@@ -904,6 +904,349 @@ body::before {
   background: var(--accent-emerald);
 }
 
+/* ── Overtime CRUD: Interactive Calendar ── */
+.ot-cal {
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  background: rgba(17, 24, 39, 0.5);
+  overflow: hidden;
+}
+
+.ot-cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(245, 158, 11, 0.08);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-amber);
+  border-bottom: 1px solid var(--border-glass);
+}
+
+.ot-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  padding: 8px;
+}
+
+.ot-cal-dow {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 4px 0;
+}
+
+.ot-cal-dow.sun {
+  color: var(--accent-rose);
+}
+
+.ot-cal-dow.sat {
+  color: var(--accent-blue);
+}
+
+.ot-cal-day {
+  text-align: center;
+  font-size: 12px;
+  padding: 8px 2px 4px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  transition: var(--transition);
+  cursor: pointer;
+  position: relative;
+  min-height: 38px;
+}
+
+.ot-cal-day:hover {
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--text-primary);
+  transform: scale(1.05);
+}
+
+.ot-cal-day.empty {
+  visibility: hidden;
+  cursor: default;
+}
+
+.ot-cal-day.weekend {
+  color: rgba(59, 130, 246, 0.7);
+}
+
+.ot-cal-day.holiday {
+  color: var(--accent-rose);
+  font-weight: 700;
+  background: rgba(244, 63, 94, 0.08);
+}
+
+.ot-cal-day.today {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--accent-emerald);
+  font-weight: 700;
+}
+
+.ot-cal-day.selected {
+  background: rgba(99, 102, 241, 0.2) !important;
+  color: var(--accent-indigo) !important;
+  font-weight: 700;
+  box-shadow: 0 0 8px rgba(99, 102, 241, 0.3);
+}
+
+/* Record dots on calendar day */
+.ot-cal-dots {
+  display: flex;
+  justify-content: center;
+  gap: 3px;
+  margin-top: 3px;
+  min-height: 6px;
+}
+
+.ot-cal-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+.ot-cal-dot.overtime {
+  background: var(--accent-amber);
+}
+
+.ot-cal-dot.oncall_standby {
+  background: var(--accent-cyan);
+}
+
+.ot-cal-dot.oncall_callout {
+  background: var(--accent-indigo);
+}
+
+.ot-cal-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--border-glass);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.ot-cal-legend span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ot-cal-legend .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* ── Overtime: Input Panel ── */
+.ot-input-panel {
+  margin-top: 16px;
+  padding: 16px;
+  background: rgba(99, 102, 241, 0.04);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  border-radius: var(--radius-md);
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+    max-height: 0;
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 500px;
+  }
+}
+
+.ot-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.btn-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border-glass);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: var(--transition);
+}
+
+.btn-icon:hover {
+  background: rgba(244, 63, 94, 0.15);
+  color: var(--accent-rose);
+  border-color: rgba(244, 63, 94, 0.3);
+}
+
+/* ── Overtime: Type Selector ── */
+.ot-type-selector {
+  display: flex;
+  gap: 6px;
+}
+
+.ot-type-option {
+  flex: 1;
+  cursor: pointer;
+}
+
+.ot-type-option input[type="radio"] {
+  display: none;
+}
+
+.ot-type-label {
+  display: block;
+  text-align: center;
+  padding: 8px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  transition: var(--transition);
+}
+
+.ot-type-option input[type="radio"]:checked+.ot-type-label {
+  color: var(--type-color, var(--accent-indigo));
+  background: rgba(99, 102, 241, 0.08);
+  border-color: var(--type-color, var(--accent-indigo));
+  box-shadow: 0 0 8px rgba(99, 102, 241, 0.15);
+}
+
+.ot-type-label:hover {
+  color: var(--text-primary);
+  background: var(--bg-glass-hover);
+}
+
+/* ── Overtime: Preview ── */
+.ot-preview {
+  margin: 8px 0;
+  padding: 12px;
+  background: rgba(16, 185, 129, 0.05);
+  border: 1px solid rgba(16, 185, 129, 0.12);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  min-height: 40px;
+}
+
+.ot-preview .preview-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 0;
+  color: var(--text-secondary);
+}
+
+.ot-preview .preview-row .val {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ot-preview .preview-total {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0 0;
+  margin-top: 6px;
+  border-top: 1px solid rgba(16, 185, 129, 0.15);
+  font-weight: 700;
+  color: var(--accent-emerald);
+}
+
+/* ── Overtime: Record List ── */
+.ot-record-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.ot-record-item:hover {
+  border-color: var(--accent-indigo);
+  background: rgba(99, 102, 241, 0.06);
+  transform: translateX(2px);
+}
+
+.ot-record-date {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-accent);
+  min-width: 40px;
+  text-align: center;
+}
+
+.ot-record-type {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+
+.ot-record-type.overtime {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--accent-amber);
+}
+
+.ot-record-type.oncall_standby {
+  background: rgba(6, 182, 212, 0.15);
+  color: var(--accent-cyan);
+}
+
+.ot-record-type.oncall_callout {
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--accent-indigo);
+}
+
+.ot-record-info {
+  flex: 1;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.ot-record-pay {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-emerald);
+  white-space: nowrap;
+}
+
+.ot-record-summary {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px;
+  margin-top: 8px;
+  background: rgba(16, 185, 129, 0.06);
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  color: var(--accent-emerald);
+  font-size: 14px;
+}
+
 /* ── Responsive ── */
 @media (max-width: 768px) {
   .header-inner {
