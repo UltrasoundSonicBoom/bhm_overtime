@@ -34,7 +34,7 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
     const tabName = tab.dataset.tab;
     if (tabName === 'payroll') applyProfileToPayroll();
     if (tabName === 'overtime') { applyProfileToOvertime(); initOvertimeTab(); }
-    if (tabName === 'leave') applyProfileToLeave();
+    if (tabName === 'leave') { applyProfileToLeave(); initLeaveTab(); }
     if (tabName === 'career') applyProfileToCareer();
   });
 });
@@ -125,6 +125,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 시간외·온콜 탭 초기화
   initOvertimeTab();
+
+  // 휴가 관리 탭 초기화
+  initLeaveTab();
 });
 
 // ═══════════ 📌 프로필 관리 ═══════════
@@ -235,10 +238,22 @@ function applyProfileToPayroll() {
 
 function applyProfileToLeave() {
   const profile = PROFILE.load();
-  if (!profile || !profile.hireDate) return;
-  document.getElementById('lvHireDate').value = profile.hireDate;
+  if (!profile) return;
+  if (profile.hireDate) {
+    const hireDateEl = document.getElementById('lvHireDate');
+    if (hireDateEl) hireDateEl.value = profile.hireDate;
+    // 연차 자동 산정
+    const parsed = PROFILE.parseDate(profile.hireDate);
+    if (parsed) {
+      const result = CALC.calcAnnualLeave(parsed);
+      if (result) lvTotalAnnual = result.총연차;
+    }
+  }
   const wage = PROFILE.calcWage(profile);
-  if (wage) document.getElementById('plWage').value = wage.monthlyWage;
+  if (wage) {
+    const plWageEl = document.getElementById('plWage');
+    if (plWageEl) plWageEl.value = wage.monthlyWage;
+  }
 }
 
 function applyProfileToCareer() {
@@ -996,6 +1011,7 @@ function handleChat() {
 // 현재 선택된 날짜 상태
 let otSelectedDate = null;
 let otHolidayMap = {};
+let otInitialized = false;
 
 // 초기화
 function initOvertimeTab() {
@@ -1016,9 +1032,12 @@ function initOvertimeTab() {
     }
   }
 
-  // 연도/월 변경 이벤트
-  document.getElementById('otYear').addEventListener('change', () => refreshOtCalendar());
-  document.getElementById('otMonth').addEventListener('change', () => refreshOtCalendar());
+  // 연도/월 변경 이벤트 (최초 1회만)
+  if (!otInitialized) {
+    document.getElementById('otYear').addEventListener('change', () => refreshOtCalendar());
+    document.getElementById('otMonth').addEventListener('change', () => refreshOtCalendar());
+    otInitialized = true;
+  }
 
   refreshOtCalendar();
 }
@@ -1434,4 +1453,365 @@ function importOtData(event) {
   };
   reader.readAsText(file);
   event.target.value = ''; // Reset file input
+}
+
+// ═══════════ 📅 휴가 관리 ═══════════
+
+let lvSelectedDate = null;
+let lvHolidayMap = {};
+let lvTotalAnnual = 0;
+let lvInitialized = false;
+
+function initLeaveTab() {
+  const now = new Date();
+  const yearSel = document.getElementById('lvYear');
+  const monthSel = document.getElementById('lvMonth');
+  if (yearSel) yearSel.value = String(now.getFullYear());
+  if (monthSel) monthSel.value = String(now.getMonth() + 1);
+
+  // 프로필에서 연차 자동 산정
+  const profile = PROFILE.load();
+  if (profile && profile.hireDate) {
+    const parsed = PROFILE.parseDate(profile.hireDate);
+    if (parsed) {
+      const result = CALC.calcAnnualLeave(parsed);
+      if (result) lvTotalAnnual = result.총연차;
+    }
+  }
+
+  // 연도/월 변경 이벤트 (최초 1회만)
+  if (!lvInitialized) {
+    document.getElementById('lvYear').addEventListener('change', () => refreshLvCalendar());
+    document.getElementById('lvMonth').addEventListener('change', () => refreshLvCalendar());
+    document.getElementById('lvStartDate').addEventListener('change', previewLvCalc);
+    document.getElementById('lvEndDate').addEventListener('change', previewLvCalc);
+    lvInitialized = true;
+  }
+
+  refreshLvCalendar();
+}
+
+async function refreshLvCalendar() {
+  const year = parseInt(document.getElementById('lvYear').value);
+  const month = parseInt(document.getElementById('lvMonth').value);
+
+  document.getElementById('lvMonthBadge').textContent = `${year}년 ${month}월`;
+
+  // 공휴일 데이터
+  let workInfo;
+  try { workInfo = await HOLIDAYS.calcWorkDays(year, month); }
+  catch { workInfo = { holidays: [], anniversaries: [] }; }
+
+  lvHolidayMap = {};
+  (workInfo.holidays || []).forEach(h => { lvHolidayMap[h.day] = h.name; });
+
+  // 기록
+  const monthRecords = LEAVE.getMonthRecords(year, month);
+  const recordsByDay = {};
+  monthRecords.forEach(r => {
+    // 연속 휴가 → 각 날짜에 표시
+    const start = new Date(r.startDate);
+    const end = new Date(r.endDate);
+    const cur = new Date(start);
+    while (cur <= end) {
+      if (cur.getMonth() + 1 === month && cur.getFullYear() === year) {
+        const d = cur.getDate();
+        if (!recordsByDay[d]) recordsByDay[d] = [];
+        recordsByDay[d].push(r);
+      }
+      cur.setDate(cur.getDate() + 1);
+    }
+  });
+
+  renderLvCalendar(year, month, recordsByDay);
+  renderLvRecordList(year);
+  renderLvStats(year);
+  closeLvPanel();
+}
+
+function renderLvCalendar(year, month, recordsByDay) {
+  const container = document.getElementById('lvCalendar');
+  if (!container) return;
+
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const firstDow = new Date(year, month - 1, 1).getDay();
+  const today = new Date();
+  const isCurrentMonth = (today.getFullYear() === year && (today.getMonth() + 1) === month);
+  const todayDay = isCurrentMonth ? today.getDate() : -1;
+
+  const dowLabels = ['일', '월', '화', '수', '목', '금', '토'];
+  let html = '<div class="ot-cal"><div class="ot-cal-header" style="background:rgba(16,185,129,0.08); color:var(--accent-emerald)">📅 ' + year + '년 ' + month + '월</div>';
+  html += '<div class="ot-cal-grid">';
+
+  dowLabels.forEach((d, i) => {
+    const cls = i === 0 ? 'sun' : (i === 6 ? 'sat' : '');
+    html += `<div class="ot-cal-dow ${cls}">${d}</div>`;
+  });
+
+  for (let i = 0; i < firstDow; i++) html += '<div class="ot-cal-day empty"></div>';
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dow = new Date(year, month - 1, d).getDay();
+    const isWknd = (dow === 0 || dow === 6);
+    const isHoliday = !!lvHolidayMap[d];
+    const isToday = (d === todayDay);
+    const isSelected = lvSelectedDate && lvSelectedDate.day === d;
+    const dayRecords = recordsByDay[d] || [];
+
+    let cls = 'ot-cal-day';
+    if (isHoliday) cls += ' holiday';
+    else if (isWknd) cls += ' weekend';
+    if (isToday) cls += ' today';
+    if (isSelected) cls += ' selected';
+
+    let dotsHtml = '<div class="ot-cal-dots">';
+    const dotTypes = [...new Set(dayRecords.map(r => r.type))];
+    dotTypes.forEach(t => { dotsHtml += `<div class="lv-cal-dot ${t}"></div>`; });
+    dotsHtml += '</div>';
+
+    html += `<div class="${cls}" onclick="onLvDateClick(${year},${month},${d})">${d}${dotsHtml}</div>`;
+  }
+
+  html += '</div>';
+  html += `<div class="ot-cal-legend">
+    <span><i class="dot" style="background:var(--accent-emerald)"></i>연차</span>
+    <span><i class="dot" style="background:var(--accent-rose)"></i>병가/무급</span>
+    <span><i class="dot" style="background:var(--accent-amber)"></i>경조</span>
+    <span><i class="dot" style="background:var(--accent-violet)"></i>생리휴가</span>
+  </div>`;
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function onLvDateClick(year, month, day) {
+  lvSelectedDate = { year, month, day };
+  document.querySelectorAll('#lvCalendar .ot-cal-day').forEach(el => el.classList.remove('selected'));
+  if (event && event.currentTarget) event.currentTarget.classList.add('selected');
+
+  const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  const dow = new Date(year, month - 1, day).getDay();
+  const dowNames = ['일', '월', '화', '수', '목', '금', '토'];
+
+  let dateLabel = `${month}월 ${day}일 (${dowNames[dow]})`;
+  if (lvHolidayMap[day]) dateLabel += ` 🔴 ${lvHolidayMap[day]}`;
+
+  document.getElementById('lvPanelDate').textContent = dateLabel;
+  document.getElementById('lvInputPanel').style.display = 'block';
+  document.getElementById('lvStartDate').value = dateStr;
+  document.getElementById('lvEndDate').value = dateStr;
+  document.getElementById('lvEditId').value = '';
+  document.getElementById('lvDeleteBtn').style.display = 'none';
+  document.getElementById('lvSaveBtn').textContent = '💾 저장';
+  document.getElementById('lvMemo').value = '';
+  document.getElementById('lvType').value = 'annual';
+
+  previewLvCalc();
+
+  // 기존 기록 표시
+  const existing = LEAVE.getDateRecords(dateStr);
+  if (existing.length > 0) {
+    const container = document.getElementById('lvPreview');
+    let extra = '<div style="margin-top:8px; padding:8px; background:rgba(16,185,129,0.06); border-radius:6px; font-size:12px;">';
+    extra += `<strong style="color:var(--accent-emerald)">📋 기존 기록 (${existing.length}건)</strong>`;
+    existing.forEach(r => {
+      const typeInfo = LEAVE.types[r.type] || {};
+      extra += `<div style="margin-top:4px; cursor:pointer; padding:4px; border-radius:4px;" 
+        onclick="editLvRecord('${r.id}')"
+        onmouseover="this.style.background='rgba(99,102,241,0.1)'"
+        onmouseout="this.style.background='transparent'">
+        <span class="lv-record-type ${r.isPaid ? 'paid' : 'unpaid'}" style="font-size:10px">${typeInfo.label || r.type}</span>
+        ${r.startDate === r.endDate ? '' : r.startDate + '~' + r.endDate}
+        ${r.days}일
+        ${r.salaryImpact ? '<strong style="color:var(--accent-rose)">-₩' + Math.abs(r.salaryImpact).toLocaleString() + '</strong>' : ''}
+      </div>`;
+    });
+    extra += '</div>';
+    container.insertAdjacentHTML('afterend', extra);
+  }
+}
+
+function closeLvPanel() {
+  document.getElementById('lvInputPanel').style.display = 'none';
+  lvSelectedDate = null;
+  document.querySelectorAll('#lvCalendar .ot-cal-day').forEach(el => el.classList.remove('selected'));
+}
+
+function onLvTypeChange() { previewLvCalc(); }
+
+function previewLvCalc() {
+  const preview = document.getElementById('lvPreview');
+  const type = document.getElementById('lvType').value;
+  const typeInfo = LEAVE.types[type];
+  if (!typeInfo) { preview.innerHTML = ''; return; }
+
+  const startStr = document.getElementById('lvStartDate').value;
+  const endStr = document.getElementById('lvEndDate').value;
+  if (!startStr || !endStr) { preview.innerHTML = ''; return; }
+
+  let days;
+  if (typeInfo.days === 0.5) {
+    days = 0.5;
+  } else {
+    days = LEAVE._calcBusinessDays(startStr, endStr);
+  }
+
+  let html = `<div class="preview-row"><span>유형</span><span class="val">${typeInfo.label}</span></div>`;
+  html += `<div class="preview-row"><span>일수</span><span class="val">${days}일</span></div>`;
+
+  if (typeInfo.usesAnnual) {
+    const summary = LEAVE.calcAnnualSummary(parseInt(startStr.split('-')[0]), lvTotalAnnual);
+    const remain = summary.remainingAnnual;
+    html += `<div class="preview-row"><span>연차 차감</span><span class="val" style="color:var(--accent-amber)">-${days}일</span></div>`;
+    html += `<div class="preview-row"><span>잔여 연차</span><span class="val">${remain}일 → ${remain - days}일</span></div>`;
+  }
+
+  if (!typeInfo.isPaid) {
+    const profile = PROFILE.load();
+    const wage = profile ? PROFILE.calcWage(profile) : null;
+    const hourlyRate = wage ? wage.hourlyRate : 0;
+    const deduction = hourlyRate * 8 * days;
+    html += `<div class="preview-row"><span>급여 차감</span><span class="val" style="color:var(--accent-rose)">-₩${deduction.toLocaleString()}</span></div>`;
+  } else {
+    html += `<div class="preview-row"><span>급여 차감</span><span class="val" style="color:var(--accent-emerald)">₩0 (유급)</span></div>`;
+  }
+
+  preview.innerHTML = html;
+}
+
+function saveLvRecord() {
+  const type = document.getElementById('lvType').value;
+  const startDate = document.getElementById('lvStartDate').value;
+  const endDate = document.getElementById('lvEndDate').value;
+  const memo = document.getElementById('lvMemo').value;
+  const editId = document.getElementById('lvEditId').value;
+
+  if (!startDate || !endDate) { alert('시작일/종료일을 선택하세요.'); return; }
+  if (new Date(endDate) < new Date(startDate)) { alert('종료일이 시작일보다 이전입니다.'); return; }
+
+  const typeInfo = LEAVE.types[type];
+  const profile = PROFILE.load();
+  const wage = profile ? PROFILE.calcWage(profile) : null;
+  const hourlyRate = wage ? wage.hourlyRate : 0;
+
+  let days;
+  if (typeInfo && typeInfo.days === 0.5) {
+    days = 0.5;
+  } else {
+    days = LEAVE._calcBusinessDays(startDate, endDate);
+  }
+
+  const record = { type, startDate, endDate, days, memo, hourlyRate };
+
+  if (editId) {
+    LEAVE.updateRecord(editId, record);
+  } else {
+    LEAVE.addRecord(record);
+  }
+
+  refreshLvCalendar();
+}
+
+function editLvRecord(id) {
+  const all = LEAVE._loadAll();
+  let record = null;
+  for (const records of Object.values(all)) {
+    record = records.find(r => r.id === id);
+    if (record) break;
+  }
+  if (!record) return;
+
+  document.getElementById('lvInputPanel').style.display = 'block';
+  document.getElementById('lvType').value = record.type;
+  document.getElementById('lvStartDate').value = record.startDate;
+  document.getElementById('lvEndDate').value = record.endDate;
+  document.getElementById('lvMemo').value = record.memo || '';
+  document.getElementById('lvEditId').value = id;
+  document.getElementById('lvDeleteBtn').style.display = 'block';
+  document.getElementById('lvSaveBtn').textContent = '✏️ 수정';
+
+  const [y, m, d] = record.startDate.split('-').map(Number);
+  const dowNames = ['일', '월', '화', '수', '목', '금', '토'];
+  const dow = new Date(y, m - 1, d).getDay();
+  document.getElementById('lvPanelDate').textContent = `${m}월 ${d}일 (${dowNames[dow]}) — 수정`;
+
+  previewLvCalc();
+}
+
+function deleteLvRecord() {
+  const id = document.getElementById('lvEditId').value;
+  if (!id) return;
+  if (!confirm('이 휴가 기록을 삭제하시겠습니까?')) return;
+  LEAVE.deleteRecord(id);
+  refreshLvCalendar();
+}
+
+function renderLvStats(year) {
+  const summary = LEAVE.calcAnnualSummary(year, lvTotalAnnual);
+
+  document.getElementById('lvStatTotal').textContent = summary.totalAnnual + '일';
+  document.getElementById('lvStatUsed').textContent = summary.usedAnnual + '일';
+  document.getElementById('lvStatRemain').textContent = summary.remainingAnnual + '일';
+  document.getElementById('lvStatDeduction').textContent = summary.totalDeduction > 0 ? '-₩' + summary.totalDeduction.toLocaleString() : '₩0';
+  document.getElementById('lvUsagePercent').textContent = summary.usagePercent + '%';
+  document.getElementById('lvProgressFill').style.width = summary.usagePercent + '%';
+  document.getElementById('lvRecordCount').textContent = summary.recordCount + '건';
+}
+
+function renderLvRecordList(year) {
+  const container = document.getElementById('lvRecordList');
+  if (!container) return;
+
+  const records = LEAVE.getYearRecords(year);
+  if (records.length === 0) {
+    container.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:24px;">캘린더에서 날짜를 클릭하여 휴가를 등록하세요.</p>';
+    return;
+  }
+
+  const sorted = [...records].sort((a, b) => a.startDate.localeCompare(b.startDate));
+  let html = '';
+
+  sorted.forEach(r => {
+    const typeInfo = LEAVE.types[r.type] || {};
+    const dateDisplay = r.startDate === r.endDate
+      ? r.startDate.substring(5)
+      : r.startDate.substring(5) + ' ~ ' + r.endDate.substring(5);
+
+    html += `<div class="lv-record-item" onclick="editLvRecord('${r.id}')">
+      <span class="lv-record-type ${r.isPaid ? 'paid' : 'unpaid'}">${typeInfo.label || r.type}</span>
+      <div style="flex:1; font-size:12px; color:var(--text-secondary)">
+        ${dateDisplay} (${r.days}일)
+        ${r.memo ? '<br><span style="color:var(--text-muted)">' + r.memo + '</span>' : ''}
+      </div>
+      <div style="font-size:12px; font-weight:700; color:${r.salaryImpact ? 'var(--accent-rose)' : 'var(--accent-emerald)'}">
+        ${r.salaryImpact ? '-₩' + Math.abs(r.salaryImpact).toLocaleString() : '유급'}
+      </div>
+    </div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+function exportLvData() {
+  const json = LEAVE.exportData();
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `leave_records_${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  document.getElementById('lvExportMsg').textContent = '✅ 내보내기 완료';
+}
+
+function importLvData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const result = LEAVE.importData(e.target.result);
+    document.getElementById('lvExportMsg').textContent = result.message;
+    if (result.success) refreshLvCalendar();
+  };
+  reader.readAsText(file);
+  event.target.value = '';
 }

@@ -25,7 +25,7 @@
         <button class="nav-tab active" data-tab="profile">📌 내 정보</button>
         <button class="nav-tab" data-tab="payroll">🧾 급여시뮬</button>
         <button class="nav-tab" data-tab="overtime">⏰ 시간외·온콜</button>
-        <button class="nav-tab" data-tab="leave">📅 휴가·휴직</button>
+        <button class="nav-tab" data-tab="leave">📅 휴가관리</button>
         <button class="nav-tab" data-tab="allowance">💵 수당</button>
         <button class="nav-tab" data-tab="career">📊 승진·퇴직</button>
         <button class="nav-tab" data-tab="reference">📋 규정·챗봇</button>
@@ -554,47 +554,220 @@
       </div>
     </div>
 
-    <!-- ═══════════ 📅 휴가·휴직 ═══════════ -->
+    <!-- ═══════════ 📅 휴가 관리 ═══════════ -->
     <div class="tab-content" id="tab-leave">
+      <!-- 연간 현황 대시보드 -->
+      <div class="stat-grid lv-stats" style="margin-bottom:16px;">
+        <div class="stat-card">
+          <div class="stat-value" id="lvStatTotal" style="color:var(--accent-indigo)">0일</div>
+          <div class="stat-label">총 연차</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="lvStatUsed" style="color:var(--accent-amber)">0일</div>
+          <div class="stat-label">사용</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="lvStatRemain" style="color:var(--accent-emerald)">0일</div>
+          <div class="stat-label">잔여</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="lvStatDeduction" style="color:var(--accent-rose)">₩0</div>
+          <div class="stat-label">무급 차감</div>
+        </div>
+      </div>
+
+      <!-- 프로그레스 바 -->
+      <div class="card" style="padding:12px 20px; margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;">
+          <span style="color:var(--text-secondary)">연차 사용률</span>
+          <span id="lvUsagePercent" style="color:var(--accent-indigo); font-weight:600;">0%</span>
+        </div>
+        <div class="lv-progress-bar">
+          <div class="lv-progress-fill" id="lvProgressFill" style="width:0%"></div>
+        </div>
+      </div>
+
       <div class="grid-2">
-        <div class="card">
-          <div class="card-title"><span class="icon emerald">📅</span> 연차 계산기</div>
-          <div class="form-group">
-            <label>입사일</label>
-            <input type="text" id="lvHireDate" placeholder="예: 2006-07-05">
-          </div>
-          <button class="btn btn-primary btn-full" onclick="calculateLeave()">계산하기</button>
-          <div id="leaveResult" style="margin-top:16px"></div>
-        </div>
-
-        <div class="card">
-          <div class="card-title"><span class="icon rose">👶</span> 육아휴직 급여 시뮬레이터</div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>월 통상임금 (원)</label>
-              <input type="number" id="plWage" value="0" min="0">
+        <!-- 좌측: 캘린더 + 입력 -->
+        <div>
+          <div class="card">
+            <div class="card-title">
+              <span class="icon emerald">📅</span> 휴가 기록
+              <span class="badge indigo" id="lvMonthBadge">2026년 3월</span>
             </div>
-            <div class="form-group">
-              <label>휴직 개월수</label>
-              <input type="number" id="plMonths" value="12" min="1" max="36">
+
+            <!-- 연도/월 선택 -->
+            <div class="form-row" style="margin-bottom:12px;">
+              <div class="form-group">
+                <label>연도</label>
+                <select id="lvYear">
+                  <option value="2025">2025년</option>
+                  <option value="2026" selected>2026년</option>
+                  <option value="2027">2027년</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>월</label>
+                <select id="lvMonth">
+                  <option value="1">1월</option>
+                  <option value="2">2월</option>
+                  <option value="3" selected>3월</option>
+                  <option value="4">4월</option>
+                  <option value="5">5월</option>
+                  <option value="6">6월</option>
+                  <option value="7">7월</option>
+                  <option value="8">8월</option>
+                  <option value="9">9월</option>
+                  <option value="10">10월</option>
+                  <option value="11">11월</option>
+                  <option value="12">12월</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- 인터랙티브 캘린더 -->
+            <div id="lvCalendar"></div>
+
+            <!-- 휴가 입력 패널 -->
+            <div id="lvInputPanel" class="ot-input-panel" style="display:none;">
+              <div class="ot-panel-header">
+                <span id="lvPanelDate" style="font-weight:600;"></span>
+                <button class="btn-icon" onclick="closeLvPanel()" title="닫기">✕</button>
+              </div>
+
+              <div class="form-group" style="margin-top:8px;">
+                <label>휴가 유형</label>
+                <select id="lvType" onchange="onLvTypeChange()">
+                  <option value="annual">🟢 연차 (유급)</option>
+                  <option value="half_am">🟢 반차-오전 (유급, 0.5일)</option>
+                  <option value="half_pm">🟢 반차-오후 (유급, 0.5일)</option>
+                  <option value="sick">🔴 병가 (무급)</option>
+                  <option value="menstrual">🟣 생리휴가 (무급)</option>
+                  <option value="ceremony">🟡 경조휴가 (유급-별도)</option>
+                  <option value="maternity">🔴 출산휴가 (유급-별도)</option>
+                  <option value="spouse_birth">🔵 배우자출산 (유급-별도)</option>
+                  <option value="unpaid">🔴 기타 무급휴가</option>
+                </select>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>시작일</label>
+                  <input type="date" id="lvStartDate">
+                </div>
+                <div class="form-group">
+                  <label>종료일</label>
+                  <input type="date" id="lvEndDate">
+                </div>
+              </div>
+
+              <!-- 급여 영향 미리보기 -->
+              <div id="lvPreview" class="ot-preview"></div>
+
+              <div class="form-group">
+                <label>메모 (선택)</label>
+                <input type="text" id="lvMemo" placeholder="예: 개인사유">
+              </div>
+
+              <div class="form-row" style="margin-top:12px;">
+                <button class="btn btn-primary" onclick="saveLvRecord()" style="flex:2" id="lvSaveBtn">💾 저장</button>
+                <button class="btn btn-outline" onclick="deleteLvRecord()" style="flex:1; display:none;"
+                  id="lvDeleteBtn">🗑 삭제</button>
+              </div>
+              <input type="hidden" id="lvEditId" value="">
             </div>
           </div>
-          <button class="btn btn-primary btn-full" onclick="calculateParentalLeave()">시뮬레이션</button>
-          <div id="parentalResult" style="margin-top:16px"></div>
-        </div>
-      </div>
 
-      <div class="card">
-        <div class="card-title"><span class="icon violet">🎉</span> 청원휴가 · 경조금 일람</div>
-        <div style="overflow-x:auto;">
-          <table class="data-table" id="ceremonyTable"></table>
-        </div>
-      </div>
+          <!-- 기존 계산기 (접이식) -->
+          <div class="card" style="margin-top:16px;">
+            <div class="collapsible-header" onclick="toggleCollapsible('lvAnnualCalc')">
+              <span>▸ 연차 계산기 (입사일 기준)</span>
+            </div>
+            <div class="collapsible-body" id="lvAnnualCalc" style="display:none;">
+              <div class="form-group">
+                <label>입사일</label>
+                <input type="text" id="lvHireDate" placeholder="예: 2006-07-05">
+              </div>
+              <button class="btn btn-primary btn-full" onclick="calculateLeave()">연차 계산</button>
+              <div id="leaveResult" style="margin-top:16px"></div>
+            </div>
+          </div>
 
-      <div class="card">
-        <div class="card-title"><span class="icon blue">📋</span> 휴직 제도 일람</div>
-        <div style="overflow-x:auto;">
-          <table class="data-table" id="leaveTable"></table>
+          <div class="card" style="margin-top:16px;">
+            <div class="collapsible-header" onclick="toggleCollapsible('lvParentalCalc')">
+              <span>▸ 육아휴직 급여 시뮬레이터</span>
+            </div>
+            <div class="collapsible-body" id="lvParentalCalc" style="display:none;">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>월 통상임금 (원)</label>
+                  <input type="number" id="plWage" value="0" min="0">
+                </div>
+                <div class="form-group">
+                  <label>휴직 개월수</label>
+                  <input type="number" id="plMonths" value="12" min="1" max="36">
+                </div>
+              </div>
+              <button class="btn btn-primary btn-full" onclick="calculateParentalLeave()">시뮬레이션</button>
+              <div id="parentalResult" style="margin-top:16px"></div>
+            </div>
+          </div>
+
+          <!-- JSON 내보내기/가져오기 -->
+          <div class="card" style="margin-top:16px;">
+            <div class="collapsible-header" onclick="toggleCollapsible('lvExportSection')">
+              <span>▸ 데이터 내보내기 / 가져오기</span>
+            </div>
+            <div class="collapsible-body" id="lvExportSection" style="display:none;">
+              <div class="form-row" style="margin-bottom:8px;">
+                <button class="btn btn-outline" onclick="exportLvData()" style="flex:1">📤 JSON 내보내기</button>
+                <label class="btn btn-outline" style="flex:1; text-align:center; cursor:pointer;">
+                  📥 JSON 가져오기
+                  <input type="file" id="lvImportFile" accept=".json" style="display:none"
+                    onchange="importLvData(event)">
+                </label>
+              </div>
+              <div id="lvExportMsg" style="font-size:12px; color:var(--text-muted);"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 우측: 사용 내역 -->
+        <div>
+          <div class="card">
+            <div class="card-title">
+              <span class="icon amber">📋</span> 사용 내역
+              <span class="badge emerald" id="lvRecordCount">0건</span>
+            </div>
+            <div id="lvRecordList" style="max-height:500px; overflow-y:auto;">
+              <p style="color:var(--text-muted); text-align:center; padding:24px;">
+                캘린더에서 날짜를 클릭하여 휴가를 등록하세요.
+              </p>
+            </div>
+          </div>
+
+          <!-- 경조휴가 & 휴직 참조 -->
+          <div class="card" style="margin-top:16px;">
+            <div class="collapsible-header" onclick="toggleCollapsible('lvCeremonyRef')">
+              <span>▸ 청원휴가 · 경조금 일람</span>
+            </div>
+            <div class="collapsible-body" id="lvCeremonyRef" style="display:none;">
+              <div style="overflow-x:auto;">
+                <table class="data-table" id="ceremonyTable"></table>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:16px;">
+            <div class="collapsible-header" onclick="toggleCollapsible('lvLeaveRef')">
+              <span>▸ 휴직 제도 일람</span>
+            </div>
+            <div class="collapsible-body" id="lvLeaveRef" style="display:none;">
+              <div style="overflow-x:auto;">
+                <table class="data-table" id="leaveTable"></table>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1004,6 +1177,7 @@
   <script src="holidays.js"></script>
   <script src="profile.js"></script>
   <script src="overtime.js"></script>
+  <script src="leave.js"></script>
   <script src="app.js"></script>
 </body>
 
