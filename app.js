@@ -63,7 +63,7 @@ function populateJobTypeDropdowns() {
     Object.entries(DATA.jobTypes).forEach(([key, info]) => {
       const opt = document.createElement('option');
       opt.value = key;
-      opt.textContent = info.label;
+      opt.textContent = key;
       sel.appendChild(opt);
     });
   });
@@ -134,7 +134,7 @@ function updateProfileGrades() {
   table.grades.forEach(g => {
     const opt = document.createElement('option');
     opt.value = g;
-    opt.textContent = `${g} (${table.gradeLabels[g]})`;
+    opt.textContent = g;
     gradeSelect.appendChild(opt);
   });
 }
@@ -179,7 +179,7 @@ function updateProfileSummary(profile) {
   let html = `
     <div class="card-title"><span class="icon emerald">📊</span> 내 급여 요약</div>
     ${profile.name ? `<p style="font-weight:600; font-size:16px; margin-bottom:8px;">👤 ${profile.name}</p>` : ''}
-    <div class="result-row"><span class="key">직종/등급</span><span class="val">${profile.jobType} ${profile.grade} (${gradeLabel}) ${profile.year}년차</span></div>
+    <div class="result-row"><span class="key">직종/등급</span><span class="val">${profile.jobType} ${profile.grade} ${profile.year}년차</span></div>
     ${serviceYears > 0 ? `<div class="result-row"><span class="key">근속연수</span><span class="val">${serviceYears}년</span></div>` : ''}
     <hr class="divider">
     <div class="result-box">
@@ -256,7 +256,7 @@ function updateGrades() {
   table.grades.forEach(g => {
     const opt = document.createElement('option');
     opt.value = g;
-    opt.textContent = `${g} (${table.gradeLabels[g]})`;
+    opt.textContent = g;
     gradeSelect.appendChild(opt);
   });
 }
@@ -270,7 +270,7 @@ function updatePromoGrades() {
   Object.keys(table.autoPromotion).forEach(g => {
     const opt = document.createElement('option');
     opt.value = g;
-    opt.textContent = `${g} (${table.gradeLabels[g]})`;
+    opt.textContent = g;
     gradeSelect.appendChild(opt);
   });
 }
@@ -286,7 +286,7 @@ function updatePayrollGrades() {
   table.grades.forEach(g => {
     const opt = document.createElement('option');
     opt.value = g;
-    opt.textContent = `${g} (${table.gradeLabels[g]})`;
+    opt.textContent = g;
     gradeSelect.appendChild(opt);
   });
 }
