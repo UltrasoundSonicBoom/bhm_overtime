@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SNUH 급여도우미 - 분석 & 개선 로드맵</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Noto+Sans+KR:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0e1a;
+      --card: rgba(17,24,39,0.85);
+      --border: rgba(99,102,241,0.15);
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --accent: #818cf8;
+      --green: #34d399;
+      --yellow: #fbbf24;
+      --red: #f87171;
+      --blue: #60a5fa;
+      --cyan: #22d3ee;
+      --rose: #fb7185;
+      --orange: #fb923c;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Noto Sans KR', 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      padding: 20px;
+    }
+    .container { max-width: 1400px; margin: 0 auto; }
+
+    /* ── Header ── */
+    .page-header {
+      text-align: center;
+      padding: 40px 20px 30px;
+      margin-bottom: 40px;
+      background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(34,211,238,0.05));
+      border-radius: 20px;
+      border: 1px solid var(--border);
+    }
+    .page-header h1 { font-size: 28px; font-weight: 800; margin-bottom: 8px; }
+    .page-header h1 span { color: var(--accent); }
+    .page-header p { color: var(--muted); font-size: 14px; }
+
+    /* ── Section ── */
+    .section { margin-bottom: 50px; }
+    .section-title {
+      font-size: 22px; font-weight: 700;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .section-title .num {
+      background: var(--accent);
+      color: #fff;
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    /* ── Pain Point Cards ── */
+    .pain-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+    }
+    .pain-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      transition: transform 0.2s;
+    }
+    .pain-card:hover { transform: translateY(-2px); }
+    .pain-card .pain-header {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 10px;
+    }
+    .pain-card .pain-icon {
+      font-size: 24px;
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .pain-card .pain-title { font-weight: 700; font-size: 15px; }
+    .pain-card .pain-voice {
+      background: rgba(251,191,36,0.08);
+      border-left: 3px solid var(--yellow);
+      padding: 8px 12px;
+      margin: 10px 0;
+      font-size: 13px;
+      color: var(--yellow);
+      border-radius: 0 8px 8px 0;
+      font-style: italic;
+    }
+    .pain-card .pain-desc { font-size: 13px; color: var(--muted); }
+    .pain-card .pain-example {
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--text);
+      background: rgba(255,255,255,0.03);
+      padding: 6px 10px;
+      border-radius: 6px;
+    }
+    .icon-hr { background: rgba(99,102,241,0.15); }
+    .icon-me { background: rgba(34,211,238,0.15); }
+
+    /* ── Status Badge ── */
+    .status {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 11px; font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+    .status-done { background: rgba(52,211,153,0.15); color: var(--green); }
+    .status-partial { background: rgba(251,191,36,0.15); color: var(--yellow); }
+    .status-none { background: rgba(248,113,113,0.15); color: var(--red); }
+    .status-new { background: rgba(96,165,250,0.15); color: var(--blue); }
+    .dot { width: 6px; height: 6px; border-radius: 50%; }
+    .dot-done { background: var(--green); }
+    .dot-partial { background: var(--yellow); }
+    .dot-none { background: var(--red); }
+    .dot-new { background: var(--blue); }
+
+    /* ── Coverage Table ── */
+    .coverage-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .coverage-table th {
+      background: rgba(99,102,241,0.1);
+      padding: 12px 14px;
+      text-align: left;
+      font-weight: 700;
+      border-bottom: 2px solid var(--border);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .coverage-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(99,102,241,0.08);
+      vertical-align: top;
+    }
+    .coverage-table tr:hover { background: rgba(99,102,241,0.03); }
+    .coverage-table .cat {
+      font-weight: 700; color: var(--accent);
+      min-width: 120px;
+    }
+
+    /* ── Flowchart / Diagram ── */
+    .diagram-wrap {
+      overflow-x: auto;
+      padding: 10px 0;
+    }
+
+    /* ── PAYSLIP DIAGRAM ── */
+    .payslip-diagram {
+      display: flex;
+      align-items: stretch;
+      gap: 20px;
+      min-width: 900px;
+      padding: 20px;
+    }
+    .payslip-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      flex: 1;
+      min-width: 250px;
+    }
+    .payslip-box h3 {
+      font-size: 14px;
+      margin-bottom: 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .payslip-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 6px 0;
+      font-size: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+    .payslip-item .label { color: var(--muted); }
+    .payslip-item .value { font-weight: 600; font-family: 'Inter', monospace; }
+    .payslip-arrow {
+      display: flex;
+      align-items: center;
+      font-size: 28px;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+    .q-mark {
+      color: var(--red);
+      font-weight: 800;
+      font-size: 11px;
+      margin-left: 4px;
+    }
+    .explained {
+      color: var(--green);
+      font-size: 11px;
+      margin-left: 4px;
+    }
+
+    /* ── SITEMAP ── */
+    .sitemap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      padding: 30px 10px;
+    }
+    .sitemap-root {
+      background: linear-gradient(135deg, var(--accent), #6366f1);
+      color: #fff;
+      padding: 16px 32px;
+      border-radius: 14px;
+      font-weight: 800;
+      font-size: 16px;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(99,102,241,0.3);
+    }
+    .sitemap-connector {
+      width: 2px;
+      height: 30px;
+      background: var(--border);
+    }
+    .sitemap-branches {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .sitemap-branch {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      width: 175px;
+      overflow: hidden;
+      transition: transform 0.2s;
+    }
+    .sitemap-branch:hover { transform: translateY(-3px); }
+    .sitemap-branch.is-new {
+      border-color: rgba(96,165,250,0.4);
+      box-shadow: 0 0 15px rgba(96,165,250,0.1);
+    }
+    .sitemap-branch.is-improve {
+      border-color: rgba(251,191,36,0.4);
+      box-shadow: 0 0 15px rgba(251,191,36,0.1);
+    }
+    .branch-head {
+      padding: 12px 14px;
+      font-weight: 700;
+      font-size: 13px;
+      display: flex; align-items: center; gap: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+    .branch-items { padding: 10px 14px; }
+    .branch-item {
+      font-size: 11px;
+      color: var(--muted);
+      padding: 4px 0;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .branch-item .bi-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .bi-existing { background: var(--green); }
+    .bi-improve { background: var(--yellow); }
+    .bi-new { background: var(--blue); }
+
+    /* ── Legend ── */
+    .legend {
+      display: flex; gap: 20px; flex-wrap: wrap;
+      margin: 16px 0;
+      font-size: 12px;
+    }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+
+    /* ── PRIORITY ── */
+    .priority-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 900px) { .priority-grid { grid-template-columns: 1fr; } }
+    .priority-col h3 {
+      font-size: 14px;
+      margin-bottom: 12px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      text-align: center;
+    }
+    .p-high h3 { background: rgba(248,113,113,0.1); color: var(--red); }
+    .p-mid h3 { background: rgba(251,191,36,0.1); color: var(--yellow); }
+    .p-low h3 { background: rgba(96,165,250,0.1); color: var(--blue); }
+    .priority-item {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+    .priority-item .pi-title {
+      font-weight: 700;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+    .priority-item .pi-desc {
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .priority-item .pi-impact {
+      margin-top: 6px;
+      font-size: 11px;
+      color: var(--cyan);
+    }
+
+    /* ── Compare diagram ── */
+    .compare-flow {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 20px;
+      min-width: 800px;
+    }
+    .compare-box {
+      background: var(--card);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      padding: 20px;
+      text-align: center;
+      flex: 1;
+    }
+    .compare-box h4 { font-size: 13px; margin-bottom: 10px; }
+    .compare-box .big-num {
+      font-size: 28px;
+      font-weight: 800;
+      font-family: 'Inter', sans-serif;
+    }
+    .compare-box .sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    .compare-arrow {
+      font-size: 24px;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+    .compare-box.problem { border-color: rgba(248,113,113,0.3); }
+    .compare-box.solution { border-color: rgba(52,211,153,0.3); }
+
+    .summary-box {
+      background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(34,211,238,0.05));
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      margin-top: 20px;
+      font-size: 14px;
+    }
+    .summary-box strong { color: var(--accent); }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- ══════════ HEADER ══════════ -->
+  <div class="page-header">
+    <h1>SNUH 급여도우미 <span>분석 & 개선 로드맵</span></h1>
+    <p>기존 급여명세서(PDF) vs 현재 앱 vs 개선 제안 | 인사과 직원 + 직장인 관점</p>
+  </div>
+
+  <!-- ══════════ SECTION 1: 기존 명세서의 문제 ══════════ -->
+  <div class="section">
+    <div class="section-title">
+      <div class="num">1</div>
+      기존 급여명세서(PDF)는 이런 문서다
+    </div>
+
+    <div class="diagram-wrap">
+      <div class="compare-flow">
+        <div class="compare-box problem">
+          <h4>급여명세서 PDF</h4>
+          <div class="big-num" style="color:var(--yellow);">126칸</div>
+          <div class="sub">지급 66칸 + 공제 42칸 + 시간/연차 18칸</div>
+        </div>
+        <div class="compare-arrow">→</div>
+        <div class="compare-box problem">
+          <h4>실제 값이 있는 칸</h4>
+          <div class="big-num" style="color:var(--orange);">~20칸</div>
+          <div class="sub">나머지 106칸은 빈칸 (다른 직종용)</div>
+        </div>
+        <div class="compare-arrow">→</div>
+        <div class="compare-box problem">
+          <h4>산식이 보이는 칸</h4>
+          <div class="big-num" style="color:var(--red);">1칸</div>
+          <div class="sub">식대공제 (22×3,000)=66,000 — 유일한 산식</div>
+        </div>
+        <div class="compare-arrow">→</div>
+        <div class="compare-box problem">
+          <h4>결과</h4>
+          <div class="big-num" style="color:var(--red);">?</div>
+          <div class="sub">"왜 이 금액인지" 알 수 없음</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 실제 명세서 수치 다이어그램 -->
+    <div class="diagram-wrap" style="margin-top: 20px;">
+      <div class="payslip-diagram">
+        <div class="payslip-box">
+          <h3>💰 지급내역 (급여총액 7,968,900)</h3>
+          <div class="payslip-item"><span class="label">기준기본급</span><span class="value">3,085,900 <span class="q-mark">? 호봉표 어디?</span></span></div>
+          <div class="payslip-item"><span class="label">근속가산기본급</span><span class="value">226,570 <span class="q-mark">? 산식?</span></span></div>
+          <div class="payslip-item"><span class="label">능력급</span><span class="value">1,075,700 <span class="q-mark">? 기준?</span></span></div>
+          <div class="payslip-item"><span class="label">상여금</span><span class="value">157,400 <span class="q-mark">? 연간 몇%?</span></span></div>
+          <div class="payslip-item"><span class="label">가계지원비</span><span class="value">934,970 <span class="q-mark">? 11개월 분할?</span></span></div>
+          <div class="payslip-item"><span class="label">명절지원비</span><span class="value" style="color:var(--yellow);">1,731,660 <span class="q-mark">? 산출근거?</span></span></div>
+          <div class="payslip-item"><span class="label">급식보조비</span><span class="value">150,000</span></div>
+          <div class="payslip-item"><span class="label">교통보조비</span><span class="value">150,000</span></div>
+          <div class="payslip-item"><span class="label">야간수당</span><span class="value">301,700 <span class="q-mark">? 시간=0인데?</span></span></div>
+          <div class="payslip-item"><span class="label">장기근속수당</span><span class="value">80,000</span></div>
+          <div class="payslip-item"><span class="label">자기계발별정수당</span><span class="value">40,000</span></div>
+          <div class="payslip-item"><span class="label">별정수당5</span><span class="value">35,000</span></div>
+        </div>
+
+        <div class="payslip-arrow">→</div>
+
+        <div class="payslip-box">
+          <h3>📉 공제내역 (공제총액 3,169,950)</h3>
+          <div class="payslip-item"><span class="label">소득세</span><span class="value">731,310 <span class="q-mark">? 세율?</span></span></div>
+          <div class="payslip-item"><span class="label">주민세</span><span class="value">73,130</span></div>
+          <div class="payslip-item"><span class="label" style="color:var(--red);">소득세(정산)</span><span class="value" style="color:var(--red);">406,000 <span class="q-mark">? 왜 추징?</span></span></div>
+          <div class="payslip-item"><span class="label" style="color:var(--red);">주민세(정산)</span><span class="value" style="color:var(--red);">40,660</span></div>
+          <div class="payslip-item"><span class="label">국민건강</span><span class="value">288,580</span></div>
+          <div class="payslip-item"><span class="label">장기요양</span><span class="value">38,360</span></div>
+          <div class="payslip-item"><span class="label" style="color:var(--red);">건강보험(정산)</span><span class="value" style="color:var(--red);">433,570 <span class="q-mark">? 정산 기준?</span></span></div>
+          <div class="payslip-item"><span class="label">교원장기급여</span><span class="value">60,000</span></div>
+          <div class="payslip-item"><span class="label">노동조합비</span><span class="value">69,960</span></div>
+          <div class="payslip-item"><span class="label">사학연금부담금</span><span class="value" style="color:var(--orange);">619,220 <span class="q-mark">? 부담률?</span></span></div>
+          <div class="payslip-item"><span class="label">사학연금대여상환</span><span class="value">343,160</span></div>
+          <div class="payslip-item"><span class="label">식대공제</span><span class="value">66,000 <span class="explained">✓ 22×3,000</span></span></div>
+        </div>
+
+        <div class="payslip-arrow">→</div>
+
+        <div class="payslip-box" style="max-width:220px; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+          <h3>💳 실지급액</h3>
+          <div style="font-size:32px; font-weight:800; color:var(--green); font-family:'Inter',monospace;">4,798,950</div>
+          <div style="font-size:12px; color:var(--muted); margin-top:8px;">공제율 40%</div>
+          <div style="font-size:11px; color:var(--red); margin-top:12px; text-align:center;">
+            정산 3건만 -880,230<br>
+            "왜 이번달에?" 설명 없음
+          </div>
+          <div style="margin-top:16px; padding-top:12px; border-top:1px solid var(--border); font-size:11px; color:var(--muted); text-align:center;">
+            Page 2 통상임금<br>
+            <span style="font-size:18px; font-weight:700; color:var(--text);">6,736,550</span><br>
+            <span style="color:var(--red);">← 분해 불가</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ SECTION 2: 인사과 + 직장인 Pain Points ══════════ -->
+  <div class="section">
+    <div class="section-title">
+      <div class="num">2</div>
+      인사과 직원으로서 & 직장인으로서 궁금한 것들
+    </div>
+
+    <div class="legend">
+      <div class="legend-item"><div style="width:18px;height:18px;border-radius:6px;" class="icon-hr"></div> 인사과 직원 관점</div>
+      <div class="legend-item"><div style="width:18px;height:18px;border-radius:6px;" class="icon-me"></div> 직장인 개인 관점</div>
+    </div>
+
+    <div class="pain-grid">
+      <!-- HR 1 -->
+      <div class="pain-card">
+        <div class="pain-header">
+          <div class="pain-icon icon-hr">📞</div>
+          <div class="pain-title">HR-1. "이 금액이 맞나요?" 전화 폭탄</div>
+        </div>
+        <div class="pain-voice">"시간외수당이 왜 30만원밖에 안 되죠? 저 분명 40시간 했는데요"</div>
+        <div class="pain-desc">산식이 안 보이니까 직원도 검증 못하고, 인사과도 ERP 열어서 일일이 확인해야 함. 매달 반복.</div>
+        <div class="pain-example">핵심: <strong>수당 산식의 투명한 공개</strong>가 문의의 80%를 줄임</div>
+      </div>
+
+      <!-- HR 2 -->
+      <div class="pain-card">
+        <div class="pain-header">
+          <div class="pain-icon icon-hr">🔍</div>
+          <div class="pain-title">HR-2. 통상임금 구성 설명이 불가능</div>
+        </div>
+        <div class="pain-voice">"전월통상임금 673만원이라는데 이게 어떻게 나온 건가요?"</div>
+        <div class="pain-desc">19개 항목의 합산인데, 명세서에는 합계만 나옴. 인사과 직원조차 매번 규정집 펼쳐서 확인.</div>
+        <div class="pain-example">핵심: <strong>통상임금 = Σ(항목1~19)</strong> 분해 시각화</div>
+      </div>
+
+      <!-- HR 3 -->
+      <div class="pain-card">
+        <div class="pain-header">
+          <div class="pain-icon icon-hr">📊</div>
+          <div class="pain-title">HR-3. 정산월 문의 쓰나미</div>
+        </div>
+        <div class="pain-voice">"이번 달 갑자기 90만원이 더 빠졌어요! 오류 아닌가요?"</div>
+        <div class="pain-desc">연말정산(2월), 건강보험정산(4월), 사학연금정산 — 정산이 언제 왜 발생하는지 사전 안내 없음.</div>
+        <div class="pain-example">이번 명세서: 소득세정산 40.6만 + 주민세정산 4만 + 건보정산 43.3만 = <strong>88만원 추가공제</strong></div>
+      </div>
+
+      <!-- HR 4 -->
+      <div class="pain-card">
+        <div class="pain-header">
+          <div class="pain-icon icon-hr">⚖️</div>
+          <div class="pain-title">HR-4. 사학연금 vs 국민연금 혼동</div>
+        </div>
+        <div class="pain-voice">"국민연금은 4.5%라던데 왜 저는 62만원이나 빠지죠?"</div>
+        <div class="pain-desc">보라매병원은 사학연금 적용. 부담률·기준보수월액·대여상환이 다 다른데 설명 자료 없음.</div>
+        <div class="pain-example">이번 명세서: 사학연금 619,220 + 대여상환 343,160 = <strong>96만원</strong> (공제의 30%)</div>
+      </div>
+
+      <!-- ME 1 -->
+      <div class="pain-card">
+        <div class="pain-header">
+          <div class="pain-icon icon-me">💸</div>
+          <div class="pain-title">ME-1. 왜 매달 금액이 다른지 모르겠다</div>
+        </div>
+        <div class="pain-voice">"지난달 520만원 들어왔는데 이번달은 480만원이네... 왜?"</div>
+        <div class="pain-desc">명절비 유무, 근무일수 차이, 정산, 성과급 — 변동 요인이 여러 개인데 명세서 한 장으로는 비교 불가.</div>
+        <div class="pain-example">핵심: <strong>전월 대비 변동 항목 하이라이트</strong></div>
+      </div>
+
+      <!-- ME 2 -->
+      <div class="pain-card">
+        <div class="pain-header">
+          <div class="pain-icon icon-me">📈</div>
+          <div class="pain-title">ME-2. 올해 연봉이 정확히 얼마인지</div>
+        </div>
+        <div class="pain-voice">"연봉이 얼마냐고 물어보면... 월급×12? 명절비 포함? 성과급은?"</div>
+        <div class="pain-desc">월급 × 12가 연봉이 아님. 명절비(4회), 가계지원비(11개월), 성과급, 정근수당 등 비정기 항목 포함 필요.</div>
+        <div class="pain-example">핵심: <strong>연간 총보수 시뮬레이션</strong> (월별 예상 포함)</div>
+      </div>
+
+      <!-- ME 3 -->
+      <div class="pain-card">
+        <div class="pain-header">
+          <div class="pain-icon icon-me">🏖️</div>
+          <div class="pain-title">ME-3. 연차가 몇 개 남았는지</div>
+        </div>
+        <div class="pain-voice">"명세서에 연차 칸이 있는데 비어있어요..."</div>
+        <div class="pain-desc">급여명세서에 지급연차/사용연차/발생연차 칸이 있지만 이 직원은 전부 빈칸. 별도 시스템 확인 필요.</div>
+        <div class="pain-example">핵심: <strong>연차 발생-사용-잔여-소멸 예정 타임라인</strong></div>
+      </div>
+
+      <!-- ME 4 -->
+      <div class="pain-card">
+        <div class="pain-header">
+          <div class="pain-icon icon-me">🔮</div>
+          <div class="pain-title">ME-4. 미래 급여 시뮬레이션</div>
+        </div>
+        <div class="pain-voice">"내년 호봉 오르면 실수령 얼마나 올라? 퇴직하면 세후 얼마?"</div>
+        <div class="pain-desc">호봉 승급, 승진, 퇴직금 세후, 육아휴직 복직 후 급여 — 인생 설계에 필요한 시뮬이 부족.</div>
+        <div class="pain-example">핵심: <strong>N년 후 급여 예측 + 퇴직소득세 계산</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ SECTION 3: 현재 앱의 해결 현황 ══════════ -->
+  <div class="section">
+    <div class="section-title">
+      <div class="num">3</div>
+      현재 앱이 해결한 것 vs 아직 부족한 것
+    </div>
+
+    <div class="legend">
+      <div class="legend-item"><span class="status status-done"><span class="dot dot-done"></span>해결됨</span></div>
+      <div class="legend-item"><span class="status status-partial"><span class="dot dot-partial"></span>부분 해결</span></div>
+      <div class="legend-item"><span class="status status-none"><span class="dot dot-none"></span>미해결</span></div>
+      <div class="legend-item"><span class="status status-new"><span class="dot dot-new"></span>신규 제안</span></div>
+    </div>
+
+    <table class="coverage-table">
+      <thead>
+        <tr>
+          <th>카테고리</th>
+          <th>Pain Point</th>
+          <th>현재 앱 상태</th>
+          <th>해결도</th>
+          <th>남은 갭 / 개선안</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- 통상임금 -->
+        <tr>
+          <td class="cat">통상임금</td>
+          <td>19개 항목 분해</td>
+          <td>시간외·온콜 탭에서 19개 항목 합산·시급 산출 가능</td>
+          <td><span class="status status-done"><span class="dot dot-done"></span>해결</span></td>
+          <td>-</td>
+        </tr>
+        <tr>
+          <td class="cat"></td>
+          <td>명세서 실제값과 대조 검증</td>
+          <td>미구현</td>
+          <td><span class="status status-none"><span class="dot dot-none"></span>미해결</span></td>
+          <td>"내 명세서 검증" — PDF 수치 입력 → 앱 계산과 비교 → 차이 표시</td>
+        </tr>
+
+        <!-- 급여 시뮬 -->
+        <tr>
+          <td class="cat">급여 시뮬</td>
+          <td>월별 총지급/공제/실수령</td>
+          <td>급여시뮬 탭에서 월별 계산 가능, 미니 캘린더 포함</td>
+          <td><span class="status status-done"><span class="dot dot-done"></span>해결</span></td>
+          <td>-</td>
+        </tr>
+        <tr>
+          <td class="cat"></td>
+          <td>전월 대비 변동 분석</td>
+          <td>미구현 — 매월 독립 계산만 가능</td>
+          <td><span class="status status-none"><span class="dot dot-none"></span>미해결</span></td>
+          <td>"이번 달 변동사항" 패널: +명절비, -정산, 근무일 차이 등 자동 분석</td>
+        </tr>
+        <tr>
+          <td class="cat"></td>
+          <td>연간 총보수 시뮬</td>
+          <td>미구현</td>
+          <td><span class="status status-none"><span class="dot dot-none"></span>미해결</span></td>
+          <td>12개월 급여 합산 + 비정기 수당 → 연봉 총액 + 월별 차트</td>
+        </tr>
+
+        <!-- 시간외·수당 -->
+        <tr>
+          <td class="cat">시간외·수당</td>
+          <td>시간외수당 산식</td>
+          <td>시간×단가×배율 계산기 있음 (150~200%)</td>
+          <td><span class="status status-done"><span class="dot dot-done"></span>해결</span></td>
+          <td>-</td>
+        </tr>
+        <tr>
+          <td class="cat"></td>
+          <td>온콜수당 산식</td>
+          <td>대기비+교통비+근무시간 계산 가능</td>
+          <td><span class="status status-done"><span class="dot dot-done"></span>해결</span></td>
+          <td>-</td>
+        </tr>
+        <tr>
+          <td class="cat"></td>
+          <td>야간수당 301,700의 근거</td>
+          <td>야간수당(₩10,000/회) 계산은 있으나, 고정수당 vs 실적 구분 없음</td>
+          <td><span class="status status-partial"><span class="dot dot-partial"></span>부분</span></td>
+          <td>고정 야간수당(통상근무자) vs 실적 야간수당(교대근무자) 분리</td>
+        </tr>
+
+        <!-- 공제 -->
+        <tr>
+          <td class="cat">공제 계산</td>
+          <td>4대보험 계산</td>
+          <td>건강보험, 장기요양, 국민연금, 고용보험 간이 계산</td>
+          <td><span class="status status-partial"><span class="dot dot-partial"></span>부분</span></td>
+          <td><strong>사학연금 계산 누락</strong> — 보라매병원은 사학연금 적용 기관</td>
+        </tr>
+        <tr>
+          <td class="cat"></td>
+          <td>소득세 계산</td>
+          <td>간이세액표 기준 참고치</td>
+          <td><span class="status status-partial"><span class="dot dot-partial"></span>부분</span></td>
+          <td>정산 시뮬(연말정산 추징/환급 예측) 추가 필요</td>
+        </tr>
+        <tr>
+          <td class="cat"></td>
+          <td>정산월 예고</td>
+          <td>미구현</td>
+          <td><span class="status status-none"><span class="dot dot-none"></span>미해결</span></td>
+          <td>"2월은 연말정산, 4월은 건보정산" 사전 알림 + 예상 추가공제액</td>
+        </tr>
+
+        <!-- 휴가 -->
+        <tr>
+          <td class="cat">휴가·연차</td>
+          <td>연차 발생일수 계산</td>
+          <td>근속 기간 기반 연차 일수 산출 가능</td>
+          <td><span class="status status-done"><span class="dot dot-done"></span>해결</span></td>
+          <td>-</td>
+        </tr>
+        <tr>
+          <td class="cat"></td>
+          <td>연차 사용/잔여 추적</td>
+          <td>미구현</td>
+          <td><span class="status status-none"><span class="dot dot-none"></span>미해결</span></td>
+          <td>사용 내역 입력 → 잔여/소멸예정 대시보드</td>
+        </tr>
+
+        <!-- 경력 -->
+        <tr>
+          <td class="cat">승진·퇴직</td>
+          <td>승진 시뮬레이터</td>
+          <td>자동승진 타임라인 계산 가능</td>
+          <td><span class="status status-done"><span class="dot dot-done"></span>해결</span></td>
+          <td>-</td>
+        </tr>
+        <tr>
+          <td class="cat"></td>
+          <td>퇴직금 계산</td>
+          <td>근속기간별 지급률 계산 가능</td>
+          <td><span class="status status-partial"><span class="dot dot-partial"></span>부분</span></td>
+          <td>퇴직소득세 계산 추가 → 세후 실수령액</td>
+        </tr>
+
+        <!-- 기타 -->
+        <tr>
+          <td class="cat">UX</td>
+          <td>챗봇/FAQ</td>
+          <td>30개+ FAQ, 키워드 검색</td>
+          <td><span class="status status-done"><span class="dot dot-done"></span>해결</span></td>
+          <td>정산 관련 FAQ 보강 필요</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ══════════ SECTION 4: 개선된 앱 사이트맵 ══════════ -->
+  <div class="section">
+    <div class="section-title">
+      <div class="num">4</div>
+      개선 제안 사이트맵 (앱 구조도)
+    </div>
+
+    <div class="legend">
+      <div class="legend-item"><span class="dot dot-done" style="width:10px;height:10px;display:inline-block;"></span> 기존 기능 유지</div>
+      <div class="legend-item"><span class="dot dot-partial" style="width:10px;height:10px;display:inline-block;"></span> 기존 기능 개선</div>
+      <div class="legend-item"><span class="dot dot-new" style="width:10px;height:10px;display:inline-block;"></span> 신규 기능 제안</div>
+    </div>
+
+    <div class="diagram-wrap">
+      <div class="sitemap">
+        <div class="sitemap-root">🏥 SNUH 급여 도우미 (개선안)</div>
+        <div class="sitemap-connector"></div>
+        <div class="sitemap-branches">
+
+          <!-- Tab 1: 내 정보 -->
+          <div class="sitemap-branch">
+            <div class="branch-head">📌 내 정보</div>
+            <div class="branch-items">
+              <div class="branch-item"><div class="bi-dot bi-existing"></div>프로필 저장 (직종/직급/호봉)</div>
+              <div class="branch-item"><div class="bi-dot bi-existing"></div>입사일·군복무·가족</div>
+              <div class="branch-item"><div class="bi-dot bi-improve"></div>사학연금 가입 여부 추가</div>
+              <div class="branch-item"><div class="bi-dot bi-new"></div>교원공제회 가입 여부</div>
+            </div>
+          </div>
+
+          <!-- Tab 2: 급여시뮬 -->
+          <div class="sitemap-branch is-improve">
+            <div class="branch-head">🧾 급여시뮬</div>
+            <div class="branch-items">
+              <div class="branch-item"><div class="bi-dot bi-existing"></div>월급 시뮬레이션</div>
+              <div class="branch-item"><div class="bi-dot bi-existing"></div>미니 캘린더</div>
+              <div class="branch-item"><div class="bi-dot bi-existing"></div>명절비/가계지원비 자동 반영</div>
+              <div class="branch-item"><div class="bi-dot bi-improve"></div>사학연금 공제 계산 추가</div>
+              <div class="branch-item"><div class="bi-dot bi-new"></div>전월 대비 변동 분석 패널</div>
+              <div class="branch-item"><div class="bi-dot bi-new"></div>정산월 알림 & 영향 시뮬</div>
+              <div class="branch-item"><div class="bi-dot bi-new"></div>연간 총보수 시뮬 (12개월)</div>
+            </div>
+          </div>
+
+          <!-- Tab 3: 시간외·온콜 -->
+          <div class="sitemap-branch">
+            <div class="branch-head">⏰ 시간외·온콜</div>
+            <div class="branch-items">
+              <div class="branch-item"><div class="bi-dot bi-existing"></div>통상임금 19항목 계산</div>
+              <div class="branch-item"><div class="bi-dot bi-existing"></div>시간외수당 계산기</div>
+              <div class="branch-item"><div class="bi-dot bi-existing"></div>온콜수당 계산기</div>
+              <div class="branch-item"><div class="bi-dot bi-improve"></div>고정야간 vs 실적야간 구분</div>
+            </div>
+          </div>
+
+          <!-- Tab 4: 휴가·휴직 -->
+          <div class="sitemap-branch is-improve">
+            <div class="branch-head">📅 휴가·휴직</div>
+            <div class="branch-items">
+              <div class="branch-item"><div class="bi-dot bi-existing"></div>연차 일수 계산기</div>
+              <div class="branch-item"><div class="bi-dot bi-existing"></div>육아휴직 시뮬</div>
+              <div class="branch-item"><div class="bi-dot bi-existing"></div>경조사 휴가표</div>
+              <div class="branch-item"><div class="bi-dot bi-new"></div>연차 사용/잔여 추적 대시보드</div>
+              <div class="branch-item"><div class="bi-dot bi-new"></div>연차 소멸 예정 알림</div>
+            </div>
+          </div>
+
+          <!-- Tab 5: 수당 -->
+          <div class="sitemap-branch">
+            <div class="branch-head">💵 수당</div>
+            <div class="branch-items">
+              <div class="branch-item"><div class="bi-dot bi-existing"></div>가족수당 계산기</div>
+              <div class="branch-item"><div class="bi-dot bi-existing"></div>장기근속수당</div>
+              <div class="branch-item"><div class="bi-dot bi-existing"></div>야간근무 보너스</div>
+              <div class="branch-item"><div class="bi-dot bi-improve"></div>명절지원비 산식 표시</div>
+            </div>
+          </div>
+
+          <!-- Tab 6: 승진·퇴직 -->
+          <div class="sitemap-branch is-improve">
+            <div class="branch-head">📊 승진·퇴직</div>
+            <div class="branch-items">
+              <div class="branch-item"><div class="bi-dot bi-existing"></div>승진 시뮬레이터</div>
+              <div class="branch-item"><div class="bi-dot bi-existing"></div>퇴직금 계산</div>
+              <div class="branch-item"><div class="bi-dot bi-new"></div>퇴직소득세 계산</div>
+              <div class="branch-item"><div class="bi-dot bi-new"></div>N년 후 급여 예측 그래프</div>
+            </div>
+          </div>
+
+          <!-- Tab 7: 규정·챗봇 -->
+          <div class="sitemap-branch">
+            <div class="branch-head">📋 규정·챗봇</div>
+            <div class="branch-items">
+              <div class="branch-item"><div class="bi-dot bi-existing"></div>FAQ 챗봇 (30개+)</div>
+              <div class="branch-item"><div class="bi-dot bi-existing"></div>참조표</div>
+              <div class="branch-item"><div class="bi-dot bi-improve"></div>정산 관련 FAQ 보강</div>
+              <div class="branch-item"><div class="bi-dot bi-improve"></div>사학연금 FAQ 추가</div>
+            </div>
+          </div>
+
+          <!-- NEW Tab: 명세서 검증 -->
+          <div class="sitemap-branch is-new">
+            <div class="branch-head" style="color:var(--blue);">🔎 명세서 검증 <span class="status status-new" style="margin-left:auto;">NEW</span></div>
+            <div class="branch-items">
+              <div class="branch-item"><div class="bi-dot bi-new"></div>명세서 항목 입력 폼</div>
+              <div class="branch-item"><div class="bi-dot bi-new"></div>앱 계산 결과와 자동 대조</div>
+              <div class="branch-item"><div class="bi-dot bi-new"></div>차이 항목 하이라이트</div>
+              <div class="branch-item"><div class="bi-dot bi-new"></div>통상임금 역산 검증</div>
+              <div class="branch-item"><div class="bi-dot bi-new"></div>"왜 다른지" 가능 원인 표시</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ SECTION 5: 우선순위 ══════════ -->
+  <div class="section">
+    <div class="section-title">
+      <div class="num">5</div>
+      개선 우선순위 제안
+    </div>
+
+    <div class="priority-grid">
+      <!-- HIGH -->
+      <div class="priority-col p-high">
+        <h3>🔴 즉시 (인사과 문의 감소 효과 큼)</h3>
+
+        <div class="priority-item">
+          <div class="pi-title">1. 사학연금 계산 추가</div>
+          <div class="pi-desc">국민연금 → 사학연금 전환. 부담률(9%), 기준보수월액 기반 계산. 현재 가장 큰 계산 오류.</div>
+          <div class="pi-impact">영향: 급여시뮬 공제액이 현재 실제와 크게 다름</div>
+        </div>
+
+        <div class="priority-item">
+          <div class="pi-title">2. 정산월 알림 시스템</div>
+          <div class="pi-desc">2월(연말정산), 4월(건보정산) 자동 감지. "이번 달은 정산월이라 약 ○○만원 추가 공제 예상" 표시.</div>
+          <div class="pi-impact">영향: 매년 2월·4월 전화 문의 80% 감소 기대</div>
+        </div>
+
+        <div class="priority-item">
+          <div class="pi-title">3. 명세서 검증 탭 (NEW)</div>
+          <div class="pi-desc">실제 명세서 숫자 입력 → 앱 계산과 비교 → 차이 원인 표시. 인사과의 "맞는지 확인해주세요" 업무 자동화.</div>
+          <div class="pi-impact">영향: 직원 자체 검증 가능 → 문의 건수 대폭 감소</div>
+        </div>
+      </div>
+
+      <!-- MEDIUM -->
+      <div class="priority-col p-mid">
+        <h3>🟡 단기 (직원 만족도 향상)</h3>
+
+        <div class="priority-item">
+          <div class="pi-title">4. 전월 대비 변동 분석</div>
+          <div class="pi-desc">이번 달 vs 지난 달 자동 비교. 변동 항목과 원인(명절비, 근무일수, 정산 등) 자동 분석.</div>
+          <div class="pi-impact">영향: "왜 달라졌지?" 의문 해소</div>
+        </div>
+
+        <div class="priority-item">
+          <div class="pi-title">5. 연간 총보수 시뮬레이션</div>
+          <div class="pi-desc">12개월 급여 합산 + 명절비(4회) + 가계지원비(11회) + 성과급 → 연봉 총액 시각화.</div>
+          <div class="pi-impact">영향: "내 연봉이 얼마인지" 정확히 파악</div>
+        </div>
+
+        <div class="priority-item">
+          <div class="pi-title">6. 명절지원비 산식 표시</div>
+          <div class="pi-desc">명절지원비 1,731,660원의 산출근거 표시. (기준기본급 × ○% 또는 별도 테이블)</div>
+          <div class="pi-impact">영향: 명절비 관련 문의 해소</div>
+        </div>
+      </div>
+
+      <!-- LOW -->
+      <div class="priority-col p-low">
+        <h3>🔵 중기 (완성도 향상)</h3>
+
+        <div class="priority-item">
+          <div class="pi-title">7. 연차 사용/잔여 대시보드</div>
+          <div class="pi-desc">발생-사용-잔여-소멸예정 타임라인. 연차보전수당 예상 금액 연동.</div>
+          <div class="pi-impact">영향: 명세서 빈칸 문제 해소</div>
+        </div>
+
+        <div class="priority-item">
+          <div class="pi-title">8. 퇴직소득세 계산</div>
+          <div class="pi-desc">퇴직금에서 퇴직소득세 차감 → 세후 실수령 표시. 근속연수공제 반영.</div>
+          <div class="pi-impact">영향: 퇴직 설계 정확도 향상</div>
+        </div>
+
+        <div class="priority-item">
+          <div class="pi-title">9. N년 후 급여 예측</div>
+          <div class="pi-desc">호봉 자동승급 + 승진 시뮬 연동 → 3년/5년/10년 후 예상 실수령 그래프.</div>
+          <div class="pi-impact">영향: 장기 재무 설계 지원</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ SUMMARY ══════════ -->
+  <div class="section">
+    <div class="summary-box">
+      <p style="font-size:16px; font-weight:700; margin-bottom:12px;">핵심 요약</p>
+      <p>기존 급여명세서는 <strong>"126칸짜리 결과 통보서"</strong>다. 산식은 1개(식대공제)만 보여주고, 나머지는 숫자만 나열한다.</p>
+      <br>
+      <p>현재 앱은 <strong>통상임금 분해, 시간외수당 산식, 연차 계산 등 "과정"을 보여주는 도구</strong>로 이미 핵심 가치를 제공하고 있다.</p>
+      <br>
+      <p>하지만 <strong>3가지 핵심 갭</strong>이 남아있다:</p>
+      <ol style="margin: 10px 0 0 20px; line-height: 2;">
+        <li><strong style="color:var(--red);">사학연금 계산 누락</strong> — 보라매병원 최대 공제항목(96만원)인데 앱에서 국민연금으로 계산 중</li>
+        <li><strong style="color:var(--red);">정산 시뮬 없음</strong> — 매년 2월·4월 "갑자기 88만원 추가공제" 사태에 대한 사전 안내 불가</li>
+        <li><strong style="color:var(--red);">명세서 역검증 불가</strong> — "이 숫자가 맞는지" 확인하는 것이 직원의 가장 기본적인 니즈인데 미구현</li>
+      </ol>
+      <br>
+      <p>이 3가지를 해결하면, 앱은 <strong>"결과 통보서를 해석해주는 번역기"</strong>에서 <strong>"내 급여의 모든 과정을 추적하는 대시보드"</strong>로 진화한다.</p>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

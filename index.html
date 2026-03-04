@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="서울대학교병원 보라매병원 SNUH 급여 도우미: 수당 계산기, 급여 시뮬레이터">
+  <title> SNUH 급여 도우미 </title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- ═══════════ Header ═══════════ -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <div class="logo-icon">🏥</div>
+        <div>
+          <h1>SNUH 급여 도우미</h1>
+          <p>2026 단체협약 기준</p>
+        </div>
+      </div>
+      <nav class="nav-tabs" id="navTabs">
+        <button class="nav-tab active" data-tab="profile">📌 내 정보</button>
+        <button class="nav-tab" data-tab="payroll">🧾 급여시뮬</button>
+        <button class="nav-tab" data-tab="overtime">⏰ 시간외·온콜</button>
+        <button class="nav-tab" data-tab="leave">📅 휴가·휴직</button>
+        <button class="nav-tab" data-tab="allowance">💵 수당</button>
+        <button class="nav-tab" data-tab="career">📊 승진·퇴직</button>
+        <button class="nav-tab" data-tab="reference">📋 규정·챗봇</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <!-- ═══════════ 📌 내 정보 ═══════════ -->
+    <div class="tab-content active" id="tab-profile">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title"><span class="icon indigo">📌</span> 내 정보
+            <span class="badge emerald" id="profileStatus">미저장</span>
+          </div>
+          <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">한번 저장하면 모든 계산기에 자동 반영됩니다. 데이터는 이
+            브라우저에만 저장됩니다.</p>
+
+          <div class="form-group">
+            <label>이름</label>
+            <input type="text" id="pfName" placeholder="예: 홍길동" autocomplete="off">
+          </div>
+
+          <div class="form-group">
+            <label>직종</label>
+            <select id="pfJobType" onchange="updateProfileGrades()">
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>직급·등급</label>
+              <select id="pfGrade"></select>
+            </div>
+            <div class="form-group">
+              <label>호봉 (연차)</label>
+              <select id="pfYear">
+                <option value="1">1년차</option>
+                <option value="2">2년차</option>
+                <option value="3">3년차</option>
+                <option value="4">4년차</option>
+                <option value="5">5년차</option>
+                <option value="6">6년차</option>
+                <option value="7">7년차</option>
+                <option value="8">8년차</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>입사일</label>
+            <input type="text" id="pfHireDate" placeholder="예: 2006-07-05">
+            <small id="pfServiceDisplay" style="color:var(--text-muted)"></small>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>조정급 (원/월)</label>
+              <input type="number" id="pfAdjust" value="0" min="0">
+            </div>
+            <div class="form-group">
+              <label>승급조정급 (원/월)</label>
+              <input type="number" id="pfUpgradeAdjust" value="0" min="0">
+            </div>
+          </div>
+
+          <div class="toggle-group">
+            <input type="checkbox" id="pfMilitary">
+            <label for="pfMilitary">군복무수당</label>
+          </div>
+          <div class="form-group" id="pfMilitaryMonthsGroup" style="display:none; margin-left:24px;">
+            <label>복무기간 (개월, 기본 24)</label>
+            <input type="number" id="pfMilitaryMonths" value="24" min="1" max="36">
+          </div>
+
+          <div class="toggle-group">
+            <input type="checkbox" id="pfSeniority">
+            <label for="pfSeniority">근속가산기본급 (2016.2 이전 입사자)</label>
+          </div>
+
+          <p style="font-size:12px; color:var(--accent-indigo); margin:12px 0 4px; font-weight:600;">▸ 가족수당</p>
+          <div class="toggle-group">
+            <input type="checkbox" id="pfSpouse">
+            <label for="pfSpouse">배우자 (40,000원)</label>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>자녀 수</label>
+              <input type="number" id="pfChildren" value="0" min="0" max="10">
+            </div>
+            <div class="form-group">
+              <label>기타 가족 수</label>
+              <input type="number" id="pfOtherFamily" value="0" min="0" max="5">
+            </div>
+          </div>
+
+          <p style="font-size:12px; color:var(--accent-amber); margin:12px 0 4px; font-weight:600;">▸ 기타 수당</p>
+          <div class="form-row">
+            <div class="form-group">
+              <label>별정수당 (원/월)</label>
+              <input type="number" id="pfSpecial" value="0" min="0">
+            </div>
+            <div class="form-group">
+              <label>직책급 (원/월)</label>
+              <input type="number" id="pfPosition" value="0" min="0">
+            </div>
+          </div>
+
+          <div class="form-row" style="margin-top:16px;">
+            <button class="btn btn-primary" onclick="saveProfile()" style="flex:2">💾 저장하기</button>
+            <button class="btn btn-outline" onclick="clearProfile()" style="flex:1">🗑 초기화</button>
+          </div>
+        </div>
+
+        <!-- 프로필 요약 카드 -->
+        <div class="card" id="profileSummary">
+          <div class="card-title"><span class="icon emerald">📊</span> 내 급여 요약</div>
+          <p style="color:var(--text-muted)">좌측에서 정보를 입력하고 [저장하기]를 눌러주세요.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ 🧾 급여 시뮬레이터 ═══════════ -->
+    <div class="tab-content" id="tab-payroll">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title"><span class="icon rose">🧾</span> 급여 시뮬레이터
+            <span class="badge amber">실급여 시뮬레이션</span>
+          </div>
+          <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">📌 내 정보가 저장되어 있으면 자동 반영됩니다. 월별 변동사항만
+            입력하세요.</p>
+
+          <div id="psProfileBanner" class="warning-box" style="display:none;"></div>
+
+          <p style="font-size:12px; color:var(--accent-amber); margin:8px 0 4px; font-weight:600;">▸ 시뮬레이션 월</p>
+          <div class="form-row">
+            <div class="form-group">
+              <label>연도</label>
+              <select id="psSimYear" onchange="autoFillMonth()">
+                <option value="2025">2025년</option>
+                <option value="2026" selected>2026년</option>
+                <option value="2027">2027년</option>
+                <option value="2028">2028년</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>월</label>
+              <select id="psSimMonth" onchange="autoFillMonth()">
+                <option value="1">1월</option>
+                <option value="2">2월</option>
+                <option value="3" selected>3월</option>
+                <option value="4">4월</option>
+                <option value="5">5월</option>
+                <option value="6">6월</option>
+                <option value="7">7월</option>
+                <option value="8">8월</option>
+                <option value="9">9월</option>
+                <option value="10">10월</option>
+                <option value="11">11월</option>
+                <option value="12">12월</option>
+              </select>
+            </div>
+          </div>
+          <div id="psHolidayInfo" style="font-size:12px; color:var(--text-muted); margin-bottom:12px;"></div>
+          <div id="psMiniCalendar" style="margin-bottom:16px;"></div>
+
+          <p style="font-size:12px; color:var(--accent-amber); margin:8px 0 4px; font-weight:600;">▸ 이번달 변동사항</p>
+          <div class="form-row">
+            <div class="form-group">
+              <label>근무일수</label>
+              <input type="number" id="psWorkDays" value="22" min="0" max="31">
+            </div>
+            <div class="form-group">
+              <label>야간근무가산 (횟수)</label>
+              <input type="number" id="psNightShiftCount" value="0" min="0" max="31">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>연장근무 (시간)</label>
+              <input type="number" id="psOvertime" value="0" min="0" step="0.25">
+            </div>
+            <div class="form-group">
+              <label>야간근무 (시간)</label>
+              <input type="number" id="psNight" value="0" min="0" step="0.25">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>휴일근무 (시간)</label>
+            <input type="number" id="psHoliday" value="0" min="0" step="0.25">
+          </div>
+
+          <div class="toggle-group">
+            <input type="checkbox" id="psHolidayMonth">
+            <label for="psHolidayMonth">명절지원비 해당월 (설·추석·5월·7월)</label>
+          </div>
+
+          <!-- 내 정보 없는 경우 직접 입력 영역 -->
+          <div id="psManualSection">
+            <div class="collapsible-header" onclick="toggleCollapsible('psManualFields')">
+              <span>▸ 내 정보 미저장 시 직접 입력</span>
+            </div>
+            <div class="collapsible-body" id="psManualFields" style="display:none;">
+              <div class="form-group">
+                <label>직종</label>
+                <select id="psJobType" onchange="updatePayrollGrades()">
+                </select>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>직급</label>
+                  <select id="psGrade"></select>
+                </div>
+                <div class="form-group">
+                  <label>호봉</label>
+                  <select id="psYear">
+                    <option value="1">1년차</option>
+                    <option value="2">2년차</option>
+                    <option value="3">3년차</option>
+                    <option value="4">4년차</option>
+                    <option value="5">5년차</option>
+                    <option value="6">6년차</option>
+                    <option value="7">7년차</option>
+                    <option value="8">8년차</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>근속연수</label>
+                  <input type="number" id="psServiceYears" value="1" min="0" max="40">
+                </div>
+                <div class="form-group">
+                  <label>조정급 (원/월)</label>
+                  <input type="number" id="psAdjust" value="0" min="0">
+                </div>
+              </div>
+              <div class="toggle-group">
+                <input type="checkbox" id="psMilitary">
+                <label for="psMilitary">군복무수당</label>
+              </div>
+              <div class="toggle-group">
+                <input type="checkbox" id="psSeniority">
+                <label for="psSeniority">근속가산기본급</label>
+              </div>
+              <div class="toggle-group">
+                <input type="checkbox" id="psSpouse">
+                <label for="psSpouse">배우자 (40,000원)</label>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn btn-primary btn-full" onclick="calculatePayroll()" style="margin-top:12px;">급여
+            시뮬레이션</button>
+        </div>
+
+        <div class="card" id="payrollResult">
+          <div class="card-title"><span class="icon emerald">📊</span> 시뮬레이션 결과</div>
+          <p style="color:var(--text-muted)">좌측에서 정보를 입력하고 [급여 시뮬레이션]을 눌러주세요.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ ⏰ 시간외·온콜 ═══════════ -->
+    <div class="tab-content" id="tab-overtime">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title"><span class="icon amber">⏰</span> 시간외·온콜 수당 계산기</div>
+
+          <!-- 시급 입력 영역 -->
+          <div class="form-group">
+            <label>시급 (원)</label>
+            <input type="number" id="otHourly" value="0" min="0">
+            <small id="otHourlyHint" style="color:var(--text-muted)"></small>
+          </div>
+
+          <div class="collapsible-header" onclick="toggleCollapsible('wageCalcSection')">
+            <span>▼ 시급 모르면? → 통상임금으로 시급 계산하기</span>
+          </div>
+          <div class="collapsible-body" id="wageCalcSection" style="display:none;">
+            <div class="form-group">
+              <label>직종</label>
+              <select id="wJobType" onchange="updateGrades()">
+              </select>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>직급·등급</label>
+                <select id="wGrade"></select>
+              </div>
+              <div class="form-group">
+                <label>호봉</label>
+                <select id="wYear">
+                  <option value="1">1년차</option>
+                  <option value="2">2년차</option>
+                  <option value="3">3년차</option>
+                  <option value="4">4년차</option>
+                  <option value="5">5년차</option>
+                  <option value="6">6년차</option>
+                  <option value="7">7년차</option>
+                  <option value="8">8년차</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>근속연수</label>
+              <input type="number" id="wServiceYears" value="1" min="0" max="40">
+            </div>
+            <div class="toggle-group">
+              <input type="checkbox" id="wMilitary">
+              <label for="wMilitary">군복무수당</label>
+            </div>
+            <div class="toggle-group">
+              <input type="checkbox" id="wSeniority">
+              <label for="wSeniority">근속가산기본급 (2016.2 이전)</label>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>조정급</label>
+                <input type="number" id="wAdjust" value="0" min="0">
+              </div>
+              <div class="form-group">
+                <label>별정수당</label>
+                <input type="number" id="wSpecial" value="0" min="0">
+              </div>
+            </div>
+            <div class="toggle-group">
+              <input type="checkbox" id="wSpouse">
+              <label for="wSpouse">배우자 (40,000원)</label>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>자녀 수</label>
+                <input type="number" id="wChildren" value="0" min="0" max="10">
+              </div>
+              <div class="form-group">
+                <label>기타 가족</label>
+                <input type="number" id="wOtherFamily" value="0" min="0" max="5">
+              </div>
+            </div>
+            <button class="btn btn-primary btn-full" onclick="calculateWage()">시급 계산 → 자동 반영</button>
+            <div id="wageCalcResult" style="margin-top:8px;"></div>
+          </div>
+
+          <hr class="divider">
+
+          <!-- 시간외수당 -->
+          <p style="font-size:13px; font-weight:600; color:var(--accent-amber); margin:8px 0;">⏰ 시간외수당</p>
+          <div class="form-row">
+            <div class="form-group">
+              <label>연장근무 시간</label>
+              <input type="number" id="otExtHours" value="0" min="0" step="0.25">
+            </div>
+            <div class="form-group">
+              <label>야간근무 시간 (22~06시)</label>
+              <input type="number" id="otNightHours" value="0" min="0" step="0.25">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>휴일근무 시간</label>
+            <input type="number" id="otHolidayHours" value="0" min="0" step="0.25">
+          </div>
+          <div class="toggle-group">
+            <input type="checkbox" id="otExtNight">
+            <label for="otExtNight">통상근무자가 연장→야간 (200%)</label>
+          </div>
+          <button class="btn btn-primary btn-full" onclick="calculateOvertime()">시간외수당 계산</button>
+          <div class="warning-box">⏱ 15분(0.25시간) 단위로 계산됩니다. (2020년~)</div>
+
+          <hr class="divider">
+
+          <!-- 온콜수당 -->
+          <p style="font-size:13px; font-weight:600; color:var(--accent-cyan); margin:8px 0;">📞 온콜수당</p>
+          <div class="form-row">
+            <div class="form-group">
+              <label>온콜 대기 일수 (호출 안 됨)</label>
+              <input type="number" id="ocStandby" value="0" min="0">
+            </div>
+            <div class="form-group">
+              <label>실제 출근 횟수</label>
+              <input type="number" id="ocCallOuts" value="0" min="0">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>출근 당 실 근무시간 (출퇴근 2h 자동 가산)</label>
+            <input type="number" id="ocWorkHours" value="0" min="0" step="0.25">
+          </div>
+          <div class="toggle-group">
+            <input type="checkbox" id="ocNight">
+            <label for="ocNight">야간(22~06시) 포함 (200%)</label>
+          </div>
+          <button class="btn btn-primary btn-full" onclick="calculateOnCall()">온콜수당 계산</button>
+        </div>
+
+        <!-- 결과 영역 -->
+        <div>
+          <div class="stat-grid" style="margin-bottom:16px;">
+            <div class="stat-card">
+              <div class="stat-value" style="color:var(--accent-indigo)">₩10,000</div>
+              <div class="stat-label">온콜대기 / 일</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" style="color:var(--accent-emerald)">₩50,000</div>
+              <div class="stat-label">온콜교통비 / 회</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" style="color:var(--accent-cyan)">2시간</div>
+              <div class="stat-label">출퇴근 인정</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" style="color:var(--accent-amber)">150~200%</div>
+              <div class="stat-label">할증률</div>
+            </div>
+          </div>
+          <div class="card" id="overtimeResult">
+            <div class="card-title"><span class="icon emerald">📊</span> 시간외수당 결과</div>
+            <p style="color:var(--text-muted)">시급을 입력하고 시간외수당 또는 온콜수당을 계산하세요.</p>
+          </div>
+          <div class="card" id="oncallResult" style="margin-top:16px;">
+            <div class="card-title"><span class="icon emerald">📊</span> 온콜수당 결과</div>
+            <p style="color:var(--text-muted)">온콜수당 [계산하기]를 눌러주세요.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ 📅 휴가·휴직 ═══════════ -->
+    <div class="tab-content" id="tab-leave">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title"><span class="icon emerald">📅</span> 연차 계산기</div>
+          <div class="form-group">
+            <label>입사일</label>
+            <input type="text" id="lvHireDate" placeholder="예: 2006-07-05">
+          </div>
+          <button class="btn btn-primary btn-full" onclick="calculateLeave()">계산하기</button>
+          <div id="leaveResult" style="margin-top:16px"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><span class="icon rose">👶</span> 육아휴직 급여 시뮬레이터</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>월 통상임금 (원)</label>
+              <input type="number" id="plWage" value="0" min="0">
+            </div>
+            <div class="form-group">
+              <label>휴직 개월수</label>
+              <input type="number" id="plMonths" value="12" min="1" max="36">
+            </div>
+          </div>
+          <button class="btn btn-primary btn-full" onclick="calculateParentalLeave()">시뮬레이션</button>
+          <div id="parentalResult" style="margin-top:16px"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon violet">🎉</span> 청원휴가 · 경조금 일람</div>
+        <div style="overflow-x:auto;">
+          <table class="data-table" id="ceremonyTable"></table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon blue">📋</span> 휴직 제도 일람</div>
+        <div style="overflow-x:auto;">
+          <table class="data-table" id="leaveTable"></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ 💵 수당 ═══════════ -->
+    <div class="tab-content" id="tab-allowance">
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-title"><span class="icon rose">👨‍👩‍👧‍👦</span> 가족수당 계산기</div>
+          <div class="toggle-group">
+            <input type="checkbox" id="faSpouse">
+            <label for="faSpouse">배우자 (40,000원)</label>
+          </div>
+          <div class="form-group">
+            <label>자녀 수</label>
+            <input type="number" id="faChildren" value="0" min="0" max="10">
+          </div>
+          <div class="form-group">
+            <label>기타 부양가족 수 (5인 한도 내)</label>
+            <input type="number" id="faOther" value="0" min="0" max="5">
+          </div>
+          <button class="btn btn-primary btn-full" onclick="calculateFamily()">계산하기</button>
+          <div id="familyResult" style="margin-top:12px"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><span class="icon amber">🏅</span> 장기근속수당</div>
+          <div class="form-group">
+            <label>근속연수</label>
+            <input type="number" id="lsYears" value="1" min="0" max="40">
+          </div>
+          <button class="btn btn-primary btn-full" onclick="calculateLongService()">계산하기</button>
+          <div id="longServiceResult" style="margin-top:12px"></div>
+          <hr class="divider">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>근속 구간</th>
+                <th class="amount">월 수당</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>5~10년</td>
+                <td class="amount">50,000원</td>
+              </tr>
+              <tr>
+                <td>10~15년</td>
+                <td class="amount">60,000원</td>
+              </tr>
+              <tr>
+                <td>15~20년</td>
+                <td class="amount">80,000원</td>
+              </tr>
+              <tr>
+                <td>20~21년</td>
+                <td class="amount">100,000원</td>
+              </tr>
+              <tr>
+                <td>21~25년</td>
+                <td class="amount">110,000원</td>
+              </tr>
+              <tr>
+                <td>25년+</td>
+                <td class="amount">130,000원</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><span class="icon violet">🌙</span> 야간근무가산금 (교대)</div>
+          <div class="form-group">
+            <label>월 야간근무 횟수</label>
+            <input type="number" id="nsCount" value="0" min="0" max="31">
+          </div>
+          <button class="btn btn-primary btn-full" onclick="calculateNightBonus()">계산하기</button>
+          <div id="nightBonusResult" style="margin-top:12px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ 📊 승진·퇴직 ═══════════ -->
+    <div class="tab-content" id="tab-career">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title"><span class="icon blue">📊</span> 승진 시뮬레이터</div>
+          <div class="form-group">
+            <label>직종</label>
+            <select id="prJobType" onchange="updatePromoGrades()">
+            </select>
+          </div>
+          <div class="form-group">
+            <label>현재 등급</label>
+            <select id="prGrade"></select>
+          </div>
+          <div class="form-group">
+            <label>입사일</label>
+            <input type="text" id="prHireDate" placeholder="예: 2006-07-05">
+          </div>
+          <button class="btn btn-primary btn-full" onclick="calculatePromotion()">시뮬레이션</button>
+          <div id="promoResult" style="margin-top:12px"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><span class="icon amber">🏦</span> 퇴직금 시뮬레이터</div>
+          <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">※ 2015.6.30 이전 입사자 기준 (퇴직수당)</p>
+          <div class="form-group">
+            <label>월 평균임금 (원)</label>
+            <input type="number" id="svAvgPay" value="0" min="0">
+          </div>
+          <div class="form-group">
+            <label>근속년수</label>
+            <input type="number" id="svYears" value="1" min="0" max="40">
+          </div>
+          <button class="btn btn-primary btn-full" onclick="calculateSeverance()">계산하기</button>
+          <div id="severanceResult" style="margin-top:12px"></div>
+          <hr class="divider">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>재직기간</th>
+                <th class="amount">계수</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>20년+</td>
+                <td class="amount">60%</td>
+              </tr>
+              <tr>
+                <td>15~20년</td>
+                <td class="amount">50%</td>
+              </tr>
+              <tr>
+                <td>10~15년</td>
+                <td class="amount">45%</td>
+              </tr>
+              <tr>
+                <td>5~10년</td>
+                <td class="amount">35%</td>
+              </tr>
+              <tr>
+                <td>1~5년</td>
+                <td class="amount">10%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ 📋 규정·챗봇 ═══════════ -->
+    <div class="tab-content" id="tab-reference">
+      <!-- 챗봇 -->
+      <div class="card chat-container">
+        <div class="card-title">
+          <span class="icon indigo">💬</span> 규정 상담 챗봇
+          <span class="badge indigo">2026 단체협약</span>
+        </div>
+        <div class="quick-tags" id="quickTags"></div>
+        <div class="chat-messages" id="chatMessages">
+          <div class="chat-msg bot">
+            안녕하세요! 병원 HR 챗봇입니다. 🏥<br>
+            근로시간, 수당, 휴가, 온콜, 승진, 복지 등 궁금한 점을 물어보세요.<br>
+            <small style="color:var(--text-muted)">예: "온콜 수당", "연차 몇 일", "야간근무가산금"</small>
+          </div>
+        </div>
+        <div class="chat-input-row">
+          <input type="text" class="chat-input" id="chatInput" placeholder="궁금한 점을 입력하세요..." autocomplete="off">
+          <button class="chat-send" id="chatSend" title="전송">➤</button>
+        </div>
+      </div>
+
+      <!-- 참조 테이블들 -->
+      <div class="card">
+        <div class="card-title"><span class="icon cyan">🔄</span> 교대근무 시간표</div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>근무조</th>
+              <th>시간</th>
+              <th>실근무</th>
+              <th>휴게</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>낮번 (D)</td>
+              <td>07:00 ~ 15:30</td>
+              <td>8시간</td>
+              <td>30분</td>
+            </tr>
+            <tr>
+              <td>초번 (E)</td>
+              <td>15:00 ~ 23:00</td>
+              <td>7.5시간</td>
+              <td>30분</td>
+            </tr>
+            <tr>
+              <td>밤번 (N)</td>
+              <td>22:30 ~ 익일 07:30</td>
+              <td>8.5시간</td>
+              <td>30분</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon rose">🩺</span> 진료비 감면 혜택</div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>대상</th>
+              <th>접수비</th>
+              <th>보험</th>
+              <th>비보험</th>
+              <th>비급여</th>
+              <th>선택진료</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>직원 본인</td>
+              <td class="amount">50%</td>
+              <td class="amount">50%</td>
+              <td class="amount">50%</td>
+              <td class="amount">50%</td>
+              <td class="amount">100%</td>
+            </tr>
+            <tr>
+              <td>배우자</td>
+              <td class="amount">-</td>
+              <td class="amount">50%</td>
+              <td class="amount">50%</td>
+              <td class="amount">50%</td>
+              <td class="amount">-</td>
+            </tr>
+            <tr>
+              <td>부모·자녀</td>
+              <td class="amount">-</td>
+              <td class="amount">50%</td>
+              <td class="amount">50%</td>
+              <td class="amount">50%</td>
+              <td class="amount">-</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon indigo">📝</span> 통상임금 구성 항목 (19개)</div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>항목</th>
+              <th>비고</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>기준기본급</td>
+              <td>보수표 ÷ 12</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>근속가산기본급</td>
+              <td>2016.2 이전 입사자</td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>군복무수당</td>
+              <td>월 45,000원</td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td>능력급</td>
+              <td>보수표 ÷ 12</td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td>상여금</td>
+              <td>보수표 ÷ 12</td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td>가계지원비</td>
+              <td>보수표 ÷ <strong>12</strong> (통상임금 산입)</td>
+            </tr>
+            <tr>
+              <td>7</td>
+              <td>조정급</td>
+              <td>개인별 상이</td>
+            </tr>
+            <tr>
+              <td>8</td>
+              <td>승급조정급</td>
+              <td>2015.07 이전 재직자</td>
+            </tr>
+            <tr>
+              <td>9</td>
+              <td>장기근속수당</td>
+              <td>5년 이상</td>
+            </tr>
+            <tr>
+              <td>10</td>
+              <td>별정수당</td>
+              <td>반장·전문직위</td>
+            </tr>
+            <tr>
+              <td>11</td>
+              <td>직책급</td>
+              <td>보직자</td>
+            </tr>
+            <tr>
+              <td>12</td>
+              <td>업무보조비</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td>13</td>
+              <td>급식보조비</td>
+              <td>월 150,000원</td>
+            </tr>
+            <tr>
+              <td>14</td>
+              <td>교통보조비</td>
+              <td>월 150,000원</td>
+            </tr>
+            <tr>
+              <td>15</td>
+              <td>가족수당</td>
+              <td>배우자·자녀·기타</td>
+            </tr>
+            <tr>
+              <td>16</td>
+              <td>명절지원비(월할)</td>
+              <td>연 4회 ÷ 12</td>
+            </tr>
+            <tr>
+              <td>17</td>
+              <td>자기계발별정수당</td>
+              <td>월 40,000원</td>
+            </tr>
+            <tr>
+              <td>18</td>
+              <td>별정수당5</td>
+              <td>월 35,000원</td>
+            </tr>
+            <tr>
+              <td>19</td>
+              <td>리프레시지원비</td>
+              <td>월 30,000원 (2026.01~)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon amber">⚡</span> 시간외 할증률</div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>유형</th>
+              <th class="amount">할증률</th>
+              <th>설명</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>연장근무</td>
+              <td class="amount">150%</td>
+              <td>소정근로 초과</td>
+            </tr>
+            <tr>
+              <td>야간근무</td>
+              <td class="amount">150%</td>
+              <td>22:00~06:00</td>
+            </tr>
+            <tr>
+              <td>연장→야간</td>
+              <td class="amount">200%</td>
+              <td>통상근무자 기준</td>
+            </tr>
+            <tr>
+              <td>휴일근무</td>
+              <td class="amount">150%</td>
+              <td>법정/주휴일</td>
+            </tr>
+            <tr>
+              <td>공휴일 근무 가산</td>
+              <td class="amount">50%</td>
+              <td>당직자 제외</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="data.js"></script>
+  <script src="calculators.js"></script>
+  <script src="holidays.js"></script>
+  <script src="profile.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>
