@@ -864,6 +864,140 @@ function calculateSeverance() {
   `;
 }
 
+// ═══════════ 📖 규정 위키 ═══════════
+function switchRefSubtab(tab) {
+  document.querySelectorAll('.ref-subtab').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.subtab === tab);
+    if (btn.dataset.subtab === tab) {
+      btn.className = 'btn btn-primary ref-subtab active';
+    } else {
+      btn.className = 'btn btn-outline ref-subtab';
+    }
+  });
+  document.getElementById('refSubChatbot').style.display = tab === 'chatbot' ? 'block' : 'none';
+  document.getElementById('refSubWiki').style.display = tab === 'wiki' ? 'block' : 'none';
+
+  if (tab === 'wiki') renderWikiToc();
+}
+
+function renderWikiToc() {
+  const toc = document.getElementById('wikiToc');
+  if (!toc || !DATA.handbook) return;
+  let html = '';
+  DATA.handbook.forEach((section, idx) => {
+    const count = section.articles.length;
+    html += `<div class="wiki-toc-item" onclick="showWikiCategory(${idx})" style="
+      padding:10px 12px; margin-bottom:4px; border-radius:6px; cursor:pointer;
+      display:flex; align-items:center; justify-content:space-between;
+      transition:background 0.2s;
+    " onmouseover="this.style.background='rgba(99,102,241,0.1)'" onmouseout="this.style.background='transparent'">
+      <span>${section.icon} ${section.category}</span>
+      <span class="badge" style="font-size:10px;">${count}</span>
+    </div>`;
+  });
+  toc.innerHTML = html;
+}
+
+function showWikiCategory(categoryIdx) {
+  const section = DATA.handbook[categoryIdx];
+  if (!section) return;
+  const container = document.getElementById('wikiContent');
+
+  let html = `<div class="card">
+    <div class="card-title" style="font-size:18px;">
+      <span>${section.icon}</span> ${section.category}
+      <span class="badge indigo">${section.articles.length}개 항목</span>
+    </div>`;
+
+  section.articles.forEach((article, i) => {
+    const bodyHtml = article.body.replace(/\n/g, '<br>').replace(/• /g, '<span style="color:var(--accent-indigo)">•</span> ');
+    html += `<div class="wiki-article" style="
+      margin-bottom:12px; padding:12px 14px; border-radius:8px;
+      border:1px solid rgba(255,255,255,0.06); background:rgba(255,255,255,0.02);
+    ">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <strong style="font-size:14px; color:var(--text-primary);">${article.title}</strong>
+        <span style="font-size:10px; padding:2px 8px; border-radius:4px; background:rgba(99,102,241,0.1); color:var(--accent-indigo);">📌 ${article.ref}</span>
+      </div>
+      <div style="font-size:13px; line-height:1.7; color:var(--text-secondary);">${bodyHtml}</div>
+    </div>`;
+  });
+
+  html += '</div>';
+  container.innerHTML = html;
+
+  // 목차 활성 표시
+  document.querySelectorAll('.wiki-toc-item').forEach((el, i) => {
+    el.style.background = i === categoryIdx ? 'rgba(99,102,241,0.12)' : 'transparent';
+    el.style.borderLeft = i === categoryIdx ? '3px solid var(--accent-indigo)' : '3px solid transparent';
+  });
+}
+
+function searchHandbook() {
+  const query = document.getElementById('wikiSearch').value.trim().toLowerCase();
+  const countEl = document.getElementById('wikiSearchCount');
+  const container = document.getElementById('wikiContent');
+
+  if (!query) {
+    countEl.style.display = 'none';
+    container.innerHTML = `<div class="card" style="text-align:center; padding:40px 20px; color:var(--text-muted);">
+      <div style="font-size:40px; margin-bottom:12px;">📖</div>
+      좌측 목차에서 카테고리를 선택하거나,<br>상단 검색창에 키워드를 입력하세요.
+    </div>`;
+    // 목차 활성 초기화
+    document.querySelectorAll('.wiki-toc-item').forEach(el => {
+      el.style.background = 'transparent';
+      el.style.borderLeft = '3px solid transparent';
+    });
+    return;
+  }
+
+  let results = [];
+  DATA.handbook.forEach(section => {
+    section.articles.forEach(article => {
+      const inTitle = article.title.toLowerCase().includes(query);
+      const inBody = article.body.toLowerCase().includes(query);
+      const inRef = article.ref.toLowerCase().includes(query);
+      if (inTitle || inBody || inRef) {
+        results.push({ ...article, categoryIcon: section.icon, category: section.category });
+      }
+    });
+  });
+
+  countEl.textContent = `${results.length}개 결과`;
+  countEl.style.display = 'block';
+
+  if (results.length === 0) {
+    container.innerHTML = `<div class="card" style="text-align:center; padding:30px; color:var(--text-muted);">
+      검색 결과가 없습니다. 다른 키워드로 검색해보세요.
+    </div>`;
+    return;
+  }
+
+  const highlightRe = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  let html = '';
+  results.forEach(article => {
+    let bodyHtml = article.body.replace(/\n/g, '<br>').replace(/• /g, '<span style="color:var(--accent-indigo)">•</span> ');
+    bodyHtml = bodyHtml.replace(highlightRe, '<mark style="background:rgba(251,191,36,0.3); color:var(--text-primary); padding:0 2px; border-radius:2px;">$1</mark>');
+    const titleHtml = article.title.replace(highlightRe, '<mark style="background:rgba(251,191,36,0.3); color:var(--text-primary); padding:0 2px; border-radius:2px;">$1</mark>');
+
+    html += `<div class="card" style="margin-bottom:8px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <strong style="font-size:14px;">${article.categoryIcon} ${titleHtml}</strong>
+        <span style="font-size:10px; padding:2px 8px; border-radius:4px; background:rgba(99,102,241,0.1); color:var(--accent-indigo);">📌 ${article.ref}</span>
+      </div>
+      <div style="font-size:10px; color:var(--text-muted); margin-bottom:6px;">${article.category}</div>
+      <div style="font-size:13px; line-height:1.7; color:var(--text-secondary);">${bodyHtml}</div>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+function clearWikiSearch() {
+  document.getElementById('wikiSearch').value = '';
+  searchHandbook();
+}
+
 // ═══════════ 💬 챗봇 ═══════════
 function renderQuickTags() {
   const categories = [...new Set(DATA.faq.map(f => f.category))];
@@ -951,20 +1085,37 @@ function searchFAQ(query) {
     });
 
     const aliases = {
-      '온콜': ['on-call', '호출', '대기'],
-      '연차': ['휴가', '연가', '연차'],
-      '야간': ['밤번', 'night', '밤'],
-      '급여': ['월급', '봉급', '급료', '임금'],
-      '퇴직': ['퇴사', '이직'],
-      '승진': ['승격', '진급', '승급'],
-      '출산': ['임신', '육아'],
-      '수당': ['보조', '지원'],
-      '감면': ['할인', '진료비']
+      '온콜': ['on-call', '호출', '대기', '콜'],
+      '연차': ['휴가', '연가', '연차', '쉬는날'],
+      '야간': ['밤번', 'night', '밤', '나이트'],
+      '급여': ['월급', '봉급', '급료', '임금', '페이'],
+      '퇴직': ['퇴사', '이직', '그만'],
+      '승진': ['승격', '진급', '승급', '호봉'],
+      '출산': ['임신', '육아', '아기', '아이'],
+      '수당': ['보조', '지원', '얼마'],
+      '감면': ['할인', '진료비', '병원비'],
+      '경조': ['돌아가', '사망', '장례', '조문', '결혼', '입양', '화환', '조의', '장의', '부의', '축의'],
+      '할머니': ['조부모', '외조부모', '할아버지', '외할머니', '외할아버지'],
+      '형제': ['형', '오빠', '언니', '누나', '동생', '자매', '남매'],
+      '부모': ['아버지', '어머니', '아빠', '엄마', '시어머니', '시아버지', '장인', '장모'],
+      '자녀': ['아들', '딸', '아이', '자식'],
+      '검진': ['건강검진', '검사'],
+      '헌혈': ['피', '혈액'],
+      '교육': ['연수', '학회', '방사선', '보수교육'],
+      '돌봄': ['간병', '가족돌봄', '간호'],
+      '복지': ['포인트', '복지포인트', '어린이집'],
+      '통상임금': ['시급', '임금', '통상']
     };
 
     Object.entries(aliases).forEach(([key, words]) => {
-      if (query.includes(key) || words.some(w => query.includes(w))) {
+      // 쿼리에 key 또는 alias 단어가 포함되면 → FAQ의 q/a에 key가 있으면 가산
+      const queryHasKey = query.includes(key) || words.some(w => query.includes(w));
+      if (queryHasKey) {
         if (qLower.includes(key) || aLower.includes(key)) score += 4;
+        // alias 단어가 FAQ q/a에도 있으면 추가 가산
+        words.forEach(w => {
+          if (qLower.includes(w) || aLower.includes(w)) score += 2;
+        });
       }
     });
 
