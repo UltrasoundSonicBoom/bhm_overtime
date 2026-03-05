@@ -1857,14 +1857,8 @@ function deleteLvRecord() {
 
 function renderLvStats(year) {
   const summary = LEAVE.calcAnnualSummary(year, lvTotalAnnual);
-
-  document.getElementById('lvStatTotal').textContent = summary.totalAnnual + '일';
-  document.getElementById('lvStatUsed').textContent = summary.usedAnnual + '일';
-  document.getElementById('lvStatRemain').textContent = summary.remainingAnnual + '일';
-  document.getElementById('lvStatDeduction').textContent = summary.totalDeduction > 0 ? '-₩' + summary.totalDeduction.toLocaleString() : '₩0';
-  document.getElementById('lvUsagePercent').textContent = summary.usagePercent + '%';
-  document.getElementById('lvProgressFill').style.width = summary.usagePercent + '%';
-  document.getElementById('lvRecordCount').textContent = summary.recordCount + '건';
+  const el = document.getElementById('lvRecordCount');
+  if (el) el.textContent = summary.recordCount + '건';
 }
 
 function renderLvQuotaTable(year) {
