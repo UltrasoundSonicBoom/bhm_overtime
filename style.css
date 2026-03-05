@@ -1264,25 +1264,27 @@ body::before {
   transition: width 0.5s ease;
 }
 
-/* ── Leave: Calendar Dots ── */
+/* ── Leave: Calendar Dots (category-based) ── */
 .lv-cal-dot {
   width: 5px;
   height: 5px;
   border-radius: 50%;
 }
 
-.lv-cal-dot.annual,
-.lv-cal-dot.half_am,
-.lv-cal-dot.half_pm {
+.lv-cal-dot.legal {
   background: var(--accent-emerald);
 }
 
-.lv-cal-dot.sick {
+.lv-cal-dot.health {
   background: var(--accent-rose);
 }
 
-.lv-cal-dot.menstrual {
+.lv-cal-dot.education {
   background: var(--accent-violet);
+}
+
+.lv-cal-dot.family {
+  background: var(--accent-cyan);
 }
 
 .lv-cal-dot.ceremony {
@@ -1293,12 +1295,12 @@ body::before {
   background: var(--accent-rose);
 }
 
-.lv-cal-dot.spouse_birth {
-  background: var(--accent-cyan);
+.lv-cal-dot.special {
+  background: var(--accent-indigo);
 }
 
-.lv-cal-dot.unpaid {
-  background: var(--accent-rose);
+.lv-cal-dot.other {
+  background: var(--text-muted);
 }
 
 /* ── Leave: Record Item ── */

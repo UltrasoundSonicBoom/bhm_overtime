@@ -8,6 +8,7 @@ const PROFILE = {
     // ── 기본 프로필 템플릿 ──
     defaults: {
         name: '',
+        gender: '',        // 'M' / 'F' / '' (미설정)
         jobType: '일반직',
         grade: 'J1',
         year: 1,

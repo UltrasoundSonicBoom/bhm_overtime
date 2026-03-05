@@ -5,6 +5,7 @@
 // ── 프로필 필드 매핑 ──
 const PROFILE_FIELDS = {
   name: 'pfName',
+  gender: 'pfGender',
   jobType: 'pfJobType',
   grade: 'pfGrade',
   year: 'pfYear',
@@ -1479,6 +1480,9 @@ function initLeaveTab() {
     }
   }
 
+  // 유형 select 동적 생성
+  populateLvTypeSelect();
+
   // 연도/월 변경 이벤트 (최초 1회만)
   if (!lvInitialized) {
     document.getElementById('lvYear').addEventListener('change', () => refreshLvCalendar());
@@ -1489,6 +1493,33 @@ function initLeaveTab() {
   }
 
   refreshLvCalendar();
+}
+
+// 유형 select 동적 생성 (성별 필터 + optgroup)
+function populateLvTypeSelect() {
+  const sel = document.getElementById('lvType');
+  if (!sel) return;
+  sel.innerHTML = '';
+
+  const profile = PROFILE.load();
+  const gender = profile ? profile.gender : '';
+  const groups = LEAVE.getGroupedTypes(gender);
+
+  groups.forEach(group => {
+    const optgroup = document.createElement('optgroup');
+    optgroup.label = group.label;
+    group.items.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t.id;
+      const paidIcon = t.isPaid ? '🟢' : '🔴';
+      let label = `${paidIcon} ${t.label}`;
+      if (t.halfDay) label += ' (0.5일)';
+      if (t.quota !== null) label += ` [${t.quota}일]`;
+      opt.textContent = label;
+      optgroup.appendChild(opt);
+    });
+    sel.appendChild(optgroup);
+  });
 }
 
 async function refreshLvCalendar() {
@@ -1509,7 +1540,6 @@ async function refreshLvCalendar() {
   const monthRecords = LEAVE.getMonthRecords(year, month);
   const recordsByDay = {};
   monthRecords.forEach(r => {
-    // 연속 휴가 → 각 날짜에 표시
     const start = new Date(r.startDate);
     const end = new Date(r.endDate);
     const cur = new Date(start);
@@ -1526,6 +1556,7 @@ async function refreshLvCalendar() {
   renderLvCalendar(year, month, recordsByDay);
   renderLvRecordList(year);
   renderLvStats(year);
+  renderLvQuotaTable(year);
   closeLvPanel();
 }
 
@@ -1566,7 +1597,11 @@ function renderLvCalendar(year, month, recordsByDay) {
 
     let dotsHtml = '<div class="ot-cal-dots">';
     const dotTypes = [...new Set(dayRecords.map(r => r.type))];
-    dotTypes.forEach(t => { dotsHtml += `<div class="lv-cal-dot ${t}"></div>`; });
+    dotTypes.forEach(t => {
+      const typeInfo = LEAVE.getTypeById(t);
+      const catClass = typeInfo ? typeInfo.category : t;
+      dotsHtml += `<div class="lv-cal-dot ${catClass}"></div>`;
+    });
     dotsHtml += '</div>';
 
     html += `<div class="${cls}" onclick="onLvDateClick(${year},${month},${d})">${d}${dotsHtml}</div>`;
@@ -1574,10 +1609,11 @@ function renderLvCalendar(year, month, recordsByDay) {
 
   html += '</div>';
   html += `<div class="ot-cal-legend">
-    <span><i class="dot" style="background:var(--accent-emerald)"></i>연차</span>
-    <span><i class="dot" style="background:var(--accent-rose)"></i>병가/무급</span>
-    <span><i class="dot" style="background:var(--accent-amber)"></i>경조</span>
-    <span><i class="dot" style="background:var(--accent-violet)"></i>생리휴가</span>
+    <span><i class="dot" style="background:var(--accent-emerald)"></i>법정</span>
+    <span><i class="dot" style="background:var(--accent-rose)"></i>건강</span>
+    <span><i class="dot" style="background:var(--accent-amber)"></i>청원</span>
+    <span><i class="dot" style="background:var(--accent-violet)"></i>교육</span>
+    <span><i class="dot" style="background:var(--accent-cyan)"></i>출산</span>
   </div>`;
   html += '</div>';
   container.innerHTML = html;
@@ -1605,6 +1641,7 @@ function onLvDateClick(year, month, day) {
   document.getElementById('lvMemo').value = '';
   document.getElementById('lvType').value = 'annual';
 
+  onLvTypeChange();
   previewLvCalc();
 
   // 기존 기록 표시
@@ -1614,12 +1651,12 @@ function onLvDateClick(year, month, day) {
     let extra = '<div style="margin-top:8px; padding:8px; background:rgba(16,185,129,0.06); border-radius:6px; font-size:12px;">';
     extra += `<strong style="color:var(--accent-emerald)">📋 기존 기록 (${existing.length}건)</strong>`;
     existing.forEach(r => {
-      const typeInfo = LEAVE.types[r.type] || {};
+      const typeInfo = LEAVE.getTypeById(r.type);
       extra += `<div style="margin-top:4px; cursor:pointer; padding:4px; border-radius:4px;" 
         onclick="editLvRecord('${r.id}')"
         onmouseover="this.style.background='rgba(99,102,241,0.1)'"
         onmouseout="this.style.background='transparent'">
-        <span class="lv-record-type ${r.isPaid ? 'paid' : 'unpaid'}" style="font-size:10px">${typeInfo.label || r.type}</span>
+        <span class="lv-record-type ${r.isPaid ? 'paid' : 'unpaid'}" style="font-size:10px">${typeInfo ? typeInfo.label : r.type}</span>
         ${r.startDate === r.endDate ? '' : r.startDate + '~' + r.endDate}
         ${r.days}일
         ${r.salaryImpact ? '<strong style="color:var(--accent-rose)">-₩' + Math.abs(r.salaryImpact).toLocaleString() + '</strong>' : ''}
@@ -1636,12 +1673,70 @@ function closeLvPanel() {
   document.querySelectorAll('#lvCalendar .ot-cal-day').forEach(el => el.classList.remove('selected'));
 }
 
-function onLvTypeChange() { previewLvCalc(); }
+function onLvTypeChange() {
+  const type = document.getElementById('lvType').value;
+  const typeInfo = LEAVE.getTypeById(type);
+
+  // 청원/경조 상세정보 표시
+  const ceremonyPanel = document.getElementById('lvCeremonyInfo');
+  if (typeInfo && typeInfo.ceremonyDays !== undefined) {
+    document.getElementById('lvCeremonyDays').innerHTML = `<strong>휴가일수:</strong> ${typeInfo.ceremonyDays}일`;
+    document.getElementById('lvCeremonyPay').innerHTML = typeInfo.ceremonyPay > 0
+      ? `<strong>경조비:</strong> ₩${typeInfo.ceremonyPay.toLocaleString()}`
+      : `<strong>경조비:</strong> 없음`;
+    document.getElementById('lvCeremonyDocs').innerHTML = typeInfo.docs
+      ? `<strong>구비서류:</strong> ${typeInfo.docs}`
+      : '';
+    document.getElementById('lvCeremonyExtra').innerHTML = typeInfo.extra
+      ? `💡 ${typeInfo.extra}`
+      : '';
+    ceremonyPanel.style.display = 'block';
+  } else {
+    ceremonyPanel.style.display = 'none';
+  }
+
+  // 유형 참고사항
+  const noteEl = document.getElementById('lvTypeNote');
+  if (typeInfo && (typeInfo.note || typeInfo.ref)) {
+    let noteHtml = '';
+    if (typeInfo.note) noteHtml += `📝 ${typeInfo.note}`;
+    if (typeInfo.ref) noteHtml += `${typeInfo.note ? '<br>' : ''}📖 근거: ${typeInfo.ref}`;
+    noteEl.innerHTML = noteHtml;
+    noteEl.style.display = 'block';
+  } else {
+    noteEl.style.display = 'none';
+  }
+
+  // 한도 현황 뱃지
+  const quotaBadge = document.getElementById('lvQuotaBadge');
+  const year = parseInt(document.getElementById('lvYear').value);
+  if (typeInfo && typeInfo.quota !== null && !typeInfo.usesAnnual) {
+    const records = LEAVE.getYearRecords(year);
+    const used = records.filter(r => r.type === type).reduce((sum, r) => sum + (r.days || 0), 0);
+    const remain = typeInfo.quota - used;
+    const color = remain <= 0 ? 'var(--accent-rose)' : 'var(--accent-emerald)';
+    quotaBadge.innerHTML = `<div style="padding:6px 10px; border-radius:6px; background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.15); font-size:12px;">
+      📊 <strong>${typeInfo.label}</strong> 한도: ${typeInfo.quota}일 | 사용: ${used}일 | <span style="color:${color}; font-weight:700;">잔여: ${remain}일</span>
+      ${remain <= 0 ? '<br><span style="color:var(--accent-rose)">⚠️ 한도 초과!</span>' : ''}
+    </div>`;
+    quotaBadge.style.display = 'block';
+  } else if (typeInfo && typeInfo.usesAnnual) {
+    const summary = LEAVE.calcAnnualSummary(year, lvTotalAnnual);
+    quotaBadge.innerHTML = `<div style="padding:6px 10px; border-radius:6px; background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.15); font-size:12px;">
+      📅 연차 한도: ${lvTotalAnnual}일 | 사용: ${summary.usedAnnual}일 | <span style="color:var(--accent-emerald); font-weight:700;">잔여: ${summary.remainingAnnual}일</span>
+    </div>`;
+    quotaBadge.style.display = 'block';
+  } else {
+    quotaBadge.style.display = 'none';
+  }
+
+  previewLvCalc();
+}
 
 function previewLvCalc() {
   const preview = document.getElementById('lvPreview');
   const type = document.getElementById('lvType').value;
-  const typeInfo = LEAVE.types[type];
+  const typeInfo = LEAVE.getTypeById(type);
   if (!typeInfo) { preview.innerHTML = ''; return; }
 
   const startStr = document.getElementById('lvStartDate').value;
@@ -1649,8 +1744,10 @@ function previewLvCalc() {
   if (!startStr || !endStr) { preview.innerHTML = ''; return; }
 
   let days;
-  if (typeInfo.days === 0.5) {
+  if (typeInfo.halfDay) {
     days = 0.5;
+  } else if (typeInfo.ceremonyDays) {
+    days = typeInfo.ceremonyDays;
   } else {
     days = LEAVE._calcBusinessDays(startStr, endStr);
   }
@@ -1665,12 +1762,21 @@ function previewLvCalc() {
     html += `<div class="preview-row"><span>잔여 연차</span><span class="val">${remain}일 → ${remain - days}일</span></div>`;
   }
 
-  if (!typeInfo.isPaid) {
+  // 급여 공제 미리보기
+  if (typeInfo.deductType === 'basePay') {
+    const profile = PROFILE.load();
+    const wage = profile ? PROFILE.calcWage(profile) : null;
+    const monthlyBasePay = wage ? (wage.breakdown ? wage.breakdown.basePay / 12 : 0) : 0;
+    const deduction = monthlyBasePay / 30 * days;
+    html += `<div class="preview-row"><span>급여 차감</span><span class="val" style="color:var(--accent-rose)">-₩${Math.round(deduction).toLocaleString()}</span></div>`;
+    html += `<div class="preview-row"><span>공제기준</span><span class="val" style="font-size:10px; color:var(--text-muted)">기본급 일액 (보수규정 제7조)</span></div>`;
+  } else if (typeInfo.deductType === 'ordinary') {
     const profile = PROFILE.load();
     const wage = profile ? PROFILE.calcWage(profile) : null;
     const hourlyRate = wage ? wage.hourlyRate : 0;
     const deduction = hourlyRate * 8 * days;
-    html += `<div class="preview-row"><span>급여 차감</span><span class="val" style="color:var(--accent-rose)">-₩${deduction.toLocaleString()}</span></div>`;
+    html += `<div class="preview-row"><span>급여 차감</span><span class="val" style="color:var(--accent-rose)">-₩${Math.round(deduction).toLocaleString()}</span></div>`;
+    html += `<div class="preview-row"><span>공제기준</span><span class="val" style="font-size:10px; color:var(--text-muted)">통상임금 1/30 (보수규정 제7조②)</span></div>`;
   } else {
     html += `<div class="preview-row"><span>급여 차감</span><span class="val" style="color:var(--accent-emerald)">₩0 (유급)</span></div>`;
   }
@@ -1688,19 +1794,22 @@ function saveLvRecord() {
   if (!startDate || !endDate) { alert('시작일/종료일을 선택하세요.'); return; }
   if (new Date(endDate) < new Date(startDate)) { alert('종료일이 시작일보다 이전입니다.'); return; }
 
-  const typeInfo = LEAVE.types[type];
+  const typeInfo = LEAVE.getTypeById(type);
   const profile = PROFILE.load();
   const wage = profile ? PROFILE.calcWage(profile) : null;
   const hourlyRate = wage ? wage.hourlyRate : 0;
+  const monthlyBasePay = wage && wage.breakdown ? wage.breakdown.basePay / 12 : 0;
 
   let days;
-  if (typeInfo && typeInfo.days === 0.5) {
+  if (typeInfo && typeInfo.halfDay) {
     days = 0.5;
+  } else if (typeInfo && typeInfo.ceremonyDays) {
+    days = typeInfo.ceremonyDays;
   } else {
     days = LEAVE._calcBusinessDays(startDate, endDate);
   }
 
-  const record = { type, startDate, endDate, days, memo, hourlyRate };
+  const record = { type, startDate, endDate, days, memo, hourlyRate, monthlyBasePay };
 
   if (editId) {
     LEAVE.updateRecord(editId, record);
@@ -1734,6 +1843,7 @@ function editLvRecord(id) {
   const dow = new Date(y, m - 1, d).getDay();
   document.getElementById('lvPanelDate').textContent = `${m}월 ${d}일 (${dowNames[dow]}) — 수정`;
 
+  onLvTypeChange();
   previewLvCalc();
 }
 
@@ -1757,6 +1867,36 @@ function renderLvStats(year) {
   document.getElementById('lvRecordCount').textContent = summary.recordCount + '건';
 }
 
+function renderLvQuotaTable(year) {
+  const container = document.getElementById('lvQuotaTable');
+  if (!container) return;
+
+  const quotas = LEAVE.calcQuotaSummary(year, lvTotalAnnual);
+  if (quotas.length === 0) {
+    container.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:12px;">프로필 저장 후 확인 가능</p>';
+    return;
+  }
+
+  let html = '<div style="display:grid; gap:6px;">';
+  quotas.forEach(q => {
+    const pct = q.quota > 0 ? Math.min(100, Math.round((q.used / q.quota) * 100)) : 0;
+    const barColor = q.overQuota ? 'var(--accent-rose)' : 'var(--gradient-primary)';
+    html += `<div style="padding:8px 10px; border-radius:6px; background:var(--bg-glass); border:1px solid var(--border-glass);">
+      <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
+        <span style="font-weight:600;">${q.label}</span>
+        <span style="color:${q.overQuota ? 'var(--accent-rose)' : 'var(--text-secondary)'}; font-weight:600;">
+          ${q.used}/${q.quota}일 ${q.overQuota ? '⚠️' : ''}
+        </span>
+      </div>
+      <div class="lv-progress-bar" style="height:5px;">
+        <div class="lv-progress-fill" style="width:${pct}%; background:${barColor}"></div>
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
 function renderLvRecordList(year) {
   const container = document.getElementById('lvRecordList');
   if (!container) return;
@@ -1771,13 +1911,13 @@ function renderLvRecordList(year) {
   let html = '';
 
   sorted.forEach(r => {
-    const typeInfo = LEAVE.types[r.type] || {};
+    const typeInfo = LEAVE.getTypeById(r.type);
     const dateDisplay = r.startDate === r.endDate
       ? r.startDate.substring(5)
       : r.startDate.substring(5) + ' ~ ' + r.endDate.substring(5);
 
     html += `<div class="lv-record-item" onclick="editLvRecord('${r.id}')">
-      <span class="lv-record-type ${r.isPaid ? 'paid' : 'unpaid'}">${typeInfo.label || r.type}</span>
+      <span class="lv-record-type ${r.isPaid ? 'paid' : 'unpaid'}">${typeInfo ? typeInfo.label : r.type}</span>
       <div style="flex:1; font-size:12px; color:var(--text-secondary)">
         ${dateDisplay} (${r.days}일)
         ${r.memo ? '<br><span style="color:var(--text-muted)">' + r.memo + '</span>' : ''}

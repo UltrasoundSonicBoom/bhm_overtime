@@ -207,6 +207,114 @@ const DATA = {
     maxLeave: 25       // 최대 25일
   },
 
+  // ── 휴가 유형 정의 (2026 단체협약 기준) ──
+  leaveQuotas: {
+    year: 2026,
+    categories: [
+      { id: 'legal', label: '📅 법정 휴가' },
+      { id: 'health', label: '🏥 건강' },
+      { id: 'education', label: '🎓 교육/연수' },
+      { id: 'family', label: '👨‍👩‍👧 가족' },
+      { id: 'ceremony', label: '🎉 청원/경조' },
+      { id: 'maternity', label: '🤰 출산/육아' },
+      { id: 'special', label: '🔷 특별' },
+      { id: 'other', label: '⬜ 기타' },
+    ],
+    types: [
+      // ── 📅 법정 휴가 ──
+      { id: 'annual', label: '연차', category: 'legal', isPaid: true, quota: null, usesAnnual: true, deductType: 'none', note: '입사일 기준 동적 계산' },
+      { id: 'half_am', label: '반차(오전)', category: 'legal', isPaid: true, quota: null, usesAnnual: true, deductType: 'none', halfDay: true, note: '연차에서 0.5일 차감' },
+      { id: 'half_pm', label: '반차(오후)', category: 'legal', isPaid: true, quota: null, usesAnnual: true, deductType: 'none', halfDay: true, note: '연차에서 0.5일 차감' },
+
+      // ── 🏥 건강 ──
+      { id: 'sick', label: '병가', category: 'health', isPaid: false, quota: 14, usesAnnual: false, deductType: 'ordinary', note: '14일 이내 2차의료기관 진단서 인정, 15일↑ 해당과 확인', ref: '제71조, 보수규정 제7조②' },
+      { id: 'checkup', label: '검진휴가', category: 'health', isPaid: true, quota: 1, usesAnnual: false, deductType: 'none', ref: '제65조' },
+      { id: 'blood_donation', label: '헌혈휴가', category: 'health', isPaid: true, quota: 1, usesAnnual: false, deductType: 'none' },
+      { id: 'menstrual', label: '생리휴가', category: 'health', isPaid: false, quota: 12, usesAnnual: false, deductType: 'basePay', gender: 'F', note: '월 1일, 기본급 일액 공제', ref: '제37조' },
+
+      // ── 🎓 교육/연수 ──
+      { id: 'edu_training', label: '교육연수', category: 'education', isPaid: true, quota: 3, usesAnnual: false, deductType: 'none', note: '연 3일' },
+      { id: 'edu_mandatory', label: '병원필수교육', category: 'education', isPaid: true, quota: 3, usesAnnual: false, deductType: 'none', note: '연 3일 (하반기)' },
+      { id: 'edu_license', label: '보수교육(방사선학회)', category: 'education', isPaid: true, quota: 1, usesAnnual: false, deductType: 'none' },
+      { id: 'edu_external', label: '외부교육(방사선종사자)', category: 'education', isPaid: true, quota: 1, usesAnnual: false, deductType: 'none' },
+
+      // ── 👨‍👩‍👧 가족 ──
+      { id: 'family_care_paid', label: '가족돌봄(유급)', category: 'family', isPaid: true, quota: 2, usesAnnual: false, deductType: 'none', note: '다자녀/장애아 3일', ref: '2021단협' },
+      { id: 'family_care_unpaid', label: '가족돌봄(무급)', category: 'family', isPaid: false, quota: 10, usesAnnual: false, deductType: 'ordinary', ref: '보수규정 제7조②' },
+
+      // ── 🎉 청원/경조 ──
+      {
+        id: 'ceremony_marriage_self', label: '본인 결혼', category: 'ceremony', isPaid: true, quota: null, usesAnnual: false, deductType: 'none',
+        ceremonyDays: 5, ceremonyPay: 300000, docs: '없음', extra: '축하화환 지급'
+      },
+      {
+        id: 'ceremony_marriage_child', label: '자녀 결혼', category: 'ceremony', isPaid: true, quota: null, usesAnnual: false, deductType: 'none',
+        ceremonyDays: 1, ceremonyPay: 100000, docs: '청첩장, 주민등록등본(가족관계증명서)', extra: '축하화환 지급'
+      },
+      {
+        id: 'ceremony_birth', label: '본인 출산', category: 'ceremony', isPaid: true, quota: null, usesAnnual: false, deductType: 'none',
+        ceremonyDays: 90, ceremonyPay: 100000, docs: '주민등록등본(가족관계증명서), 출생증명서', extra: '출산 후 45일 확보 (쌍둥이 이상: 120일/60일)', gender: 'F'
+      },
+      {
+        id: 'ceremony_spouse_birth', label: '배우자 출산', category: 'ceremony', isPaid: true, quota: null, usesAnnual: false, deductType: 'none',
+        ceremonyDays: 20, ceremonyPay: 100000, docs: '주민등록등본(가족관계증명서)', extra: '출산일로부터 120일 이내 사용 완료'
+      },
+      {
+        id: 'ceremony_adoption', label: '입양', category: 'ceremony', isPaid: true, quota: null, usesAnnual: false, deductType: 'none',
+        ceremonyDays: 20, ceremonyPay: 0, docs: '주민등록등본(가족관계증명서), 입양증명서'
+      },
+      {
+        id: 'ceremony_death_spouse', label: '배우자 사망', category: 'ceremony', isPaid: true, quota: null, usesAnnual: false, deductType: 'none',
+        ceremonyDays: 5, ceremonyPay: 1000000, docs: '주민등록등본(가족관계증명서), 사망진단서(기본증명서)'
+      },
+      {
+        id: 'ceremony_death_parent', label: '부모(본인·배우자) 사망', category: 'ceremony', isPaid: true, quota: null, usesAnnual: false, deductType: 'none',
+        ceremonyDays: 5, ceremonyPay: 300000, docs: '주민등록등본(가족관계증명서), 사망진단서(기본증명서)'
+      },
+      {
+        id: 'ceremony_death_child', label: '자녀·배우자 사망', category: 'ceremony', isPaid: true, quota: null, usesAnnual: false, deductType: 'none',
+        ceremonyDays: 3, ceremonyPay: 300000, docs: '주민등록등본(가족관계증명서), 사망진단서', extra: '자녀 배우자 사망 시 경조금 없음'
+      },
+      {
+        id: 'ceremony_death_grandparent', label: '조부모·외조부모 사망', category: 'ceremony', isPaid: true, quota: null, usesAnnual: false, deductType: 'none',
+        ceremonyDays: 3, ceremonyPay: 50000, docs: '주민등록등본(가족관계증명서), 사망진단서(기본증명서), 제적등본'
+      },
+      {
+        id: 'ceremony_death_sibling', label: '형제·자매 사망', category: 'ceremony', isPaid: true, quota: null, usesAnnual: false, deductType: 'none',
+        ceremonyDays: 3, ceremonyPay: 50000, docs: '주민등록등본(가족관계증명서), 사망진단서(기본증명서), 제적등본'
+      },
+
+      // ── 🤰 출산/육아 ──
+      { id: 'maternity', label: '출산휴가(90일)', category: 'maternity', isPaid: true, quota: null, usesAnnual: false, deductType: 'none', gender: 'F', note: '90일(쌍둥이 120일), 출산 후 45일 확보', ref: '제38조' },
+      { id: 'pregnancy_checkup', label: '임부 정기검진', category: 'maternity', isPaid: true, quota: null, usesAnnual: false, deductType: 'none', gender: 'F', note: '월 1일 유급', ref: '제38조④' },
+      { id: 'spouse_pregnancy', label: '임신검진 동행', category: 'maternity', isPaid: true, quota: 10, usesAnnual: false, deductType: 'none', note: '배우자 임신기간 중 (2026시행)', ref: '2025.10단협' },
+
+      // ── 🔷 특별 ──
+      { id: 'special_disaster', label: '특별휴가(재해 등)', category: 'special', isPaid: true, quota: null, usesAnnual: false, deductType: 'none', note: '재해 3일, 교통차단 등', ref: '제40조' },
+      { id: 'military_reserve', label: '예비군/민방위', category: 'special', isPaid: true, quota: null, usesAnnual: false, deductType: 'none', note: '해당일 유급, 야간훈련 시 익일 휴가', ref: '제42조' },
+      { id: 'long_service', label: '장기재직 휴가', category: 'special', isPaid: true, quota: null, usesAnnual: false, deductType: 'none', note: '10년↑ 5일, 20년↑ 7일 (2026시행)', ref: '2025.10단협' },
+
+      // ── ⬜ 기타 ──
+      { id: 'unpaid', label: '기타 무급휴가', category: 'other', isPaid: false, quota: null, usesAnnual: false, deductType: 'ordinary' },
+    ],
+
+    // ── 유산/사산 휴가 참조표 ──
+    miscarriageLeave: [
+      { weeks: '11주 이내', days: 5 },
+      { weeks: '12~15주', days: 10 },
+      { weeks: '16~21주', days: 30 },
+      { weeks: '22~27주', days: 60 },
+      { weeks: '28주 이상', days: 90 },
+    ],
+
+    // ── 병가 참조 ──
+    sickLeaveRef: {
+      maxDays: 14,
+      maxContinuous: '연 통상 2개월 초과 불가 (공무상 질병·부상은 6개월 연장 가능)',
+      docRule: '14일 이내: 2차의료기관 진단서 인정 / 15일↑: 타병원 진단서는 해당과 확인',
+    }
+  },
+
   // ── 청원휴가 & 경조금 ──
   ceremonies: [
     { type: '본인 결혼', leave: 5, hospitalPay: 300000, pensionPay: '결혼축하금', coopPay: '축하선물', docs: '없음', extra: '축하화환 지급' },
