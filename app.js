@@ -1495,6 +1495,13 @@ function initLeaveTab() {
   refreshLvCalendar();
 }
 
+// 카테고리별 아이콘 매핑
+const LV_CAT_ICONS = {
+  legal: '🏖️', health: '🏥', education: '📚',
+  family: '👪', ceremony: '🎗️', maternity: '🤱',
+  special: '🔷', other: '⬜'
+};
+
 // 유형 select 동적 생성 (성별 필터 + optgroup)
 function populateLvTypeSelect() {
   const sel = document.getElementById('lvType');
@@ -1511,8 +1518,9 @@ function populateLvTypeSelect() {
     group.items.forEach(t => {
       const opt = document.createElement('option');
       opt.value = t.id;
-      const paidIcon = t.isPaid ? '🟢' : '🔴';
-      let label = `${paidIcon} ${t.label}`;
+      const icon = LV_CAT_ICONS[t.category] || '📋';
+      const paidTag = t.isPaid ? '' : ' [무급]';
+      let label = `${icon} ${t.label}${paidTag}`;
       if (t.halfDay) label += ' (0.5일)';
       if (t.quota !== null) label += ` [${t.quota}일]`;
       opt.textContent = label;
@@ -1721,16 +1729,79 @@ function onLvTypeChange() {
     </div>`;
     quotaBadge.style.display = 'block';
   } else if (typeInfo && typeInfo.usesAnnual) {
-    const summary = LEAVE.calcAnnualSummary(year, lvTotalAnnual);
-    quotaBadge.innerHTML = `<div style="padding:6px 10px; border-radius:6px; background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.15); font-size:12px;">
-      📅 연차 한도: ${lvTotalAnnual}일 | 사용: ${summary.usedAnnual}일 | <span style="color:var(--accent-emerald); font-weight:700;">잔여: ${summary.remainingAnnual}일</span>
-    </div>`;
+    if (lvTotalAnnual > 0) {
+      const summary = LEAVE.calcAnnualSummary(year, lvTotalAnnual);
+      quotaBadge.innerHTML = `<div style="padding:6px 10px; border-radius:6px; background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.15); font-size:12px;">
+        📅 연차 한도: ${lvTotalAnnual}일 | 사용: ${summary.usedAnnual}일 | <span style="color:var(--accent-emerald); font-weight:700;">잔여: ${summary.remainingAnnual}일</span>
+      </div>`;
+    } else {
+      quotaBadge.innerHTML = `<div style="padding:6px 10px; border-radius:6px; background:rgba(251,191,36,0.06); border:1px solid rgba(251,191,36,0.2); font-size:12px; color:var(--accent-amber);">
+        ⚠️ 프로필에서 입사일을 설정하면 연차 한도가 자동 계산됩니다.
+      </div>`;
+    }
     quotaBadge.style.display = 'block';
   } else {
     quotaBadge.style.display = 'none';
   }
 
+  // 시간 단위 입력 토글 (연차 계열만)
+  const timeArea = document.getElementById('lvTimeInputArea');
+  const useTimeCheck = document.getElementById('lvUseTimeMode');
+  if (typeInfo && typeInfo.usesAnnual) {
+    timeArea.style.display = 'block';
+    useTimeCheck.checked = false;
+    document.getElementById('lvTimeFields').style.display = 'none';
+    document.getElementById('lvTimeCalcResult').textContent = '';
+  } else {
+    timeArea.style.display = 'none';
+    useTimeCheck.checked = false;
+    document.getElementById('lvTimeFields').style.display = 'none';
+  }
+
   previewLvCalc();
+}
+
+// 시간 모드 토글
+function onLvTimeModeChange() {
+  const checked = document.getElementById('lvUseTimeMode').checked;
+  document.getElementById('lvTimeFields').style.display = checked ? 'block' : 'none';
+  if (checked) calcLvTimeHours();
+  previewLvCalc();
+}
+
+// 시간 계산
+function calcLvTimeHours() {
+  const startTime = document.getElementById('lvStartTime').value;
+  const endTime = document.getElementById('lvEndTime').value;
+  if (!startTime || !endTime) return;
+
+  const [sh, sm] = startTime.split(':').map(Number);
+  const [eh, em] = endTime.split(':').map(Number);
+  let hours = (eh + em / 60) - (sh + sm / 60);
+  if (hours < 0) hours += 24; // 자정 넘기는 경우
+  // 점심시간 1시간 제외 (4시간 이상 근무시)
+  if (hours >= 4) hours -= 1;
+
+  const days = Math.round(hours / 8 * 100) / 100;
+  const resultEl = document.getElementById('lvTimeCalcResult');
+  resultEl.innerHTML = `${hours.toFixed(1)}시간 = <strong>${days}일</strong> 차감 (8시간 = 1일)`;
+}
+
+// 시간 모드일 때 차감일수 반환
+function getLvTimeDays() {
+  const useTime = document.getElementById('lvUseTimeMode');
+  if (!useTime || !useTime.checked) return null;
+
+  const startTime = document.getElementById('lvStartTime').value;
+  const endTime = document.getElementById('lvEndTime').value;
+  if (!startTime || !endTime) return null;
+
+  const [sh, sm] = startTime.split(':').map(Number);
+  const [eh, em] = endTime.split(':').map(Number);
+  let hours = (eh + em / 60) - (sh + sm / 60);
+  if (hours < 0) hours += 24;
+  if (hours >= 4) hours -= 1;
+  return Math.round(hours / 8 * 100) / 100;
 }
 
 function previewLvCalc() {
@@ -1744,7 +1815,10 @@ function previewLvCalc() {
   if (!startStr || !endStr) { preview.innerHTML = ''; return; }
 
   let days;
-  if (typeInfo.halfDay) {
+  const timeDays = getLvTimeDays();
+  if (timeDays !== null) {
+    days = timeDays;
+  } else if (typeInfo.halfDay) {
     days = 0.5;
   } else if (typeInfo.ceremonyDays) {
     days = typeInfo.ceremonyDays;
@@ -1756,10 +1830,15 @@ function previewLvCalc() {
   html += `<div class="preview-row"><span>일수</span><span class="val">${days}일</span></div>`;
 
   if (typeInfo.usesAnnual) {
-    const summary = LEAVE.calcAnnualSummary(parseInt(startStr.split('-')[0]), lvTotalAnnual);
-    const remain = summary.remainingAnnual;
-    html += `<div class="preview-row"><span>연차 차감</span><span class="val" style="color:var(--accent-amber)">-${days}일</span></div>`;
-    html += `<div class="preview-row"><span>잔여 연차</span><span class="val">${remain}일 → ${remain - days}일</span></div>`;
+    if (lvTotalAnnual > 0) {
+      const summary = LEAVE.calcAnnualSummary(parseInt(startStr.split('-')[0]), lvTotalAnnual);
+      const remain = summary.remainingAnnual;
+      html += `<div class="preview-row"><span>연차 차감</span><span class="val" style="color:var(--accent-amber)">-${days}일</span></div>`;
+      html += `<div class="preview-row"><span>잔여 연차</span><span class="val">${remain}일 → ${remain - days}일</span></div>`;
+    } else {
+      html += `<div class="preview-row"><span>연차 차감</span><span class="val" style="color:var(--accent-amber)">-${days}일</span></div>`;
+      html += `<div class="preview-row"><span>잔여 연차</span><span class="val" style="color:var(--text-muted)">프로필 입사일 설정 필요</span></div>`;
+    }
   }
 
   // 급여 공제 미리보기
@@ -1801,7 +1880,10 @@ function saveLvRecord() {
   const monthlyBasePay = wage && wage.breakdown ? wage.breakdown.basePay / 12 : 0;
 
   let days;
-  if (typeInfo && typeInfo.halfDay) {
+  const timeDays = getLvTimeDays();
+  if (timeDays !== null) {
+    days = timeDays;
+  } else if (typeInfo && typeInfo.halfDay) {
     days = 0.5;
   } else if (typeInfo && typeInfo.ceremonyDays) {
     days = typeInfo.ceremonyDays;

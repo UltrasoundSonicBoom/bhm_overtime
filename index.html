@@ -200,7 +200,6 @@
             </div>
           </div>
           <div id="psHolidayInfo" style="font-size:12px; color:var(--text-muted); margin-bottom:12px;"></div>
-          <div id="psMiniCalendar" style="margin-bottom:16px;"></div>
 
           <p style="font-size:12px; color:var(--accent-amber); margin:8px 0 4px; font-weight:600;">▸ 이번달 변동사항</p>
           <div class="form-row">
@@ -227,6 +226,14 @@
           <div class="form-group">
             <label>휴일근무 (시간)</label>
             <input type="number" id="psHoliday" value="0" min="0" step="0.25">
+          </div>
+
+          <!-- 캘린더 (접이식 참조용) -->
+          <div class="collapsible-header" onclick="toggleCollapsible('psMiniCalContainer')" style="margin-top:12px;">
+            <span>▸ 달력 보기</span>
+          </div>
+          <div class="collapsible-body" id="psMiniCalContainer" style="display:none;">
+            <div id="psMiniCalendar" style="margin-bottom:8px;"></div>
           </div>
 
           <div class="toggle-group">
@@ -641,6 +648,31 @@
 
               <!-- 한도 현황 뱃지 -->
               <div id="lvQuotaBadge" style="display:none; margin-bottom:10px;"></div>
+
+              <!-- 시간 단위 연차 입력 (연차/반차 선택 시만 표시) -->
+              <div id="lvTimeInputArea"
+                style="display:none; margin-bottom:10px; padding:10px; border-radius:8px; background:rgba(16,185,129,0.05); border:1px solid rgba(16,185,129,0.15);">
+                <label
+                  style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer; margin-bottom:8px;">
+                  <input type="checkbox" id="lvUseTimeMode" onchange="onLvTimeModeChange()">
+                  <span>⏰ 시간 단위로 사용 (1일 = 8시간)</span>
+                </label>
+                <div id="lvTimeFields" style="display:none;">
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label>시작 시간</label>
+                      <input type="time" id="lvStartTime" value="09:00" onchange="calcLvTimeHours()">
+                    </div>
+                    <div class="form-group">
+                      <label>종료 시간</label>
+                      <input type="time" id="lvEndTime" value="18:00" onchange="calcLvTimeHours()">
+                    </div>
+                  </div>
+                  <div id="lvTimeCalcResult"
+                    style="font-size:12px; padding:6px 8px; border-radius:6px; background:rgba(99,102,241,0.08); color:var(--accent-indigo); font-weight:600; text-align:center;">
+                  </div>
+                </div>
+              </div>
 
               <div class="form-row">
                 <div class="form-group">
