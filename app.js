@@ -37,6 +37,7 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
     if (tabName === 'overtime') { applyProfileToOvertime(); initOvertimeTab(); }
     if (tabName === 'leave') { applyProfileToLeave(); initLeaveTab(); }
     if (tabName === 'career') applyProfileToCareer();
+    if (tabName === 'reference') renderWikiToc();
   });
 });
 
@@ -1009,15 +1010,34 @@ function renderQuickTags() {
     tag.textContent = cat;
     tag.onclick = () => {
       const items = DATA.faq.filter(f => f.category === cat);
-      items.forEach(item => {
-        addChatMessage(item.q, 'user');
-        setTimeout(() => {
-          addChatMessage(item.a, 'bot', item.ref);
-        }, 200);
-      });
+      // 카테고리명을 사용자 메시지로 표시
+      addChatMessage(`📂 ${cat}`, 'user');
+      // 질문 목록을 선택 가능한 버튼으로 표시
+      setTimeout(() => {
+        let btnHtml = `<strong>${cat}</strong> 관련 질문을 선택하세요:<br><div style="margin-top:8px; display:flex; flex-direction:column; gap:6px;">`;
+        items.forEach((item, idx) => {
+          btnHtml += `<button class="chat-q-btn" onclick="answerFaqItem('${cat}', ${idx})" style="
+            text-align:left; padding:8px 12px; border-radius:6px; cursor:pointer;
+            background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.2);
+            color:var(--text-primary); font-size:13px; transition:background 0.2s;
+          " onmouseover="this.style.background='rgba(99,102,241,0.2)'" onmouseout="this.style.background='rgba(99,102,241,0.08)'">${item.q}</button>`;
+        });
+        btnHtml += '</div>';
+        addChatMessage(btnHtml, 'bot');
+      }, 300);
     };
     container.appendChild(tag);
   });
+}
+
+function answerFaqItem(category, idx) {
+  const items = DATA.faq.filter(f => f.category === category);
+  const item = items[idx];
+  if (!item) return;
+  addChatMessage(item.q, 'user');
+  setTimeout(() => {
+    addChatMessage(item.a, 'bot', item.ref);
+  }, 300);
 }
 
 function renderCeremonyTable() {

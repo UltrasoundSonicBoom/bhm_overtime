@@ -956,68 +956,53 @@
 
     <!-- ═══════════ 📋 규정·챗봇 ═══════════ -->
     <div class="tab-content" id="tab-reference">
-      <!-- 서브탭 -->
-      <div class="ref-subtabs" style="display:flex; gap:8px; margin-bottom:16px;">
-        <button class="btn btn-primary ref-subtab active" data-subtab="chatbot" onclick="switchRefSubtab('chatbot')">💬
-          챗봇</button>
-        <button class="btn btn-outline ref-subtab" data-subtab="wiki" onclick="switchRefSubtab('wiki')">📖 규정
-          열람</button>
+      <!-- 검색 -->
+      <div class="card" style="padding:12px 16px; margin-bottom:16px;">
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="wikiSearch" placeholder="🔍 규정 검색... (예: 온콜, 연차, 경조비)" style="flex:1;"
+            oninput="searchHandbook()">
+          <button class="btn btn-outline" onclick="clearWikiSearch()" style="white-space:nowrap;">초기화</button>
+        </div>
+        <div id="wikiSearchCount" style="font-size:11px; color:var(--text-muted); margin-top:6px; display:none;"></div>
       </div>
 
-      <!-- ===== 챗봇 서브탭 ===== -->
-      <div id="refSubChatbot">
-        <div class="card chat-container">
-          <div class="card-title">
-            <span class="icon indigo">💬</span> 규정 상담 챗봇
-            <span class="badge indigo">2026 단체협약</span>
+      <!-- 목차 + 본문 -->
+      <div class="grid-2" style="align-items:start;">
+        <!-- 좌측: 카테고리 목차 -->
+        <div>
+          <div class="card" style="position:sticky; top:80px;">
+            <div class="card-title"><span class="icon emerald">📑</span> 목차</div>
+            <div id="wikiToc"></div>
           </div>
-          <div class="quick-tags" id="quickTags"></div>
-          <div class="chat-messages" id="chatMessages">
-            <div class="chat-msg bot">
-              안녕하세요! 병원 HR 챗봇입니다. 🏥<br>
-              근로시간, 수당, 휴가, 온콜, 경조, 승진, 복지 등 궁금한 점을 물어보세요.<br>
-              <small style="color:var(--text-muted)">예: "온콜 수당", "외할머니 돌아가시면", "연차 몇 일"</small>
+        </div>
+        <!-- 우측: 본문 -->
+        <div>
+          <div id="wikiContent">
+            <div class="card" style="text-align:center; padding:40px 20px; color:var(--text-muted);">
+              <div style="font-size:40px; margin-bottom:12px;">📖</div>
+              좌측 목차에서 카테고리를 선택하거나,<br>
+              상단 검색창에 키워드를 입력하세요.
             </div>
-          </div>
-          <div class="chat-input-row">
-            <input type="text" class="chat-input" id="chatInput" placeholder="궁금한 점을 입력하세요..." autocomplete="off">
-            <button class="chat-send" id="chatSend" title="전송">➤</button>
           </div>
         </div>
       </div>
 
-      <!-- ===== 규정 열람 서브탭 ===== -->
-      <div id="refSubWiki" style="display:none;">
-        <!-- 검색 -->
-        <div class="card" style="padding:12px 16px; margin-bottom:16px;">
-          <div style="display:flex; gap:8px;">
-            <input type="text" id="wikiSearch" placeholder="🔍 규정 검색... (예: 온콜, 연차, 경조비)" style="flex:1;"
-              oninput="searchHandbook()">
-            <button class="btn btn-outline" onclick="clearWikiSearch()" style="white-space:nowrap;">초기화</button>
-          </div>
-          <div id="wikiSearchCount" style="font-size:11px; color:var(--text-muted); margin-top:6px; display:none;">
+      <!-- 챗봇 (하단) -->
+      <div class="card chat-container" style="margin-top:20px;">
+        <div class="card-title">
+          <span class="icon indigo">💬</span> 규정 상담 챗봇
+          <span class="badge indigo">2026 단체협약</span>
+        </div>
+        <div class="quick-tags" id="quickTags"></div>
+        <div class="chat-messages" id="chatMessages">
+          <div class="chat-msg bot">
+            궁금한 규정을 물어보세요! 🏥<br>
+            <small style="color:var(--text-muted)">예: "온콜 수당", "외할머니 돌아가시면", "연차 몇 일"</small>
           </div>
         </div>
-
-        <!-- 목차 + 본문 -->
-        <div class="grid-2" style="align-items:start;">
-          <!-- 좌측: 카테고리 목차 -->
-          <div>
-            <div class="card" style="position:sticky; top:80px;">
-              <div class="card-title"><span class="icon emerald">📑</span> 목차</div>
-              <div id="wikiToc"></div>
-            </div>
-          </div>
-          <!-- 우측: 본문 -->
-          <div>
-            <div id="wikiContent">
-              <div class="card" style="text-align:center; padding:40px 20px; color:var(--text-muted);">
-                <div style="font-size:40px; margin-bottom:12px;">📖</div>
-                좌측 목차에서 카테고리를 선택하거나,<br>
-                상단 검색창에 키워드를 입력하세요.
-              </div>
-            </div>
-          </div>
+        <div class="chat-input-row">
+          <input type="text" class="chat-input" id="chatInput" placeholder="궁금한 점을 입력하세요..." autocomplete="off">
+          <button class="chat-send" id="chatSend" title="전송">➤</button>
         </div>
       </div>
 
