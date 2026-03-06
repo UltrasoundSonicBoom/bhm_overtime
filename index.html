@@ -213,237 +213,97 @@
 
     <!-- ═══════════ ⏰ 시간외·온콜 관리 ═══════════ -->
     <div class="tab-content active" id="tab-overtime">
-      <!-- 월간 통계 대시보드 -->
-      <div class="stat-grid ot-stats" style="margin-bottom:16px;">
-        <div class="stat-card">
-          <div class="stat-value" id="otStatHours" style="color:var(--accent-amber)">0h</div>
-          <div class="stat-label">시간외 총시간</div>
+      <!-- Zone A: 대시보드 (pill 뱃지) -->
+      <div id="otDashboard" class="ot-dashboard"></div>
+
+      <!-- Zone B: 캘린더 + 입력 패널 -->
+      <div class="card">
+        <div class="card-title">
+          <span class="icon amber">⏰</span> 시간외·온콜 기록
         </div>
-        <div class="stat-card">
-          <div class="stat-value" id="otStatStandby" style="color:var(--accent-cyan)">0일</div>
-          <div class="stat-label">온콜 대기</div>
+
+        <!-- 시급 표시/입력 -->
+        <div class="ot-hourly-bar">
+          <span>적용 시급:</span>
+          <input type="number" id="otHourly" value="0" min="0" step="100" placeholder="시급 입력"
+            oninput="onOtHourlyInput()" style="width:110px; padding:4px 8px; border-radius:6px; border:1px solid var(--border-glass); background:var(--bg-glass); color:var(--accent-emerald); font-weight:700; font-size:14px; text-align:right;">
+          <span style="color:var(--text-muted); font-size:12px;">원</span>
+          <small id="otHourlyHint" style="font-size:11px;"></small>
         </div>
-        <div class="stat-card">
-          <div class="stat-value" id="otStatCallout" style="color:var(--accent-indigo)">0회</div>
-          <div class="stat-label">온콜 출근</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="otStatPay" style="color:var(--accent-emerald)">₩0</div>
-          <div class="stat-label">예상 수당</div>
+
+        <!-- 데스크탑: 캘린더 좌 + 입력 우 / 모바일: 세로 배치 -->
+        <div class="ot-main-grid">
+          <!-- 캘린더 -->
+          <div id="otCalendar"></div>
+
+          <!-- 입력 패널 (항상 표시) -->
+          <div id="otInputPanel" class="ot-input-panel">
+            <div class="ot-panel-header-v2">
+              <span id="otPanelDate" style="font-weight:600; font-size:14px; color:var(--text-accent);">날짜를 선택하세요</span>
+            </div>
+
+            <div class="form-group" style="margin-top:10px;">
+              <label>유형</label>
+              <div class="ot-type-selector">
+                <label class="ot-type-option active">
+                  <input type="radio" name="otType" value="overtime" checked onchange="onOtTypeChange()">
+                  <span class="ot-type-label" style="--type-color:var(--accent-amber)">⏰ 시간외</span>
+                </label>
+                <label class="ot-type-option">
+                  <input type="radio" name="otType" value="oncall_standby" onchange="onOtTypeChange()">
+                  <span class="ot-type-label" style="--type-color:var(--accent-cyan)">📞 온콜대기</span>
+                </label>
+                <label class="ot-type-option">
+                  <input type="radio" name="otType" value="oncall_callout" onchange="onOtTypeChange()">
+                  <span class="ot-type-label" style="--type-color:var(--accent-indigo)">🚗 온콜출근</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- 시간 입력 (온콜대기 시 숨김) -->
+            <div id="otTimeFields">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>시작 시간</label>
+                  <input type="time" id="otStartTime" value="18:00" onchange="previewOtCalc()">
+                </div>
+                <div class="form-group">
+                  <label>종료 시간</label>
+                  <input type="time" id="otEndTime" value="22:00" onchange="previewOtCalc()">
+                </div>
+              </div>
+            </div>
+
+            <!-- 실시간 미리보기 -->
+            <div id="otPreview" class="ot-preview"></div>
+            <!-- 기존 기록 표시 영역 (중복 방지) -->
+            <div id="otExistingRecords"></div>
+
+            <div class="form-group">
+              <label>메모 (선택)</label>
+              <input type="text" id="otMemo" placeholder="예: 응급환자 대응">
+            </div>
+
+            <div class="form-row" style="margin-top:12px;">
+              <button class="btn btn-primary" onclick="saveOtRecord()" style="flex:2" id="otSaveBtn">💾 저장</button>
+              <button class="btn btn-outline" onclick="deleteOtRecord()" style="flex:1; display:none;"
+                id="otDeleteBtn">🗑 삭제</button>
+            </div>
+            <input type="hidden" id="otEditId" value="">
+          </div>
         </div>
       </div>
 
-      <div class="grid-2">
-        <!-- 좌측: 캘린더 + 입력 패널 -->
-        <div>
-          <div class="card">
-            <div class="card-title">
-              <span class="icon amber">⏰</span> 시간외·온콜 기록
-              <span class="badge indigo" id="otMonthBadge">2026년 3월</span>
-            </div>
-
-            <!-- 시급 표시 -->
-            <div
-              style="display:flex; align-items:center; gap:8px; margin-bottom:12px; padding:8px 12px; background:rgba(16,185,129,0.06); border-radius:8px; border:1px solid rgba(16,185,129,0.15);">
-              <span style="font-size:12px; color:var(--text-muted);">적용 시급:</span>
-              <strong id="otHourlyDisplay" style="color:var(--accent-emerald); font-size:14px;">₩0</strong>
-              <small id="otHourlyHint" style="color:var(--text-muted); font-size:11px;"></small>
-              <input type="hidden" id="otHourly" value="0">
-            </div>
-
-            <!-- 인터랙티브 캘린더 (연도/월 네비게이션 내장) -->
-            <div id="otCalendar"></div>
-
-            <!-- 날짜 클릭 시 나타나는 입력 패널 -->
-            <div id="otInputPanel" class="ot-input-panel" style="display:none;">
-              <div class="ot-panel-header">
-                <span id="otPanelDate" style="font-weight:600;"></span>
-                <button class="btn-icon" onclick="closeOtPanel()" title="닫기">✕</button>
-              </div>
-
-              <div class="form-group" style="margin-top:8px;">
-                <label>유형</label>
-                <div class="ot-type-selector">
-                  <label class="ot-type-option active">
-                    <input type="radio" name="otType" value="overtime" checked onchange="onOtTypeChange()">
-                    <span class="ot-type-label" style="--type-color:var(--accent-amber)">⏰ 시간외</span>
-                  </label>
-                  <label class="ot-type-option">
-                    <input type="radio" name="otType" value="oncall_standby" onchange="onOtTypeChange()">
-                    <span class="ot-type-label" style="--type-color:var(--accent-cyan)">📞 온콜대기</span>
-                  </label>
-                  <label class="ot-type-option">
-                    <input type="radio" name="otType" value="oncall_callout" onchange="onOtTypeChange()">
-                    <span class="ot-type-label" style="--type-color:var(--accent-indigo)">🚗 온콜출근</span>
-                  </label>
-                </div>
-              </div>
-
-              <!-- 시간 입력 (온콜대기 시 숨김) -->
-              <div id="otTimeFields">
-                <div class="form-row">
-                  <div class="form-group">
-                    <label>시작 시간</label>
-                    <input type="time" id="otStartTime" value="18:00" onchange="previewOtCalc()">
-                  </div>
-                  <div class="form-group">
-                    <label>종료 시간</label>
-                    <input type="time" id="otEndTime" value="22:00" onchange="previewOtCalc()">
-                  </div>
-                </div>
-              </div>
-
-              <!-- 실시간 미리보기 -->
-              <div id="otPreview" class="ot-preview"></div>
-              <!-- 기존 기록 표시 영역 (중복 방지) -->
-              <div id="otExistingRecords"></div>
-
-              <div class="form-group">
-                <label>메모 (선택)</label>
-                <input type="text" id="otMemo" placeholder="예: 응급환자 대응">
-              </div>
-
-              <div class="form-row" style="margin-top:12px;">
-                <button class="btn btn-primary" onclick="saveOtRecord()" style="flex:2" id="otSaveBtn">💾 저장</button>
-                <button class="btn btn-outline" onclick="deleteOtRecord()" style="flex:1; display:none;"
-                  id="otDeleteBtn">🗑 삭제</button>
-              </div>
-              <input type="hidden" id="otEditId" value="">
-            </div>
-          </div>
-
-          <!-- 시급 계산기 (접이식) -->
-          <div class="card" style="margin-top:16px;">
-            <div class="collapsible-header" onclick="toggleCollapsible('wageCalcSection')">
-              <span>▸ 시급 모르면? → 통상임금으로 시급 계산하기</span>
-            </div>
-            <div class="collapsible-body" id="wageCalcSection" style="display:none;">
-              <div class="form-group">
-                <label>직종</label>
-                <select id="wJobType" onchange="updateGrades()"></select>
-              </div>
-              <div class="form-row">
-                <div class="form-group">
-                  <label>직급·등급</label>
-                  <select id="wGrade"></select>
-                </div>
-                <div class="form-group">
-                  <label>호봉</label>
-                  <select id="wYear">
-                    <option value="1">1년차</option>
-                    <option value="2">2년차</option>
-                    <option value="3">3년차</option>
-                    <option value="4">4년차</option>
-                    <option value="5">5년차</option>
-                    <option value="6">6년차</option>
-                    <option value="7">7년차</option>
-                    <option value="8">8년차</option>
-                  </select>
-                </div>
-              </div>
-              <div class="form-group">
-                <label>근속연수</label>
-                <input type="number" id="wServiceYears" value="1" min="0" max="40">
-              </div>
-              <div class="toggle-group">
-                <input type="checkbox" id="wMilitary"><label for="wMilitary">군복무수당</label>
-              </div>
-              <div class="toggle-group">
-                <input type="checkbox" id="wSeniority"><label for="wSeniority">근속가산기본급 (2016.2 이전)</label>
-              </div>
-              <div class="form-row">
-                <div class="form-group"><label>조정급</label><input type="number" id="wAdjust" value="0" min="0"></div>
-                <div class="form-group"><label>별정수당</label><input type="number" id="wSpecial" value="0" min="0"></div>
-              </div>
-              <div class="toggle-group">
-                <input type="checkbox" id="wSpouse"><label for="wSpouse">배우자 (40,000원)</label>
-              </div>
-              <div class="form-row">
-                <div class="form-group"><label>자녀 수</label><input type="number" id="wChildren" value="0" min="0"
-                    max="10"></div>
-                <div class="form-group"><label>기타 가족</label><input type="number" id="wOtherFamily" value="0" min="0"
-                    max="5"></div>
-              </div>
-              <button class="btn btn-primary btn-full" onclick="calculateWage()">시급 계산 → 자동 반영</button>
-              <div id="wageCalcResult" style="margin-top:8px;"></div>
-            </div>
-          </div>
-
-          <!-- JSON 내보내기/가져오기 -->
-          <div class="card" style="margin-top:16px;">
-            <div class="collapsible-header" onclick="toggleCollapsible('otExportSection')">
-              <span>▸ 데이터 내보내기 / 가져오기</span>
-            </div>
-            <div class="collapsible-body" id="otExportSection" style="display:none;">
-              <div class="form-row" style="margin-bottom:8px;">
-                <button class="btn btn-outline" onclick="exportOtData()" style="flex:1">📤 JSON 내보내기</button>
-                <label class="btn btn-outline" style="flex:1; text-align:center; cursor:pointer;">
-                  📥 JSON 가져오기
-                  <input type="file" id="otImportFile" accept=".json" style="display:none"
-                    onchange="importOtData(event)">
-                </label>
-              </div>
-              <div id="otExportMsg" style="font-size:12px; color:var(--text-muted);"></div>
-            </div>
-          </div>
+      <!-- Zone C: 하단 기록 -->
+      <div class="card" style="margin-top:20px;">
+        <div class="card-title">
+          <span class="icon emerald">📋</span> <span id="otRecordMonth"></span>월 기록
+          <span class="badge amber" id="otRecordCount">0건</span>
         </div>
-
-        <!-- 우측: 기록 목록 -->
-        <div>
-          <div class="card">
-            <div class="card-title">
-              <span class="icon emerald">📋</span> 기록 목록
-              <span class="badge amber" id="otRecordCount">0건</span>
-            </div>
-            <div id="otRecordList" style="max-height:600px; overflow-y:auto;">
-              <p style="color:var(--text-muted); text-align:center; padding:24px;">
-                캘린더에서 날짜를 클릭하여 기록을 추가하세요.
-              </p>
-            </div>
-          </div>
-
-          <!-- 수당 요율 참조 -->
-          <div class="card" style="margin-top:16px;">
-            <div class="collapsible-header" onclick="toggleCollapsible('otRatesRef')">
-              <span>▸ 수당 요율 참조표</span>
-            </div>
-            <div class="collapsible-body" id="otRatesRef" style="display:none;">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>구분</th>
-                    <th>시간</th>
-                    <th class="amount">요율</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>연장근무</td>
-                    <td>소정근로 초과</td>
-                    <td class="amount">150%</td>
-                  </tr>
-                  <tr>
-                    <td>야간근무</td>
-                    <td>22:00~06:00</td>
-                    <td class="amount">200%</td>
-                  </tr>
-                  <tr>
-                    <td>휴일근무</td>
-                    <td>주말/공휴일</td>
-                    <td class="amount">150%</td>
-                  </tr>
-                  <tr>
-                    <td>휴일야간</td>
-                    <td>주말/공휴일 야간</td>
-                    <td class="amount">200%</td>
-                  </tr>
-                </tbody>
-              </table>
-              <div style="margin-top:8px; font-size:12px; color:var(--text-muted);">
-                • 온콜대기: ₩10,000/일 &nbsp; • 온콜교통비: ₩50,000/회 &nbsp; • 출퇴근 인정: 2시간
-              </div>
-            </div>
-          </div>
+        <div id="otRecordList">
+          <p style="color:var(--text-muted); text-align:center; padding:24px;">
+            캘린더에서 날짜를 클릭하여 기록을 추가하세요.
+          </p>
         </div>
       </div>
     </div>
@@ -457,7 +317,6 @@
       <div class="card">
         <div class="card-title">
           <span class="icon emerald">📅</span> 휴가 기록
-          <span class="badge indigo" id="lvMonthBadge">2026년 3월</span>
         </div>
 
         <!-- 데스크탑: 캘린더 좌 + 입력 우 / 모바일: 세로 배치 -->

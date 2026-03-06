@@ -1277,14 +1277,83 @@ body::before {
   display: inline-block;
 }
 
+/* ── Overtime: Dashboard (pill badges) ── */
+.ot-dashboard {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.ot-dash-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 14px;
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: var(--transition);
+}
+
+.ot-dash-item:hover {
+  border-color: var(--border-active);
+}
+
+.ot-dash-value {
+  font-weight: 700;
+}
+
+.ot-dash-value.amber { color: var(--accent-amber); }
+.ot-dash-value.cyan { color: var(--accent-cyan); }
+.ot-dash-value.indigo { color: var(--accent-indigo); }
+.ot-dash-value.emerald { color: var(--accent-emerald); }
+
+/* ── Overtime: Calendar + Input Grid ── */
+.ot-main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.ot-main-grid > #otCalendar .ot-cal {
+  max-width: 100%;
+}
+
+.ot-hourly-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background: rgba(16, 185, 129, 0.06);
+  border-radius: 8px;
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.ot-hourly-bar strong {
+  color: var(--accent-emerald);
+  font-size: 14px;
+}
+
 /* ── Overtime: Input Panel ── */
 .ot-input-panel {
-  margin-top: 16px;
   padding: 16px;
   background: rgba(99, 102, 241, 0.04);
   border: 1px solid rgba(99, 102, 241, 0.15);
   border-radius: var(--radius-md);
-  animation: slideDown 0.3s ease;
+}
+
+.ot-panel-header-v2 {
+  padding-bottom: 10px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--border-glass);
 }
 
 @keyframes slideDown {
@@ -1753,6 +1822,10 @@ body::before {
   }
 
   .qa-cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ot-main-grid {
     grid-template-columns: 1fr;
   }
 

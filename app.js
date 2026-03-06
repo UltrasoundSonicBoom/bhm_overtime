@@ -248,8 +248,6 @@ function applyProfileToOvertime() {
   const wage = PROFILE.calcWage(profile);
   if (!wage) return;
   document.getElementById('otHourly').value = wage.hourlyRate;
-  const display = document.getElementById('otHourlyDisplay');
-  if (display) display.textContent = '₩' + wage.hourlyRate.toLocaleString();
   const hint = document.getElementById('otHourlyHint');
   if (hint) hint.textContent = `📌 내 정보 자동반영 (통상임금: ${CALC.formatCurrency(wage.monthlyWage)})`;
 }
@@ -354,8 +352,6 @@ function calculateWage() {
 
   // 시급 자동 반영
   document.getElementById('otHourly').value = result.hourlyRate;
-  const otDisplay = document.getElementById('otHourlyDisplay');
-  if (otDisplay) otDisplay.textContent = '₩' + result.hourlyRate.toLocaleString();
   const otHint = document.getElementById('otHourlyHint');
   if (otHint) otHint.textContent = `통상임금 기준 (${CALC.formatCurrency(result.monthlyWage)})`;
 
@@ -1325,27 +1321,54 @@ function initOvertimeTab() {
   otCurrentYear = now.getFullYear();
   otCurrentMonth = now.getMonth() + 1;
 
-  // 프로필에서 시급 자동 반영
+  const hourlyInput = document.getElementById('otHourly');
+  const hint = document.getElementById('otHourlyHint');
+
+  // 1순위: 프로필에서 시급 자동 반영
   const profile = PROFILE.load();
   if (profile) {
     const wage = PROFILE.calcWage(profile);
-    if (wage) {
-      document.getElementById('otHourly').value = wage.hourlyRate;
-      document.getElementById('otHourlyDisplay').textContent = '₩' + wage.hourlyRate.toLocaleString();
-      document.getElementById('otHourlyHint').textContent = `📌 내 정보 자동반영`;
+    if (wage && wage.hourlyRate > 0) {
+      hourlyInput.value = wage.hourlyRate;
+      hint.textContent = '📌 내 정보 자동반영';
+      refreshOtCalendar();
+      return;
     }
   }
 
+  // 2순위: 수동 저장된 시급 불러오기
+  const saved = localStorage.getItem('otManualHourly');
+  if (saved && parseInt(saved) > 0) {
+    hourlyInput.value = saved;
+    hint.textContent = '✏️ 수동 입력값';
+  } else {
+    hint.textContent = '⬅ 시급을 입력하세요';
+  }
+
   refreshOtCalendar();
+}
+
+// 시급 수동 입력 시 저장
+function onOtHourlyInput() {
+  const val = parseInt(document.getElementById('otHourly').value) || 0;
+  const hint = document.getElementById('otHourlyHint');
+
+  // 프로필 연결 여부 확인
+  const profile = PROFILE.load();
+  const hasProfileWage = profile && PROFILE.calcWage(profile)?.hourlyRate > 0;
+
+  if (!hasProfileWage) {
+    localStorage.setItem('otManualHourly', val.toString());
+    hint.textContent = val > 0 ? '✏️ 수동 입력값 (자동저장)' : '⬅ 시급을 입력하세요';
+  }
+
+  previewOtCalc();
 }
 
 // 캘린더 새로고침
 async function refreshOtCalendar() {
   const year = otCurrentYear;
   const month = otCurrentMonth;
-
-  // 배지 업데이트
-  document.getElementById('otMonthBadge').textContent = `${year}년 ${month}월`;
 
   // 공휴일 데이터 가져오기
   let workInfo;
@@ -1374,10 +1397,10 @@ async function refreshOtCalendar() {
 
   renderOtCalendar(year, month, recordsByDay);
   renderOtRecordList(records);
-  renderOtStats(year, month);
+  renderOtDashboard(year, month);
 
-  // 패널 닫기
-  closeOtPanel();
+  // 패널 초기화
+  resetOtPanel();
 }
 
 // 캘린더 렌더링
@@ -1477,7 +1500,6 @@ function onOtDateClick(year, month, day) {
   if (dow === 0 || dow === 6) dateLabel += ' 🔵 주말';
 
   document.getElementById('otPanelDate').textContent = dateLabel;
-  document.getElementById('otInputPanel').style.display = 'block';
   document.getElementById('otInputPanel').dataset.date = dateStr;
   document.getElementById('otInputPanel').dataset.isHoliday = isHoliday ? '1' : '0';
 
@@ -1513,13 +1535,23 @@ function onOtDateClick(year, month, day) {
   }
 }
 
-// 패널 닫기
-function closeOtPanel() {
-  document.getElementById('otInputPanel').style.display = 'none';
+// 패널 초기화 (항상 표시 유지, 필드만 리셋)
+function resetOtPanel() {
   otSelectedDate = null;
   document.querySelectorAll('.ot-cal-day').forEach(el => el.classList.remove('selected'));
+  document.getElementById('otPanelDate').textContent = '날짜를 선택하세요';
+  document.getElementById('otEditId').value = '';
+  document.getElementById('otDeleteBtn').style.display = 'none';
+  document.getElementById('otSaveBtn').textContent = '💾 저장';
+  document.getElementById('otMemo').value = '';
   document.getElementById('otExistingRecords').innerHTML = '';
+  document.getElementById('otPreview').innerHTML = '';
+  document.getElementById('otInputPanel').dataset.date = '';
+  document.getElementById('otInputPanel').dataset.isHoliday = '0';
 }
+
+// 하위 호환
+function closeOtPanel() { resetOtPanel(); }
 
 // 유형 변경
 function onOtTypeChange() {
@@ -1646,7 +1678,6 @@ function editOtRecord(id) {
   const [y, m, d] = record.date.split('-').map(Number);
   otSelectedDate = { year: y, month: m, day: d };
 
-  document.getElementById('otInputPanel').style.display = 'block';
   document.getElementById('otInputPanel').dataset.date = record.date;
   document.getElementById('otInputPanel').dataset.isHoliday = record.isHoliday ? '1' : '0';
 
@@ -1681,18 +1712,34 @@ function deleteOtRecord() {
   refreshOtCalendar();
 }
 
-// 월간 통계 렌더링
-function renderOtStats(year, month) {
+// 월간 대시보드 렌더링 (pill 뱃지 스타일)
+function renderOtDashboard(year, month) {
   const stats = OVERTIME.calcMonthlyStats(year, month);
 
-  document.getElementById('otStatHours').textContent = stats.overtimeHours.toFixed(1) + 'h';
-  document.getElementById('otStatStandby').textContent = stats.oncallStandbyDays + '일';
-  document.getElementById('otStatCallout').textContent = stats.oncallCalloutCount + '회';
-  document.getElementById('otStatPay').textContent = '₩' + stats.totalPay.toLocaleString();
-  document.getElementById('otRecordCount').textContent = stats.recordCount + '건';
+  const container = document.getElementById('otDashboard');
+  if (container) {
+    const items = [
+      { label: '시간외', value: stats.overtimeHours.toFixed(1) + 'h', cls: 'amber' },
+      { label: '온콜대기', value: stats.oncallStandbyDays + '일', cls: 'cyan' },
+      { label: '온콜출근', value: stats.oncallCalloutCount + '회', cls: 'indigo' },
+      { label: '예상수당', value: '₩' + stats.totalPay.toLocaleString(), cls: 'emerald' },
+    ];
+    container.innerHTML = items.map(item =>
+      `<div class="ot-dash-item">${item.label} <span class="ot-dash-value ${item.cls}">${item.value}</span></div>`
+    ).join('');
+  }
+
+  const countEl = document.getElementById('otRecordCount');
+  if (countEl) countEl.textContent = stats.recordCount + '건';
+
+  const monthEl = document.getElementById('otRecordMonth');
+  if (monthEl) monthEl.textContent = month;
 }
 
-// 기록 목록 렌더링
+// 하위 호환
+function renderOtStats(year, month) { renderOtDashboard(year, month); }
+
+// 기록 목록 렌더링 (통계그리드 + 유형분포 + 접이식 상세기록)
 function renderOtRecordList(records) {
   const container = document.getElementById('otRecordList');
   if (!container) return;
@@ -1702,19 +1749,66 @@ function renderOtRecordList(records) {
     return;
   }
 
-  // 날짜순 정렬
   const sorted = [...records].sort((a, b) => a.date.localeCompare(b.date));
 
-  let html = '';
-  let totalPay = 0;
+  // 통계 계산
+  let totalHours = 0, totalPay = 0;
+  const byType = {
+    overtime: { count: 0, hours: 0, pay: 0 },
+    oncall_standby: { count: 0, hours: 0, pay: 0 },
+    oncall_callout: { count: 0, hours: 0, pay: 0 }
+  };
 
+  sorted.forEach(r => {
+    totalHours += r.totalHours || 0;
+    totalPay += r.estimatedPay || 0;
+    const t = byType[r.type];
+    if (t) {
+      t.count++;
+      t.hours += r.totalHours || 0;
+      t.pay += r.estimatedPay || 0;
+    }
+  });
+
+  let html = '';
+
+  // 통계 그리드 (4칸)
+  html += `<div class="lv-stats-grid">
+    <div class="lv-stat-card"><div class="lv-stat-num">${totalHours.toFixed(1)}</div><div class="lv-stat-label">총 시간</div></div>
+    <div class="lv-stat-card"><div class="lv-stat-num" style="color:var(--accent-amber)">${byType.overtime.count}</div><div class="lv-stat-label">시간외</div></div>
+    <div class="lv-stat-card"><div class="lv-stat-num" style="color:var(--accent-cyan)">${byType.oncall_standby.count + byType.oncall_callout.count}</div><div class="lv-stat-label">온콜</div></div>
+    <div class="lv-stat-card"><div class="lv-stat-num" style="color:var(--accent-emerald); font-size:16px;">₩${totalPay.toLocaleString()}</div><div class="lv-stat-label">예상수당</div></div>
+  </div>`;
+
+  // 유형별 분포
+  const typeEntries = Object.entries(byType).filter(([, v]) => v.count > 0);
+  if (typeEntries.length > 0) {
+    const colors = { overtime: 'var(--accent-amber)', oncall_standby: 'var(--accent-cyan)', oncall_callout: 'var(--accent-indigo)' };
+    html += '<div style="margin:12px 0 8px; font-size:11px; font-weight:600; color:var(--text-muted);">유형별 분포</div>';
+    html += '<div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:12px;">';
+    typeEntries.forEach(([type, data]) => {
+      const hoursStr = data.hours > 0 ? ` (${data.hours.toFixed(1)}h)` : '';
+      html += `<span style="display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:12px; font-size:11px; background:var(--bg-glass); border:1px solid var(--border-glass);">
+        <i style="width:6px;height:6px;border-radius:50%;background:${colors[type]};display:inline-block;"></i>
+        ${OVERTIME.typeLabel(type)} <strong>${data.count}건</strong>${hoursStr} ₩${data.pay.toLocaleString()}
+      </span>`;
+    });
+    html += '</div>';
+  }
+
+  // 상세 기록 (접이식)
+  html += `<div>
+    <div class="collapsible-header" onclick="toggleCollapsible('otRecordDetail')" style="padding:6px 0; font-size:12px;">
+      <span>▸ 상세 기록 (${sorted.length}건)</span>
+    </div>
+    <div class="collapsible-body" id="otRecordDetail" style="display:none; max-height:400px; overflow-y:auto;">`;
+
+  const dowNames = ['일', '월', '화', '수', '목', '금', '토'];
   sorted.forEach(r => {
     const day = parseInt(r.date.split('-')[2]);
     const dow = new Date(r.date).getDay();
-    const dowNames = ['일', '월', '화', '수', '목', '금', '토'];
     const timeStr = r.startTime && r.endTime ? `${r.startTime}~${r.endTime}` : '종일';
     const hoursStr = r.totalHours ? `${r.totalHours}h` : '';
-    totalPay += r.estimatedPay || 0;
 
     html += `<div class="ot-record-item" onclick="editOtRecord('${r.id}')">
       <div class="ot-record-date">${day}<br><span style="font-size:10px;color:var(--text-muted)">${dowNames[dow]}</span></div>
@@ -1724,6 +1818,9 @@ function renderOtRecordList(records) {
     </div>`;
   });
 
+  html += '</div></div>';
+
+  // 합계
   html += `<div class="ot-record-summary">
     <span>합계 (${sorted.length}건)</span>
     <span>₩${totalPay.toLocaleString()}</span>
@@ -1897,8 +1994,6 @@ function populateLvTypeSelect() {
 async function refreshLvCalendar() {
   const year = lvCurrentYear;
   const month = lvCurrentMonth;
-
-  document.getElementById('lvMonthBadge').textContent = `${year}년 ${month}월`;
 
   // 공휴일 데이터
   let workInfo;
