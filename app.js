@@ -2186,18 +2186,6 @@ function onLvTypeChange() {
     ceremonyPanel.style.display = 'none';
   }
 
-  // 유형 참고사항
-  const noteEl = document.getElementById('lvTypeNote');
-  if (typeInfo && (typeInfo.note || typeInfo.ref)) {
-    let noteHtml = '';
-    if (typeInfo.note) noteHtml += `📝 ${typeInfo.note}`;
-    if (typeInfo.ref) noteHtml += `${typeInfo.note ? '<br>' : ''}📖 근거: ${typeInfo.ref}`;
-    noteEl.innerHTML = noteHtml;
-    noteEl.style.display = 'block';
-  } else {
-    noteEl.style.display = 'none';
-  }
-
   // 한도 현황 뱃지
   const quotaBadge = document.getElementById('lvQuotaBadge');
   const year = lvCurrentYear;
@@ -2206,9 +2194,10 @@ function onLvTypeChange() {
     const used = records.filter(r => r.type === type).reduce((sum, r) => sum + (r.days || 0), 0);
     const remain = typeInfo.quota - used;
     const color = remain <= 0 ? 'var(--accent-rose)' : 'var(--accent-emerald)';
+    const refNote = typeInfo.ref ? `<br><span style="color:var(--text-muted); font-size:11px;">📖 ${typeInfo.ref}</span>` : '';
     quotaBadge.innerHTML = `<div style="padding:6px 10px; border-radius:6px; background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.15); font-size:12px;">
       📊 <strong>${typeInfo.label}</strong> 한도: ${typeInfo.quota}일 | 사용: ${used}일 | <span style="color:${color}; font-weight:700;">잔여: ${remain}일</span>
-      ${remain <= 0 ? '<br><span style="color:var(--accent-rose)">⚠️ 한도 초과!</span>' : ''}
+      ${remain <= 0 ? '<br><span style="color:var(--accent-rose)">⚠️ 한도 초과!</span>' : ''}${refNote}
     </div>`;
     quotaBadge.style.display = 'block';
   } else if (typeInfo && typeInfo.usesAnnual) {
@@ -2302,8 +2291,7 @@ function previewLvCalc() {
     days = LEAVE._calcBusinessDays(startStr, endStr);
   }
 
-  let html = `<div class="preview-row"><span>유형</span><span class="val">${typeInfo.label}</span></div>`;
-  html += `<div class="preview-row"><span>일수</span><span class="val">${days}일</span></div>`;
+  let html = `<div class="preview-row"><span>일수</span><span class="val">${days}일</span></div>`;
 
   if (typeInfo.usesAnnual) {
     if (lvTotalAnnual > 0) {
