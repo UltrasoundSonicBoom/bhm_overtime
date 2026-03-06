@@ -99,8 +99,8 @@ const LEAVE = {
         // 일수 자동 계산
         if (!record.days) {
             const typeInfo = this.getTypeById(record.type);
-            if (typeInfo && typeInfo.halfDay) {
-                record.days = 0.5;
+            if (typeInfo && typeInfo.isTimeBased && record.hours) {
+                record.days = Math.round(record.hours / 8 * 100) / 100;
             } else {
                 record.days = this._calcBusinessDays(record.startDate, record.endDate);
             }
@@ -207,8 +207,8 @@ const LEAVE = {
             usage[r.type] += (r.days || 0);
         });
 
-        // 연차 계열 합산 (annual + half_am + half_pm)
-        const annualUsed = (usage['annual'] || 0) + (usage['half_am'] || 0) + (usage['half_pm'] || 0);
+        // 연차 계열 합산 (annual + time_leave)
+        const annualUsed = (usage['annual'] || 0) + (usage['time_leave'] || 0);
 
         const result = [];
         this.getTypes().forEach(t => {
@@ -218,8 +218,8 @@ const LEAVE = {
             // 연차는 동적 한도
             if (t.usesAnnual) {
                 quota = totalAnnual;
-                // 반차는 연차에서 사용 → 별도 표시하지 않음
-                if (t.id === 'half_am' || t.id === 'half_pm') return;
+                // 시간차는 연차에서 사용 → 별도 표시하지 않음
+                if (t.id === 'time_leave') return;
                 result.push({
                     id: t.id, label: t.label, category: t.category,
                     used: annualUsed, quota: quota, remaining: quota - annualUsed,
@@ -249,10 +249,16 @@ const LEAVE = {
         let sickDays = 0;
         let unpaidDays = 0;
         let totalDeduction = 0;
+        let timeLeaveHours = 0;
+        let timeLeaveDays = 0;
 
         records.forEach(r => {
             if (r.usesAnnual) usedAnnual += (r.days || 0);
             if (r.type === 'sick') sickDays += (r.days || 0);
+            if (r.type === 'time_leave') {
+                timeLeaveHours += (r.hours || 0);
+                timeLeaveDays += (r.days || 0);
+            }
             if (!r.isPaid) {
                 unpaidDays += (r.days || 0);
                 totalDeduction += Math.abs(r.salaryImpact || 0);
@@ -266,6 +272,8 @@ const LEAVE = {
             sickDays,
             unpaidDays,
             totalDeduction,
+            timeLeaveHours,
+            timeLeaveDays,
             recordCount: records.length,
             usagePercent: totalAnnual > 0 ? Math.round((usedAnnual / totalAnnual) * 100) : 0,
         };

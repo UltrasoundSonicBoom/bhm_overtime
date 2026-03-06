@@ -22,151 +22,56 @@
         </div>
       </div>
       <nav class="nav-tabs" id="navTabs">
-        <button class="nav-tab active" data-tab="profile">📌 내 정보</button>
-        <button class="nav-tab" data-tab="payroll">🧾 급여시뮬</button>
-        <button class="nav-tab" data-tab="overtime">⏰ 시간외·온콜</button>
-        <button class="nav-tab" data-tab="leave">📅 휴가관리</button>
-        <button class="nav-tab" data-tab="allowance">💵 수당</button>
-        <button class="nav-tab" data-tab="career">📊 승진·퇴직</button>
-        <button class="nav-tab" data-tab="reference">📋 규정·챗봇</button>
+        <button class="nav-tab active" data-tab="overtime">⏰ 시간외·온콜</button>
+        <button class="nav-tab" data-tab="leave">📅 휴가</button>
+        <button class="nav-tab" data-tab="payroll">💰 급여</button>
+        <button class="nav-tab" data-tab="reference">📋 규정</button>
+        <button class="nav-tab" data-tab="profile">👤 개인정보</button>
       </nav>
     </div>
   </header>
 
   <main class="main">
 
-    <!-- ═══════════ 📌 내 정보 ═══════════ -->
-    <div class="tab-content active" id="tab-profile">
-      <div class="grid-2">
-        <div class="card">
-          <div class="card-title"><span class="icon indigo">📌</span> 내 정보
-            <span class="badge emerald" id="profileStatus">미저장</span>
-          </div>
-          <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">한번 저장하면 모든 계산기에 자동 반영됩니다. 데이터는 이
-            브라우저에만 저장됩니다.</p>
+    <!-- ═══════════ 💰 급여 섹션 ═══════════ -->
+    <div class="tab-content" id="tab-payroll">
+      <!-- 서브탭 네비게이션 -->
+      <div class="sub-tabs">
+        <button class="sub-tab" data-subtab="payslip">📄 급여 명세서</button>
+        <button class="sub-tab" data-subtab="verify">✅ 급여 검증</button>
+        <button class="sub-tab active" data-subtab="simulator">🧮 맞춤 시뮬레이터</button>
+      </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label>이름</label>
-              <input type="text" id="pfName" placeholder="예: 홍길동" autocomplete="off">
-            </div>
-            <div class="form-group">
-              <label>성별 <small style="color:var(--text-muted)">(선택)</small></label>
-              <select id="pfGender">
-                <option value="">미설정</option>
-                <option value="M">남성</option>
-                <option value="F">여성</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>직종</label>
-            <select id="pfJobType" onchange="updateProfileGrades()">
-            </select>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>직급·등급</label>
-              <select id="pfGrade"></select>
-            </div>
-            <div class="form-group">
-              <label>호봉 (연차)</label>
-              <select id="pfYear">
-                <option value="1">1년차</option>
-                <option value="2">2년차</option>
-                <option value="3">3년차</option>
-                <option value="4">4년차</option>
-                <option value="5">5년차</option>
-                <option value="6">6년차</option>
-                <option value="7">7년차</option>
-                <option value="8">8년차</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>입사일</label>
-            <input type="text" id="pfHireDate" placeholder="예: 2006-07-05">
-            <small id="pfServiceDisplay" style="color:var(--text-muted)"></small>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>조정급 (원/월)</label>
-              <input type="number" id="pfAdjust" value="0" min="0">
-            </div>
-            <div class="form-group">
-              <label>승급조정급 (원/월)</label>
-              <input type="number" id="pfUpgradeAdjust" value="0" min="0">
-            </div>
-          </div>
-
-          <div class="toggle-group">
-            <input type="checkbox" id="pfMilitary">
-            <label for="pfMilitary">군복무수당</label>
-          </div>
-          <div class="form-group" id="pfMilitaryMonthsGroup" style="display:none; margin-left:24px;">
-            <label>복무기간 (개월, 기본 24)</label>
-            <input type="number" id="pfMilitaryMonths" value="24" min="1" max="36">
-          </div>
-
-          <div class="toggle-group">
-            <input type="checkbox" id="pfSeniority">
-            <label for="pfSeniority">근속가산기본급 (2016.2 이전 입사자)</label>
-          </div>
-
-          <p style="font-size:12px; color:var(--accent-indigo); margin:12px 0 4px; font-weight:600;">▸ 가족수당</p>
-          <div class="toggle-group">
-            <input type="checkbox" id="pfSpouse">
-            <label for="pfSpouse">배우자 (40,000원)</label>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>자녀 수</label>
-              <input type="number" id="pfChildren" value="0" min="0" max="10">
-            </div>
-            <div class="form-group">
-              <label>기타 가족 수</label>
-              <input type="number" id="pfOtherFamily" value="0" min="0" max="5">
-            </div>
-          </div>
-
-          <p style="font-size:12px; color:var(--accent-amber); margin:12px 0 4px; font-weight:600;">▸ 기타 수당</p>
-          <div class="form-row">
-            <div class="form-group">
-              <label>별정수당 (원/월)</label>
-              <input type="number" id="pfSpecial" value="0" min="0">
-            </div>
-            <div class="form-group">
-              <label>직책급 (원/월)</label>
-              <input type="number" id="pfPosition" value="0" min="0">
-            </div>
-          </div>
-
-          <div class="form-row" style="margin-top:16px;">
-            <button class="btn btn-primary" onclick="saveProfile()" style="flex:2">💾 저장하기</button>
-            <button class="btn btn-outline" onclick="clearProfile()" style="flex:1">🗑 초기화</button>
-          </div>
-        </div>
-
-        <!-- 프로필 요약 카드 -->
-        <div class="card" id="profileSummary">
-          <div class="card-title"><span class="icon emerald">📊</span> 내 급여 요약</div>
-          <p style="color:var(--text-muted)">좌측에서 정보를 입력하고 [저장하기]를 눌러주세요.</p>
+      <!-- 서브탭 1: 급여 명세서 -->
+      <div class="sub-content" id="sub-payslip">
+        <div class="card" style="text-align:center; padding:40px 20px;">
+          <div style="font-size:48px; margin-bottom:12px;">📄</div>
+          <p style="color:var(--text-muted); font-size:14px;">급여 명세서 업로드 기능은 준비 중입니다.</p>
+          <p style="color:var(--text-muted); font-size:12px; margin-top:8px;">Excel(.xls/.xlsx) 파일을 업로드하면<br>모바일에서 편하게 확인할 수 있습니다.</p>
         </div>
       </div>
-    </div>
 
-    <!-- ═══════════ 🧾 급여 시뮬레이터 ═══════════ -->
-    <div class="tab-content" id="tab-payroll">
-      <div class="grid-2">
-        <div class="card">
-          <div class="card-title"><span class="icon rose">🧾</span> 급여 시뮬레이터
-            <span class="badge amber">실급여 시뮬레이션</span>
+      <!-- 서브탭 2: 급여 검증 -->
+      <div class="sub-content" id="sub-verify">
+        <div class="card" style="text-align:center; padding:40px 20px;">
+          <div style="font-size:48px; margin-bottom:12px;">✅</div>
+          <p style="color:var(--text-muted); font-size:14px;">급여 검증 기능은 준비 중입니다.</p>
+          <p style="color:var(--text-muted); font-size:12px; margin-top:8px;">명세서를 업로드하면 계산기와 자동으로<br>비교·검증할 수 있습니다.</p>
+        </div>
+      </div>
+
+      <!-- 서브탭 3: 맞춤 시뮬레이터 (Q&A 카드 + 기존 급여시뮬) -->
+      <div class="sub-content active" id="sub-simulator">
+        <!-- Q&A 카드 영역 -->
+        <div id="qaCardsContainer"></div>
+
+        <!-- 기존 급여 시뮬레이터 (전체 급여 시뮬레이션 카드 안에 포함) -->
+        <div class="card" style="margin-top:16px;">
+          <div class="collapsible-header" onclick="toggleCollapsible('fullPayrollSim')">
+            <span>▸ 🧾 전체 급여 시뮬레이션 (상세)</span>
           </div>
-          <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">📌 내 정보가 저장되어 있으면 자동 반영됩니다. 월별 변동사항만
-            입력하세요.</p>
+          <div class="collapsible-body" id="fullPayrollSim" style="display:none;">
+          <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">📌 내 정보가 저장되어 있으면 자동 반영됩니다. 월별 변동사항만 입력하세요.</p>
 
           <div id="psProfileBanner" class="warning-box" style="display:none;"></div>
 
@@ -296,19 +201,18 @@
             </div>
           </div>
 
-          <button class="btn btn-primary btn-full" onclick="calculatePayroll()" style="margin-top:12px;">급여
-            시뮬레이션</button>
-        </div>
+          <button class="btn btn-primary btn-full" onclick="calculatePayroll()" style="margin-top:12px;">급여 시뮬레이션</button>
 
-        <div class="card" id="payrollResult">
-          <div class="card-title"><span class="icon emerald">📊</span> 시뮬레이션 결과</div>
-          <p style="color:var(--text-muted)">좌측에서 정보를 입력하고 [급여 시뮬레이션]을 눌러주세요.</p>
-        </div>
-      </div>
-    </div>
+          <div id="payrollResult" style="margin-top:16px;">
+            <p style="color:var(--text-muted)">위에서 정보를 입력하고 [급여 시뮬레이션]을 눌러주세요.</p>
+          </div>
+          </div><!-- /collapsible-body -->
+        </div><!-- /card -->
+      </div><!-- /sub-simulator -->
+    </div><!-- /tab-payroll -->
 
     <!-- ═══════════ ⏰ 시간외·온콜 관리 ═══════════ -->
-    <div class="tab-content" id="tab-overtime">
+    <div class="tab-content active" id="tab-overtime">
       <!-- 월간 통계 대시보드 -->
       <div class="stat-grid ot-stats" style="margin-bottom:16px;">
         <div class="stat-card">
@@ -347,36 +251,7 @@
               <input type="hidden" id="otHourly" value="0">
             </div>
 
-            <!-- 월 선택 -->
-            <div class="form-row" style="margin-bottom:12px;">
-              <div class="form-group">
-                <label>연도</label>
-                <select id="otYear">
-                  <option value="2025">2025년</option>
-                  <option value="2026" selected>2026년</option>
-                  <option value="2027">2027년</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>월</label>
-                <select id="otMonth">
-                  <option value="1">1월</option>
-                  <option value="2">2월</option>
-                  <option value="3" selected>3월</option>
-                  <option value="4">4월</option>
-                  <option value="5">5월</option>
-                  <option value="6">6월</option>
-                  <option value="7">7월</option>
-                  <option value="8">8월</option>
-                  <option value="9">9월</option>
-                  <option value="10">10월</option>
-                  <option value="11">11월</option>
-                  <option value="12">12월</option>
-                </select>
-              </div>
-            </div>
-
-            <!-- 인터랙티브 캘린더 -->
+            <!-- 인터랙티브 캘린더 (연도/월 네비게이션 내장) -->
             <div id="otCalendar"></div>
 
             <!-- 날짜 클릭 시 나타나는 입력 패널 -->
@@ -420,6 +295,8 @@
 
               <!-- 실시간 미리보기 -->
               <div id="otPreview" class="ot-preview"></div>
+              <!-- 기존 기록 표시 영역 (중복 방지) -->
+              <div id="otExistingRecords"></div>
 
               <div class="form-group">
                 <label>메모 (선택)</label>
@@ -573,383 +450,119 @@
 
     <!-- ═══════════ 📅 휴가 관리 ═══════════ -->
     <div class="tab-content" id="tab-leave">
-      <!-- 연간 현황 대시보드 -->
+      <!-- 상단 대시보드 -->
+      <div id="lvDashboard" class="lv-dashboard"></div>
 
-
-      <div class="grid-2">
-        <!-- 좌측: 캘린더 + 입력 -->
-        <div>
-          <div class="card">
-            <div class="card-title">
-              <span class="icon emerald">📅</span> 휴가 기록
-              <span class="badge indigo" id="lvMonthBadge">2026년 3월</span>
-            </div>
-
-            <!-- 연도/월 선택 -->
-            <div class="form-row" style="margin-bottom:12px;">
-              <div class="form-group">
-                <label>연도</label>
-                <select id="lvYear">
-                  <option value="2025">2025년</option>
-                  <option value="2026" selected>2026년</option>
-                  <option value="2027">2027년</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>월</label>
-                <select id="lvMonth">
-                  <option value="1">1월</option>
-                  <option value="2">2월</option>
-                  <option value="3" selected>3월</option>
-                  <option value="4">4월</option>
-                  <option value="5">5월</option>
-                  <option value="6">6월</option>
-                  <option value="7">7월</option>
-                  <option value="8">8월</option>
-                  <option value="9">9월</option>
-                  <option value="10">10월</option>
-                  <option value="11">11월</option>
-                  <option value="12">12월</option>
-                </select>
-              </div>
-            </div>
-
-            <!-- 인터랙티브 캘린더 -->
-            <div id="lvCalendar"></div>
-
-            <!-- 휴가 입력 패널 -->
-            <div id="lvInputPanel" class="ot-input-panel" style="display:none;">
-              <div class="ot-panel-header">
-                <span id="lvPanelDate" style="font-weight:600;"></span>
-                <button class="btn-icon" onclick="closeLvPanel()" title="닫기">✕</button>
-              </div>
-
-              <div class="form-group" style="margin-top:8px;">
-                <label>휴가 유형</label>
-                <select id="lvType" onchange="onLvTypeChange()">
-                  <!-- app.js에서 동적 생성 -->
-                </select>
-              </div>
-
-              <!-- 청원/경조 상세정보 패널 -->
-              <div id="lvCeremonyInfo"
-                style="display:none; margin-bottom:10px; padding:10px; border-radius:8px; background:rgba(251,191,36,0.06); border:1px solid rgba(251,191,36,0.2); font-size:12px;">
-                <div style="font-weight:600; color:var(--accent-amber); margin-bottom:6px;">📋 청원휴가 안내</div>
-                <div id="lvCeremonyDays" style="margin-bottom:3px;"></div>
-                <div id="lvCeremonyPay" style="margin-bottom:3px;"></div>
-                <div id="lvCeremonyDocs" style="margin-bottom:3px;"></div>
-                <div id="lvCeremonyExtra" style="color:var(--accent-indigo);"></div>
-              </div>
-
-              <!-- 유형 참고사항 -->
-              <div id="lvTypeNote"
-                style="display:none; margin-bottom:10px; padding:8px; border-radius:6px; background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.15); font-size:11px; color:var(--text-secondary);">
-              </div>
-
-              <!-- 한도 현황 뱃지 -->
-              <div id="lvQuotaBadge" style="display:none; margin-bottom:10px;"></div>
-
-              <!-- 시간 단위 연차 입력 (연차/반차 선택 시만 표시) -->
-              <div id="lvTimeInputArea"
-                style="display:none; margin-bottom:10px; padding:10px; border-radius:8px; background:rgba(16,185,129,0.05); border:1px solid rgba(16,185,129,0.15);">
-                <label
-                  style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer; margin-bottom:8px;">
-                  <input type="checkbox" id="lvUseTimeMode" onchange="onLvTimeModeChange()">
-                  <span>⏰ 시간 단위로 사용 (1일 = 8시간)</span>
-                </label>
-                <div id="lvTimeFields" style="display:none;">
-                  <div class="form-row">
-                    <div class="form-group">
-                      <label>시작 시간</label>
-                      <input type="time" id="lvStartTime" value="09:00" onchange="calcLvTimeHours()">
-                    </div>
-                    <div class="form-group">
-                      <label>종료 시간</label>
-                      <input type="time" id="lvEndTime" value="18:00" onchange="calcLvTimeHours()">
-                    </div>
-                  </div>
-                  <div id="lvTimeCalcResult"
-                    style="font-size:12px; padding:6px 8px; border-radius:6px; background:rgba(99,102,241,0.08); color:var(--accent-indigo); font-weight:600; text-align:center;">
-                  </div>
-                </div>
-              </div>
-
-              <div class="form-row">
-                <div class="form-group">
-                  <label>시작일</label>
-                  <input type="date" id="lvStartDate">
-                </div>
-                <div class="form-group">
-                  <label>종료일</label>
-                  <input type="date" id="lvEndDate">
-                </div>
-              </div>
-
-              <!-- 급여 영향 미리보기 -->
-              <div id="lvPreview" class="ot-preview"></div>
-
-              <div class="form-group">
-                <label>메모 (선택)</label>
-                <input type="text" id="lvMemo" placeholder="예: 개인사유">
-              </div>
-
-              <div class="form-row" style="margin-top:12px;">
-                <button class="btn btn-primary" onclick="saveLvRecord()" style="flex:2" id="lvSaveBtn">💾 저장</button>
-                <button class="btn btn-outline" onclick="deleteLvRecord()" style="flex:1; display:none;"
-                  id="lvDeleteBtn">🗑 삭제</button>
-              </div>
-              <input type="hidden" id="lvEditId" value="">
-            </div>
-          </div>
-
-          <!-- 기존 계산기 (접이식) -->
-          <div class="card" style="margin-top:16px;">
-            <div class="collapsible-header" onclick="toggleCollapsible('lvAnnualCalc')">
-              <span>▸ 연차 계산기 (입사일 기준)</span>
-            </div>
-            <div class="collapsible-body" id="lvAnnualCalc" style="display:none;">
-              <div class="form-group">
-                <label>입사일</label>
-                <input type="text" id="lvHireDate" placeholder="예: 2006-07-05">
-              </div>
-              <button class="btn btn-primary btn-full" onclick="calculateLeave()">연차 계산</button>
-              <div id="leaveResult" style="margin-top:16px"></div>
-            </div>
-          </div>
-
-          <div class="card" style="margin-top:16px;">
-            <div class="collapsible-header" onclick="toggleCollapsible('lvParentalCalc')">
-              <span>▸ 육아휴직 급여 시뮬레이터</span>
-            </div>
-            <div class="collapsible-body" id="lvParentalCalc" style="display:none;">
-              <div class="form-row">
-                <div class="form-group">
-                  <label>월 통상임금 (원)</label>
-                  <input type="number" id="plWage" value="0" min="0">
-                </div>
-                <div class="form-group">
-                  <label>휴직 개월수</label>
-                  <input type="number" id="plMonths" value="12" min="1" max="36">
-                </div>
-              </div>
-              <button class="btn btn-primary btn-full" onclick="calculateParentalLeave()">시뮬레이션</button>
-              <div id="parentalResult" style="margin-top:16px"></div>
-            </div>
-          </div>
-
-          <!-- JSON 내보내기/가져오기 -->
-          <div class="card" style="margin-top:16px;">
-            <div class="collapsible-header" onclick="toggleCollapsible('lvExportSection')">
-              <span>▸ 데이터 내보내기 / 가져오기</span>
-            </div>
-            <div class="collapsible-body" id="lvExportSection" style="display:none;">
-              <div class="form-row" style="margin-bottom:8px;">
-                <button class="btn btn-outline" onclick="exportLvData()" style="flex:1">📤 JSON 내보내기</button>
-                <label class="btn btn-outline" style="flex:1; text-align:center; cursor:pointer;">
-                  📥 JSON 가져오기
-                  <input type="file" id="lvImportFile" accept=".json" style="display:none"
-                    onchange="importLvData(event)">
-                </label>
-              </div>
-              <div id="lvExportMsg" style="font-size:12px; color:var(--text-muted);"></div>
-            </div>
-          </div>
+      <!-- 캘린더 + 휴가 입력 -->
+      <div class="card">
+        <div class="card-title">
+          <span class="icon emerald">📅</span> 휴가 기록
+          <span class="badge indigo" id="lvMonthBadge">2026년 3월</span>
         </div>
 
-        <!-- 우측: 사용 내역 -->
-        <div>
-          <div class="card">
-            <div class="card-title">
-              <span class="icon amber">📋</span> 사용 내역
-              <span class="badge emerald" id="lvRecordCount">0건</span>
-            </div>
-            <div id="lvRecordList" style="max-height:400px; overflow-y:auto;">
-              <p style="color:var(--text-muted); text-align:center; padding:24px;">
-                캘린더에서 날짜를 클릭하여 휴가를 등록하세요.
-              </p>
-            </div>
-          </div>
+        <!-- 데스크탑: 캘린더 좌 + 입력 우 / 모바일: 세로 배치 -->
+        <div class="lv-main-grid">
+          <!-- 캘린더 -->
+          <div id="lvCalendar"></div>
 
-          <!-- 유형별 소진 현황 -->
-          <div class="card" style="margin-top:16px;">
-            <div class="collapsible-header" onclick="toggleCollapsible('lvQuotaSummary')">
-              <span>▸ 유형별 소진 현황</span>
+          <!-- 휴가 입력 패널 (항상 표시) -->
+          <div id="lvInputPanel" class="lv-input-panel">
+            <div class="lv-panel-header">
+              <span id="lvPanelDate" style="font-weight:600; font-size:14px; color:var(--text-accent);">날짜를 선택하세요</span>
             </div>
-            <div class="collapsible-body" id="lvQuotaSummary" style="display:none;">
-              <div id="lvQuotaTable"></div>
-            </div>
-          </div>
 
-          <!-- 경조휴가 & 휴직 참조 -->
-          <div class="card" style="margin-top:16px;">
-            <div class="collapsible-header" onclick="toggleCollapsible('lvCeremonyRef')">
-              <span>▸ 청원휴가 · 경조금 일람</span>
+            <div class="form-group" style="margin-top:10px;">
+              <label>휴가 유형</label>
+              <select id="lvType" onchange="onLvTypeChange()">
+              </select>
             </div>
-            <div class="collapsible-body" id="lvCeremonyRef" style="display:none;">
-              <div style="overflow-x:auto;">
-                <table class="data-table" id="ceremonyTable"></table>
+
+            <!-- 시간차 시간 입력 (시간차 선택 시만 표시) -->
+            <div id="lvTimeInputArea"
+              style="display:none; margin-bottom:10px; padding:10px; border-radius:8px; background:rgba(16,185,129,0.05); border:1px solid rgba(16,185,129,0.15);">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>시작 시간</label>
+                  <input type="time" id="lvStartTime" value="09:00" onchange="calcLvTimeHours()">
+                </div>
+                <div class="form-group">
+                  <label>종료 시간</label>
+                  <input type="time" id="lvEndTime" value="13:00" onchange="calcLvTimeHours()">
+                </div>
+              </div>
+              <div id="lvTimeCalcResult"
+                style="font-size:12px; padding:6px 8px; border-radius:6px; background:rgba(99,102,241,0.08); color:var(--accent-indigo); font-weight:600; text-align:center;">
               </div>
             </div>
-          </div>
 
-          <div class="card" style="margin-top:16px;">
-            <div class="collapsible-header" onclick="toggleCollapsible('lvLeaveRef')">
-              <span>▸ 휴직 제도 일람</span>
+            <!-- 청원/경조 상세정보 패널 -->
+            <div id="lvCeremonyInfo"
+              style="display:none; margin-bottom:10px; padding:10px; border-radius:8px; background:rgba(251,191,36,0.06); border:1px solid rgba(251,191,36,0.2); font-size:12px;">
+              <div style="font-weight:600; color:var(--accent-amber); margin-bottom:6px;">📋 청원휴가 안내</div>
+              <div id="lvCeremonyDays" style="margin-bottom:3px;"></div>
+              <div id="lvCeremonyPay" style="margin-bottom:3px;"></div>
+              <div id="lvCeremonyDocs" style="margin-bottom:3px;"></div>
+              <div id="lvCeremonyExtra" style="color:var(--accent-indigo);"></div>
             </div>
-            <div class="collapsible-body" id="lvLeaveRef" style="display:none;">
-              <div style="overflow-x:auto;">
-                <table class="data-table" id="leaveTable"></table>
+
+            <!-- 유형 참고사항 -->
+            <div id="lvTypeNote"
+              style="display:none; margin-bottom:10px; padding:8px; border-radius:6px; background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.15); font-size:11px; color:var(--text-secondary);">
+            </div>
+
+            <!-- 한도 현황 뱃지 -->
+            <div id="lvQuotaBadge" style="display:none; margin-bottom:10px;"></div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>시작일</label>
+                <input type="date" id="lvStartDate">
+              </div>
+              <div class="form-group">
+                <label>종료일</label>
+                <input type="date" id="lvEndDate">
               </div>
             </div>
+
+            <!-- 급여 영향 미리보기 -->
+            <div id="lvPreview" class="ot-preview"></div>
+            <!-- 기존 기록 표시 영역 (중복 방지) -->
+            <div id="lvExistingRecords"></div>
+
+            <div class="form-group">
+              <label>메모 (선택)</label>
+              <input type="text" id="lvMemo" placeholder="예: 개인사유">
+            </div>
+
+            <div class="form-row" style="margin-top:12px;">
+              <button class="btn btn-primary" onclick="saveLvRecord()" style="flex:2" id="lvSaveBtn">💾 저장</button>
+              <button class="btn btn-outline" onclick="deleteLvRecord()" style="flex:1; display:none;"
+                id="lvDeleteBtn">🗑 삭제</button>
+            </div>
+            <input type="hidden" id="lvEditId" value="">
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- ═══════════ 💵 수당 ═══════════ -->
-    <div class="tab-content" id="tab-allowance">
-      <div class="grid-3">
+      <!-- 하단: 사용내역 + 소진현황 -->
+      <div class="grid-2" style="align-items:start;">
+        <!-- 1열: 연간 사용 내역 (대시보드) -->
         <div class="card">
-          <div class="card-title"><span class="icon rose">👨‍👩‍👧‍👦</span> 가족수당 계산기</div>
-          <div class="toggle-group">
-            <input type="checkbox" id="faSpouse">
-            <label for="faSpouse">배우자 (40,000원)</label>
+          <div class="card-title">
+            <span class="icon amber">📋</span> <span id="lvRecordYear">2026</span>년 사용 내역
+            <span class="badge emerald" id="lvRecordCount">0건</span>
           </div>
-          <div class="form-group">
-            <label>자녀 수</label>
-            <input type="number" id="faChildren" value="0" min="0" max="10">
+          <div id="lvRecordList">
+            <p style="color:var(--text-muted); text-align:center; padding:24px;">
+              캘린더에서 날짜를 클릭하여 휴가를 등록하세요.
+            </p>
           </div>
-          <div class="form-group">
-            <label>기타 부양가족 수 (5인 한도 내)</label>
-            <input type="number" id="faOther" value="0" min="0" max="5">
-          </div>
-          <button class="btn btn-primary btn-full" onclick="calculateFamily()">계산하기</button>
-          <div id="familyResult" style="margin-top:12px"></div>
         </div>
 
+        <!-- 2열: 유형별 소진 현황 -->
         <div class="card">
-          <div class="card-title"><span class="icon amber">🏅</span> 장기근속수당</div>
-          <div class="form-group">
-            <label>근속연수</label>
-            <input type="number" id="lsYears" value="1" min="0" max="40">
-          </div>
-          <button class="btn btn-primary btn-full" onclick="calculateLongService()">계산하기</button>
-          <div id="longServiceResult" style="margin-top:12px"></div>
-          <hr class="divider">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>근속 구간</th>
-                <th class="amount">월 수당</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>5~10년</td>
-                <td class="amount">50,000원</td>
-              </tr>
-              <tr>
-                <td>10~15년</td>
-                <td class="amount">60,000원</td>
-              </tr>
-              <tr>
-                <td>15~20년</td>
-                <td class="amount">80,000원</td>
-              </tr>
-              <tr>
-                <td>20~21년</td>
-                <td class="amount">100,000원</td>
-              </tr>
-              <tr>
-                <td>21~25년</td>
-                <td class="amount">110,000원</td>
-              </tr>
-              <tr>
-                <td>25년+</td>
-                <td class="amount">130,000원</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="card">
-          <div class="card-title"><span class="icon violet">🌙</span> 야간근무가산금 (교대)</div>
-          <div class="form-group">
-            <label>월 야간근무 횟수</label>
-            <input type="number" id="nsCount" value="0" min="0" max="31">
-          </div>
-          <button class="btn btn-primary btn-full" onclick="calculateNightBonus()">계산하기</button>
-          <div id="nightBonusResult" style="margin-top:12px"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══════════ 📊 승진·퇴직 ═══════════ -->
-    <div class="tab-content" id="tab-career">
-      <div class="grid-2">
-        <div class="card">
-          <div class="card-title"><span class="icon blue">📊</span> 승진 시뮬레이터</div>
-          <div class="form-group">
-            <label>직종</label>
-            <select id="prJobType" onchange="updatePromoGrades()">
-            </select>
-          </div>
-          <div class="form-group">
-            <label>현재 등급</label>
-            <select id="prGrade"></select>
-          </div>
-          <div class="form-group">
-            <label>입사일</label>
-            <input type="text" id="prHireDate" placeholder="예: 2006-07-05">
-          </div>
-          <button class="btn btn-primary btn-full" onclick="calculatePromotion()">시뮬레이션</button>
-          <div id="promoResult" style="margin-top:12px"></div>
-        </div>
-
-        <div class="card">
-          <div class="card-title"><span class="icon amber">🏦</span> 퇴직금 시뮬레이터</div>
-          <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">※ 2015.6.30 이전 입사자 기준 (퇴직수당)</p>
-          <div class="form-group">
-            <label>월 평균임금 (원)</label>
-            <input type="number" id="svAvgPay" value="0" min="0">
-          </div>
-          <div class="form-group">
-            <label>근속년수</label>
-            <input type="number" id="svYears" value="1" min="0" max="40">
-          </div>
-          <button class="btn btn-primary btn-full" onclick="calculateSeverance()">계산하기</button>
-          <div id="severanceResult" style="margin-top:12px"></div>
-          <hr class="divider">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>재직기간</th>
-                <th class="amount">계수</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>20년+</td>
-                <td class="amount">60%</td>
-              </tr>
-              <tr>
-                <td>15~20년</td>
-                <td class="amount">50%</td>
-              </tr>
-              <tr>
-                <td>10~15년</td>
-                <td class="amount">45%</td>
-              </tr>
-              <tr>
-                <td>5~10년</td>
-                <td class="amount">35%</td>
-              </tr>
-              <tr>
-                <td>1~5년</td>
-                <td class="amount">10%</td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="card-title"><span class="icon indigo">📊</span> 유형별 소진 현황</div>
+          <div id="lvQuotaTable"></div>
         </div>
       </div>
     </div>
@@ -1008,6 +621,126 @@
 
     </div>
 
+    <!-- ═══════════ 👤 개인정보 ═══════════ -->
+    <div class="tab-content" id="tab-profile">
+      <div class="card" style="max-width:600px; margin:0 auto;">
+        <div class="card-title"><span class="icon indigo">👤</span> 내 정보
+          <span class="badge emerald" id="profileStatus">미저장</span>
+        </div>
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">한번 저장하면 모든 계산기에 자동 반영됩니다. 데이터는 이 브라우저에만 저장됩니다.</p>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>이름</label>
+            <input type="text" id="pfName" placeholder="예: 홍길동" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label>성별 <small style="color:var(--text-muted)">(선택)</small></label>
+            <select id="pfGender">
+              <option value="">미설정</option>
+              <option value="M">남성</option>
+              <option value="F">여성</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>직종</label>
+          <select id="pfJobType" onchange="updateProfileGrades()">
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>직급·등급</label>
+            <select id="pfGrade"></select>
+          </div>
+          <div class="form-group">
+            <label>호봉 (연차)</label>
+            <select id="pfYear">
+              <option value="1">1년차</option>
+              <option value="2">2년차</option>
+              <option value="3">3년차</option>
+              <option value="4">4년차</option>
+              <option value="5">5년차</option>
+              <option value="6">6년차</option>
+              <option value="7">7년차</option>
+              <option value="8">8년차</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>입사일</label>
+          <input type="text" id="pfHireDate" placeholder="예: 2006-07-05">
+          <small id="pfServiceDisplay" style="color:var(--text-muted)"></small>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>조정급 (원/월)</label>
+            <input type="number" id="pfAdjust" value="0" min="0">
+          </div>
+          <div class="form-group">
+            <label>승급조정급 (원/월)</label>
+            <input type="number" id="pfUpgradeAdjust" value="0" min="0">
+          </div>
+        </div>
+
+        <div class="toggle-group">
+          <input type="checkbox" id="pfMilitary">
+          <label for="pfMilitary">군복무수당</label>
+        </div>
+        <div class="form-group" id="pfMilitaryMonthsGroup" style="display:none; margin-left:24px;">
+          <label>복무기간 (개월, 기본 24)</label>
+          <input type="number" id="pfMilitaryMonths" value="24" min="1" max="36">
+        </div>
+
+        <div class="toggle-group">
+          <input type="checkbox" id="pfSeniority">
+          <label for="pfSeniority">근속가산기본급 (2016.2 이전 입사자)</label>
+        </div>
+
+        <p style="font-size:12px; color:var(--accent-indigo); margin:12px 0 4px; font-weight:600;">▸ 가족수당</p>
+        <div class="toggle-group">
+          <input type="checkbox" id="pfSpouse">
+          <label for="pfSpouse">배우자 (40,000원)</label>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>자녀 수</label>
+            <input type="number" id="pfChildren" value="0" min="0" max="10">
+          </div>
+          <div class="form-group">
+            <label>기타 가족 수</label>
+            <input type="number" id="pfOtherFamily" value="0" min="0" max="5">
+          </div>
+        </div>
+
+        <p style="font-size:12px; color:var(--accent-amber); margin:12px 0 4px; font-weight:600;">▸ 기타 수당</p>
+        <div class="form-row">
+          <div class="form-group">
+            <label>별정수당 (원/월)</label>
+            <input type="number" id="pfSpecial" value="0" min="0">
+          </div>
+          <div class="form-group">
+            <label>직책급 (원/월)</label>
+            <input type="number" id="pfPosition" value="0" min="0">
+          </div>
+        </div>
+
+        <div class="form-row" style="margin-top:16px;">
+          <button class="btn btn-primary" onclick="saveProfile()" style="flex:2">💾 저장하기</button>
+          <button class="btn btn-outline" onclick="clearProfile()" style="flex:1">🗑 초기화</button>
+        </div>
+
+        <!-- 프로필 요약 -->
+        <div id="profileSummary" style="margin-top:16px; padding-top:16px; border-top:1px solid var(--border-glass);">
+          <div class="card-title" style="font-size:14px;"><span class="icon emerald">📊</span> 내 급여 요약</div>
+          <p style="color:var(--text-muted)">정보를 입력하고 [저장하기]를 눌러주세요.</p>
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <script src="data.js"></script>
@@ -1016,6 +749,7 @@
   <script src="profile.js"></script>
   <script src="overtime.js"></script>
   <script src="leave.js"></script>
+  <script src="payroll.js"></script>
   <script src="app.js"></script>
 </body>
 

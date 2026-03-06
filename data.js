@@ -223,8 +223,7 @@ const DATA = {
     types: [
       // ── 📅 법정 휴가 ──
       { id: 'annual', label: '연차', category: 'legal', isPaid: true, quota: null, usesAnnual: true, deductType: 'none', note: '입사일 기준 동적 계산' },
-      { id: 'half_am', label: '반차(오전)', category: 'legal', isPaid: true, quota: null, usesAnnual: true, deductType: 'none', halfDay: true, note: '연차에서 0.5일 차감' },
-      { id: 'half_pm', label: '반차(오후)', category: 'legal', isPaid: true, quota: null, usesAnnual: true, deductType: 'none', halfDay: true, note: '연차에서 0.5일 차감' },
+      { id: 'time_leave', label: '시간차', category: 'legal', isPaid: true, quota: null, usesAnnual: true, deductType: 'none', isTimeBased: true, note: '시작/종료 시간 선택 (8시간 = 1일, 연차에서 차감)' },
 
       // ── 🏥 건강 ──
       { id: 'sick', label: '병가', category: 'health', isPaid: false, quota: 14, usesAnnual: false, deductType: 'ordinary', note: '14일 이내 2차의료기관 진단서 인정, 15일↑ 해당과 확인', ref: '제71조, 보수규정 제7조②' },

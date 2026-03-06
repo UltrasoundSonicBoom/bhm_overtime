@@ -31,15 +31,42 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
     tab.classList.add('active');
     document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
 
-    // 탭 전환 시 프로필 자동 반영
     const tabName = tab.dataset.tab;
-    if (tabName === 'payroll') applyProfileToPayroll();
+    if (tabName === 'payroll') { applyProfileToPayroll(); if (typeof PAYROLL !== 'undefined') PAYROLL.init(); }
     if (tabName === 'overtime') { applyProfileToOvertime(); initOvertimeTab(); }
     if (tabName === 'leave') { applyProfileToLeave(); initLeaveTab(); }
-    if (tabName === 'career') applyProfileToCareer();
     if (tabName === 'reference') renderWikiToc();
+    if (tabName === 'profile') initProfileTab();
   });
 });
+
+// ── 서브탭 전환 ──
+document.querySelectorAll('.sub-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.sub-content').forEach(c => c.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('sub-' + tab.dataset.subtab).classList.add('active');
+  });
+});
+
+// ── 개인정보 탭 초기화 ──
+function initProfileTab() {
+  const saved = PROFILE.load();
+  if (saved) {
+    updateProfileSummary(saved);
+  }
+}
+
+// ── 개인정보 탭으로 전환 ──
+function switchToProfileTab() {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  const profileTab = document.querySelector('.nav-tab[data-tab="profile"]');
+  if (profileTab) profileTab.classList.add('active');
+  document.getElementById('tab-profile').classList.add('active');
+  initProfileTab();
+}
 
 // ── 접이식(collapsible) 토글 ──
 function toggleCollapsible(id) {
@@ -57,7 +84,7 @@ function toggleCollapsible(id) {
 
 // ── 직종 드롭다운 동적 생성 ──
 function populateJobTypeDropdowns() {
-  const selectIds = ['pfJobType', 'psJobType', 'wJobType', 'prJobType'];
+  const selectIds = ['pfJobType', 'psJobType', 'wJobType'];
   selectIds.forEach(id => {
     const sel = document.getElementById(id);
     if (!sel) return;
@@ -76,7 +103,6 @@ document.addEventListener('DOMContentLoaded', () => {
   populateJobTypeDropdowns();
   updateProfileGrades();
   updateGrades();
-  updatePromoGrades();
   updatePayrollGrades();
   renderCeremonyTable();
   renderLeaveTable();
@@ -125,7 +151,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // 초기 로드 시 현재 선택된 연도/월로 자동설정
   autoFillMonth();
 
-  // 시간외·온콜 탭 초기화
+  // 시간외·온콜 탭 초기화 (기본 활성 탭)
+  applyProfileToOvertime();
   initOvertimeTab();
 
   // 휴가 관리 탭 초기화
@@ -153,6 +180,8 @@ function saveProfile() {
   updateProfileSummary(profile);
   document.getElementById('profileStatus').textContent = '저장됨 ✓';
   document.getElementById('profileStatus').className = 'badge emerald';
+  // Q&A 카드 갱신
+  if (typeof PAYROLL !== 'undefined') PAYROLL.init();
 }
 
 function clearProfile() {
@@ -171,9 +200,11 @@ function clearProfile() {
   document.getElementById('profileStatus').textContent = '미저장';
   document.getElementById('profileStatus').className = 'badge amber';
   document.getElementById('profileSummary').innerHTML = `
-        <div class="card-title"><span class="icon emerald">📊</span> 내 급여 요약</div>
-        <p style="color:var(--text-muted)">좌측에서 정보를 입력하고 [저장하기]를 눌러주세요.</p>
+        <div class="card-title" style="font-size:14px;"><span class="icon emerald">📊</span> 내 급여 요약</div>
+        <p style="color:var(--text-muted)">정보를 입력하고 [저장하기]를 눌러주세요.</p>
     `;
+  // Q&A 카드 갱신
+  if (typeof PAYROLL !== 'undefined') PAYROLL.init();
 }
 
 function updateProfileSummary(profile) {
@@ -258,16 +289,7 @@ function applyProfileToLeave() {
   }
 }
 
-function applyProfileToCareer() {
-  const profile = PROFILE.load();
-  if (!profile) return;
-  if (profile.jobType) {
-    document.getElementById('prJobType').value = profile.jobType;
-    updatePromoGrades();
-  }
-  if (profile.grade) document.getElementById('prGrade').value = profile.grade;
-  if (profile.hireDate) document.getElementById('prHireDate').value = profile.hireDate;
-}
+// applyProfileToCareer — 제거됨 (승진·퇴직은 Q&A 카드로 이동)
 
 // ═══════════ 직급 목록 업데이트 ═══════════
 function updateGrades() {
@@ -284,19 +306,7 @@ function updateGrades() {
   });
 }
 
-function updatePromoGrades() {
-  const jobType = document.getElementById('prJobType').value;
-  const gradeSelect = document.getElementById('prGrade');
-  const table = DATA.payTables[CALC.resolvePayTable(jobType)];
-  if (!gradeSelect || !table) return;
-  gradeSelect.innerHTML = '';
-  Object.keys(table.autoPromotion).forEach(g => {
-    const opt = document.createElement('option');
-    opt.value = g;
-    opt.textContent = g;
-    gradeSelect.appendChild(opt);
-  });
-}
+// updatePromoGrades — 제거됨 (승진 기능은 Q&A 카드로 이동)
 
 function updatePayrollGrades() {
   const el = document.getElementById('psJobType');
@@ -866,21 +876,6 @@ function calculateSeverance() {
 }
 
 // ═══════════ 📖 규정 위키 ═══════════
-function switchRefSubtab(tab) {
-  document.querySelectorAll('.ref-subtab').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.subtab === tab);
-    if (btn.dataset.subtab === tab) {
-      btn.className = 'btn btn-primary ref-subtab active';
-    } else {
-      btn.className = 'btn btn-outline ref-subtab';
-    }
-  });
-  document.getElementById('refSubChatbot').style.display = tab === 'chatbot' ? 'block' : 'none';
-  document.getElementById('refSubWiki').style.display = tab === 'wiki' ? 'block' : 'none';
-
-  if (tab === 'wiki') renderWikiToc();
-}
-
 function renderWikiToc() {
   const toc = document.getElementById('wikiToc');
   if (!toc || !DATA.handbook) return;
@@ -1036,7 +1031,13 @@ function answerFaqItem(category, idx) {
   if (!item) return;
   addChatMessage(item.q, 'user');
   setTimeout(() => {
-    addChatMessage(item.a, 'bot', item.ref);
+    // FAQ 답변 + 핸드북 원문 보강
+    const result = searchChat(item.q);
+    let html = `<div style="margin-bottom:6px;">${item.a}</div>`;
+    if (result && result.handbook.length > 0) {
+      html += renderHandbookSource(result.handbook);
+    }
+    addChatMessage(html, 'bot', item.ref);
   }, 300);
 }
 
@@ -1086,63 +1087,170 @@ function addChatMessage(text, type, ref = null) {
   container.scrollTop = container.scrollHeight;
 }
 
-function searchFAQ(query) {
-  query = query.toLowerCase().trim();
-  if (!query) return [];
+// ── 챗봇 별칭(alias) 사전 ──
+const CHAT_ALIASES = {
+  '온콜': ['on-call', '호출', '대기', '콜'],
+  '연차': ['연가', '연차', '쉬는날', '몇일'],
+  '야간': ['밤번', 'night', '밤', '나이트'],
+  '급여': ['월급', '봉급', '급료', '임금', '페이'],
+  '퇴직': ['퇴사', '이직', '그만'],
+  '승진': ['승격', '진급', '승급'],
+  '출산': ['임신', '육아', '아기', '아이'],
+  '수당': ['보조', '지원', '얼마'],
+  '감면': ['할인', '진료비', '병원비'],
+  '경조': ['돌아가', '사망', '장례', '조문', '결혼', '입양', '화환', '조의', '장의', '부의', '축의'],
+  '할머니': ['조부모', '외조부모', '할아버지', '외할머니', '외할아버지'],
+  '형제': ['형', '오빠', '언니', '누나', '동생', '자매', '남매'],
+  '부모': ['아버지', '어머니', '아빠', '엄마', '시어머니', '시아버지', '장인', '장모'],
+  '자녀': ['아들', '딸', '아이', '자식'],
+  '검진': ['건강검진', '검사'],
+  '헌혈': ['피', '혈액'],
+  '교육': ['연수', '학회', '방사선', '보수교육'],
+  '돌봄': ['간병', '가족돌봄', '간호'],
+  '복지': ['포인트', '복지포인트', '어린이집'],
+  '통상임금': ['시급', '임금', '통상'],
+  '호봉': ['승급', '연봉']
+};
 
+// ── 쿼리→카테고리 직접 매핑 (단일 키워드 → 핸드북 카테고리) ──
+const CHAT_CATEGORY_MAP = {
+  '연차': '연차·휴가', '휴가': '연차·휴가', '연가': '연차·휴가', '쉬는날': '연차·휴가',
+  '온콜': '온콜', '호출': '온콜', '대기수당': '온콜',
+  '야간': '근로시간', '밤번': '근로시간', '리커버리': '근로시간',
+  '경조': '청원·경조', '결혼': '청원·경조', '사망': '청원·경조', '돌아가': '청원·경조', '장례': '청원·경조',
+  '수당': '임금·수당', '급여': '임금·수당', '월급': '임금·수당', '통상임금': '임금·수당', '가족수당': '임금·수당',
+  '승진': '승진', '승격': '승진', '호봉': '승진',
+  '휴직': '휴직', '육아휴직': '휴직', '질병휴직': '휴직',
+  '출산': '연차·휴가', '임신': '연차·휴가',
+  '복지': '복지', '감면': '복지', '진료비': '복지', '어린이집': '복지', '복지포인트': '복지',
+  '근로시간': '근로시간', '근무시간': '근로시간', '시간외': '근로시간'
+};
+
+/**
+ * 챗봇 검색: FAQ에서 가장 정확한 1건 + 핸드북 원문으로 보강
+ */
+function searchChat(query) {
+  query = query.toLowerCase().trim();
+  if (!query) return null;
+
+  const qWords = query.split(/\s+/);
+
+  // ── 1) 쿼리에서 핵심 카테고리 추론 ──
+  let mappedCategory = null;
+  for (const word of qWords) {
+    if (CHAT_CATEGORY_MAP[word]) { mappedCategory = CHAT_CATEGORY_MAP[word]; break; }
+  }
+  // alias를 통한 카테고리 추론
+  if (!mappedCategory) {
+    for (const [key, words] of Object.entries(CHAT_ALIASES)) {
+      if (query.includes(key) || words.some(w => query.includes(w))) {
+        if (CHAT_CATEGORY_MAP[key]) { mappedCategory = CHAT_CATEGORY_MAP[key]; break; }
+      }
+    }
+  }
+
+  // ── 2) FAQ 점수 계산 (가장 정확한 1건만) ──
   const scored = DATA.faq.map(item => {
     let score = 0;
     const qLower = item.q.toLowerCase();
     const aLower = item.a.toLowerCase();
-    const catLower = item.category.toLowerCase();
 
-    if (query.includes(catLower) || catLower.includes(query)) score += 5;
-
-    const qWords = query.split(/\s+/);
+    // 질문에 직접 매칭 (가장 높은 가중치)
     qWords.forEach(w => {
-      if (qLower.includes(w)) score += 3;
+      if (qLower.includes(w)) score += 5;
       if (aLower.includes(w)) score += 1;
     });
 
-    const aliases = {
-      '온콜': ['on-call', '호출', '대기', '콜'],
-      '연차': ['휴가', '연가', '연차', '쉬는날'],
-      '야간': ['밤번', 'night', '밤', '나이트'],
-      '급여': ['월급', '봉급', '급료', '임금', '페이'],
-      '퇴직': ['퇴사', '이직', '그만'],
-      '승진': ['승격', '진급', '승급', '호봉'],
-      '출산': ['임신', '육아', '아기', '아이'],
-      '수당': ['보조', '지원', '얼마'],
-      '감면': ['할인', '진료비', '병원비'],
-      '경조': ['돌아가', '사망', '장례', '조문', '결혼', '입양', '화환', '조의', '장의', '부의', '축의'],
-      '할머니': ['조부모', '외조부모', '할아버지', '외할머니', '외할아버지'],
-      '형제': ['형', '오빠', '언니', '누나', '동생', '자매', '남매'],
-      '부모': ['아버지', '어머니', '아빠', '엄마', '시어머니', '시아버지', '장인', '장모'],
-      '자녀': ['아들', '딸', '아이', '자식'],
-      '검진': ['건강검진', '검사'],
-      '헌혈': ['피', '혈액'],
-      '교육': ['연수', '학회', '방사선', '보수교육'],
-      '돌봄': ['간병', '가족돌봄', '간호'],
-      '복지': ['포인트', '복지포인트', '어린이집'],
-      '통상임금': ['시급', '임금', '통상']
-    };
-
-    Object.entries(aliases).forEach(([key, words]) => {
-      // 쿼리에 key 또는 alias 단어가 포함되면 → FAQ의 q/a에 key가 있으면 가산
+    // alias 가산
+    Object.entries(CHAT_ALIASES).forEach(([key, words]) => {
       const queryHasKey = query.includes(key) || words.some(w => query.includes(w));
-      if (queryHasKey) {
-        if (qLower.includes(key) || aLower.includes(key)) score += 4;
-        // alias 단어가 FAQ q/a에도 있으면 추가 가산
-        words.forEach(w => {
-          if (qLower.includes(w) || aLower.includes(w)) score += 2;
-        });
-      }
+      if (queryHasKey && (qLower.includes(key) || aLower.includes(key))) score += 3;
     });
+
+    // 매핑된 카테고리가 있으면 같은 카테고리 FAQ에 보너스
+    // 단, 카테고리가 넓은 경우(휴가) 질문 직접매칭 안되면 보너스 줄이기
+    if (mappedCategory) {
+      const catSection = DATA.handbook.find(h => h.category === mappedCategory);
+      if (catSection && item.category === catSection.category) {
+        score += 2;
+      } else if (item.category === mappedCategory) {
+        score += 2;
+      }
+    }
 
     return { ...item, score };
   });
 
-  return scored.filter(s => s.score > 0).sort((a, b) => b.score - a.score).slice(0, 3);
+  const best = scored.filter(s => s.score > 0).sort((a, b) => b.score - a.score)[0];
+
+  // ── 3) 핸드북에서 원문 찾기 ──
+  let handbookArticles = [];
+  // 핸드북 카테고리 직접 매칭
+  if (mappedCategory) {
+    const section = DATA.handbook.find(h => h.category === mappedCategory);
+    if (section) {
+      // 카테고리 내에서 관련 article 필터링
+      const articleScores = section.articles.map(art => {
+        let s = 0;
+        const tLower = art.title.toLowerCase();
+        const bLower = art.body.toLowerCase();
+        qWords.forEach(w => { if (tLower.includes(w)) s += 5; if (bLower.includes(w)) s += 1; });
+        Object.entries(CHAT_ALIASES).forEach(([key, words]) => {
+          if (query.includes(key) || words.some(w => query.includes(w))) {
+            if (tLower.includes(key) || bLower.includes(key)) s += 3;
+          }
+        });
+        return { ...art, score: s };
+      });
+      // 점수 높은 순 정렬, 최소 1건 보장
+      const sorted = articleScores.sort((a, b) => b.score - a.score);
+      // 질문이 구체적이면 (2단어 이상) 가장 관련있는 것만, 아니면 전체
+      if (qWords.length >= 2 && sorted[0] && sorted[0].score > 0) {
+        handbookArticles = sorted.filter(a => a.score > 0).slice(0, 2);
+      } else {
+        handbookArticles = sorted; // 카테고리 전체
+      }
+    }
+  }
+
+  // 핸드북 매칭 실패 시 FAQ 카테고리로 재시도
+  if (handbookArticles.length === 0 && best) {
+    // FAQ의 카테고리 → 핸드북 카테고리 매핑
+    const faqCatMap = {
+      '근로시간': '근로시간', '온콜': '온콜', '야간근무': '근로시간',
+      '휴가': '연차·휴가', '경조': '청원·경조', '수당': '임금·수당',
+      '휴직': '휴직', '승진': '승진', '복지': '복지'
+    };
+    const hbCat = faqCatMap[best.category];
+    if (hbCat) {
+      const section = DATA.handbook.find(h => h.category === hbCat);
+      if (section) {
+        // best FAQ의 ref와 매칭되는 article 우선
+        const matched = section.articles.filter(a => best.ref && a.ref.includes(best.ref.split(',')[0].trim()));
+        handbookArticles = matched.length > 0 ? matched.slice(0, 2) : [section.articles[0]];
+      }
+    }
+  }
+
+  if (!best && handbookArticles.length === 0) return null;
+
+  return { faq: best || null, handbook: handbookArticles };
+}
+
+/**
+ * 핸드북 원문을 HTML 블록으로 렌더
+ */
+function renderHandbookSource(articles) {
+  if (!articles || articles.length === 0) return '';
+  let html = '<div style="margin-top:10px; padding:10px 12px; background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.15); border-radius:8px; font-size:12px;">';
+  html += '<div style="font-weight:600; color:var(--accent-indigo); margin-bottom:6px;">📖 규정 원문</div>';
+  articles.forEach((art, i) => {
+    if (i > 0) html += '<hr style="border:none; border-top:1px solid rgba(99,102,241,0.1); margin:8px 0;">';
+    html += `<div style="font-weight:600; color:var(--text-primary); margin-bottom:4px;">${art.title} <span style="font-weight:400; color:var(--accent-indigo); font-size:11px;">${art.ref}</span></div>`;
+    html += `<div style="color:var(--text-secondary); white-space:pre-line; line-height:1.6;">${art.body}</div>`;
+  });
+  html += '</div>';
+  return html;
 }
 
 document.getElementById('chatSend').addEventListener('click', handleChat);
@@ -1158,22 +1266,32 @@ function handleChat() {
   addChatMessage(query, 'user');
   input.value = '';
 
-  const results = searchFAQ(query);
+  const result = searchChat(query);
 
   setTimeout(() => {
-    if (results.length === 0) {
+    if (!result) {
       addChatMessage(
-        '죄송합니다, 해당 질문에 대한 답변을 찾지 못했습니다. 😅<br>' +
-        '아래 카테고리 태그를 클릭하시거나, 더 구체적인 키워드로 검색해보세요.<br>' +
-        '<small style="color:var(--text-muted)">예: "온콜", "연차", "야간근무", "가족수당", "승진"</small>',
+        '해당 질문에 대한 답변을 찾지 못했습니다. 😅<br>' +
+        '<small style="color:var(--text-muted)">더 구체적인 키워드로 검색해보세요. 예: "온콜", "연차", "야간", "가족수당", "승진"</small>',
         'bot'
       );
+      return;
+    }
+
+    // 핸드북 카테고리 전체를 보여주는 경우 (단일 키워드 검색)
+    if (result.handbook.length > 1 && !result.faq) {
+      // 핸드북 원문만으로 답변
+      let html = renderHandbookSource(result.handbook);
+      addChatMessage(html, 'bot');
     } else {
-      results.forEach((r, i) => {
-        setTimeout(() => {
-          addChatMessage(r.a, 'bot', r.ref);
-        }, i * 300);
-      });
+      // FAQ 답변 + 핸드북 원문 보강
+      let html = '';
+      if (result.faq) {
+        html += `<div style="margin-bottom:6px;">${result.faq.a}</div>`;
+      }
+      html += renderHandbookSource(result.handbook);
+      const ref = result.faq ? result.faq.ref : (result.handbook[0] ? result.handbook[0].ref : null);
+      addChatMessage(html, 'bot', ref);
     }
   }, 400);
 }
@@ -1183,15 +1301,29 @@ function handleChat() {
 // 현재 선택된 날짜 상태
 let otSelectedDate = null;
 let otHolidayMap = {};
-let otInitialized = false;
+let otCurrentYear = new Date().getFullYear();
+let otCurrentMonth = new Date().getMonth() + 1;
+
+// 월 이동
+function otNavMonth(delta) {
+  otCurrentMonth += delta;
+  if (otCurrentMonth > 12) { otCurrentMonth = 1; otCurrentYear++; }
+  if (otCurrentMonth < 1) { otCurrentMonth = 12; otCurrentYear--; }
+  refreshOtCalendar();
+}
+
+function otGoToday() {
+  const now = new Date();
+  otCurrentYear = now.getFullYear();
+  otCurrentMonth = now.getMonth() + 1;
+  refreshOtCalendar();
+}
 
 // 초기화
 function initOvertimeTab() {
   const now = new Date();
-  const yearSel = document.getElementById('otYear');
-  const monthSel = document.getElementById('otMonth');
-  if (yearSel) yearSel.value = String(now.getFullYear());
-  if (monthSel) monthSel.value = String(now.getMonth() + 1);
+  otCurrentYear = now.getFullYear();
+  otCurrentMonth = now.getMonth() + 1;
 
   // 프로필에서 시급 자동 반영
   const profile = PROFILE.load();
@@ -1204,20 +1336,13 @@ function initOvertimeTab() {
     }
   }
 
-  // 연도/월 변경 이벤트 (최초 1회만)
-  if (!otInitialized) {
-    document.getElementById('otYear').addEventListener('change', () => refreshOtCalendar());
-    document.getElementById('otMonth').addEventListener('change', () => refreshOtCalendar());
-    otInitialized = true;
-  }
-
   refreshOtCalendar();
 }
 
 // 캘린더 새로고침
 async function refreshOtCalendar() {
-  const year = parseInt(document.getElementById('otYear').value);
-  const month = parseInt(document.getElementById('otMonth').value);
+  const year = otCurrentYear;
+  const month = otCurrentMonth;
 
   // 배지 업데이트
   document.getElementById('otMonthBadge').textContent = `${year}년 ${month}월`;
@@ -1268,7 +1393,11 @@ function renderOtCalendar(year, month, recordsByDay) {
   const todayDay = isCurrentMonth ? today.getDate() : -1;
 
   const dowLabels = ['일', '월', '화', '수', '목', '금', '토'];
-  let html = '<div class="ot-cal"><div class="ot-cal-header">📅 ' + year + '년 ' + month + '월</div>';
+  let html = '<div class="ot-cal"><div class="ot-cal-header">'
+    + '<button class="cal-nav-btn" onclick="otNavMonth(-1)">◀</button>'
+    + '<span class="cal-nav-title" onclick="otGoToday()">' + year + '년 ' + month + '월</span>'
+    + '<button class="cal-nav-btn" onclick="otNavMonth(1)">▶</button>'
+    + '</div>';
   html += '<div class="ot-cal-grid">';
 
   // 요일 헤더
@@ -1361,15 +1490,17 @@ function onOtDateClick(year, month, day) {
   onOtTypeChange();
   previewOtCalc();
 
-  // 해당 날짜 기존 기록 표시
+  // 해당 날짜 기존 기록 표시 (전용 컨테이너 사용 → 중복 방지)
+  const existingContainer = document.getElementById('otExistingRecords');
+  existingContainer.innerHTML = '';
   const existing = OVERTIME.getDateRecords(year, month, day);
   if (existing.length > 0) {
     let existingHtml = '<div style="margin-top:8px; padding:8px; background:rgba(245,158,11,0.06); border-radius:6px; font-size:12px;">';
     existingHtml += `<strong style="color:var(--accent-amber)">📋 기존 기록 (${existing.length}건)</strong>`;
     existing.forEach(r => {
-      existingHtml += `<div style="margin-top:4px; cursor:pointer; padding:4px; border-radius:4px;" 
-        onclick="editOtRecord('${r.id}')" 
-        onmouseover="this.style.background='rgba(99,102,241,0.1)'" 
+      existingHtml += `<div style="margin-top:4px; cursor:pointer; padding:4px; border-radius:4px;"
+        onclick="editOtRecord('${r.id}')"
+        onmouseover="this.style.background='rgba(99,102,241,0.1)'"
         onmouseout="this.style.background='transparent'">
         <span class="ot-record-type ${r.type}" style="font-size:10px">${OVERTIME.typeLabel(r.type)}</span>
         ${r.startTime ? r.startTime + '~' + r.endTime : '종일'}
@@ -1378,7 +1509,7 @@ function onOtDateClick(year, month, day) {
       </div>`;
     });
     existingHtml += '</div>';
-    document.getElementById('otPreview').insertAdjacentHTML('afterend', existingHtml);
+    existingContainer.innerHTML = existingHtml;
   }
 }
 
@@ -1387,6 +1518,7 @@ function closeOtPanel() {
   document.getElementById('otInputPanel').style.display = 'none';
   otSelectedDate = null;
   document.querySelectorAll('.ot-cal-day').forEach(el => el.classList.remove('selected'));
+  document.getElementById('otExistingRecords').innerHTML = '';
 }
 
 // 유형 변경
@@ -1632,14 +1764,29 @@ function importOtData(event) {
 let lvSelectedDate = null;
 let lvHolidayMap = {};
 let lvTotalAnnual = 0;
+let lvCurrentYear = new Date().getFullYear();
+let lvCurrentMonth = new Date().getMonth() + 1;
 let lvInitialized = false;
+
+// 월 이동
+function lvNavMonth(delta) {
+  lvCurrentMonth += delta;
+  if (lvCurrentMonth > 12) { lvCurrentMonth = 1; lvCurrentYear++; }
+  if (lvCurrentMonth < 1) { lvCurrentMonth = 12; lvCurrentYear--; }
+  refreshLvCalendar();
+}
+
+function lvGoToday() {
+  const now = new Date();
+  lvCurrentYear = now.getFullYear();
+  lvCurrentMonth = now.getMonth() + 1;
+  refreshLvCalendar();
+}
 
 function initLeaveTab() {
   const now = new Date();
-  const yearSel = document.getElementById('lvYear');
-  const monthSel = document.getElementById('lvMonth');
-  if (yearSel) yearSel.value = String(now.getFullYear());
-  if (monthSel) monthSel.value = String(now.getMonth() + 1);
+  lvCurrentYear = now.getFullYear();
+  lvCurrentMonth = now.getMonth() + 1;
 
   // 프로필에서 연차 자동 산정
   const profile = PROFILE.load();
@@ -1654,16 +1801,62 @@ function initLeaveTab() {
   // 유형 select 동적 생성
   populateLvTypeSelect();
 
-  // 연도/월 변경 이벤트 (최초 1회만)
+  // 날짜 변경 이벤트 (최초 1회만)
   if (!lvInitialized) {
-    document.getElementById('lvYear').addEventListener('change', () => refreshLvCalendar());
-    document.getElementById('lvMonth').addEventListener('change', () => refreshLvCalendar());
     document.getElementById('lvStartDate').addEventListener('change', previewLvCalc);
     document.getElementById('lvEndDate').addEventListener('change', previewLvCalc);
     lvInitialized = true;
   }
 
   refreshLvCalendar();
+}
+
+// ── 대시보드 렌더링 ──
+function renderLvDashboard(year) {
+  const container = document.getElementById('lvDashboard');
+  if (!container) return;
+
+  const records = LEAVE.getYearRecords(year);
+  const usage = {};
+  records.forEach(r => {
+    if (!usage[r.type]) usage[r.type] = 0;
+    usage[r.type] += (r.days || 0);
+  });
+
+  // 시간차 시간 합산
+  let timeLeaveHours = 0;
+  records.forEach(r => { if (r.type === 'time_leave') timeLeaveHours += (r.hours || 0); });
+
+  const annualUsed = (usage['annual'] || 0) + (usage['time_leave'] || 0);
+  const eduTraining = usage['edu_training'] || 0;
+  const eduMandatory = usage['edu_mandatory'] || 0;
+  const checkup = usage['checkup'] || 0;
+  const blood = usage['blood_donation'] || 0;
+
+  const items = [
+    { label: '연차', used: annualUsed, total: lvTotalAnnual || '?', key: true },
+    { label: '시간차', used: timeLeaveHours, total: null, suffix: 'h', show: timeLeaveHours > 0 },
+    { label: '교육연수', used: eduTraining, total: 3 },
+    { label: '필수교육', used: eduMandatory, total: 3 },
+    { label: '검진휴가', used: checkup, total: 1 },
+    { label: '헌혈휴가', used: blood, total: 1 },
+  ];
+
+  let html = '';
+  items.forEach(item => {
+    if (item.show === false) return;
+    if (item.suffix) {
+      html += `<div class="lv-dash-item">${item.label} <span class="lv-dash-value">${item.used}${item.suffix}</span></div>`;
+      return;
+    }
+    const remain = typeof item.total === 'number' ? item.total - item.used : null;
+    let cls = 'lv-dash-value';
+    if (remain !== null && remain <= 0) cls += ' over';
+    else if (remain !== null && remain <= Math.ceil((typeof item.total === 'number' ? item.total : 0) * 0.2)) cls += ' warning';
+    html += `<div class="lv-dash-item">${item.label}(<span class="${cls}">${item.used}/${item.total}</span>)</div>`;
+  });
+
+  container.innerHTML = html;
 }
 
 // 카테고리별 아이콘 매핑
@@ -1692,7 +1885,7 @@ function populateLvTypeSelect() {
       const icon = LV_CAT_ICONS[t.category] || '📋';
       const paidTag = t.isPaid ? '' : ' [무급]';
       let label = `${icon} ${t.label}${paidTag}`;
-      if (t.halfDay) label += ' (0.5일)';
+      if (t.isTimeBased) label += ' (시간단위)';
       if (t.quota !== null) label += ` [${t.quota}일]`;
       opt.textContent = label;
       optgroup.appendChild(opt);
@@ -1702,8 +1895,8 @@ function populateLvTypeSelect() {
 }
 
 async function refreshLvCalendar() {
-  const year = parseInt(document.getElementById('lvYear').value);
-  const month = parseInt(document.getElementById('lvMonth').value);
+  const year = lvCurrentYear;
+  const month = lvCurrentMonth;
 
   document.getElementById('lvMonthBadge').textContent = `${year}년 ${month}월`;
 
@@ -1736,7 +1929,8 @@ async function refreshLvCalendar() {
   renderLvRecordList(year);
   renderLvStats(year);
   renderLvQuotaTable(year);
-  closeLvPanel();
+  renderLvDashboard(year);
+  resetLvPanel();
 }
 
 function renderLvCalendar(year, month, recordsByDay) {
@@ -1750,7 +1944,11 @@ function renderLvCalendar(year, month, recordsByDay) {
   const todayDay = isCurrentMonth ? today.getDate() : -1;
 
   const dowLabels = ['일', '월', '화', '수', '목', '금', '토'];
-  let html = '<div class="ot-cal"><div class="ot-cal-header" style="background:rgba(16,185,129,0.08); color:var(--accent-emerald)">📅 ' + year + '년 ' + month + '월</div>';
+  let html = '<div class="ot-cal"><div class="ot-cal-header" style="background:rgba(16,185,129,0.08); color:var(--accent-emerald)">'
+    + '<button class="cal-nav-btn" onclick="lvNavMonth(-1)">◀</button>'
+    + '<span class="cal-nav-title" onclick="lvGoToday()">' + year + '년 ' + month + '월</span>'
+    + '<button class="cal-nav-btn" onclick="lvNavMonth(1)">▶</button>'
+    + '</div>';
   html += '<div class="ot-cal-grid">';
 
   dowLabels.forEach((d, i) => {
@@ -1823,34 +2021,53 @@ function onLvDateClick(year, month, day) {
   onLvTypeChange();
   previewLvCalc();
 
-  // 기존 기록 표시
+  // 기존 기록 표시 (전용 컨테이너 사용 → 중복 방지)
+  const existingContainer = document.getElementById('lvExistingRecords');
+  existingContainer.innerHTML = '';
   const existing = LEAVE.getDateRecords(dateStr);
   if (existing.length > 0) {
-    const container = document.getElementById('lvPreview');
     let extra = '<div style="margin-top:8px; padding:8px; background:rgba(16,185,129,0.06); border-radius:6px; font-size:12px;">';
     extra += `<strong style="color:var(--accent-emerald)">📋 기존 기록 (${existing.length}건)</strong>`;
     existing.forEach(r => {
       const typeInfo = LEAVE.getTypeById(r.type);
-      extra += `<div style="margin-top:4px; cursor:pointer; padding:4px; border-radius:4px;" 
+      const timeInfo = r.type === 'time_leave' && r.hours ? ` (${r.hours}h)` : '';
+      extra += `<div style="margin-top:4px; cursor:pointer; padding:4px; border-radius:4px;"
         onclick="editLvRecord('${r.id}')"
         onmouseover="this.style.background='rgba(99,102,241,0.1)'"
         onmouseout="this.style.background='transparent'">
         <span class="lv-record-type ${r.isPaid ? 'paid' : 'unpaid'}" style="font-size:10px">${typeInfo ? typeInfo.label : r.type}</span>
         ${r.startDate === r.endDate ? '' : r.startDate + '~' + r.endDate}
-        ${r.days}일
+        ${r.days}일${timeInfo}
         ${r.salaryImpact ? '<strong style="color:var(--accent-rose)">-₩' + Math.abs(r.salaryImpact).toLocaleString() + '</strong>' : ''}
       </div>`;
     });
     extra += '</div>';
-    container.insertAdjacentHTML('afterend', extra);
+    existingContainer.innerHTML = extra;
   }
 }
 
-function closeLvPanel() {
-  document.getElementById('lvInputPanel').style.display = 'none';
+function resetLvPanel() {
   lvSelectedDate = null;
   document.querySelectorAll('#lvCalendar .ot-cal-day').forEach(el => el.classList.remove('selected'));
+  document.getElementById('lvPanelDate').textContent = '날짜를 선택하세요';
+  document.getElementById('lvEditId').value = '';
+  document.getElementById('lvDeleteBtn').style.display = 'none';
+  document.getElementById('lvSaveBtn').textContent = '💾 저장';
+  document.getElementById('lvMemo').value = '';
+  document.getElementById('lvExistingRecords').innerHTML = '';
+  document.getElementById('lvPreview').innerHTML = '';
+
+  // 오늘 날짜 기본 설정
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  document.getElementById('lvStartDate').value = todayStr;
+  document.getElementById('lvEndDate').value = todayStr;
+  document.getElementById('lvType').value = 'annual';
+  onLvTypeChange();
 }
+
+// 하위 호환
+function closeLvPanel() { resetLvPanel(); }
 
 function onLvTypeChange() {
   const type = document.getElementById('lvType').value;
@@ -1888,7 +2105,7 @@ function onLvTypeChange() {
 
   // 한도 현황 뱃지
   const quotaBadge = document.getElementById('lvQuotaBadge');
-  const year = parseInt(document.getElementById('lvYear').value);
+  const year = lvCurrentYear;
   if (typeInfo && typeInfo.quota !== null && !typeInfo.usesAnnual) {
     const records = LEAVE.getYearRecords(year);
     const used = records.filter(r => r.type === type).reduce((sum, r) => sum + (r.days || 0), 0);
@@ -1915,32 +2132,20 @@ function onLvTypeChange() {
     quotaBadge.style.display = 'none';
   }
 
-  // 시간 단위 입력 토글 (연차 계열만)
+  // 시간차 선택 시 시간 입력 표시
   const timeArea = document.getElementById('lvTimeInputArea');
-  const useTimeCheck = document.getElementById('lvUseTimeMode');
-  if (typeInfo && typeInfo.usesAnnual) {
+  if (typeInfo && typeInfo.isTimeBased) {
     timeArea.style.display = 'block';
-    useTimeCheck.checked = false;
-    document.getElementById('lvTimeFields').style.display = 'none';
-    document.getElementById('lvTimeCalcResult').textContent = '';
+    calcLvTimeHours();
   } else {
     timeArea.style.display = 'none';
-    useTimeCheck.checked = false;
-    document.getElementById('lvTimeFields').style.display = 'none';
+    document.getElementById('lvTimeCalcResult').textContent = '';
   }
 
   previewLvCalc();
 }
 
-// 시간 모드 토글
-function onLvTimeModeChange() {
-  const checked = document.getElementById('lvUseTimeMode').checked;
-  document.getElementById('lvTimeFields').style.display = checked ? 'block' : 'none';
-  if (checked) calcLvTimeHours();
-  previewLvCalc();
-}
-
-// 시간 계산
+// 시간차 시간 계산
 function calcLvTimeHours() {
   const startTime = document.getElementById('lvStartTime').value;
   const endTime = document.getElementById('lvEndTime').value;
@@ -1949,19 +2154,23 @@ function calcLvTimeHours() {
   const [sh, sm] = startTime.split(':').map(Number);
   const [eh, em] = endTime.split(':').map(Number);
   let hours = (eh + em / 60) - (sh + sm / 60);
-  if (hours < 0) hours += 24; // 자정 넘기는 경우
-  // 점심시간 1시간 제외 (4시간 이상 근무시)
+  if (hours < 0) hours += 24;
+  // 점심시간 1시간 제외 (4시간 이상일 때)
   if (hours >= 4) hours -= 1;
+  hours = Math.max(0, hours);
 
   const days = Math.round(hours / 8 * 100) / 100;
   const resultEl = document.getElementById('lvTimeCalcResult');
   resultEl.innerHTML = `${hours.toFixed(1)}시간 = <strong>${days}일</strong> 차감 (8시간 = 1일)`;
+
+  previewLvCalc();
 }
 
-// 시간 모드일 때 차감일수 반환
-function getLvTimeDays() {
-  const useTime = document.getElementById('lvUseTimeMode');
-  if (!useTime || !useTime.checked) return null;
+// 시간차 타입일 때 시간/일수 반환
+function getLvTimeInfo() {
+  const type = document.getElementById('lvType').value;
+  const typeInfo = LEAVE.getTypeById(type);
+  if (!typeInfo || !typeInfo.isTimeBased) return null;
 
   const startTime = document.getElementById('lvStartTime').value;
   const endTime = document.getElementById('lvEndTime').value;
@@ -1972,7 +2181,10 @@ function getLvTimeDays() {
   let hours = (eh + em / 60) - (sh + sm / 60);
   if (hours < 0) hours += 24;
   if (hours >= 4) hours -= 1;
-  return Math.round(hours / 8 * 100) / 100;
+  hours = Math.max(0, hours);
+  const days = Math.round(hours / 8 * 100) / 100;
+
+  return { hours: Math.round(hours * 10) / 10, days, startTime, endTime };
 }
 
 function previewLvCalc() {
@@ -1986,11 +2198,9 @@ function previewLvCalc() {
   if (!startStr || !endStr) { preview.innerHTML = ''; return; }
 
   let days;
-  const timeDays = getLvTimeDays();
-  if (timeDays !== null) {
-    days = timeDays;
-  } else if (typeInfo.halfDay) {
-    days = 0.5;
+  const timeInfo = getLvTimeInfo();
+  if (timeInfo !== null) {
+    days = timeInfo.days;
   } else if (typeInfo.ceremonyDays) {
     days = typeInfo.ceremonyDays;
   } else {
@@ -2051,11 +2261,15 @@ function saveLvRecord() {
   const monthlyBasePay = wage && wage.breakdown ? wage.breakdown.basePay / 12 : 0;
 
   let days;
-  const timeDays = getLvTimeDays();
-  if (timeDays !== null) {
-    days = timeDays;
-  } else if (typeInfo && typeInfo.halfDay) {
-    days = 0.5;
+  let hours = null;
+  let startTimeVal = null;
+  let endTimeVal = null;
+  const timeInfo = getLvTimeInfo();
+  if (timeInfo !== null) {
+    days = timeInfo.days;
+    hours = timeInfo.hours;
+    startTimeVal = timeInfo.startTime;
+    endTimeVal = timeInfo.endTime;
   } else if (typeInfo && typeInfo.ceremonyDays) {
     days = typeInfo.ceremonyDays;
   } else {
@@ -2063,6 +2277,11 @@ function saveLvRecord() {
   }
 
   const record = { type, startDate, endDate, days, memo, hourlyRate, monthlyBasePay };
+  if (hours !== null) {
+    record.hours = hours;
+    record.startTime = startTimeVal;
+    record.endTime = endTimeVal;
+  }
 
   if (editId) {
     LEAVE.updateRecord(editId, record);
@@ -2082,7 +2301,6 @@ function editLvRecord(id) {
   }
   if (!record) return;
 
-  document.getElementById('lvInputPanel').style.display = 'block';
   document.getElementById('lvType').value = record.type;
   document.getElementById('lvStartDate').value = record.startDate;
   document.getElementById('lvEndDate').value = record.endDate;
@@ -2090,6 +2308,12 @@ function editLvRecord(id) {
   document.getElementById('lvEditId').value = id;
   document.getElementById('lvDeleteBtn').style.display = 'block';
   document.getElementById('lvSaveBtn').textContent = '✏️ 수정';
+
+  // 시간차 편집 시 시간 복원
+  if (record.type === 'time_leave' && record.startTime && record.endTime) {
+    document.getElementById('lvStartTime').value = record.startTime;
+    document.getElementById('lvEndTime').value = record.endTime;
+  }
 
   const [y, m, d] = record.startDate.split('-').map(Number);
   const dowNames = ['일', '월', '화', '수', '목', '금', '토'];
@@ -2148,6 +2372,10 @@ function renderLvRecordList(year) {
   const container = document.getElementById('lvRecordList');
   if (!container) return;
 
+  // 연도 표시 업데이트
+  const yearEl = document.getElementById('lvRecordYear');
+  if (yearEl) yearEl.textContent = year;
+
   const records = LEAVE.getYearRecords(year);
   if (records.length === 0) {
     container.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:24px;">캘린더에서 날짜를 클릭하여 휴가를 등록하세요.</p>';
@@ -2155,25 +2383,109 @@ function renderLvRecordList(year) {
   }
 
   const sorted = [...records].sort((a, b) => a.startDate.localeCompare(b.startDate));
+
+  // ── 통계 계산 ──
+  let totalDays = 0, paidDays = 0, unpaidDays = 0, totalDeduction = 0;
+  const byCategory = {};
+  const byMonth = {};
+
+  sorted.forEach(r => {
+    const days = r.days || 0;
+    totalDays += days;
+    if (r.isPaid) paidDays += days; else unpaidDays += days;
+    if (r.salaryImpact) totalDeduction += Math.abs(r.salaryImpact);
+
+    const typeInfo = LEAVE.getTypeById(r.type);
+    const cat = typeInfo ? typeInfo.label : r.type;
+    byCategory[cat] = (byCategory[cat] || 0) + days;
+
+    const m = parseInt(r.startDate.split('-')[1]);
+    byMonth[m] = (byMonth[m] || 0) + days;
+  });
+
   let html = '';
+
+  // ── 요약 카드 ──
+  html += `<div class="lv-stats-grid">
+    <div class="lv-stat-card">
+      <div class="lv-stat-num">${totalDays}</div>
+      <div class="lv-stat-label">총 사용일</div>
+    </div>
+    <div class="lv-stat-card">
+      <div class="lv-stat-num" style="color:var(--accent-emerald)">${paidDays}</div>
+      <div class="lv-stat-label">유급</div>
+    </div>
+    <div class="lv-stat-card">
+      <div class="lv-stat-num" style="color:var(--accent-rose)">${unpaidDays}</div>
+      <div class="lv-stat-label">무급</div>
+    </div>
+    <div class="lv-stat-card">
+      <div class="lv-stat-num" style="color:var(--accent-amber); font-size:14px;">${totalDeduction > 0 ? '-₩' + totalDeduction.toLocaleString() : '₩0'}</div>
+      <div class="lv-stat-label">급여 차감</div>
+    </div>
+  </div>`;
+
+  // ── 월별 히트맵 바 ──
+  const maxMonthDays = Math.max(...Object.values(byMonth), 1);
+  html += '<div style="margin:12px 0 8px; font-size:11px; font-weight:600; color:var(--text-muted);">월별 사용</div>';
+  html += '<div class="lv-month-bars">';
+  for (let m = 1; m <= 12; m++) {
+    const d = byMonth[m] || 0;
+    const pct = Math.round((d / maxMonthDays) * 100);
+    const isCurrentMonth = (m === lvCurrentMonth && year === lvCurrentYear);
+    html += `<div class="lv-month-bar${isCurrentMonth ? ' current' : ''}">
+      <div class="lv-month-bar-fill" style="height:${Math.max(pct, d > 0 ? 8 : 0)}%"></div>
+      <span class="lv-month-bar-label">${m}월</span>
+      ${d > 0 ? `<span class="lv-month-bar-val">${d}</span>` : ''}
+    </div>`;
+  }
+  html += '</div>';
+
+  // ── 유형별 분포 ──
+  const catEntries = Object.entries(byCategory).sort((a, b) => b[1] - a[1]);
+  if (catEntries.length > 0) {
+    html += '<div style="margin:12px 0 6px; font-size:11px; font-weight:600; color:var(--text-muted);">유형별 분포</div>';
+    html += '<div style="display:flex; flex-wrap:wrap; gap:4px;">';
+    const colors = ['var(--accent-indigo)', 'var(--accent-emerald)', 'var(--accent-amber)', 'var(--accent-rose)', 'var(--accent-cyan)', 'var(--accent-violet)'];
+    catEntries.forEach(([cat, days], i) => {
+      html += `<span style="display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border-radius:12px; font-size:11px; background:rgba(99,102,241,0.08); border:1px solid var(--border-glass);">
+        <i style="width:6px;height:6px;border-radius:50%;background:${colors[i % colors.length]};display:inline-block;"></i>
+        ${cat} <strong>${days}일</strong>
+      </span>`;
+    });
+    html += '</div>';
+  }
+
+  // ── 상세 기록 (최근순, 접이식) ──
+  html += `<div style="margin-top:12px;">
+    <div class="collapsible-header" onclick="toggleCollapsible('lvRecordDetail')" style="padding:6px 0; font-size:12px;">
+      <span>▸ 상세 기록 (${sorted.length}건)</span>
+    </div>
+    <div class="collapsible-body" id="lvRecordDetail" style="display:none; max-height:300px; overflow-y:auto;">`;
 
   sorted.forEach(r => {
     const typeInfo = LEAVE.getTypeById(r.type);
     const dateDisplay = r.startDate === r.endDate
       ? r.startDate.substring(5)
       : r.startDate.substring(5) + ' ~ ' + r.endDate.substring(5);
-
+    let timeDisplay = '';
+    if (r.type === 'time_leave' && r.hours) {
+      timeDisplay = ` ${r.startTime || ''}~${r.endTime || ''} (${r.hours}h)`;
+    } else {
+      timeDisplay = ` ${r.days}일`;
+    }
     html += `<div class="lv-record-item" onclick="editLvRecord('${r.id}')">
       <span class="lv-record-type ${r.isPaid ? 'paid' : 'unpaid'}">${typeInfo ? typeInfo.label : r.type}</span>
       <div style="flex:1; font-size:12px; color:var(--text-secondary)">
-        ${dateDisplay} (${r.days}일)
-        ${r.memo ? '<br><span style="color:var(--text-muted)">' + r.memo + '</span>' : ''}
+        ${dateDisplay}${timeDisplay}
+        ${r.memo ? ' <span style="color:var(--text-muted)">' + r.memo + '</span>' : ''}
       </div>
-      <div style="font-size:12px; font-weight:700; color:${r.salaryImpact ? 'var(--accent-rose)' : 'var(--accent-emerald)'}">
+      <div style="font-size:11px; font-weight:700; color:${r.salaryImpact ? 'var(--accent-rose)' : 'var(--accent-emerald)'}">
         ${r.salaryImpact ? '-₩' + Math.abs(r.salaryImpact).toLocaleString() : '유급'}
       </div>
     </div>`;
   });
+  html += '</div></div>';
 
   container.innerHTML = html;
 }
@@ -2187,7 +2499,7 @@ function exportLvData() {
   a.download = `leave_records_${new Date().toISOString().split('T')[0]}.json`;
   a.click();
   URL.revokeObjectURL(url);
-  document.getElementById('lvExportMsg').textContent = '✅ 내보내기 완료';
+  const _msg = document.getElementById('lvExportMsg'); if (_msg) _msg.textContent = '✅ 내보내기 완료';
 }
 
 function importLvData(event) {
@@ -2196,7 +2508,7 @@ function importLvData(event) {
   const reader = new FileReader();
   reader.onload = (e) => {
     const result = LEAVE.importData(e.target.result);
-    document.getElementById('lvExportMsg').textContent = result.message;
+    const _msg = document.getElementById('lvExportMsg'); if (_msg) _msg.textContent = result.message;
     if (result.success) refreshLvCalendar();
   };
   reader.readAsText(file);
