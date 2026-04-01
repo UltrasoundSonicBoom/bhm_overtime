@@ -213,7 +213,7 @@
 
     <!-- ═══════════ ⏰ 시간외·온콜 관리 ═══════════ -->
     <div class="tab-content active" id="tab-overtime">
-      <!-- Zone A: 대시보드 (pill 뱃지) -->
+      <!-- Zone A: 대시보드 (수당 금액 중심) -->
       <div id="otDashboard" class="ot-dashboard"></div>
 
       <!-- Zone B: 캘린더 + 입력 패널 -->
@@ -245,6 +245,10 @@
             <div class="form-group" style="margin-top:10px;">
               <label>유형</label>
               <div class="ot-type-selector">
+                <label class="ot-type-option">
+                  <input type="radio" name="otType" value="oncall_callout" onchange="onOtTypeChange()">
+                  <span class="ot-type-label" style="--type-color:var(--accent-indigo)">🚗 온콜출근</span>
+                </label>
                 <label class="ot-type-option active">
                   <input type="radio" name="otType" value="overtime" checked onchange="onOtTypeChange()">
                   <span class="ot-type-label" style="--type-color:var(--accent-amber)">⏰ 시간외</span>
@@ -252,10 +256,6 @@
                 <label class="ot-type-option">
                   <input type="radio" name="otType" value="oncall_standby" onchange="onOtTypeChange()">
                   <span class="ot-type-label" style="--type-color:var(--accent-cyan)">📞 온콜대기</span>
-                </label>
-                <label class="ot-type-option">
-                  <input type="radio" name="otType" value="oncall_callout" onchange="onOtTypeChange()">
-                  <span class="ot-type-label" style="--type-color:var(--accent-indigo)">🚗 온콜출근</span>
                 </label>
               </div>
             </div>
@@ -265,11 +265,11 @@
               <div class="form-row">
                 <div class="form-group">
                   <label>시작 시간</label>
-                  <input type="time" id="otStartTime" value="18:00" onchange="previewOtCalc()">
+                  <input type="time" id="otStartTime" value="18:00" step="900" onchange="previewOtCalc()">
                 </div>
                 <div class="form-group">
                   <label>종료 시간</label>
-                  <input type="time" id="otEndTime" value="22:00" onchange="previewOtCalc()">
+                  <input type="time" id="otEndTime" value="22:00" step="900" onchange="previewOtCalc()">
                 </div>
               </div>
             </div>
@@ -605,6 +605,8 @@
   <script src="leave.js"></script>
   <script src="payroll.js"></script>
   <script src="app.js"></script>
+  <!-- Toast notification -->
+  <div id="otToast" class="ot-toast" style="display:none;"></div>
 </body>
 
 </html>

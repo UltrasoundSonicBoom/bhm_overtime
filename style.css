@@ -1277,31 +1277,56 @@ body::before {
   display: inline-block;
 }
 
-/* ── Overtime: Dashboard (pill badges) ── */
+/* ── Overtime: Dashboard (수당 금액 중심) ── */
 .ot-dashboard {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(6, 182, 212, 0.06));
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  border-radius: var(--radius-lg);
+}
+
+.ot-dash-main {
+  flex-shrink: 0;
+}
+
+.ot-dash-main .ot-dash-pay {
+  font-size: 32px;
+  font-weight: 700;
+  background: var(--gradient-success);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.2;
+}
+
+.ot-dash-main .ot-dash-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.ot-dash-details {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 16px;
+  margin-left: auto;
 }
 
 .ot-dash-item {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 8px 14px;
-  background: var(--bg-card);
-  backdrop-filter: blur(12px);
+  padding: 6px 12px;
+  background: var(--bg-glass);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-full);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--text-secondary);
-  transition: var(--transition);
-}
-
-.ot-dash-item:hover {
-  border-color: var(--border-active);
 }
 
 .ot-dash-value {
@@ -1312,6 +1337,207 @@ body::before {
 .ot-dash-value.cyan { color: var(--accent-cyan); }
 .ot-dash-value.indigo { color: var(--accent-indigo); }
 .ot-dash-value.emerald { color: var(--accent-emerald); }
+
+/* ── Overtime: Quick Actions ── */
+.ot-quick-actions {
+  margin-bottom: 16px;
+}
+
+.ot-quick-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ot-quick-date {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent-emerald);
+  background: rgba(16, 185, 129, 0.1);
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+}
+
+.ot-quick-btns {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.ot-quick-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 8px;
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: inherit;
+  position: relative;
+  overflow: hidden;
+}
+
+.ot-quick-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+.ot-quick-btn.overtime::before {
+  background: var(--accent-amber);
+}
+
+.ot-quick-btn.oncall::before {
+  background: var(--accent-cyan);
+}
+
+.ot-quick-btn.callout::before {
+  background: var(--accent-indigo);
+}
+
+.ot-quick-btn:hover {
+  border-color: var(--border-active);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow);
+}
+
+.ot-quick-btn:active {
+  transform: translateY(0);
+}
+
+.ot-quick-icon {
+  font-size: 20px;
+}
+
+.ot-quick-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ot-quick-sub {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--accent-emerald);
+}
+
+/* ── Overtime: Time Presets ── */
+.ot-time-presets {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.ot-preset-btn {
+  flex: 1;
+  padding: 8px 4px;
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-sm);
+  background: var(--bg-glass);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: inherit;
+  text-align: center;
+}
+
+.ot-preset-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-glass-hover);
+  border-color: var(--accent-amber);
+}
+
+.ot-preset-btn.active {
+  color: var(--accent-amber);
+  background: rgba(245, 158, 11, 0.1);
+  border-color: var(--accent-amber);
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.15);
+}
+
+.ot-preset-btn.custom {
+  font-size: 11px;
+}
+
+.ot-preset-btn.custom.active {
+  color: var(--accent-indigo);
+  background: rgba(99, 102, 241, 0.1);
+  border-color: var(--accent-indigo);
+  box-shadow: 0 0 8px rgba(99, 102, 241, 0.15);
+}
+
+/* ── Overtime: Toast Notification ── */
+.ot-toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  padding: 14px 28px;
+  background: rgba(16, 185, 129, 0.95);
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  box-shadow: 0 8px 32px rgba(16, 185, 129, 0.3);
+  z-index: 999;
+  opacity: 0;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.ot-toast.show {
+  display: block;
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── Overtime: Callout Modal ── */
+.ot-callout-modal {
+  margin-bottom: 16px;
+  animation: fadeIn 0.3s ease;
+}
+
+.ot-callout-inner {
+  padding: 20px;
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--accent-indigo);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.1);
+}
+
+.ot-callout-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent-indigo);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-glass);
+}
+
+.ot-callout-duration {
+  font-size: 13px;
+  color: var(--accent-emerald);
+  font-weight: 600;
+  margin-top: 4px;
+}
 
 /* ── Overtime: Calendar + Input Grid ── */
 .ot-main-grid {
@@ -1439,13 +1665,13 @@ body::before {
   background: var(--bg-glass-hover);
 }
 
-/* ── Overtime: Preview ── */
+/* ── Overtime: Preview (수당 금액 강조) ── */
 .ot-preview {
-  margin: 8px 0;
-  padding: 12px;
-  background: rgba(16, 185, 129, 0.05);
-  border: 1px solid rgba(16, 185, 129, 0.12);
-  border-radius: var(--radius-sm);
+  margin: 10px 0;
+  padding: 16px;
+  background: rgba(16, 185, 129, 0.06);
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  border-radius: var(--radius-md);
   font-size: 13px;
   min-height: 40px;
 }
@@ -1811,6 +2037,24 @@ body::before {
 
   .stat-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .ot-quick-btns {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .ot-dashboard {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .ot-dash-details {
+    margin-left: 0;
+  }
+
+  .ot-dash-main .ot-dash-pay {
+    font-size: 26px;
   }
 
   .result-total {
