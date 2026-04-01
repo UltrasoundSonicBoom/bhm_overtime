@@ -1721,11 +1721,16 @@ function renderOtCalendar(year, month, recordsByDay) {
 
     const titleAttr = titleParts.length > 0 ? ` title="${titleParts.join(' / ')}"` : '';
 
-    // 기록 도트
-    let dotsHtml = '<div class="ot-cal-dots">';
-    const dotTypes = [...new Set(dayRecords.map(r => r.type))];
-    dotTypes.forEach(t => {
-      dotsHtml += `<div class="ot-cal-dot ${t}"></div>`;
+    // 기록 뱃지 (모바일용)
+    let dotsHtml = '<div style="display:flex; flex-direction:column; gap:2px; margin-top:2px;">';
+    dayRecords.forEach(r => {
+      if (r.type === 'oncall_standby') {
+        dotsHtml += `<span style="font-size:10px; background:rgba(6,182,212,0.15); color:var(--accent-cyan); padding:2px 4px; border-radius:4px; text-align:center; font-weight:600; line-height:1.2;">📞 대기</span>`;
+      } else if (r.type === 'oncall_callout') {
+        dotsHtml += `<span style="font-size:10px; background:rgba(99,102,241,0.15); color:var(--accent-indigo); padding:2px 4px; border-radius:4px; text-align:center; font-weight:600; line-height:1.2;">🚗 ${r.totalHours}h</span>`;
+      } else if (r.type === 'overtime') {
+        dotsHtml += `<span style="font-size:10px; background:rgba(245,158,11,0.15); color:var(--accent-amber); padding:2px 4px; border-radius:4px; text-align:center; font-weight:600; line-height:1.2;">⏰ ${r.totalHours}h</span>`;
+      }
     });
     dotsHtml += '</div>';
 
@@ -1735,12 +1740,11 @@ function renderOtCalendar(year, month, recordsByDay) {
   html += '</div>'; // grid
 
   // 범례
-  html += `<div class="ot-cal-legend">
-    <span><i class="dot" style="background:var(--accent-indigo)"></i>온콜출근</span>
-    <span><i class="dot" style="background:var(--accent-amber)"></i>시간외</span>
-    <span><i class="dot" style="background:var(--accent-cyan)"></i>온콜대기</span>
+  html += `<div class="ot-cal-legend" style="margin-top:16px;">
+    <span><span style="font-size:11px; background:rgba(245,158,11,0.15); color:var(--accent-amber); padding:2px 6px; border-radius:4px;">⏰ 시간외</span></span>
+    <span><span style="font-size:11px; background:rgba(6,182,212,0.15); color:var(--accent-cyan); padding:2px 6px; border-radius:4px;">📞 대기</span></span>
+    <span><span style="font-size:11px; background:rgba(99,102,241,0.15); color:var(--accent-indigo); padding:2px 6px; border-radius:4px;">🚗 출근</span></span>
     <span><i class="dot" style="background:var(--accent-rose)"></i>공휴일</span>
-    <span><i class="dot" style="background:var(--accent-emerald)"></i>오늘</span>
   </div>`;
 
   html += '</div>'; // ot-cal
@@ -1797,7 +1801,30 @@ function onOtDateClick(year, month, day) {
       </div>`;
     });
     existingHtml += '</div>';
+    existingHtml += '</div>';
     existingContainer.innerHTML = existingHtml;
+  }
+
+  // 바텀 시트 열기 (모바일 대응)
+  openOtBottomSheet();
+}
+
+// ── 바텀 시트 컨트롤 ──
+function openOtBottomSheet() {
+  const overlay = document.getElementById('otInputOverlay');
+  const panel = document.getElementById('otInputPanel');
+  if (overlay && panel) {
+    overlay.classList.add('show');
+    panel.classList.add('show');
+  }
+}
+
+function closeOtBottomSheet() {
+  const overlay = document.getElementById('otInputOverlay');
+  const panel = document.getElementById('otInputPanel');
+  if (overlay && panel) {
+    overlay.classList.remove('show');
+    panel.classList.remove('show');
   }
 }
 
@@ -1808,7 +1835,7 @@ function resetOtPanel() {
   document.getElementById('otPanelDate').textContent = '날짜를 선택하세요';
   document.getElementById('otEditId').value = '';
   document.getElementById('otDeleteBtn').style.display = 'none';
-  document.getElementById('otSaveBtn').textContent = '💾 저장';
+  document.getElementById('otSaveBtn').textContent = '저장하기';
   document.getElementById('otMemo').value = '';
   document.getElementById('otExistingRecords').innerHTML = '';
   document.getElementById('otPreview').innerHTML = '';
@@ -1936,6 +1963,7 @@ function saveOtRecord() {
   }
 
   refreshOtCalendar();
+  closeOtBottomSheet();
 }
 
 // 기록 수정 모드

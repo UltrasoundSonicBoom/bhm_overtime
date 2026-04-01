@@ -1568,7 +1568,7 @@ body::before {
   font-size: 14px;
 }
 
-/* ── Overtime: Input Panel ── */
+/* ── Overtime: Input Panel (Legacy for Desktop, re-used partially) ── */
 .ot-input-panel {
   padding: 16px;
   background: rgba(99, 102, 241, 0.04);
@@ -1576,10 +1576,92 @@ body::before {
   border-radius: var(--radius-md);
 }
 
+/* ── 바텀 시트 오버레이 ── */
+.ot-bottom-sheet-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 9999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.ot-bottom-sheet-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ── 바텀 시트 패널 ── */
+.ot-bottom-sheet {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--bg-card);
+  z-index: 10000;
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  padding: 16px 20px 24px 20px;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.3);
+  transform: translateY(100%);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  max-height: 90vh;
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: none;
+}
+
+.ot-bottom-sheet.show {
+  transform: translateY(0);
+}
+
+.ot-sheet-handle {
+  width: 40px;
+  height: 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  margin: 0 auto 20px auto;
+}
+
+/* ── 프리미엄 시간 입력 폼 ── */
+.time-picker-premium {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border-glass);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+.time-picker-premium:focus {
+  border-color: var(--accent-indigo);
+  outline: none;
+  background: rgba(99, 102, 241, 0.1);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.premium-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border-glass);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  font-size: 14px;
+}
+.premium-input:focus {
+  border-color: var(--accent-emerald);
+  outline: none;
+  background: rgba(16, 185, 129, 0.1);
+}
+
 .ot-panel-header-v2 {
-  padding-bottom: 10px;
-  margin-bottom: 4px;
-  border-bottom: 1px solid var(--border-glass);
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 @keyframes slideDown {
