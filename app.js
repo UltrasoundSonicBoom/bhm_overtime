@@ -2010,7 +2010,18 @@ function deleteOtRecord() {
   if (!id) return;
   if (!confirm('이 기록을 삭제하시겠습니까?')) return;
 
+  const dateStr = document.getElementById('otInputPanel').dataset.date;
+  
   OVERTIME.deleteRecord(id);
+  
+  // 패널 초기화 및 UI 갱신
+  resetOtPanel();
+  document.getElementById('otInputPanel').dataset.date = dateStr; // 유지
+  if (dateStr) {
+    const [y, m, d] = dateStr.split('-');
+    onOtDateClick(parseInt(y), parseInt(m), parseInt(d));
+  }
+  
   refreshOtCalendar();
 }
 
