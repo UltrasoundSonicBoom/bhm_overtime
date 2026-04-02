@@ -41,6 +41,12 @@ const OVERTIME = {
         record.id = 'ot_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
         all[key].push(record);
         this._saveAll(all);
+
+        // Sync to Supabase async
+        if (window.SupabaseSync) {
+            window.SupabaseSync.pushCloudData('overtime_records', record);
+        }
+
         return record;
     },
 
@@ -51,6 +57,12 @@ const OVERTIME = {
             if (idx !== -1) {
                 all[key][idx] = { ...all[key][idx], ...updates, id };
                 this._saveAll(all);
+                
+                // Sync to Supabase async
+                if (window.SupabaseSync) {
+                    window.SupabaseSync.pushCloudData('overtime_records', all[key][idx]);
+                }
+
                 return all[key][idx];
             }
         }
@@ -64,6 +76,12 @@ const OVERTIME = {
             if (idx !== -1) {
                 all[key].splice(idx, 1);
                 this._saveAll(all);
+
+                // Sync delete to Supabase async
+                if (window.SupabaseSync) {
+                    window.SupabaseSync.deleteCloudRecord('overtime_records', id);
+                }
+
                 return true;
             }
         }
@@ -154,7 +172,7 @@ const OVERTIME = {
         } else if (type === 'oncall_callout') {
             // 교통비 + 시간외 (출퇴근 2시간 이미 totalHours에 포함된 상태로 계산)
             pay += DATA.allowances.onCallTransport;
-            pay += DATA.allowances.onCallStandby; // 대기수당도 포함
+            // 사용자 요청: 온콜 출근 시 대기수당은 중복 지급되지 않음.
         }
 
         return Math.round(pay);

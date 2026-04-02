@@ -160,6 +160,84 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 휴가 관리 탭 초기화
   initLeaveTab();
+
+  // ── [URL 파라미터 듀얼 모드 감지] ──
+  const urlParams = new URLSearchParams(window.location.search);
+  window.isFamilyMode = urlParams.get('mode') === 'family';
+
+  const authContainer = document.getElementById('authContainer');
+  const backupSection = document.getElementById('localBackupSection');
+  
+  if (!window.isFamilyMode) {
+      if (authContainer) authContainer.style.display = 'none';
+      if (backupSection) backupSection.style.display = 'block';
+  } else {
+      if (authContainer) authContainer.style.display = 'flex';
+      if (backupSection) backupSection.style.display = 'none'; // 가족 모드에서는 백업 UI 숨김 (원하면 유지 가능하지만 클라우드가 있으므로 숨김)
+  }
+
+  // ── [Supabase Cloud Sync Callback] ──
+  window.syncCloudData = function(cloudData) {
+    if (!cloudData) return;
+    let changed = false;
+    if (cloudData.profile) {
+      localStorage.setItem(PROFILE.STORAGE_KEY, JSON.stringify(cloudData.profile));
+      changed = true;
+    }
+    if (cloudData.overtime && cloudData.overtime.length > 0) {
+      const otMap = {};
+      cloudData.overtime.forEach(r => {
+        const d = new Date(r.date);
+        const y = d.getFullYear();
+        const m = d.getMonth() + 1;
+        const key = `${y}-${String(m).padStart(2, '0')}`;
+        if (!otMap[key]) otMap[key] = [];
+        otMap[key].push(r);
+      });
+      localStorage.setItem(OVERTIME.STORAGE_KEY, JSON.stringify(otMap));
+      changed = true;
+    }
+
+    // 휴가 데이터 동기화
+    if (cloudData.leave && cloudData.leave.length > 0) {
+      const lvMap = {};
+      cloudData.leave.forEach(r => {
+        // 시간차 데이터 복구: hours가 있으면 type을 time_leave로 강제 설정
+        if (r.hours && r.hours > 0 && r.type !== 'time_leave') {
+          console.warn('[syncCloudData] 시간차 type 복구:', r.id, r.type, '→ time_leave');
+          r.type = 'time_leave';
+        }
+        const year = r.startDate.split('-')[0];
+        if (!lvMap[year]) lvMap[year] = [];
+        lvMap[year].push(r);
+      });
+      localStorage.setItem(LEAVE.STORAGE_KEY, JSON.stringify(lvMap));
+      changed = true;
+    }
+
+    if (changed) {
+      console.log("Cloud data synced, refreshing UI...");
+      const profile = PROFILE.load();
+      if (profile) {
+        PROFILE.applyToForm(profile, PROFILE_FIELDS);
+        updateProfileSummary(profile);
+        const profileStatusEl = document.getElementById('profileStatus');
+        if (profileStatusEl) {
+          profileStatusEl.textContent = '저장됨 ✓';
+          profileStatusEl.className = 'badge emerald';
+        }
+      }
+      if (typeof applyProfileToOvertime === 'function') applyProfileToOvertime();
+      if (typeof initOvertimeTab === 'function') initOvertimeTab();
+      
+      const toast = document.getElementById('otToast');
+      if (toast) {
+        toast.textContent = "클라우드 데이터와 동기화되었습니다. ✅";
+        toast.style.display = 'block';
+        setTimeout(() => toast.style.display = 'none', 3000);
+      }
+    }
+  };
 });
 
 // ═══════════ 📌 프로필 관리 ═══════════
@@ -208,6 +286,57 @@ function clearProfile() {
     `;
   // Q&A 카드 갱신
   if (typeof PAYROLL !== 'undefined') PAYROLL.init();
+}
+
+// ═══════════ 데이터 백업 및 복구 ═══════════
+function downloadBackup() {
+    const data = {
+        version: "1.0",
+        exportDate: new Date().toISOString(),
+        profile: localStorage.getItem('bhm_hr_profile'),
+        overtime: localStorage.getItem('overtimeRecords'),
+        leave: localStorage.getItem('leaveRecords')
+    };
+    const jsonStr = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const yyyymmdd = new Date().toISOString().split('T')[0];
+    a.download = `snuh_backup_${yyyymmdd}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    const toast = document.getElementById('otToast');
+    if (toast) {
+        toast.textContent = "백업 파일이 안전하게 다운로드되었습니다. 📥";
+        toast.style.display = 'block';
+        setTimeout(() => toast.style.display = 'none', 3000);
+    } else {
+        alert("백업 파일이 다운로드되었습니다.");
+    }
+}
+
+async function uploadBackup(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        
+        if (data.profile) localStorage.setItem('bhm_hr_profile', data.profile);
+        if (data.overtime) localStorage.setItem('overtimeRecords', data.overtime);
+        if (data.leave) localStorage.setItem('leaveRecords', data.leave);
+        
+        alert("데이터가 성공적으로 복원되었습니다! 앱을 새로고침합니다.");
+        window.location.reload();
+    } catch (e) {
+        alert("복원 실패: 올바른 백업 파일이 아닙니다.");
+    } finally {
+        event.target.value = '';
+    }
 }
 
 function updateProfileSummary(profile) {
@@ -280,7 +409,7 @@ function applyProfileToLeave() {
     const parsed = PROFILE.parseDate(profile.hireDate);
     if (parsed) {
       const result = CALC.calcAnnualLeave(parsed);
-      if (result) lvTotalAnnual = result.총연차;
+      if (result) lvTotalAnnual = result.totalLeave;
     }
   }
   const wage = PROFILE.calcWage(profile);
@@ -1353,20 +1482,9 @@ function initOvertimeTab() {
   refreshOtCalendar();
 }
 
-// 오늘 날짜 자동 선택
+// 오늘 날짜 자동 선택 (사용자 요청: 초기 로드 시 입력창 자동 팝업 방지를 위해 기능 비활성화)
 function autoSelectToday() {
-  try {
-    const now = new Date();
-    if (otCurrentYear === now.getFullYear() && otCurrentMonth === now.getMonth() + 1) {
-      const todayDay = now.getDate();
-      const todayCell = document.querySelector(`#otCalendar .ot-cal-day[data-day="${todayDay}"]`);
-      if (todayCell) {
-        onOtDateClick(otCurrentYear, otCurrentMonth, todayDay);
-      }
-    }
-  } catch(e) {
-    console.warn('autoSelectToday:', e);
-  }
+  // onOtDateClick()을 자동 호출하면 입력창(BottomSheet)이 즉시 열려 불편하다는 피드백에 따라 무효화합니다.
 }
 
 // 퀵액션 버튼 예상 수당 표시
@@ -1508,7 +1626,6 @@ function previewCalloutCalc() {
     html += `<div class="preview-row"><span>야간 ${tempBreakdown.night}h × 200%</span><span class="val">${(tempBreakdown.night * hourlyRate * 2.0).toLocaleString()}원</span></div>`;
   }
   html += `<div class="preview-row"><span>온콜교통비</span><span class="val">₩${DATA.allowances.onCallTransport.toLocaleString()}</span></div>`;
-  html += `<div class="preview-row"><span>온콜대기수당</span><span class="val">₩${DATA.allowances.onCallStandby.toLocaleString()}</span></div>`;
 
   preview.innerHTML = html;
 }
@@ -1928,7 +2045,6 @@ function previewOtCalc() {
   }
   if (type === 'oncall_callout') {
     html += `<div class="preview-row"><span>온콜교통비</span><span class="val">₩${DATA.allowances.onCallTransport.toLocaleString()}</span></div>`;
-    html += `<div class="preview-row"><span>온콜대기수당</span><span class="val">₩${DATA.allowances.onCallStandby.toLocaleString()}</span></div>`;
   }
 
   preview.innerHTML = html;
@@ -2211,7 +2327,7 @@ function initLeaveTab() {
     const parsed = PROFILE.parseDate(profile.hireDate);
     if (parsed) {
       const result = CALC.calcAnnualLeave(parsed);
-      if (result) lvTotalAnnual = result.총연차;
+      if (result) lvTotalAnnual = result.totalLeave;
     }
   }
 
@@ -2455,7 +2571,7 @@ function onLvDateClick(year, month, day) {
         onmouseout="this.style.background='transparent'">
         <span class="lv-record-type ${r.isPaid ? 'paid' : 'unpaid'}" style="font-size:10px">${typeInfo ? typeInfo.label : r.type}</span>
         ${r.startDate === r.endDate ? '' : r.startDate + '~' + r.endDate}
-        ${r.days}일${timeInfo}
+        ${(r.days || 0).toFixed(1)}일${timeInfo}
         ${r.salaryImpact ? '<strong style="color:var(--accent-rose)">-₩' + Math.abs(r.salaryImpact).toLocaleString() + '</strong>' : ''}
       </div>`;
     });
@@ -2514,8 +2630,9 @@ function onLvTypeChange() {
   const year = lvCurrentYear;
   if (typeInfo && typeInfo.quota !== null && !typeInfo.usesAnnual) {
     const records = LEAVE.getYearRecords(year);
-    const used = records.filter(r => r.type === type).reduce((sum, r) => sum + (r.days || 0), 0);
-    const remain = typeInfo.quota - used;
+    const usedRaw = records.filter(r => r.type === type).reduce((sum, r) => sum + (r.days || 0), 0);
+    const used = Math.round(usedRaw * 10) / 10;
+    const remain = Math.round((typeInfo.quota - usedRaw) * 10) / 10;
     const color = remain <= 0 ? 'var(--accent-rose)' : 'var(--accent-emerald)';
     const refNote = typeInfo.ref ? `<br><span style="color:var(--text-muted); font-size:11px;">📖 ${typeInfo.ref}</span>` : '';
     quotaBadge.innerHTML = `<div style="padding:6px 10px; border-radius:6px; background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.15); font-size:12px;">
@@ -2566,9 +2683,9 @@ function calcLvTimeHours() {
   if (hours >= 4) hours -= 1;
   hours = Math.max(0, hours);
 
-  const days = Math.round(hours / 8 * 100) / 100;
+  const days = Math.round(hours / 8 * 10) / 10;
   const resultEl = document.getElementById('lvTimeCalcResult');
-  resultEl.innerHTML = `${hours.toFixed(1)}시간 = <strong>${days}일</strong> 차감 (8시간 = 1일)`;
+  resultEl.innerHTML = `${hours.toFixed(1)}시간 = <strong>${days.toFixed(1)}일</strong> 차감 (8시간 = 1일)`;
 
   previewLvCalc();
 }
@@ -2589,7 +2706,7 @@ function getLvTimeInfo() {
   if (hours < 0) hours += 24;
   if (hours >= 4) hours -= 1;
   hours = Math.max(0, hours);
-  const days = Math.round(hours / 8 * 100) / 100;
+  const days = Math.round(hours / 8 * 10) / 10;
 
   return { hours: Math.round(hours * 10) / 10, days, startTime, endTime };
 }
@@ -2614,16 +2731,19 @@ function previewLvCalc() {
     days = LEAVE._calcBusinessDays(startStr, endStr);
   }
 
-  let html = `<div class="preview-row"><span>일수</span><span class="val">${days}일</span></div>`;
+  // 소수점 1자리로 반올림
+  const daysRound = Math.round(days * 10) / 10;
+  let html = `<div class="preview-row"><span>일수</span><span class="val">${daysRound}일</span></div>`;
 
   if (typeInfo.usesAnnual) {
     if (lvTotalAnnual > 0) {
       const summary = LEAVE.calcAnnualSummary(parseInt(startStr.split('-')[0]), lvTotalAnnual);
       const remain = summary.remainingAnnual;
-      html += `<div class="preview-row"><span>연차 차감</span><span class="val" style="color:var(--accent-amber)">-${days}일</span></div>`;
-      html += `<div class="preview-row"><span>잔여 연차</span><span class="val">${remain}일 → ${remain - days}일</span></div>`;
+      const newRemain = Math.round((remain - daysRound) * 10) / 10;
+      html += `<div class="preview-row"><span>연차 차감</span><span class="val" style="color:var(--accent-amber)">-${daysRound}일</span></div>`;
+      html += `<div class="preview-row"><span>잔여 연차</span><span class="val">${remain}일 → ${newRemain}일</span></div>`;
     } else {
-      html += `<div class="preview-row"><span>연차 차감</span><span class="val" style="color:var(--accent-amber)">-${days}일</span></div>`;
+      html += `<div class="preview-row"><span>연차 차감</span><span class="val" style="color:var(--accent-amber)">-${daysRound}일</span></div>`;
       html += `<div class="preview-row"><span>잔여 연차</span><span class="val" style="color:var(--text-muted)">프로필 입사일 설정 필요</span></div>`;
     }
   }
@@ -2812,17 +2932,18 @@ function renderLvRecordList(year) {
   let html = '';
 
   // ── 요약 카드 ──
+  const round1 = v => (Math.round(v * 10) / 10).toFixed(1);
   html += `<div class="lv-stats-grid">
     <div class="lv-stat-card">
-      <div class="lv-stat-num">${totalDays}</div>
+      <div class="lv-stat-num">${round1(totalDays)}</div>
       <div class="lv-stat-label">총 사용일</div>
     </div>
     <div class="lv-stat-card">
-      <div class="lv-stat-num" style="color:var(--accent-emerald)">${paidDays}</div>
+      <div class="lv-stat-num" style="color:var(--accent-emerald)">${round1(paidDays)}</div>
       <div class="lv-stat-label">유급</div>
     </div>
     <div class="lv-stat-card">
-      <div class="lv-stat-num" style="color:var(--accent-rose)">${unpaidDays}</div>
+      <div class="lv-stat-num" style="color:var(--accent-rose)">${round1(unpaidDays)}</div>
       <div class="lv-stat-label">무급</div>
     </div>
     <div class="lv-stat-card">
@@ -2842,7 +2963,7 @@ function renderLvRecordList(year) {
     html += `<div class="lv-month-bar${isCurrentMonth ? ' current' : ''}">
       <div class="lv-month-bar-fill" style="height:${Math.max(pct, d > 0 ? 8 : 0)}%"></div>
       <span class="lv-month-bar-label">${m}월</span>
-      ${d > 0 ? `<span class="lv-month-bar-val">${d}</span>` : ''}
+      ${d > 0 ? `<span class="lv-month-bar-val">${round1(d)}</span>` : ''}
     </div>`;
   }
   html += '</div>';
@@ -2876,9 +2997,9 @@ function renderLvRecordList(year) {
       : r.startDate.substring(5) + ' ~ ' + r.endDate.substring(5);
     let timeDisplay = '';
     if (r.type === 'time_leave' && r.hours) {
-      timeDisplay = ` ${r.startTime || ''}~${r.endTime || ''} (${r.hours}h)`;
+      timeDisplay = ` ${r.startTime || ''}~${r.endTime || ''} (${(r.hours || 0).toFixed(1)}h)`;
     } else {
-      timeDisplay = ` ${r.days}일`;
+      timeDisplay = ` ${(r.days || 0).toFixed(1)}일`;
     }
     html += `<div class="lv-record-item" onclick="editLvRecord('${r.id}')">
       <span class="lv-record-type ${r.isPaid ? 'paid' : 'unpaid'}">${typeInfo ? typeInfo.label : r.type}</span>

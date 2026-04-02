@@ -96,19 +96,24 @@ const LEAVE = {
 
         record.id = 'lv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
 
+        // 시간 정보가 있으면 시간차로 강제 설정 (데이터 일관성 보장)
+        if (record.hours && record.hours > 0) {
+            record.type = 'time_leave';
+        }
+
         // 일수 자동 계산
         if (!record.days) {
             const typeInfo = this.getTypeById(record.type);
             if (typeInfo && typeInfo.isTimeBased && record.hours) {
-                record.days = Math.round(record.hours / 8 * 100) / 100;
+                record.days = Math.round(record.hours / 8 * 10) / 10;
             } else {
                 record.days = this._calcBusinessDays(record.startDate, record.endDate);
             }
         }
 
-        // 청원휴가: ceremonyDays 자동 반영
+        // 청원휴가: ceremonyDays 자동 반영 (days가 없거나 daysOverride가 아닌 경우에만)
         const typeInfo = this.getTypeById(record.type);
-        if (typeInfo && typeInfo.ceremonyDays && !record.daysOverride) {
+        if (typeInfo && typeInfo.ceremonyDays && !record.days && !record.daysOverride) {
             record.days = typeInfo.ceremonyDays;
         }
 
@@ -123,6 +128,12 @@ const LEAVE = {
 
         all[year].push(record);
         this._saveAll(all);
+
+        // Sync to Supabase async
+        if (window.SupabaseSync) {
+            window.SupabaseSync.pushCloudData('leave_records', record);
+        }
+
         return record;
     },
 
@@ -135,7 +146,19 @@ const LEAVE = {
 
                 // 재계산
                 const record = all[year][idx];
+
+                // 시간 정보가 있으면 시간차로 강제 설정 (데이터 일관성 보장)
+                if (record.hours && record.hours > 0) {
+                    record.type = 'time_leave';
+                }
+
                 const typeInfo = this.getTypeById(record.type);
+
+                // 시간차의 경우 hours로 days 재계산
+                if (typeInfo && typeInfo.isTimeBased && record.hours) {
+                    record.days = Math.round(record.hours / 8 * 10) / 10;
+                }
+
                 record.isPaid = typeInfo ? typeInfo.isPaid : false;
                 record.usesAnnual = typeInfo ? typeInfo.usesAnnual : false;
                 record.category = typeInfo ? typeInfo.label : record.type;
@@ -143,6 +166,12 @@ const LEAVE = {
                 record.salaryImpact = this._calcDeduction(record, typeInfo);
 
                 this._saveAll(all);
+
+                // Sync to Supabase async
+                if (window.SupabaseSync) {
+                    window.SupabaseSync.pushCloudData('leave_records', all[year][idx]);
+                }
+
                 return all[year][idx];
             }
         }
@@ -156,6 +185,12 @@ const LEAVE = {
             if (idx !== -1) {
                 all[year].splice(idx, 1);
                 this._saveAll(all);
+
+                // Sync delete to Supabase async
+                if (window.SupabaseSync) {
+                    window.SupabaseSync.deleteCloudRecord('leave_records', id);
+                }
+
                 return true;
             }
         }
@@ -207,12 +242,15 @@ const LEAVE = {
             usage[r.type] += (r.days || 0);
         });
 
+        // 소수점 1자리로 반올림 (부동소수점 오류 방지)
+        const round1 = v => Math.round(v * 10) / 10;
+
         // 연차 계열 합산 (annual + time_leave)
-        const annualUsed = (usage['annual'] || 0) + (usage['time_leave'] || 0);
+        const annualUsed = round1((usage['annual'] || 0) + (usage['time_leave'] || 0));
 
         const result = [];
         this.getTypes().forEach(t => {
-            const used = usage[t.id] || 0;
+            const used = round1(usage[t.id] || 0);
             let quota = t.quota;
 
             // 연차는 동적 한도
@@ -222,7 +260,7 @@ const LEAVE = {
                 if (t.id === 'time_leave') return;
                 result.push({
                     id: t.id, label: t.label, category: t.category,
-                    used: annualUsed, quota: quota, remaining: quota - annualUsed,
+                    used: annualUsed, quota: quota, remaining: round1(quota - annualUsed),
                     overQuota: quota !== null && annualUsed > quota,
                     isPaid: t.isPaid,
                 });
@@ -232,7 +270,7 @@ const LEAVE = {
             if (quota !== null) {
                 result.push({
                     id: t.id, label: t.label, category: t.category,
-                    used, quota, remaining: quota - used,
+                    used, quota, remaining: round1(quota - used),
                     overQuota: used > quota,
                     isPaid: t.isPaid,
                 });
@@ -265,15 +303,18 @@ const LEAVE = {
             }
         });
 
+        // 소수점 1자리로 반올림 (부동소수점 오류 방지)
+        const round1 = v => Math.round(v * 10) / 10;
+
         return {
             totalAnnual,
-            usedAnnual,
-            remainingAnnual: totalAnnual - usedAnnual,
-            sickDays,
-            unpaidDays,
-            totalDeduction,
-            timeLeaveHours,
-            timeLeaveDays,
+            usedAnnual: round1(usedAnnual),
+            remainingAnnual: round1(totalAnnual - usedAnnual),
+            sickDays: round1(sickDays),
+            unpaidDays: round1(unpaidDays),
+            totalDeduction: Math.round(totalDeduction),
+            timeLeaveHours: round1(timeLeaveHours),
+            timeLeaveDays: round1(timeLeaveDays),
             recordCount: records.length,
             usagePercent: totalAnnual > 0 ? Math.round((usedAnnual / totalAnnual) * 100) : 0,
         };
@@ -292,7 +333,9 @@ const LEAVE = {
             if (!r.isPaid) deduction += Math.abs(r.salaryImpact || 0);
         });
 
-        return { totalDays, annualUsed, deduction, recordCount: records.length };
+        // 소수점 1자리로 반올림 (부동소수점 오류 방지)
+        const round1 = v => Math.round(v * 10) / 10;
+        return { totalDays: round1(totalDays), annualUsed: round1(annualUsed), deduction: Math.round(deduction), recordCount: records.length };
     },
 
     // ── JSON 내보내기 ──

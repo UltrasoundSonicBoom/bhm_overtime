@@ -86,8 +86,8 @@ const CALC = {
             '가족수당': familyAllowance,
             '명절지원비(월할)': monthlyHolidayBonus,
             '자기계발별정수당': DATA.allowances.selfDevAllowance,
-            '별정수당5': DATA.allowances.specialPay5,
-            '리프레시지원비': DATA.allowances.refreshBenefit
+            '별정수당5': DATA.allowances.specialPay5
+            // '리프레시지원비': DATA.allowances.refreshBenefit // 병원 급여명세서 실물 대조 결과 통상임금에서 제외된 것으로 확인됨
         };
 
         const monthlyWage = Object.values(breakdown).reduce((a, b) => a + b, 0);
@@ -153,7 +153,7 @@ const CALC = {
      * @returns {object}
      */
     calcOnCallPay(hourlyRate, standbyDays = 0, callOuts = 0, workHours = 0, includesNight = false) {
-        const totalStandbyDays = standbyDays + callOuts;
+        const totalStandbyDays = standbyDays; // 온콜 출근 시 대기수당과는 중복되지 않으므로 출근 횟수는 대기일수에서 분리
         const standbyPay = totalStandbyDays * DATA.allowances.onCallStandby;
         const transportPay = callOuts * DATA.allowances.onCallTransport;
 

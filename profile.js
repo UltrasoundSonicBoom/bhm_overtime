@@ -33,6 +33,13 @@ const PROFILE = {
     save(data) {
         const profile = { ...this.defaults, ...data, savedAt: new Date().toISOString() };
         localStorage.setItem(this.STORAGE_KEY, JSON.stringify(profile));
+        
+        // Sync to Supabase async
+        if (window.isFamilyMode && window.SupabaseSync) {
+            profile.id = window.SupabaseUser ? window.SupabaseUser.id : 'local_user_profile';
+            window.SupabaseSync.pushCloudData('profiles', profile);
+        }
+
         return profile;
     },
 
