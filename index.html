@@ -1,12 +1,31 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" data-theme="neo">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="서울대학교병원 보라매병원 SNUH 급여 도우미: 수당 계산기, 급여 시뮬레이터">
   <title> SNUH 급여 도우미 </title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=2.0">
+  <style>
+    .theme-toggle-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: 1px solid var(--border-glass);
+      background: var(--bg-card);
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease-out;
+      flex-shrink: 0;
+    }
+    .theme-toggle-btn:hover {
+      border-color: var(--border-active);
+    }
+  </style>
 </head>
 
 <body>
@@ -21,6 +40,7 @@
           <p>2026 단체협약 기준</p>
         </div>
       </div>
+      <button class="theme-toggle-btn" id="themeToggle" title="테마 전환" onclick="toggleTheme()">🎨</button>
       <div id="authContainer" class="auth-container" style="display:none; align-items:center; gap:8px;">
         <button onclick="if(window.SupabaseSync) window.SupabaseSync.signInWithGoogle()" class="btn btn-outline" style="padding:4px 10px; font-size:12px; border-color:var(--text-muted); color:var(--text-muted); border-radius:20px;">
           접속 확인 중...
@@ -619,6 +639,31 @@
   <script src="leave.js?v=1.1"></script>
   <script src="payroll.js?v=1.1"></script>
   <script src="app.js?v=1.1"></script>
+  <script>
+    // ── 테마 전환 시스템 ──
+    (function initTheme() {
+      const saved = localStorage.getItem('theme');
+      if (saved === 'linear') {
+        document.documentElement.removeAttribute('data-theme');
+        document.getElementById('themeToggle').textContent = '🌙';
+      }
+    })();
+
+    function toggleTheme() {
+      const html = document.documentElement;
+      const btn = document.getElementById('themeToggle');
+      const isNeo = html.getAttribute('data-theme') === 'neo';
+      if (isNeo) {
+        html.removeAttribute('data-theme');
+        btn.textContent = '🌙';
+        localStorage.setItem('theme', 'linear');
+      } else {
+        html.setAttribute('data-theme', 'neo');
+        btn.textContent = '🎨';
+        localStorage.setItem('theme', 'neo');
+      }
+    }
+  </script>
   <script>
     // ── 테스트 데이터 초기화 스크립트 ──
     if (!localStorage.getItem('cleared_v1')) {

@@ -3,7 +3,7 @@
    Linear / Raycast — Restrained Dark Tech
    ============================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
 
 :root {
   /* ── Linear Palette: Deep solid darks, no transparency ── */
@@ -2123,4 +2123,592 @@ body::before {
   .chat-container {
     height: 400px;
   }
+}
+
+/* ============================================
+   THEME: Neobrutalism — Bold, Raw, Playful
+   Activated via data-theme="neo" on <html>
+   ============================================ */
+
+/* ── Neo: Design Tokens ── */
+html[data-theme="neo"] {
+  --bg-primary: #FFFDF5;
+  --bg-secondary: #FFF8E7;
+  --bg-card: #FFFFFF;
+  --bg-glass: #F5F0E1;
+  --bg-glass-hover: #EDE7D3;
+  --border-glass: #1a1a1a;
+  --border-active: #1a1a1a;
+
+  --text-primary: #1a1a1a;
+  --text-secondary: #4a4a4a;
+  --text-muted: #7a7a7a;
+  --text-accent: #1a1a1a;
+
+  --accent-indigo: #6C5CE7;
+  --accent-blue: #74B9FF;
+  --accent-cyan: #00CEC9;
+  --accent-emerald: #00B894;
+  --accent-amber: #FDCB6E;
+  --accent-rose: #FD79A8;
+  --accent-violet: #A29BFE;
+
+  --gradient-primary: #6C5CE7;
+  --gradient-success: #00B894;
+  --gradient-warning: #FDCB6E;
+  --gradient-info: #74B9FF;
+
+  --shadow-sm: 2px 2px 0px #1a1a1a;
+  --shadow-md: 4px 4px 0px #1a1a1a;
+  --shadow-lg: 6px 6px 0px #1a1a1a;
+  --shadow-glow: none;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+}
+
+/* ── Neo: Typography ── */
+html[data-theme="neo"] body {
+  font-family: 'Space Grotesk', 'Noto Sans KR', -apple-system, sans-serif;
+}
+
+/* ── Neo: Header ── */
+html[data-theme="neo"] .header {
+  background: var(--accent-amber);
+  border-bottom: 3px solid #1a1a1a;
+  padding: 14px 24px;
+}
+
+html[data-theme="neo"] .logo-icon {
+  background: #FFFFFF;
+  border: 3px solid #1a1a1a;
+  box-shadow: 2px 2px 0px #1a1a1a;
+}
+
+/* ── Neo: Nav Tabs ── */
+html[data-theme="neo"] .nav-tab {
+  font-weight: 600;
+  border: 2px solid transparent;
+}
+
+html[data-theme="neo"] .nav-tab:hover {
+  border-color: #1a1a1a;
+}
+
+html[data-theme="neo"] .nav-tab.active {
+  background: #FFFFFF;
+  border: 3px solid #1a1a1a;
+  box-shadow: 2px 2px 0px #1a1a1a;
+}
+
+/* ── Neo: Cards ── */
+html[data-theme="neo"] .card {
+  border: 3px solid #1a1a1a;
+  box-shadow: 4px 4px 0px #1a1a1a;
+}
+
+html[data-theme="neo"] .card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px #1a1a1a;
+}
+
+html[data-theme="neo"] .card-title .icon {
+  border: 2px solid #1a1a1a;
+}
+
+html[data-theme="neo"] .card-title .icon.indigo { background: var(--accent-violet); }
+html[data-theme="neo"] .card-title .icon.emerald { background: var(--accent-emerald); }
+html[data-theme="neo"] .card-title .icon.amber { background: var(--accent-amber); }
+html[data-theme="neo"] .card-title .icon.cyan { background: var(--accent-cyan); }
+html[data-theme="neo"] .card-title .icon.rose { background: var(--accent-rose); }
+html[data-theme="neo"] .card-title .icon.violet { background: var(--accent-violet); }
+html[data-theme="neo"] .card-title .icon.blue { background: var(--accent-blue); }
+
+/* ── Neo: Sub-tabs ── */
+html[data-theme="neo"] .sub-tabs {
+  gap: 6px;
+  border-bottom: none;
+}
+
+html[data-theme="neo"] .sub-tab {
+  border: 2px solid #1a1a1a;
+  background: var(--bg-card);
+  font-weight: 600;
+  border-bottom-color: #1a1a1a;
+}
+
+html[data-theme="neo"] .sub-tab:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 2px 2px 0px #1a1a1a;
+}
+
+html[data-theme="neo"] .sub-tab.active {
+  background: var(--accent-violet);
+  color: #FFFFFF;
+  box-shadow: 2px 2px 0px #1a1a1a;
+}
+
+/* ── Neo: Buttons ── */
+html[data-theme="neo"] .btn {
+  border: 3px solid #1a1a1a;
+  font-weight: 700;
+  box-shadow: 2px 2px 0px #1a1a1a;
+}
+
+html[data-theme="neo"] .btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0px #1a1a1a;
+}
+
+html[data-theme="neo"] .btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+/* ── Neo: Form Elements ── */
+html[data-theme="neo"] .form-group label {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+html[data-theme="neo"] .form-group select,
+html[data-theme="neo"] .form-group input {
+  border: 2px solid #1a1a1a;
+  background: var(--bg-card);
+}
+
+html[data-theme="neo"] .form-group select:focus,
+html[data-theme="neo"] .form-group input:focus {
+  box-shadow: 3px 3px 0px var(--accent-indigo);
+}
+
+/* ── Neo: QA Cards ── */
+html[data-theme="neo"] .qa-card {
+  border: 3px solid #1a1a1a;
+  box-shadow: 2px 2px 0px #1a1a1a;
+}
+
+html[data-theme="neo"] .qa-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px #1a1a1a;
+}
+
+html[data-theme="neo"] .qa-card-result {
+  background: var(--accent-amber);
+  border: 2px solid #1a1a1a;
+}
+
+/* ── Neo: Result Display ── */
+html[data-theme="neo"] .result-box {
+  background: var(--accent-blue);
+  border: 3px solid #1a1a1a;
+  box-shadow: 4px 4px 0px #1a1a1a;
+}
+
+html[data-theme="neo"] .result-box.success {
+  background: var(--accent-emerald);
+}
+
+/* ── Neo: Tables ── */
+html[data-theme="neo"] .data-table {
+  border: 2px solid #1a1a1a;
+}
+
+html[data-theme="neo"] .data-table th {
+  font-weight: 700;
+  border-bottom: 2px solid #1a1a1a;
+  background: var(--accent-amber);
+  color: #1a1a1a;
+}
+
+/* ── Neo: Stat Cards ── */
+html[data-theme="neo"] .stat-card {
+  border: 3px solid #1a1a1a;
+  box-shadow: 2px 2px 0px #1a1a1a;
+}
+
+html[data-theme="neo"] .stat-card:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px #1a1a1a;
+}
+
+/* ── Neo: Badges ── */
+html[data-theme="neo"] .badge {
+  border: 2px solid #1a1a1a;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+}
+
+html[data-theme="neo"] .badge.indigo { background: var(--accent-violet); color: white; }
+html[data-theme="neo"] .badge.emerald { background: var(--accent-emerald); color: white; }
+html[data-theme="neo"] .badge.amber { background: var(--accent-amber); color: #1a1a1a; }
+html[data-theme="neo"] .badge.rose { background: var(--accent-rose); color: white; }
+
+/* ── Neo: Warning Box ── */
+html[data-theme="neo"] .warning-box,
+html[data-theme="neo"] .qa-profile-warning {
+  background: var(--accent-amber);
+  border: 2px solid #1a1a1a;
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+/* ── Neo: Chatbot ── */
+html[data-theme="neo"] .chat-msg.bot {
+  border: 2px solid #1a1a1a;
+  box-shadow: 2px 2px 0px #1a1a1a;
+}
+
+html[data-theme="neo"] .chat-msg.user {
+  border: 2px solid #1a1a1a;
+  box-shadow: 2px 2px 0px #1a1a1a;
+}
+
+html[data-theme="neo"] .chat-input {
+  border: 2px solid #1a1a1a;
+  border-radius: var(--radius-sm);
+}
+
+html[data-theme="neo"] .chat-input:focus {
+  box-shadow: 3px 3px 0px var(--accent-indigo);
+}
+
+html[data-theme="neo"] .chat-send {
+  border: 2px solid #1a1a1a;
+  border-radius: var(--radius-sm);
+  box-shadow: 2px 2px 0px #1a1a1a;
+}
+
+html[data-theme="neo"] .chat-input-row {
+  border-top: 2px solid #1a1a1a;
+}
+
+html[data-theme="neo"] .quick-tag {
+  border: 2px solid #1a1a1a;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+}
+
+html[data-theme="neo"] .quick-tag:hover {
+  background: var(--accent-violet);
+  color: white;
+}
+
+/* ── Neo: Collapsibles ── */
+html[data-theme="neo"] .collapsible-header {
+  border: 2px solid #1a1a1a;
+  font-weight: 600;
+  box-shadow: 2px 2px 0px #1a1a1a;
+}
+
+html[data-theme="neo"] .collapsible-header:hover {
+  background: var(--accent-violet);
+  color: white;
+}
+
+html[data-theme="neo"] .collapsible-body {
+  border: 2px solid #1a1a1a;
+  border-top: none;
+  background: var(--bg-card);
+}
+
+/* ── Neo: Mini Calendar ── */
+html[data-theme="neo"] .mini-cal {
+  border: 3px solid #1a1a1a;
+  box-shadow: 4px 4px 0px #1a1a1a;
+  background: var(--bg-card);
+}
+
+html[data-theme="neo"] .mini-cal-header {
+  background: var(--accent-rose);
+  color: white;
+  font-weight: 700;
+  border-bottom: 3px solid #1a1a1a;
+}
+
+html[data-theme="neo"] .mini-cal-day.today {
+  background: var(--accent-emerald);
+  color: white;
+  border: 2px solid #1a1a1a;
+}
+
+/* ── Neo: OT Calendar ── */
+html[data-theme="neo"] .ot-cal {
+  border: 3px solid #1a1a1a;
+  box-shadow: 4px 4px 0px #1a1a1a;
+  background: var(--bg-card);
+}
+
+html[data-theme="neo"] .ot-cal-header {
+  background: var(--accent-amber);
+  color: #1a1a1a;
+  font-weight: 700;
+  border-bottom: 3px solid #1a1a1a;
+}
+
+html[data-theme="neo"] .cal-nav-btn {
+  border: 2px solid #1a1a1a;
+  font-weight: 600;
+  background: var(--bg-card);
+}
+
+html[data-theme="neo"] .cal-nav-btn:hover {
+  background: #1a1a1a;
+  color: white;
+}
+
+html[data-theme="neo"] .ot-cal-day.today {
+  background: var(--accent-emerald);
+  color: white;
+  border: 2px solid #1a1a1a;
+}
+
+html[data-theme="neo"] .ot-cal-day.selected {
+  background: var(--accent-indigo) !important;
+  color: white !important;
+  border: 2px solid #1a1a1a;
+}
+
+/* ── Neo: OT Dashboard ── */
+html[data-theme="neo"] .ot-dashboard {
+  background: var(--accent-emerald);
+  border: 3px solid #1a1a1a;
+  box-shadow: 4px 4px 0px #1a1a1a;
+}
+
+html[data-theme="neo"] .ot-dash-main .ot-dash-pay {
+  color: #1a1a1a;
+}
+
+html[data-theme="neo"] .ot-dash-main .ot-dash-label {
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+html[data-theme="neo"] .ot-dash-item {
+  border: 2px solid #1a1a1a;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+}
+
+/* ── Neo: OT Quick Buttons ── */
+html[data-theme="neo"] .ot-quick-btn {
+  border: 3px solid #1a1a1a;
+  box-shadow: 2px 2px 0px #1a1a1a;
+}
+
+html[data-theme="neo"] .ot-quick-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0px #1a1a1a;
+}
+
+html[data-theme="neo"] .ot-quick-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+/* ── Neo: Bottom Sheet ── */
+html[data-theme="neo"] .ot-bottom-sheet-overlay {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+html[data-theme="neo"] .ot-bottom-sheet {
+  border: 3px solid #1a1a1a;
+  border-bottom: none;
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -4px 0px #1a1a1a;
+}
+
+html[data-theme="neo"] .ot-sheet-handle {
+  background: var(--text-muted);
+}
+
+/* ── Neo: Type Selector ── */
+html[data-theme="neo"] .ot-type-label {
+  border: 2px solid #1a1a1a;
+  font-weight: 700;
+}
+
+html[data-theme="neo"] .ot-type-option input[type="radio"]:checked+.ot-type-label {
+  color: white;
+  background: var(--type-color, var(--accent-indigo));
+  box-shadow: 2px 2px 0px #1a1a1a;
+}
+
+/* ── Neo: Time Inputs ── */
+html[data-theme="neo"] .time-picker-premium,
+html[data-theme="neo"] .premium-input {
+  border: 2px solid #1a1a1a;
+  background: var(--bg-card);
+}
+
+html[data-theme="neo"] .time-picker-premium:focus {
+  box-shadow: 3px 3px 0px var(--accent-indigo);
+}
+
+html[data-theme="neo"] .premium-input:focus {
+  box-shadow: 3px 3px 0px var(--accent-emerald);
+}
+
+/* ── Neo: Preset Buttons ── */
+html[data-theme="neo"] .ot-preset-btn {
+  border: 2px solid #1a1a1a;
+  font-weight: 700;
+}
+
+html[data-theme="neo"] .ot-preset-btn.active {
+  background: var(--accent-amber);
+  color: #1a1a1a;
+}
+
+html[data-theme="neo"] .ot-preset-btn.custom.active {
+  background: var(--accent-indigo);
+  color: white;
+}
+
+/* ── Neo: Preview ── */
+html[data-theme="neo"] .ot-preview {
+  background: var(--accent-emerald);
+  border: 2px solid #1a1a1a;
+  color: #1a1a1a;
+}
+
+/* ── Neo: Record Items ── */
+html[data-theme="neo"] .ot-record-item {
+  border: 2px solid #1a1a1a;
+  box-shadow: 2px 2px 0px #1a1a1a;
+}
+
+html[data-theme="neo"] .ot-record-item:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0px #1a1a1a;
+}
+
+html[data-theme="neo"] .ot-record-type {
+  border: 1px solid #1a1a1a;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+}
+
+html[data-theme="neo"] .ot-record-type.overtime { background: var(--accent-amber); color: #1a1a1a; }
+html[data-theme="neo"] .ot-record-type.oncall_standby { background: var(--accent-cyan); color: #1a1a1a; }
+html[data-theme="neo"] .ot-record-type.oncall_callout { background: var(--accent-indigo); color: white; }
+
+html[data-theme="neo"] .ot-record-summary {
+  background: var(--accent-emerald);
+  border: 2px solid #1a1a1a;
+  color: #1a1a1a;
+}
+
+/* ── Neo: Toast ── */
+html[data-theme="neo"] .ot-toast {
+  background: var(--accent-emerald);
+  color: #1a1a1a;
+  border: 3px solid #1a1a1a;
+  border-radius: var(--radius-sm);
+  box-shadow: 4px 4px 0px #1a1a1a;
+  font-weight: 700;
+}
+
+/* ── Neo: Callout Modal ── */
+html[data-theme="neo"] .ot-callout-inner {
+  border: 3px solid #1a1a1a;
+  box-shadow: 4px 4px 0px #1a1a1a;
+}
+
+/* ── Neo: Modal ── */
+html[data-theme="neo"] .modal-content {
+  border: 3px solid #1a1a1a;
+  box-shadow: 6px 6px 0px #1a1a1a;
+}
+
+/* ── Neo: Hourly Bar ── */
+html[data-theme="neo"] .ot-hourly-bar {
+  background: var(--accent-emerald);
+  border: 2px solid #1a1a1a;
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+/* ── Neo: Leave Dashboard ── */
+html[data-theme="neo"] .lv-dash-item {
+  border: 2px solid #1a1a1a;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+}
+
+html[data-theme="neo"] .lv-dash-item:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 2px 2px 0px #1a1a1a;
+}
+
+/* ── Neo: Leave Progress ── */
+html[data-theme="neo"] .lv-progress-bar {
+  border: 2px solid #1a1a1a;
+  height: 10px;
+}
+
+html[data-theme="neo"] .lv-progress-fill {
+  border-radius: 0;
+}
+
+/* ── Neo: Leave Records ── */
+html[data-theme="neo"] .lv-record-item {
+  border: 2px solid #1a1a1a;
+  box-shadow: 2px 2px 0px #1a1a1a;
+}
+
+html[data-theme="neo"] .lv-record-item:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px #1a1a1a;
+}
+
+html[data-theme="neo"] .lv-record-type {
+  border: 1px solid #1a1a1a;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+}
+
+html[data-theme="neo"] .lv-record-type.paid { background: var(--accent-emerald); color: white; }
+html[data-theme="neo"] .lv-record-type.unpaid { background: var(--accent-rose); color: white; }
+
+/* ── Neo: Leave Stats ── */
+html[data-theme="neo"] .lv-stat-card {
+  border: 2px solid #1a1a1a;
+  box-shadow: 2px 2px 0px #1a1a1a;
+}
+
+html[data-theme="neo"] .lv-month-bar-fill {
+  border-radius: 0;
+  border: 1px solid #1a1a1a;
+}
+
+/* ── Neo: Input Panel ── */
+html[data-theme="neo"] .ot-input-panel,
+html[data-theme="neo"] .lv-input-panel {
+  border: 2px solid #1a1a1a;
+}
+
+/* ── Neo: Quick Date Badge ── */
+html[data-theme="neo"] .ot-quick-date {
+  background: var(--accent-emerald);
+  color: #1a1a1a;
+  border: 1px solid #1a1a1a;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+}
+
+/* ── Neo: Theme Toggle (styling) ── */
+html[data-theme="neo"] .theme-toggle-btn {
+  background: var(--bg-card);
+  border: 2px solid #1a1a1a;
+  box-shadow: 2px 2px 0px #1a1a1a;
+}
+
+html[data-theme="neo"] .theme-toggle-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0px #1a1a1a;
 }
