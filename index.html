@@ -287,16 +287,12 @@
         </div> <!-- /form-group -->
 
         <!-- 시간 입력 (온콜대기 시 숨김) -->
-        <div id="otTimeFields">
-          <div class="form-row" style="gap:16px;">
-            <div class="form-group" style="flex:1;">
-              <label style="font-weight:600; font-size:var(--text-body-large);">시작 시간</label>
-              <input type="time" id="otStartTime" class="time-picker-premium" value="18:00" step="900" onchange="previewOtCalc()">
-            </div>
-            <div class="form-group" style="flex:1;">
-              <label style="font-weight:600; font-size:var(--text-body-large);">종료 시간</label>
-              <input type="time" id="otEndTime" class="time-picker-premium" value="22:00" step="900" onchange="previewOtCalc()">
-            </div>
+        <div id="otTimeFields" style="margin-bottom:16px;">
+          <label style="display:block; font-size:var(--text-body-large); font-weight:600; color:var(--text-secondary); margin-bottom:6px;">근무 시간</label>
+          <div style="display:flex; flex-direction:row; gap:8px; align-items:center;">
+            <input type="time" id="otStartTime" class="time-picker-premium" style="flex:1; width:100%" value="18:00" step="900" onchange="previewOtCalc()">
+            <span style="color:var(--text-muted); font-weight:700;">~</span>
+            <input type="time" id="otEndTime" class="time-picker-premium" style="flex:1; width:100%" value="22:00" step="900" onchange="previewOtCalc()">
           </div>
         </div>
 
@@ -359,15 +355,11 @@
         <!-- 시간차 시간 입력 -->
         <div id="lvTimeInputArea"
           style="display:none; margin-bottom:10px; padding:10px; border-radius:8px; background:rgba(16,185,129,0.05); border:1px solid rgba(16,185,129,0.15);">
-          <div class="form-row">
-            <div class="form-group">
-              <label>시작 시간</label>
-              <input type="time" id="lvStartTime" value="09:00" onchange="calcLvTimeHours()">
-            </div>
-            <div class="form-group">
-              <label>종료 시간</label>
-              <input type="time" id="lvEndTime" value="13:00" onchange="calcLvTimeHours()">
-            </div>
+          <label style="display:block; font-size:var(--text-body-large); font-weight:600; color:var(--accent-emerald); margin-bottom:6px;">시간 설정</label>
+          <div style="display:flex; flex-direction:row; gap:8px; align-items:center; margin-bottom:8px;">
+            <input type="time" id="lvStartTime" class="time-picker-premium" style="flex:1; width:100%" value="09:00" onchange="calcLvTimeHours()">
+            <span style="color:var(--text-muted); font-weight:700;">~</span>
+            <input type="time" id="lvEndTime" class="time-picker-premium" style="flex:1; width:100%" value="13:00" onchange="calcLvTimeHours()">
           </div>
           <div id="lvTimeCalcResult"
             style="font-size:var(--text-body-large); padding:6px 8px; border-radius:6px; background:rgba(99,102,241,0.08); color:var(--accent-indigo); font-weight:600; text-align:center;">
@@ -387,13 +379,10 @@
         <!-- 한도 현황 뱃지 -->
         <div id="lvQuotaBadge" style="display:none; margin-bottom:10px;"></div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label>시작일</label>
-            <input type="date" id="lvStartDate">
-          </div>
-          <div class="form-group">
-            <label>종료일</label>
+        <div class="form-row" id="lvDateFields">
+          <input type="hidden" id="lvStartDate">
+          <div class="form-group" style="width:100%;">
+            <label>종료일 <small style="color:var(--text-muted); font-weight:normal;">(선택한 날짜부터)</small></label>
             <input type="date" id="lvEndDate">
           </div>
         </div>

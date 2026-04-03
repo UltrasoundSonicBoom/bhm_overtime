@@ -2704,13 +2704,16 @@ function onLvTypeChange() {
     quotaBadge.style.display = 'none';
   }
 
-  // 시간차 선택 시 시간 입력 표시
+  // 시간차 선택 시 시간 입력 표시 및 날짜 필드 숨김
   const timeArea = document.getElementById('lvTimeInputArea');
+  const dateArea = document.getElementById('lvDateFields');
   if (typeInfo && typeInfo.isTimeBased) {
     timeArea.style.display = 'block';
+    if (dateArea) dateArea.style.display = 'none';
     calcLvTimeHours();
   } else {
     timeArea.style.display = 'none';
+    if (dateArea) dateArea.style.display = '';
     document.getElementById('lvTimeCalcResult').textContent = '';
   }
 
