@@ -245,21 +245,23 @@ body::before {
 /* ── Sub-tabs ── */
 .sub-tabs {
   display: flex;
-  gap: 4px;
-  background: var(--bg-glass);
-  border-radius: var(--radius-md);
-  padding: 4px;
-  border: 1px solid var(--border-glass);
+  gap: 2px;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  padding: 0;
+  border: none;
   margin-bottom: 20px;
+  border-bottom: 1px solid var(--border-glass);
 }
 
 .sub-tab {
   flex: 1;
   padding: 10px 12px;
-  border-radius: var(--radius-sm);
+  border-radius: 0;
   border: none;
+  border-bottom: 2px solid transparent;
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;
@@ -270,13 +272,11 @@ body::before {
 
 .sub-tab:hover {
   color: var(--text-primary);
-  background: var(--bg-glass-hover);
 }
 
 .sub-tab.active {
-  background: rgba(99, 102, 241, 0.15);
-  color: var(--accent-indigo);
-  border: 1px solid rgba(99, 102, 241, 0.3);
+  color: var(--text-primary);
+  border-bottom-color: var(--accent-indigo);
 }
 
 .sub-content {
@@ -297,7 +297,6 @@ body::before {
 
 .qa-card {
   background: var(--bg-card);
-  backdrop-filter: blur(12px);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-md);
   padding: 16px;
@@ -306,10 +305,8 @@ body::before {
 }
 
 .qa-card:hover {
-  border-color: var(--accent-indigo);
+  border-color: var(--border-active);
   background: var(--bg-glass-hover);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-glow);
 }
 
 .qa-card.expanded {
@@ -364,10 +361,7 @@ body::before {
 .qa-card-result .result-value {
   font-size: 22px;
   font-weight: 700;
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--accent-indigo);
 }
 
 .qa-card-result .result-label {
@@ -499,7 +493,6 @@ body::before {
 .form-group select:focus,
 .form-group input:focus {
   border-color: var(--accent-indigo);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
 .form-group select option {
@@ -529,14 +522,12 @@ body::before {
 }
 
 .btn-primary {
-  background: var(--gradient-primary);
+  background: var(--accent-indigo);
   color: white;
-  box-shadow: var(--shadow-sm);
 }
 
 .btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-glow);
+  background: #5558e6;
 }
 
 .btn-secondary {
@@ -572,17 +563,12 @@ body::before {
 .result-total {
   font-size: 28px;
   font-weight: 700;
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--accent-indigo);
   margin-bottom: 12px;
 }
 
 .result-total.green {
-  background: var(--gradient-success);
-  -webkit-background-clip: text;
-  background-clip: text;
+  color: var(--accent-emerald);
 }
 
 .result-label {
@@ -673,7 +659,7 @@ body::before {
 
 .chat-msg.user {
   align-self: flex-end;
-  background: var(--gradient-primary);
+  background: var(--accent-indigo);
   color: white;
 }
 
@@ -715,7 +701,7 @@ body::before {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: var(--gradient-primary);
+  background: var(--accent-indigo);
   border: none;
   color: white;
   font-size: 18px;
@@ -727,8 +713,7 @@ body::before {
 }
 
 .chat-send:hover {
-  transform: scale(1.05);
-  box-shadow: var(--shadow-glow);
+  background: #5558e6;
 }
 
 /* ── Quick Tags (Chatbot) ── */
@@ -927,16 +912,15 @@ body::before {
 }
 
 .btn-outline:hover {
-  background: rgba(244, 63, 94, 0.1);
-  color: var(--accent-rose);
-  border-color: rgba(244, 63, 94, 0.3);
+  color: var(--text-primary);
+  border-color: var(--border-active);
 }
 
 /* ── Mini Calendar ── */
 .mini-cal {
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-md);
-  background: rgba(17, 24, 39, 0.5);
+  background: var(--bg-card);
   overflow: hidden;
 }
 
@@ -946,10 +930,10 @@ body::before {
   justify-content: center;
   gap: 8px;
   padding: 10px 12px;
-  background: rgba(99, 102, 241, 0.08);
+  background: var(--bg-secondary);
   font-size: 13px;
   font-weight: 600;
-  color: var(--text-accent);
+  color: var(--text-secondary);
   border-bottom: 1px solid var(--border-glass);
 }
 
@@ -1024,7 +1008,6 @@ body::before {
   background: rgba(16, 185, 129, 0.15);
   color: var(--accent-emerald);
   font-weight: 700;
-  box-shadow: 0 0 8px rgba(16, 185, 129, 0.2);
 }
 
 .mini-cal-day[title]:hover::before {
@@ -1087,7 +1070,7 @@ body::before {
 .ot-cal {
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-md);
-  background: rgba(17, 24, 39, 0.5);
+  background: var(--bg-card);
   overflow: hidden;
 }
 
@@ -1097,10 +1080,10 @@ body::before {
   justify-content: space-between;
   gap: 8px;
   padding: 10px 12px;
-  background: rgba(245, 158, 11, 0.08);
+  background: var(--bg-secondary);
   font-size: 13px;
   font-weight: 600;
-  color: var(--accent-amber);
+  color: var(--text-secondary);
   border-bottom: 1px solid var(--border-glass);
 }
 
@@ -1165,9 +1148,8 @@ body::before {
 }
 
 .ot-cal-day:hover {
-  background: rgba(99, 102, 241, 0.12);
+  background: var(--bg-glass-hover);
   color: var(--text-primary);
-  transform: scale(1.05);
 }
 
 .ot-cal-day.empty {
@@ -1192,10 +1174,9 @@ body::before {
 }
 
 .ot-cal-day.selected {
-  background: rgba(99, 102, 241, 0.2) !important;
+  background: rgba(99, 102, 241, 0.15) !important;
   color: var(--accent-indigo) !important;
   font-weight: 700;
-  box-shadow: 0 0 8px rgba(99, 102, 241, 0.3);
 }
 
 /* Record dots on calendar day */
@@ -1255,9 +1236,9 @@ body::before {
   gap: 16px;
   margin-bottom: 16px;
   padding: 20px 24px;
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(6, 182, 212, 0.06));
-  border: 1px solid rgba(16, 185, 129, 0.15);
-  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
 }
 
 .ot-dash-main {
@@ -1267,10 +1248,7 @@ body::before {
 .ot-dash-main .ot-dash-pay {
   font-size: 32px;
   font-weight: 700;
-  background: var(--gradient-success);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--accent-emerald);
   line-height: 1.2;
 }
 
@@ -1346,7 +1324,6 @@ body::before {
   gap: 4px;
   padding: 14px 8px;
   background: var(--bg-card);
-  backdrop-filter: blur(12px);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-md);
   cursor: pointer;
@@ -1380,8 +1357,6 @@ body::before {
 
 .ot-quick-btn:hover {
   border-color: var(--border-active);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-glow);
 }
 
 .ot-quick-btn:active {
@@ -1436,7 +1411,6 @@ body::before {
   color: var(--accent-amber);
   background: rgba(245, 158, 11, 0.1);
   border-color: var(--accent-amber);
-  box-shadow: 0 0 8px rgba(245, 158, 11, 0.15);
 }
 
 .ot-preset-btn.custom {
@@ -1447,7 +1421,6 @@ body::before {
   color: var(--accent-indigo);
   background: rgba(99, 102, 241, 0.1);
   border-color: var(--accent-indigo);
-  box-shadow: 0 0 8px rgba(99, 102, 241, 0.15);
 }
 
 /* ── Overtime: Toast Notification ── */
@@ -1457,15 +1430,14 @@ body::before {
   left: 50%;
   transform: translateX(-50%) translateY(20px);
   padding: 14px 28px;
-  background: rgba(16, 185, 129, 0.95);
+  background: var(--accent-emerald);
   color: white;
   font-size: 14px;
   font-weight: 600;
   border-radius: var(--radius-full);
-  box-shadow: 0 8px 32px rgba(16, 185, 129, 0.3);
   z-index: 999;
   opacity: 0;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s ease-out;
   pointer-events: none;
   font-family: inherit;
   white-space: nowrap;
@@ -1486,10 +1458,8 @@ body::before {
 .ot-callout-inner {
   padding: 20px;
   background: var(--bg-card);
-  backdrop-filter: blur(12px);
   border: 1px solid var(--accent-indigo);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 0 20px rgba(99, 102, 241, 0.1);
+  border-radius: var(--radius-md);
 }
 
 .ot-callout-header {
@@ -1551,9 +1521,7 @@ body::before {
 .ot-bottom-sheet-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.6);
   z-index: 9999;
   opacity: 0;
   pointer-events: none;
@@ -1569,17 +1537,17 @@ body::before {
 .ot-bottom-sheet {
   position: fixed;
   bottom: 0; left: 0; right: 0;
-  background: var(--bg-card);
+  background: var(--bg-secondary);
   z-index: 10000;
-  border-top-left-radius: 24px;
-  border-top-right-radius: 24px;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
   padding: 16px 20px 24px 20px;
-  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.4);
   transform: translateY(100%);
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.3s ease-out;
   max-height: 90vh;
   overflow-y: auto;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-glass);
   border-bottom: none;
 }
 
@@ -1610,8 +1578,7 @@ body::before {
 .time-picker-premium:focus {
   border-color: var(--accent-indigo);
   outline: none;
-  background: rgba(99, 102, 241, 0.1);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+  background: rgba(99, 102, 241, 0.06);
 }
 
 .premium-input {
@@ -1710,7 +1677,6 @@ body::before {
   color: var(--type-color, var(--accent-indigo));
   background: rgba(99, 102, 241, 0.08);
   border-color: var(--type-color, var(--accent-indigo));
-  box-shadow: 0 0 8px rgba(99, 102, 241, 0.15);
 }
 
 .ot-type-label:hover {
@@ -1842,7 +1808,6 @@ body::before {
   gap: 4px;
   padding: 8px 14px;
   background: var(--bg-card);
-  backdrop-filter: blur(12px);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-full);
   font-size: 13px;
@@ -1904,7 +1869,7 @@ body::before {
 
 .lv-progress-fill {
   height: 100%;
-  background: var(--gradient-primary);
+  background: var(--accent-indigo);
   border-radius: var(--radius-full);
   transition: width 0.5s ease;
 }
@@ -2040,7 +2005,7 @@ body::before {
 .lv-month-bar-fill {
   width: 100%;
   border-radius: 3px 3px 0 0;
-  background: var(--gradient-primary);
+  background: var(--accent-indigo);
   min-width: 4px;
   transition: height 0.3s ease;
 }
@@ -2115,7 +2080,14 @@ body::before {
   }
 
   .sub-tabs {
-    flex-direction: column;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+  }
+
+  .sub-tab {
+    white-space: nowrap;
+    flex: 0 0 auto;
   }
 
   .qa-cards-grid {
