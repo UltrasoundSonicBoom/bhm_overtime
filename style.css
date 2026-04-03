@@ -1,41 +1,48 @@
 /* ============================================
    병원 HR 종합 시스템 - 스타일
-   Modern Dark Theme with Glassmorphism
+   Neobrutalism — Bold, Raw, Playful
    ============================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap');
 
 :root {
-  --bg-primary: #0a0e1a;
-  --bg-secondary: #111827;
-  --bg-card: rgba(17, 24, 39, 0.7);
-  --bg-glass: rgba(255, 255, 255, 0.04);
-  --bg-glass-hover: rgba(255, 255, 255, 0.08);
-  --border-glass: rgba(255, 255, 255, 0.08);
-  --border-active: rgba(99, 102, 241, 0.5);
+  /* ── Neobrutalism Palette: Warm cream bg, bold bright accents ── */
+  --bg-primary: #FFFDF5;
+  --bg-secondary: #FFF8E7;
+  --bg-card: #FFFFFF;
+  --bg-glass: #F5F0E1;
+  --bg-glass-hover: #EDE7D3;
+  --border-glass: #1a1a1a;
+  --border-active: #1a1a1a;
 
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  --text-accent: #818cf8;
+  --text-primary: #1a1a1a;
+  --text-secondary: #4a4a4a;
+  --text-muted: #7a7a7a;
+  --text-accent: #1a1a1a;
 
-  --accent-indigo: #6366f1;
-  --accent-blue: #3b82f6;
-  --accent-cyan: #06b6d4;
-  --accent-emerald: #10b981;
-  --accent-amber: #f59e0b;
-  --accent-rose: #f43f5e;
-  --accent-violet: #8b5cf6;
+  --accent-indigo: #6C5CE7;
+  --accent-blue: #74B9FF;
+  --accent-cyan: #00CEC9;
+  --accent-emerald: #00B894;
+  --accent-amber: #FDCB6E;
+  --accent-rose: #FD79A8;
+  --accent-violet: #A29BFE;
 
-  --gradient-primary: linear-gradient(135deg, #6366f1, #8b5cf6);
-  --gradient-success: linear-gradient(135deg, #10b981, #06b6d4);
-  --gradient-warning: linear-gradient(135deg, #f59e0b, #ef4444);
-  --gradient-info: linear-gradient(135deg, #3b82f6, #6366f1);
+  /* ── Neobrutalism: Flat solid colors, no gradients ── */
+  --gradient-primary: #6C5CE7;
+  --gradient-success: #00B894;
+  --gradient-warning: #FDCB6E;
+  --gradient-info: #74B9FF;
 
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
-  --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.15);
+  --neo-border: 3px solid #1a1a1a;
+  --neo-shadow: 4px 4px 0px #1a1a1a;
+  --neo-shadow-sm: 2px 2px 0px #1a1a1a;
+  --neo-shadow-hover: 6px 6px 0px #1a1a1a;
+
+  --shadow-sm: 2px 2px 0px #1a1a1a;
+  --shadow-md: 4px 4px 0px #1a1a1a;
+  --shadow-lg: 6px 6px 0px #1a1a1a;
+  --shadow-glow: none;
 
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -43,7 +50,7 @@
   --radius-xl: 20px;
   --radius-full: 9999px;
 
-  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition: all 0.15s ease-out;
 }
 
 * {
@@ -57,51 +64,25 @@ html {
 }
 
 body {
-  font-family: 'Noto Sans KR', 'Inter', -apple-system, sans-serif;
+  font-family: 'Space Grotesk', 'Noto Sans KR', -apple-system, sans-serif;
   background: var(--bg-primary);
   color: var(--text-primary);
   min-height: 100vh;
   line-height: 1.6;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* ── Ambient Background ── */
+/* ── Ambient Background: REMOVED for Neobrutalism ── */
 body::before {
-  content: '';
-  position: fixed;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle at 30% 20%, rgba(99, 102, 241, 0.06) 0%, transparent 50%),
-    radial-gradient(circle at 70% 80%, rgba(139, 92, 246, 0.04) 0%, transparent 50%),
-    radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.03) 0%, transparent 50%);
-  z-index: -1;
-  animation: ambientMove 30s ease-in-out infinite;
+  display: none;
 }
 
-@keyframes ambientMove {
-
-  0%,
-  100% {
-    transform: translate(0, 0);
-  }
-
-  33% {
-    transform: translate(-2%, 1%);
-  }
-
-  66% {
-    transform: translate(1%, -2%);
-  }
-}
-
-/* ── Header ── */
+/* ── Header (Neobrutalism: solid bg, hard border bottom) ── */
 .header {
-  background: rgba(10, 14, 26, 0.85);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border-glass);
-  padding: 16px 24px;
+  background: var(--accent-amber);
+  border-bottom: var(--neo-border);
+  padding: 14px 24px;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -125,50 +106,49 @@ body::before {
 .logo-icon {
   width: 40px;
   height: 40px;
-  background: var(--gradient-primary);
-  border-radius: var(--radius-md);
+  background: #FFFFFF;
+  border: var(--neo-border);
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 20px;
-  box-shadow: var(--shadow-glow);
+  box-shadow: var(--neo-shadow-sm);
 }
 
 .logo h1 {
   font-size: 18px;
   font-weight: 700;
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
 }
 
 .logo p {
   font-size: 11px;
-  color: var(--text-muted);
-  font-weight: 400;
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
-/* ── Navigation Tabs ── */
+/* ── Navigation Tabs (Neobrutalism: bold bordered pills) ── */
 .nav-tabs {
   display: flex;
-  gap: 4px;
-  background: var(--bg-glass);
-  border-radius: var(--radius-full);
-  padding: 4px;
-  border: 1px solid var(--border-glass);
+  gap: 6px;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  padding: 0;
+  border: none;
   flex-wrap: wrap;
 }
 
 .nav-tab {
   padding: 8px 16px;
-  border-radius: var(--radius-full);
-  border: none;
+  border-radius: var(--radius-sm);
+  border: 2px solid transparent;
   background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   transition: var(--transition);
   font-family: inherit;
   white-space: nowrap;
@@ -176,13 +156,14 @@ body::before {
 
 .nav-tab:hover {
   color: var(--text-primary);
-  background: var(--bg-glass-hover);
+  border-color: var(--text-primary);
 }
 
 .nav-tab.active {
-  background: var(--gradient-primary);
-  color: white;
-  box-shadow: var(--shadow-glow);
+  background: #FFFFFF;
+  color: var(--text-primary);
+  border: var(--neo-border);
+  box-shadow: var(--neo-shadow-sm);
 }
 
 /* ── Main ── */
@@ -236,13 +217,13 @@ body::before {
 }
 
 .modal-content {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-glass);
-  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  border: var(--neo-border);
+  border-radius: var(--radius-md);
   padding: 24px;
   width: 100%;
   max-width: 520px;
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--neo-shadow-hover);
   animation: modalSlideIn 0.3s ease;
 }
 
@@ -269,14 +250,14 @@ body::before {
   overflow-y: auto;
 }
 
-/* ── Sub-tabs ── */
+/* ── Sub-tabs (Neobrutalism: bold bordered tabs) ── */
 .sub-tabs {
   display: flex;
-  gap: 4px;
-  background: var(--bg-glass);
-  border-radius: var(--radius-md);
-  padding: 4px;
-  border: 1px solid var(--border-glass);
+  gap: 6px;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  padding: 0;
+  border: none;
   margin-bottom: 20px;
 }
 
@@ -284,12 +265,12 @@ body::before {
   flex: 1;
   padding: 10px 12px;
   border-radius: var(--radius-sm);
-  border: none;
-  background: transparent;
+  border: 2px solid var(--border-glass);
+  background: var(--bg-card);
   color: var(--text-secondary);
   cursor: pointer;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   transition: var(--transition);
   font-family: inherit;
   text-align: center;
@@ -297,13 +278,15 @@ body::before {
 
 .sub-tab:hover {
   color: var(--text-primary);
-  background: var(--bg-glass-hover);
+  transform: translate(-1px, -1px);
+  box-shadow: 2px 2px 0px var(--text-primary);
 }
 
 .sub-tab.active {
-  background: rgba(99, 102, 241, 0.15);
-  color: var(--accent-indigo);
-  border: 1px solid rgba(99, 102, 241, 0.3);
+  background: var(--accent-violet);
+  color: #FFFFFF;
+  border-color: var(--text-primary);
+  box-shadow: var(--neo-shadow-sm);
 }
 
 .sub-content {
@@ -324,19 +307,17 @@ body::before {
 
 .qa-card {
   background: var(--bg-card);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--border-glass);
+  border: var(--neo-border);
   border-radius: var(--radius-md);
   padding: 16px;
   cursor: pointer;
   transition: var(--transition);
+  box-shadow: var(--neo-shadow-sm);
 }
 
 .qa-card:hover {
-  border-color: var(--accent-indigo);
-  background: var(--bg-glass-hover);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-glow);
+  transform: translate(-2px, -2px);
+  box-shadow: var(--neo-shadow-hover);
 }
 
 .qa-card.expanded {
@@ -381,8 +362,8 @@ body::before {
 }
 
 .qa-card-result {
-  background: rgba(99, 102, 241, 0.06);
-  border: 1px solid rgba(99, 102, 241, 0.15);
+  background: var(--accent-amber);
+  border: 2px solid var(--text-primary);
   border-radius: var(--radius-sm);
   padding: 12px 16px;
   margin-top: 12px;
@@ -391,10 +372,7 @@ body::before {
 .qa-card-result .result-value {
   font-size: 22px;
   font-weight: 700;
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text-primary);
 }
 
 .qa-card-result .result-label {
@@ -408,12 +386,13 @@ body::before {
   align-items: center;
   gap: 8px;
   padding: 12px 16px;
-  background: rgba(245, 158, 11, 0.08);
-  border: 1px solid rgba(245, 158, 11, 0.2);
+  background: var(--accent-amber);
+  border: 2px solid var(--text-primary);
   border-radius: var(--radius-sm);
   margin-bottom: 16px;
   font-size: 13px;
-  color: var(--accent-amber);
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .qa-profile-warning a {
@@ -422,20 +401,20 @@ body::before {
   cursor: pointer;
 }
 
-/* ── Cards ── */
+/* ── Cards (Neobrutalism: solid bg, hard border, offset shadow) ── */
 .card {
   background: var(--bg-card);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--border-glass);
-  border-radius: var(--radius-lg);
+  border: var(--neo-border);
+  border-radius: var(--radius-md);
   padding: 24px;
   margin-bottom: 20px;
   transition: var(--transition);
+  box-shadow: var(--neo-shadow);
 }
 
 .card:hover {
-  border-color: var(--border-active);
-  box-shadow: var(--shadow-glow);
+  transform: translate(-2px, -2px);
+  box-shadow: var(--neo-shadow-hover);
 }
 
 .card-title {
@@ -458,31 +437,38 @@ body::before {
 }
 
 .card-title .icon.indigo {
-  background: rgba(99, 102, 241, 0.15);
+  background: var(--accent-violet);
+  border: 2px solid var(--text-primary);
 }
 
 .card-title .icon.emerald {
-  background: rgba(16, 185, 129, 0.15);
+  background: var(--accent-emerald);
+  border: 2px solid var(--text-primary);
 }
 
 .card-title .icon.amber {
-  background: rgba(245, 158, 11, 0.15);
+  background: var(--accent-amber);
+  border: 2px solid var(--text-primary);
 }
 
 .card-title .icon.cyan {
-  background: rgba(6, 182, 212, 0.15);
+  background: var(--accent-cyan);
+  border: 2px solid var(--text-primary);
 }
 
 .card-title .icon.rose {
-  background: rgba(244, 63, 94, 0.15);
+  background: var(--accent-rose);
+  border: 2px solid var(--text-primary);
 }
 
 .card-title .icon.violet {
-  background: rgba(139, 92, 246, 0.15);
+  background: var(--accent-violet);
+  border: 2px solid var(--text-primary);
 }
 
 .card-title .icon.blue {
-  background: rgba(59, 130, 246, 0.15);
+  background: var(--accent-blue);
+  border: 2px solid var(--text-primary);
 }
 
 /* ── Grid ── */
@@ -506,8 +492,8 @@ body::before {
 .form-group label {
   display: block;
   font-size: 13px;
-  font-weight: 500;
-  color: var(--text-secondary);
+  font-weight: 600;
+  color: var(--text-primary);
   margin-bottom: 6px;
 }
 
@@ -515,8 +501,8 @@ body::before {
 .form-group input {
   width: 100%;
   padding: 10px 14px;
-  background: var(--bg-glass);
-  border: 1px solid var(--border-glass);
+  background: var(--bg-card);
+  border: 2px solid var(--text-primary);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
   font-size: 14px;
@@ -528,7 +514,7 @@ body::before {
 .form-group select:focus,
 .form-group input:focus {
   border-color: var(--accent-indigo);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  box-shadow: 3px 3px 0px var(--accent-indigo);
 }
 
 .form-group select option {
@@ -542,41 +528,48 @@ body::before {
   gap: 12px;
 }
 
-/* ── Buttons ── */
+/* ── Buttons (Neobrutalism: solid, hard borders, offset shadow) ── */
 .btn {
   padding: 10px 20px;
-  border: none;
+  border: var(--neo-border);
   border-radius: var(--radius-sm);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: var(--transition);
   font-family: inherit;
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  box-shadow: var(--neo-shadow-sm);
+}
+
+.btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--neo-shadow);
+}
+
+.btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
 }
 
 .btn-primary {
-  background: var(--gradient-primary);
+  background: var(--accent-indigo);
   color: white;
-  box-shadow: var(--shadow-sm);
 }
 
 .btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-glow);
+  background: #5B4BD6;
 }
 
 .btn-secondary {
-  background: var(--bg-glass);
+  background: var(--bg-card);
   color: var(--text-primary);
-  border: 1px solid var(--border-glass);
 }
 
 .btn-secondary:hover {
   background: var(--bg-glass-hover);
-  border-color: var(--border-active);
 }
 
 .btn-full {
@@ -584,34 +577,29 @@ body::before {
   justify-content: center;
 }
 
-/* ── Result Display ── */
+/* ── Result Display (Neobrutalism: bold, bright accent bg) ── */
 .result-box {
-  background: rgba(99, 102, 241, 0.06);
-  border: 1px solid rgba(99, 102, 241, 0.15);
+  background: var(--accent-blue);
+  border: var(--neo-border);
   border-radius: var(--radius-md);
   padding: 20px;
   margin-top: 16px;
+  box-shadow: var(--neo-shadow);
 }
 
 .result-box.success {
-  background: rgba(16, 185, 129, 0.06);
-  border-color: rgba(16, 185, 129, 0.2);
+  background: var(--accent-emerald);
 }
 
 .result-total {
   font-size: 28px;
   font-weight: 700;
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text-primary);
   margin-bottom: 12px;
 }
 
 .result-total.green {
-  background: var(--gradient-success);
-  -webkit-background-clip: text;
-  background-clip: text;
+  color: var(--text-primary);
 }
 
 .result-label {
@@ -696,39 +684,44 @@ body::before {
 .chat-msg.bot {
   align-self: flex-start;
   background: var(--bg-glass);
-  border: 1px solid var(--border-glass);
+  border: 2px solid var(--text-primary);
   color: var(--text-primary);
+  box-shadow: var(--neo-shadow-sm);
 }
 
 .chat-msg.user {
   align-self: flex-end;
-  background: var(--gradient-primary);
+  background: var(--accent-indigo);
   color: white;
+  border: 2px solid var(--text-primary);
+  box-shadow: var(--neo-shadow-sm);
 }
 
 .chat-msg .ref {
   display: inline-block;
   margin-top: 8px;
   font-size: 11px;
-  color: var(--text-accent);
-  background: rgba(99, 102, 241, 0.1);
+  color: var(--text-primary);
+  background: var(--accent-amber);
   padding: 2px 8px;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--text-primary);
+  font-weight: 600;
 }
 
 .chat-input-row {
   display: flex;
   gap: 8px;
   padding: 16px;
-  border-top: 1px solid var(--border-glass);
+  border-top: 2px solid var(--text-primary);
 }
 
 .chat-input {
   flex: 1;
   padding: 12px 16px;
-  background: var(--bg-glass);
-  border: 1px solid var(--border-glass);
-  border-radius: var(--radius-full);
+  background: var(--bg-card);
+  border: 2px solid var(--text-primary);
+  border-radius: var(--radius-sm);
   color: var(--text-primary);
   font-size: 14px;
   outline: none;
@@ -738,14 +731,15 @@ body::before {
 
 .chat-input:focus {
   border-color: var(--accent-indigo);
+  box-shadow: 3px 3px 0px var(--accent-indigo);
 }
 
 .chat-send {
   width: 44px;
   height: 44px;
-  border-radius: 50%;
-  background: var(--gradient-primary);
-  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--accent-indigo);
+  border: 2px solid var(--text-primary);
   color: white;
   font-size: 18px;
   cursor: pointer;
@@ -753,11 +747,12 @@ body::before {
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: var(--neo-shadow-sm);
 }
 
 .chat-send:hover {
-  transform: scale(1.05);
-  box-shadow: var(--shadow-glow);
+  transform: translate(-1px, -1px);
+  box-shadow: var(--neo-shadow);
 }
 
 /* ── Quick Tags (Chatbot) ── */
@@ -770,35 +765,37 @@ body::before {
 
 .quick-tag {
   padding: 6px 12px;
-  background: var(--bg-glass);
-  border: 1px solid var(--border-glass);
-  border-radius: var(--radius-full);
+  background: var(--bg-card);
+  border: 2px solid var(--text-primary);
+  border-radius: var(--radius-sm);
   color: var(--text-secondary);
   font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
   transition: var(--transition);
   font-family: inherit;
 }
 
 .quick-tag:hover {
-  color: var(--text-primary);
-  border-color: var(--accent-indigo);
-  background: rgba(99, 102, 241, 0.1);
+  background: var(--accent-violet);
+  color: white;
 }
 
-/* ── Tables ── */
+/* ── Tables (Neobrutalism: hard borders) ── */
 .data-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
+  border: 2px solid var(--text-primary);
 }
 
 .data-table th {
   padding: 10px 12px;
   text-align: left;
-  font-weight: 600;
-  color: var(--text-accent);
-  border-bottom: 1px solid var(--border-glass);
+  font-weight: 700;
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--text-primary);
+  background: var(--accent-amber);
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.3px;
@@ -806,7 +803,7 @@ body::before {
 
 .data-table td {
   padding: 10px 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid var(--text-muted);
   color: var(--text-secondary);
 }
 
@@ -830,15 +827,17 @@ body::before {
 }
 
 .stat-card {
-  background: var(--bg-glass);
-  border: 1px solid var(--border-glass);
+  background: var(--bg-card);
+  border: var(--neo-border);
   border-radius: var(--radius-md);
   padding: 16px;
   transition: var(--transition);
+  box-shadow: var(--neo-shadow-sm);
 }
 
 .stat-card:hover {
-  border-color: var(--border-active);
+  transform: translate(-1px, -1px);
+  box-shadow: var(--neo-shadow);
 }
 
 .stat-value {
@@ -877,29 +876,30 @@ body::before {
 .badge {
   display: inline-block;
   padding: 3px 10px;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-sm);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
+  border: 2px solid var(--text-primary);
 }
 
 .badge.indigo {
-  background: rgba(99, 102, 241, 0.15);
-  color: var(--accent-indigo);
+  background: var(--accent-violet);
+  color: white;
 }
 
 .badge.emerald {
-  background: rgba(16, 185, 129, 0.15);
-  color: var(--accent-emerald);
+  background: var(--accent-emerald);
+  color: white;
 }
 
 .badge.amber {
-  background: rgba(245, 158, 11, 0.15);
-  color: var(--accent-amber);
+  background: var(--accent-amber);
+  color: var(--text-primary);
 }
 
 .badge.rose {
-  background: rgba(244, 63, 94, 0.15);
-  color: var(--accent-rose);
+  background: var(--accent-rose);
+  color: white;
 }
 
 /* ── Divider ── */
@@ -911,62 +911,63 @@ body::before {
 
 /* ── Warning box ── */
 .warning-box {
-  background: rgba(245, 158, 11, 0.06);
-  border: 1px solid rgba(245, 158, 11, 0.2);
+  background: var(--accent-amber);
+  border: 2px solid var(--text-primary);
   border-radius: var(--radius-sm);
   padding: 12px 16px;
   font-size: 13px;
-  color: var(--accent-amber);
+  font-weight: 600;
+  color: var(--text-primary);
   margin-top: 12px;
 }
 
 /* ── Collapsible Sections ── */
 .collapsible-header {
   padding: 10px 14px;
-  background: var(--bg-glass);
-  border: 1px solid var(--border-glass);
+  background: var(--bg-card);
+  border: 2px solid var(--text-primary);
   border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 13px;
-  font-weight: 500;
-  color: var(--text-accent);
+  font-weight: 600;
+  color: var(--text-primary);
   transition: var(--transition);
   margin: 12px 0 4px;
+  box-shadow: var(--neo-shadow-sm);
 }
 
 .collapsible-header:hover {
-  background: var(--bg-glass-hover);
-  border-color: var(--accent-indigo);
+  background: var(--accent-violet);
+  color: white;
 }
 
 .collapsible-body {
   padding: 16px;
-  border: 1px solid var(--border-glass);
+  border: 2px solid var(--text-primary);
   border-top: none;
   border-radius: 0 0 var(--radius-sm) var(--radius-sm);
-  background: rgba(99, 102, 241, 0.02);
+  background: var(--bg-card);
   margin-bottom: 12px;
 }
 
 /* ── Outline Button ── */
 .btn-outline {
-  background: transparent;
-  color: var(--text-secondary);
-  border: 1px solid var(--border-glass);
+  background: var(--bg-card);
+  color: var(--text-primary);
 }
 
 .btn-outline:hover {
-  background: rgba(244, 63, 94, 0.1);
-  color: var(--accent-rose);
-  border-color: rgba(244, 63, 94, 0.3);
+  background: var(--accent-rose);
+  color: white;
 }
 
-/* ── Mini Calendar ── */
+/* ── Mini Calendar (Neobrutalism: solid bg, hard border) ── */
 .mini-cal {
-  border: 1px solid var(--border-glass);
+  border: var(--neo-border);
   border-radius: var(--radius-md);
-  background: rgba(17, 24, 39, 0.5);
+  background: var(--bg-card);
   overflow: hidden;
+  box-shadow: var(--neo-shadow);
 }
 
 .mini-cal-header {
@@ -975,11 +976,11 @@ body::before {
   justify-content: center;
   gap: 8px;
   padding: 10px 12px;
-  background: rgba(99, 102, 241, 0.08);
+  background: var(--accent-rose);
   font-size: 13px;
-  font-weight: 600;
-  color: var(--text-accent);
-  border-bottom: 1px solid var(--border-glass);
+  font-weight: 700;
+  color: white;
+  border-bottom: var(--neo-border);
 }
 
 .mini-cal-grid {
@@ -1050,10 +1051,10 @@ body::before {
 }
 
 .mini-cal-day.today {
-  background: rgba(16, 185, 129, 0.15);
-  color: var(--accent-emerald);
+  background: var(--accent-emerald);
+  color: white;
   font-weight: 700;
-  box-shadow: 0 0 8px rgba(16, 185, 129, 0.2);
+  border: 2px solid var(--text-primary);
 }
 
 .mini-cal-day[title]:hover::before {
@@ -1112,12 +1113,13 @@ body::before {
   background: var(--accent-emerald);
 }
 
-/* ── Overtime CRUD: Interactive Calendar ── */
+/* ── Overtime CRUD: Interactive Calendar (Neobrutalism) ── */
 .ot-cal {
-  border: 1px solid var(--border-glass);
+  border: var(--neo-border);
   border-radius: var(--radius-md);
-  background: rgba(17, 24, 39, 0.5);
+  background: var(--bg-card);
   overflow: hidden;
+  box-shadow: var(--neo-shadow);
 }
 
 .ot-cal-header {
@@ -1126,27 +1128,29 @@ body::before {
   justify-content: space-between;
   gap: 8px;
   padding: 10px 12px;
-  background: rgba(245, 158, 11, 0.08);
+  background: var(--accent-amber);
   font-size: 13px;
-  font-weight: 600;
-  color: var(--accent-amber);
-  border-bottom: 1px solid var(--border-glass);
+  font-weight: 700;
+  color: var(--text-primary);
+  border-bottom: var(--neo-border);
 }
 
 .cal-nav-btn {
-  background: none;
-  border: 1px solid var(--border-glass);
+  background: var(--bg-card);
+  border: 2px solid var(--text-primary);
   border-radius: var(--radius-sm);
-  color: inherit;
+  color: var(--text-primary);
   cursor: pointer;
   padding: 4px 10px;
   font-size: 12px;
+  font-weight: 600;
   transition: var(--transition);
   font-family: inherit;
 }
 
 .cal-nav-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--text-primary);
+  color: white;
 }
 
 .cal-nav-title {
@@ -1194,9 +1198,9 @@ body::before {
 }
 
 .ot-cal-day:hover {
-  background: rgba(99, 102, 241, 0.12);
+  background: var(--bg-glass-hover);
   color: var(--text-primary);
-  transform: scale(1.05);
+  font-weight: 700;
 }
 
 .ot-cal-day.empty {
@@ -1215,16 +1219,17 @@ body::before {
 }
 
 .ot-cal-day.today {
-  background: rgba(16, 185, 129, 0.15);
-  color: var(--accent-emerald);
+  background: var(--accent-emerald);
+  color: white;
   font-weight: 700;
+  border: 2px solid var(--text-primary);
 }
 
 .ot-cal-day.selected {
-  background: rgba(99, 102, 241, 0.2) !important;
-  color: var(--accent-indigo) !important;
+  background: var(--accent-indigo) !important;
+  color: white !important;
   font-weight: 700;
-  box-shadow: 0 0 8px rgba(99, 102, 241, 0.3);
+  border: 2px solid var(--text-primary);
 }
 
 /* Record dots on calendar day */
@@ -1277,16 +1282,17 @@ body::before {
   display: inline-block;
 }
 
-/* ── Overtime: Dashboard (수당 금액 중심) ── */
+/* ── Overtime: Dashboard (Neobrutalism) ── */
 .ot-dashboard {
   display: flex;
   align-items: center;
   gap: 16px;
   margin-bottom: 16px;
   padding: 20px 24px;
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(6, 182, 212, 0.06));
-  border: 1px solid rgba(16, 185, 129, 0.15);
-  border-radius: var(--radius-lg);
+  background: var(--accent-emerald);
+  border: var(--neo-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--neo-shadow);
 }
 
 .ot-dash-main {
@@ -1296,17 +1302,14 @@ body::before {
 .ot-dash-main .ot-dash-pay {
   font-size: 32px;
   font-weight: 700;
-  background: var(--gradient-success);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text-primary);
   line-height: 1.2;
 }
 
 .ot-dash-main .ot-dash-label {
   font-size: 12px;
-  color: var(--text-muted);
-  font-weight: 500;
+  color: var(--text-primary);
+  font-weight: 600;
 }
 
 .ot-dash-details {
@@ -1321,11 +1324,11 @@ body::before {
   align-items: center;
   gap: 4px;
   padding: 6px 12px;
-  background: var(--bg-glass);
-  border: 1px solid var(--border-glass);
-  border-radius: var(--radius-full);
+  background: var(--bg-card);
+  border: 2px solid var(--text-primary);
+  border-radius: var(--radius-sm);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-secondary);
 }
 
@@ -1333,10 +1336,10 @@ body::before {
   font-weight: 700;
 }
 
-.ot-dash-value.amber { color: var(--accent-amber); }
-.ot-dash-value.cyan { color: var(--accent-cyan); }
-.ot-dash-value.indigo { color: var(--accent-indigo); }
-.ot-dash-value.emerald { color: var(--accent-emerald); }
+.ot-dash-value.amber { color: var(--text-primary); }
+.ot-dash-value.cyan { color: var(--text-primary); }
+.ot-dash-value.indigo { color: var(--text-primary); }
+.ot-dash-value.emerald { color: var(--text-primary); }
 
 /* ── Overtime: Quick Actions ── */
 .ot-quick-actions {
@@ -1355,11 +1358,12 @@ body::before {
 
 .ot-quick-date {
   font-size: 12px;
-  font-weight: 500;
-  color: var(--accent-emerald);
-  background: rgba(16, 185, 129, 0.1);
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--accent-emerald);
   padding: 2px 10px;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--text-primary);
 }
 
 .ot-quick-btns {
@@ -1375,14 +1379,14 @@ body::before {
   gap: 4px;
   padding: 14px 8px;
   background: var(--bg-card);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--border-glass);
+  border: var(--neo-border);
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: var(--transition);
   font-family: inherit;
   position: relative;
   overflow: hidden;
+  box-shadow: var(--neo-shadow-sm);
 }
 
 .ot-quick-btn::before {
@@ -1391,8 +1395,7 @@ body::before {
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  height: 4px;
 }
 
 .ot-quick-btn.overtime::before {
@@ -1408,13 +1411,13 @@ body::before {
 }
 
 .ot-quick-btn:hover {
-  border-color: var(--border-active);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-glow);
+  transform: translate(-2px, -2px);
+  box-shadow: var(--neo-shadow);
 }
 
 .ot-quick-btn:active {
-  transform: translateY(0);
+  transform: translate(2px, 2px);
+  box-shadow: none;
 }
 
 .ot-quick-icon {
@@ -1443,12 +1446,12 @@ body::before {
 .ot-preset-btn {
   flex: 1;
   padding: 8px 4px;
-  border: 1px solid var(--border-glass);
+  border: 2px solid var(--text-primary);
   border-radius: var(--radius-sm);
-  background: var(--bg-glass);
+  background: var(--bg-card);
   color: var(--text-secondary);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: var(--transition);
   font-family: inherit;
@@ -1456,16 +1459,12 @@ body::before {
 }
 
 .ot-preset-btn:hover {
-  color: var(--text-primary);
   background: var(--bg-glass-hover);
-  border-color: var(--accent-amber);
 }
 
 .ot-preset-btn.active {
-  color: var(--accent-amber);
-  background: rgba(245, 158, 11, 0.1);
-  border-color: var(--accent-amber);
-  box-shadow: 0 0 8px rgba(245, 158, 11, 0.15);
+  background: var(--accent-amber);
+  color: var(--text-primary);
 }
 
 .ot-preset-btn.custom {
@@ -1473,28 +1472,27 @@ body::before {
 }
 
 .ot-preset-btn.custom.active {
-  color: var(--accent-indigo);
-  background: rgba(99, 102, 241, 0.1);
-  border-color: var(--accent-indigo);
-  box-shadow: 0 0 8px rgba(99, 102, 241, 0.15);
+  background: var(--accent-indigo);
+  color: white;
 }
 
-/* ── Overtime: Toast Notification ── */
+/* ── Overtime: Toast Notification (Neobrutalism) ── */
 .ot-toast {
   position: fixed;
   bottom: 32px;
   left: 50%;
   transform: translateX(-50%) translateY(20px);
   padding: 14px 28px;
-  background: rgba(16, 185, 129, 0.95);
-  color: white;
+  background: var(--accent-emerald);
+  color: var(--text-primary);
   font-size: 14px;
-  font-weight: 600;
-  border-radius: var(--radius-full);
-  box-shadow: 0 8px 32px rgba(16, 185, 129, 0.3);
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  border: var(--neo-border);
+  box-shadow: var(--neo-shadow);
   z-index: 999;
   opacity: 0;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s ease-out;
   pointer-events: none;
   font-family: inherit;
   white-space: nowrap;
@@ -1515,10 +1513,9 @@ body::before {
 .ot-callout-inner {
   padding: 20px;
   background: var(--bg-card);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--accent-indigo);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 0 20px rgba(99, 102, 241, 0.1);
+  border: var(--neo-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--neo-shadow);
 }
 
 .ot-callout-header {
@@ -1556,33 +1553,32 @@ body::before {
   gap: 8px;
   margin-bottom: 12px;
   padding: 8px 12px;
-  background: rgba(16, 185, 129, 0.06);
-  border-radius: 8px;
-  border: 1px solid rgba(16, 185, 129, 0.15);
+  background: var(--accent-emerald);
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--text-primary);
   font-size: 12px;
-  color: var(--text-muted);
+  color: var(--text-primary);
+  font-weight: 600;
 }
 
 .ot-hourly-bar strong {
-  color: var(--accent-emerald);
+  color: var(--text-primary);
   font-size: 14px;
 }
 
-/* ── Overtime: Input Panel (Legacy for Desktop, re-used partially) ── */
+/* ── Overtime: Input Panel ── */
 .ot-input-panel {
   padding: 16px;
-  background: rgba(99, 102, 241, 0.04);
-  border: 1px solid rgba(99, 102, 241, 0.15);
+  background: var(--bg-card);
+  border: 2px solid var(--text-primary);
   border-radius: var(--radius-md);
 }
 
-/* ── 바텀 시트 오버레이 ── */
+/* ── 바톰 시트 오버레이 (Neobrutalism) ── */
 .ot-bottom-sheet-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
   z-index: 9999;
   opacity: 0;
   pointer-events: none;
@@ -1594,21 +1590,21 @@ body::before {
   pointer-events: auto;
 }
 
-/* ── 바텀 시트 패널 ── */
+/* ── 바톰 시트 패널 (Neobrutalism) ── */
 .ot-bottom-sheet {
   position: fixed;
   bottom: 0; left: 0; right: 0;
   background: var(--bg-card);
   z-index: 10000;
-  border-top-left-radius: 24px;
-  border-top-right-radius: 24px;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
   padding: 16px 20px 24px 20px;
-  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 -4px 0px var(--text-primary);
   transform: translateY(100%);
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.3s ease-out;
   max-height: 90vh;
   overflow-y: auto;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: var(--neo-border);
   border-bottom: none;
 }
 
@@ -1624,38 +1620,37 @@ body::before {
   margin: 0 auto 20px auto;
 }
 
-/* ── 프리미엄 시간 입력 폼 ── */
+/* ── 시간 입력 폼 (Neobrutalism) ── */
 .time-picker-premium {
   width: 100%;
   padding: 12px 14px;
-  border-radius: 12px;
-  border: 1px solid var(--border-glass);
-  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--text-primary);
+  background: var(--bg-card);
   color: var(--text-primary);
   font-size: 16px;
   font-weight: 600;
-  transition: all 0.2s ease;
+  transition: var(--transition);
 }
 .time-picker-premium:focus {
   border-color: var(--accent-indigo);
   outline: none;
-  background: rgba(99, 102, 241, 0.1);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+  box-shadow: 3px 3px 0px var(--accent-indigo);
 }
 
 .premium-input {
   width: 100%;
   padding: 12px 14px;
-  border-radius: 12px;
-  border: 1px solid var(--border-glass);
-  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--text-primary);
+  background: var(--bg-card);
   color: var(--text-primary);
   font-size: 14px;
 }
 .premium-input:focus {
   border-color: var(--accent-emerald);
   outline: none;
-  background: rgba(16, 185, 129, 0.1);
+  box-shadow: 3px 3px 0px var(--accent-emerald);
 }
 
 .ot-panel-header-v2 {
@@ -1728,18 +1723,18 @@ body::before {
   padding: 8px 6px;
   border-radius: var(--radius-sm);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-muted);
-  background: var(--bg-glass);
-  border: 1px solid var(--border-glass);
+  background: var(--bg-card);
+  border: 2px solid var(--text-primary);
   transition: var(--transition);
 }
 
 .ot-type-option input[type="radio"]:checked+.ot-type-label {
-  color: var(--type-color, var(--accent-indigo));
-  background: rgba(99, 102, 241, 0.08);
-  border-color: var(--type-color, var(--accent-indigo));
-  box-shadow: 0 0 8px rgba(99, 102, 241, 0.15);
+  color: white;
+  background: var(--type-color, var(--accent-indigo));
+  border-color: var(--text-primary);
+  box-shadow: var(--neo-shadow-sm);
 }
 
 .ot-type-label:hover {
@@ -1747,15 +1742,16 @@ body::before {
   background: var(--bg-glass-hover);
 }
 
-/* ── Overtime: Preview (수당 금액 강조) ── */
+/* ── Overtime: Preview (Neobrutalism) ── */
 .ot-preview {
   margin: 10px 0;
   padding: 16px;
-  background: rgba(16, 185, 129, 0.06);
-  border: 1px solid rgba(16, 185, 129, 0.15);
+  background: var(--accent-emerald);
+  border: 2px solid var(--text-primary);
   border-radius: var(--radius-md);
   font-size: 13px;
   min-height: 40px;
+  color: var(--text-primary);
 }
 
 .ot-preview .preview-row {
@@ -1787,17 +1783,17 @@ body::before {
   gap: 12px;
   padding: 12px;
   border-radius: var(--radius-sm);
-  background: var(--bg-glass);
-  border: 1px solid var(--border-glass);
+  background: var(--bg-card);
+  border: 2px solid var(--text-primary);
   margin-bottom: 8px;
   cursor: pointer;
   transition: var(--transition);
+  box-shadow: var(--neo-shadow-sm);
 }
 
 .ot-record-item:hover {
-  border-color: var(--accent-indigo);
-  background: rgba(99, 102, 241, 0.06);
-  transform: translateX(2px);
+  transform: translate(-2px, -2px);
+  box-shadow: var(--neo-shadow);
 }
 
 .ot-record-date {
@@ -1810,25 +1806,26 @@ body::before {
 
 .ot-record-type {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   padding: 2px 8px;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-sm);
   white-space: nowrap;
+  border: 1px solid var(--text-primary);
 }
 
 .ot-record-type.overtime {
-  background: rgba(245, 158, 11, 0.15);
-  color: var(--accent-amber);
+  background: var(--accent-amber);
+  color: var(--text-primary);
 }
 
 .ot-record-type.oncall_standby {
-  background: rgba(6, 182, 212, 0.15);
-  color: var(--accent-cyan);
+  background: var(--accent-cyan);
+  color: var(--text-primary);
 }
 
 .ot-record-type.oncall_callout {
-  background: rgba(99, 102, 241, 0.15);
-  color: var(--accent-indigo);
+  background: var(--accent-indigo);
+  color: white;
 }
 
 .ot-record-info {
@@ -1849,11 +1846,11 @@ body::before {
   justify-content: space-between;
   padding: 12px;
   margin-top: 8px;
-  background: rgba(16, 185, 129, 0.06);
-  border: 1px solid rgba(16, 185, 129, 0.15);
+  background: var(--accent-emerald);
+  border: 2px solid var(--text-primary);
   border-radius: var(--radius-sm);
   font-weight: 700;
-  color: var(--accent-emerald);
+  color: var(--text-primary);
   font-size: 14px;
 }
 
@@ -1871,17 +1868,17 @@ body::before {
   gap: 4px;
   padding: 8px 14px;
   background: var(--bg-card);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--border-glass);
-  border-radius: var(--radius-full);
+  border: 2px solid var(--text-primary);
+  border-radius: var(--radius-sm);
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-secondary);
   transition: var(--transition);
 }
 
 .lv-dash-item:hover {
-  border-color: var(--border-active);
+  transform: translate(-1px, -1px);
+  box-shadow: var(--neo-shadow-sm);
 }
 
 .lv-dash-value {
@@ -1910,8 +1907,8 @@ body::before {
 
 .lv-input-panel {
   padding: 16px;
-  background: rgba(99, 102, 241, 0.04);
-  border: 1px solid rgba(99, 102, 241, 0.15);
+  background: var(--bg-card);
+  border: 2px solid var(--text-primary);
   border-radius: var(--radius-md);
 }
 
@@ -1921,20 +1918,20 @@ body::before {
   border-bottom: 1px solid var(--border-glass);
 }
 
-/* ── Leave: Progress Bar ── */
+/* ── Leave: Progress Bar (Neobrutalism) ── */
 .lv-progress-bar {
   width: 100%;
-  height: 8px;
+  height: 10px;
   background: var(--bg-glass);
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-sm);
   overflow: hidden;
-  border: 1px solid var(--border-glass);
+  border: 2px solid var(--text-primary);
 }
 
 .lv-progress-fill {
   height: 100%;
-  background: var(--gradient-primary);
-  border-radius: var(--radius-full);
+  background: var(--accent-indigo);
+  border-radius: 0;
   transition: width 0.5s ease;
 }
 
@@ -1984,34 +1981,36 @@ body::before {
   gap: 10px;
   padding: 10px 12px;
   border-radius: var(--radius-sm);
-  background: var(--bg-glass);
-  border: 1px solid var(--border-glass);
+  background: var(--bg-card);
+  border: 2px solid var(--text-primary);
   margin-bottom: 6px;
   cursor: pointer;
   transition: var(--transition);
+  box-shadow: var(--neo-shadow-sm);
 }
 
 .lv-record-item:hover {
-  border-color: var(--accent-indigo);
-  background: rgba(99, 102, 241, 0.06);
+  transform: translate(-1px, -1px);
+  box-shadow: var(--neo-shadow);
 }
 
 .lv-record-type {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   padding: 2px 8px;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-sm);
   white-space: nowrap;
+  border: 1px solid var(--text-primary);
 }
 
 .lv-record-type.paid {
-  background: rgba(16, 185, 129, 0.15);
-  color: var(--accent-emerald);
+  background: var(--accent-emerald);
+  color: white;
 }
 
 .lv-record-type.unpaid {
-  background: rgba(244, 63, 94, 0.15);
-  color: var(--accent-rose);
+  background: var(--accent-rose);
+  color: white;
 }
 
 /* ── Leave: Stats Dashboard ── */
@@ -2026,8 +2025,9 @@ body::before {
   text-align: center;
   padding: 10px 4px;
   border-radius: var(--radius-sm);
-  background: var(--bg-glass);
-  border: 1px solid var(--border-glass);
+  background: var(--bg-card);
+  border: 2px solid var(--text-primary);
+  box-shadow: var(--neo-shadow-sm);
 }
 
 .lv-stat-num {
@@ -2068,10 +2068,11 @@ body::before {
 
 .lv-month-bar-fill {
   width: 100%;
-  border-radius: 3px 3px 0 0;
-  background: var(--gradient-primary);
+  border-radius: 0;
+  background: var(--accent-indigo);
   min-width: 4px;
   transition: height 0.3s ease;
+  border: 1px solid var(--text-primary);
 }
 
 .lv-month-bar-label {
@@ -2144,7 +2145,21 @@ body::before {
   }
 
   .sub-tabs {
-    flex-direction: column;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .sub-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sub-tab {
+    min-width: max-content;
+  }
+
+  .btn {
+    padding: 12px 20px;
   }
 
   .qa-cards-grid {
