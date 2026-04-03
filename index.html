@@ -15,7 +15,7 @@
       border: 1px solid var(--border-glass);
       background: var(--bg-card);
       cursor: pointer;
-      font-size:21px;
+      font-size:var(--text-title-large);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -43,7 +43,7 @@
         </div>
         <div class="header-right">
           <div id="authContainer" class="auth-container" style="display:none; align-items:center; gap:8px;">
-            <button onclick="if(window.SupabaseSync) window.SupabaseSync.signInWithGoogle()" class="btn btn-outline" style="padding:4px 10px; font-size:15px; border-color:var(--text-muted); color:var(--text-muted); border-radius:20px;">
+            <button onclick="if(window.SupabaseSync) window.SupabaseSync.signInWithGoogle()" class="btn btn-outline" style="padding:4px 10px; font-size:var(--text-body-normal); border-color:var(--text-muted); color:var(--text-muted); border-radius:20px;">
               접속 확인 중...
             </button>
           </div>
@@ -74,18 +74,18 @@
       <!-- 서브탭 1: 급여 명세서 -->
       <div class="sub-content" id="sub-payslip">
         <div class="card" style="text-align:center; padding:40px 20px;">
-          <div style="font-size:51px; margin-bottom:12px;">📄</div>
-          <p style="color:var(--text-muted); font-size:17px;">급여 명세서 업로드 기능은 준비 중입니다.</p>
-          <p style="color:var(--text-muted); font-size:15px; margin-top:8px;">Excel(.xls/.xlsx) 파일을 업로드하면<br>모바일에서 편하게 확인할 수 있습니다.</p>
+          <div style="font-size:var(--text-amount-huge); margin-bottom:12px;">📄</div>
+          <p style="color:var(--text-muted); font-size:var(--text-body-large);">급여 명세서 업로드 기능은 준비 중입니다.</p>
+          <p style="color:var(--text-muted); font-size:var(--text-body-normal); margin-top:8px;">Excel(.xls/.xlsx) 파일을 업로드하면<br>모바일에서 편하게 확인할 수 있습니다.</p>
         </div>
       </div>
 
       <!-- 서브탭 2: 급여 검증 -->
       <div class="sub-content" id="sub-verify">
         <div class="card" style="text-align:center; padding:40px 20px;">
-          <div style="font-size:51px; margin-bottom:12px;">✅</div>
-          <p style="color:var(--text-muted); font-size:17px;">급여 검증 기능은 준비 중입니다.</p>
-          <p style="color:var(--text-muted); font-size:15px; margin-top:8px;">명세서를 업로드하면 계산기와 자동으로<br>비교·검증할 수 있습니다.</p>
+          <div style="font-size:var(--text-amount-huge); margin-bottom:12px;">✅</div>
+          <p style="color:var(--text-muted); font-size:var(--text-body-large);">급여 검증 기능은 준비 중입니다.</p>
+          <p style="color:var(--text-muted); font-size:var(--text-body-normal); margin-top:8px;">명세서를 업로드하면 계산기와 자동으로<br>비교·검증할 수 있습니다.</p>
         </div>
       </div>
 
@@ -100,11 +100,11 @@
             <span>▸ 🧾 전체 급여 시뮬레이션 (상세)</span>
           </div>
           <div class="collapsible-body" id="fullPayrollSim" style="display:none;">
-          <p style="font-size:15px; color:var(--text-muted); margin-bottom:12px;">📌 내 정보가 저장되어 있으면 자동 반영됩니다. 월별 변동사항만 입력하세요.</p>
+          <p style="font-size:var(--text-body-normal); color:var(--text-muted); margin-bottom:12px;">📌 내 정보가 저장되어 있으면 자동 반영됩니다. 월별 변동사항만 입력하세요.</p>
 
           <div id="psProfileBanner" class="warning-box" style="display:none;"></div>
 
-          <p style="font-size:15px; color:var(--accent-amber); margin:8px 0 4px; font-weight:600;">▸ 시뮬레이션 월</p>
+          <p style="font-size:var(--text-body-normal); color:var(--accent-amber); margin:8px 0 4px; font-weight:600;">▸ 시뮬레이션 월</p>
           <div class="form-row">
             <div class="form-group">
               <label>연도</label>
@@ -133,9 +133,9 @@
               </select>
             </div>
           </div>
-          <div id="psHolidayInfo" style="font-size:15px; color:var(--text-muted); margin-bottom:12px;"></div>
+          <div id="psHolidayInfo" style="font-size:var(--text-body-normal); color:var(--text-muted); margin-bottom:12px;"></div>
 
-          <p style="font-size:15px; color:var(--accent-amber); margin:8px 0 4px; font-weight:600;">▸ 이번달 변동사항</p>
+          <p style="font-size:var(--text-body-normal); color:var(--accent-amber); margin:8px 0 4px; font-weight:600;">▸ 이번달 변동사항</p>
           <div class="form-row">
             <div class="form-group">
               <label>근무일수</label>
@@ -247,9 +247,9 @@
         <div class="ot-hourly-bar" style="margin-bottom: 8px;">
           <span>적용 시급:</span>
           <input type="number" id="otHourly" value="0" min="0" step="100" placeholder="시급 입력"
-            oninput="onOtHourlyInput()" style="width:110px; padding:4px 8px; border-radius:6px; border:1px solid var(--border-glass); background:var(--bg-glass); color:var(--accent-emerald); font-weight:700; font-size:17px; text-align:right;">
-          <span style="color:var(--text-muted); font-size:15px;">원</span>
-          <small id="otHourlyHint" style="font-size:14px;"></small>
+            oninput="onOtHourlyInput()" style="width:110px; padding:4px 8px; border-radius:6px; border:1px solid var(--border-glass); background:var(--bg-glass); color:var(--accent-emerald); font-weight:700; font-size:var(--text-body-large); text-align:right;">
+          <span style="color:var(--text-muted); font-size:var(--text-body-normal);">원</span>
+          <small id="otHourlyHint" style="font-size:var(--text-body-normal);"></small>
         </div>
 
         <!-- 캘린더 -->
@@ -264,8 +264,8 @@
       <div id="otInputPanel" class="ot-bottom-sheet">
         <div class="ot-sheet-handle"></div>
         <div class="ot-panel-header-v2" style="display:flex; justify-content:space-between; align-items:center;">
-          <span id="otPanelDate" style="font-weight:700; font-size:21px; color:var(--text-primary);">날짜를 선택하세요</span>
-          <button class="btn btn-icon" onclick="closeOtBottomSheet()" style="padding:4px; font-size:19px;"><span style="color:var(--text-muted)">✕</span></button>
+          <span id="otPanelDate" style="font-weight:700; font-size:var(--text-title-large); color:var(--text-primary);">날짜를 선택하세요</span>
+          <button class="btn btn-icon" onclick="closeOtBottomSheet()" style="padding:4px; font-size:var(--text-title-large);"><span style="color:var(--text-muted)">✕</span></button>
         </div>
 
         <div class="form-group" style="margin-top:16px;">
@@ -290,11 +290,11 @@
         <div id="otTimeFields">
           <div class="form-row" style="gap:16px;">
             <div class="form-group" style="flex:1;">
-              <label style="font-weight:600; font-size:16px;">시작 시간</label>
+              <label style="font-weight:600; font-size:var(--text-body-large);">시작 시간</label>
               <input type="time" id="otStartTime" class="time-picker-premium" value="18:00" step="900" onchange="previewOtCalc()">
             </div>
             <div class="form-group" style="flex:1;">
-              <label style="font-weight:600; font-size:16px;">종료 시간</label>
+              <label style="font-weight:600; font-size:var(--text-body-large);">종료 시간</label>
               <input type="time" id="otEndTime" class="time-picker-premium" value="22:00" step="900" onchange="previewOtCalc()">
             </div>
           </div>
@@ -312,7 +312,7 @@
 
         <div class="form-row" style="margin-top:20px; gap:12px;">
           <button class="btn btn-outline" onclick="deleteOtRecord()" style="flex:1; display:none; border-color:var(--accent-rose); color:var(--accent-rose);" id="otDeleteBtn">🗑 삭제</button>
-          <button class="btn btn-primary" onclick="saveOtRecord()" style="flex:2; font-size:19px; padding:12px;" id="otSaveBtn">저장하기</button>
+          <button class="btn btn-primary" onclick="saveOtRecord()" style="flex:2; font-size:var(--text-title-large); padding:12px;" id="otSaveBtn">저장하기</button>
         </div>
         <input type="hidden" id="otEditId" value="">
       </div> <!-- /otInputPanel -->
@@ -344,8 +344,8 @@
       <div id="lvInputSheet" class="ot-bottom-sheet">
         <div class="ot-sheet-handle"></div>
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <span id="lvPanelDate" style="font-weight:700; font-size:21px; color:var(--text-primary);">날짜를 선택하세요</span>
-          <button class="btn btn-icon" onclick="closeLvBottomSheet()" style="padding:4px; font-size:23px; background:none; border:none; cursor:pointer;">
+          <span id="lvPanelDate" style="font-weight:700; font-size:var(--text-title-large); color:var(--text-primary);">날짜를 선택하세요</span>
+          <button class="btn btn-icon" onclick="closeLvBottomSheet()" style="padding:4px; font-size:var(--text-title-large); background:none; border:none; cursor:pointer;">
             <span style="color:var(--text-muted);">✕</span>
           </button>
         </div>
@@ -370,13 +370,13 @@
             </div>
           </div>
           <div id="lvTimeCalcResult"
-            style="font-size:16px; padding:6px 8px; border-radius:6px; background:rgba(99,102,241,0.08); color:var(--accent-indigo); font-weight:600; text-align:center;">
+            style="font-size:var(--text-body-large); padding:6px 8px; border-radius:6px; background:rgba(99,102,241,0.08); color:var(--accent-indigo); font-weight:600; text-align:center;">
           </div>
         </div>
 
         <!-- 청원/경조 상세정보 패널 -->
         <div id="lvCeremonyInfo"
-          style="display:none; margin-bottom:10px; padding:10px; border-radius:8px; background:rgba(251,191,36,0.06); border:1px solid rgba(251,191,36,0.2); font-size:16px;">
+          style="display:none; margin-bottom:10px; padding:10px; border-radius:8px; background:rgba(251,191,36,0.06); border:1px solid rgba(251,191,36,0.2); font-size:var(--text-body-large);">
           <div style="font-weight:600; color:var(--accent-amber); margin-bottom:6px;">📋 청원휴가 안내</div>
           <div id="lvCeremonyDays" style="margin-bottom:3px;"></div>
           <div id="lvCeremonyPay" style="margin-bottom:3px;"></div>
@@ -410,7 +410,7 @@
         <div class="form-row" style="margin-top:16px; gap:12px;">
           <button class="btn btn-outline" onclick="deleteLvRecord()" style="flex:1; display:none; border-color:var(--accent-rose); color:var(--accent-rose);"
             id="lvDeleteBtn">🗑 삭제</button>
-          <button class="btn btn-primary" onclick="saveLvRecord()" style="flex:2; font-size:19px; padding:12px;" id="lvSaveBtn">💾 저장</button>
+          <button class="btn btn-primary" onclick="saveLvRecord()" style="flex:2; font-size:var(--text-title-large); padding:12px;" id="lvSaveBtn">💾 저장</button>
         </div>
         <input type="hidden" id="lvEditId" value="">
       </div>
@@ -433,7 +433,7 @@
         <!-- 2열: 2026년 휴가 현황 -->
         <div class="card">
           <div class="collapsible-header" onclick="toggleCollapsible('lvQuotaTableWrap')" style="cursor:pointer; padding:10px 0;">
-            <span class="card-title" style="margin:0;"><span class="icon indigo">🏖️</span> 2026년 휴가 현황 <span style="font-size:15px; color:var(--text-muted);">▸</span></span>
+            <span class="card-title" style="margin:0;"><span class="icon indigo">🏖️</span> 2026년 휴가 현황 <span style="font-size:var(--text-body-normal); color:var(--text-muted);">▸</span></span>
           </div>
           <div id="lvQuotaTableWrap" class="collapsible-body" style="display:none;">
             <div id="lvQuotaTable"></div>
@@ -451,7 +451,7 @@
             oninput="searchHandbook()">
           <button class="btn btn-outline" onclick="clearWikiSearch()" style="white-space:nowrap;">초기화</button>
         </div>
-        <div id="wikiSearchCount" style="font-size:14px; color:var(--text-muted); margin-top:6px; display:none;"></div>
+        <div id="wikiSearchCount" style="font-size:var(--text-body-normal); color:var(--text-muted); margin-top:6px; display:none;"></div>
       </div>
 
       <!-- 목차 + 본문 -->
@@ -467,7 +467,7 @@
         <div>
           <div id="wikiContent">
             <div class="card" style="text-align:center; padding:40px 20px; color:var(--text-muted);">
-              <div style="font-size:43px; margin-bottom:12px;">📖</div>
+              <div style="font-size:var(--text-amount-huge); margin-bottom:12px;">📖</div>
               좌측 목차에서 카테고리를 선택하거나,<br>
               상단 검색창에 키워드를 입력하세요.
             </div>
@@ -502,7 +502,7 @@
         <div class="card-title"><span class="icon indigo">👤</span> 내 정보
           <span class="badge emerald" id="profileStatus">미저장</span>
         </div>
-        <p style="font-size:15px; color:var(--text-muted); margin-bottom:12px;">한번 저장하면 모든 계산기에 자동 반영됩니다. 데이터는 이 브라우저에만 저장됩니다.</p>
+        <p style="font-size:var(--text-body-normal); color:var(--text-muted); margin-bottom:12px;">한번 저장하면 모든 계산기에 자동 반영됩니다. 데이터는 이 브라우저에만 저장됩니다.</p>
 
         <div class="form-row">
           <div class="form-group">
@@ -575,7 +575,7 @@
           <label for="pfSeniority">근속가산기본급 (2016.2 이전 입사자)</label>
         </div>
 
-        <p style="font-size:15px; color:var(--accent-indigo); margin:12px 0 4px; font-weight:600;">▸ 가족수당</p>
+        <p style="font-size:var(--text-body-normal); color:var(--accent-indigo); margin:12px 0 4px; font-weight:600;">▸ 가족수당</p>
         <div class="toggle-group">
           <input type="checkbox" id="pfSpouse">
           <label for="pfSpouse">배우자 (40,000원)</label>
@@ -591,7 +591,7 @@
           </div>
         </div>
 
-        <p style="font-size:15px; color:var(--accent-amber); margin:12px 0 4px; font-weight:600;">▸ 기타 수당</p>
+        <p style="font-size:var(--text-body-normal); color:var(--accent-amber); margin:12px 0 4px; font-weight:600;">▸ 기타 수당</p>
         <div class="form-row">
           <div class="form-group">
             <label>별정수당 (원/월)</label>
@@ -610,14 +610,14 @@
 
         <!-- 프로필 요약 -->
         <div id="profileSummary" style="margin-top:16px; padding-top:16px; border-top:1px solid var(--border-glass);">
-          <div class="card-title" style="font-size:17px;"><span class="icon emerald">📊</span> 내 급여 요약</div>
+          <div class="card-title" style="font-size:var(--text-body-large);"><span class="icon emerald">📊</span> 내 급여 요약</div>
           <p style="color:var(--text-muted)">정보를 입력하고 [저장하기]를 눌러주세요.</p>
         </div>
 
         <!-- 파일 백업/복구 (일반 모드 전용) -->
         <div id="localBackupSection" style="margin-top:24px; padding:16px; background:var(--bg-glass); border-radius:12px; border:1px solid var(--border-glass);">
-          <div class="card-title" style="font-size:17px;"><span class="icon indigo">💾</span> 데이터 백업 및 복구</div>
-          <p style="font-size:15px; color:var(--text-muted); margin-bottom:12px;">클라우드 동기화 없이 기기 내부에 저장된 기록을 파일로 안전하게 평생 보관하고 복원할 수 있습니다.</p>
+          <div class="card-title" style="font-size:var(--text-body-large);"><span class="icon indigo">💾</span> 데이터 백업 및 복구</div>
+          <p style="font-size:var(--text-body-normal); color:var(--text-muted); margin-bottom:12px;">클라우드 동기화 없이 기기 내부에 저장된 기록을 파일로 안전하게 평생 보관하고 복원할 수 있습니다.</p>
           <div class="form-row">
             <button class="btn btn-outline" onclick="downloadBackup()" style="flex:1; font-weight:600;">📥 다운로드 (백업)</button>
             <label class="btn btn-outline" style="flex:1; font-weight:600; text-align:center; cursor:pointer;">
@@ -684,16 +684,16 @@
             const name = user.user_metadata?.full_name || user.email;
             const avatar = user.user_metadata?.avatar_url || '';
             authContainer.innerHTML = `
-              <div style="font-size:15px; color:var(--text-muted); text-align:right;">
+              <div style="font-size:var(--text-body-normal); color:var(--text-muted); text-align:right;">
                 <div style="font-weight:600; color:var(--text-primary)">${name}</div>
-                <button onclick="SupabaseSync.signOut()" style="background:transparent; border:none; color:var(--accent-rose); font-size:14px; cursor:pointer; padding:0; margin-top:2px; text-decoration:underline;">로그아웃</button>
+                <button onclick="SupabaseSync.signOut()" style="background:transparent; border:none; color:var(--accent-rose); font-size:var(--text-body-normal); cursor:pointer; padding:0; margin-top:2px; text-decoration:underline;">로그아웃</button>
               </div>
               <img src="${avatar}" style="width:32px; height:32px; border-radius:50%; background:var(--bg-glass); display:${avatar ? 'block' : 'none'}; border:1px solid var(--border-glass);">
             `;
         } else {
             authContainer.innerHTML = `
-              <button onclick="SupabaseSync.signInWithGoogle()" class="btn btn-primary" style="padding:6px 14px; font-size:16px; font-weight:600; display:flex; align-items:center; gap:6px; background:#4285F4; border-color:#4285F4;">
-                <span style="background:white; border-radius:50%; width:16px; height:16px; display:inline-flex; align-items:center; justify-content:center; color:#4285F4; font-weight:bold; font-size:13px;">G</span> 로그인
+              <button onclick="SupabaseSync.signInWithGoogle()" class="btn btn-primary" style="padding:6px 14px; font-size:var(--text-body-large); font-weight:600; display:flex; align-items:center; gap:6px; background:#4285F4; border-color:#4285F4;">
+                <span style="background:white; border-radius:50%; width:16px; height:16px; display:inline-flex; align-items:center; justify-content:center; color:#4285F4; font-weight:bold; font-size:var(--text-label-small);">G</span> 로그인
               </button>
             `;
         }

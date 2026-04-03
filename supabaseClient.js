@@ -31,9 +31,11 @@ if (SUPABASE_URL !== 'YOUR_SUPABASE_URL' && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE
             if (session) {
                 window.SupabaseUser = session.user;
                 if (typeof updateAuthUI === 'function') updateAuthUI(session.user);
-                
-                // 로그인 완료 시 클라우드 데이터(내 프로필/기록) 가져오기
-                if (window.isFamilyMode && typeof window.syncCloudData === 'function') {
+
+                // 로그인/세션복원 시에만 클라우드 데이터 동기화
+                // TOKEN_REFRESHED, USER_UPDATED 등 반복 이벤트에서는 불필요한 재동기화 방지
+                const syncEvents = ['SIGNED_IN', 'INITIAL_SESSION'];
+                if (window.isFamilyMode && syncEvents.includes(event) && typeof window.syncCloudData === 'function') {
                     SupabaseSync.fetchCloudData().then(data => {
                         window.syncCloudData(data);
                     });
@@ -159,11 +161,16 @@ const SupabaseSync = {
 
     async deleteCloudRecord(tableName, id) {
         if (!window.isFamilyMode || !supabaseClient) return;
+        if (!window.SupabaseUser) return;
         try {
-            const { error } = await supabaseClient
-                .from(tableName)
-                .delete()
-                .eq('id', id);
+            const userId = window.SupabaseUser.id;
+            // profiles 테이블은 id가 PK이므로 user_id 필터 불필요
+            // 그 외 테이블은 user_id 필터 추가로 타인 레코드 삭제 방지
+            let query = supabaseClient.from(tableName).delete().eq('id', id);
+            if (tableName !== 'profiles') {
+                query = query.eq('user_id', userId);
+            }
+            const { error } = await query;
             if (error) throw error;
         } catch (e) {
             console.error(`Failed to delete from ${tableName}:`, e);

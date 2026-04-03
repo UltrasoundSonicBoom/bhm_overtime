@@ -229,7 +229,7 @@ const PAYROLL = {
       // 미리보기 값 (접힌 상태에서)
       if (!isExpanded && result && result.value) {
         html += `<div style="margin-left:auto; text-align:right;">`;
-        html += `<div style="font-size:18px; font-weight:700; color:var(--accent-emerald);">${result.value}</div>`;
+        html += `<div style="font-size:var(--text-body-large); font-weight:700; color:var(--accent-emerald);">${result.value}</div>`;
         html += `</div>`;
       }
       html += `</div>`;

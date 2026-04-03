@@ -281,7 +281,7 @@ function clearProfile() {
   document.getElementById('profileStatus').textContent = '미저장';
   document.getElementById('profileStatus').className = 'badge amber';
   document.getElementById('profileSummary').innerHTML = `
-        <div class="card-title" style="font-size:17px;"><span class="icon emerald">📊</span> 내 급여 요약</div>
+        <div class="card-title" style="font-size:var(--text-body-large);"><span class="icon emerald">📊</span> 내 급여 요약</div>
         <p style="color:var(--text-muted)">정보를 입력하고 [저장하기]를 눌러주세요.</p>
     `;
   // Q&A 카드 갱신
@@ -349,7 +349,7 @@ function updateProfileSummary(profile) {
 
   let html = `
     <div class="card-title"><span class="icon emerald">📊</span> 내 급여 요약</div>
-    ${profile.name ? `<p style="font-weight:600; font-size:19px; margin-bottom:8px;">👤 ${profile.name}</p>` : ''}
+    ${profile.name ? `<p style="font-weight:600; font-size:var(--text-title-large); margin-bottom:8px;">👤 ${profile.name}</p>` : ''}
     <div class="result-row"><span class="key">직종/등급</span><span class="val">${profile.jobType} ${profile.grade} ${profile.year}년차</span></div>
     ${serviceYears > 0 ? `<div class="result-row"><span class="key">근속연수</span><span class="val">${serviceYears}년</span></div>` : ''}
     <hr class="divider">
@@ -360,7 +360,7 @@ function updateProfileSummary(profile) {
       <div class="result-total green">${CALC.formatCurrency(wage.hourlyRate)}</div>
     </div>
     <hr class="divider">
-    <div class="card-title" style="font-size:17px;"><span class="icon indigo">📝</span> 통상임금 내역</div>
+    <div class="card-title" style="font-size:var(--text-body-large);"><span class="icon indigo">📝</span> 통상임금 내역</div>
     `;
 
   Object.entries(wage.breakdown).forEach(([key, val]) => {
@@ -493,7 +493,7 @@ function calculateWage() {
     <div class="result-box">
       <div class="result-label">시급 (÷209시간)</div>
       <div class="result-total green">${CALC.formatCurrency(result.hourlyRate)}</div>
-      <div class="result-label" style="margin-top:4px; font-size:15px;">통상임금: ${CALC.formatCurrency(result.monthlyWage)}</div>
+      <div class="result-label" style="margin-top:4px; font-size:var(--text-body-normal);">통상임금: ${CALC.formatCurrency(result.monthlyWage)}</div>
     </div>
     `;
   Object.entries(result.breakdown).forEach(([key, val]) => {
@@ -710,7 +710,7 @@ async function renderMiniCalendar(year, month, workInfo) {
     <div class="mini-cal">
       <div class="mini-cal-header">
         📅 ${year}년 ${month}월 달력
-        <span style="font-weight:400;font-size:14px;color:var(--text-muted);">(근무 ${workDayCount}일 / 휴일 ${dayOffCount}일)</span>
+        <span style="font-weight:400;font-size:var(--text-body-normal);color:var(--text-muted);">(근무 ${workDayCount}일 / 휴일 ${dayOffCount}일)</span>
       </div>
       <div class="mini-cal-grid">${gridHTML}</div>
       <div class="mini-cal-legend">
@@ -806,7 +806,7 @@ function calculatePayroll() {
     </div>
 
     <hr class="divider">
-    <div class="card-title" style="font-size:17px;"><span class="icon indigo">💰</span> 지급내역</div>
+    <div class="card-title" style="font-size:var(--text-body-large);"><span class="icon indigo">💰</span> 지급내역</div>
     `;
 
   Object.entries(r.지급내역).forEach(([key, val]) => {
@@ -822,7 +822,7 @@ function calculatePayroll() {
     </div>
 
     <hr class="divider">
-    <div class="card-title" style="font-size:17px;"><span class="icon rose">📝</span> 공제내역</div>
+    <div class="card-title" style="font-size:var(--text-body-large);"><span class="icon rose">📝</span> 공제내역</div>
     `;
 
   Object.entries(r.공제내역).forEach(([key, val]) => {
@@ -1018,7 +1018,7 @@ function renderWikiToc() {
       transition:background 0.2s;
     " onmouseover="this.style.background='rgba(99,102,241,0.1)'" onmouseout="this.style.background='transparent'">
       <span>${section.icon} ${section.category}</span>
-      <span class="badge" style="font-size:13px;">${count}</span>
+      <span class="badge" style="font-size:var(--text-label-small);">${count}</span>
     </div>`;
   });
   toc.innerHTML = html;
@@ -1030,7 +1030,7 @@ function showWikiCategory(categoryIdx) {
   const container = document.getElementById('wikiContent');
 
   let html = `<div class="card">
-    <div class="card-title" style="font-size:21px;">
+    <div class="card-title" style="font-size:var(--text-title-large);">
       <span>${section.icon}</span> ${section.category}
       <span class="badge indigo">${section.articles.length}개 항목</span>
     </div>`;
@@ -1042,10 +1042,10 @@ function showWikiCategory(categoryIdx) {
       border:1px solid rgba(255,255,255,0.06); background:rgba(255,255,255,0.02);
     ">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-        <strong style="font-size:17px; color:var(--text-primary);">${article.title}</strong>
-        <span style="font-size:13px; padding:2px 8px; border-radius:4px; background:rgba(99,102,241,0.1); color:var(--accent-indigo);">📌 ${article.ref}</span>
+        <strong style="font-size:var(--text-body-large); color:var(--text-primary);">${article.title}</strong>
+        <span style="font-size:var(--text-label-small); padding:2px 8px; border-radius:4px; background:rgba(99,102,241,0.1); color:var(--accent-indigo);">📌 ${article.ref}</span>
       </div>
-      <div style="font-size:16px; line-height:1.7; color:var(--text-secondary);">${bodyHtml}</div>
+      <div style="font-size:var(--text-body-large); line-height:1.7; color:var(--text-secondary);">${bodyHtml}</div>
     </div>`;
   });
 
@@ -1067,7 +1067,7 @@ function searchHandbook() {
   if (!query) {
     countEl.style.display = 'none';
     container.innerHTML = `<div class="card" style="text-align:center; padding:40px 20px; color:var(--text-muted);">
-      <div style="font-size:43px; margin-bottom:12px;">📖</div>
+      <div style="font-size:var(--text-amount-huge); margin-bottom:12px;">📖</div>
       좌측 목차에서 카테고리를 선택하거나,<br>상단 검색창에 키워드를 입력하세요.
     </div>`;
     // 목차 활성 초기화
@@ -1109,11 +1109,11 @@ function searchHandbook() {
 
     html += `<div class="card" style="margin-bottom:8px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-        <strong style="font-size:17px;">${article.categoryIcon} ${titleHtml}</strong>
-        <span style="font-size:13px; padding:2px 8px; border-radius:4px; background:rgba(99,102,241,0.1); color:var(--accent-indigo);">📌 ${article.ref}</span>
+        <strong style="font-size:var(--text-body-large);">${article.categoryIcon} ${titleHtml}</strong>
+        <span style="font-size:var(--text-label-small); padding:2px 8px; border-radius:4px; background:rgba(99,102,241,0.1); color:var(--accent-indigo);">📌 ${article.ref}</span>
       </div>
-      <div style="font-size:13px; color:var(--text-muted); margin-bottom:6px;">${article.category}</div>
-      <div style="font-size:16px; line-height:1.7; color:var(--text-secondary);">${bodyHtml}</div>
+      <div style="font-size:var(--text-label-small); color:var(--text-muted); margin-bottom:6px;">${article.category}</div>
+      <div style="font-size:var(--text-body-large); line-height:1.7; color:var(--text-secondary);">${bodyHtml}</div>
     </div>`;
   });
   container.innerHTML = html;
@@ -1144,7 +1144,7 @@ function renderQuickTags() {
           btnHtml += `<button class="chat-q-btn" onclick="answerFaqItem('${cat}', ${idx})" style="
             text-align:left; padding:8px 12px; border-radius:6px; cursor:pointer;
             background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.2);
-            color:var(--text-primary); font-size:16px; transition:background 0.2s;
+            color:var(--text-primary); font-size:var(--text-body-large); transition:background 0.2s;
           " onmouseover="this.style.background='rgba(99,102,241,0.2)'" onmouseout="this.style.background='rgba(99,102,241,0.08)'">${item.q}</button>`;
         });
         btnHtml += '</div>';
@@ -1181,7 +1181,7 @@ function renderCeremonyTable() {
       <td>${typeof c.leave === 'number' ? c.leave + '일' : c.leave}</td>
       <td class="amount">${c.hospitalPay ? c.hospitalPay.toLocaleString() + '원' : '-'}</td>
       <td>${c.pensionPay || '-'}</td>
-      <td style="font-size:15px;color:var(--text-muted)">${c.extra || ''}</td>
+      <td style="font-size:var(--text-body-normal);color:var(--text-muted)">${c.extra || ''}</td>
     </tr>`;
   });
   html += '</tbody>';
@@ -1198,7 +1198,7 @@ function renderLeaveTable() {
       <td>${l.condition}</td>
       <td>${l.period}</td>
       <td>${l.tenure ? '<span class="badge emerald">✓</span>' : '<span class="badge rose">✗</span>'}</td>
-      <td style="font-size:15px">${l.pay}</td>
+      <td style="font-size:var(--text-body-normal)">${l.pay}</td>
     </tr>`;
   });
   html += '</tbody>';
@@ -1372,11 +1372,11 @@ function searchChat(query) {
  */
 function renderHandbookSource(articles) {
   if (!articles || articles.length === 0) return '';
-  let html = '<div style="margin-top:10px; padding:10px 12px; background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.15); border-radius:8px; font-size:15px;">';
+  let html = '<div style="margin-top:10px; padding:10px 12px; background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.15); border-radius:8px; font-size:var(--text-body-normal);">';
   html += '<div style="font-weight:600; color:var(--accent-indigo); margin-bottom:6px;">📖 규정 원문</div>';
   articles.forEach((art, i) => {
     if (i > 0) html += '<hr style="border:none; border-top:1px solid rgba(99,102,241,0.1); margin:8px 0;">';
-    html += `<div style="font-weight:600; color:var(--text-primary); margin-bottom:4px;">${art.title} <span style="font-weight:400; color:var(--accent-indigo); font-size:14px;">${art.ref}</span></div>`;
+    html += `<div style="font-weight:600; color:var(--text-primary); margin-bottom:4px;">${art.title} <span style="font-weight:400; color:var(--accent-indigo); font-size:var(--text-body-normal);">${art.ref}</span></div>`;
     html += `<div style="color:var(--text-secondary); white-space:pre-line; line-height:1.6;">${art.body}</div>`;
   });
   html += '</div>';
@@ -1616,7 +1616,7 @@ function previewCalloutCalc() {
 
   let html = `<div class="preview-total" style="border:none; margin:0 0 8px 0; padding:0 0 8px 0; border-bottom:1px solid rgba(16,185,129,0.15);">
     <span>💰 예상 수당</span>
-    <span style="font-size:23px;">₩${pay.toLocaleString()}</span>
+    <span style="font-size:var(--text-title-large);">₩${pay.toLocaleString()}</span>
   </div>`;
   html += `<div class="preview-row"><span>근무시간</span><span class="val" style="color:var(--accent-emerald)">${durationStr} (${startTime}~${endTime})</span></div>`;
   if (breakdown.extended > 0) {
@@ -1856,7 +1856,7 @@ function renderOtCalendar(year, month, recordsByDay) {
       const payStr = dayTotalPay >= 10000
         ? Math.round(dayTotalPay / 10000) + '만'
         : '₩' + dayTotalPay.toLocaleString();
-      dotsHtml += `<span class="cal-badge" style="color:var(--accent-emerald); font-weight:700; font-size:12px;">${payStr}</span>`;
+      dotsHtml += `<span class="cal-badge" style="color:var(--accent-emerald); font-weight:700; font-size:var(--text-label-small);">${payStr}</span>`;
     }
     dotsHtml += '</div>';
 
@@ -1913,14 +1913,14 @@ function onOtDateClick(year, month, day) {
   existingContainer.innerHTML = '';
   const existing = OVERTIME.getDateRecords(year, month, day);
   if (existing.length > 0) {
-    let existingHtml = '<div style="margin-top:8px; padding:8px; background:rgba(244,63,94,0.06); border-radius:6px; font-size:15px;">';
+    let existingHtml = '<div style="margin-top:8px; padding:8px; background:rgba(244,63,94,0.06); border-radius:6px; font-size:var(--text-body-normal);">';
     existingHtml += `<strong style="color:var(--accent-rose)">📋 기존 기록 (${existing.length}건)</strong>`;
     existing.forEach(r => {
       existingHtml += `<div style="margin-top:4px; cursor:pointer; padding:4px; border-radius:4px;"
         onclick="editOtRecord('${r.id}')"
         onmouseover="this.style.background='rgba(99,102,241,0.1)'"
         onmouseout="this.style.background='transparent'">
-        <span class="ot-record-type ${r.type}" style="font-size:13px">${OVERTIME.typeLabel(r.type)}</span>
+        <span class="ot-record-type ${r.type}" style="font-size:var(--text-label-small)">${OVERTIME.typeLabel(r.type)}</span>
         ${r.startTime ? r.startTime + '~' + r.endTime : '종일'}
         ${r.totalHours ? r.totalHours + 'h' : ''}
         <strong style="color:var(--accent-emerald)">₩${(r.estimatedPay || 0).toLocaleString()}</strong>
@@ -2006,7 +2006,7 @@ function previewOtCalc() {
     preview.innerHTML = `
       <div class="preview-total" style="border:none; margin:0; padding:0;">
         <span>💰 예상 수당</span>
-        <span style="font-size:23px;">₩${pay.toLocaleString()}</span>
+        <span style="font-size:var(--text-title-large);">₩${pay.toLocaleString()}</span>
       </div>
       <div class="preview-row"><span>온콜 대기수당</span><span class="val">₩${pay.toLocaleString()}</span></div>`;
     return;
@@ -2034,7 +2034,7 @@ function previewOtCalc() {
   // 수당 금액을 크게 맨 위에 표시
   let html = `<div class="preview-total" style="border:none; margin:0 0 8px 0; padding:0 0 8px 0; border-bottom:1px solid rgba(16,185,129,0.15);">
     <span>💰 예상 수당</span>
-    <span style="font-size:23px;">₩${pay.toLocaleString()}</span>
+    <span style="font-size:var(--text-title-large);">₩${pay.toLocaleString()}</span>
   </div>`;
 
   html += `<div class="preview-row"><span>총 근무시간</span><span class="val">${tempBreakdown.totalHours}h</span></div>`;
@@ -2173,7 +2173,7 @@ function renderOtDashboard(year, month) {
         <div class="ot-dash-label">💰 ${month}월 예상 수당</div>
         <div class="ot-dash-pay">₩${stats.totalPay.toLocaleString()}</div>
       </div>
-      <div class="ot-dash-details">${detailsHtml || '<span style="color:var(--text-muted); font-size:15px;">기록 없음</span>'}</div>`;
+      <div class="ot-dash-details">${detailsHtml || '<span style="color:var(--text-muted); font-size:var(--text-body-normal);">기록 없음</span>'}</div>`;
   }
 
   const countEl = document.getElementById('otRecordCount');
@@ -2224,18 +2224,18 @@ function renderOtRecordList(records) {
     <div class="lv-stat-card"><div class="lv-stat-num">${totalHours.toFixed(1)}</div><div class="lv-stat-label">총 시간</div></div>
     <div class="lv-stat-card"><div class="lv-stat-num" style="color:var(--accent-rose)">${byType.overtime.count}</div><div class="lv-stat-label">시간외</div></div>
     <div class="lv-stat-card"><div class="lv-stat-num" style="color:var(--accent-cyan)">${byType.oncall_standby.count + byType.oncall_callout.count}</div><div class="lv-stat-label">온콜</div></div>
-    <div class="lv-stat-card"><div class="lv-stat-num" style="color:var(--accent-emerald); font-size:19px;">₩${totalPay.toLocaleString()}</div><div class="lv-stat-label">예상수당</div></div>
+    <div class="lv-stat-card"><div class="lv-stat-num" style="color:var(--accent-emerald); font-size:var(--text-title-large);">₩${totalPay.toLocaleString()}</div><div class="lv-stat-label">예상수당</div></div>
   </div>`;
 
   // 유형별 분포
   const typeEntries = Object.entries(byType).filter(([, v]) => v.count > 0);
   if (typeEntries.length > 0) {
     const colors = { overtime: 'var(--accent-rose)', oncall_standby: 'var(--accent-cyan)', oncall_callout: 'var(--accent-indigo)' };
-    html += '<div style="margin:12px 0 8px; font-size:14px; font-weight:600; color:var(--text-muted);">유형별 분포</div>';
+    html += '<div style="margin:12px 0 8px; font-size:var(--text-body-normal); font-weight:600; color:var(--text-muted);">유형별 분포</div>';
     html += '<div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:12px;">';
     typeEntries.forEach(([type, data]) => {
       const hoursStr = data.hours > 0 ? ` (${data.hours.toFixed(1)}h)` : '';
-      html += `<span style="display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:12px; font-size:14px; background:var(--bg-glass); border:1px solid var(--border-glass);">
+      html += `<span style="display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:12px; font-size:var(--text-body-normal); background:var(--bg-glass); border:1px solid var(--border-glass);">
         <i style="width:6px;height:6px;border-radius:50%;background:${colors[type]};display:inline-block;"></i>
         ${OVERTIME.typeLabel(type)} <strong>${data.count}건</strong>${hoursStr} ₩${data.pay.toLocaleString()}
       </span>`;
@@ -2245,7 +2245,7 @@ function renderOtRecordList(records) {
 
   // 상세 기록 (접이식)
   html += `<div>
-    <div class="collapsible-header" onclick="toggleCollapsible('otRecordDetail')" style="padding:6px 0; font-size:15px;">
+    <div class="collapsible-header" onclick="toggleCollapsible('otRecordDetail')" style="padding:6px 0; font-size:var(--text-body-normal);">
       <span>▸ 상세 기록 (${sorted.length}건)</span>
     </div>
     <div class="collapsible-body" id="otRecordDetail" style="display:none; max-height:400px; overflow-y:auto;">`;
@@ -2258,7 +2258,7 @@ function renderOtRecordList(records) {
     const hoursStr = r.totalHours ? `${r.totalHours}h` : '';
 
     html += `<div class="ot-record-item" onclick="editOtRecord('${r.id}')">
-      <div class="ot-record-date">${day}<br><span style="font-size:13px;color:var(--text-muted)">${dowNames[dow]}</span></div>
+      <div class="ot-record-date">${day}<br><span style="font-size:var(--text-label-small);color:var(--text-muted)">${dowNames[dow]}</span></div>
       <span class="ot-record-type ${r.type}">${OVERTIME.typeLabel(r.type)}</span>
       <div class="ot-record-info">${timeStr} ${hoursStr}${r.memo ? '<br><span style="color:var(--text-muted)">' + r.memo + '</span>' : ''}</div>
       <div class="ot-record-pay">₩${(r.estimatedPay || 0).toLocaleString()}</div>
@@ -2583,7 +2583,7 @@ function onLvDateClick(year, month, day) {
   existingContainer.innerHTML = '';
   const existing = LEAVE.getDateRecords(dateStr);
   if (existing.length > 0) {
-    let extra = '<div style="margin-top:8px; padding:8px; background:rgba(16,185,129,0.06); border-radius:6px; font-size:16px;">';
+    let extra = '<div style="margin-top:8px; padding:8px; background:rgba(16,185,129,0.06); border-radius:6px; font-size:var(--text-body-large);">';
     extra += `<strong style="color:var(--accent-emerald)">📋 기존 기록 (${existing.length}건)</strong>`;
     existing.forEach(r => {
       const typeInfo = LEAVE.getTypeById(r.type);
@@ -2592,7 +2592,7 @@ function onLvDateClick(year, month, day) {
         onclick="editLvRecord('${r.id}')"
         onmouseover="this.style.background='rgba(99,102,241,0.1)'"
         onmouseout="this.style.background='transparent'">
-        <span class="lv-record-type ${r.isPaid ? 'paid' : 'unpaid'}" style="font-size:14px">${typeInfo ? typeInfo.label : r.type}</span>
+        <span class="lv-record-type ${r.isPaid ? 'paid' : 'unpaid'}" style="font-size:var(--text-body-normal)">${typeInfo ? typeInfo.label : r.type}</span>
         ${r.startDate === r.endDate ? '' : r.startDate + '~' + r.endDate}
         ${(r.days || 0).toFixed(1)}일${timeInfo}
         ${r.salaryImpact ? '<strong style="color:var(--accent-rose)">-₩' + Math.abs(r.salaryImpact).toLocaleString() + '</strong>' : ''}
@@ -2682,8 +2682,8 @@ function onLvTypeChange() {
     const used = Math.round(usedRaw * 10) / 10;
     const remain = Math.round((typeInfo.quota - usedRaw) * 10) / 10;
     const color = remain <= 0 ? 'var(--accent-rose)' : 'var(--accent-emerald)';
-    const refNote = typeInfo.ref ? `<br><span style="color:var(--text-muted); font-size:14px;">📖 ${typeInfo.ref}</span>` : '';
-    quotaBadge.innerHTML = `<div style="padding:6px 10px; border-radius:6px; background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.15); font-size:15px;">
+    const refNote = typeInfo.ref ? `<br><span style="color:var(--text-muted); font-size:var(--text-body-normal);">📖 ${typeInfo.ref}</span>` : '';
+    quotaBadge.innerHTML = `<div style="padding:6px 10px; border-radius:6px; background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.15); font-size:var(--text-body-normal);">
       📊 <strong>${typeInfo.label}</strong> 한도: ${typeInfo.quota}일 | 사용: ${used}일 | <span style="color:${color}; font-weight:700;">잔여: ${remain}일</span>
       ${remain <= 0 ? '<br><span style="color:var(--accent-rose)">⚠️ 한도 초과!</span>' : ''}${refNote}
     </div>`;
@@ -2691,11 +2691,11 @@ function onLvTypeChange() {
   } else if (typeInfo && typeInfo.usesAnnual) {
     if (lvTotalAnnual > 0) {
       const summary = LEAVE.calcAnnualSummary(year, lvTotalAnnual);
-      quotaBadge.innerHTML = `<div style="padding:6px 10px; border-radius:6px; background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.15); font-size:15px;">
+      quotaBadge.innerHTML = `<div style="padding:6px 10px; border-radius:6px; background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.15); font-size:var(--text-body-normal);">
         📅 연차 한도: ${lvTotalAnnual}일 | 사용: ${summary.usedAnnual}일 | <span style="color:var(--accent-emerald); font-weight:700;">잔여: ${summary.remainingAnnual}일</span>
       </div>`;
     } else {
-      quotaBadge.innerHTML = `<div style="padding:6px 10px; border-radius:6px; background:rgba(251,191,36,0.06); border:1px solid rgba(251,191,36,0.2); font-size:15px; color:var(--accent-amber);">
+      quotaBadge.innerHTML = `<div style="padding:6px 10px; border-radius:6px; background:rgba(251,191,36,0.06); border:1px solid rgba(251,191,36,0.2); font-size:var(--text-body-normal); color:var(--accent-amber);">
         ⚠️ 프로필에서 입사일을 설정하면 연차 한도가 자동 계산됩니다.
       </div>`;
     }
@@ -2803,14 +2803,14 @@ function previewLvCalc() {
     const monthlyBasePay = wage ? (wage.breakdown ? wage.breakdown.basePay / 12 : 0) : 0;
     const deduction = monthlyBasePay / 30 * days;
     html += `<div class="preview-row"><span>급여 차감</span><span class="val" style="color:var(--accent-rose)">-₩${Math.round(deduction).toLocaleString()}</span></div>`;
-    html += `<div class="preview-row"><span>공제기준</span><span class="val" style="font-size:13px; color:var(--text-muted)">기본급 일액 (보수규정 제7조)</span></div>`;
+    html += `<div class="preview-row"><span>공제기준</span><span class="val" style="font-size:var(--text-label-small); color:var(--text-muted)">기본급 일액 (보수규정 제7조)</span></div>`;
   } else if (typeInfo.deductType === 'ordinary') {
     const profile = PROFILE.load();
     const wage = profile ? PROFILE.calcWage(profile) : null;
     const hourlyRate = wage ? wage.hourlyRate : 0;
     const deduction = hourlyRate * 8 * days;
     html += `<div class="preview-row"><span>급여 차감</span><span class="val" style="color:var(--accent-rose)">-₩${Math.round(deduction).toLocaleString()}</span></div>`;
-    html += `<div class="preview-row"><span>공제기준</span><span class="val" style="font-size:13px; color:var(--text-muted)">통상임금 1/30 (보수규정 제7조②)</span></div>`;
+    html += `<div class="preview-row"><span>공제기준</span><span class="val" style="font-size:var(--text-label-small); color:var(--text-muted)">통상임금 1/30 (보수규정 제7조②)</span></div>`;
   } else {
     html += `<div class="preview-row"><span>급여 차감</span><span class="val" style="color:var(--accent-emerald)">₩0 (유급)</span></div>`;
   }
@@ -2934,13 +2934,13 @@ function renderLvQuotaTable(year) {
     const remainColor = q.overQuota ? 'var(--accent-rose)' : 'var(--accent-emerald)';
     html += `<div style="padding:8px 10px; border-radius:8px; background:var(--bg-glass); border:1px solid var(--border-glass);">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-        <span style="font-weight:600; font-size:16px;">${q.label}</span>
-        <span style="font-size:15px; font-weight:700; color:${remainColor};">${q.remaining}일</span>
+        <span style="font-weight:600; font-size:var(--text-body-large);">${q.label}</span>
+        <span style="font-size:var(--text-body-normal); font-weight:700; color:${remainColor};">${q.remaining}일</span>
       </div>
       <div class="lv-progress-bar" style="height:4px; margin-bottom:3px;">
         <div class="lv-progress-fill" style="width:${pct}%; background:${barColor}"></div>
       </div>
-      <div style="font-size:14px; color:var(--text-muted);">${q.used}/${q.quota}일 사용 ${q.overQuota ? '⚠️' : ''}</div>
+      <div style="font-size:var(--text-body-normal); color:var(--text-muted);">${q.used}/${q.quota}일 사용 ${q.overQuota ? '⚠️' : ''}</div>
     </div>`;
   });
   html += '</div>';
@@ -3000,14 +3000,14 @@ function renderLvRecordList(year) {
       <div class="lv-stat-label">무급</div>
     </div>
     <div class="lv-stat-card">
-      <div class="lv-stat-num" style="color:var(--accent-amber); font-size:17px;">${totalDeduction > 0 ? '-₩' + totalDeduction.toLocaleString() : '₩0'}</div>
+      <div class="lv-stat-num" style="color:var(--accent-amber); font-size:var(--text-body-large);">${totalDeduction > 0 ? '-₩' + totalDeduction.toLocaleString() : '₩0'}</div>
       <div class="lv-stat-label">급여 차감</div>
     </div>
   </div>`;
 
   // ── 월별 히트맵 바 ──
   const maxMonthDays = Math.max(...Object.values(byMonth), 1);
-  html += '<div style="margin:12px 0 8px; font-size:14px; font-weight:600; color:var(--text-muted);">월별 사용</div>';
+  html += '<div style="margin:12px 0 8px; font-size:var(--text-body-normal); font-weight:600; color:var(--text-muted);">월별 사용</div>';
   html += '<div class="lv-month-bars">';
   for (let m = 1; m <= 12; m++) {
     const d = byMonth[m] || 0;
@@ -3024,11 +3024,11 @@ function renderLvRecordList(year) {
   // ── 유형별 분포 ──
   const catEntries = Object.entries(byCategory).sort((a, b) => b[1] - a[1]);
   if (catEntries.length > 0) {
-    html += '<div style="margin:12px 0 6px; font-size:14px; font-weight:600; color:var(--text-muted);">유형별 분포</div>';
+    html += '<div style="margin:12px 0 6px; font-size:var(--text-body-normal); font-weight:600; color:var(--text-muted);">유형별 분포</div>';
     html += '<div style="display:flex; flex-wrap:wrap; gap:4px;">';
     const colors = ['var(--accent-indigo)', 'var(--accent-emerald)', 'var(--accent-amber)', 'var(--accent-rose)', 'var(--accent-cyan)', 'var(--accent-violet)'];
     catEntries.forEach(([cat, days], i) => {
-      html += `<span style="display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border-radius:12px; font-size:14px; background:rgba(99,102,241,0.08); border:1px solid var(--border-glass);">
+      html += `<span style="display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border-radius:12px; font-size:var(--text-body-normal); background:rgba(99,102,241,0.08); border:1px solid var(--border-glass);">
         <i style="width:6px;height:6px;border-radius:50%;background:${colors[i % colors.length]};display:inline-block;"></i>
         ${cat} <strong>${days}일</strong>
       </span>`;
@@ -3038,7 +3038,7 @@ function renderLvRecordList(year) {
 
   // ── 상세 기록 (최근순, 접이식) ──
   html += `<div style="margin-top:12px;">
-    <div class="collapsible-header" onclick="toggleCollapsible('lvRecordDetail')" style="padding:6px 0; font-size:15px;">
+    <div class="collapsible-header" onclick="toggleCollapsible('lvRecordDetail')" style="padding:6px 0; font-size:var(--text-body-normal);">
       <span>▸ 상세 기록 (${sorted.length}건)</span>
     </div>
     <div class="collapsible-body" id="lvRecordDetail" style="display:none; max-height:300px; overflow-y:auto;">`;
@@ -3056,11 +3056,11 @@ function renderLvRecordList(year) {
     }
     html += `<div class="lv-record-item" onclick="editLvRecord('${r.id}')">
       <span class="lv-record-type ${r.isPaid ? 'paid' : 'unpaid'}">${typeInfo ? typeInfo.label : r.type}</span>
-      <div style="flex:1; font-size:15px; color:var(--text-secondary)">
+      <div style="flex:1; font-size:var(--text-body-normal); color:var(--text-secondary)">
         ${dateDisplay}${timeDisplay}
         ${r.memo ? ' <span style="color:var(--text-muted)">' + r.memo + '</span>' : ''}
       </div>
-      <div style="font-size:14px; font-weight:700; color:${r.salaryImpact ? 'var(--accent-rose)' : 'var(--accent-emerald)'}">
+      <div style="font-size:var(--text-body-normal); font-weight:700; color:${r.salaryImpact ? 'var(--accent-rose)' : 'var(--accent-emerald)'}">
         ${r.salaryImpact ? '-₩' + Math.abs(r.salaryImpact).toLocaleString() : '유급'}
       </div>
     </div>`;
