@@ -1,23 +1,24 @@
 /* ============================================
    병원 HR 종합 시스템 - 스타일
-   Modern Dark Theme with Glassmorphism
+   Linear / Raycast — Restrained Dark Tech
    ============================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --bg-primary: #0a0e1a;
-  --bg-secondary: #111827;
-  --bg-card: rgba(17, 24, 39, 0.7);
-  --bg-glass: rgba(255, 255, 255, 0.04);
-  --bg-glass-hover: rgba(255, 255, 255, 0.08);
-  --border-glass: rgba(255, 255, 255, 0.08);
-  --border-active: rgba(99, 102, 241, 0.5);
+  /* ── Linear Palette: Deep solid darks, no transparency ── */
+  --bg-primary: #09090b;
+  --bg-secondary: #0f0f11;
+  --bg-card: #141416;
+  --bg-glass: rgba(255, 255, 255, 0.03);
+  --bg-glass-hover: rgba(255, 255, 255, 0.06);
+  --border-glass: rgba(255, 255, 255, 0.06);
+  --border-active: rgba(255, 255, 255, 0.15);
 
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  --text-accent: #818cf8;
+  --text-primary: #ececef;
+  --text-secondary: #a0a0ab;
+  --text-muted: #63636e;
+  --text-accent: #a0a0ab;
 
   --accent-indigo: #6366f1;
   --accent-blue: #3b82f6;
@@ -27,23 +28,24 @@
   --accent-rose: #f43f5e;
   --accent-violet: #8b5cf6;
 
-  --gradient-primary: linear-gradient(135deg, #6366f1, #8b5cf6);
-  --gradient-success: linear-gradient(135deg, #10b981, #06b6d4);
-  --gradient-warning: linear-gradient(135deg, #f59e0b, #ef4444);
-  --gradient-info: linear-gradient(135deg, #3b82f6, #6366f1);
+  /* ── Linear: Flat solid colors for buttons, no gradients ── */
+  --gradient-primary: #6366f1;
+  --gradient-success: #10b981;
+  --gradient-warning: #f59e0b;
+  --gradient-info: #3b82f6;
 
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
-  --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.15);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.6);
+  --shadow-glow: none;
 
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
   --radius-full: 9999px;
 
-  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition: all 0.15s ease-out;
 }
 
 * {
@@ -57,51 +59,26 @@ html {
 }
 
 body {
-  font-family: 'Noto Sans KR', 'Inter', -apple-system, sans-serif;
+  font-family: 'Inter', 'Noto Sans KR', -apple-system, sans-serif;
   background: var(--bg-primary);
   color: var(--text-primary);
   min-height: 100vh;
   line-height: 1.6;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* ── Ambient Background ── */
+/* ── Ambient Background: REMOVED for Linear aesthetic ── */
 body::before {
-  content: '';
-  position: fixed;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle at 30% 20%, rgba(99, 102, 241, 0.06) 0%, transparent 50%),
-    radial-gradient(circle at 70% 80%, rgba(139, 92, 246, 0.04) 0%, transparent 50%),
-    radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.03) 0%, transparent 50%);
-  z-index: -1;
-  animation: ambientMove 30s ease-in-out infinite;
-}
-
-@keyframes ambientMove {
-
-  0%,
-  100% {
-    transform: translate(0, 0);
-  }
-
-  33% {
-    transform: translate(-2%, 1%);
-  }
-
-  66% {
-    transform: translate(1%, -2%);
-  }
+  display: none;
 }
 
 /* ── Header ── */
 .header {
-  background: rgba(10, 14, 26, 0.85);
-  backdrop-filter: blur(20px);
+  background: var(--bg-primary);
   border-bottom: 1px solid var(--border-glass);
-  padding: 16px 24px;
+  padding: 12px 24px;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -123,24 +100,22 @@ body::before {
 }
 
 .logo-icon {
-  width: 40px;
-  height: 40px;
-  background: var(--gradient-primary);
-  border-radius: var(--radius-md);
+  width: 36px;
+  height: 36px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
-  box-shadow: var(--shadow-glow);
+  font-size: 18px;
 }
 
 .logo h1 {
-  font-size: 18px;
-  font-weight: 700;
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
 }
 
 .logo p {
@@ -149,23 +124,23 @@ body::before {
   font-weight: 400;
 }
 
-/* ── Navigation Tabs ── */
+/* ── Navigation Tabs (Linear: minimal pill) ── */
 .nav-tabs {
   display: flex;
-  gap: 4px;
-  background: var(--bg-glass);
-  border-radius: var(--radius-full);
-  padding: 4px;
-  border: 1px solid var(--border-glass);
+  gap: 2px;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  padding: 0;
+  border: none;
   flex-wrap: wrap;
 }
 
 .nav-tab {
-  padding: 8px 16px;
-  border-radius: var(--radius-full);
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
   border: none;
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;
@@ -176,13 +151,11 @@ body::before {
 
 .nav-tab:hover {
   color: var(--text-primary);
-  background: var(--bg-glass-hover);
 }
 
 .nav-tab.active {
-  background: var(--gradient-primary);
-  color: white;
-  box-shadow: var(--shadow-glow);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
 }
 
 /* ── Main ── */
@@ -422,20 +395,18 @@ body::before {
   cursor: pointer;
 }
 
-/* ── Cards ── */
+/* ── Cards (Linear: solid bg, thin border, no blur/glow) ── */
 .card {
   background: var(--bg-card);
-  backdrop-filter: blur(12px);
   border: 1px solid var(--border-glass);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   padding: 24px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   transition: var(--transition);
 }
 
 .card:hover {
   border-color: var(--border-active);
-  box-shadow: var(--shadow-glow);
 }
 
 .card-title {
