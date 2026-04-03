@@ -2160,7 +2160,7 @@ body::before {
 
   .form-group select,
   .form-group input {
-    font-size: var(--text-title-large);
+    font-size: var(--text-body-large);
     padding: 12px 14px;
   }
 
