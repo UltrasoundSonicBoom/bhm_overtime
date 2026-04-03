@@ -173,7 +173,7 @@ body::before {
   transition: var(--transition);
   font-family: inherit;
   white-space: nowrap;
-  flex: 1;
+  flex: auto;
   text-align: center;
 }
 
@@ -2116,7 +2116,7 @@ body::before {
   .nav-tab {
     padding: 8px 4px 6px;
     font-size: 14px;
-    flex: 1;
+    flex: auto;
     text-align: center;
     border-radius: 8px;
     min-width: 0;

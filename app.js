@@ -1848,7 +1848,7 @@ function renderOtCalendar(year, month, recordsByDay) {
       } else if (r.type === 'oncall_callout') {
         dotsHtml += `<span class="cal-badge" style="background:rgba(99,102,241,0.15); color:#1a1a1a;">🚗${r.totalHours}h</span>`;
       } else if (r.type === 'overtime') {
-        dotsHtml += `<span class="cal-badge" style="background:rgba(245,158,11,0.15); color:#1a1a1a;">⏰${r.totalHours}h</span>`;
+        dotsHtml += `<span class="cal-badge" style="background:rgba(244,63,94,0.15); color:#1a1a1a;">⏰${r.totalHours}h</span>`;
       }
     });
     // 누적금액 표시 (1만원 이상이면 만원 단위)
@@ -1867,7 +1867,7 @@ function renderOtCalendar(year, month, recordsByDay) {
 
   // 범례
   html += `<div class="ot-cal-legend" style="margin-top:16px;">
-    <span><span class="cal-badge" style="background:rgba(245,158,11,0.15); color:#1a1a1a; padding:2px 6px;">⏰ 시간외</span></span>
+    <span><span class="cal-badge" style="background:rgba(244,63,94,0.15); color:#1a1a1a; padding:2px 6px;">⏰ 시간외</span></span>
     <span><span class="cal-badge" style="background:rgba(6,182,212,0.15); color:#1a1a1a; padding:2px 6px;">📞 대기</span></span>
     <span><span class="cal-badge" style="background:rgba(99,102,241,0.15); color:#1a1a1a; padding:2px 6px;">🚗 출근</span></span>
     <span><i class="dot" style="background:var(--accent-rose)"></i>공휴일</span>
@@ -1913,8 +1913,8 @@ function onOtDateClick(year, month, day) {
   existingContainer.innerHTML = '';
   const existing = OVERTIME.getDateRecords(year, month, day);
   if (existing.length > 0) {
-    let existingHtml = '<div style="margin-top:8px; padding:8px; background:rgba(245,158,11,0.06); border-radius:6px; font-size:15px;">';
-    existingHtml += `<strong style="color:var(--accent-amber)">📋 기존 기록 (${existing.length}건)</strong>`;
+    let existingHtml = '<div style="margin-top:8px; padding:8px; background:rgba(244,63,94,0.06); border-radius:6px; font-size:15px;">';
+    existingHtml += `<strong style="color:var(--accent-rose)">📋 기존 기록 (${existing.length}건)</strong>`;
     existing.forEach(r => {
       existingHtml += `<div style="margin-top:4px; cursor:pointer; padding:4px; border-radius:4px;"
         onclick="editOtRecord('${r.id}')"
@@ -2160,7 +2160,7 @@ function renderOtDashboard(year, month) {
   if (container) {
     const detailItems = [
       { label: '온콜출근', value: stats.oncallCalloutCount + '회', cls: 'indigo' },
-      { label: '시간외', value: stats.overtimeHours.toFixed(1) + 'h', cls: 'amber' },
+      { label: '시간외', value: stats.overtimeHours.toFixed(1) + 'h', cls: 'rose' },
       { label: '온콜대기', value: stats.oncallStandbyDays + '일', cls: 'cyan' },
     ];
     const detailsHtml = detailItems
@@ -2222,7 +2222,7 @@ function renderOtRecordList(records) {
   // 통계 그리드 (4칸)
   html += `<div class="lv-stats-grid">
     <div class="lv-stat-card"><div class="lv-stat-num">${totalHours.toFixed(1)}</div><div class="lv-stat-label">총 시간</div></div>
-    <div class="lv-stat-card"><div class="lv-stat-num" style="color:var(--accent-amber)">${byType.overtime.count}</div><div class="lv-stat-label">시간외</div></div>
+    <div class="lv-stat-card"><div class="lv-stat-num" style="color:var(--accent-rose)">${byType.overtime.count}</div><div class="lv-stat-label">시간외</div></div>
     <div class="lv-stat-card"><div class="lv-stat-num" style="color:var(--accent-cyan)">${byType.oncall_standby.count + byType.oncall_callout.count}</div><div class="lv-stat-label">온콜</div></div>
     <div class="lv-stat-card"><div class="lv-stat-num" style="color:var(--accent-emerald); font-size:19px;">₩${totalPay.toLocaleString()}</div><div class="lv-stat-label">예상수당</div></div>
   </div>`;
@@ -2230,7 +2230,7 @@ function renderOtRecordList(records) {
   // 유형별 분포
   const typeEntries = Object.entries(byType).filter(([, v]) => v.count > 0);
   if (typeEntries.length > 0) {
-    const colors = { overtime: 'var(--accent-amber)', oncall_standby: 'var(--accent-cyan)', oncall_callout: 'var(--accent-indigo)' };
+    const colors = { overtime: 'var(--accent-rose)', oncall_standby: 'var(--accent-cyan)', oncall_callout: 'var(--accent-indigo)' };
     html += '<div style="margin:12px 0 8px; font-size:14px; font-weight:600; color:var(--text-muted);">유형별 분포</div>';
     html += '<div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:12px;">';
     typeEntries.forEach(([type, data]) => {
