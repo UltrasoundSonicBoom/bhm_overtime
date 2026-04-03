@@ -12,6 +12,14 @@ window.isFamilyMode = urlParams.get('mode') === 'family';
 let supabaseClient = null;
 window.SupabaseUser = null;
 
+// ── 사용자별 localStorage 키 생성 ──
+// 로그인 유저: 'baseKey_<userId>', 비로그인: 'baseKey_guest'
+function getUserStorageKey(baseKey) {
+    const uid = window.SupabaseUser ? window.SupabaseUser.id : 'guest';
+    return `${baseKey}_${uid}`;
+}
+window.getUserStorageKey = getUserStorageKey;
+
 // Initialize Supabase Client if URL and Key are provided
 if (SUPABASE_URL !== 'YOUR_SUPABASE_URL' && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY') {
     // Requires Supabase JS SDK loaded via CDN
@@ -58,12 +66,14 @@ const SupabaseSync = {
     async signOut() {
         if (!window.isFamilyMode || !supabaseClient) return;
         try {
+            // 로그아웃 전에 userId 캡처 (signOut 후엔 SupabaseUser가 null이 됨)
+            const uid = window.SupabaseUser ? window.SupabaseUser.id : 'guest';
             await supabaseClient.auth.signOut();
             // 가족 모드: 로그아웃 시 타인에게 정보 노출 방지를 위해 정확한 로컬 캐시 키 파기
-            localStorage.removeItem('bhm_hr_profile');
-            localStorage.removeItem('overtimeRecords');
-            localStorage.removeItem('leaveRecords');
-            localStorage.removeItem('otManualHourly');
+            localStorage.removeItem(`bhm_hr_profile_${uid}`);
+            localStorage.removeItem(`overtimeRecords_${uid}`);
+            localStorage.removeItem(`leaveRecords_${uid}`);
+            localStorage.removeItem(`otManualHourly_${uid}`);
         } catch (e) {
             console.error('Logout error:', e);
         }

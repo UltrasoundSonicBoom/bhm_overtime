@@ -123,12 +123,12 @@ body::before {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 19px;
   flex-shrink: 0;
 }
 
 .logo h1 {
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--text-primary);
   letter-spacing: -0.02em;
@@ -137,7 +137,7 @@ body::before {
 
 .logo p,
 .logo .logo-subtitle {
-  font-size: 11px;
+  font-size: 14px;
   color: var(--text-muted);
   font-weight: 400;
 }
@@ -168,7 +168,7 @@ body::before {
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 500;
   transition: var(--transition);
   font-family: inherit;
@@ -292,7 +292,7 @@ body::before {
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 500;
   transition: var(--transition);
   font-family: inherit;
@@ -356,18 +356,18 @@ body::before {
 }
 
 .qa-card-icon {
-  font-size: 24px;
+  font-size: 27px;
   flex-shrink: 0;
 }
 
 .qa-card-title {
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .qa-card-desc {
-  font-size: 12px;
+  font-size: 15px;
   color: var(--text-muted);
   margin-top: 2px;
 }
@@ -388,13 +388,13 @@ body::before {
 }
 
 .qa-card-result .result-value {
-  font-size: 22px;
+  font-size: 25px;
   font-weight: 700;
   color: var(--accent-indigo);
 }
 
 .qa-card-result .result-label {
-  font-size: 12px;
+  font-size: 15px;
   color: var(--text-muted);
   margin-top: 2px;
 }
@@ -408,7 +408,7 @@ body::before {
   border: 1px solid rgba(245, 158, 11, 0.2);
   border-radius: var(--radius-sm);
   margin-bottom: 16px;
-  font-size: 13px;
+  font-size: 16px;
   color: var(--accent-amber);
 }
 
@@ -433,7 +433,7 @@ body::before {
 }
 
 .card-title {
-  font-size: 16px;
+  font-size: 19px;
   font-weight: 600;
   margin-bottom: 16px;
   display: flex;
@@ -448,7 +448,7 @@ body::before {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 19px;
 }
 
 .card-title .icon.indigo {
@@ -499,7 +499,7 @@ body::before {
 
 .form-group label {
   display: block;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 500;
   color: var(--text-secondary);
   margin-bottom: 6px;
@@ -513,7 +513,7 @@ body::before {
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 17px;
   font-family: inherit;
   transition: var(--transition);
   outline: none;
@@ -540,7 +540,7 @@ body::before {
   padding: 10px 20px;
   border: none;
   border-radius: var(--radius-sm);
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 600;
   cursor: pointer;
   transition: var(--transition);
@@ -590,7 +590,7 @@ body::before {
 }
 
 .result-total {
-  font-size: 28px;
+  font-size: 31px;
   font-weight: 700;
   color: var(--accent-indigo);
   margin-bottom: 12px;
@@ -601,7 +601,7 @@ body::before {
 }
 
 .result-label {
-  font-size: 12px;
+  font-size: 15px;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -613,7 +613,7 @@ body::before {
   justify-content: space-between;
   padding: 8px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-  font-size: 14px;
+  font-size: 17px;
 }
 
 .result-row:last-child {
@@ -662,7 +662,7 @@ body::before {
   max-width: 85%;
   padding: 12px 16px;
   border-radius: var(--radius-md);
-  font-size: 14px;
+  font-size: 17px;
   line-height: 1.5;
   animation: msgSlide 0.3s ease;
 }
@@ -695,7 +695,7 @@ body::before {
 .chat-msg .ref {
   display: inline-block;
   margin-top: 8px;
-  font-size: 11px;
+  font-size: 14px;
   color: var(--text-accent);
   background: rgba(99, 102, 241, 0.1);
   padding: 2px 8px;
@@ -716,7 +716,7 @@ body::before {
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-full);
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 17px;
   outline: none;
   font-family: inherit;
   transition: var(--transition);
@@ -733,7 +733,7 @@ body::before {
   background: var(--accent-indigo);
   border: none;
   color: white;
-  font-size: 18px;
+  font-size: 21px;
   cursor: pointer;
   transition: var(--transition);
   display: flex;
@@ -759,7 +759,7 @@ body::before {
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-full);
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: 15px;
   cursor: pointer;
   transition: var(--transition);
   font-family: inherit;
@@ -775,7 +775,7 @@ body::before {
 .data-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 16px;
 }
 
 .data-table th {
@@ -784,7 +784,7 @@ body::before {
   font-weight: 600;
   color: var(--text-accent);
   border-bottom: 1px solid var(--border-glass);
-  font-size: 12px;
+  font-size: 15px;
   text-transform: uppercase;
   letter-spacing: 0.3px;
 }
@@ -827,13 +827,13 @@ body::before {
 }
 
 .stat-value {
-  font-size: 24px;
+  font-size: 27px;
   font-weight: 700;
   margin-bottom: 4px;
 }
 
 .stat-label {
-  font-size: 12px;
+  font-size: 15px;
   color: var(--text-muted);
 }
 
@@ -853,7 +853,7 @@ body::before {
 }
 
 .toggle-group label {
-  font-size: 13px;
+  font-size: 16px;
   color: var(--text-secondary);
   cursor: pointer;
 }
@@ -863,7 +863,7 @@ body::before {
   display: inline-block;
   padding: 3px 10px;
   border-radius: var(--radius-full);
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 600;
 }
 
@@ -900,7 +900,7 @@ body::before {
   border: 1px solid rgba(245, 158, 11, 0.2);
   border-radius: var(--radius-sm);
   padding: 12px 16px;
-  font-size: 13px;
+  font-size: 16px;
   color: var(--accent-amber);
   margin-top: 12px;
 }
@@ -912,7 +912,7 @@ body::before {
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 500;
   color: var(--text-accent);
   transition: var(--transition);
@@ -960,7 +960,7 @@ body::before {
   gap: 8px;
   padding: 10px 12px;
   background: var(--bg-secondary);
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--text-secondary);
   border-bottom: 1px solid var(--border-glass);
@@ -975,7 +975,7 @@ body::before {
 
 .mini-cal-dow {
   text-align: center;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-muted);
   padding: 4px 0;
@@ -991,7 +991,7 @@ body::before {
 
 .mini-cal-day {
   text-align: center;
-  font-size: 12px;
+  font-size: 15px;
   padding: 6px 2px;
   border-radius: 6px;
   color: var(--text-secondary);
@@ -1049,7 +1049,7 @@ body::before {
   color: var(--text-primary);
   padding: 4px 8px;
   border-radius: 4px;
-  font-size: 11px;
+  font-size: 14px;
   white-space: nowrap;
   z-index: 10;
   border: 1px solid var(--border-glass);
@@ -1062,7 +1062,7 @@ body::before {
   gap: 12px;
   padding: 8px 12px;
   border-top: 1px solid var(--border-glass);
-  font-size: 11px;
+  font-size: 14px;
   color: var(--text-muted);
 }
 
@@ -1110,7 +1110,7 @@ body::before {
   gap: 8px;
   padding: 10px 12px;
   background: var(--bg-secondary);
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--text-secondary);
   border-bottom: 1px solid var(--border-glass);
@@ -1123,7 +1123,7 @@ body::before {
   color: inherit;
   cursor: pointer;
   padding: 4px 10px;
-  font-size: 12px;
+  font-size: 15px;
   transition: var(--transition);
   font-family: inherit;
 }
@@ -1150,7 +1150,7 @@ body::before {
 
 .ot-cal-dow {
   text-align: center;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-muted);
   padding: 4px 0;
@@ -1166,7 +1166,7 @@ body::before {
 
 .ot-cal-day {
   text-align: center;
-  font-size: 12px;
+  font-size: 15px;
   padding: 8px 2px 4px;
   border-radius: 8px;
   color: var(--text-secondary);
@@ -1241,7 +1241,7 @@ body::before {
   gap: 12px;
   padding: 8px 12px;
   border-top: 1px solid var(--border-glass);
-  font-size: 11px;
+  font-size: 14px;
   color: var(--text-muted);
 }
 
@@ -1275,14 +1275,14 @@ body::before {
 }
 
 .ot-dash-main .ot-dash-pay {
-  font-size: 32px;
+  font-size: 35px;
   font-weight: 700;
   color: var(--accent-emerald);
   line-height: 1.2;
 }
 
 .ot-dash-main .ot-dash-label {
-  font-size: 12px;
+  font-size: 15px;
   color: var(--text-muted);
   font-weight: 500;
 }
@@ -1302,7 +1302,7 @@ body::before {
   background: var(--bg-glass);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-full);
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 500;
   color: var(--text-secondary);
 }
@@ -1322,7 +1322,7 @@ body::before {
 }
 
 .ot-quick-title {
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 10px;
@@ -1332,7 +1332,7 @@ body::before {
 }
 
 .ot-quick-date {
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 500;
   color: var(--accent-emerald);
   background: rgba(16, 185, 129, 0.1);
@@ -1393,17 +1393,17 @@ body::before {
 }
 
 .ot-quick-icon {
-  font-size: 20px;
+  font-size: 23px;
 }
 
 .ot-quick-label {
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .ot-quick-sub {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--accent-emerald);
 }
@@ -1422,7 +1422,7 @@ body::before {
   border-radius: var(--radius-sm);
   background: var(--bg-glass);
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   transition: var(--transition);
@@ -1443,7 +1443,7 @@ body::before {
 }
 
 .ot-preset-btn.custom {
-  font-size: 11px;
+  font-size: 14px;
 }
 
 .ot-preset-btn.custom.active {
@@ -1461,7 +1461,7 @@ body::before {
   padding: 14px 28px;
   background: var(--accent-emerald);
   color: white;
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 600;
   border-radius: var(--radius-full);
   z-index: 999;
@@ -1495,7 +1495,7 @@ body::before {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--accent-indigo);
   padding-bottom: 10px;
@@ -1503,7 +1503,7 @@ body::before {
 }
 
 .ot-callout-duration {
-  font-size: 13px;
+  font-size: 16px;
   color: var(--accent-emerald);
   font-weight: 600;
   margin-top: 4px;
@@ -1529,13 +1529,13 @@ body::before {
   background: rgba(16, 185, 129, 0.06);
   border-radius: 8px;
   border: 1px solid rgba(16, 185, 129, 0.15);
-  font-size: 12px;
+  font-size: 15px;
   color: var(--text-muted);
 }
 
 .ot-hourly-bar strong {
   color: var(--accent-emerald);
-  font-size: 14px;
+  font-size: 17px;
 }
 
 /* ── Overtime: Input Panel (Legacy for Desktop, re-used partially) ── */
@@ -1600,7 +1600,7 @@ body::before {
   border: 1px solid var(--border-glass);
   background: rgba(255, 255, 255, 0.05);
   color: var(--text-primary);
-  font-size: 16px;
+  font-size: 19px;
   font-weight: 600;
   transition: all 0.2s ease;
 }
@@ -1617,7 +1617,7 @@ body::before {
   border: 1px solid var(--border-glass);
   background: rgba(255, 255, 255, 0.05);
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 17px;
 }
 .premium-input:focus {
   border-color: var(--accent-emerald);
@@ -1649,7 +1649,7 @@ body::before {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 14px;
+  font-size: 17px;
   color: var(--text-primary);
 }
 
@@ -1664,7 +1664,7 @@ body::before {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 17px;
   transition: var(--transition);
 }
 
@@ -1694,7 +1694,7 @@ body::before {
   text-align: center;
   padding: 8px 6px;
   border-radius: var(--radius-sm);
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--text-muted);
   background: var(--bg-glass);
@@ -1720,7 +1720,7 @@ body::before {
   background: rgba(16, 185, 129, 0.06);
   border: 1px solid rgba(16, 185, 129, 0.15);
   border-radius: var(--radius-md);
-  font-size: 13px;
+  font-size: 16px;
   min-height: 40px;
 }
 
@@ -1767,7 +1767,7 @@ body::before {
 }
 
 .ot-record-date {
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--text-accent);
   min-width: 40px;
@@ -1775,7 +1775,7 @@ body::before {
 }
 
 .ot-record-type {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 600;
   padding: 2px 8px;
   border-radius: var(--radius-full);
@@ -1799,12 +1799,12 @@ body::before {
 
 .ot-record-info {
   flex: 1;
-  font-size: 12px;
+  font-size: 15px;
   color: var(--text-secondary);
 }
 
 .ot-record-pay {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--accent-emerald);
   white-space: nowrap;
@@ -1820,7 +1820,7 @@ body::before {
   border-radius: var(--radius-sm);
   font-weight: 700;
   color: var(--accent-emerald);
-  font-size: 14px;
+  font-size: 17px;
 }
 
 /* ── Leave: Dashboard ── */
@@ -1839,7 +1839,7 @@ body::before {
   background: var(--bg-card);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-full);
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 500;
   color: var(--text-secondary);
   transition: var(--transition);
@@ -1962,7 +1962,7 @@ body::before {
 }
 
 .lv-record-type {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 600;
   padding: 2px 8px;
   border-radius: var(--radius-full);
@@ -1996,14 +1996,14 @@ body::before {
 }
 
 .lv-stat-num {
-  font-size: 20px;
+  font-size: 23px;
   font-weight: 700;
   color: var(--text-primary);
   line-height: 1.2;
 }
 
 .lv-stat-label {
-  font-size: 10px;
+  font-size: 13px;
   color: var(--text-muted);
   margin-top: 2px;
 }
@@ -2040,7 +2040,7 @@ body::before {
 }
 
 .lv-month-bar-label {
-  font-size: 9px;
+  font-size: 12px;
   color: var(--text-muted);
   margin-top: 2px;
 }
@@ -2048,14 +2048,14 @@ body::before {
 .lv-month-bar-val {
   position: absolute;
   top: -2px;
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--accent-indigo);
 }
 
 /* ── Calendar badge (for day annotations) ── */
 .cal-badge {
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 600;
   padding: 1px 3px;
   border-radius: 4px;
@@ -2084,11 +2084,11 @@ body::before {
   .logo-icon {
     width: 28px;
     height: 28px;
-    font-size: 14px;
+    font-size: 17px;
   }
 
   .logo h1 {
-    font-size: 16px;
+    font-size: 19px;
   }
 
   .logo .logo-subtitle {
@@ -2115,7 +2115,7 @@ body::before {
 
   .nav-tab {
     padding: 8px 4px 6px;
-    font-size: 11px;
+    font-size: 14px;
     flex: 1;
     text-align: center;
     border-radius: 8px;
@@ -2129,7 +2129,7 @@ body::before {
   .theme-toggle-btn {
     width: 30px;
     height: 30px;
-    font-size: 15px;
+    font-size: 18px;
   }
 
   /* ── Main content: bottom padding for tab bar ── */
@@ -2143,72 +2143,72 @@ body::before {
   }
 
   .card-title {
-    font-size: 18px;
+    font-size: 21px;
   }
 
   .form-group label {
-    font-size: 15px;
+    font-size: 18px;
   }
 
   .form-group select,
   .form-group input {
-    font-size: 16px;
+    font-size: 19px;
     padding: 12px 14px;
   }
 
   .ot-cal-day {
-    font-size: 14px;
+    font-size: 17px;
   }
 
   .ot-cal-dow {
-    font-size: 13px;
+    font-size: 16px;
   }
 
   .cal-badge {
-    font-size: 9px;
+    font-size: 12px;
   }
 
   .badge {
-    font-size: 13px;
+    font-size: 16px;
   }
 
   .stat-label,
   .lv-stat-label {
-    font-size: 13px;
+    font-size: 16px;
   }
 
   .stat-value,
   .lv-stat-num {
-    font-size: 22px;
+    font-size: 25px;
   }
 
   .ot-record-info {
-    font-size: 14px;
+    font-size: 17px;
   }
 
   .ot-record-pay {
-    font-size: 15px;
+    font-size: 18px;
   }
 
   .ot-record-type,
   .lv-record-type {
-    font-size: 13px;
-  }
-
-  .collapsible-header {
-    font-size: 15px;
-  }
-
-  .toggle-group label {
-    font-size: 15px;
-  }
-
-  .btn {
     font-size: 16px;
   }
 
+  .collapsible-header {
+    font-size: 18px;
+  }
+
+  .toggle-group label {
+    font-size: 18px;
+  }
+
+  .btn {
+    font-size: 19px;
+  }
+
   .ot-dash-main .ot-dash-label {
-    font-size: 14px;
+    font-size: 17px;
   }
 
   /* ── Toast above tab bar ── */
@@ -2246,11 +2246,11 @@ body::before {
   }
 
   .ot-dash-main .ot-dash-pay {
-    font-size: 26px;
+    font-size: 29px;
   }
 
   .result-total {
-    font-size: 24px;
+    font-size: 27px;
   }
 
   .sub-tabs {
@@ -2262,7 +2262,7 @@ body::before {
   .sub-tab {
     white-space: nowrap;
     flex: 0 0 auto;
-    font-size: 14px;
+    font-size: 17px;
   }
 
   .qa-cards-grid {
@@ -2305,41 +2305,41 @@ body::before {
   }
 
   .ot-type-label {
-    font-size: 13px;
+    font-size: 16px;
     padding: 8px 6px;
   }
 
   /* Hourly bar adjustments */
   .ot-hourly-bar {
     padding: 8px 12px;
-    font-size: 13px;
+    font-size: 16px;
     gap: 6px;
     flex-wrap: wrap;
   }
 
   /* Preview text */
   .ot-preview {
-    font-size: 15px;
+    font-size: 18px;
   }
 
   .ot-preview .preview-row {
-    font-size: 14px;
+    font-size: 17px;
   }
 
   /* Legend text */
   .ot-cal-legend {
-    font-size: 13px;
+    font-size: 16px;
   }
 }
 
 /* ── Very small screens (iPhone SE, Galaxy S lite etc) ── */
 @media (max-width: 380px) {
   .logo h1 {
-    font-size: 14px;
+    font-size: 17px;
   }
 
   .nav-tab {
-    font-size: 10px;
+    font-size: 13px;
     padding: 5px 2px 3px;
   }
 
@@ -2352,7 +2352,7 @@ body::before {
   }
 
   .ot-type-label {
-    font-size: 12px;
+    font-size: 15px;
     padding: 6px 4px;
   }
 

@@ -3,7 +3,9 @@
 // ============================================
 
 const PROFILE = {
-    STORAGE_KEY: 'bhm_hr_profile',
+    get STORAGE_KEY() {
+        return window.getUserStorageKey ? window.getUserStorageKey('bhm_hr_profile') : 'bhm_hr_profile';
+    },
 
     // ── 기본 프로필 템플릿 ──
     defaults: {
@@ -34,9 +36,9 @@ const PROFILE = {
         const profile = { ...this.defaults, ...data, savedAt: new Date().toISOString() };
         localStorage.setItem(this.STORAGE_KEY, JSON.stringify(profile));
         
-        // Sync to Supabase async
-        if (window.isFamilyMode && window.SupabaseSync) {
-            profile.id = window.SupabaseUser ? window.SupabaseUser.id : 'local_user_profile';
+        // Sync to Supabase async (로그인 상태일 때만)
+        if (window.isFamilyMode && window.SupabaseSync && window.SupabaseUser) {
+            profile.id = window.SupabaseUser.id;
             window.SupabaseSync.pushCloudData('profiles', profile);
         }
 

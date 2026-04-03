@@ -4,7 +4,9 @@
 // ============================================
 
 const OVERTIME = {
-    STORAGE_KEY: 'overtimeRecords',
+    get STORAGE_KEY() {
+        return window.getUserStorageKey ? window.getUserStorageKey('overtimeRecords') : 'overtimeRecords';
+    },
 
     // ── 저장소 접근 ──
     _loadAll() {

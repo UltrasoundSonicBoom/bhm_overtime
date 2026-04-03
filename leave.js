@@ -5,7 +5,9 @@
 // ============================================
 
 const LEAVE = {
-    STORAGE_KEY: 'leaveRecords',
+    get STORAGE_KEY() {
+        return window.getUserStorageKey ? window.getUserStorageKey('leaveRecords') : 'leaveRecords';
+    },
 
     // ── 유형 조회 (data.js 기반) ──
     getTypes() {
