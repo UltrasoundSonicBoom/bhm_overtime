@@ -33,18 +33,22 @@
   <!-- ═══════════ Header ═══════════ -->
   <header class="header">
     <div class="header-inner">
-      <div class="logo">
-        <div class="logo-icon">🏥</div>
-        <div>
-          <h1>SNUH 급여 도우미</h1>
-          <p>2026 단체협약 기준</p>
+      <div class="header-top-row">
+        <div class="logo">
+          <div class="logo-icon">🏥</div>
+          <div>
+            <h1>SNUH 급여 도우미</h1>
+            <p class="logo-subtitle">2026 단체협약 기준</p>
+          </div>
         </div>
-      </div>
-      <button class="theme-toggle-btn" id="themeToggle" title="테마 전환" onclick="toggleTheme()">🎨</button>
-      <div id="authContainer" class="auth-container" style="display:none; align-items:center; gap:8px;">
-        <button onclick="if(window.SupabaseSync) window.SupabaseSync.signInWithGoogle()" class="btn btn-outline" style="padding:4px 10px; font-size:12px; border-color:var(--text-muted); color:var(--text-muted); border-radius:20px;">
-          접속 확인 중...
-        </button>
+        <div class="header-right">
+          <div id="authContainer" class="auth-container" style="display:none; align-items:center; gap:8px;">
+            <button onclick="if(window.SupabaseSync) window.SupabaseSync.signInWithGoogle()" class="btn btn-outline" style="padding:4px 10px; font-size:12px; border-color:var(--text-muted); color:var(--text-muted); border-radius:20px;">
+              접속 확인 중...
+            </button>
+          </div>
+          <button class="theme-toggle-btn" id="themeToggle" title="테마 전환" onclick="toggleTheme()">🎨</button>
+        </div>
       </div>
       <nav class="nav-tabs" id="navTabs">
         <button class="nav-tab active" data-tab="overtime">⏰ 시간외·온콜</button>
@@ -329,92 +333,86 @@
 
     <!-- ═══════════ 📅 휴가 관리 ═══════════ -->
     <div class="tab-content" id="tab-leave">
-      <!-- 상단 대시보드 -->
-      <div id="lvDashboard" class="lv-dashboard"></div>
 
-      <!-- 캘린더 + 휴가 입력 -->
-      <div class="card">
-        <div class="card-title">
-          <span class="icon emerald">📅</span> 휴가 기록
+      <!-- 캘린더 -->
+      <div class="card" style="padding: 12px;">
+        <div id="lvCalendar"></div>
+      </div>
+
+      <!-- 휴가 입력 바텀시트 (시간외·온콜과 동일한 UX) -->
+      <div id="lvInputOverlay" class="ot-bottom-sheet-overlay" onclick="closeLvBottomSheet()"></div>
+      <div id="lvInputSheet" class="ot-bottom-sheet">
+        <div class="ot-sheet-handle"></div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span id="lvPanelDate" style="font-weight:700; font-size:18px; color:var(--text-primary);">날짜를 선택하세요</span>
+          <button class="btn btn-icon" onclick="closeLvBottomSheet()" style="padding:4px; font-size:20px; background:none; border:none; cursor:pointer;">
+            <span style="color:var(--text-muted);">✕</span>
+          </button>
         </div>
 
-        <!-- 데스크탑: 캘린더 좌 + 입력 우 / 모바일: 세로 배치 -->
-        <div class="lv-main-grid">
-          <!-- 캘린더 -->
-          <div id="lvCalendar"></div>
+        <div class="form-group" style="margin-top:10px;">
+          <label>휴가 유형</label>
+          <select id="lvType" onchange="onLvTypeChange()">
+          </select>
+        </div>
 
-          <!-- 휴가 입력 패널 (항상 표시) -->
-          <div id="lvInputPanel" class="lv-input-panel">
-            <div class="lv-panel-header">
-              <span id="lvPanelDate" style="font-weight:600; font-size:14px; color:var(--text-accent);">날짜를 선택하세요</span>
-            </div>
-
-            <div class="form-group" style="margin-top:10px;">
-              <label>휴가 유형</label>
-              <select id="lvType" onchange="onLvTypeChange()">
-              </select>
-            </div>
-
-            <!-- 시간차 시간 입력 (시간차 선택 시만 표시) -->
-            <div id="lvTimeInputArea"
-              style="display:none; margin-bottom:10px; padding:10px; border-radius:8px; background:rgba(16,185,129,0.05); border:1px solid rgba(16,185,129,0.15);">
-              <div class="form-row">
-                <div class="form-group">
-                  <label>시작 시간</label>
-                  <input type="time" id="lvStartTime" value="09:00" onchange="calcLvTimeHours()">
-                </div>
-                <div class="form-group">
-                  <label>종료 시간</label>
-                  <input type="time" id="lvEndTime" value="13:00" onchange="calcLvTimeHours()">
-                </div>
-              </div>
-              <div id="lvTimeCalcResult"
-                style="font-size:12px; padding:6px 8px; border-radius:6px; background:rgba(99,102,241,0.08); color:var(--accent-indigo); font-weight:600; text-align:center;">
-              </div>
-            </div>
-
-            <!-- 청원/경조 상세정보 패널 -->
-            <div id="lvCeremonyInfo"
-              style="display:none; margin-bottom:10px; padding:10px; border-radius:8px; background:rgba(251,191,36,0.06); border:1px solid rgba(251,191,36,0.2); font-size:12px;">
-              <div style="font-weight:600; color:var(--accent-amber); margin-bottom:6px;">📋 청원휴가 안내</div>
-              <div id="lvCeremonyDays" style="margin-bottom:3px;"></div>
-              <div id="lvCeremonyPay" style="margin-bottom:3px;"></div>
-              <div id="lvCeremonyDocs" style="margin-bottom:3px;"></div>
-              <div id="lvCeremonyExtra" style="color:var(--accent-indigo);"></div>
-            </div>
-
-            <!-- 한도 현황 뱃지 -->
-            <div id="lvQuotaBadge" style="display:none; margin-bottom:10px;"></div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label>시작일</label>
-                <input type="date" id="lvStartDate">
-              </div>
-              <div class="form-group">
-                <label>종료일</label>
-                <input type="date" id="lvEndDate">
-              </div>
-            </div>
-
-            <!-- 급여 영향 미리보기 -->
-            <div id="lvPreview" class="ot-preview"></div>
-            <!-- 기존 기록 표시 영역 (중복 방지) -->
-            <div id="lvExistingRecords"></div>
-
+        <!-- 시간차 시간 입력 -->
+        <div id="lvTimeInputArea"
+          style="display:none; margin-bottom:10px; padding:10px; border-radius:8px; background:rgba(16,185,129,0.05); border:1px solid rgba(16,185,129,0.15);">
+          <div class="form-row">
             <div class="form-group">
-              <label>메모 (선택)</label>
-              <input type="text" id="lvMemo" placeholder="예: 개인사유">
+              <label>시작 시간</label>
+              <input type="time" id="lvStartTime" value="09:00" onchange="calcLvTimeHours()">
             </div>
-
-            <div class="form-row" style="margin-top:12px;">
-              <button class="btn btn-primary" onclick="saveLvRecord()" style="flex:2" id="lvSaveBtn">💾 저장</button>
-              <button class="btn btn-outline" onclick="deleteLvRecord()" style="flex:1; display:none;"
-                id="lvDeleteBtn">🗑 삭제</button>
+            <div class="form-group">
+              <label>종료 시간</label>
+              <input type="time" id="lvEndTime" value="13:00" onchange="calcLvTimeHours()">
             </div>
-            <input type="hidden" id="lvEditId" value="">
+          </div>
+          <div id="lvTimeCalcResult"
+            style="font-size:13px; padding:6px 8px; border-radius:6px; background:rgba(99,102,241,0.08); color:var(--accent-indigo); font-weight:600; text-align:center;">
           </div>
         </div>
+
+        <!-- 청원/경조 상세정보 패널 -->
+        <div id="lvCeremonyInfo"
+          style="display:none; margin-bottom:10px; padding:10px; border-radius:8px; background:rgba(251,191,36,0.06); border:1px solid rgba(251,191,36,0.2); font-size:13px;">
+          <div style="font-weight:600; color:var(--accent-amber); margin-bottom:6px;">📋 청원휴가 안내</div>
+          <div id="lvCeremonyDays" style="margin-bottom:3px;"></div>
+          <div id="lvCeremonyPay" style="margin-bottom:3px;"></div>
+          <div id="lvCeremonyDocs" style="margin-bottom:3px;"></div>
+          <div id="lvCeremonyExtra" style="color:var(--accent-indigo);"></div>
+        </div>
+
+        <!-- 한도 현황 뱃지 -->
+        <div id="lvQuotaBadge" style="display:none; margin-bottom:10px;"></div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>시작일</label>
+            <input type="date" id="lvStartDate">
+          </div>
+          <div class="form-group">
+            <label>종료일</label>
+            <input type="date" id="lvEndDate">
+          </div>
+        </div>
+
+        <!-- 급여 영향 미리보기 -->
+        <div id="lvPreview" class="ot-preview"></div>
+        <div id="lvExistingRecords"></div>
+
+        <div class="form-group">
+          <label>메모 (선택)</label>
+          <input type="text" id="lvMemo" placeholder="예: 개인사유">
+        </div>
+
+        <div class="form-row" style="margin-top:16px; gap:12px;">
+          <button class="btn btn-outline" onclick="deleteLvRecord()" style="flex:1; display:none; border-color:var(--accent-rose); color:var(--accent-rose);"
+            id="lvDeleteBtn">🗑 삭제</button>
+          <button class="btn btn-primary" onclick="saveLvRecord()" style="flex:2; font-size:16px; padding:12px;" id="lvSaveBtn">💾 저장</button>
+        </div>
+        <input type="hidden" id="lvEditId" value="">
       </div>
 
       <!-- 하단: 사용내역 + 소진현황 -->
@@ -434,8 +432,12 @@
 
         <!-- 2열: 유형별 소진 현황 -->
         <div class="card">
-          <div class="card-title"><span class="icon indigo">📊</span> 유형별 소진 현황</div>
-          <div id="lvQuotaTable"></div>
+          <div class="collapsible-header" onclick="toggleCollapsible('lvQuotaTableWrap')" style="cursor:pointer; padding:10px 0;">
+            <span class="card-title" style="margin:0;"><span class="icon indigo">📊</span> 유형별 소진 현황 <span style="font-size:12px; color:var(--text-muted);">▸</span></span>
+          </div>
+          <div id="lvQuotaTableWrap" class="collapsible-body" style="display:none;">
+            <div id="lvQuotaTable"></div>
+          </div>
         </div>
       </div>
     </div>

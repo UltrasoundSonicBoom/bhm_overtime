@@ -1838,17 +1838,26 @@ function renderOtCalendar(year, month, recordsByDay) {
 
     const titleAttr = titleParts.length > 0 ? ` title="${titleParts.join(' / ')}"` : '';
 
-    // 기록 뱃지 (모바일용)
-    let dotsHtml = '<div style="display:flex; flex-direction:column; gap:2px; margin-top:2px;">';
+    // 기록 뱃지 + 누적금액
+    let dotsHtml = '<div style="display:flex; flex-direction:column; gap:1px; margin-top:1px;">';
+    let dayTotalPay = 0;
     dayRecords.forEach(r => {
+      dayTotalPay += r.estimatedPay || 0;
       if (r.type === 'oncall_standby') {
-        dotsHtml += `<span style="font-size:10px; background:rgba(6,182,212,0.15); color:var(--accent-cyan); padding:2px 4px; border-radius:4px; text-align:center; font-weight:600; line-height:1.2;">📞 대기</span>`;
+        dotsHtml += `<span class="cal-badge" style="background:rgba(6,182,212,0.15); color:#1a1a1a;">📞대기</span>`;
       } else if (r.type === 'oncall_callout') {
-        dotsHtml += `<span style="font-size:10px; background:rgba(99,102,241,0.15); color:var(--accent-indigo); padding:2px 4px; border-radius:4px; text-align:center; font-weight:600; line-height:1.2;">🚗 ${r.totalHours}h</span>`;
+        dotsHtml += `<span class="cal-badge" style="background:rgba(99,102,241,0.15); color:#1a1a1a;">🚗${r.totalHours}h</span>`;
       } else if (r.type === 'overtime') {
-        dotsHtml += `<span style="font-size:10px; background:rgba(245,158,11,0.15); color:var(--accent-amber); padding:2px 4px; border-radius:4px; text-align:center; font-weight:600; line-height:1.2;">⏰ ${r.totalHours}h</span>`;
+        dotsHtml += `<span class="cal-badge" style="background:rgba(245,158,11,0.15); color:#1a1a1a;">⏰${r.totalHours}h</span>`;
       }
     });
+    // 누적금액 표시 (1만원 이상이면 만원 단위)
+    if (dayTotalPay > 0) {
+      const payStr = dayTotalPay >= 10000
+        ? Math.round(dayTotalPay / 10000) + '만'
+        : '₩' + dayTotalPay.toLocaleString();
+      dotsHtml += `<span class="cal-badge" style="color:var(--accent-emerald); font-weight:700; font-size:9px;">${payStr}</span>`;
+    }
     dotsHtml += '</div>';
 
     html += `<div class="${cls}"${titleAttr} data-day="${d}" onclick="onOtDateClick(${year},${month},${d})">${d}${dotsHtml}</div>`;
@@ -1858,9 +1867,9 @@ function renderOtCalendar(year, month, recordsByDay) {
 
   // 범례
   html += `<div class="ot-cal-legend" style="margin-top:16px;">
-    <span><span style="font-size:11px; background:rgba(245,158,11,0.15); color:var(--accent-amber); padding:2px 6px; border-radius:4px;">⏰ 시간외</span></span>
-    <span><span style="font-size:11px; background:rgba(6,182,212,0.15); color:var(--accent-cyan); padding:2px 6px; border-radius:4px;">📞 대기</span></span>
-    <span><span style="font-size:11px; background:rgba(99,102,241,0.15); color:var(--accent-indigo); padding:2px 6px; border-radius:4px;">🚗 출근</span></span>
+    <span><span class="cal-badge" style="background:rgba(245,158,11,0.15); color:#1a1a1a; padding:2px 6px;">⏰ 시간외</span></span>
+    <span><span class="cal-badge" style="background:rgba(6,182,212,0.15); color:#1a1a1a; padding:2px 6px;">📞 대기</span></span>
+    <span><span class="cal-badge" style="background:rgba(99,102,241,0.15); color:#1a1a1a; padding:2px 6px;">🚗 출근</span></span>
     <span><i class="dot" style="background:var(--accent-rose)"></i>공휴일</span>
   </div>`;
 
@@ -1943,6 +1952,8 @@ function closeOtBottomSheet() {
     overlay.classList.remove('show');
     panel.classList.remove('show');
   }
+  // Also close leave bottom sheet if open
+  closeLvBottomSheet();
 }
 
 // 패널 초기화 (항상 표시 유지, 필드만 리셋)
@@ -2452,7 +2463,6 @@ async function refreshLvCalendar() {
   renderLvRecordList(year);
   renderLvStats(year);
   renderLvQuotaTable(year);
-  renderLvDashboard(year);
   resetLvPanel();
 
   // 2. 공휴일 데이터 백그라운드 로드
@@ -2506,25 +2516,38 @@ function renderLvCalendar(year, month, recordsByDay) {
     if (isToday) cls += ' today';
     if (isSelected) cls += ' selected';
 
-    let dotsHtml = '<div class="ot-cal-dots">';
-    const dotTypes = [...new Set(dayRecords.map(r => r.type))];
-    dotTypes.forEach(t => {
+    // 휴가 유형 텍스트 표시 (점 대신 유형명)
+    let dotsHtml = '<div style="display:flex; flex-direction:column; gap:1px; margin-top:1px;">';
+    const uniqueTypes = [...new Set(dayRecords.map(r => r.type))];
+    uniqueTypes.forEach(t => {
       const typeInfo = LEAVE.getTypeById(t);
-      const catClass = typeInfo ? typeInfo.category : t;
-      dotsHtml += `<div class="lv-cal-dot ${catClass}"></div>`;
+      const label = typeInfo ? typeInfo.label : t;
+      // 3글자까지만 표시 (모바일 공간 절약)
+      const shortLabel = label.length > 3 ? label.substring(0, 3) : label;
+      const catColors = {
+        legal: 'rgba(16,185,129,0.15)',
+        health: 'rgba(244,63,94,0.12)',
+        education: 'rgba(139,92,246,0.12)',
+        family: 'rgba(99,102,241,0.12)',
+        ceremony: 'rgba(245,158,11,0.12)',
+        maternity: 'rgba(6,182,212,0.12)',
+        special: 'rgba(99,102,241,0.12)',
+      };
+      const bg = catColors[typeInfo?.category] || 'rgba(99,102,241,0.1)';
+      dotsHtml += `<span class="cal-badge" style="background:${bg}; color:#1a1a1a;">${shortLabel}</span>`;
     });
     dotsHtml += '</div>';
 
-    html += `<div class="${cls}" onclick="onLvDateClick(${year},${month},${d})">${d}${dotsHtml}</div>`;
+    html += `<div class="${cls}" data-day="${d}" onclick="onLvDateClick(${year},${month},${d})">${d}${dotsHtml}</div>`;
   }
 
   html += '</div>';
   html += `<div class="ot-cal-legend">
-    <span><i class="dot" style="background:var(--accent-emerald)"></i>법정</span>
-    <span><i class="dot" style="background:var(--accent-rose)"></i>건강</span>
-    <span><i class="dot" style="background:var(--accent-amber)"></i>청원</span>
-    <span><i class="dot" style="background:var(--accent-violet)"></i>교육</span>
-    <span><i class="dot" style="background:var(--accent-cyan)"></i>출산</span>
+    <span><span class="cal-badge" style="background:rgba(16,185,129,0.15); color:#1a1a1a; padding:2px 6px;">법정</span></span>
+    <span><span class="cal-badge" style="background:rgba(244,63,94,0.12); color:#1a1a1a; padding:2px 6px;">건강</span></span>
+    <span><span class="cal-badge" style="background:rgba(245,158,11,0.12); color:#1a1a1a; padding:2px 6px;">청원</span></span>
+    <span><span class="cal-badge" style="background:rgba(139,92,246,0.12); color:#1a1a1a; padding:2px 6px;">교육</span></span>
+    <span><span class="cal-badge" style="background:rgba(6,182,212,0.12); color:#1a1a1a; padding:2px 6px;">출산</span></span>
   </div>`;
   html += '</div>';
   container.innerHTML = html;
@@ -2533,7 +2556,8 @@ function renderLvCalendar(year, month, recordsByDay) {
 function onLvDateClick(year, month, day) {
   lvSelectedDate = { year, month, day };
   document.querySelectorAll('#lvCalendar .ot-cal-day').forEach(el => el.classList.remove('selected'));
-  if (event && event.currentTarget) event.currentTarget.classList.add('selected');
+  const targetCell = document.querySelector(`#lvCalendar .ot-cal-day[data-day="${day}"]`);
+  if (targetCell) targetCell.classList.add('selected');
 
   const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   const dow = new Date(year, month - 1, day).getDay();
@@ -2543,7 +2567,6 @@ function onLvDateClick(year, month, day) {
   if (lvHolidayMap[day]) dateLabel += ` 🔴 ${lvHolidayMap[day]}`;
 
   document.getElementById('lvPanelDate').textContent = dateLabel;
-  document.getElementById('lvInputPanel').style.display = 'block';
   document.getElementById('lvStartDate').value = dateStr;
   document.getElementById('lvEndDate').value = dateStr;
   document.getElementById('lvEditId').value = '';
@@ -2555,12 +2578,12 @@ function onLvDateClick(year, month, day) {
   onLvTypeChange();
   previewLvCalc();
 
-  // 기존 기록 표시 (전용 컨테이너 사용 → 중복 방지)
+  // 기존 기록 표시
   const existingContainer = document.getElementById('lvExistingRecords');
   existingContainer.innerHTML = '';
   const existing = LEAVE.getDateRecords(dateStr);
   if (existing.length > 0) {
-    let extra = '<div style="margin-top:8px; padding:8px; background:rgba(16,185,129,0.06); border-radius:6px; font-size:12px;">';
+    let extra = '<div style="margin-top:8px; padding:8px; background:rgba(16,185,129,0.06); border-radius:6px; font-size:13px;">';
     extra += `<strong style="color:var(--accent-emerald)">📋 기존 기록 (${existing.length}건)</strong>`;
     existing.forEach(r => {
       const typeInfo = LEAVE.getTypeById(r.type);
@@ -2569,7 +2592,7 @@ function onLvDateClick(year, month, day) {
         onclick="editLvRecord('${r.id}')"
         onmouseover="this.style.background='rgba(99,102,241,0.1)'"
         onmouseout="this.style.background='transparent'">
-        <span class="lv-record-type ${r.isPaid ? 'paid' : 'unpaid'}" style="font-size:10px">${typeInfo ? typeInfo.label : r.type}</span>
+        <span class="lv-record-type ${r.isPaid ? 'paid' : 'unpaid'}" style="font-size:11px">${typeInfo ? typeInfo.label : r.type}</span>
         ${r.startDate === r.endDate ? '' : r.startDate + '~' + r.endDate}
         ${(r.days || 0).toFixed(1)}일${timeInfo}
         ${r.salaryImpact ? '<strong style="color:var(--accent-rose)">-₩' + Math.abs(r.salaryImpact).toLocaleString() + '</strong>' : ''}
@@ -2577,6 +2600,28 @@ function onLvDateClick(year, month, day) {
     });
     extra += '</div>';
     existingContainer.innerHTML = extra;
+  }
+
+  // 바텀시트 열기
+  openLvBottomSheet();
+}
+
+// ── 휴가 바텀시트 컨트롤 ──
+function openLvBottomSheet() {
+  const overlay = document.getElementById('lvInputOverlay');
+  const sheet = document.getElementById('lvInputSheet');
+  if (overlay && sheet) {
+    overlay.classList.add('show');
+    sheet.classList.add('show');
+  }
+}
+
+function closeLvBottomSheet() {
+  const overlay = document.getElementById('lvInputOverlay');
+  const sheet = document.getElementById('lvInputSheet');
+  if (overlay && sheet) {
+    overlay.classList.remove('show');
+    sheet.classList.remove('show');
   }
 }
 
@@ -2598,6 +2643,9 @@ function resetLvPanel() {
   document.getElementById('lvEndDate').value = todayStr;
   document.getElementById('lvType').value = 'annual';
   onLvTypeChange();
+
+  // 바텀시트 닫기
+  closeLvBottomSheet();
 }
 
 // 하위 호환
@@ -2816,6 +2864,7 @@ function saveLvRecord() {
   }
 
   refreshLvCalendar();
+  closeLvBottomSheet();
 }
 
 function editLvRecord(id) {
@@ -2848,6 +2897,9 @@ function editLvRecord(id) {
 
   onLvTypeChange();
   previewLvCalc();
+
+  // 바텀시트 열기
+  openLvBottomSheet();
 }
 
 function deleteLvRecord() {
@@ -2874,20 +2926,21 @@ function renderLvQuotaTable(year) {
     return;
   }
 
-  let html = '<div style="display:grid; gap:6px;">';
+  // 컴팩트 2열 그리드 (미니 프로그레스 바 포함)
+  let html = '<div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">';
   quotas.forEach(q => {
     const pct = q.quota > 0 ? Math.min(100, Math.round((q.used / q.quota) * 100)) : 0;
-    const barColor = q.overQuota ? 'var(--accent-rose)' : 'var(--gradient-primary)';
-    html += `<div style="padding:8px 10px; border-radius:6px; background:var(--bg-glass); border:1px solid var(--border-glass);">
-      <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
-        <span style="font-weight:600;">${q.label}</span>
-        <span style="color:${q.overQuota ? 'var(--accent-rose)' : 'var(--text-secondary)'}; font-weight:600;">
-          ${q.used}/${q.quota}일 ${q.overQuota ? '⚠️' : ''}
-        </span>
+    const barColor = q.overQuota ? 'var(--accent-rose)' : 'var(--accent-emerald)';
+    const remainColor = q.overQuota ? 'var(--accent-rose)' : 'var(--accent-emerald)';
+    html += `<div style="padding:8px 10px; border-radius:8px; background:var(--bg-glass); border:1px solid var(--border-glass);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+        <span style="font-weight:600; font-size:13px;">${q.label}</span>
+        <span style="font-size:12px; font-weight:700; color:${remainColor};">${q.remaining}일</span>
       </div>
-      <div class="lv-progress-bar" style="height:5px;">
+      <div class="lv-progress-bar" style="height:4px; margin-bottom:3px;">
         <div class="lv-progress-fill" style="width:${pct}%; background:${barColor}"></div>
       </div>
+      <div style="font-size:11px; color:var(--text-muted);">${q.used}/${q.quota}일 사용 ${q.overQuota ? '⚠️' : ''}</div>
     </div>`;
   });
   html += '</div>';
