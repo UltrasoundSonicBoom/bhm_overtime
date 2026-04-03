@@ -2104,17 +2104,17 @@ body::before {
     background: var(--bg-primary);
     border-top: 1px solid var(--border-glass);
     border-bottom: none;
-    padding: 4px 4px;
-    padding-bottom: max(4px, env(safe-area-inset-bottom));
+    padding: 8px 12px;
+    padding-bottom: max(10px, calc(env(safe-area-inset-bottom) + 6px));
     z-index: 90;
-    gap: 0;
+    gap: 4px;
     justify-content: space-around;
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.12);
     border-radius: 0;
   }
 
   .nav-tab {
-    padding: 6px 2px 4px;
+    padding: 8px 4px 6px;
     font-size: 11px;
     flex: 1;
     text-align: center;
@@ -2134,7 +2134,7 @@ body::before {
 
   /* ── Main content: bottom padding for tab bar ── */
   .main {
-    padding: 12px 10px 72px 10px;
+    padding: 12px 10px 88px 10px;
   }
 
   /* ── Font size increase (+3pt for mobile readability) ── */
@@ -2395,6 +2395,13 @@ html[data-theme="neo"] .ot-cal-legend .cal-badge {
     background: var(--accent-amber);
     border-top: 3px solid #1a1a1a;
     box-shadow: 0 -4px 0px #1a1a1a;
+    padding: 8px 14px;
+    padding-bottom: max(12px, calc(env(safe-area-inset-bottom) + 8px));
+    gap: 6px;
+  }
+
+  html[data-theme="neo"] .nav-tab {
+    padding: 8px 6px 6px;
   }
 
   html[data-theme="neo"] .nav-tab.active {
