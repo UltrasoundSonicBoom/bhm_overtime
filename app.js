@@ -154,12 +154,22 @@ document.addEventListener('DOMContentLoaded', () => {
   // 초기 로드 시 현재 선택된 연도/월로 자동설정
   autoFillMonth();
 
-  // 시간외·온콜 탭 초기화 (기본 활성 탭)
-  applyProfileToOvertime();
-  initOvertimeTab();
-
-  // 휴가 관리 탭 초기화
-  initLeaveTab();
+  // v1 대시보드: 시간외·온콜 전용 초기화
+  function activateV1DefaultTab() {
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    
+    const otTab = document.querySelector('.nav-tab[data-tab="overtime"]');
+    const otContent = document.getElementById('tab-overtime');
+    
+    if (otTab) otTab.classList.add('active');
+    if (otContent) otContent.classList.add('active');
+    
+    applyProfileToOvertime();
+    initOvertimeTab();
+    initLeaveTab();
+  }
+  activateV1DefaultTab();
 
   // ── [URL 파라미터 듀얼 모드 감지] ──
   const urlParams = new URLSearchParams(window.location.search);
