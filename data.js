@@ -222,14 +222,14 @@ const DATA = {
     ],
     types: [
       // ── 📅 법정 휴가 ──
-      { id: 'annual', label: '연차', category: 'legal', isPaid: true, quota: null, usesAnnual: true, deductType: 'none', note: '입사일 기준 동적 계산' },
-      { id: 'time_leave', label: '시간차', category: 'legal', isPaid: true, quota: null, usesAnnual: true, deductType: 'none', isTimeBased: true, note: '시작/종료 시간 선택 (8시간 = 1일, 연차에서 차감)' },
+      { id: 'annual', label: '연차', category: 'legal', isPaid: false, quota: null, usesAnnual: true, deductType: 'ordinary', note: '입사일 기준 동적 계산, 통상임금 일액 공제' },
+      { id: 'time_leave', label: '시간차', category: 'legal', isPaid: false, quota: null, usesAnnual: true, deductType: 'ordinary', isTimeBased: true, note: '시작/종료 시간 선택 (8시간 = 1일, 연차에서 차감, 통상임금 기준 공제)' },
 
       // ── 🏥 건강 ──
-      { id: 'sick', label: '병가', category: 'health', isPaid: false, quota: 14, usesAnnual: false, deductType: 'ordinary', note: '14일 이내 2차의료기관 진단서 인정, 15일↑ 해당과 확인', ref: '제71조, 보수규정 제7조②' },
+      { id: 'sick', label: '병가', category: 'health', isPaid: true, quota: 14, usesAnnual: false, deductType: 'none', note: '14일 이내 유급, 2차의료기관 진단서 인정, 15일↑ 해당과 확인', ref: '제71조' },
       { id: 'checkup', label: '검진휴가', category: 'health', isPaid: true, quota: 1, usesAnnual: false, deductType: 'none', ref: '제65조' },
       { id: 'blood_donation', label: '헌혈휴가', category: 'health', isPaid: true, quota: 1, usesAnnual: false, deductType: 'none' },
-      { id: 'menstrual', label: '생리휴가', category: 'health', isPaid: false, quota: 12, usesAnnual: false, deductType: 'basePay', gender: 'F', note: '월 1일, 기본급 일액 공제', ref: '제37조' },
+      { id: 'menstrual', label: '생리휴가', category: 'health', isPaid: true, quota: 12, usesAnnual: false, deductType: 'none', gender: 'F', note: '월 1일 유급', ref: '제37조' },
 
       // ── 🎓 교육/연수 ──
       { id: 'edu_training', label: '교육연수', category: 'education', isPaid: true, quota: 3, usesAnnual: false, deductType: 'none', note: '연 3일' },
@@ -406,7 +406,7 @@ const DATA = {
     { category: '휴가', q: '배우자 출산휴가는?', a: '20일입니다. 출산일로부터 120일 이내 사용 완료, 3회 분할 가능합니다.', ref: '제38조' },
     { category: '휴가', q: '출산휴가는 몇 일?', a: '90일(출산 후 45일 확보)입니다. 다자녀: 120일, 미숙아: 100일입니다.', ref: '제38조' },
     { category: '휴가', q: '병가는 최대 며칠?', a: '연 통산 2개월까지입니다. 공무상 질병/부상은 6개월 연장 가능합니다.', ref: '복무규정 제30조' },
-    { category: '휴가', q: '생리휴가는?', a: '월 1일(무급)입니다.', ref: '제37조' },
+    { category: '휴가', q: '생리휴가는?', a: '월 1일(유급)입니다.', ref: '제37조' },
     { category: '휴가', q: '난임 치료 휴가는?', a: '연간 6일(최초 2일 유급)입니다.', ref: '제40조 제6호' },
     { category: '휴가', q: '검진휴가는?', a: '연 1일 유급입니다. 건강검진일에 사용합니다.', ref: '복무규정' },
     { category: '휴가', q: '헌혈휴가는?', a: '헌혈 시 1일 유급휴가를 부여합니다.', ref: '복무규정' },
@@ -488,7 +488,7 @@ const DATA = {
         { title: '병가', ref: '복무규정 제30조', body: '연 통산 2개월 (60일).\n공무상 질병/부상: 6개월 연장 가능.\n진단서 제출 필요.' },
         { title: '출산휴가', ref: '제38조', body: '• 일반: 90일 (출산 후 45일 확보)\n• 다자녀: 120일\n• 미숙아: 100일\n\n출산 전 분할 사용 가능.' },
         { title: '배우자 출산휴가', ref: '제38조', body: '20일 (2026 단체협약 기준).\n출산일로부터 120일 이내 사용 완료.\n3회까지 분할 가능.' },
-        { title: '생리휴가', ref: '제37조', body: '월 1일 (무급).\n기본급 일액 기준 공제.' },
+        { title: '생리휴가', ref: '제37조', body: '월 1일 (유급).' },
         { title: '난임 치료 휴가', ref: '제40조 제6호', body: '연간 6일.\n최초 2일 유급, 나머지 무급.' },
         { title: '검진·헌혈·교육', ref: '복무규정', body: '• 검진휴가: 연 1일 유급\n• 헌혈휴가: 헌혈 시 1일 유급\n• 교육연수: 연 3일\n• 병원필수교육: 연 3일 (하반기)\n• 보수교육(방사선학회): 1일\n• 외부교육(방사선작업종사자): 1일' },
         { title: '가족돌봄 휴가', ref: '제37조, 단체협약', body: '• 유급: 2일 (다자녀/장애 자녀 3일)\n• 무급: 10일' },

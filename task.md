@@ -1,3 +1,4 @@
+<!-- /autoplan restore point: /Users/momo/.gstack/projects/UltrasoundSonicBoom-bhm_overtime/main-autoplan-restore-20260404-145619.md -->
 # SNUH 급여 도우미 - Design Context (Linear Branch)
 
 ## Design Context

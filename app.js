@@ -2352,6 +2352,9 @@ function initLeaveTab() {
     lvInitialized = true;
   }
 
+  // 기존 기록 마이그레이션 (유형 규정 변경 감지 → 재계산)
+  LEAVE.migrateRecords();
+
   refreshLvCalendar();
 }
 
@@ -2800,20 +2803,33 @@ function previewLvCalc() {
   }
 
   // 급여 공제 미리보기
-  if (typeInfo.deductType === 'basePay') {
+  if (typeInfo.deductType === 'basePay' || typeInfo.deductType === 'ordinary') {
     const profile = PROFILE.load();
     const wage = profile ? PROFILE.calcWage(profile) : null;
-    const monthlyBasePay = wage ? (wage.breakdown ? wage.breakdown.basePay / 12 : 0) : 0;
-    const deduction = monthlyBasePay / 30 * days;
-    html += `<div class="preview-row"><span>급여 차감</span><span class="val" style="color:var(--accent-rose)">-₩${Math.round(deduction).toLocaleString()}</span></div>`;
-    html += `<div class="preview-row"><span>공제기준</span><span class="val" style="font-size:var(--text-label-small); color:var(--text-muted)">기본급 일액 (보수규정 제7조)</span></div>`;
-  } else if (typeInfo.deductType === 'ordinary') {
-    const profile = PROFILE.load();
-    const wage = profile ? PROFILE.calcWage(profile) : null;
-    const hourlyRate = wage ? wage.hourlyRate : 0;
-    const deduction = hourlyRate * 8 * days;
-    html += `<div class="preview-row"><span>급여 차감</span><span class="val" style="color:var(--accent-rose)">-₩${Math.round(deduction).toLocaleString()}</span></div>`;
-    html += `<div class="preview-row"><span>공제기준</span><span class="val" style="font-size:var(--text-label-small); color:var(--text-muted)">통상임금 1/30 (보수규정 제7조②)</span></div>`;
+    let deduction = 0;
+    let basisLabel = '';
+    let dailyAmount = 0;
+
+    if (typeInfo.deductType === 'basePay') {
+      // 생리휴가: 기본급 월액 / 30 × 일수
+      const monthlyBasePay = wage && wage.breakdown ? (wage.breakdown['기준기본급'] || 0) : 0;
+      dailyAmount = Math.round(monthlyBasePay / 30);
+      deduction = dailyAmount * days;
+      basisLabel = `기본급 일액 ${CALC.formatCurrency(dailyAmount)} (보수규정 제7조)`;
+    } else {
+      // 무급: 통상임금 월액 / 30 × 일수
+      const monthlyWage = wage ? wage.monthlyWage : 0;
+      dailyAmount = Math.round(monthlyWage / 30);
+      deduction = dailyAmount * days;
+      basisLabel = `통상임금 일액 ${CALC.formatCurrency(dailyAmount)} (보수규정 제7조②)`;
+    }
+
+    if (deduction > 0) {
+      html += `<div class="preview-row"><span>급여 차감</span><span class="val" style="color:var(--accent-rose)">-₩${Math.round(deduction).toLocaleString()}</span></div>`;
+      html += `<div class="preview-row"><span>공제기준</span><span class="val" style="font-size:var(--text-label-small); color:var(--text-muted)">${basisLabel}</span></div>`;
+    } else {
+      html += `<div class="preview-row"><span>급여 차감</span><span class="val" style="color:var(--accent-amber)">⚠️ 프로필 저장 후 자동 계산</span></div>`;
+    }
   } else {
     html += `<div class="preview-row"><span>급여 차감</span><span class="val" style="color:var(--accent-emerald)">₩0 (유급)</span></div>`;
   }
@@ -2835,7 +2851,7 @@ function saveLvRecord() {
   const profile = PROFILE.load();
   const wage = profile ? PROFILE.calcWage(profile) : null;
   const hourlyRate = wage ? wage.hourlyRate : 0;
-  const monthlyBasePay = wage && wage.breakdown ? wage.breakdown.basePay / 12 : 0;
+  const monthlyBasePay = wage && wage.breakdown ? (wage.breakdown['기준기본급'] || 0) : 0;
 
   let days;
   let hours = null;
@@ -3003,7 +3019,7 @@ function renderLvRecordList(year) {
       <div class="lv-stat-label">무급</div>
     </div>
     <div class="lv-stat-card">
-      <div class="lv-stat-num" style="color:var(--accent-amber); font-size:var(--text-body-large);">${totalDeduction > 0 ? '-₩' + totalDeduction.toLocaleString() : '₩0'}</div>
+      <div class="lv-stat-num" style="color:var(--accent-rose)">${totalDeduction > 0 ? '-₩' + totalDeduction.toLocaleString() : '₩0'}</div>
       <div class="lv-stat-label">급여 차감</div>
     </div>
   </div>`;

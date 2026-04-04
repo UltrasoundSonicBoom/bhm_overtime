@@ -200,20 +200,48 @@ const LEAVE = {
     },
 
     // ── 급여 공제 계산 ──
+    // 보수규정 제7조② 기준:
+    //   basePay 공제: 기본급 월액 / 30 × 일수 (생리휴가 등)
+    //   ordinary 공제: 통상임금 월액 / 30 × 일수 (병가, 무급휴가, 가족돌봄 무급 등)
     _calcDeduction(record, typeInfo) {
         if (!typeInfo || typeInfo.deductType === 'none') return 0;
         const days = record.days || 0;
+        if (days === 0) return 0;
+
+        // 프로필 기반 급여 정보 로드 (record에 저장된 값이 없으면 현재 프로필에서 계산)
+        let hourlyRate = record.hourlyRate || 0;
+        let monthlyBasePay = record.monthlyBasePay || 0;
+        let monthlyOrdinaryWage = 0;
+
+        if ((hourlyRate === 0 || monthlyBasePay === 0) && typeof PROFILE !== 'undefined' && typeof CALC !== 'undefined') {
+            const profile = PROFILE.load();
+            if (profile) {
+                const wage = PROFILE.calcWage(profile);
+                if (wage) {
+                    hourlyRate = hourlyRate || wage.hourlyRate || 0;
+                    monthlyOrdinaryWage = wage.monthlyWage || 0;
+                    // 기준기본급 (한글 키 사용)
+                    monthlyBasePay = monthlyBasePay || wage.breakdown['기준기본급'] || 0;
+                }
+            }
+        }
+
+        // monthlyOrdinaryWage 미설정 시 hourlyRate에서 역산
+        if (monthlyOrdinaryWage === 0 && hourlyRate > 0) {
+            monthlyOrdinaryWage = hourlyRate * 209; // 월 소정근로시간 209h
+        }
 
         if (typeInfo.deductType === 'basePay') {
-            // 생리휴가: 기본급 기준 일액 공제
-            const basePay = record.monthlyBasePay || record.hourlyRate * 209 || 0;
-            return -(basePay / 30 * days);
+            // 생리휴가: 기본급 일액 공제 (기본급 월액 / 30 × 일수)
+            if (monthlyBasePay === 0) return 0;
+            return -(Math.round(monthlyBasePay / 30) * days);
         }
 
         if (typeInfo.deductType === 'ordinary') {
-            // 병가/무급: 통상임금 기준 1/30 공제
-            const hourlyRate = record.hourlyRate || 0;
-            return -(hourlyRate * 8 * days);
+            // 병가/무급: 통상임금 기준 일액 공제 (통상임금 월액 / 30 × 일수)
+            // 보수규정 제7조② "무급 휴가 기간 중 보수는 통상임금 일액 기준으로 공제한다"
+            if (monthlyOrdinaryWage === 0) return 0;
+            return -(Math.round(monthlyOrdinaryWage / 30) * days);
         }
 
         return 0;
@@ -364,5 +392,44 @@ const LEAVE = {
         } catch (e) {
             return { success: false, message: `가져오기 실패: ${e.message}` };
         }
+    },
+
+    // ── 기존 기록 마이그레이션 (유형 규정 변경 시 재계산) ──
+    migrateRecords() {
+        const all = this._loadAll();
+        let migrated = false;
+
+        for (const year of Object.keys(all)) {
+            if (!Array.isArray(all[year])) continue;
+            all[year].forEach(record => {
+                const typeInfo = this.getTypeById(record.type);
+                if (!typeInfo) return;
+
+                // 현재 규정과 다르면 업데이트
+                const needsUpdate =
+                    record.isPaid !== typeInfo.isPaid ||
+                    record.deductType !== (typeInfo.deductType || 'none');
+
+                if (needsUpdate) {
+                    record.isPaid = typeInfo.isPaid;
+                    record.usesAnnual = typeInfo.usesAnnual;
+                    record.deductType = typeInfo.deductType || 'none';
+                    record.salaryImpact = this._calcDeduction(record, typeInfo);
+                    migrated = true;
+                }
+
+                // salaryImpact가 0인데 deductType이 공제 필요 유형이면 재계산
+                if (record.salaryImpact === 0 && typeInfo.deductType !== 'none' && (record.days || 0) > 0) {
+                    record.salaryImpact = this._calcDeduction(record, typeInfo);
+                    if (record.salaryImpact !== 0) migrated = true;
+                }
+            });
+        }
+
+        if (migrated) {
+            this._saveAll(all);
+            console.log('[LEAVE] 기존 기록 마이그레이션 완료 (규정 변경 반영)');
+        }
+        return migrated;
     },
 };

@@ -26,16 +26,18 @@ const PAYROLL = {
       id: 'unpaidLeave',
       icon: '📅',
       title: '무급휴가 1일 쓰면 얼마 공제?',
-      desc: '통상임금 일액 (시급 × 8h)',
+      desc: '통상임금 월액 / 30 (보수규정 제7조②)',
       calc(profile, wage) {
-        const daily = wage.hourlyRate * 8;
+        const dailyOrdinary = Math.round(wage.monthlyWage / 30);
+        const dailyBasePay = Math.round((wage.breakdown['기준기본급'] || 0) / 30);
         return {
-          value: CALC.formatCurrency(daily),
-          label: '무급휴가 1일 공제액',
+          value: CALC.formatCurrency(dailyOrdinary),
+          label: '무급휴가 1일 공제액 (통상임금 기준)',
           details: [
-            { key: '시급', val: CALC.formatCurrency(wage.hourlyRate) },
-            { key: '일 근무시간', val: '8시간' },
-            { key: '계산', val: `${CALC.formatNumber(wage.hourlyRate)} × 8h` }
+            { key: '통상임금 월액', val: CALC.formatCurrency(wage.monthlyWage) },
+            { key: '통상임금 일액 (÷30)', val: CALC.formatCurrency(dailyOrdinary) },
+            { key: '기본급 일액 (÷30)', val: CALC.formatCurrency(dailyBasePay) + ' ← 생리휴가 기준' },
+            { key: '근거', val: '보수규정 제7조②' }
           ]
         };
       }
