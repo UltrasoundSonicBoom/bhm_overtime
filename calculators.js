@@ -336,10 +336,14 @@ const CALC = {
             let cap = 0;
             let explanation = '';
 
-            if (i <= 6) {
+            if (i <= 3) {
                 pay = monthlyWage;
                 cap = 2500000;
                 explanation = `${i}개월차: 통상임금 100% (상한 250만원)`;
+            } else if (i <= 6) {
+                pay = monthlyWage;
+                cap = 2000000;
+                explanation = `${i}개월차: 통상임금 100% (상한 200만원)`;
             } else if (i <= 12) {
                 pay = Math.round(monthlyWage * 0.8);
                 cap = 1600000;
