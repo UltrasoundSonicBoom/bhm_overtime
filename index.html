@@ -498,6 +498,8 @@
         <div class="collapsible-body" id="pfInputFields" style="display:block;">
           <p style="font-size:var(--text-body-normal); color:var(--text-muted); margin-bottom:12px;">한번 저장하면 모든 계산기에 자동 반영됩니다. 데이터는 이 브라우저에만 저장됩니다.</p>
 
+          <!-- ▸ 기본 정보 -->
+          <p style="font-size:var(--text-body-normal); color:var(--accent-indigo); margin:0 0 8px; font-weight:600;">▸ 기본 정보</p>
           <div class="form-row">
             <div class="form-group">
               <label>이름</label>
@@ -512,17 +514,17 @@
               </select>
             </div>
           </div>
-
-          <div class="form-group">
-            <label>직종</label>
-            <select id="pfJobType" onchange="updateProfileGrades()">
-            </select>
-          </div>
           <div class="form-row">
+            <div class="form-group">
+              <label>직종</label>
+              <select id="pfJobType" onchange="updateProfileGrades()"></select>
+            </div>
             <div class="form-group">
               <label>직급·등급</label>
               <select id="pfGrade"></select>
             </div>
+          </div>
+          <div class="form-row">
             <div class="form-group">
               <label>호봉 (연차)</label>
               <select id="pfYear">
@@ -536,66 +538,76 @@
                 <option value="8">8년차</option>
               </select>
             </div>
+            <div class="form-group">
+              <label>입사일</label>
+              <input type="text" id="pfHireDate" placeholder="예: 2006-07-05">
+              <small id="pfServiceDisplay" style="color:var(--text-muted)"></small>
+            </div>
           </div>
 
-          <div class="form-group">
-            <label>입사일</label>
-            <input type="text" id="pfHireDate" placeholder="예: 2006-07-05">
-            <small id="pfServiceDisplay" style="color:var(--text-muted)"></small>
-          </div>
-
+          <!-- ▸ 개인 수당 (급여명세서 확인 후 입력) -->
+          <p style="font-size:var(--text-body-normal); color:var(--accent-amber); margin:16px 0 4px; font-weight:600;">▸ 개인 수당 <small style="font-weight:400; color:var(--text-muted)">급여명세서 확인 후 입력</small></p>
           <div class="form-row">
             <div class="form-group">
-              <label>조정급 (원/월)</label>
-              <input type="number" id="pfAdjust" value="0" min="0">
+              <label>조정급 <small style="color:#e53e3e; font-weight:600;">★필수</small></label>
+              <input type="number" id="pfAdjust" value="0" min="0" placeholder="급여명세서 확인">
             </div>
             <div class="form-group">
-              <label>승급조정급 (원/월)</label>
+              <label>승급조정급</label>
               <input type="number" id="pfUpgradeAdjust" value="0" min="0">
             </div>
           </div>
-
-          <div class="toggle-group">
-            <input type="checkbox" id="pfMilitary">
-            <label for="pfMilitary">군복무수당</label>
-          </div>
-          <div class="form-group" id="pfMilitaryMonthsGroup" style="display:none; margin-left:24px;">
-            <label>복무기간 (개월, 기본 24)</label>
-            <input type="number" id="pfMilitaryMonths" value="24" min="1" max="36">
-          </div>
-
-          <div class="toggle-group">
-            <input type="checkbox" id="pfSeniority">
-            <label for="pfSeniority">근속가산기본급 (2016.2 이전 입사자)</label>
-          </div>
-
-          <p style="font-size:var(--text-body-normal); color:var(--accent-indigo); margin:12px 0 4px; font-weight:600;">▸ 가족수당</p>
-          <div class="toggle-group">
-            <input type="checkbox" id="pfSpouse">
-            <label for="pfSpouse">배우자 (40,000원)</label>
+          <div class="form-row">
+            <div class="form-group">
+              <label>별정수당</label>
+              <input type="number" id="pfSpecial" value="0" min="0">
+            </div>
+            <div class="form-group">
+              <label>직책급</label>
+              <input type="number" id="pfPosition" value="0" min="0">
+            </div>
           </div>
           <div class="form-row">
+            <div class="form-group">
+              <label>업무보조비</label>
+              <input type="number" id="pfWorkSupport" value="0" min="0">
+            </div>
+            <div class="form-group">
+              <label>군복무수당</label>
+              <div class="toggle-group" style="margin-top:6px;">
+                <input type="checkbox" id="pfMilitary">
+                <label for="pfMilitary">해당 있음</label>
+              </div>
+              <div id="pfMilitaryMonthsGroup" style="display:none; margin-top:6px;">
+                <input type="number" id="pfMilitaryMonths" value="24" min="1" max="36" placeholder="복무기간(개월)">
+              </div>
+            </div>
+          </div>
+
+          <!-- ▸ 가족수당 -->
+          <p style="font-size:var(--text-body-normal); color:var(--accent-indigo); margin:16px 0 4px; font-weight:600;">▸ 가족수당</p>
+          <div class="form-row">
+            <div class="form-group">
+              <label>배우자</label>
+              <div class="toggle-group" style="margin-top:6px;">
+                <input type="checkbox" id="pfSpouse">
+                <label for="pfSpouse">있음 (40,000원)</label>
+              </div>
+            </div>
             <div class="form-group">
               <label>자녀 수</label>
               <input type="number" id="pfChildren" value="0" min="0" max="10">
             </div>
-            <div class="form-group">
-              <label>기타 가족 수</label>
-              <input type="number" id="pfOtherFamily" value="0" min="0" max="5">
-            </div>
           </div>
-
-          <p style="font-size:var(--text-body-normal); color:var(--accent-amber); margin:12px 0 4px; font-weight:600;">▸ 기타 수당</p>
           <div class="form-row">
             <div class="form-group">
-              <label>별정수당 (원/월)</label>
-              <input type="number" id="pfSpecial" value="0" min="0">
+              <label>기타 가족 수 <small style="color:var(--text-muted)">(최대 5인)</small></label>
+              <input type="number" id="pfOtherFamily" value="0" min="0" max="5">
             </div>
-            <div class="form-group">
-              <label>직책급 (원/월)</label>
-              <input type="number" id="pfPosition" value="0" min="0">
-            </div>
+            <div class="form-group"></div>
           </div>
+          <!-- 근속가산기본급: 입사일로 자동 계산, 별도 입력 불필요 -->
+          <input type="checkbox" id="pfSeniority" style="display:none;">
 
           <div class="form-row" style="margin-top:16px;">
             <button class="btn btn-primary" onclick="saveProfile()" style="flex:2">💾 저장하기</button>

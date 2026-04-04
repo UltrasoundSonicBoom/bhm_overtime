@@ -122,16 +122,20 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('pfMilitaryMonthsGroup').style.display = e.target.checked ? 'block' : 'none';
   });
 
-  // 입사일 → 근속연수 표시 (텍스트 입력 지원)
+  // 입사일 → 근속연수 표시 + 근속가산기본급 자동 감지 (2016.2 이전 입사자)
   document.getElementById('pfHireDate').addEventListener('input', (e) => {
     const parsed = PROFILE.parseDate(e.target.value);
     if (parsed) {
       const years = PROFILE.calcServiceYears(parsed);
       document.getElementById('pfServiceDisplay').textContent = `→ ${parsed} (근속 ${years}년)`;
+      const hireDate = new Date(parsed);
+      const seniorityThreshold = new Date('2016-02-01');
+      document.getElementById('pfSeniority').checked = hireDate < seniorityThreshold;
     } else if (e.target.value.length > 0) {
       document.getElementById('pfServiceDisplay').textContent = '※ YYYY-MM-DD, YYYYMMDD, YYYY.MM.DD 형식';
     } else {
       document.getElementById('pfServiceDisplay').textContent = '';
+      document.getElementById('pfSeniority').checked = false;
     }
   });
 
@@ -374,11 +378,9 @@ function updateProfileSummary(profile) {
 
   let html = `
     <div class="card-title"><span class="icon emerald">📊</span> 내 급여 요약</div>
-    ${profile.name ? `<p style="font-weight:600; font-size:var(--text-title-large); margin-bottom:8px;">👤 ${profile.name}</p>` : ''}
-    <div class="result-row"><span class="key">직종/등급</span><span class="val">${profile.jobType} ${profile.grade} ${profile.year}년차</span></div>
-    ${serviceYears > 0 ? `<div class="result-row"><span class="key">근속연수</span><span class="val">${serviceYears}년</span></div>` : ''}
-    <hr class="divider">
     <div class="result-box">
+      ${profile.name ? `<div style="font-weight:700; font-size:var(--text-title-large); margin-bottom:2px;">👤 ${profile.name}</div>` : ''}
+      <div style="color:var(--text-muted); font-size:var(--text-body-normal); margin-bottom:12px;">${profile.jobType} ${profile.grade} ${profile.year}년차${serviceYears > 0 ? ` · 근속 ${serviceYears}년` : ''}</div>
       <div class="result-label">월 통상임금</div>
       <div class="result-total">${CALC.formatCurrency(wage.monthlyWage)}</div>
       <div class="result-label" style="margin-top:8px;">시급 (÷209시간)</div>

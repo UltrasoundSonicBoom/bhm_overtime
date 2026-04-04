@@ -2229,6 +2229,10 @@ body::before {
     grid-template-columns: 1fr;
   }
 
+  #pfInputFields .form-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
   .grid-2,
   .grid-3 {
     grid-template-columns: 1fr;
