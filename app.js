@@ -145,6 +145,21 @@ document.addEventListener('DOMContentLoaded', () => {
       profileStatusEl.textContent = '저장됨 ✓';
       profileStatusEl.className = 'badge emerald';
     }
+    // 데이터가 있으면 입력 폼 접기
+    const pfInput = document.getElementById('pfInputFields');
+    if (pfInput) {
+      pfInput.style.display = 'none';
+      const label = document.getElementById('pfInputToggleLabel');
+      if (label) label.textContent = '▸ 내 정보 입력/수정';
+    }
+  } else {
+    // 데이터 없으면 열어두기
+    const pfInput = document.getElementById('pfInputFields');
+    if (pfInput) {
+      pfInput.style.display = 'block';
+      const label = document.getElementById('pfInputToggleLabel');
+      if (label) label.textContent = '▼ 내 정보 입력/수정';
+    }
   }
 
   // 급여 시뮬레이터: 연도/월 변경 시 자동 업데이트
