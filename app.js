@@ -1946,6 +1946,7 @@ function onOtDateClick(year, month, day) {
   document.getElementById('otEditId').value = '';
   document.getElementById('otDeleteBtn').style.display = 'none';
   document.getElementById('otSaveBtn').textContent = '💾 저장';
+  document.getElementById('otSaveBtn').disabled = false;
   document.getElementById('otMemo').value = '';
   document.querySelector('input[name="otType"][value="overtime"]').checked = true;
   onOtTypeChange();
@@ -2007,6 +2008,7 @@ function resetOtPanel() {
   document.getElementById('otEditId').value = '';
   document.getElementById('otDeleteBtn').style.display = 'none';
   document.getElementById('otSaveBtn').textContent = '저장하기';
+  document.getElementById('otSaveBtn').disabled = true;
   document.getElementById('otMemo').value = '';
   document.getElementById('otExistingRecords').innerHTML = '';
   document.getElementById('otPreview').innerHTML = '';

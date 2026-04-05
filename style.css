@@ -567,6 +567,11 @@ body::before {
   background: #5558e6;
 }
 
+.btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .btn-secondary {
   background: var(--bg-glass);
   color: var(--text-primary);
