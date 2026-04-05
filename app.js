@@ -290,6 +290,11 @@ function saveProfile() {
   updateProfileSummary(profile);
   document.getElementById('profileStatus').textContent = '저장됨 ✓';
   document.getElementById('profileStatus').className = 'badge emerald';
+  // 저장 후 입력 폼 접기
+  const pfInput = document.getElementById('pfInputFields');
+  if (pfInput) pfInput.style.display = 'none';
+  const label = document.getElementById('pfInputToggleLabel');
+  if (label) label.textContent = '▸ 내 정보 입력/수정';
   // Q&A 카드 갱신
   if (typeof PAYROLL !== 'undefined') PAYROLL.init();
 }
@@ -309,6 +314,11 @@ function clearProfile() {
   document.getElementById('pfServiceDisplay').textContent = '';
   document.getElementById('profileStatus').textContent = '미저장';
   document.getElementById('profileStatus').className = 'badge amber';
+  // 초기화 후 입력 폼 열기
+  const pfInput = document.getElementById('pfInputFields');
+  if (pfInput) pfInput.style.display = 'block';
+  const label = document.getElementById('pfInputToggleLabel');
+  if (label) label.textContent = '▼ 내 정보 입력/수정';
   document.getElementById('profileSummary').innerHTML = `
         <div class="card-title" style="font-size:var(--text-body-large);"><span class="icon indigo">📝</span> 통상임금 내역</div>
         <p style="color:var(--text-muted)">정보를 입력하고 [저장하기]를 눌러주세요.</p>
@@ -397,7 +407,8 @@ function updateProfileSummary(profile) {
     <div class="result-row" style="font-weight:700;">
       <span class="key">시급 (÷209시간)</span><span class="val" style="color:var(--accent-emerald);">${CALC.formatCurrency(wage.hourlyRate)}</span>
     </div>
-    <div class="warning-box" style="margin-top:12px;">💡 이 시급이 시간외·온콜 탭에 자동 반영됩니다.</div>`;
+    ${!profile.adjustPay ? '<div class="warning-box" style="margin-top:8px; border-color:var(--accent-amber);">⚠️ 조정급 미입력 시 근속가산기본급·명절지원비가 과소 계산됩니다. 내 정보에서 조정급을 입력해주세요.</div>' : ''}
+    <div class="warning-box" style="margin-top:8px;">💡 이 시급이 시간외·온콜 탭에 자동 반영됩니다.</div>`;
   document.getElementById('profileSummary').innerHTML = html;
 }
 
