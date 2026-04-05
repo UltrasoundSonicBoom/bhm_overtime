@@ -185,11 +185,18 @@ const PROFILE = {
             ? this.calcServiceYears(profile.hireDate)
             : 0;
 
+        // 근속가산기본급 조건: 저장값이 아닌 입사일로 직접 판단 (2016.02.01 이전 입사자)
+        let hasSeniority = false;
+        if (profile.hireDate) {
+            const parsed = this.parseDate(profile.hireDate);
+            if (parsed) hasSeniority = new Date(parsed) < new Date('2016-02-01');
+        }
+
         return CALC.calcOrdinaryWage(profile.jobType, profile.grade, profile.year, {
             hasMilitary: profile.hasMilitary,
             militaryMonths: profile.militaryMonths || 24,
-            hasSeniority: profile.hasSeniority,
-            seniorityYears: profile.hasSeniority ? serviceYears : 0,
+            hasSeniority,
+            seniorityYears: hasSeniority ? serviceYears : 0,
             longServiceYears: serviceYears,
             specialPayAmount: profile.specialPay || 0,
             adjustPay: profile.adjustPay || 0,

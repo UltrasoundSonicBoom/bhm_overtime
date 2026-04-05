@@ -310,7 +310,7 @@ function clearProfile() {
   document.getElementById('profileStatus').textContent = '미저장';
   document.getElementById('profileStatus').className = 'badge amber';
   document.getElementById('profileSummary').innerHTML = `
-        <div class="card-title" style="font-size:var(--text-body-large);"><span class="icon emerald">📊</span> 내 급여 요약</div>
+        <div class="card-title" style="font-size:var(--text-body-large);"><span class="icon indigo">📝</span> 통상임금 내역</div>
         <p style="color:var(--text-muted)">정보를 입력하고 [저장하기]를 눌러주세요.</p>
     `;
   // Q&A 카드 갱신
@@ -377,16 +377,6 @@ function updateProfileSummary(profile) {
   const gradeLabel = table ? (table.gradeLabels[profile.grade] || profile.grade) : profile.grade;
 
   let html = `
-    <div class="card-title"><span class="icon emerald">📊</span> 내 급여 요약</div>
-    <div class="result-box">
-      ${profile.name ? `<div style="font-weight:700; font-size:var(--text-title-large); margin-bottom:2px;">👤 ${profile.name}</div>` : ''}
-      <div style="color:var(--text-muted); font-size:var(--text-body-normal); margin-bottom:12px;">${profile.jobType} ${profile.grade} ${profile.year}년차${serviceYears > 0 ? ` · 근속 ${serviceYears}년` : ''}</div>
-      <div class="result-label">월 통상임금</div>
-      <div class="result-total">${CALC.formatCurrency(wage.monthlyWage)}</div>
-      <div class="result-label" style="margin-top:8px;">시급 (÷209시간)</div>
-      <div class="result-total green">${CALC.formatCurrency(wage.hourlyRate)}</div>
-    </div>
-    <hr class="divider">
     <div class="card-title" style="font-size:var(--text-body-large);"><span class="icon indigo">📝</span> 통상임금 내역</div>
     `;
 
@@ -396,7 +386,18 @@ function updateProfileSummary(profile) {
     }
   });
 
-  html += `<div class="warning-box" style="margin-top:12px;">💡 이 시급이 시간외·온콜 탭에 자동 반영됩니다.</div>`;
+  const gradeDisplay = `${profile.jobType} ${gradeLabel}(${profile.grade}) ${profile.year}년차${serviceYears > 0 ? ` · 근속 ${serviceYears}년` : ''}`;
+  html += `
+    <div class="result-row" style="border-top:2px solid var(--border); margin-top:8px; padding-top:8px; font-weight:600;">
+      <span class="key">현재 직급/호봉</span><span class="val" style="color:var(--text-muted); font-size:var(--text-body-normal);">${gradeDisplay}</span>
+    </div>
+    <div class="result-row" style="font-weight:700;">
+      <span class="key">월 통상임금</span><span class="val" style="color:var(--accent-indigo);">${CALC.formatCurrency(wage.monthlyWage)}</span>
+    </div>
+    <div class="result-row" style="font-weight:700;">
+      <span class="key">시급 (÷209시간)</span><span class="val" style="color:var(--accent-emerald);">${CALC.formatCurrency(wage.hourlyRate)}</span>
+    </div>
+    <div class="warning-box" style="margin-top:12px;">💡 이 시급이 시간외·온콜 탭에 자동 반영됩니다.</div>`;
   document.getElementById('profileSummary').innerHTML = html;
 }
 
