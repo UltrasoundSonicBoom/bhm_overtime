@@ -25,7 +25,8 @@ const PROFILE = {
         otherFamily: 0,
         specialPay: 0,
         positionPay: 0,
-        workSupportPay: 0
+        workSupportPay: 0,
+        nightShiftsUnrewarded: 0  // 누적 미지급 야간근무 횟수 (리커버리 데이 정산용)
     },
 
     /**

@@ -273,6 +273,58 @@ const CALC = {
     },
 
     /**
+     * 퇴직금 통합 계산 (2001.08.31 이전 입사자 누진배수 + 2015.06.30 이전 퇴직수당 포함)
+     * @param {number} avgMonthlyPay - 월 평균임금
+     * @param {number} totalYears - 총 근속연수
+     * @param {string} hireDateStr - 입사일 문자열 (YYYY-MM-DD)
+     * @returns {object}
+     */
+    calcSeveranceFullPay(avgMonthlyPay, totalYears, hireDateStr) {
+        if (totalYears < 1) return { 퇴직금: 0, note: '근속 1년 미만 해당없음' };
+
+        const cutoff2001 = new Date('2001-08-31');
+        const cutoff2015 = new Date('2015-06-30');
+        const hireDate = hireDateStr ? new Date(hireDateStr) : null;
+
+        // 기본 퇴직금
+        let baseSeverance = Math.round(avgMonthlyPay * totalYears);
+        let method = '법정 퇴직금 (근속연수 × 평균임금)';
+
+        // 2001.08.31 이전 입사자: 누진배수 적용
+        if (hireDate && hireDate <= cutoff2001) {
+            const row = DATA.severanceMultipliersPre2001.find(r => totalYears >= r.min);
+            if (row) {
+                baseSeverance = Math.round(avgMonthlyPay * row.multiplier);
+                method = `누진배수 적용 (×${row.multiplier}, 2001년 이전 입사자)`;
+            }
+        }
+
+        // 2015.06.30 이전 입사자: 퇴직수당 가산
+        let addon = 0;
+        let addonNote = '해당없음';
+        if (hireDate && hireDate <= cutoff2015) {
+            const sp = DATA.severancePay.find(s => totalYears >= s.min);
+            if (sp) {
+                addon = Math.round(avgMonthlyPay * totalYears * sp.rate);
+                addonNote = `퇴직수당 ${sp.rate * 100}% 가산 (2015년 이전 입사자)`;
+            }
+        }
+
+        const total = baseSeverance + addon;
+        return {
+            퇴직금: total,
+            기본퇴직금: baseSeverance,
+            퇴직수당: addon,
+            산정방법: method,
+            퇴직수당비고: addonNote,
+            산식: addon > 0
+                ? `기본 ${baseSeverance.toLocaleString()}원 + 수당 ${addon.toLocaleString()}원`
+                : `${baseSeverance.toLocaleString()}원 (${method})`,
+            note: `근속 ${totalYears}년 기준`
+        };
+    },
+
+    /**
      * 승진 시뮬레이터
      * @param {string} jobType
      * @param {string} currentGrade
@@ -303,20 +355,35 @@ const CALC = {
     },
 
     /**
-     * 야간근무 가산금 계산 (교대근무자 전용)
-     * @param {number} nightShiftCount - 야간근무 횟수
-     * @returns {object}
+     * 야간근무 가산금 및 리커버리 데이 계산 (교대근무자 전용)
+     * @param {number} nightShiftCount - 당월 야간근무 횟수
+     * @param {number} prevCumulative - 이전 누적 미지급 야간횟수 (profile.nightShiftsUnrewarded, 기본 0)
+     * @returns {object} { 야간근무가산금, 횟수, 리커버리데이, 누적리커버리데이(잔여), 초과경고 }
      */
-    calcNightShiftBonus(nightShiftCount) {
+    calcNightShiftBonus(nightShiftCount, prevCumulative = 0) {
         const bonus = nightShiftCount * DATA.allowances.nightShiftBonus;
-        const recoveryDays = nightShiftCount >= 7 ? 1 : 0;
-        const accRecovery = Math.floor(nightShiftCount / 15);
+        const rd = DATA.recoveryDay;
+
+        let recoveryDaysEarned = 0;
+        let newCumulative = prevCumulative + nightShiftCount;
+
+        // 당월 7일 이상: 즉시 1일 부여, 누적에서 7일 차감
+        if (nightShiftCount >= rd.monthlyTrigger) {
+            recoveryDaysEarned += 1;
+            newCumulative -= rd.monthlyTrigger;
+        }
+
+        // 누적 15일 도달 시 1일 추가 부여
+        if (newCumulative >= rd.nurseCumulativeTrigger) {
+            recoveryDaysEarned += 1;
+            newCumulative -= rd.nurseCumulativeTrigger;
+        }
 
         return {
             야간근무가산금: bonus,
             횟수: nightShiftCount,
-            리커버리데이: recoveryDays,
-            누적리커버리데이: accRecovery,
+            리커버리데이: recoveryDaysEarned,
+            누적리커버리데이: newCumulative,  // 이월 잔여 누적 횟수
             초과경고: nightShiftCount > 9 ? '⚠️ 월 9일 초과! 시간외수당 처리 필요' : ''
         };
     },

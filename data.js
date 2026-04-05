@@ -528,5 +528,37 @@ const DATA = {
         { title: '공제 항목', ref: '규정', body: '• 건강보험: 3.545% (근로자)\n• 장기요양: 건강보험의 12.95%\n• 국민연금: 4.5%\n• 고용보험: 0.9%\n• 식대공제: 3,000원/일' }
       ]
     }
-  ]
+  ],
+
+  // ── 퇴직금 2001.08.31 이전 입사자 누진배수 (hospital_rule_master_2026.json 기준) ──
+  severanceMultipliersPre2001: [
+    { min: 30, multiplier: 52.5 },
+    { min: 25, multiplier: 42.5 },
+    { min: 20, multiplier: 33.0 },
+    { min: 15, multiplier: 24.0 },
+    { min: 14, multiplier: 22.3 },
+    { min: 13, multiplier: 20.6 },
+    { min: 12, multiplier: 18.9 },
+    { min: 11, multiplier: 17.2 },
+    { min: 10, multiplier: 15.5 },
+    { min:  9, multiplier: 13.9 },
+    { min:  8, multiplier: 12.3 },
+    { min:  7, multiplier: 10.7 },
+    { min:  6, multiplier:  9.1 },
+    { min:  5, multiplier:  7.5 },
+    { min:  4, multiplier:  5.5 },
+    { min:  3, multiplier:  3.5 },
+    { min:  2, multiplier:  2.0 },
+    { min:  1, multiplier:  1.0 }
+  ],
+
+  // ── 가계지원비 고정 지급 월 (1·9월 미지급, 설·추석 해당 월은 isHolidayMonth로 별도 처리) ──
+  familySupportMonths: [3, 4, 5, 6, 7, 8, 10, 11, 12],
+
+  // ── 리커버리 데이 파라미터 ──
+  recoveryDay: {
+    monthlyTrigger: 7,            // 당월 7일 이상 야간 시 즉시 1일 부여, 누적에서 7일 차감
+    nurseCumulativeTrigger: 15,   // 간호부 누적 기준
+    otherCumulativeTrigger: 20    // 시설·이송·미화 등 누적 기준
+  }
 };

@@ -971,15 +971,17 @@ function calculateLongService() {
 // ═══════════ 🌙 야간근무가산금 ═══════════
 function calculateNightBonus() {
   const count = parseInt(document.getElementById('nsCount').value) || 0;
-  const r = CALC.calcNightShiftBonus(count);
+  const profile = PROFILE.load();
+  const prevCumulative = (profile && profile.nightShiftsUnrewarded) ? profile.nightShiftsUnrewarded : 0;
+  const r = CALC.calcNightShiftBonus(count, prevCumulative);
 
   let html = `
     <div class="result-box ${r.초과경고 ? '' : 'success'}">
       <div class="result-label">야간근무가산금 (${r.횟수}회)</div>
       <div class="result-total ${r.초과경고 ? '' : 'green'}">${CALC.formatCurrency(r.야간근무가산금)}</div>
     </div>
-    <div class="result-row"><span class="key">리커버리데이 (7일+ 야간)</span><span class="val accent">${r.리커버리데이}일</span></div>
-    <div class="result-row"><span class="key">누적 리커버리데이 (15일당)</span><span class="val accent">${r.누적리커버리데이}일</span></div>
+    <div class="result-row"><span class="key">이번 달 리커버리데이 획득</span><span class="val accent">${r.리커버리데이}일</span></div>
+    <div class="result-row"><span class="key">정산 후 잔여 누적 야간횟수</span><span class="val accent">${r.누적리커버리데이}회 (이월)</span></div>
   `;
 
   if (r.초과경고) {
