@@ -297,6 +297,8 @@ function saveProfile() {
   if (label) label.textContent = '▸ 내 정보 입력/수정';
   // Q&A 카드 갱신
   if (typeof PAYROLL !== 'undefined') PAYROLL.init();
+  // 휴가 연차 한도 갱신
+  if (typeof applyProfileToLeave === 'function') applyProfileToLeave();
 }
 
 function clearProfile() {
@@ -2113,6 +2115,11 @@ function saveOtRecord() {
 
   let startTime = document.getElementById('otStartTime').value;
   let endTime = document.getElementById('otEndTime').value;
+
+  if (!dateStr) {
+    alert('날짜를 먼저 선택해주세요.');
+    return;
+  }
 
   if (type !== 'oncall_standby' && (!startTime || !endTime)) {
     alert('시작/종료 시간을 입력하세요.');
