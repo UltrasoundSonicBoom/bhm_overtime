@@ -40,7 +40,7 @@
     <div class="header-inner">
       <div class="header-top-row">
         <div class="logo">
-          <img src="logo.png" alt="SNUH Mate" style="width:36px; height:36px; object-fit:contain; flex-shrink:0; border-radius:6px;">
+          <img src="logo.png" alt="SNUH Mate" style="width:54px; height:54px; object-fit:contain; flex-shrink:0; border-radius:10px;">
           <div>
             <h1 class="logo-main-title">슬기로운 병원 생활 메이트</h1>
           </div>
@@ -429,7 +429,7 @@
           <div class="collapsible-header" onclick="toggleCollapsible('lvQuotaTableWrap')">
             <div style="display:flex; align-items:center; gap:8px;">
               <span class="toggle-icon">▸</span> 
-              <span class="card-title" style="margin:0; font-size:inherit; display:flex; align-items:center; gap:8px;"><span class="icon amber">🏖️</span> 2026년 휴가 현황</span>
+              <span class="card-title" style="margin:0; font-size:var(--text-title-large); display:flex; align-items:center; gap:8px;"><span class="icon amber">🏖️</span> 2026년 휴가 현황</span>
             </div>
           </div>
           <div id="lvQuotaTableWrap" class="collapsible-body" style="display:none;">
@@ -632,9 +632,9 @@
         <div id="localBackupSection" style="margin-top:24px; padding:16px; background:var(--bg-glass); border-radius:12px; border:1px solid var(--border-glass);">
           <div class="card-title" style="font-size:var(--text-body-large);"><span class="icon indigo">💾</span> 데이터 백업 및 복구</div>
           <p style="font-size:var(--text-body-normal); color:var(--text-muted); margin-bottom:12px;">클라우드 동기화 없이 기기 내부에 저장된 기록을 파일로 안전하게 평생 보관하고 복원할 수 있습니다.</p>
-          <div class="form-row">
-            <button class="btn btn-outline" onclick="downloadBackup()" style="flex:1; font-weight:600;">📥 다운로드 (백업)</button>
-            <label class="btn btn-outline" style="flex:1; font-weight:600; text-align:center; cursor:pointer;">
+          <div class="form-row" style="grid-template-columns: 1fr 1fr;">
+            <button class="btn btn-outline" onclick="downloadBackup()" style="flex:1; font-weight:600; font-size:var(--text-body-normal); padding:8px 4px;">📥 다운로드 (백업)</button>
+            <label class="btn btn-outline" style="flex:1; font-weight:600; text-align:center; cursor:pointer; font-size:var(--text-body-normal); padding:8px 4px;">
               📤 불러오기 (복원)
               <input type="file" id="backupFileInput" style="display:none" accept=".json" onchange="uploadBackup(event)">
             </label>
