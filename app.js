@@ -20,7 +20,8 @@ const PROFILE_FIELDS = {
   otherFamily: 'pfOtherFamily',
   specialPay: 'pfSpecial',
   positionPay: 'pfPosition',
-  workSupportPay: 'pfWorkSupport'
+  workSupportPay: 'pfWorkSupport',
+  weeklyHours: 'pfWeeklyHours'
 };
 
 // ── 탭 전환 ──
@@ -122,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('pfMilitaryMonthsGroup').style.display = e.target.checked ? 'block' : 'none';
   });
 
-  // 입사일 → 근속연수 표시 + 근속가산기본급 자동 감지 (2016.2 이전 입사자)
+  // 입사일 → 근속연수 표시 + 근속가산기본급 자동 감지 (2016.2 이전 입사자) + 호봉 자동 제안
   document.getElementById('pfHireDate').addEventListener('input', (e) => {
     const parsed = PROFILE.parseDate(e.target.value);
     if (parsed) {
@@ -131,12 +132,22 @@ document.addEventListener('DOMContentLoaded', () => {
       const hireDate = new Date(parsed);
       const seniorityThreshold = new Date('2016-02-01');
       document.getElementById('pfSeniority').checked = hireDate < seniorityThreshold;
+      // 호봉 자동 제안
+      _suggestYear(parsed);
     } else if (e.target.value.length > 0) {
       document.getElementById('pfServiceDisplay').textContent = '※ YYYY-MM-DD, YYYYMMDD, YYYY.MM.DD 형식';
     } else {
       document.getElementById('pfServiceDisplay').textContent = '';
       document.getElementById('pfSeniority').checked = false;
+      const hint = document.getElementById('pfYearHint');
+      if (hint) hint.textContent = '';
     }
+  });
+
+  // 직급 변경 시 호봉 재제안
+  document.getElementById('pfGrade').addEventListener('change', () => {
+    const hireDate = PROFILE.parseDate(document.getElementById('pfHireDate').value);
+    if (hireDate) _suggestYear(hireDate);
   });
 
   // 저장된 프로필 불러오기
@@ -173,16 +184,16 @@ document.addEventListener('DOMContentLoaded', () => {
   // 초기 로드 시 현재 선택된 연도/월로 자동설정
   autoFillMonth();
 
-  // v1 대시보드: 시간외·온콜 전용 초기화
+  // 초기 기본 탭 (휴가 탭 우선)
   function activateV1DefaultTab() {
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
     
-    const otTab = document.querySelector('.nav-tab[data-tab="overtime"]');
-    const otContent = document.getElementById('tab-overtime');
+    const leaveTab = document.querySelector('.nav-tab[data-tab="leave"]');
+    const leaveContent = document.getElementById('tab-leave');
     
-    if (otTab) otTab.classList.add('active');
-    if (otContent) otContent.classList.add('active');
+    if (leaveTab) leaveTab.classList.add('active');
+    if (leaveContent) leaveContent.classList.add('active');
     
     applyProfileToOvertime();
     initOvertimeTab();
@@ -329,6 +340,51 @@ function clearProfile() {
   if (typeof PAYROLL !== 'undefined') PAYROLL.init();
 }
 
+// ═══════════ 호봉 자동 제안 ═══════════
+/**
+ * 입사일 + 현재 직급 기준으로 호봉을 자동 제안하여 pfYear 셀렉트에 반영
+ * 자동 승진 체인(autoPromotion)에 있는 등급만 계산 가능하며,
+ * S1 이상 등급은 개인차가 있으므로 제안하지 않음.
+ * @param {string} hireDateStr - 'YYYY-MM-DD' 형식
+ */
+function _suggestYear(hireDateStr) {
+  const hint = document.getElementById('pfYearHint');
+  if (!hint) return;
+
+  const jobType = document.getElementById('pfJobType')?.value;
+  const grade = document.getElementById('pfGrade')?.value;
+  if (!jobType || !grade || !hireDateStr) { hint.textContent = ''; return; }
+
+  const payTableName = CALC.resolvePayTable(jobType);
+  const table = DATA.payTables[payTableName];
+  if (!table) { hint.textContent = ''; return; }
+
+  // 자동 승진 체인에서 시작 등급 찾기 (아무도 'next'로 지목하지 않은 등급)
+  const promotedTo = new Set(Object.values(table.autoPromotion || {}).map(p => p.next));
+  const startGrade = table.grades.find(g => !promotedTo.has(g));
+  if (!startGrade) { hint.textContent = ''; return; }
+
+  // 시작 등급부터 현재 등급까지 누적 연수 계산
+  let cumYears = 0;
+  let cur = startGrade;
+  while (cur && cur !== grade) {
+    const promo = table.autoPromotion[cur];
+    if (!promo) { hint.textContent = '⚠️ 승진 이력이 있어 자동 계산 불가 — 직접 입력하세요'; return; }
+    cumYears += promo.years;
+    cur = promo.next;
+  }
+  if (cur !== grade) { hint.textContent = ''; return; }
+
+  const totalYears = PROFILE.calcServiceYears(hireDateStr);
+  const yearsInGrade = totalYears - cumYears;
+  if (yearsInGrade < 0) { hint.textContent = '⚠️ 입사일과 직급이 맞지 않습니다'; return; }
+
+  const suggested = Math.min(8, Math.max(1, Math.floor(yearsInGrade) + 1));
+  const sel = document.getElementById('pfYear');
+  if (sel) sel.value = String(suggested);
+  hint.textContent = `→ 입사일 기준 자동 계산: ${suggested}년차`;
+}
+
 // ═══════════ 데이터 백업 및 복구 ═══════════
 function downloadBackup() {
     const data = {
@@ -407,7 +463,7 @@ function updateProfileSummary(profile) {
       <span class="key">월 통상임금</span><span class="val" style="color:var(--accent-indigo);">${CALC.formatCurrency(wage.monthlyWage)}</span>
     </div>
     <div class="result-row" style="font-weight:700;">
-      <span class="key">시급 (÷209시간)</span><span class="val" style="color:var(--accent-emerald);">${CALC.formatCurrency(wage.hourlyRate)}</span>
+      <span class="key">시급 (÷${profile.weeklyHours || 209}시간)</span><span class="val" style="color:var(--accent-emerald);">${CALC.formatCurrency(wage.hourlyRate)}</span>
     </div>
     ${!profile.adjustPay ? '<div class="warning-box" style="margin-top:8px; border-color:var(--accent-amber);">⚠️ 조정급 미입력 시 근속가산기본급·명절지원비가 과소 계산됩니다. 내 정보에서 조정급을 입력해주세요.</div>' : ''}
     <div class="warning-box" style="margin-top:8px;">💡 이 시급이 시간외·온콜 탭에 자동 반영됩니다.</div>`;

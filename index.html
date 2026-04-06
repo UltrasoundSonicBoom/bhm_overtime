@@ -201,8 +201,8 @@
         </div>
       </div>
       <nav class="nav-tabs" id="navTabs">
-        <button class="nav-tab active" data-tab="overtime">⏰ 시간외·온콜</button>
-        <button class="nav-tab" data-tab="leave">📅 휴가</button>
+        <button class="nav-tab active" data-tab="leave">📅 휴가</button>
+        <button class="nav-tab" data-tab="overtime">⏰ 시간외·온콜</button>
         <!-- AI_RESTRICTION: DO NOT REMOVE OR UNCOMMENT THE FOLLOWING TABS WITHOUT EXPLICIT USER PERMISSION -->
         <!-- <button class="nav-tab" data-tab="payroll">💰 급여</button> -->
         <!-- <button class="nav-tab" data-tab="reference">📋 규정</button> -->
@@ -392,7 +392,7 @@
     </div><!-- /tab-payroll -->
 
     <!-- ═══════════ ⏰ 시간외·온콜 관리 ═══════════ -->
-    <div class="tab-content active" id="tab-overtime">
+    <div class="tab-content" id="tab-overtime">
       <!-- Zone A: 모바일 캘린더 -->
       <div class="card" style="margin-bottom: 12px; padding: 12px;">
         <div class="ot-hourly-bar" style="margin-bottom: 8px;">
@@ -433,12 +433,12 @@
               <span class="ot-type-label" style="--type-color:var(--accent-amber)">⏰ 시간외</span>
             </label>
             <label class="ot-type-option">
-              <input type="radio" name="otType" value="oncall_standby" onchange="onOtTypeChange()">
-              <span class="ot-type-label" style="--type-color:var(--accent-cyan)">📞 온콜대기</span>
-            </label>
-            <label class="ot-type-option">
               <input type="radio" name="otType" value="oncall_callout" onchange="onOtTypeChange()">
               <span class="ot-type-label" style="--type-color:var(--accent-indigo)">🚗 온콜출근</span>
+            </label>
+            <label class="ot-type-option">
+              <input type="radio" name="otType" value="oncall_standby" onchange="onOtTypeChange()">
+              <span class="ot-type-label" style="--type-color:var(--accent-cyan)">📞 온콜대기</span>
             </label>
           </div>
         </div> <!-- /form-group -->
@@ -485,7 +485,7 @@
     </div>
 
     <!-- ═══════════ 📅 휴가 관리 ═══════════ -->
-    <div class="tab-content" id="tab-leave">
+    <div class="tab-content active" id="tab-leave">
 
       <!-- 연차 기준 안내 배너 -->
       <div class="info-note-banner" id="lvAnnualInfoNote">
@@ -718,12 +718,21 @@
                 <option value="7">7년차</option>
                 <option value="8">8년차</option>
               </select>
+              <small id="pfYearHint" style="color:var(--text-muted)"></small>
             </div>
             <div class="form-group">
               <label>입사일</label>
               <input type="text" id="pfHireDate" placeholder="예: 2006-07-05">
               <small id="pfServiceDisplay" style="color:var(--text-muted)"></small>
             </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>월 소정근로시간 <small style="font-weight:400; color:var(--text-muted)">기본 209h</small></label>
+              <input type="number" id="pfWeeklyHours" value="209" min="1" max="300" placeholder="209">
+              <small style="color:var(--text-muted)">시급 계산 기준 · 일반 전일제 근무자는 209h 그대로</small>
+            </div>
+            <div class="form-group"></div>
           </div>
 
           <!-- ▸ 개인 수당 (급여명세서 확인 후 입력) -->
