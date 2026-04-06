@@ -15,9 +15,9 @@ const PROFILE_FIELDS = {
   hasMilitary: 'pfMilitary',
   militaryMonths: 'pfMilitaryMonths',
   hasSeniority: 'pfSeniority',
-  hasSpouse: 'pfSpouse',
+  numFamily: 'pfFamily',
   numChildren: 'pfChildren',
-  otherFamily: 'pfOtherFamily',
+  numChildrenUnder6: 'pfChildrenUnder6',
   specialPay: 'pfSpecial',
   positionPay: 'pfPosition',
   workSupportPay: 'pfWorkSupport',
@@ -154,6 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const saved = PROFILE.load();
   if (saved) {
     PROFILE.applyToForm(saved, PROFILE_FIELDS);
+    toggleUnder6Field(); // 자녀 수 기반 6세이하 행 표시
     updateProfileSummary(saved);
     const profileStatusEl = document.getElementById('profileStatus');
     if (profileStatusEl) {
@@ -294,6 +295,12 @@ function updateProfileGrades() {
     gradeSelect.appendChild(opt);
   });
 }
+// 자녀 수가 1 이상일 때 6세이하 행 표시
+function toggleUnder6Field() {
+  const numChildren = parseInt(document.getElementById('pfChildren')?.value) || 0;
+  const row = document.getElementById('under6Row');
+  if (row) row.style.display = numChildren >= 1 ? 'grid' : 'none';
+}
 
 function saveProfile() {
   const data = PROFILE.collectFromForm(PROFILE_FIELDS);
@@ -359,9 +366,11 @@ function _suggestYear(hireDateStr) {
   const table = DATA.payTables[payTableName];
   if (!table) { hint.textContent = ''; return; }
 
-  // 자동 승진 체인에서 시작 등급 찾기 (아무도 'next'로 지목하지 않은 등급)
+  // 자동 승진 체인에서 시작 등급 찾기
+  // 조건: 승진 체인의 출발점 = canPromoteFrom에 있고 다른 등급의 next 목표가 아닌 것
+  const canPromoteFrom = new Set(Object.keys(table.autoPromotion || {}));
   const promotedTo = new Set(Object.values(table.autoPromotion || {}).map(p => p.next));
-  const startGrade = table.grades.find(g => !promotedTo.has(g));
+  const startGrade = table.grades.find(g => canPromoteFrom.has(g) && !promotedTo.has(g));
   if (!startGrade) { hint.textContent = ''; return; }
 
   // 시작 등급부터 현재 등급까지 누적 연수 계산
@@ -571,11 +580,12 @@ function calculateWage() {
   const hasSeniority = document.getElementById('wSeniority').checked;
   const adjustPay = parseInt(document.getElementById('wAdjust').value) || 0;
   const specialPay = parseInt(document.getElementById('wSpecial').value) || 0;
-  const hasSpouse = document.getElementById('wSpouse').checked;
+  const numFamily = parseInt(document.getElementById('wFamily')?.value) || 0;
   const numChildren = parseInt(document.getElementById('wChildren').value) || 0;
-  const otherFamily = parseInt(document.getElementById('wOtherFamily').value) || 0;
+  const numChildrenUnder6 = parseInt(document.getElementById('wChildrenUnder6')?.value) || 0;
 
-  const familyResult = CALC.calcFamilyAllowance(hasSpouse, numChildren, otherFamily);
+  const familyResult = CALC.calcFamilyAllowance(numFamily, numChildren);
+  const childrenUnder6Pay = numChildrenUnder6 * 130000;
 
   const result = CALC.calcOrdinaryWage(jobType, grade, year, {
     hasMilitary,
@@ -584,7 +594,8 @@ function calculateWage() {
     longServiceYears: serviceYears,
     specialPayAmount: specialPay,
     adjustPay,
-    familyAllowance: familyResult.월수당
+    familyAllowance: familyResult.월수당,
+    childrenUnder6Pay,
   });
 
   if (!result) return;
@@ -846,9 +857,9 @@ function calculatePayroll() {
       hasSeniority: profile.hasSeniority,
       seniorityYears: profile.hasSeniority ? serviceYears : 0,
       longServiceYears: serviceYears,
-      hasSpouse: profile.hasSpouse,
+      numFamily: parseInt(profile.numFamily) || 0,
       numChildren: parseInt(profile.numChildren) || 0,
-      otherFamily: parseInt(profile.otherFamily) || 0,
+      numChildrenUnder6: parseInt(profile.numChildrenUnder6) || 0,
       specialPay: parseInt(profile.specialPay) || 0,
       positionPay: parseInt(profile.positionPay) || 0,
       workSupportPay: parseInt(profile.workSupportPay) || 0,
@@ -866,8 +877,7 @@ function calculatePayroll() {
       hasSeniority: document.getElementById('psSeniority')?.checked || false,
       seniorityYears: document.getElementById('psSeniority')?.checked ? serviceYears : 0,
       longServiceYears: serviceYears,
-      hasSpouse: document.getElementById('psSpouse')?.checked || false,
-      numChildren: 0, otherFamily: 0,
+      numFamily: 0, numChildren: 0, numChildrenUnder6: 0,
     };
   }
 

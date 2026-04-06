@@ -32,8 +32,7 @@ const CALC = {
         const monthlyBase = Math.round(annualBase / 12);
         const monthlyAbility = Math.round(annualAbility / 12);
         const monthlyBonus = Math.round(annualBonus / 12);
-        const monthlyFamilyPaid = Math.round(annualFamily / 11); // 실지급: 11개월 균등분배
-        const monthlyFamilyOrdinary = Math.round(annualFamily / 12); // 통상임금 산입: 연÷12
+        const monthlyFamilyPaid = Math.round(annualFamily / 11); // 가계지원비: 연간÷11개월 (병원 지급 기준)
 
         // 조정급 (통상임금 계산 순서상 먼저 설정)
         const adjustPay = extras.adjustPay || 0;
@@ -63,6 +62,7 @@ const CALC = {
         const positionPay = extras.positionPay || 0;
         const workSupportPay = extras.workSupportPay || 0;
         const familyAllowance = extras.familyAllowance || 0;
+        const childrenUnder6Pay = extras.childrenUnder6Pay || 0;
 
         // 명절지원비 (연 4회): (기준기본급 + 근속가산기본급 + 조정급/2) × 50%
         const holidayBonusPerTime = Math.round((monthlyBase + seniorityBasePay + adjustPay / 2) * 0.5);
@@ -74,7 +74,7 @@ const CALC = {
             '군복무수당': militaryPay,
             '능력급': monthlyAbility,
             '상여금': monthlyBonus,
-            '가계지원비(통상)': monthlyFamilyOrdinary,
+            '가계지원비': monthlyFamilyPaid,
             '조정급': adjustPay,
             '승급조정급': upgradeAdjustPay,
             '장기근속수당': longServicePay,
@@ -85,25 +85,20 @@ const CALC = {
             '교통보조비': DATA.allowances.transportSubsidy,
             '가족수당': familyAllowance,
             '명절지원비(월할)': monthlyHolidayBonus,
+            '6세이하자녀수당': childrenUnder6Pay,
             '자기계발별정수당': DATA.allowances.selfDevAllowance,
             '별정수당5': DATA.allowances.specialPay5
             // '리프레시지원비': DATA.allowances.refreshBenefit // 병원 급여명세서 실물 대조 결과 통상임금에서 제외된 것으로 확인됨
         };
 
         const monthlyWage = Object.values(breakdown).reduce((a, b) => a + b, 0);
-        const hourlyRate = Math.round(monthlyWage / DATA.allowances.weeklyHours);
-
-        // 실지급 참고용 (가계지원비 11개월 지급분)
-        const monthlyFamilyDisplay = monthlyFamilyPaid;
-        // 명절지원비 실지급 (해당 월에만 지급)
-        const holidayBonusActual = holidayBonusPerTime;
+        const weeklyHours = extras.weeklyHours || DATA.allowances.weeklyHours;
+        const hourlyRate = Math.round(monthlyWage / weeklyHours);
 
         return {
             monthlyWage, hourlyRate, breakdown,
             displayInfo: {
-                monthlyFamilyPaid: monthlyFamilyDisplay,
-                monthlyFamilyOrdinary,
-                holidayBonusPerTime: holidayBonusActual,
+                holidayBonusPerTime,
                 holidayBonusMonths: '설·추석·5월·7월'
             }
         };
@@ -217,37 +212,39 @@ const CALC = {
 
     /**
      * 가족수당 계산
-     * @param {boolean} hasSpouse
-     * @param {number} numChildren
-     * @param {number} otherFamily
+     * 첫 번째 가족 (= 배우자 등 주치) : 40,000원
+     * 추가 가족 1인당 : 20,000원
+     * 자녀 : 첫째 30,000원 / 둘째 20,000원 / 셋째이상 10,000원
+     * 전체 가족 수 최대 5인
+     * @param {number} numFamily - 전체 가족 수 (자녀 제외)
+     * @param {number} numChildren - 자녀 수
      * @returns {object}
      */
-    calcFamilyAllowance(hasSpouse = false, numChildren = 0, otherFamily = 0) {
+    calcFamilyAllowance(numFamily = 0, numChildren = 0) {
         const fa = DATA.familyAllowance;
         let total = 0;
         const breakdown = {};
 
-        if (hasSpouse) {
-            breakdown['배우자'] = fa.spouse;
+        // 가족 수당: 첫 번째 = 40,000원, 추가 1인당 20,000원, 최대 5인
+        const cappedFamily = Math.min(numFamily, fa.maxFamilyMembers);
+        if (cappedFamily >= 1) {
+            breakdown['첫 번째 가족'] = fa.spouse; // 40,000
             total += fa.spouse;
         }
+        if (cappedFamily >= 2) {
+            const extra = cappedFamily - 1;
+            breakdown[`추가 가족 ${extra}인`] = fa.generalFamily * extra; // 20,000 × n
+            total += fa.generalFamily * extra;
+        }
 
-        let childTotal = 0;
+        // 자녀 수당: 1째 30,000 / 2째 20,000 / 3째이상 10,000
         for (let i = 1; i <= numChildren; i++) {
             let amt = 0;
             if (i === 1) amt = fa.child1;
             else if (i === 2) amt = fa.child2;
             else amt = fa.child3Plus;
-            childTotal += amt;
             breakdown[`${i}째 자녀`] = amt;
-        }
-        total += childTotal;
-
-        const maxOther = Math.max(0, fa.maxFamilyMembers - (hasSpouse ? 1 : 0) - numChildren);
-        const actualOther = Math.min(otherFamily, maxOther);
-        if (actualOther > 0) {
-            breakdown['기타 가족'] = fa.generalFamily * actualOther;
-            total += fa.generalFamily * actualOther;
+            total += amt;
         }
 
         return { 월수당: total, breakdown };
@@ -428,6 +425,52 @@ const CALC = {
         return { monthly: result, total, months };
     },
 
+    /**
+     * 평균임금 자동 계산 (퇴직금 산정 기준)
+     * 공식: (퇴직 전 3개월 통상임금 + 시간외/온콜 수당 합계) / 해당 기간 역일수
+     * @param {number} monthlyWage - 월 통상임금
+     * @param {number} [monthsBack=3] - 소급 개월 수
+     * @returns {object} { dailyAvgWage, monthlyAvgWage, totalOtPay, totalCalendarDays, breakdown }
+     */
+    calcAverageWage(monthlyWage, monthsBack = 3) {
+        const now = new Date();
+        let totalOtPay = 0;
+        let totalCalendarDays = 0;
+        const breakdown = [];
+
+        for (let i = 1; i <= monthsBack; i++) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const y = d.getFullYear();
+            const m = d.getMonth() + 1;
+            const daysInMonth = new Date(y, m, 0).getDate();
+
+            const stats = OVERTIME.calcMonthlyStats(y, m);
+            const otPay = stats.totalPay || 0;
+            totalOtPay += otPay;
+            totalCalendarDays += daysInMonth;
+
+            breakdown.push({
+                label: `${y}-${String(m).padStart(2, '0')}`,
+                daysInMonth,
+                monthlyWage,
+                otPay
+            });
+        }
+
+        const totalWage = monthlyWage * monthsBack + totalOtPay;
+        const dailyAvgWage = Math.round(totalWage / totalCalendarDays);
+        const monthlyAvgWage = dailyAvgWage * 30;
+
+        return {
+            dailyAvgWage,
+            monthlyAvgWage,
+            totalOtPay,
+            totalCalendarDays,
+            monthsBack,
+            breakdown
+        };
+    },
+
     // ── 유틸리티 ──
     formatNumber(n) {
         return n.toLocaleString('ko-KR');
@@ -448,7 +491,7 @@ const CALC = {
             hasMilitary = false, militaryMonths = 24,
             hasSeniority = false, seniorityYears = 0,
             longServiceYears = 0,
-            hasSpouse = false, numChildren = 0, otherFamily = 0,
+            numFamily = 0, numChildren = 0, numChildrenUnder6 = 0,
             specialPay = 0, positionPay = 0, workSupportPay = 0,
             workDays = 22, isHolidayMonth = false, isFamilySupportMonth = true,
             overtimeHours = 0, nightHours = 0, holidayWorkHours = 0,
@@ -456,8 +499,9 @@ const CALC = {
         } = params;
 
         // 1. 가족수당 계산
-        const familyResult = this.calcFamilyAllowance(hasSpouse, numChildren, otherFamily);
+        const familyResult = this.calcFamilyAllowance(numFamily, numChildren);
         const familyAllowance = familyResult.월수당;
+        const childrenUnder6Pay = numChildrenUnder6 * 130000;
 
         // 2. 통상임금 계산
         const wage = this.calcOrdinaryWage(jobType, grade, year, {

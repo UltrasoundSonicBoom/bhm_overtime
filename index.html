@@ -778,21 +778,19 @@
           <p style="font-size:var(--text-body-normal); color:var(--accent-indigo); margin:16px 0 4px; font-weight:600;">▸ 가족수당</p>
           <div class="form-row">
             <div class="form-group">
-              <label>배우자</label>
-              <div class="toggle-group" style="margin-top:6px;">
-                <input type="checkbox" id="pfSpouse">
-                <label for="pfSpouse">있음 (40,000원)</label>
-              </div>
+              <label>가족 수 <small style="color:var(--text-muted)">(자녀 제외·최대 5인)</small></label>
+              <input type="number" id="pfFamily" value="0" min="0" max="5">
+              <small style="color:var(--text-muted)">1인 40,000원 / 추가 1인당 20,000원</small>
             </div>
             <div class="form-group">
               <label>자녀 수</label>
-              <input type="number" id="pfChildren" value="0" min="0" max="10">
+              <input type="number" id="pfChildren" value="0" min="0" max="10" onchange="toggleUnder6Field()">
             </div>
           </div>
-          <div class="form-row">
+          <div class="form-row" id="under6Row" style="display:none;">
             <div class="form-group">
-              <label>기타 가족 수 <small style="color:var(--text-muted)">(최대 5인)</small></label>
-              <input type="number" id="pfOtherFamily" value="0" min="0" max="5">
+              <label>6세 이하 자녀 수 <small style="color:var(--text-muted)">(1인당 130,000원)</small></label>
+              <input type="number" id="pfChildrenUnder6" value="0" min="0" max="10">
             </div>
             <div class="form-group"></div>
           </div>

@@ -132,19 +132,22 @@ const PAYROLL = {
       id: 'familyAllowance',
       icon: '👨‍👩‍👧',
       title: '가족수당 계산',
-      desc: '배우자·자녀·기타 가족 기준',
+      desc: '가족 수·자녀 수 기준 (6세 이하 별도)',
       calc(profile, wage) {
         const r = CALC.calcFamilyAllowance(
-          profile.hasSpouse,
-          parseInt(profile.numChildren) || 0,
-          parseInt(profile.otherFamily) || 0
+          parseInt(profile.numFamily) || 0,
+          parseInt(profile.numChildren) || 0
         );
+        const under6Pay = (parseInt(profile.numChildrenUnder6) || 0) * 130000;
         const details = Object.entries(r.breakdown).map(([key, val]) => ({
           key, val: CALC.formatCurrency(val)
         }));
+        if (under6Pay > 0) {
+          details.push({ key: '6세 이하 자녀수당', val: CALC.formatCurrency(under6Pay) });
+        }
         return {
-          value: CALC.formatCurrency(r.월수당),
-          label: '월 가족수당',
+          value: CALC.formatCurrency(r.월수당 + under6Pay),
+          label: '월 가족수당 합계',
           details: details.length > 0 ? details : [{ key: '해당', val: '없음 (가족정보 미입력)' }]
         };
       }
@@ -172,18 +175,24 @@ const PAYROLL = {
       id: 'severance',
       icon: '🏦',
       title: '퇴직금 시뮬레이션',
-      desc: '2015.6.30 이전 입사자 기준',
+      desc: '최근 3개월 평균임금 자동 계산 (시간외·온콜 포함)',
       calc(profile, wage) {
         const years = profile.hireDate ? PROFILE.calcServiceYears(profile.hireDate) : 0;
-        const r = CALC.calcSeverancePay(wage.monthlyWage, years);
+        // 평균임금: 최근 3개월 통상임금 + 시간외/온콜 수당 합계 ÷ 역일수
+        const avg = CALC.calcAverageWage(wage.monthlyWage, 3);
+        const r = CALC.calcSeveranceFullPay(avg.monthlyAvgWage, years, profile.hireDate || null);
+        const hasOt = avg.totalOtPay > 0;
         return {
           value: r.퇴직금 > 0 ? CALC.formatCurrency(r.퇴직금) : '해당없음',
-          label: r.퇴직금 > 0 ? `근속 ${years}년 기준 예상 퇴직수당` : (r.note || '근속 1년 미만'),
+          label: r.퇴직금 > 0 ? `근속 ${years}년 기준 예상 퇴직금` : (r.note || '근속 1년 미만'),
           details: [
-            { key: '월 평균임금', val: CALC.formatCurrency(wage.monthlyWage) },
+            { key: '월 통상임금', val: CALC.formatCurrency(wage.monthlyWage) },
+            { key: '최근 3개월 시간외·온콜 수당', val: CALC.formatCurrency(avg.totalOtPay) + (hasOt ? '' : ' (없음)') },
+            { key: '일 평균임금 (÷역일수)', val: CALC.formatCurrency(avg.dailyAvgWage) },
+            { key: '월 평균임금 (×30)', val: CALC.formatCurrency(avg.monthlyAvgWage) + (hasOt ? ' ↑시간외 반영' : ' = 통상임금 기준') },
             { key: '근속년수', val: `${years}년` },
-            { key: '적용 계수', val: r.적용계수 || '-' },
-            { key: '산식', val: r.산식 || '-' }
+            { key: '산식', val: r.산식 || '-' },
+            { key: '비고', val: r.퇴직수당비고 || '해당없음' }
           ]
         };
       }
