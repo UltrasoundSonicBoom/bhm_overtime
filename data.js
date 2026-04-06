@@ -234,8 +234,8 @@ const DATA = {
       // ── 🎓 교육/연수 ──
       { id: 'edu_training', label: '교육연수', category: 'education', isPaid: true, quota: 3, usesAnnual: false, deductType: 'none', note: '연 3일' },
       { id: 'edu_mandatory', label: '병원필수교육', category: 'education', isPaid: true, quota: 3, usesAnnual: false, deductType: 'none', note: '연 3일 (하반기)' },
-      { id: 'edu_license', label: '보수교육(방사선학회)', category: 'education', isPaid: true, quota: 1, usesAnnual: false, deductType: 'none' },
-      { id: 'edu_external', label: '외부교육(방사선종사자)', category: 'education', isPaid: true, quota: 1, usesAnnual: false, deductType: 'none' },
+      { id: 'edu_license', label: '보수교육', category: 'education', isPaid: true, quota: 1, usesAnnual: false, deductType: 'none' },
+      { id: 'edu_external', label: '외부교육', category: 'education', isPaid: true, quota: 1, usesAnnual: false, deductType: 'none' },
 
       // ── 👨‍👩‍👧 가족 ──
       { id: 'family_care_paid', label: '가족돌봄(유급)', category: 'family', isPaid: true, quota: 2, usesAnnual: false, deductType: 'none', note: '다자녀/장애아 3일', ref: '2021단협' },

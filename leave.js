@@ -278,9 +278,18 @@ const LEAVE = {
         // 연차 계열 합산 (annual + time_leave)
         const annualUsed = round1((usage['annual'] || 0) + (usage['time_leave'] || 0));
 
+        // 항상 표시할 기본 휴가 목록
+        const alwaysShow = ['annual', 'checkup', 'edu_training', 'edu_mandatory'];
+
         const result = [];
         this.getTypes().forEach(t => {
             const used = round1(usage[t.id] || 0);
+            
+            // 항상 표시 항목이 아니고, 사용량이 0이면 숨김 처리
+            if (!alwaysShow.includes(t.id) && used === 0) {
+                return;
+            }
+
             let quota = t.quota;
 
             // 연차는 동적 한도
@@ -297,11 +306,11 @@ const LEAVE = {
                 return;
             }
 
-            if (quota !== null) {
+            if (quota !== null || alwaysShow.includes(t.id) || used > 0) {
                 result.push({
                     id: t.id, label: t.label, category: t.category,
-                    used, quota, remaining: round1(quota - used),
-                    overQuota: used > quota,
+                    used, quota, remaining: quota !== null ? round1(quota - used) : null,
+                    overQuota: quota !== null ? used > quota : false,
                     isPaid: t.isPaid,
                 });
             }

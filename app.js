@@ -3006,18 +3006,31 @@ function renderLvQuotaTable(year) {
   // 컴팩트 2열 그리드 (미니 프로그레스 바 포함)
   let html = '<div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">';
   quotas.forEach(q => {
-    const pct = q.quota > 0 ? Math.min(100, Math.round((q.used / q.quota) * 100)) : 0;
+    let pct = 0;
+    let remainText = '-';
+    let quotaText = '-';
+    
+    if (q.quota !== null) {
+        pct = q.quota > 0 ? Math.min(100, Math.round((q.used / q.quota) * 100)) : 0;
+        remainText = `${q.remaining}일`;
+        quotaText = `${q.quota}일`;
+    } else {
+        pct = 100; // 한도 없는 경우 막대를 꽉 채우거나 마음대로
+        remainText = `제한없음`;
+    }
+
     const barColor = q.overQuota ? 'var(--accent-rose)' : 'var(--accent-emerald)';
-    const remainColor = q.overQuota ? 'var(--accent-rose)' : 'var(--accent-emerald)';
+    const remainColor = q.overQuota ? 'var(--accent-rose)' : (q.quota !== null ? 'var(--accent-emerald)' : 'var(--text-muted)');
+    
     html += `<div style="padding:8px 10px; border-radius:8px; background:var(--bg-glass); border:1px solid var(--border-glass);">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
         <span style="font-weight:600; font-size:var(--text-body-large);">${q.label}</span>
-        <span style="font-size:var(--text-body-normal); font-weight:700; color:${remainColor};">${q.remaining}일</span>
+        <span style="font-size:var(--text-body-normal); font-weight:700; color:${remainColor};">${remainText}</span>
       </div>
-      <div class="lv-progress-bar" style="height:4px; margin-bottom:3px;">
+      <div class="lv-progress-bar" style="height:4px; margin-bottom:3px; display:${q.quota !== null ? 'block' : 'none'};">
         <div class="lv-progress-fill" style="width:${pct}%; background:${barColor}"></div>
       </div>
-      <div style="font-size:var(--text-body-normal); color:var(--text-muted);">${q.used}/${q.quota}일 사용 ${q.overQuota ? '⚠️' : ''}</div>
+      <div style="font-size:var(--text-body-normal); color:var(--text-muted);">${q.used}${q.quota !== null ? '/' + quotaText : '일'} 사용 ${q.overQuota ? '⚠️' : ''}</div>
     </div>`;
   });
   html += '</div>';
