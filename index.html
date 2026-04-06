@@ -795,6 +795,13 @@
             </label>
           </div>
         </div>
+
+        <!-- 시작 가이드 버튼 -->
+        <div style="margin-top:12px;">
+          <button onclick="showOnboarding()" class="btn btn-outline" style="width:100%; font-size:var(--text-body-normal); padding:10px; color:var(--accent-indigo); border-color:var(--accent-indigo);">
+            🚀 시작 가이드 보기
+          </button>
+        </div>
       </div>
     </div>
 
@@ -913,22 +920,28 @@
   </div>
 
   <script>
-    // ── 온보딩 로직 ──
+    // ── 온보딩 로직 (최대 3회, 프로필 없을 때만) ──
     (function checkOnboarding() {
-      const done = localStorage.getItem('onboarding_v1');
       const profile = localStorage.getItem('profile');
-      if (!done && !profile) {
+      if (profile) return; // 프로필 저장된 경우 표시 안 함
+      const count = parseInt(localStorage.getItem('onboarding_count') || '0');
+      if (count < 3) {
         setTimeout(() => {
           const modal = document.getElementById('onboardingModal');
           if (modal) modal.style.display = 'flex';
+          localStorage.setItem('onboarding_count', String(count + 1));
         }, 600);
       }
     })();
 
+    function showOnboarding() {
+      const modal = document.getElementById('onboardingModal');
+      if (modal) modal.style.display = 'flex';
+    }
+
     function dismissOnboarding(goProfile) {
       const modal = document.getElementById('onboardingModal');
       if (modal) modal.style.display = 'none';
-      localStorage.setItem('onboarding_v1', 'done');
       if (goProfile) switchTab('profile');
     }
 
