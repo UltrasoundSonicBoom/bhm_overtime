@@ -203,8 +203,7 @@
       <nav class="nav-tabs" id="navTabs">
         <button class="nav-tab active" data-tab="leave">📅 휴가</button>
         <button class="nav-tab" data-tab="overtime">⏰ 시간외·온콜</button>
-        <!-- AI_RESTRICTION: DO NOT REMOVE OR UNCOMMENT THE FOLLOWING TABS WITHOUT EXPLICIT USER PERMISSION -->
-        <!-- <button class="nav-tab" data-tab="payroll">💰 급여</button> -->
+        <button class="nav-tab" data-tab="payroll">💰 급여</button>
         <button class="nav-tab" data-tab="profile">👤 개인정보</button>
         <button class="nav-tab" data-tab="feedback">📢 피드백</button>
       </nav>
@@ -224,19 +223,39 @@
 
       <!-- 서브탭 1: 급여 명세서 -->
       <div class="sub-content" id="sub-payslip">
-        <div class="card" style="text-align:center; padding:40px 20px;">
-          <div style="font-size:var(--text-amount-huge); margin-bottom:12px;">📄</div>
-          <p style="color:var(--text-muted); font-size:var(--text-body-large);">급여 명세서 업로드 기능은 준비 중입니다.</p>
-          <p style="color:var(--text-muted); font-size:var(--text-body-normal); margin-top:8px;">Excel(.xls/.xlsx) 파일을 업로드하면<br>모바일에서 편하게 확인할 수 있습니다.</p>
+        <div class="card">
+          <div class="card-title"><span class="icon" style="color:var(--accent-indigo);">📄</span> 급여 명세서 업로드</div>
+
+          <!-- 업로드 영역 -->
+          <div id="payslipDropZone"
+            style="border:2px dashed var(--border-glass); border-radius:12px; padding:32px 16px; text-align:center; cursor:pointer; transition:all 0.2s;"
+            onclick="document.getElementById('payslipFileInput').click()"
+            ondragover="event.preventDefault(); this.style.borderColor='var(--accent-indigo)';"
+            ondragleave="this.style.borderColor='var(--border-glass)';"
+            ondrop="handlePayslipDrop(event)">
+            <div style="font-size:2.4rem; margin-bottom:8px;">📂</div>
+            <p style="color:var(--text-primary); font-weight:600; margin-bottom:4px;">파일을 드래그하거나 탭하여 선택</p>
+            <p style="color:var(--text-muted); font-size:var(--text-body-normal);">PDF · XLS · XLSX · CSV</p>
+          </div>
+          <input type="file" id="payslipFileInput" accept=".pdf,.xls,.xlsx,.csv" style="display:none" onchange="handlePayslipUpload(this.files[0])">
+
+          <!-- 저장된 달 목록 -->
+          <div id="savedMonthsList" style="margin-top:12px;"></div>
+
+          <!-- 파싱 결과 -->
+          <div id="payslipResult" style="margin-top:16px;"></div>
         </div>
       </div>
 
       <!-- 서브탭 2: 급여 검증 -->
       <div class="sub-content" id="sub-verify">
-        <div class="card" style="text-align:center; padding:40px 20px;">
-          <div style="font-size:var(--text-amount-huge); margin-bottom:12px;">✅</div>
-          <p style="color:var(--text-muted); font-size:var(--text-body-large);">급여 검증 기능은 준비 중입니다.</p>
-          <p style="color:var(--text-muted); font-size:var(--text-body-normal); margin-top:8px;">명세서를 업로드하면 계산기와 자동으로<br>비교·검증할 수 있습니다.</p>
+        <div class="card">
+          <div class="card-title"><span class="icon" style="color:var(--accent-emerald);">✅</span> 앱 계산값 vs 명세서 비교</div>
+          <div id="verifyResult">
+            <p style="color:var(--text-muted); font-size:var(--text-body-normal); text-align:center; padding:24px 0;">
+              먼저 <strong>📄 급여 명세서</strong> 탭에서 파일을 업로드하면<br>자동으로 비교 결과를 보여줍니다.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -865,6 +884,8 @@
 
   </main>
 
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabaseClient.js?v=1.4"></script>
   <script src="data.js?v=1.2"></script>
@@ -874,6 +895,7 @@
   <script src="overtime.js?v=1.1"></script>
   <script src="leave.js?v=1.1"></script>
   <script src="payroll.js?v=1.2"></script>
+  <script src="salary-parser.js?v=1.0"></script>
   <script src="app.js?v=1.2"></script>
   <script>
     // ── 테마 전환 시스템 ──

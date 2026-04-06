@@ -2437,7 +2437,183 @@ function importOtData(event) {
   event.target.value = ''; // Reset file input
 }
 
+
+// ═══════════ 💰 급여 명세서 파서 ═══════════
+
+function handlePayslipDrop(event) {
+  event.preventDefault();
+  event.currentTarget.style.borderColor = 'var(--border-glass)';
+  const file = event.dataTransfer.files[0];
+  if (file) handlePayslipUpload(file);
+}
+
+async function handlePayslipUpload(file) {
+  if (!file) return;
+  const resultEl = document.getElementById('payslipResult');
+  resultEl.innerHTML = `<div class="warning-box" style="text-align:center;">⏳ 파일 분석 중...</div>`;
+
+  try {
+    const parsed = await SALARY_PARSER.parseFile(file);
+    const ym = SALARY_PARSER.parsePeriodYearMonth(parsed);
+    if (!ym) throw new Error('급여 기간을 인식하지 못했습니다. 파일을 확인해주세요.');
+
+    // 해당 월 localStorage에 저장 (자동 덮어쓰기)
+    SALARY_PARSER.saveMonthlyData(ym.year, ym.month, parsed);
+
+    // 안정적인 항목은 프로필에도 반영
+    const profileUpdated = SALARY_PARSER.applyStableItemsToProfile(parsed);
+
+    renderPayslip(parsed, ym, profileUpdated);
+    renderVerification(parsed);
+    renderSavedMonths();
+  } catch (e) {
+    resultEl.innerHTML = `<div class="warning-box" style="border-color:var(--accent-rose);">❌ 오류: ${e.message}</div>`;
+    console.error('[PayslipParser]', e);
+  }
+}
+
+function renderPayslip(data, ym, profileUpdated) {
+  const resultEl = document.getElementById('payslipResult');
+  const fmt = n => n > 0 ? n.toLocaleString() + '원' : '-';
+  const info = data.employeeInfo;
+  const meta = data.metadata;
+
+  let html = `
+    <div style="margin-bottom:12px; padding:10px 12px; background:var(--bg-hover); border-radius:8px; font-size:var(--text-body-normal); color:var(--text-muted);">
+      <strong style="color:var(--text-primary);">${ym.year}년 ${ym.month}월 급여명세서</strong>
+      ${info.name ? `· ${info.name}` : ''}
+      ${info.jobType ? `· ${info.jobType}` : ''}
+      ${info.payGrade ? `· ${info.payGrade}` : ''}
+      ${meta.payDate ? `<br>지급일: ${meta.payDate}` : ''}
+    </div>`;
+
+  if (profileUpdated) {
+    html += `<div class="warning-box" style="border-color:var(--accent-emerald); margin-bottom:8px;">✅ 조정급 등 변경되지 않는 항목을 내 정보에 자동 반영했습니다.</div>`;
+  }
+
+  // 지급 내역 테이블
+  html += `<p style="font-size:var(--text-body-normal); color:var(--accent-indigo); font-weight:600; margin:12px 0 6px;">▸ 지급 내역</p>`;
+  html += `<div style="display:flex; flex-direction:column; gap:4px;">`;
+  data.salaryItems.forEach(item => {
+    html += `<div class="result-row"><span class="key">${item.name}</span><span class="val">${fmt(item.amount)}</span></div>`;
+  });
+  html += `</div>`;
+
+  // 공제 내역
+  if (data.deductionItems.length > 0) {
+    html += `<p style="font-size:var(--text-body-normal); color:var(--accent-rose); font-weight:600; margin:12px 0 6px;">▸ 공제 내역</p>`;
+    html += `<div style="display:flex; flex-direction:column; gap:4px;">`;
+    data.deductionItems.forEach(item => {
+      html += `<div class="result-row"><span class="key">${item.name}</span><span class="val" style="color:var(--accent-rose);">${fmt(item.amount)}</span></div>`;
+    });
+    html += `</div>`;
+  }
+
+  // 합계
+  html += `
+    <div class="result-box" style="margin-top:12px;">
+      <div class="result-row"><span class="key">급여총액</span><span class="val green">${fmt(data.summary.grossPay)}</span></div>
+      <div class="result-row"><span class="key">공제총액</span><span class="val" style="color:var(--accent-rose);">${fmt(data.summary.totalDeduction)}</span></div>
+      <div class="result-row" style="border-top:1px solid var(--border-glass); padding-top:8px; margin-top:4px;">
+        <span class="key" style="font-weight:700;">실지급액</span>
+        <span class="val" style="font-size:var(--text-body-large); font-weight:700;">${fmt(data.summary.netPay)}</span>
+      </div>
+    </div>
+    <button class="btn btn-secondary btn-full" style="margin-top:12px;" onclick="switchPayrollSubTab('verify')">✅ 앱 계산값과 비교하기</button>
+  `;
+  resultEl.innerHTML = html;
+}
+
+function renderVerification(data) {
+  const verifyEl = document.getElementById('verifyResult');
+  if (!verifyEl) return;
+  const comparison = SALARY_PARSER.compareWithApp(data);
+
+  if (!comparison) {
+    verifyEl.innerHTML = `<div class="warning-box">⚠️ 비교하려면 먼저 <strong>개인정보 탭</strong>에서 내 정보를 저장해주세요.</div>`;
+    return;
+  }
+
+  const fmt = n => n != null ? n.toLocaleString() + '원' : '-';
+  let html = `<div style="overflow-x:auto;"><table style="width:100%; border-collapse:collapse; font-size:var(--text-body-normal);">
+    <thead>
+      <tr style="background:var(--bg-hover); color:var(--text-muted);">
+        <th style="padding:8px 6px; text-align:left;">항목</th>
+        <th style="padding:8px 6px; text-align:right;">명세서</th>
+        <th style="padding:8px 6px; text-align:right;">앱 계산</th>
+        <th style="padding:8px 6px; text-align:right;">차이</th>
+      </tr>
+    </thead><tbody>`;
+
+  comparison.comparison.forEach(row => {
+    const diff = row.diff;
+    const diffStr = diff !== null ? (diff === 0 ? '✅ 일치' : `${diff > 0 ? '+' : ''}${diff.toLocaleString()}`) : '-';
+    const diffColor = diff === null ? 'var(--text-muted)' : diff === 0 ? 'var(--accent-emerald)' : 'var(--accent-amber)';
+    const rowStyle = row.isTotal ? 'border-top:2px solid var(--border-glass); font-weight:700;' : '';
+    html += `<tr style="${rowStyle}">
+      <td style="padding:7px 6px; color:var(--text-primary);">${row.name}</td>
+      <td style="padding:7px 6px; text-align:right; color:var(--text-primary);">${fmt(row.payslip)}</td>
+      <td style="padding:7px 6px; text-align:right; color:var(--text-muted);">${fmt(row.app)}</td>
+      <td style="padding:7px 6px; text-align:right; color:${diffColor}; font-weight:600;">${diffStr}</td>
+    </tr>`;
+  });
+
+  html += `</tbody></table></div>`;
+
+  // 차이 있는 항목 안내
+  const mismatches = comparison.comparison.filter(r => r.diff !== null && r.diff !== 0 && !r.isTotal);
+  if (mismatches.length > 0) {
+    html += `<div class="warning-box" style="margin-top:12px;">
+      ⚠️ <strong>차이가 발생한 항목 ${mismatches.length}개:</strong><br>
+      ${mismatches.map(r => `${r.name}: ${(r.diff > 0 ? '+' : '')}${r.diff.toLocaleString()}원`).join('<br>')}
+      <br><br>💡 <strong>개인정보</strong> 탭에서 조정급·직책급 등을 실제 명세서 금액으로 수정하면 오차가 줄어듭니다.
+    </div>`;
+  }
+  verifyEl.innerHTML = html;
+}
+
+function renderSavedMonths() {
+  const el = document.getElementById('savedMonthsList');
+  if (!el) return;
+  const months = SALARY_PARSER.listSavedMonths();
+  if (months.length === 0) { el.innerHTML = ''; return; }
+
+  let html = `<p style="font-size:var(--text-body-normal); color:var(--text-muted); margin:4px 0 6px; font-weight:600;">📁 저장된 명세서</p>`;
+  html += `<div style="display:flex; gap:8px; flex-wrap:wrap;">`;
+  months.forEach(({ year, month, key }) => {
+    html += `<button class="btn btn-outline" style="font-size:var(--text-body-normal); padding:6px 12px;"
+      onclick="loadSavedMonth(${year}, ${month})">${year}년 ${month}월</button>`;
+  });
+  html += `</div>`;
+  el.innerHTML = html;
+}
+
+function loadSavedMonth(year, month) {
+  const data = SALARY_PARSER.loadMonthlyData(year, month);
+  if (!data) return;
+  const ym = { year, month };
+  renderPayslip(data, ym, false);
+  renderVerification(data);
+}
+
+function switchPayrollSubTab(name) {
+  document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.sub-content').forEach(c => c.classList.remove('active'));
+  const tab = document.querySelector(`.sub-tab[data-subtab="${name}"]`);
+  const content = document.getElementById(`sub-${name}`);
+  if (tab) tab.classList.add('active');
+  if (content) content.classList.add('active');
+}
+
+// 급여 탭 진입 시 저장 월 목록 갱신
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelector('.nav-tab[data-tab="payroll"]')?.addEventListener('click', () => {
+    renderSavedMonths();
+  });
+});
+
 // ═══════════ 📅 휴가 관리 ═══════════
+
 
 let lvSelectedDate = null;
 let lvHolidayMap = {};
