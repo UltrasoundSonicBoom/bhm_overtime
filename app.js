@@ -2531,13 +2531,13 @@ function populateLvTypeSelect() {
 }
 
 function openLvTypeBottomSheet() {
-  document.getElementById('lvTypeSelectOverlay').classList.add('active');
-  document.getElementById('lvTypeSelectSheet').classList.add('active');
+  document.getElementById('lvTypeSelectOverlay').classList.add('show');
+  document.getElementById('lvTypeSelectSheet').classList.add('show');
 }
 
 function closeLvTypeBottomSheet() {
-  document.getElementById('lvTypeSelectOverlay').classList.remove('active');
-  document.getElementById('lvTypeSelectSheet').classList.remove('active');
+  document.getElementById('lvTypeSelectOverlay').classList.remove('show');
+  document.getElementById('lvTypeSelectSheet').classList.remove('show');
 }
 
 function selectLvType(id, label) {
