@@ -2627,6 +2627,9 @@ function renderLvCalendar(year, month, recordsByDay) {
 
   for (let i = 0; i < firstDow; i++) html += '<div class="ot-cal-day empty"></div>';
 
+  let hasHolidayInMonth = false;
+  const presentCategories = new Set();
+
   for (let d = 1; d <= daysInMonth; d++) {
     const dow = new Date(year, month - 1, d).getDay();
     const isWknd = (dow === 0 || dow === 6);
@@ -2636,8 +2639,12 @@ function renderLvCalendar(year, month, recordsByDay) {
     const dayRecords = recordsByDay[d] || [];
 
     let cls = 'ot-cal-day';
-    if (isHoliday) cls += ' holiday';
-    else if (isWknd) cls += ' weekend';
+    if (isHoliday) {
+      cls += ' holiday';
+      hasHolidayInMonth = true;
+    } else if (isWknd) {
+      cls += ' weekend';
+    }
     if (isToday) cls += ' today';
     if (isSelected) cls += ' selected';
 
@@ -2646,6 +2653,7 @@ function renderLvCalendar(year, month, recordsByDay) {
     const uniqueTypes = [...new Set(dayRecords.map(r => r.type))];
     uniqueTypes.forEach(t => {
       const typeInfo = LEAVE.getTypeById(t);
+      if (typeInfo && typeInfo.category) presentCategories.add(typeInfo.category);
       const label = typeInfo ? typeInfo.label : t;
       // 3글자까지만 표시 (모바일 공간 절약)
       const shortLabel = label.length > 3 ? label.substring(0, 3) : label;
@@ -2667,13 +2675,44 @@ function renderLvCalendar(year, month, recordsByDay) {
   }
 
   html += '</div>';
-  html += `<div class="ot-cal-legend">
-    <span><span class="cal-badge" style="background:rgba(16,185,129,0.15); color:#1a1a1a; padding:2px 6px;">법정</span></span>
-    <span><span class="cal-badge" style="background:rgba(244,63,94,0.12); color:#1a1a1a; padding:2px 6px;">건강</span></span>
-    <span><span class="cal-badge" style="background:rgba(245,158,11,0.12); color:#1a1a1a; padding:2px 6px;">청원</span></span>
-    <span><span class="cal-badge" style="background:rgba(139,92,246,0.12); color:#1a1a1a; padding:2px 6px;">교육</span></span>
-    <span><span class="cal-badge" style="background:rgba(6,182,212,0.12); color:#1a1a1a; padding:2px 6px;">출산</span></span>
-  </div>`;
+
+  let legendHtml = '';
+  
+  if (hasHolidayInMonth) {
+    legendHtml += `<span style="display:flex; align-items:center; gap:4px;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--accent-rose);"></span> <span style="font-size:12px; color:var(--text-secondary);">공휴일</span></span>`;
+  }
+
+  const catNames = {
+    legal: '법정',
+    health: '건강',
+    education: '교육',
+    family: '가족',
+    ceremony: '청원',
+    maternity: '출산',
+    special: '특별'
+  };
+  const catColors = {
+    legal: 'rgba(16,185,129,0.15)',
+    health: 'rgba(244,63,94,0.12)',
+    education: 'rgba(139,92,246,0.12)',
+    family: 'rgba(99,102,241,0.12)',
+    ceremony: 'rgba(245,158,11,0.12)',
+    maternity: 'rgba(6,182,212,0.12)',
+    special: 'rgba(99,102,241,0.12)',
+  };
+
+  ['legal', 'health', 'education', 'family', 'ceremony', 'maternity', 'special'].forEach(cat => {
+    if (presentCategories.has(cat)) {
+      legendHtml += `<span><span class="cal-badge" style="background:${catColors[cat]}; color:#1a1a1a; padding:2px 6px;">${catNames[cat]}</span></span>`;
+    }
+  });
+
+  if (legendHtml !== '') {
+    html += `<div class="ot-cal-legend" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:center; padding:10px 10px 16px;">
+      ${legendHtml}
+    </div>`;
+  }
+
   html += '</div>';
   container.innerHTML = html;
 }
