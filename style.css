@@ -177,6 +177,14 @@ body::before {
   letter-spacing: -0.01em;
 }
 
+.logo .logo-sub-title {
+  font-size: var(--text-label-small);
+  color: #888888;
+  margin-top: 2px;
+  line-height: 1.4;
+  font-weight: 400;
+}
+
 html[data-theme="neo"] .logo .logo-main-title {
   text-shadow: none !important; /* 색상 그림자 완벽 제거 */
 }
