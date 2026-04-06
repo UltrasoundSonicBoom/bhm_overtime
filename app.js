@@ -446,12 +446,20 @@ function applyProfileToLeave() {
   if (profile.hireDate) {
     const hireDateEl = document.getElementById('lvHireDate');
     if (hireDateEl) hireDateEl.value = profile.hireDate;
+    
+    // 입사일이 있으면 배너 숨김
+    const infoNote = document.getElementById('lvAnnualInfoNote');
+    if (infoNote) infoNote.style.display = 'none';
+
     // 연차 자동 산정
     const parsed = PROFILE.parseDate(profile.hireDate);
     if (parsed) {
       const result = CALC.calcAnnualLeave(parsed);
       if (result) lvTotalAnnual = result.totalLeave;
     }
+  } else {
+    const infoNote = document.getElementById('lvAnnualInfoNote');
+    if (infoNote) infoNote.style.display = 'flex';
   }
   const wage = PROFILE.calcWage(profile);
   if (wage) {
