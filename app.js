@@ -1968,14 +1968,19 @@ function onOtDateClick(year, month, day) {
     let existingHtml = '<div style="margin-top:8px; padding:8px; background:rgba(244,63,94,0.06); border-radius:6px; font-size:var(--text-body-normal);">';
     existingHtml += `<strong style="color:var(--accent-rose)">📋 기존 기록 (${existing.length}건)</strong>`;
     existing.forEach(r => {
-      existingHtml += `<div style="margin-top:4px; cursor:pointer; padding:4px; border-radius:4px;"
-        onclick="editOtRecord('${r.id}')"
+      existingHtml += `<div style="margin-top:4px; padding:4px; border-radius:4px; display:flex; justify-content:space-between; align-items:center;"
         onmouseover="this.style.background='rgba(99,102,241,0.1)'"
         onmouseout="this.style.background='transparent'">
-        <span class="ot-record-type ${r.type}" style="font-size:var(--text-label-small)">${OVERTIME.typeLabel(r.type)}</span>
-        ${r.startTime ? r.startTime + '~' + r.endTime : '종일'}
-        ${r.totalHours ? r.totalHours + 'h' : ''}
-        <strong style="color:var(--accent-emerald)">₩${(r.estimatedPay || 0).toLocaleString()}</strong>
+        <div>
+          <span class="ot-record-type ${r.type}" style="font-size:var(--text-label-small)">${OVERTIME.typeLabel(r.type)}</span>
+          ${r.startTime ? r.startTime + '~' + r.endTime : '종일'}
+          ${r.totalHours ? r.totalHours + 'h' : ''}
+          <strong style="color:var(--accent-emerald)">₩${(r.estimatedPay || 0).toLocaleString()}</strong>
+        </div>
+        <div style="display:flex; gap:4px; flex-shrink:0;">
+          <button onclick="editOtRecord('${r.id}')" style="background:var(--accent-indigo); color:white; border:none; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:600; cursor:pointer;">EDIT</button>
+          <button onclick="deleteOtRecord('${r.id}')" style="background:var(--accent-rose); color:white; border:none; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:600; cursor:pointer;">DELETE</button>
+        </div>
       </div>`;
     });
     existingHtml += '</div>';
@@ -2649,14 +2654,19 @@ function onLvDateClick(year, month, day) {
     existing.forEach(r => {
       const typeInfo = LEAVE.getTypeById(r.type);
       const timeInfo = r.type === 'time_leave' && r.hours ? ` (${r.hours}h)` : '';
-      extra += `<div style="margin-top:4px; cursor:pointer; padding:4px; border-radius:4px;"
-        onclick="editLvRecord('${r.id}')"
+      extra += `<div style="margin-top:4px; padding:4px; border-radius:4px; display:flex; justify-content:space-between; align-items:center;"
         onmouseover="this.style.background='rgba(99,102,241,0.1)'"
         onmouseout="this.style.background='transparent'">
-        <span class="lv-record-type ${r.isPaid ? 'paid' : 'unpaid'}" style="font-size:var(--text-body-normal)">${typeInfo ? typeInfo.label : r.type}</span>
-        ${r.startDate === r.endDate ? '' : r.startDate + '~' + r.endDate}
-        ${(r.days || 0).toFixed(1)}일${timeInfo}
-        ${r.salaryImpact ? '<strong style="color:var(--accent-rose)">-₩' + Math.abs(r.salaryImpact).toLocaleString() + '</strong>' : ''}
+        <div>
+          <span class="lv-record-type ${r.isPaid ? 'paid' : 'unpaid'}" style="font-size:var(--text-body-normal)">${typeInfo ? typeInfo.label : r.type}</span>
+          ${r.startDate === r.endDate ? '' : r.startDate + '~' + r.endDate}
+          ${(r.days || 0).toFixed(1)}일${timeInfo}
+          ${r.salaryImpact ? '<strong style="color:var(--accent-rose)">-₩' + Math.abs(r.salaryImpact).toLocaleString() + '</strong>' : ''}
+        </div>
+        <div style="display:flex; gap:4px; flex-shrink:0;">
+          <button onclick="editLvRecord('${r.id}')" style="background:var(--accent-indigo); color:white; border:none; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:600; cursor:pointer;">EDIT</button>
+          <button onclick="deleteLvRecord('${r.id}')" style="background:var(--accent-rose); color:white; border:none; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:600; cursor:pointer;">DELETE</button>
+        </div>
       </div>`;
     });
     extra += '</div>';
