@@ -2295,8 +2295,8 @@ function renderOtRecordList(records) {
 
   // 상세 기록 (접이식)
   html += `<div>
-    <div class="collapsible-header" onclick="toggleCollapsible('otRecordDetail')" style="padding:6px 0; font-size:var(--text-body-normal);">
-      <span>▸ 상세 기록 (${sorted.length}건)</span>
+    <div class="collapsible-header" onclick="toggleCollapsible('otRecordDetail')">
+      <span style="display:flex; align-items:center; gap:8px;"><span class="toggle-icon">▸</span> 상세 기록 (${sorted.length}건)</span>
     </div>
     <div class="collapsible-body" id="otRecordDetail" style="display:none; max-height:400px; overflow-y:auto;">`;
 
@@ -3107,8 +3107,8 @@ function renderLvRecordList(year) {
 
   // ── 상세 기록 (최근순, 접이식) ──
   html += `<div style="margin-top:12px;">
-    <div class="collapsible-header" onclick="toggleCollapsible('lvRecordDetail')" style="padding:6px 0; font-size:var(--text-body-normal);">
-      <span>▸ 상세 기록 (${sorted.length}건)</span>
+    <div class="collapsible-header" onclick="toggleCollapsible('lvRecordDetail')">
+      <span style="display:flex; align-items:center; gap:8px;"><span class="toggle-icon">▸</span> 상세 기록 (${sorted.length}건)</span>
     </div>
     <div class="collapsible-body" id="lvRecordDetail" style="display:none; max-height:300px; overflow-y:auto;">`;
 
