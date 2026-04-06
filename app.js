@@ -2478,30 +2478,89 @@ const LV_CAT_ICONS = {
 
 // 유형 select 동적 생성 (성별 필터 + optgroup)
 function populateLvTypeSelect() {
-  const sel = document.getElementById('lvType');
-  if (!sel) return;
-  sel.innerHTML = '';
+  const container = document.getElementById('lvTypeSelectContainer');
+  if (!container) return;
+  container.innerHTML = '';
 
   const profile = PROFILE.load();
   const gender = profile ? profile.gender : '';
   const groups = LEAVE.getGroupedTypes(gender);
 
   groups.forEach(group => {
-    const optgroup = document.createElement('optgroup');
-    optgroup.label = group.label;
+    const groupDiv = document.createElement('div');
+    groupDiv.style.marginBottom = '6px';
+    
+    const titleDiv = document.createElement('div');
+    titleDiv.style.fontSize = 'var(--text-label-small)';
+    titleDiv.style.fontWeight = '700';
+    titleDiv.style.color = 'var(--text-muted)';
+    titleDiv.style.padding = '4px 8px';
+    titleDiv.textContent = group.label;
+    groupDiv.appendChild(titleDiv);
+
     group.items.forEach(t => {
-      const opt = document.createElement('option');
-      opt.value = t.id;
       const icon = LV_CAT_ICONS[t.category] || '📋';
       const paidTag = t.isPaid ? '' : ' [무급]';
       let label = `${icon} ${t.label}${paidTag}`;
       if (t.isTimeBased) label += ' (시간단위)';
       if (t.quota !== null) label += ` [${t.quota}일]`;
-      opt.textContent = label;
-      optgroup.appendChild(opt);
+
+      const btn = document.createElement('button');
+      btn.className = 'btn';
+      btn.style.width = '100%';
+      btn.style.textAlign = 'left';
+      btn.style.justifyContent = 'flex-start';
+      btn.style.marginBottom = '4px';
+      btn.style.padding = '12px 14px';
+      btn.style.background = 'var(--bg-glass)';
+      btn.style.border = '1.5px solid var(--border-active)';
+      btn.style.borderRadius = 'var(--radius-sm)';
+      btn.style.color = 'var(--text-primary)';
+      btn.style.fontSize = 'var(--text-body-large)';
+      btn.style.fontWeight = '600';
+      btn.onclick = () => selectLvType(t.id, label);
+      btn.textContent = label;
+      
+      btn.onmouseover = () => btn.style.background = 'var(--bg-glass-hover)';
+      btn.onmouseout = () => btn.style.background = 'var(--bg-glass)';
+
+      groupDiv.appendChild(btn);
     });
-    sel.appendChild(optgroup);
+    container.appendChild(groupDiv);
   });
+}
+
+function openLvTypeBottomSheet() {
+  document.getElementById('lvTypeSelectOverlay').classList.add('active');
+  document.getElementById('lvTypeSelectSheet').classList.add('active');
+}
+
+function closeLvTypeBottomSheet() {
+  document.getElementById('lvTypeSelectOverlay').classList.remove('active');
+  document.getElementById('lvTypeSelectSheet').classList.remove('active');
+}
+
+function selectLvType(id, label) {
+  const lvTypeInput = document.getElementById('lvType');
+  const btnText = document.getElementById('lvTypeBtnText');
+  if (lvTypeInput && btnText) {
+    lvTypeInput.value = id;
+    btnText.textContent = label;
+    onLvTypeChange();
+  }
+  closeLvTypeBottomSheet();
+}
+
+function updateLvTypeBtnText(id) {
+  const typeInfo = LEAVE.getTypeById(id);
+  if (!typeInfo) return;
+  const icon = LV_CAT_ICONS[typeInfo.category] || '📋';
+  const paidTag = typeInfo.isPaid ? '' : ' [무급]';
+  let label = `${icon} ${typeInfo.label}${paidTag}`;
+  if (typeInfo.isTimeBased) label += ' (시간단위)';
+  if (typeInfo.quota !== null) label += ` [${typeInfo.quota}일]`;
+  const btnText = document.getElementById('lvTypeBtnText');
+  if (btnText) btnText.textContent = label;
 }
 
 async function refreshLvCalendar() {
@@ -2640,6 +2699,7 @@ function onLvDateClick(year, month, day) {
   document.getElementById('lvSaveBtn').textContent = '💾 저장';
   document.getElementById('lvMemo').value = '';
   document.getElementById('lvType').value = 'annual';
+  updateLvTypeBtnText('annual');
 
   onLvTypeChange();
   previewLvCalc();
@@ -2713,6 +2773,7 @@ function resetLvPanel() {
   document.getElementById('lvStartDate').value = todayStr;
   document.getElementById('lvEndDate').value = todayStr;
   document.getElementById('lvType').value = 'annual';
+  updateLvTypeBtnText('annual');
   onLvTypeChange();
 
   // 바텀시트 닫기
@@ -2766,7 +2827,7 @@ function onLvTypeChange() {
         📅 연차 한도: ${lvTotalAnnual}일 | 사용: ${summary.usedAnnual}일 | <span style="color:var(--accent-emerald); font-weight:700;">잔여: ${summary.remainingAnnual}일</span>
       </div>`;
     } else {
-      quotaBadge.innerHTML = `<div style="padding:6px 10px; border-radius:6px; background:rgba(251,191,36,0.06); border:1px solid rgba(251,191,36,0.2); font-size:var(--text-body-normal); color:var(--accent-amber);">
+      quotaBadge.innerHTML = `<div style="padding:6px 10px; border-radius:6px; background:rgba(251,191,36,0.06); border:1px solid rgba(251,191,36,0.2); font-size:var(--text-body-normal); color:var(--text-primary); font-weight:600;">
         ⚠️ 프로필에서 입사일을 설정하면 연차 한도가 자동 계산됩니다.
       </div>`;
     }
@@ -2964,6 +3025,7 @@ function editLvRecord(id) {
   if (!record) return;
 
   document.getElementById('lvType').value = record.type;
+  updateLvTypeBtnText(record.type);
   document.getElementById('lvStartDate').value = record.startDate;
   document.getElementById('lvEndDate').value = record.endDate;
   document.getElementById('lvMemo').value = record.memo || '';
