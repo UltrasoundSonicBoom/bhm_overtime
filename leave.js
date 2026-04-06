@@ -109,7 +109,9 @@ const LEAVE = {
             if (typeInfo && typeInfo.isTimeBased && record.hours) {
                 record.days = Math.round(record.hours / 8 * 10) / 10;
             } else {
-                record.days = this._calcBusinessDays(record.startDate, record.endDate);
+                record.days = this._calcBusinessDays(record.startDate, record.endDate, {
+                    calendarDays: record.type === 'sick'
+                });
             }
         }
 
@@ -248,14 +250,20 @@ const LEAVE = {
     },
 
     // ── 영업일 계산 (주말 제외) ──
-    _calcBusinessDays(startStr, endStr) {
+    // calendarDays=true: 주말·공휴일 포함 역일수 계산 (병가용)
+    // calendarDays=false: 주말 제외 영업일 계산 (연차·기타 휴가용)
+    _calcBusinessDays(startStr, endStr, { calendarDays = false } = {}) {
         const start = new Date(startStr);
         const end = new Date(endStr);
         let count = 0;
         const cur = new Date(start);
         while (cur <= end) {
-            const dow = cur.getDay();
-            if (dow !== 0 && dow !== 6) count++;
+            if (calendarDays) {
+                count++;
+            } else {
+                const dow = cur.getDay();
+                if (dow !== 0 && dow !== 6) count++;
+            }
             cur.setDate(cur.getDate() + 1);
         }
         return Math.max(count, 1);

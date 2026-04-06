@@ -2911,7 +2911,7 @@ function previewLvCalc() {
   } else if (typeInfo.ceremonyDays) {
     days = typeInfo.ceremonyDays;
   } else {
-    days = LEAVE._calcBusinessDays(startStr, endStr);
+    days = LEAVE._calcBusinessDays(startStr, endStr, { calendarDays: type === 'sick' });
   }
 
   // 소수점 1자리로 반올림
@@ -2995,7 +2995,7 @@ function saveLvRecord() {
   } else if (typeInfo && typeInfo.ceremonyDays) {
     days = typeInfo.ceremonyDays;
   } else {
-    days = LEAVE._calcBusinessDays(startDate, endDate);
+    days = LEAVE._calcBusinessDays(startDate, endDate, { calendarDays: type === 'sick' });
   }
 
   const record = { type, startDate, endDate, days, memo, hourlyRate, monthlyBasePay };
