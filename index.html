@@ -188,7 +188,7 @@
           <img src="logo.png" alt="SNUH Mate" style="width:81px; height:81px; object-fit:contain; flex-shrink:0; border-radius:10px;">
           <div>
             <h1 class="logo-main-title">슬기로운 병원 생활 메이트</h1>
-            <p class="logo-sub-title">데이터는 개인의 핸드폰 · PC에만 저장됩니다.<br>필요시 꼭 ‘백업’ 하세요.</p>
+            <p class="logo-sub-title">By Steve &amp; Nora · 데이터는 내 기기에만 저장됩니다.<br>필요시 꼭 ‘백업’ 하세요.</p>
           </div>
         </div>
         <div class="header-right">
@@ -393,6 +393,11 @@
 
     <!-- ═══════════ ⏰ 시간외·온콜 관리 ═══════════ -->
     <div class="tab-content" id="tab-overtime">
+      <!-- 참고용 안내 배너 -->
+      <div class="info-note-banner">
+        <span>ℹ️</span>
+        <div>이 계산기는 <strong>참고용</strong>입니다. 근속연수·무급휴직 등 개인차에 따라 실제 수당과 차이가 있을 수 있어요. 정확한 금액은 급여 명세서를 기준으로 확인하세요.</div>
+      </div>
       <!-- Zone A: 모바일 캘린더 -->
       <div class="card" style="margin-bottom: 12px; padding: 12px;">
         <div class="ot-hourly-bar" style="margin-bottom: 8px;">
@@ -835,6 +840,15 @@
 
     <!-- ═══════════ 📢 피드백 방 ═══════════ -->
     <div class="tab-content" id="tab-feedback">
+      <!-- 만든 사람 소개 -->
+      <div class="info-note-banner" style="margin-bottom:12px;">
+        <span>👨‍💻</span>
+        <div>
+          <strong>만든 사람: 김계환 (핵의학과)</strong><br>
+          병원 생활이 조금 더 편리해지길 바라며 만들었습니다.<br>
+          문의·제안: <a href="mailto:stevegogothing@gmail.com">stevegogothing@gmail.com</a>
+        </div>
+      </div>
       <div class="card" style="padding:16px;">
         <div class="card-title" style="font-size:var(--text-body-large); margin-bottom:8px;">
           <span class="icon" style="color:var(--accent-rose);">📢</span> SNUHmate 사용자 피드백 접수
@@ -927,7 +941,10 @@
     <div class="onboarding-card">
       <div class="onboarding-icon">👋</div>
       <div class="onboarding-title">처음 오셨나요?</div>
-      <div class="onboarding-sub">3단계면 바로 시작할 수 있어요!</div>
+      <div class="onboarding-sub">
+        지금까지 휴가와 시간외 등을 얼마나 썼는지<br>기록하고 관리하기 위해 만들었어요.<br>
+        <small style="color:var(--accent-amber); font-size:var(--text-body-normal);">※ 수당 계산은 참고용 — 근속연수·무급휴직 등 개인차로<br>실제와 다를 수 있어요.</small>
+      </div>
       <div class="onboarding-steps">
         <div class="onboarding-step">
           <div class="step-num">1</div>
@@ -950,6 +967,13 @@
             <small>연차·병가 등록 → 잔여 휴가를<br>자동으로 추적합니다</small>
           </div>
         </div>
+        <div class="onboarding-step">
+          <div class="step-num" style="background:var(--accent-emerald);">4</div>
+          <div class="step-text">
+            <strong>🔐 내 데이터는 철저히 내 것</strong>
+            <small>개발자도 서버도 절대 볼 수 없어요.<br>기기를 바꾸실 땐 꼭 ‘백업’ 하세요!</small>
+          </div>
+        </div>
       </div>
       <button onclick="dismissOnboarding(false)" class="btn btn-primary btn-full" style="font-size:var(--text-body-large); padding:12px;">
         🚀 시작하기
@@ -957,8 +981,8 @@
       <a onclick="dismissOnboarding(true)" class="onboarding-link">
         👤 개인정보 먼저 입력하러 가기
       </a>
-      <p style="margin-top:14px; font-size:var(--text-body-normal); color:var(--text-muted); line-height:1.5; border-top:1px solid var(--border-glass); padding-top:12px;">
-        🔒 데이터는 저장된 개인의 핸드폰 · PC에만 저장됩니다.<br><strong>필요시 꼭 ‘백업’ 기능을 활용하세요.</strong>
+      <p style="margin-top:14px; font-size:var(--text-body-normal); color:var(--text-muted); text-align:center; border-top:1px solid var(--border-glass); padding-top:12px;">
+        만든 사람: 김계환 (핵의학과)
       </p>
     </div>
   </div>
