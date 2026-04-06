@@ -205,8 +205,8 @@
         <button class="nav-tab" data-tab="overtime">⏰ 시간외·온콜</button>
         <!-- AI_RESTRICTION: DO NOT REMOVE OR UNCOMMENT THE FOLLOWING TABS WITHOUT EXPLICIT USER PERMISSION -->
         <!-- <button class="nav-tab" data-tab="payroll">💰 급여</button> -->
-        <!-- <button class="nav-tab" data-tab="reference">📋 규정</button> -->
         <button class="nav-tab" data-tab="profile">👤 개인정보</button>
+        <button class="nav-tab" data-tab="feedback">📢 피드백</button>
       </nav>
     </div>
   </header>
@@ -833,18 +833,34 @@
       </div>
     </div>
 
+    <!-- ═══════════ 📢 피드백 방 ═══════════ -->
+    <div class="tab-content" id="tab-feedback">
+      <div class="card" style="padding:16px;">
+        <div class="card-title" style="font-size:var(--text-body-large); margin-bottom:8px;">
+          <span class="icon" style="color:var(--accent-rose);">📢</span> SNUHmate 사용자 피드백 접수
+        </div>
+        <p style="font-size:var(--text-body-normal); color:var(--text-muted); margin-bottom:16px; line-height:1.5;">
+          앱을 사용하시면서 겪은 버그, 불편한 점, 또는 개선 아이디어가 있다면 편하게 남겨주세요.<br>
+          <strong style="color:var(--accent-indigo);">오류가 발생한 화면의 스마트폰 스크린샷 캡쳐본을 첨부</strong>해주시면 정확한 원인 파악과 빠른 해결에 가장 큰 도움이 됩니다!
+        </p>
+        <div style="border-radius:12px; overflow:hidden; background:var(--bg-card);">
+          <iframe data-tally-src="https://tally.so/embed/44vYv5?alignLeft=1&hideTitle=1&transparentBackground=1&dynamicHeight=1" loading="lazy" width="100%" height="400" frameborder="0" marginheight="0" marginwidth="0" title="SNUHmate 버그건의 리포트"></iframe>
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabaseClient.js?v=1.4"></script>
-  <script src="data.js?v=1.1"></script>
-  <script src="calculators.js?v=1.1"></script>
+  <script src="data.js?v=1.2"></script>
+  <script src="calculators.js?v=1.2"></script>
   <script src="holidays.js?v=1.1"></script>
-  <script src="profile.js?v=1.1"></script>
+  <script src="profile.js?v=1.2"></script>
   <script src="overtime.js?v=1.1"></script>
   <script src="leave.js?v=1.1"></script>
-  <script src="payroll.js?v=1.1"></script>
-  <script src="app.js?v=1.1"></script>
+  <script src="payroll.js?v=1.2"></script>
+  <script src="app.js?v=1.2"></script>
   <script>
     // ── 테마 전환 시스템 ──
     (function initTheme() {
@@ -988,6 +1004,7 @@
     });
   </script>
 
+  <script>var d=document,w="https://tally.so/widgets/embed.js",v=function(){"undefined"!=typeof Tally?Tally.loadEmbeds():d.querySelectorAll("iframe[data-tally-src]:not([src])").forEach((function(e){e.src=e.dataset.tallySrc}))};if("undefined"!=typeof Tally)v();else if(d.querySelector('script[src="'+w+'"]')==null){var s=d.createElement("script");s.src=w,s.onload=v,s.onerror=v,d.body.appendChild(s);}</script>
 </body>
 
 </html>
