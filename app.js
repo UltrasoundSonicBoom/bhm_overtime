@@ -1891,6 +1891,11 @@ function renderOtCalendar(year, month, recordsByDay) {
 
     // 기록 뱃지 + 누적금액
     let dotsHtml = '<div style="display:flex; flex-direction:column; gap:1px; margin-top:1px;">';
+    if (isHoliday) {
+      const hName = otHolidayMap[d];
+      const hShort = hName.length > 3 ? hName.substring(0, 3) : hName;
+      dotsHtml += `<span class="cal-badge" style="background:rgba(244,63,94,0.15); color:var(--accent-rose); font-weight:600;">${hShort}</span>`;
+    }
     let dayTotalPay = 0;
     dayRecords.forEach(r => {
       dayTotalPay += r.estimatedPay || 0;
@@ -2648,8 +2653,13 @@ function renderLvCalendar(year, month, recordsByDay) {
     if (isToday) cls += ' today';
     if (isSelected) cls += ' selected';
 
-    // 휴가 유형 텍스트 표시 (점 대신 유형명)
+    // 휴가 유형 텍스트 표시 (점 대신 유형명) + 공휴일 이름
     let dotsHtml = '<div style="display:flex; flex-direction:column; gap:1px; margin-top:1px;">';
+    if (isHoliday) {
+      const hName = lvHolidayMap[d];
+      const hShort = hName.length > 3 ? hName.substring(0, 3) : hName;
+      dotsHtml += `<span class="cal-badge" style="background:rgba(244,63,94,0.15); color:var(--accent-rose); font-weight:600;">${hShort}</span>`;
+    }
     const uniqueTypes = [...new Set(dayRecords.map(r => r.type))];
     uniqueTypes.forEach(t => {
       const typeInfo = LEAVE.getTypeById(t);
