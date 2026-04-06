@@ -1202,6 +1202,7 @@ html[data-theme="neo"] .logo .logo-main-title {
 .cal-nav-title {
   cursor: pointer;
   user-select: none;
+  font-size: var(--text-amount-large);
 }
 
 .cal-nav-title:hover {
