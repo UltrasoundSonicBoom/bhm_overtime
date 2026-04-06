@@ -587,6 +587,7 @@ function calculateWage() {
   const familyResult = CALC.calcFamilyAllowance(numFamily, numChildren);
   const childrenUnder6Pay = numChildrenUnder6 * 130000;
 
+  // 가족수당은 통상임금 계산에서 제외 (보수규정 제44조 2항)
   const result = CALC.calcOrdinaryWage(jobType, grade, year, {
     hasMilitary,
     hasSeniority,
@@ -594,8 +595,7 @@ function calculateWage() {
     longServiceYears: serviceYears,
     specialPayAmount: specialPay,
     adjustPay,
-    familyAllowance: familyResult.월수당,
-    childrenUnder6Pay,
+    // familyAllowance 제외
   });
 
   if (!result) return;
@@ -617,7 +617,7 @@ function calculateWage() {
       html += `<div class="result-row"><span class="key">${key}</span><span class="val">${CALC.formatCurrency(val)}</span></div>`;
     }
   });
-  html += `<div class="warning-box">💡 시급이 위 시간외·온콜 필드에 자동 반영되었습니다.</div>`;
+  html += `<div class="warning-box" style="border-color:var(--accent-emerald);">💡 가족수당은 통상임금에 포함되지 않아 시급 계산에서 제외됩니다. (보수규정 제44조) 시급은 위 시간외·온콜 필드에 자동 반영되었습니다.</div>`;
   document.getElementById('wageCalcResult').innerHTML = html;
 }
 

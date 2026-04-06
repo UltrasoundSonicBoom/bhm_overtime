@@ -774,25 +774,27 @@
             </div>
           </div>
 
-          <!-- ▸ 가족수당 -->
-          <p style="font-size:var(--text-body-normal); color:var(--accent-indigo); margin:16px 0 4px; font-weight:600;">▸ 가족수당</p>
-          <div class="form-row">
-            <div class="form-group">
-              <label>가족 수 <small style="color:var(--text-muted)">(자녀 제외·최대 5인)</small></label>
-              <input type="number" id="pfFamily" value="0" min="0" max="5">
-              <small style="color:var(--text-muted)">1인 40,000원 / 추가 1인당 20,000원</small>
+          <!-- ▸ 가족수당 (숨김 처리 — 급여 탭에서 활성화 예정) -->
+          <div id="familyAllowanceSection" style="display:none;">
+            <p style="font-size:var(--text-body-normal); color:var(--accent-indigo); margin:16px 0 4px; font-weight:600;">▸ 가족수당 <small style="font-weight:400; color:var(--text-muted)">(통상임금 미포함 — 별도 지급)</small></p>
+            <div class="form-row">
+              <div class="form-group">
+                <label>가족 수 <small style="color:var(--text-muted)">(자녀 제외·최대 5인)</small></label>
+                <input type="number" id="pfFamily" value="0" min="0" max="5">
+                <small style="color:var(--text-muted)">1인 40,000원 / 추가 1인당 20,000원</small>
+              </div>
+              <div class="form-group">
+                <label>자녀 수</label>
+                <input type="number" id="pfChildren" value="0" min="0" max="10" onchange="toggleUnder6Field()">
+              </div>
             </div>
-            <div class="form-group">
-              <label>자녀 수</label>
-              <input type="number" id="pfChildren" value="0" min="0" max="10" onchange="toggleUnder6Field()">
+            <div class="form-row" id="under6Row" style="display:none;">
+              <div class="form-group">
+                <label>6세 이하 자녀 수 <small style="color:var(--text-muted)">(1인당 130,000원)</small></label>
+                <input type="number" id="pfChildrenUnder6" value="0" min="0" max="10">
+              </div>
+              <div class="form-group"></div>
             </div>
-          </div>
-          <div class="form-row" id="under6Row" style="display:none;">
-            <div class="form-group">
-              <label>6세 이하 자녀 수 <small style="color:var(--text-muted)">(1인당 130,000원)</small></label>
-              <input type="number" id="pfChildrenUnder6" value="0" min="0" max="10">
-            </div>
-            <div class="form-group"></div>
           </div>
           <!-- 근속가산기본급: 입사일로 자동 계산, 별도 입력 불필요 -->
           <input type="checkbox" id="pfSeniority" style="display:none;">

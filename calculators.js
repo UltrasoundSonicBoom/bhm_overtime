@@ -61,8 +61,7 @@ const CALC = {
         const upgradeAdjustPay = extras.upgradeAdjustPay || 0;
         const positionPay = extras.positionPay || 0;
         const workSupportPay = extras.workSupportPay || 0;
-        const familyAllowance = extras.familyAllowance || 0;
-        const childrenUnder6Pay = extras.childrenUnder6Pay || 0;
+        // 가족수당은 통상임금 산정 제외 (보수규정 제44조 2항 미포함)
 
         // 명절지원비 (연 4회): (기준기본급 + 근속가산기본급 + 조정급/2) × 50%
         const holidayBonusPerTime = Math.round((monthlyBase + seniorityBasePay + adjustPay / 2) * 0.5);
@@ -83,12 +82,11 @@ const CALC = {
             '업무보조비': workSupportPay,
             '급식보조비': DATA.allowances.mealSubsidy,
             '교통보조비': DATA.allowances.transportSubsidy,
-            '가족수당': familyAllowance,
+            // ※ 가족수당은 통상임금에 포함되지 않음 (보수규정 제44조 2항)
             '명절지원비(월할)': monthlyHolidayBonus,
-            '6세이하자녀수당': childrenUnder6Pay,
             '자기계발별정수당': DATA.allowances.selfDevAllowance,
             '별정수당5': DATA.allowances.specialPay5
-            // '리프레시지원비': DATA.allowances.refreshBenefit // 병원 급여명세서 실물 대조 결과 통상임금에서 제외된 것으로 확인됨
+            // '리프레시지원비': DATA.allowances.refreshBenefit // 통상임금 제외 확인
         };
 
         const monthlyWage = Object.values(breakdown).reduce((a, b) => a + b, 0);
@@ -503,15 +501,15 @@ const CALC = {
         const familyAllowance = familyResult.월수당;
         const childrenUnder6Pay = numChildrenUnder6 * 130000;
 
-        // 2. 통상임금 계산
+        // 2. 통상임금 계산 (가족수당 제외 — 보수규정 제44조 2항 미포함)
         const wage = this.calcOrdinaryWage(jobType, grade, year, {
             hasMilitary, militaryMonths,
             hasSeniority, seniorityYears,
             longServiceYears,
             specialPayAmount: specialPay,
             adjustPay, upgradeAdjustPay,
-            positionPay, workSupportPay,
-            familyAllowance
+            positionPay, workSupportPay
+            // familyAllowance: 통상임금 산정에서 제외
         });
 
         if (!wage) return null;
@@ -533,11 +531,13 @@ const CALC = {
             '급식보조비': DATA.allowances.mealSubsidy,
             '교통보조비': DATA.allowances.transportSubsidy,
             '장기근속수당': wage.breakdown['장기근속수당'],
-            '가족수당': familyAllowance,
             '별정수당': specialPay,
             '직책급': positionPay,
             '업무보조비': workSupportPay
         };
+        // 가족수당은 통상임금에 포함되지 않는 별도 지급 항목
+        if (familyAllowance > 0) 지급내역['가족수당(비통상임금)'] = familyAllowance;
+        if (childrenUnder6Pay > 0) 지급내역['6세이하자녀수당(비통상임금)'] = childrenUnder6Pay;
 
         // 가계지원비: 11개월 지급 (3,4,5,6,7,8,10,11,12 + 설/추석월)
         if (isFamilySupportMonth) {
