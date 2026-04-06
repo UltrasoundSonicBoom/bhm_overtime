@@ -86,7 +86,7 @@ body::before {
 .header {
   background: var(--bg-primary);
   border-bottom: 1px solid var(--border-glass);
-  padding: 10px 16px;
+  padding: 5px 16px;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -2146,7 +2146,7 @@ html[data-theme="neo"] .logo .logo-main-title {
 @media (max-width: 768px) {
   /* ── Header: 1-line only (nav moves to bottom) ── */
   .header {
-    padding: 8px 12px;
+    padding: 4px 12px;
   }
 
   .header-inner {
@@ -2543,7 +2543,7 @@ html[data-theme="neo"] body {
 html[data-theme="neo"] .header {
   background: var(--accent-amber);
   border-bottom: 3px solid #1a1a1a;
-  padding: 10px 16px;
+  padding: 5px 16px;
 }
 
 html[data-theme="neo"] .logo-icon {
