@@ -40,10 +40,8 @@
     <div class="header-inner">
       <div class="header-top-row">
         <div class="logo">
-          <img src="logo.png" alt="SNUH Mate Logo" style="height: 48px; width: auto; object-fit: contain; border-radius: 12px; margin-right: 4px;">
           <div>
-            <h1>SNUH 메이트</h1>
-            <p class="logo-subtitle">슬기로운 병원 생활 메이트</p>
+            <h1 class="logo-main-title">슬기로운 병원 생활 메이트</h1>
           </div>
         </div>
         <div class="header-right">
@@ -103,7 +101,7 @@
         <!-- 기존 급여 시뮬레이터 (전체 급여 시뮬레이션 카드 안에 포함) -->
         <div class="card" style="margin-top:16px;">
           <div class="collapsible-header" onclick="toggleCollapsible('fullPayrollSim')">
-            <span>▸ 🧾 전체 급여 시뮬레이션 (상세)</span>
+            <span><span class="toggle-icon">▸</span> 🧾 전체 급여 시뮬레이션 (상세)</span>
           </div>
           <div class="collapsible-body" id="fullPayrollSim" style="display:none;">
           <p style="font-size:var(--text-body-normal); color:var(--text-muted); margin-bottom:12px;">📌 내 정보가 저장되어 있으면 자동 반영됩니다. 월별 변동사항만 입력하세요.</p>
@@ -428,7 +426,7 @@
         <!-- 2열: 2026년 휴가 현황 -->
         <div class="card">
           <div class="collapsible-header" onclick="toggleCollapsible('lvQuotaTableWrap')" style="cursor:pointer; padding:10px 0;">
-            <span class="card-title" style="margin:0;"><span class="icon indigo">🏖️</span> 2026년 휴가 현황 <span style="font-size:var(--text-body-normal); color:var(--text-muted);">▸</span></span>
+            <span class="card-title" style="margin:0;"><span class="toggle-icon">▸</span> <span class="icon indigo">🏖️</span> 2026년 휴가 현황 </span>
           </div>
           <div id="lvQuotaTableWrap" class="collapsible-body" style="display:none;">
             <div id="lvQuotaTable"></div>
@@ -498,7 +496,7 @@
           <span class="badge emerald" id="profileStatus">미저장</span>
         </div>
         <div class="collapsible-header" onclick="toggleCollapsible('pfInputFields')" style="margin-top:12px;">
-          <span id="pfInputToggleLabel">▸ 내 정보 입력/수정</span>
+          <span id="pfInputToggleLabel"><span class="toggle-icon">▸</span> 내 정보 입력/수정</span>
         </div>
         <div class="collapsible-body" id="pfInputFields" style="display:block;">
           <p style="font-size:var(--text-body-normal); color:var(--text-muted); margin-bottom:12px;">한번 저장하면 모든 계산기에 자동 반영됩니다. 데이터는 이 브라우저에만 저장됩니다.</p>
