@@ -9,25 +9,25 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "snuhmatecircle.png",
+      "src": "snuhmaterect.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "snuhmatecircle.png",
+      "src": "snuhmaterect.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "snuhmatecircle.png",
+      "src": "snuhmaterect.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "snuhmatecircle.png",
+      "src": "snuhmaterect.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
