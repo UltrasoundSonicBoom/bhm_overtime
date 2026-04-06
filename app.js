@@ -334,9 +334,9 @@ function downloadBackup() {
     const data = {
         version: "1.0",
         exportDate: new Date().toISOString(),
-        profile: localStorage.getItem('bhm_hr_profile'),
-        overtime: localStorage.getItem('overtimeRecords'),
-        leave: localStorage.getItem('leaveRecords')
+        profile: localStorage.getItem(PROFILE.STORAGE_KEY),
+        overtime: localStorage.getItem(OVERTIME.STORAGE_KEY),
+        leave: localStorage.getItem(LEAVE.STORAGE_KEY)
     };
     const jsonStr = JSON.stringify(data, null, 2);
     const blob = new Blob([jsonStr], { type: 'application/json' });
@@ -367,9 +367,9 @@ async function uploadBackup(event) {
         const text = await file.text();
         const data = JSON.parse(text);
         
-        if (data.profile) localStorage.setItem('bhm_hr_profile', data.profile);
-        if (data.overtime) localStorage.setItem('overtimeRecords', data.overtime);
-        if (data.leave) localStorage.setItem('leaveRecords', data.leave);
+        if (data.profile) localStorage.setItem(PROFILE.STORAGE_KEY, data.profile);
+        if (data.overtime) localStorage.setItem(OVERTIME.STORAGE_KEY, data.overtime);
+        if (data.leave) localStorage.setItem(LEAVE.STORAGE_KEY, data.leave);
         
         alert("데이터가 성공적으로 복원되었습니다! 앱을 새로고침합니다.");
         window.location.reload();
