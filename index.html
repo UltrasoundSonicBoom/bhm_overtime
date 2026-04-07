@@ -15,6 +15,14 @@
   <link rel="icon" type="image/png" sizes="16x16" href="snuhmaterect.png?v=1.3">
   <link rel="shortcut icon" href="snuhmaterect.png?v=1.3">
   <link rel="stylesheet" href="style.css?v=2.2">
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-Q4QYNTQHQ8"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-Q4QYNTQHQ8');
+  </script>
   <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
   <style>
     .theme-toggle-btn {
@@ -587,7 +595,11 @@
               style="color:var(--text-muted)">✕</span></button>
         </div>
 
-        <div class="form-group" style="margin-top:16px;">
+        <!-- ① 이 날의 기록 탭 (기존 기록 있을 때 JS로 렌더링) — 선택하면 아래 폼에 로드됨 -->
+        <div id="otExistingRecords" style="margin-top:12px;"></div>
+
+        <!-- ② 입력 폼 영역 -->
+        <div class="form-group" style="margin-top:4px;">
           <label>유형</label>
           <div class="ot-type-selector">
             <label class="ot-type-option active">
@@ -603,13 +615,12 @@
               <span class="ot-type-label" style="--type-color:var(--accent-cyan)">📞 온콜대기</span>
             </label>
           </div>
-        </div> <!-- /form-group -->
+        </div>
 
         <!-- 시간 입력 (온콜대기 시 숨김) -->
         <div id="otTimeFields" style="margin-bottom:16px;">
           <label
-            style="display:block; font-size:var(--text-body-large); font-weight:600; color:var(--text-secondary); margin-bottom:6px;">근무
-            시간</label>
+            style="display:block; font-size:var(--text-body-large); font-weight:600; color:var(--text-secondary); margin-bottom:6px;">근무 시간</label>
           <div style="display:flex; flex-direction:row; gap:8px; align-items:center;">
             <input type="time" id="otStartTime" class="time-picker-premium" style="flex:1; width:100%" value="18:00"
               step="900" onchange="previewOtCalc()">
@@ -621,20 +632,17 @@
 
         <!-- 실시간 미리보기 -->
         <div id="otPreview" class="ot-preview" style="margin-bottom:12px;"></div>
-        <!-- 기존 기록 표시 영역 -->
-        <div id="otExistingRecords" style="margin-bottom:12px;"></div>
 
         <div class="form-group">
           <label>메모 (선택)</label>
           <input type="text" id="otMemo" placeholder="예: 응급환자 대응" class="premium-input">
         </div>
 
-        <div class="form-row" style="margin-top:20px; gap:12px;">
-          <button class="btn btn-outline" onclick="deleteOtRecord()"
-            style="flex:1; display:none; border-color:var(--accent-rose); color:var(--accent-rose);" id="otDeleteBtn">🗑
-            삭제</button>
+        <div style="display:flex; flex-direction:column; margin-top:20px; gap:8px;">
           <button class="btn btn-primary" onclick="saveOtRecord()"
-            style="flex:2; font-size:var(--text-title-large); padding:12px;" id="otSaveBtn" disabled>저장하기</button>
+            style="width:100%; font-size:var(--text-title-large); padding:14px; justify-content:center; border-radius:12px;" id="otSaveBtn" disabled>저장하기</button>
+          <button class="btn btn-outline" onclick="deleteOtRecord()"
+            style="width:100%; display:none; border-color:transparent; background:rgba(244,63,94,0.08); color:var(--accent-rose); font-size:var(--text-body-large); font-weight:600; padding:12px; justify-content:center; border-radius:12px; transition:all 0.2s;" id="otDeleteBtn">🗑 이 기록 삭제하기</button>
         </div>
         <input type="hidden" id="otEditId" value="">
       </div> <!-- /otInputPanel -->
@@ -733,19 +741,16 @@
 
         <!-- 급여 영향 미리보기 -->
         <div id="lvPreview" class="ot-preview"></div>
-        <div id="lvExistingRecords"></div>
-
         <div class="form-group">
           <label>메모 (선택)</label>
           <input type="text" id="lvMemo" placeholder="예: 개인사유">
         </div>
 
-        <div class="form-row" style="margin-top:16px; gap:12px;">
-          <button class="btn btn-outline" onclick="deleteLvRecord()"
-            style="flex:1; display:none; border-color:var(--accent-rose); color:var(--accent-rose);" id="lvDeleteBtn">🗑
-            삭제</button>
+        <div style="display:flex; flex-direction:column; margin-top:16px; gap:8px;">
           <button class="btn btn-primary" onclick="saveLvRecord()"
-            style="flex:2; font-size:var(--text-title-large); padding:12px;" id="lvSaveBtn">💾 저장</button>
+            style="width:100%; font-size:var(--text-title-large); padding:14px; justify-content:center; border-radius:12px;" id="lvSaveBtn">💾 저장하기</button>
+          <button class="btn btn-outline" onclick="deleteLvRecord()"
+            style="width:100%; display:none; border-color:transparent; background:rgba(244,63,94,0.08); color:var(--accent-rose); font-size:var(--text-body-large); font-weight:600; padding:12px; justify-content:center; border-radius:12px; transition:all 0.2s;" id="lvDeleteBtn">🗑 이 휴가 삭제하기</button>
         </div>
         <input type="hidden" id="lvEditId" value="">
       </div>

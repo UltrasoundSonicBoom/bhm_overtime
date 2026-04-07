@@ -2157,46 +2157,179 @@ function onOtDateClick(year, month, day) {
   document.getElementById('otInputPanel').dataset.date = dateStr;
   document.getElementById('otInputPanel').dataset.isHoliday = isHoliday ? '1' : '0';
 
-  // 초기화
+  // 해당 날짜 기존 기록 로드
+  const existing = OVERTIME.getDateRecords(year, month, day);
+
+  // 기존 기록 탭 렌더링 (선택형)
+  renderOtRecordTabs(existing, dateStr);
+
+  // 기존 기록이 없으면 → 신규 입력 모드 초기화
+  // 기존 기록이 있으면 → 탭 선택을 기다림 (폼은 대기 상태)
+  if (existing.length === 0) {
+    // 신규 입력 모드
+    document.getElementById('otEditId').value = '';
+    document.getElementById('otDeleteBtn').style.display = 'none';
+    document.getElementById('otSaveBtn').textContent = '💾 저장하기';
+    document.getElementById('otSaveBtn').disabled = false;
+    document.getElementById('otMemo').value = '';
+    document.querySelector('input[name="otType"][value="overtime"]').checked = true;
+    onOtTypeChange();
+    previewOtCalc();
+  } else {
+    // 기존 기록 있음 → 폼을 "대기" 상태로 (저장 버튼 숨기고 설명 표시)
+    document.getElementById('otEditId').value = '';
+    document.getElementById('otDeleteBtn').style.display = 'none';
+    document.getElementById('otSaveBtn').textContent = '💾 저장하기';
+    document.getElementById('otSaveBtn').disabled = true;
+    document.getElementById('otMemo').value = '';
+    document.querySelector('input[name="otType"][value="overtime"]').checked = true;
+    onOtTypeChange();
+    previewOtCalc();
+  }
+
+  // 바텀 시트 열기 (모바일 대응)
+  openOtBottomSheet();
+}
+
+// 기존 기록 탭 렌더링 (선택형 — 클릭 시 폼 로드)
+function renderOtRecordTabs(existing, dateStr) {
+  const existingContainer = document.getElementById('otExistingRecords');
+  if (!existing || existing.length === 0) {
+    existingContainer.innerHTML = '';
+    return;
+  }
+
+  let html = `<div style="margin-bottom:16px;">`;
+  html += `<div style="font-size:var(--text-body-normal); font-weight:700; color:var(--text-muted); margin-bottom:8px; display:flex; align-items:center; gap:6px;">`;
+  html += `<span>📋</span> 이 날의 기록 — 선택하면 수정/삭제할 수 있어요</div>`;
+
+  existing.forEach(r => {
+    const timeStr = r.startTime ? `${r.startTime}~${r.endTime}` : '종일';
+    const hoursStr = r.totalHours ? ` (${r.totalHours}h)` : '';
+    html += `
+      <div id="ot-tab-${r.id}"
+        onclick="selectOtRecordTab('${r.id}')"
+        style="
+          padding:12px 14px;
+          margin-bottom:8px;
+          border-radius:10px;
+          border:2px solid var(--border-glass);
+          background:var(--bg-glass);
+          cursor:pointer;
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          transition:all 0.18s;
+        "
+        onmouseover="if(!this.classList.contains('ot-tab-selected')){ this.style.borderColor='rgba(99,102,241,0.35)'; this.style.background='rgba(99,102,241,0.04)'; }"
+        onmouseout="if(!this.classList.contains('ot-tab-selected')){ this.style.borderColor='var(--border-glass)'; this.style.background='var(--bg-glass)'; }"
+      >
+        <div style="display:flex; flex-direction:column; gap:3px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="ot-record-type ${r.type}">${OVERTIME.typeLabel(r.type)}</span>
+            <span style="font-weight:600; font-size:13px; color:var(--text-secondary);">${timeStr}${hoursStr}</span>
+          </div>
+          <strong style="color:var(--accent-emerald); font-size:14px;">₩${(r.estimatedPay || 0).toLocaleString()}</strong>
+        </div>
+        <span data-hint style="color:var(--text-muted); font-size:12px; flex-shrink:0;">탭해서 선택 ›</span>
+      </div>`;
+  });
+
+  // 새 기록 추가 탭
+  html += `
+    <div id="ot-tab-new"
+      onclick="selectOtNewTab('${dateStr}')"
+      style="
+        padding:12px 14px;
+        margin-bottom:4px;
+        border-radius:10px;
+        border:2px dashed var(--border-glass);
+        background:transparent;
+        cursor:pointer;
+        display:flex;
+        align-items:center;
+        gap:8px;
+        color:var(--text-muted);
+        font-weight:600;
+        font-size:var(--text-body-large);
+        transition:all 0.18s;
+      "
+      onmouseover="this.style.borderColor='rgba(16,185,129,0.4)'; this.style.color='var(--accent-emerald)';"
+      onmouseout="this.style.borderColor='var(--border-glass)'; this.style.color='var(--text-muted)';"
+    >
+      <span>＋</span> 새 기록 추가하기
+    </div>`;
+
+  html += '</div>';
+  existingContainer.innerHTML = html;
+}
+
+// 기존 기록 탭 선택 → 수정 모드로 폼 로드
+function selectOtRecordTab(id) {
+  const selectedTab = document.getElementById(`ot-tab-${id}`);
+  const isAlreadySelected = selectedTab && selectedTab.classList.contains('ot-tab-selected');
+
+  // 모든 탭 선택 해제
+  document.querySelectorAll('#otExistingRecords [id^="ot-tab-"]').forEach(el => {
+    el.classList.remove('ot-tab-selected');
+    el.style.borderColor = 'var(--border-glass)';
+    el.style.background = 'var(--bg-glass)';
+    const hint = el.querySelector('[data-hint]');
+    if (hint) hint.textContent = '탭해서 선택 ›';
+  });
+
+  if (isAlreadySelected) {
+    // 이미 선택된 탭 재클릭 → 선택 취소, 신규 입력 모드로
+    document.getElementById('otEditId').value = '';
+    document.getElementById('otDeleteBtn').style.display = 'none';
+    document.getElementById('otSaveBtn').textContent = '💾 저장하기';
+    document.getElementById('otSaveBtn').disabled = true;
+    document.getElementById('otMemo').value = '';
+    document.querySelector('input[name="otType"][value="overtime"]').checked = true;
+    onOtTypeChange();
+    previewOtCalc();
+    return;
+  }
+
+  // 새 탭 선택 하이라이트
+  if (selectedTab) {
+    selectedTab.classList.add('ot-tab-selected');
+    selectedTab.style.borderColor = 'var(--accent-indigo)';
+    selectedTab.style.background = 'rgba(99,102,241,0.07)';
+    const hint = selectedTab.querySelector('[data-hint]');
+    if (hint) hint.textContent = '선택됨 ✓';
+  }
+  // 폼에 기록 로드
+  editOtRecord(id);
+}
+
+// 새 기록 추가 탭 선택 → 신규 입력 모드
+function selectOtNewTab(dateStr) {
+  // 탭 하이라이트
+  document.querySelectorAll('#otExistingRecords [id^="ot-tab-"]').forEach(el => {
+    el.classList.remove('ot-tab-selected');
+    el.style.borderColor = 'var(--border-glass)';
+    el.style.background = 'var(--bg-glass)';
+    const hint = el.querySelector('[data-hint]');
+    if (hint) hint.textContent = '탭해서 선택 ›';
+  });
+  const newTab = document.getElementById('ot-tab-new');
+  if (newTab) {
+    newTab.classList.add('ot-tab-selected');
+    newTab.style.borderColor = 'rgba(16,185,129,0.5)';
+    newTab.style.color = 'var(--accent-emerald)';
+  }
+
+  // 신규 입력 모드로 폼 초기화
+  const isHoliday = document.getElementById('otInputPanel').dataset.isHoliday === '1';
   document.getElementById('otEditId').value = '';
   document.getElementById('otDeleteBtn').style.display = 'none';
-  document.getElementById('otSaveBtn').textContent = '💾 저장';
+  document.getElementById('otSaveBtn').textContent = '💾 저장하기';
   document.getElementById('otSaveBtn').disabled = false;
   document.getElementById('otMemo').value = '';
   document.querySelector('input[name="otType"][value="overtime"]').checked = true;
   onOtTypeChange();
   previewOtCalc();
-
-  // 해당 날짜 기존 기록 표시 (전용 컨테이너 사용 → 중복 방지)
-  const existingContainer = document.getElementById('otExistingRecords');
-  existingContainer.innerHTML = '';
-  const existing = OVERTIME.getDateRecords(year, month, day);
-  if (existing.length > 0) {
-    let existingHtml = '<div style="margin-top:8px; padding:8px; background:rgba(244,63,94,0.06); border-radius:6px; font-size:var(--text-body-normal);">';
-    existingHtml += `<strong style="color:var(--accent-rose)">📋 기존 기록 (${existing.length}건)</strong>`;
-    existing.forEach(r => {
-      existingHtml += `<div style="margin-top:4px; padding:4px; border-radius:4px; display:flex; justify-content:space-between; align-items:center;"
-        onmouseover="this.style.background='rgba(99,102,241,0.1)'"
-        onmouseout="this.style.background='transparent'">
-        <div>
-          <span class="ot-record-type ${r.type}" style="font-size:var(--text-label-small)">${OVERTIME.typeLabel(r.type)}</span>
-          ${r.startTime ? r.startTime + '~' + r.endTime : '종일'}
-          ${r.totalHours ? r.totalHours + 'h' : ''}
-          <strong style="color:var(--accent-emerald)">₩${(r.estimatedPay || 0).toLocaleString()}</strong>
-        </div>
-        <div style="display:flex; gap:4px; flex-shrink:0;">
-          <button onclick="editOtRecord('${r.id}')" style="background:var(--accent-indigo); color:white; border:none; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:600; cursor:pointer;">EDIT</button>
-          <button onclick="deleteOtRecord('${r.id}')" style="background:var(--accent-rose); color:white; border:none; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:600; cursor:pointer;">DELETE</button>
-        </div>
-      </div>`;
-    });
-    existingHtml += '</div>';
-    existingHtml += '</div>';
-    existingContainer.innerHTML = existingHtml;
-  }
-
-  // 바텀 시트 열기 (모바일 대응)
-  openOtBottomSheet();
 }
 
 // ── 바텀 시트 컨트롤 ──
@@ -2227,7 +2360,7 @@ function resetOtPanel() {
   document.getElementById('otPanelDate').textContent = '날짜를 선택하세요';
   document.getElementById('otEditId').value = '';
   document.getElementById('otDeleteBtn').style.display = 'none';
-  document.getElementById('otSaveBtn').textContent = '저장하기';
+  document.getElementById('otSaveBtn').textContent = '💾 저장하기';
   document.getElementById('otSaveBtn').disabled = true;
   document.getElementById('otMemo').value = '';
   document.getElementById('otExistingRecords').innerHTML = '';
@@ -2326,6 +2459,59 @@ function previewOtCalc() {
   preview.innerHTML = html;
 }
 
+// ── 시간외 중복 검사 헬퍼 ──
+function checkOtOverlap(dateStr, startTime, endTime, type, excludeId) {
+  const parseMin = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+  const epochMin = (dStr) => {
+    const [y, mo, d] = dStr.split('-').map(Number);
+    return Math.floor(new Date(y, mo - 1, d).getTime() / 60000);
+  };
+
+  // 규칙 1: 온콜출근 ↔ 온콜대기 같은 날 공존 불가
+  if (type === 'oncall_callout' || type === 'oncall_standby') {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const sameDayRecords = OVERTIME.getDateRecords(y, m, d).filter(r => r.id !== excludeId);
+    const conflictType = type === 'oncall_callout' ? 'oncall_standby' : 'oncall_callout';
+    if (sameDayRecords.some(r => r.type === conflictType)) {
+      return `같은 날에 온콜출근과 온콜대기를 함께 등록할 수 없습니다.`;
+    }
+  }
+
+  // 규칙 2: 시간 겹침 검사 (온콜대기는 시간 없으므로 제외)
+  if (type === 'oncall_standby' || !startTime || !endTime) return null;
+
+  const baseMin = epochMin(dateStr);
+  const newS = baseMin + parseMin(startTime);
+  const newE = parseMin(endTime) <= parseMin(startTime)
+    ? baseMin + parseMin(endTime) + 1440   // 자정 넘김 → 익일로
+    : baseMin + parseMin(endTime);
+
+  // 당일, 전날, 익일 기록 검사 (자정 넘김 대응)
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const checkDates = [-1, 0, 1].map(offset => {
+    const dt = new Date(y, m - 1, d + offset);
+    return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+  });
+
+  for (const dStr of checkDates) {
+    const [cy, cm, cd] = dStr.split('-').map(Number);
+    const records = OVERTIME.getDateRecords(cy, cm, cd).filter(r => r.id !== excludeId);
+    for (const r of records) {
+      if (r.type === 'oncall_standby' || !r.startTime || !r.endTime) continue;
+      const rBase = epochMin(r.date);
+      const rS = rBase + parseMin(r.startTime);
+      const rE = parseMin(r.endTime) <= parseMin(r.startTime)
+        ? rBase + parseMin(r.endTime) + 1440
+        : rBase + parseMin(r.endTime);
+      if (newS < rE && newE > rS) {
+        return `입력한 시간(${startTime}~${endTime})이 기존 기록(${OVERTIME.typeLabel(r.type)} ${r.startTime}~${r.endTime}, ${r.date})과 겹칩니다.`;
+      }
+    }
+  }
+
+  return null;
+}
+
 // 저장
 function saveOtRecord() {
   const type = document.querySelector('input[name="otType"]:checked').value;
@@ -2353,6 +2539,13 @@ function saveOtRecord() {
     return;
   }
 
+  // 중복 검사
+  const overlapError = checkOtOverlap(dateStr, startTime, endTime, type, editId);
+  if (overlapError) {
+    alert(overlapError);
+    return;
+  }
+
   if (editId) {
     OVERTIME.updateRecordFull(editId, dateStr, startTime, endTime, type, hourlyRate, isHoliday, memo);
   } else {
@@ -2363,7 +2556,7 @@ function saveOtRecord() {
   closeOtBottomSheet();
 }
 
-// 기록 수정 모드
+// 기록 수정 모드 (탭에서 선택하거나 하단 기록 목록에서 호출)
 function editOtRecord(id) {
   const all = OVERTIME._loadAll();
   let record = null;
@@ -2373,7 +2566,7 @@ function editOtRecord(id) {
   }
   if (!record) return;
 
-  // 해당 날짜로 패널 열기
+  // 해당 날짜로 패널 열기 (탭에서 이미 열려 있으면 그대로 유지)
   const [y, m, d] = record.date.split('-').map(Number);
   otSelectedDate = { year: y, month: m, day: d };
 
@@ -2382,7 +2575,9 @@ function editOtRecord(id) {
 
   const dow = new Date(y, m - 1, d).getDay();
   const dowNames = ['일', '월', '화', '수', '목', '금', '토'];
-  let dateLabel = `${m}월 ${d}일 (${dowNames[dow]}) — 수정`;
+  let dateLabel = `${m}월 ${d}일 (${dowNames[dow]})`;
+  if (!!otHolidayMap[d]) dateLabel += ` 🔴 ${otHolidayMap[d]}`;
+  if (dow === 0 || dow === 6) dateLabel += ' 🔵 주말';
   document.getElementById('otPanelDate').textContent = dateLabel;
 
   // 필드 채우기
@@ -2393,32 +2588,36 @@ function editOtRecord(id) {
   if (record.endTime) document.getElementById('otEndTime').value = record.endTime;
   document.getElementById('otMemo').value = record.memo || '';
 
-  // 수정 모드 표시
+  // 수정 모드 표시 — otEditId에 id 박아넣고, 삭제 버튼 onclick에도 id를 직접 전달
   document.getElementById('otEditId').value = id;
-  document.getElementById('otDeleteBtn').style.display = 'block';
-  document.getElementById('otSaveBtn').textContent = '✏️ 수정';
+  const deleteBtn = document.getElementById('otDeleteBtn');
+  deleteBtn.style.display = 'block';
+  deleteBtn.setAttribute('onclick', `deleteOtRecord('${id}')`);
+  document.getElementById('otSaveBtn').disabled = false;
+  document.getElementById('otSaveBtn').textContent = '✏️ 수정 내용 저장하기';
 
   previewOtCalc();
 }
 
-// 삭제
-function deleteOtRecord() {
-  const id = document.getElementById('otEditId').value;
-  if (!id) return;
-  if (!confirm('이 기록을 삭제하시겠습니까?')) return;
+// 삭제 (id를 직접 받거나, 수정 모드의 otEditId에서 읽음)
+function deleteOtRecord(id) {
+  const targetId = id || document.getElementById('otEditId').value;
+  if (!targetId) {
+    console.warn('[deleteOtRecord] targetId가 비어있음');
+    return;
+  }
 
   const dateStr = document.getElementById('otInputPanel').dataset.date;
-  
-  OVERTIME.deleteRecord(id);
-  
-  // 패널 초기화 및 UI 갱신
-  resetOtPanel();
-  document.getElementById('otInputPanel').dataset.date = dateStr; // 유지
-  if (dateStr) {
-    const [y, m, d] = dateStr.split('-');
-    onOtDateClick(parseInt(y), parseInt(m), parseInt(d));
-  }
-  
+  console.log('[deleteOtRecord] 삭제 시작 id:', targetId, 'dateStr:', dateStr);
+
+  // confirm 없이 즉시 삭제 (confirm이 환경에 따라 블록될 수 있음)
+  OVERTIME.deleteRecord(targetId);
+  console.log('[deleteOtRecord] OVERTIME.deleteRecord 완료');
+
+  // 바텀시트 닫기
+  closeOtBottomSheet();
+
+  // 캘린더 및 기록 목록 전체 갱신
   refreshOtCalendar();
 }
 
@@ -3021,28 +3220,43 @@ function updateLvTypeBtnText(id) {
   if (btnText) btnText.textContent = label;
 }
 
-async function refreshLvCalendar() {
-  const year = lvCurrentYear;
-  const month = lvCurrentMonth;
-
-  // 1. 빠른 렌더링을 위해 캐시된 기록만 먼저 표시
-  const monthRecords = LEAVE.getMonthRecords(year, month);
+// recordsByDay 빌더 - 주말/공휴일 제외 (병가는 역일 기준이므로 포함)
+function buildLvRecordsByDay(year, month, monthRecords, holidayMap) {
   const recordsByDay = {};
   monthRecords.forEach(r => {
+    const useCalendarDays = (r.type === 'sick'); // 병가만 역일 기준
     const start = new Date(r.startDate);
     const end = new Date(r.endDate);
     const cur = new Date(start);
     while (cur <= end) {
       if (cur.getMonth() + 1 === month && cur.getFullYear() === year) {
         const d = cur.getDate();
+        const dow = cur.getDay();
+        const isWeekend = (dow === 0 || dow === 6);
+        const isHoliday = !!(holidayMap && holidayMap[d]);
+        // 병가가 아닌 경우 주말·공휴일은 연차 소진 없으므로 표시 제외
+        if (!useCalendarDays && (isWeekend || isHoliday)) {
+          cur.setDate(cur.getDate() + 1);
+          continue;
+        }
         if (!recordsByDay[d]) recordsByDay[d] = [];
         recordsByDay[d].push(r);
       }
       cur.setDate(cur.getDate() + 1);
     }
   });
+  return recordsByDay;
+}
 
-  renderLvCalendar(year, month, recordsByDay);
+async function refreshLvCalendar() {
+  const year = lvCurrentYear;
+  const month = lvCurrentMonth;
+
+  // 1. 빠른 렌더링 (공휴일 미적용, 주말만 제외)
+  const monthRecords = LEAVE.getMonthRecords(year, month);
+  const recordsByDayFast = buildLvRecordsByDay(year, month, monthRecords, lvHolidayMap);
+
+  renderLvCalendar(year, month, recordsByDayFast);
   renderLvRecordList(year);
   renderLvStats(year);
   renderLvQuotaTable(year);
@@ -3056,7 +3270,8 @@ async function refreshLvCalendar() {
   lvHolidayMap = {};
   (workInfo.holidays || []).forEach(h => { lvHolidayMap[h.day] = h.name; });
 
-  // 3. 공휴일 데이터가 준비되면 다시 렌더링
+  // 3. 공휴일 포함해서 재빌드 후 재렌더링
+  const recordsByDay = buildLvRecordsByDay(year, month, monthRecords, lvHolidayMap);
   renderLvCalendar(year, month, recordsByDay);
 }
 
@@ -3187,6 +3402,15 @@ function onLvDateClick(year, month, day) {
   if (targetCell) targetCell.classList.add('selected');
 
   const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+  // 기존 기록이 있으면 자동으로 수정 모드로 열기
+  const existing = LEAVE.getDateRecords(dateStr);
+  if (existing.length > 0) {
+    editLvRecord(existing[0].id);
+    return;
+  }
+
+  // 새 기록 입력 모드
   const dow = new Date(year, month - 1, day).getDay();
   const dowNames = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -3198,42 +3422,13 @@ function onLvDateClick(year, month, day) {
   document.getElementById('lvEndDate').value = dateStr;
   document.getElementById('lvEditId').value = '';
   document.getElementById('lvDeleteBtn').style.display = 'none';
-  document.getElementById('lvSaveBtn').textContent = '💾 저장';
+  document.getElementById('lvSaveBtn').textContent = '💾 저장하기';
   document.getElementById('lvMemo').value = '';
   document.getElementById('lvType').value = 'annual';
   updateLvTypeBtnText('annual');
 
   onLvTypeChange();
   previewLvCalc();
-
-  // 기존 기록 표시
-  const existingContainer = document.getElementById('lvExistingRecords');
-  existingContainer.innerHTML = '';
-  const existing = LEAVE.getDateRecords(dateStr);
-  if (existing.length > 0) {
-    let extra = '<div style="margin-top:8px; padding:8px; background:rgba(16,185,129,0.06); border-radius:6px; font-size:var(--text-body-large);">';
-    extra += `<strong style="color:var(--accent-emerald)">📋 기존 기록 (${existing.length}건)</strong>`;
-    existing.forEach(r => {
-      const typeInfo = LEAVE.getTypeById(r.type);
-      const timeInfo = r.type === 'time_leave' && r.hours ? ` (${r.hours}h)` : '';
-      extra += `<div style="margin-top:4px; padding:4px; border-radius:4px; display:flex; justify-content:space-between; align-items:center;"
-        onmouseover="this.style.background='rgba(99,102,241,0.1)'"
-        onmouseout="this.style.background='transparent'">
-        <div>
-          <span class="lv-record-type ${r.isPaid ? 'paid' : 'unpaid'}" style="font-size:var(--text-body-normal)">${typeInfo ? typeInfo.label : r.type}</span>
-          ${r.startDate === r.endDate ? '' : r.startDate + '~' + r.endDate}
-          ${(r.days || 0).toFixed(1)}일${timeInfo}
-          ${r.salaryImpact ? '<strong style="color:var(--accent-rose)">-₩' + Math.abs(r.salaryImpact).toLocaleString() + '</strong>' : ''}
-        </div>
-        <div style="display:flex; gap:4px; flex-shrink:0;">
-          <button onclick="editLvRecord('${r.id}')" style="background:var(--accent-indigo); color:white; border:none; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:600; cursor:pointer;">EDIT</button>
-          <button onclick="deleteLvRecord('${r.id}')" style="background:var(--accent-rose); color:white; border:none; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:600; cursor:pointer;">DELETE</button>
-        </div>
-      </div>`;
-    });
-    extra += '</div>';
-    existingContainer.innerHTML = extra;
-  }
 
   // 바텀시트 열기
   openLvBottomSheet();
@@ -3264,9 +3459,8 @@ function resetLvPanel() {
   document.getElementById('lvPanelDate').textContent = '날짜를 선택하세요';
   document.getElementById('lvEditId').value = '';
   document.getElementById('lvDeleteBtn').style.display = 'none';
-  document.getElementById('lvSaveBtn').textContent = '💾 저장';
+  document.getElementById('lvSaveBtn').textContent = '💾 저장하기';
   document.getElementById('lvMemo').value = '';
-  document.getElementById('lvExistingRecords').innerHTML = '';
   document.getElementById('lvPreview').innerHTML = '';
 
   // 오늘 날짜 기본 설정
@@ -3478,6 +3672,20 @@ function saveLvRecord() {
   if (!startDate || !endDate) { alert('시작일/종료일을 선택하세요.'); return; }
   if (new Date(endDate) < new Date(startDate)) { alert('종료일이 시작일보다 이전입니다.'); return; }
 
+  // 새 기록 추가 시 날짜 중복 검사 (수정 모드 제외)
+  if (!editId) {
+    const year = startDate.split('-')[0];
+    const yearRecords = LEAVE.getYearRecords(parseInt(year));
+    const overlap = yearRecords.find(r => {
+      return new Date(r.startDate) <= new Date(endDate) && new Date(r.endDate) >= new Date(startDate);
+    });
+    if (overlap) {
+      const typeInfo2 = LEAVE.getTypeById(overlap.type);
+      alert(`해당 기간에 이미 저장된 휴가가 있습니다.\n(${typeInfo2 ? typeInfo2.label : overlap.type}: ${overlap.startDate} ~ ${overlap.endDate})\n\n날짜를 클릭하면 기존 기록을 수정할 수 있습니다.`);
+      return;
+    }
+  }
+
   const typeInfo = LEAVE.getTypeById(type);
   const profile = PROFILE.load();
   const wage = profile ? PROFILE.calcWage(profile) : null;
@@ -3533,7 +3741,7 @@ function editLvRecord(id) {
   document.getElementById('lvMemo').value = record.memo || '';
   document.getElementById('lvEditId').value = id;
   document.getElementById('lvDeleteBtn').style.display = 'block';
-  document.getElementById('lvSaveBtn').textContent = '✏️ 수정';
+  document.getElementById('lvSaveBtn').textContent = '✏️ 수정 내용 저장하기';
 
   // 시간차 편집 시 시간 복원
   if (record.type === 'time_leave' && record.startTime && record.endTime) {
@@ -3544,7 +3752,7 @@ function editLvRecord(id) {
   const [y, m, d] = record.startDate.split('-').map(Number);
   const dowNames = ['일', '월', '화', '수', '목', '금', '토'];
   const dow = new Date(y, m - 1, d).getDay();
-  document.getElementById('lvPanelDate').textContent = `${m}월 ${d}일 (${dowNames[dow]}) — 수정`;
+  document.getElementById('lvPanelDate').textContent = `${m}월 ${d}일 (${dowNames[dow]})`;
 
   onLvTypeChange();
   previewLvCalc();
@@ -3558,6 +3766,7 @@ function deleteLvRecord() {
   if (!id) return;
   if (!confirm('이 휴가 기록을 삭제하시겠습니까?')) return;
   LEAVE.deleteRecord(id);
+  closeLvBottomSheet();
   refreshLvCalendar();
 }
 
