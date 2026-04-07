@@ -262,15 +262,8 @@ html[data-theme="neo"] .logo .logo-main-title {
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 /* ── Modal Overlay ── */
@@ -1643,14 +1636,18 @@ html[data-theme="neo"] .logo .logo-main-title {
 /* ── 바텀 시트 패널 ── */
 .ot-bottom-sheet {
   position: fixed;
-  bottom: 0; left: 0; right: 0;
+  bottom: 0; 
+  left: 50%;
+  right: auto;
+  width: 100%;
+  max-width: 600px; /* 데스크탑에서 탭 컨텐츠 폭과 맞춤 */
   background: var(--bg-secondary);
   z-index: 10000;
   border-top-left-radius: 16px;
   border-top-right-radius: 16px;
   padding: 16px 20px 24px 20px;
   box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.4);
-  transform: translateY(100%);
+  transform: translate(-50%, 100%);
   transition: transform 0.3s ease-out;
   max-height: 90vh;
   overflow-y: auto;
@@ -1659,7 +1656,7 @@ html[data-theme="neo"] .logo .logo-main-title {
 }
 
 .ot-bottom-sheet.show {
-  transform: translateY(0);
+  transform: translate(-50%, 0);
 }
 
 .ot-sheet-handle {
