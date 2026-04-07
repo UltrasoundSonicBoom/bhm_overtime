@@ -244,6 +244,18 @@ document.addEventListener('DOMContentLoaded', () => {
   window.syncCloudData = function(cloudData) {
     if (!cloudData) return;
 
+    // ✅ 수정: 클라우드 조회 실패 시 로컬 데이터를 건드리지 않고 경고만 표시
+    if (cloudData._fetchFailed) {
+      console.warn('[syncCloudData] 클라우드 조회 실패 — 로컬 데이터 보존');
+      const toast = document.getElementById('otToast');
+      if (toast) {
+        toast.textContent = '⚠️ 클라우드 연결 실패 — 로컬 데이터로 계속합니다.';
+        toast.style.display = 'block';
+        setTimeout(() => toast.style.display = 'none', 4000);
+      }
+      return;
+    }
+
     // ── [Guest → 로그인 유저 마이그레이션] ──
     // 로컬 모드(비로그인)에서 입력한 _guest 키 데이터를 로그인 직후 사용자 키로 이전.
     // 클라우드에 이미 데이터가 있으면 클라우드 우선, guest 데이터는 폐기.

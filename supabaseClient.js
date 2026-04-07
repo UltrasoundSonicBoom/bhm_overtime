@@ -68,20 +68,13 @@ const SupabaseSync = {
     async signOut() {
         if (!window.isFamilyMode || !supabaseClient) return;
         try {
-            // 로그아웃 전에 키를 미리 수집 (signOut 후엔 SupabaseUser가 null이 됨)
-            const keysToRemove = [
-                getUserStorageKey('bhm_hr_profile'),
-                getUserStorageKey('overtimeRecords'),
-                getUserStorageKey('leaveRecords'),
-                getUserStorageKey('otManualHourly'),
-            ];
             await supabaseClient.auth.signOut();
-            // 가족 모드: 로그아웃 시 타인에게 정보 노출 방지를 위해 로컬 캐시 키 파기
-            keysToRemove.forEach(k => localStorage.removeItem(k));
+            // ✅ 수정: 로컬 캐시를 삭제하지 않음.
+            // 키가 이미 `_<userId>` 형태로 구분되어 있으므로 타인이 볼 수 없고,
+            // 다음 로그인 시 클라우드 sync 실패해도 로컬 데이터가 보존됨.
         } catch (e) {
             console.error('Logout error:', e);
         }
-        // 화면 데이터를 확실히 초기화하기 위해 파라미터 유지한 채로 완전히 새로고침
         window.location.reload();
     },
 
@@ -92,7 +85,6 @@ const SupabaseSync = {
             if (!session) return null;
             const userId = session.user.id;
 
-            // 유저 로그인 상태라면 본인 데이터만 가져오도록 user_id로 명시적 필터링
             const { data: otData, error: otErr } = await supabaseClient
                 .from('overtime_records')
                 .select('*')
@@ -100,7 +92,6 @@ const SupabaseSync = {
             
             if (otErr) throw otErr;
 
-            // profiles 테이블은 RLS가 열려 있어 모두 열람 가능할 수 있으므로, 명시적으로 id 필터링
             const { data: pfData, error: pfErr } = await supabaseClient
                 .from('profiles')
                 .select('*')
@@ -109,7 +100,6 @@ const SupabaseSync = {
 
             if (pfErr) throw pfErr;
 
-            // 휴가 기록도 가져오기
             const { data: lvData, error: lvErr } = await supabaseClient
                 .from('leave_records')
                 .select('*')
@@ -118,13 +108,15 @@ const SupabaseSync = {
             if (lvErr) throw lvErr;
 
             return {
-                overtime: otData,
+                overtime: otData || [],
                 profile: pfData,
-                leave: lvData
+                leave: lvData || [],
+                _fetchSuccess: true  // ✅ 클라우드 조회 성공 여부 표시
             };
         } catch (e) {
             console.error("Failed to fetch from Supabase:", e);
-            return null;
+            // ✅ 수정: null 대신 실패 표시를 반환 → syncCloudData가 로컬 데이터를 보호
+            return { _fetchFailed: true };
         }
     },
 
