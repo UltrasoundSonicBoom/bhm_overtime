@@ -68,14 +68,16 @@ const SupabaseSync = {
     async signOut() {
         if (!window.isFamilyMode || !supabaseClient) return;
         try {
-            // 로그아웃 전에 userId 캡처 (signOut 후엔 SupabaseUser가 null이 됨)
-            const uid = window.SupabaseUser ? window.SupabaseUser.id : 'guest';
+            // 로그아웃 전에 키를 미리 수집 (signOut 후엔 SupabaseUser가 null이 됨)
+            const keysToRemove = [
+                getUserStorageKey('bhm_hr_profile'),
+                getUserStorageKey('overtimeRecords'),
+                getUserStorageKey('leaveRecords'),
+                getUserStorageKey('otManualHourly'),
+            ];
             await supabaseClient.auth.signOut();
-            // 가족 모드: 로그아웃 시 타인에게 정보 노출 방지를 위해 정확한 로컬 캐시 키 파기
-            localStorage.removeItem(`bhm_hr_profile_${uid}`);
-            localStorage.removeItem(`overtimeRecords_${uid}`);
-            localStorage.removeItem(`leaveRecords_${uid}`);
-            localStorage.removeItem(`otManualHourly_${uid}`);
+            // 가족 모드: 로그아웃 시 타인에게 정보 노출 방지를 위해 로컬 캐시 키 파기
+            keysToRemove.forEach(k => localStorage.removeItem(k));
         } catch (e) {
             console.error('Logout error:', e);
         }

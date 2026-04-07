@@ -2,6 +2,18 @@
 // 병원 HR 종합 시스템 - 앱 로직
 // ============================================
 
+// ── HTML 이스케이프 (XSS 방지) ──
+// innerHTML에 사용자 입력값을 삽입할 때 반드시 이 함수를 거칠 것
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // ── 프로필 필드 매핑 ──
 const PROFILE_FIELDS = {
   name: 'pfName',
@@ -220,7 +232,76 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── [Supabase Cloud Sync Callback] ──
   window.syncCloudData = function(cloudData) {
     if (!cloudData) return;
-    let changed = false;
+
+    // ── [Guest → 로그인 유저 마이그레이션] ──
+    // 로컬 모드(비로그인)에서 입력한 _guest 키 데이터를 로그인 직후 사용자 키로 이전.
+    // 클라우드에 이미 데이터가 있으면 클라우드 우선, guest 데이터는 폐기.
+    // 어느 쪽이든 로그인 후에는 _guest 키를 삭제해 공용 기기 개인정보 방치를 방지.
+    const GUEST_KEYS = {
+      profile:  'bhm_hr_profile_guest',
+      overtime: 'overtimeRecords_guest',
+      leave:    'leaveRecords_guest',
+      manual:   'otManualHourly_guest'
+    };
+    const rawGuestProfile = localStorage.getItem(GUEST_KEYS.profile);
+    const rawGuestOt      = localStorage.getItem(GUEST_KEYS.overtime);
+    const rawGuestLeave   = localStorage.getItem(GUEST_KEYS.leave);
+    const rawGuestManual  = localStorage.getItem(GUEST_KEYS.manual);
+    let migrated = false;
+
+    if (rawGuestProfile || rawGuestOt || rawGuestLeave) {
+      console.log('[syncCloudData] Guest 데이터 감지 → 마이그레이션 시작');
+
+      // 프로필: 클라우드에 없을 때만 이전
+      if (!cloudData.profile && rawGuestProfile) {
+        localStorage.setItem(PROFILE.STORAGE_KEY, rawGuestProfile);
+        try {
+          const pf = JSON.parse(rawGuestProfile);
+          pf.id = window.SupabaseUser.id;
+          window.SupabaseSync.pushCloudData('profiles', pf);
+        } catch(e) { console.warn('[migrate] profile push 실패', e); }
+        migrated = true;
+      }
+
+      // 시간외: 클라우드 레코드가 없을 때만 이전
+      if (!(cloudData.overtime && cloudData.overtime.length > 0) && rawGuestOt) {
+        localStorage.setItem(OVERTIME.STORAGE_KEY, rawGuestOt);
+        try {
+          const otMap = JSON.parse(rawGuestOt);
+          Object.values(otMap).flat().forEach(r =>
+            window.SupabaseSync.pushCloudData('overtime_records', { ...r })
+          );
+        } catch(e) { console.warn('[migrate] overtime push 실패', e); }
+        migrated = true;
+      }
+
+      // 휴가: 클라우드 레코드가 없을 때만 이전
+      if (!(cloudData.leave && cloudData.leave.length > 0) && rawGuestLeave) {
+        localStorage.setItem(LEAVE.STORAGE_KEY, rawGuestLeave);
+        try {
+          const lvMap = JSON.parse(rawGuestLeave);
+          Object.values(lvMap).flat().forEach(r =>
+            window.SupabaseSync.pushCloudData('leave_records', { ...r })
+          );
+        } catch(e) { console.warn('[migrate] leave push 실패', e); }
+        migrated = true;
+      }
+
+      // otManualHourly: 사용자 키에 값 없을 때만 이전
+      if (rawGuestManual) {
+        const userManualKey = window.getUserStorageKey('otManualHourly');
+        if (!localStorage.getItem(userManualKey)) {
+          localStorage.setItem(userManualKey, rawGuestManual);
+        }
+      }
+
+      // _guest 키 전부 삭제 — 공용 기기에서 타인이 볼 수 없도록
+      Object.values(GUEST_KEYS).forEach(k => localStorage.removeItem(k));
+      console.log('[syncCloudData] Guest 마이그레이션 완료, guest 키 삭제됨');
+    }
+
+    // ── [클라우드 → 로컬 동기화] ──
+    let changed = migrated; // 마이그레이션만 있어도 UI 갱신 필요
     if (cloudData.profile) {
       localStorage.setItem(PROFILE.STORAGE_KEY, JSON.stringify(cloudData.profile));
       changed = true;
@@ -273,7 +354,9 @@ document.addEventListener('DOMContentLoaded', () => {
       
       const toast = document.getElementById('otToast');
       if (toast) {
-        toast.textContent = "클라우드 데이터와 동기화되었습니다. ✅";
+        toast.textContent = migrated
+          ? "로컬 데이터를 클라우드에 저장했습니다. ✅"
+          : "클라우드 데이터와 동기화되었습니다. ✅";
         toast.style.display = 'block';
         setTimeout(() => toast.style.display = 'none', 3000);
       }
@@ -431,11 +514,25 @@ async function uploadBackup(event) {
     try {
         const text = await file.text();
         const data = JSON.parse(text);
-        
-        if (data.profile) localStorage.setItem(PROFILE.STORAGE_KEY, data.profile);
-        if (data.overtime) localStorage.setItem(OVERTIME.STORAGE_KEY, data.overtime);
-        if (data.leave) localStorage.setItem(LEAVE.STORAGE_KEY, data.leave);
-        
+
+        // 백업 파일 내 각 필드는 localStorage 저장용 JSON 문자열이어야 함.
+        // 수동 편집 등으로 객체로 들어온 경우 다시 직렬화하고,
+        // 최종적으로 JSON.parse 검증을 통과해야만 저장 — 무음 손상 방지.
+        const toStorable = v => {
+            if (!v) return null;
+            const s = typeof v === 'string' ? v : JSON.stringify(v);
+            JSON.parse(s); // 유효하지 않으면 여기서 throw → catch로 이동
+            return s;
+        };
+
+        const profileStr  = toStorable(data.profile);
+        const overtimeStr = toStorable(data.overtime);
+        const leaveStr    = toStorable(data.leave);
+
+        if (profileStr)  localStorage.setItem(PROFILE.STORAGE_KEY,  profileStr);
+        if (overtimeStr) localStorage.setItem(OVERTIME.STORAGE_KEY, overtimeStr);
+        if (leaveStr)    localStorage.setItem(LEAVE.STORAGE_KEY,    leaveStr);
+
         alert("데이터가 성공적으로 복원되었습니다! 앱을 새로고침합니다.");
         window.location.reload();
     } catch (e) {
@@ -497,7 +594,7 @@ function applyProfileToPayroll() {
 
   if (profile) {
     banner.style.display = 'block';
-    banner.innerHTML = `📌 <strong>${profile.name || '내 정보'}</strong> 프로필이 적용됩니다. (${profile.jobType} ${profile.grade} ${profile.year}년차)`;
+    banner.innerHTML = `📌 <strong>${escapeHtml(profile.name) || '내 정보'}</strong> 프로필이 적용됩니다. (${escapeHtml(profile.jobType)} ${escapeHtml(profile.grade)} ${escapeHtml(String(profile.year))}년차)`;
     manualSection.style.display = 'none';
   } else {
     banner.style.display = 'none';
@@ -1048,7 +1145,8 @@ function calculateLongService() {
 function calculateNightBonus() {
   const count = parseInt(document.getElementById('nsCount').value) || 0;
   const profile = PROFILE.load();
-  const prevCumulative = (profile && profile.nightShiftsUnrewarded) ? profile.nightShiftsUnrewarded : 0;
+  const prevCumulative = (profile && profile.nightShiftsUnrewarded != null)
+    ? profile.nightShiftsUnrewarded : 0;
   const r = CALC.calcNightShiftBonus(count, prevCumulative);
 
   let html = `
@@ -1062,6 +1160,14 @@ function calculateNightBonus() {
 
   if (r.초과경고) {
     html += `<div class="warning-box">${r.초과경고}</div>`;
+  }
+
+  // 이월 누적 횟수를 profile에 저장 — 다음 달 calculateNightBonus() 호출 시 자동 반영
+  if (profile) {
+    PROFILE.save({ ...profile, nightShiftsUnrewarded: r.누적리커버리데이 });
+    html += `<div class="info-note-banner" style="margin-top:8px;">💾 이월 횟수 (${r.누적리커버리데이}회) 저장됨 — 다음 달 계산 시 자동 반영됩니다.</div>`;
+  } else {
+    html += `<div class="warning-box" style="margin-top:8px;">⚠️ 개인정보 탭에서 프로필을 저장하면 이월 횟수가 자동으로 기억됩니다.</div>`;
   }
 
   document.getElementById('nightBonusResult').innerHTML = html;
@@ -2394,7 +2500,7 @@ function renderOtRecordList(records) {
     html += `<div class="ot-record-item" onclick="editOtRecord('${r.id}')">
       <div class="ot-record-date">${day}<br><span style="font-size:var(--text-label-small);color:var(--text-muted)">${dowNames[dow]}</span></div>
       <span class="ot-record-type ${r.type}">${OVERTIME.typeLabel(r.type)}</span>
-      <div class="ot-record-info">${timeStr} ${hoursStr}${r.memo ? '<br><span style="color:var(--text-muted)">' + r.memo + '</span>' : ''}</div>
+      <div class="ot-record-info">${timeStr} ${hoursStr}${r.memo ? '<br><span style="color:var(--text-muted)">' + escapeHtml(r.memo) + '</span>' : ''}</div>
       <div class="ot-record-pay">₩${(r.estimatedPay || 0).toLocaleString()}</div>
     </div>`;
   });
@@ -3511,7 +3617,7 @@ function renderLvRecordList(year) {
       <span class="lv-record-type ${r.isPaid ? 'paid' : 'unpaid'}">${typeInfo ? typeInfo.label : r.type}</span>
       <div style="flex:1; font-size:var(--text-body-normal); color:var(--text-secondary)">
         ${dateDisplay}${timeDisplay}
-        ${r.memo ? ' <span style="color:var(--text-muted)">' + r.memo + '</span>' : ''}
+        ${r.memo ? ' <span style="color:var(--text-muted)">' + escapeHtml(r.memo) + '</span>' : ''}
       </div>
       <div style="font-size:var(--text-body-normal); font-weight:700; color:${r.salaryImpact ? 'var(--accent-rose)' : 'var(--accent-emerald)'}">
         ${r.salaryImpact ? '-₩' + Math.abs(r.salaryImpact).toLocaleString() : '유급'}

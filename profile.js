@@ -20,14 +20,13 @@ const PROFILE = {
         hasMilitary: false,
         militaryMonths: 24,
         hasSeniority: false,
-        hasSpouse: false,
-        numChildren: 0,
-        otherFamily: 0,
+        numFamily: 0,              // 가족 수 (자녀 제외)
+        numChildren: 0,            // 자녀 수
+        numChildrenUnder6: 0,      // 6세이하 자녀 수 (인원 수, 비통상임금)
         specialPay: 0,
         positionPay: 0,
         workSupportPay: 0,
-        childrenUnder6Pay: 0,
-        nightShiftsUnrewarded: 0,  // 누적 미지급 야간근무 횟수 (리커버리 데이 정산용)
+        nightShiftsUnrewarded: 0,  // 누적 미지급 야간근무 횟수 (리커버리 데이 이월용)
         weeklyHours: 209           // 월 소정근로시간 (기본 209시간, 비정규직 등 다를 경우 수정)
     },
 
@@ -206,7 +205,6 @@ const PROFILE = {
             positionPay: profile.positionPay || 0,
             workSupportPay: profile.workSupportPay || 0,
             familyAllowance: this.calcFamilyAllowance(profile),
-            childrenUnder6Pay: profile.childrenUnder6Pay || 0,
             weeklyHours: profile.weeklyHours || 209
         });
     }
