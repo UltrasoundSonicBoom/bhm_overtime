@@ -164,7 +164,7 @@
       border: 2px solid #1a1a1a;
       box-shadow: 2px 2px 0 #1a1a1a;
       background: #fff8e1;
-      color: #7a5200;
+      color: #000000;
     }
 
     .hourly-warning-banner a {
@@ -305,7 +305,7 @@
 
             <div id="psProfileBanner" class="warning-box" style="display:none;"></div>
 
-            <p style="font-size:var(--text-body-normal); color:var(--accent-amber); margin:8px 0 4px; font-weight:600;">
+            <p style="font-size:var(--text-body-normal); color:#000000; margin:8px 0 4px; font-weight:600;">
               ▸ 시뮬레이션 월</p>
             <div class="form-row">
               <div class="form-group">
@@ -338,7 +338,7 @@
             <div id="psHolidayInfo"
               style="font-size:var(--text-body-normal); color:var(--text-muted); margin-bottom:12px;"></div>
 
-            <p style="font-size:var(--text-body-normal); color:var(--accent-amber); margin:8px 0 4px; font-weight:600;">
+            <p style="font-size:var(--text-body-normal); color:#000000; margin:8px 0 4px; font-weight:600;">
               ▸ 이번달 변동사항</p>
             <div class="form-row">
               <div class="form-group">
@@ -616,7 +616,7 @@
         <!-- 청원/경조 상세정보 패널 -->
         <div id="lvCeremonyInfo"
           style="display:none; margin-bottom:10px; padding:10px; border-radius:8px; background:rgba(251,191,36,0.06); border:1px solid rgba(251,191,36,0.2); font-size:var(--text-body-large);">
-          <div style="font-weight:600; color:var(--accent-amber); margin-bottom:6px;">📋 청원휴가 안내</div>
+          <div style="font-weight:600; color:#000000; margin-bottom:6px;">📋 청원휴가 안내</div>
           <div id="lvCeremonyDays" style="margin-bottom:3px;"></div>
           <div id="lvCeremonyPay" style="margin-bottom:3px;"></div>
           <div id="lvCeremonyDocs" style="margin-bottom:3px;"></div>
@@ -769,8 +769,7 @@
               class="toggle-icon">▸</span> 내 정보 입력/수정</span>
         </div>
         <div class="collapsible-body" id="pfInputFields" style="display:block;">
-          <p style="font-size:var(--text-body-normal); color:var(--text-muted); margin-bottom:12px;">한번 저장하면 모든 계산기에 자동
-            반영됩니다. 데이터는 이 브라우저에만 저장됩니다.</p>
+          <p style="font-size:var(--text-body-normal); color:var(--text-muted); margin-bottom:12px;">개인정보를 입력해주세요. (통상임금 항목) <br>데이터는 이 기기에만 저장됩니다.</p>
 
           <!-- ▸ 기본 정보 -->
           <p style="font-size:var(--text-body-normal); color:var(--accent-indigo); margin:0 0 8px; font-weight:600;">▸
@@ -816,7 +815,7 @@
             </div>
             <div class="form-group">
               <label>입사일</label>
-              <input type="text" id="pfHireDate" placeholder="예: 2006-07-05">
+              <input type="text" id="pfHireDate" placeholder="예: 2021-01-01">
               <small id="pfServiceDisplay" style="color:var(--text-muted)"></small>
             </div>
           </div>
@@ -830,7 +829,7 @@
           </div>
 
           <!-- ▸ 개인 수당 (급여명세서 확인 후 입력) -->
-          <p style="font-size:var(--text-body-normal); color:var(--accent-amber); margin:16px 0 4px; font-weight:600;">▸
+          <p style="font-size:var(--text-body-normal); color:#000000; margin:16px 0 4px; font-weight:600;">▸
             개인 수당 <small style="font-weight:400; color:var(--text-muted)">급여명세서 확인 후 입력</small></p>
           <div class="form-row">
             <div class="form-group">
@@ -896,33 +895,34 @@
           <!-- 근속가산기본급: 입사일로 자동 계산, 별도 입력 불필요 -->
           <input type="checkbox" id="pfSeniority" style="display:none;">
 
+          <!-- 공용 기기 개인정보 주의 안내 -->
+          <div
+            style="display:flex; align-items:flex-start; gap:10px; padding:10px 12px; background:rgba(245,158,11,0.09); border:1px solid rgba(245,158,11,0.35); border-radius:8px; font-size:var(--text-body-normal); margin-top:20px; line-height:1.5;">
+            <span style="font-size:1.1rem; flex-shrink:0; margin-top:1px;">⚠️</span>
+            <div>
+              <strong style="color:#F080A0; font-weight: bold; display:block; margin-bottom:2px;">공용 기기에서는 개인정보를 저장하지
+                마세요</strong>
+              <span style="color:var(--text-secondary);">학교·도서관·직장 공용 컴퓨터에서는 개인정보를 입력하지 마세요. 데이터는 이 브라우저에만 저장되어
+                <strong>다음 사용자가 동일 브라우저를 열면 볼 수 있습니다.</strong></span>
+            </div>
+          </div>
+
           <div class="form-row" style="margin-top:16px;">
             <button class="btn btn-primary" onclick="saveProfile()" style="flex:2">💾 저장하기</button>
             <button class="btn btn-outline" onclick="clearProfile()" style="flex:1">🗑 초기화</button>
           </div>
         </div>
-
-        <!-- 프로필 요약 -->
-        <div id="profileSummary" style="margin-top:16px; padding-top:16px; border-top:1px solid var(--border-glass);">
-          <div class="card-title" style="font-size:var(--text-body-large);"><span class="icon indigo">📝</span> 통상임금 내역
-          </div>
-          <p style="color:var(--text-muted)">정보를 입력하고 [저장하기]를 눌러주세요.</p>
+      </div><!-- End of Profile Form Card -->
+        
+      <!-- 프로필 요약 -->
+      <div id="profileSummary" class="card" style="max-width:600px; margin:20px auto 0;">
+        <div class="card-title" style="font-size:var(--text-body-large);"><span class="icon indigo">📝</span> 통상임금 내역
         </div>
+        <p style="color:var(--text-muted)">정보를 입력하고 [저장하기]를 눌러주세요.</p>
+      </div>
 
         <!-- 파일 백업/복구 (일반 모드 전용) -->
-        <div id="localBackupSection"
-          style="margin-top:24px; padding:16px; background:var(--bg-glass); border-radius:12px; border:1px solid var(--border-glass);">
-          <!-- 공용 기기 개인정보 주의 안내 -->
-          <div
-            style="display:flex; align-items:flex-start; gap:10px; padding:10px 12px; background:rgba(245,158,11,0.09); border:1px solid rgba(245,158,11,0.35); border-radius:8px; font-size:var(--text-body-normal); margin-bottom:14px; line-height:1.5;">
-            <span style="font-size:1.1rem; flex-shrink:0; margin-top:1px;">⚠️</span>
-            <div>
-              <strong style="color:#F080A0; font-weight: bold; display:block; margin-bottom:2px;">공용 기기에서는 개인정보를 저장하지
-                마세요</strong>
-              <span style="color:var(--text-secondary);">학교·도서관·직장 공용 컴퓨터에서는 호봉·수당 등 개인정보를 입력하지 마세요. 데이터는 이 브라우저에만 저장되어
-                <strong>다음 사용자가 동일 브라우저를 열면 볼 수 있습니다.</strong></span>
-            </div>
-          </div>
+        <div id="localBackupSection" class="card" style="max-width:600px; margin:20px auto 0;">
           <div class="card-title" style="font-size:var(--text-body-large);"><span class="icon indigo">💾</span> 데이터 백업 및
             복구</div>
           <p style="font-size:var(--text-body-normal); color:var(--text-muted); margin-bottom:12px;">클라우드 동기화 없이 기기 내부에
@@ -940,13 +940,12 @@
         </div>
 
         <!-- 시작 가이드 버튼 -->
-        <div style="margin-top:12px;">
+        <div style="max-width:600px; margin:16px auto 0;">
           <button onclick="showOnboarding()" class="btn btn-outline"
             style="width:100%; font-size:var(--text-body-normal); padding:10px; color:var(--accent-indigo); border-color:var(--accent-indigo);">
             🚀 시작 가이드 보기
           </button>
         </div>
-      </div>
     </div>
 
     <!-- ═══════════ 📢 피드백 방 ═══════════ -->
@@ -1061,7 +1060,7 @@
       <div class="onboarding-title">처음 오셨나요?</div>
       <div class="onboarding-sub">
         지금까지 휴가와 시간외 등을 얼마나 썼는지<br>기록하고 관리하기 위해 만들었어요.<br>
-        <small style="color:var(--accent-amber); font-size:var(--text-body-normal);">※ 수당 계산은 참고용 — 근속연수·무급휴직 등
+        <small style="color:#009894; font-size:var(--text-body-normal);">※ 수당 계산은 참고용 — 근속연수·무급휴직 등
           개인차로<br>실제와 다를 수 있어요.</small>
       </div>
       <div class="onboarding-steps">

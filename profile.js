@@ -11,8 +11,8 @@ const PROFILE = {
     defaults: {
         name: '',
         gender: '',        // 'M' / 'F' / '' (미설정)
-        jobType: '일반직',
-        grade: 'J1',
+        jobType: '간호직',
+        grade: 'J3',
         year: 1,
         hireDate: '',
         adjustPay: 0,

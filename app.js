@@ -120,6 +120,8 @@ function populateJobTypeDropdowns() {
       opt.textContent = key;
       sel.appendChild(opt);
     });
+    // 기본값 설정 (간호직)
+    sel.value = '간호직';
   });
 }
 
@@ -386,6 +388,9 @@ function updateProfileGrades() {
     opt.textContent = g;
     gradeSelect.appendChild(opt);
   });
+  if (!gradeSelect.value || gradeSelect.value === 'J1') {
+    gradeSelect.value = 'J3';
+  }
 }
 // 자녀 수가 1 이상일 때 6세이하 행 표시
 function toggleUnder6Field() {
