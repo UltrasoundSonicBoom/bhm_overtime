@@ -36,20 +36,37 @@ const PROFILE_FIELDS = {
   weeklyHours: 'pfWeeklyHours'
 };
 
+function getCaptureParams() {
+  return new URLSearchParams(window.location.search);
+}
+
 // ── 탭 전환 ──
+function switchTab(tabName) {
+  if (!tabName) return false;
+
+  const targetTab = document.querySelector(`.nav-tab[data-tab="${tabName}"]`);
+  const targetContent = document.getElementById('tab-' + tabName);
+  if (!targetTab || !targetContent) return false;
+
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  targetTab.classList.add('active');
+  targetContent.classList.add('active');
+
+  if (tabName === 'payroll') { applyProfileToPayroll(); if (typeof PAYROLL !== 'undefined') PAYROLL.init(); }
+  if (tabName === 'overtime') { applyProfileToOvertime(); initOvertimeTab(); }
+  if (tabName === 'leave') { applyProfileToLeave(); initLeaveTab(); }
+  if (tabName === 'reference') renderWikiToc();
+  if (tabName === 'profile') initProfileTab();
+
+  return true;
+}
+
+window.switchTab = switchTab;
+
 document.querySelectorAll('.nav-tab').forEach(tab => {
   tab.addEventListener('click', () => {
-    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    tab.classList.add('active');
-    document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
-
-    const tabName = tab.dataset.tab;
-    if (tabName === 'payroll') { applyProfileToPayroll(); if (typeof PAYROLL !== 'undefined') PAYROLL.init(); }
-    if (tabName === 'overtime') { applyProfileToOvertime(); initOvertimeTab(); }
-    if (tabName === 'leave') { applyProfileToLeave(); initLeaveTab(); }
-    if (tabName === 'reference') renderWikiToc();
-    if (tabName === 'profile') initProfileTab();
+    switchTab(tab.dataset.tab);
   });
 });
 
@@ -73,12 +90,7 @@ function initProfileTab() {
 
 // ── 개인정보 탭으로 전환 ──
 function switchToProfileTab() {
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-  const profileTab = document.querySelector('.nav-tab[data-tab="profile"]');
-  if (profileTab) profileTab.classList.add('active');
-  document.getElementById('tab-profile').classList.add('active');
-  initProfileTab();
+  switchTab('profile');
 }
 
 // ── 접이식(collapsible) 토글 ──
@@ -199,18 +211,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 초기 기본 탭 (휴가 탭 우선)
   function activateV1DefaultTab() {
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-    
-    const leaveTab = document.querySelector('.nav-tab[data-tab="leave"]');
-    const leaveContent = document.getElementById('tab-leave');
-    
-    if (leaveTab) leaveTab.classList.add('active');
-    if (leaveContent) leaveContent.classList.add('active');
-    
     applyProfileToOvertime();
     initOvertimeTab();
     initLeaveTab();
+
+    const params = getCaptureParams();
+    const requestedTab = params.get('tab');
+    if (!switchTab(requestedTab || 'leave')) {
+      switchTab('leave');
+    }
   }
   activateV1DefaultTab();
 

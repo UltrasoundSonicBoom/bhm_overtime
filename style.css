@@ -2941,6 +2941,8 @@ html[data-theme="neo"] .ot-preview {
   background: var(--accent-emerald);
   border: 2px solid #1a1a1a;
   color: #1a1a1a;
+  --accent-rose: #8B0000; /* 초록 배경 위에서 파스텔 핑크 안 보임 → 진한 빨강으로 재정의 */
+  --text-muted: #1a1a1a99;
 }
 
 /* ── Neo: Record Items ── */

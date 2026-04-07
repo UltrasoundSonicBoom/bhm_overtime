@@ -1,0 +1,5 @@
+{
+  "name": "Payroll Parser WebApp",
+  "description": "A web application to upload, parse, and display payroll data from CSV or XLSX files.",
+  "requestFramePermissions": []
+}
