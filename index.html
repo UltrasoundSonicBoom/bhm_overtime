@@ -201,10 +201,113 @@
       cursor: pointer;
       font-weight: 600;
     }
+    /* ── Migration Banner ── */
+    .migration-banner {
+      background: #4f46e5;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      position: relative;
+      z-index: 10000;
+      border-bottom: 2px solid #1a1a1a;
+    }
+
+    html[data-theme="neo"] .migration-banner {
+      background: #6366f1;
+      border-bottom: 4px solid #1a1a1a;
+    }
+
+    .migration-content {
+      max-width: 1000px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .migration-icon {
+      font-size: 32px;
+    }
+
+    .migration-text {
+      line-height: 1.6;
+      font-size: var(--text-body-large);
+      text-align: center;
+    }
+
+    .migration-text strong {
+      font-size: 1.1em;
+    }
+
+    .migration-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .migration-btn {
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 2px solid #1a1a1a;
+      box-shadow: 3px 3px 0px #1a1a1a;
+      transition: all 0.1s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .migration-btn:active {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0px #1a1a1a;
+    }
+
+    .migration-btn.primary {
+      background: #fbbf24;
+      color: #1a1a1a;
+    }
+
+    .migration-btn.secondary {
+      background: white;
+      color: #1a1a1a;
+    }
+
+    @media (min-width: 850px) {
+      .migration-content {
+        flex-direction: row;
+        text-align: left;
+      }
+      .migration-text {
+        text-align: left;
+      }
+      .migration-actions {
+        margin-left: auto;
+      }
+    }
   </style>
 </head>
 
 <body>
+
+  <!-- ═══════════ 도메인 이전 안내 배너 ═══════════ -->
+  <div id="migrationBanner" class="migration-banner" style="display:none;">
+    <div class="migration-content">
+      <div class="migration-icon">🚀</div>
+      <div class="migration-text">
+        <strong>사이트 주소가 <span style="text-decoration:underline;">snuhmate.com</span>으로 이전되었습니다!</strong><br>
+        브라우저 보안 정책상 기존 데이터는 자동으로 이동되지 않습니다. 기존 사용자분들은 백업 후 이동해 주세요.<br>
+        <span style="font-size: 0.9em; opacity: 0.9;">※ 처음 접속하시는 분은 처음부터 <strong>snuhmate.com</strong>에서 기록하시면 됩니다.</span>
+      </div>
+      <div class="migration-actions">
+        <button class="migration-btn primary" onclick="downloadBackup()">📦 데이터 백업하기</button>
+        <a href="https://snuhmate.com" class="migration-btn secondary">🔗 snuhmate.com으로 이동</a>
+      </div>
+    </div>
+  </div>
 
   <!-- ═══════════ Header ═══════════ -->
   <header class="header">
@@ -1173,6 +1276,13 @@
       const warning = document.getElementById('otHourlyWarning');
       if (warning) warning.style.display = val === 0 ? 'flex' : 'none';
     }
+
+    // 도메인 이전 배너 노출 로직 (vercel.app인 경우에만)
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.location.hostname.includes('vercel.app')) {
+        document.getElementById('migrationBanner').style.display = 'block';
+      }
+    });
 
     // 시간외 탭 전환 시 경고 확인
     document.addEventListener('DOMContentLoaded', () => {
