@@ -248,6 +248,7 @@ html[data-theme="neo"] .logo .logo-main-title {
   max-width: 1200px;
   margin: 0 auto;
   padding: 24px;
+  padding-bottom: 100px; /* 하단 고정 탭바 공간 확보 (데스크탑) */
 }
 
 /* ── Tab Content ── */

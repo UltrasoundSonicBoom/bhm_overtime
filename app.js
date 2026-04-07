@@ -412,8 +412,12 @@ function saveProfile() {
   if (label) label.textContent = '▸ 내 정보 입력/수정';
   // Q&A 카드 갱신
   if (typeof PAYROLL !== 'undefined') PAYROLL.init();
-  // 휴가 연차 한도 갱신
-  if (typeof applyProfileToLeave === 'function') applyProfileToLeave();
+  // 휴가 연차 한도 갱신 및 UI 리렌더링
+  if (typeof applyProfileToLeave === 'function') {
+      applyProfileToLeave();
+      if (typeof populateLvTypeSelect === 'function') populateLvTypeSelect();
+      if (typeof refreshLvCalendar === 'function' && typeof lvInitialized !== 'undefined' && lvInitialized) refreshLvCalendar();
+  }
 }
 
 function clearProfile() {
@@ -630,7 +634,7 @@ function applyProfileToLeave() {
     // 연차 자동 산정
     const parsed = PROFILE.parseDate(profile.hireDate);
     if (parsed) {
-      const result = CALC.calcAnnualLeave(parsed);
+      const result = CALC.calcAnnualLeave(new Date(parsed));
       if (result) lvTotalAnnual = result.totalLeave;
     }
   } else {
@@ -2767,7 +2771,7 @@ function initLeaveTab() {
   if (profile && profile.hireDate) {
     const parsed = PROFILE.parseDate(profile.hireDate);
     if (parsed) {
-      const result = CALC.calcAnnualLeave(parsed);
+      const result = CALC.calcAnnualLeave(new Date(parsed));
       if (result) lvTotalAnnual = result.totalLeave;
     }
   }
@@ -2852,47 +2856,124 @@ function populateLvTypeSelect() {
   const profile = PROFILE.load();
   const gender = profile ? profile.gender : '';
   const groups = LEAVE.getGroupedTypes(gender);
+  
+  // 기본적으로 토글이 펼쳐진 그룹들
+  const defaultOpenGroups = ['legal', 'education', 'health', 'family'];
+
+  // 사용 현황 데이터 가져오기
+  const year = typeof lvCurrentYear !== 'undefined' ? lvCurrentYear : new Date().getFullYear();
+  const records = LEAVE.getYearRecords(year);
+  const usage = {};
+  let timeLeaveHours = 0;
+  records.forEach(r => {
+    if (!usage[r.type]) usage[r.type] = 0;
+    usage[r.type] += (r.days || 0);
+    if (r.type === 'time_leave') timeLeaveHours += (r.hours || 0);
+  });
 
   groups.forEach(group => {
     const groupDiv = document.createElement('div');
     groupDiv.style.marginBottom = '6px';
+    groupDiv.style.background = 'var(--bg-card)';
+    groupDiv.style.borderRadius = 'var(--radius-sm)';
+    groupDiv.style.overflow = 'hidden';
+    groupDiv.style.border = '1px solid var(--border-glass)';
+    groupDiv.style.flexShrink = '0'; // 컨테이너가 찌그러지지 않도록 설정
     
+    // 제목 (토글 버튼)
     const titleDiv = document.createElement('div');
-    titleDiv.style.fontSize = 'var(--text-label-small)';
+    titleDiv.style.fontSize = 'var(--text-body-normal)';
     titleDiv.style.fontWeight = '700';
-    titleDiv.style.color = 'var(--text-muted)';
-    titleDiv.style.padding = '4px 8px';
-    titleDiv.textContent = group.label;
+    titleDiv.style.color = 'var(--text-primary)';
+    titleDiv.style.padding = '10px 14px';
+    titleDiv.style.cursor = 'pointer';
+    titleDiv.style.display = 'flex';
+    titleDiv.style.alignItems = 'center';
+    titleDiv.style.justifyContent = 'space-between';
+    titleDiv.style.background = 'var(--bg-secondary)';
+    
+    const isOpenByDefault = defaultOpenGroups.includes(group.id);
+    
+    titleDiv.innerHTML = `<span>${group.label}</span><span class="toggle-icon" style="color:var(--text-muted); transition:transform 0.2s;">${isOpenByDefault ? '▲' : '▼'}</span>`;
     groupDiv.appendChild(titleDiv);
 
+    const itemsContainer = document.createElement('div');
+    itemsContainer.style.padding = '8px 12px';
+    itemsContainer.style.borderTop = '1px solid var(--border-glass)';
+    itemsContainer.style.display = isOpenByDefault ? 'block' : 'none';
+    
+    // 2컬럼 레이아웃 적용
+    if (group.id !== 'other') {
+      itemsContainer.style.display = isOpenByDefault ? 'grid' : 'none';
+      if (itemsContainer.style.display === 'grid') {
+        itemsContainer.style.gridTemplateColumns = '1fr 1fr';
+        itemsContainer.style.gap = '6px';
+      }
+    }
+    
+    titleDiv.onclick = () => {
+      const icon = titleDiv.querySelector('.toggle-icon');
+      if (itemsContainer.style.display === 'none') {
+        if (group.id !== 'other') {
+           itemsContainer.style.display = 'grid';
+           itemsContainer.style.gridTemplateColumns = '1fr 1fr';
+           itemsContainer.style.gap = '6px';
+        } else {
+           itemsContainer.style.display = 'block';
+        }
+        icon.textContent = '▲';
+      } else {
+        itemsContainer.style.display = 'none';
+        icon.textContent = '▼';
+      }
+    };
+
     group.items.forEach(t => {
-      const icon = LV_CAT_ICONS[t.category] || '📋';
-      const paidTag = t.isPaid ? '' : ' [무급]';
-      let label = `${icon} ${t.label}${paidTag}`;
-      if (t.isTimeBased) label += ' (시간단위)';
-      if (t.quota !== null) label += ` [${t.quota}일]`;
+      let label = t.label; // 아이콘, [무급] 태그 제거
+      if (t.isTimeBased && t.id !== 'time_leave') label += ' (시간단위)'; // (시간단위) 제거
+      
+      const usedRaw = usage[t.id] || 0;
+      const usedDays = Math.round(usedRaw * 10) / 10;
+      let statusHtml = '';
+
+      if (t.id === 'annual' || t.usesAnnual) {
+        // 연차의 경우
+        const annualData = LEAVE.calcAnnualSummary(year, typeof lvTotalAnnual !== 'undefined' ? lvTotalAnnual : 15);
+        if (t.id === 'time_leave') {
+           statusHtml = `<span style="color: #00B894; font-size: 11px; font-weight: 700; margin-left: auto;">${timeLeaveHours}h 사용</span>`;
+        } else {
+           statusHtml = `<span style="color: #00B894; font-size: 11px; font-weight: 700; margin-left: auto;">${annualData.usedAnnual}/${annualData.totalAnnual}</span>`;
+        }
+      } else if (t.quota !== null) {
+        statusHtml = `<span style="color: #00B894; font-size: 11px; font-weight: 700; margin-left: auto;">${usedDays}/${t.quota}</span>`;
+      } else {
+        statusHtml = `<span style="color: #00B894; font-size: 11px; font-weight: 700; margin-left: auto;">${usedDays}일 사용</span>`;
+      }
 
       const btn = document.createElement('button');
       btn.className = 'btn';
       btn.style.width = '100%';
-      btn.style.textAlign = 'left';
-      btn.style.justifyContent = 'flex-start';
-      btn.style.marginBottom = '4px';
-      btn.style.padding = '12px 14px';
+      btn.style.display = 'flex'; // flex박스 사용
+      btn.style.alignItems = 'center';
+      btn.style.justifyContent = 'space-between'; // 양끝 정렬
+      btn.style.marginBottom = group.id !== 'other' ? '0' : '4px';
+      btn.style.padding = '10px 12px';
       btn.style.background = 'var(--bg-glass)';
-      btn.style.border = '1.5px solid var(--border-active)';
+      btn.style.border = '1px solid var(--border-active)';
       btn.style.borderRadius = 'var(--radius-sm)';
       btn.style.color = 'var(--text-primary)';
-      btn.style.fontSize = 'var(--text-body-large)';
+      btn.style.fontSize = 'var(--text-body-normal)';
       btn.style.fontWeight = '600';
-      btn.onclick = () => selectLvType(t.id, label);
-      btn.textContent = label;
+      btn.onclick = () => selectLvType(t.id, t.label);
+      btn.innerHTML = `<span>${label}</span>${statusHtml}`;
       
       btn.onmouseover = () => btn.style.background = 'var(--bg-glass-hover)';
       btn.onmouseout = () => btn.style.background = 'var(--bg-glass)';
 
-      groupDiv.appendChild(btn);
+      itemsContainer.appendChild(btn);
     });
+    
+    groupDiv.appendChild(itemsContainer);
     container.appendChild(groupDiv);
   });
 }
@@ -2921,11 +3002,9 @@ function selectLvType(id, label) {
 function updateLvTypeBtnText(id) {
   const typeInfo = LEAVE.getTypeById(id);
   if (!typeInfo) return;
-  const icon = LV_CAT_ICONS[typeInfo.category] || '📋';
-  const paidTag = typeInfo.isPaid ? '' : ' [무급]';
-  let label = `${icon} ${typeInfo.label}${paidTag}`;
-  if (typeInfo.isTimeBased) label += ' (시간단위)';
-  if (typeInfo.quota !== null) label += ` [${typeInfo.quota}일]`;
+  
+  let label = typeInfo.label; // 아이콘, [무급] 태그 제거
+  if (typeInfo.isTimeBased && id !== 'time_leave') label += ' (시간단위)'; // (시간단위) 제거
   const btnText = document.getElementById('lvTypeBtnText');
   if (btnText) btnText.textContent = label;
 }
@@ -3080,7 +3159,7 @@ function renderLvCalendar(year, month, recordsByDay) {
   });
 
   if (legendHtml !== '') {
-    html += `<div class="ot-cal-legend" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:center; padding:10px 10px 16px;">
+    html += `<div class="ot-cal-legend" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:flex-start; padding:10px 12px 16px;">
       ${legendHtml}
     </div>`;
   }

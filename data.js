@@ -212,8 +212,8 @@ const DATA = {
     year: 2026,
     categories: [
       { id: 'legal', label: '📅 법정 휴가' },
-      { id: 'health', label: '🏥 건강' },
       { id: 'education', label: '🎓 교육/연수' },
+      { id: 'health', label: '🏥 건강' },
       { id: 'family', label: '👨‍👩‍👧 가족' },
       { id: 'ceremony', label: '🎉 청원/경조' },
       { id: 'maternity', label: '🤰 출산/육아' },
