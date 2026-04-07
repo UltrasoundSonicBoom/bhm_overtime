@@ -119,7 +119,8 @@ body::before {
   }
 
   #tab-overtime,
-  #tab-leave {
+  #tab-leave,
+  #tab-feedback {
     max-width: 600px;
     margin: 0 auto;
   }

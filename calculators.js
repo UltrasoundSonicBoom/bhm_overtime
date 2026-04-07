@@ -63,8 +63,8 @@ const CALC = {
         const workSupportPay = extras.workSupportPay || 0;
         // 가족수당은 통상임금 산정 제외 (보수규정 제44조 2항 미포함)
 
-        // 명절지원비 (연 4회): (기준기본급 + 근속가산기본급 + 조정급/2) × 50%
-        const holidayBonusPerTime = Math.round((monthlyBase + seniorityBasePay + adjustPay / 2) * 0.5);
+        // 명절지원비 (연 4회): (기준기본급 + 조정급/2) × 50% (보수규정 — 근속가산기본급 미포함)
+        const holidayBonusPerTime = Math.round((monthlyBase + adjustPay / 2) * 0.5);
         const monthlyHolidayBonus = Math.round((holidayBonusPerTime * 4) / 12);
 
         const breakdown = {
@@ -212,7 +212,7 @@ const CALC = {
      * 가족수당 계산
      * 첫 번째 가족 (= 배우자 등 주치) : 40,000원
      * 추가 가족 1인당 : 20,000원
-     * 자녀 : 첫째 30,000원 / 둘째 20,000원 / 셋째이상 10,000원
+     * 자녀 : 첫째 30,000원 / 둘째 70,000원 / 셋째이상 110,000원
      * 전체 가족 수 최대 5인
      * @param {number} numFamily - 전체 가족 수 (자녀 제외)
      * @param {number} numChildren - 자녀 수
