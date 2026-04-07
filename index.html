@@ -269,7 +269,7 @@
       <h2 class="onboarding-title">사이트 주소가 이전되었습니다!</h2>
       <div class="onboarding-sub" style="text-align: left; line-height: 1.6; margin-top: 16px;">
         <strong>snuhmate.com</strong>으로 주소가 변경되었습니다.<br><br>
-        브라우저 보안 정책상 기존 데이터는 자동으로 이동되지 않습니다. 기존 사용자분들은 아래 버튼으로 데이터를 <strong>백업</strong>하신 후 이동해 주세요.
+        브라우저 보안 정책상 기존 데이터는 자동으로 이동되지 않습니다. 기존 사용자분들은 아래 버튼으로 데이터를 <strong>백업</strong>하신 후, <strong>snuhmate.com의 개인정보 페이지</strong>에서 복원해 주세요.
         <p style="font-size: 0.9em; margin-top: 14px; color: var(--text-muted); background: rgba(0,0,0,0.05); padding: 10px; border-radius: 8px;">
           ※ 처음 접속하시는 분은 '그냥 시작하기'를 누르시거나 바로 새 주소로 이동하세요.
         </p>
@@ -1257,8 +1257,17 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      if (window.location.hostname.includes('vercel.app')) {
+      const host = window.location.hostname;
+      if (host.includes('vercel.app')) {
         document.getElementById('migrationOverlay').style.display = 'flex';
+      }
+      // 새 도메인 접속 시 온보딩 자동 노출보장 (기존 로직이 있지만 명시적으로 추가)
+      if (host === 'snuhmate.com' || host === 'www.snuhmate.com') {
+        const hasSeen = localStorage.getItem('onboarding_seen_v2');
+        if (!hasSeen) {
+          showOnboarding();
+          localStorage.setItem('onboarding_seen_v2', 'true');
+        }
       }
     });
 
