@@ -638,11 +638,11 @@
           <input type="text" id="otMemo" placeholder="예: 응급환자 대응" class="premium-input">
         </div>
 
-        <div style="display:flex; flex-direction:column; margin-top:20px; gap:8px;">
-          <button class="btn btn-primary" onclick="saveOtRecord()"
-            style="width:100%; font-size:var(--text-title-large); padding:14px; justify-content:center; border-radius:12px;" id="otSaveBtn" disabled>저장하기</button>
+        <div style="display:flex; flex-direction:row; margin-top:20px; gap:12px;">
           <button class="btn btn-outline" onclick="deleteOtRecord()"
-            style="width:100%; display:none; border-color:transparent; background:rgba(244,63,94,0.08); color:var(--accent-rose); font-size:var(--text-body-large); font-weight:600; padding:12px; justify-content:center; border-radius:12px; transition:all 0.2s;" id="otDeleteBtn">🗑 이 기록 삭제하기</button>
+            style="flex:1; display:none; border-color:transparent; background:rgba(244,63,94,0.08); color:var(--accent-rose); font-size:var(--text-body-large); font-weight:600; padding:14px; justify-content:center; border-radius:12px; transition:all 0.2s;" id="otDeleteBtn">삭제</button>
+          <button class="btn btn-primary" onclick="saveOtRecord()"
+            style="flex:2; font-size:var(--text-title-large); padding:14px; justify-content:center; border-radius:12px;" id="otSaveBtn" disabled>저장</button>
         </div>
         <input type="hidden" id="otEditId" value="">
       </div> <!-- /otInputPanel -->

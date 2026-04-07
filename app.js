@@ -2169,7 +2169,7 @@ function onOtDateClick(year, month, day) {
     // 신규 입력 모드
     document.getElementById('otEditId').value = '';
     document.getElementById('otDeleteBtn').style.display = 'none';
-    document.getElementById('otSaveBtn').textContent = '💾 저장하기';
+    document.getElementById('otSaveBtn').textContent = '저장';
     document.getElementById('otSaveBtn').disabled = false;
     document.getElementById('otMemo').value = '';
     document.querySelector('input[name="otType"][value="overtime"]').checked = true;
@@ -2179,7 +2179,7 @@ function onOtDateClick(year, month, day) {
     // 기존 기록 있음 → 폼을 "대기" 상태로 (저장 버튼 숨기고 설명 표시)
     document.getElementById('otEditId').value = '';
     document.getElementById('otDeleteBtn').style.display = 'none';
-    document.getElementById('otSaveBtn').textContent = '💾 저장하기';
+    document.getElementById('otSaveBtn').textContent = '저장';
     document.getElementById('otSaveBtn').disabled = true;
     document.getElementById('otMemo').value = '';
     document.querySelector('input[name="otType"][value="overtime"]').checked = true;
@@ -2282,7 +2282,7 @@ function selectOtRecordTab(id) {
     // 이미 선택된 탭 재클릭 → 선택 취소, 신규 입력 모드로
     document.getElementById('otEditId').value = '';
     document.getElementById('otDeleteBtn').style.display = 'none';
-    document.getElementById('otSaveBtn').textContent = '💾 저장하기';
+    document.getElementById('otSaveBtn').textContent = '저장';
     document.getElementById('otSaveBtn').disabled = true;
     document.getElementById('otMemo').value = '';
     document.querySelector('input[name="otType"][value="overtime"]').checked = true;
@@ -2324,7 +2324,7 @@ function selectOtNewTab(dateStr) {
   const isHoliday = document.getElementById('otInputPanel').dataset.isHoliday === '1';
   document.getElementById('otEditId').value = '';
   document.getElementById('otDeleteBtn').style.display = 'none';
-  document.getElementById('otSaveBtn').textContent = '💾 저장하기';
+  document.getElementById('otSaveBtn').textContent = '저장';
   document.getElementById('otSaveBtn').disabled = false;
   document.getElementById('otMemo').value = '';
   document.querySelector('input[name="otType"][value="overtime"]').checked = true;
@@ -2360,7 +2360,7 @@ function resetOtPanel() {
   document.getElementById('otPanelDate').textContent = '날짜를 선택하세요';
   document.getElementById('otEditId').value = '';
   document.getElementById('otDeleteBtn').style.display = 'none';
-  document.getElementById('otSaveBtn').textContent = '💾 저장하기';
+  document.getElementById('otSaveBtn').textContent = '저장';
   document.getElementById('otSaveBtn').disabled = true;
   document.getElementById('otMemo').value = '';
   document.getElementById('otExistingRecords').innerHTML = '';
@@ -2594,7 +2594,7 @@ function editOtRecord(id) {
   deleteBtn.style.display = 'block';
   deleteBtn.setAttribute('onclick', `deleteOtRecord('${id}')`);
   document.getElementById('otSaveBtn').disabled = false;
-  document.getElementById('otSaveBtn').textContent = '✏️ 수정 내용 저장하기';
+  document.getElementById('otSaveBtn').textContent = '수정';
 
   previewOtCalc();
 }
@@ -3422,7 +3422,7 @@ function onLvDateClick(year, month, day) {
   document.getElementById('lvEndDate').value = dateStr;
   document.getElementById('lvEditId').value = '';
   document.getElementById('lvDeleteBtn').style.display = 'none';
-  document.getElementById('lvSaveBtn').textContent = '💾 저장하기';
+  document.getElementById('lvSaveBtn').textContent = '저장';
   document.getElementById('lvMemo').value = '';
   document.getElementById('lvType').value = 'annual';
   updateLvTypeBtnText('annual');
@@ -3459,7 +3459,7 @@ function resetLvPanel() {
   document.getElementById('lvPanelDate').textContent = '날짜를 선택하세요';
   document.getElementById('lvEditId').value = '';
   document.getElementById('lvDeleteBtn').style.display = 'none';
-  document.getElementById('lvSaveBtn').textContent = '💾 저장하기';
+  document.getElementById('lvSaveBtn').textContent = '저장';
   document.getElementById('lvMemo').value = '';
   document.getElementById('lvPreview').innerHTML = '';
 
@@ -3741,7 +3741,7 @@ function editLvRecord(id) {
   document.getElementById('lvMemo').value = record.memo || '';
   document.getElementById('lvEditId').value = id;
   document.getElementById('lvDeleteBtn').style.display = 'block';
-  document.getElementById('lvSaveBtn').textContent = '✏️ 수정 내용 저장하기';
+  document.getElementById('lvSaveBtn').textContent = '수정';
 
   // 시간차 편집 시 시간 복원
   if (record.type === 'time_leave' && record.startTime && record.endTime) {
