@@ -3827,8 +3827,8 @@ function renderLvQuotaTable(year) {
         <span style="font-weight:600; font-size:var(--text-body-large);">${q.label}</span>
         <span style="font-size:var(--text-body-normal); font-weight:700; color:${remainColor};">${remainText}</span>
       </div>
-      <div class="lv-progress-bar" style="height:4px; margin-bottom:3px; display:${q.quota !== null ? 'block' : 'none'};">
-        <div class="lv-progress-fill" style="width:${pct}%; background:${barColor}"></div>
+      <div class="lv-progress-bar" style="margin-bottom:3px; display:${q.quota !== null ? 'block' : 'none'};">
+        <div class="lv-progress-fill" style="width:${pct}%; height:100%; background:${barColor}"></div>
       </div>
       <div style="font-size:var(--text-body-normal); color:var(--text-muted);">${q.used}${q.quota !== null ? '/' + quotaText : '일'} 사용 ${q.overQuota ? '⚠️' : ''}</div>
     </div>`;
