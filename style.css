@@ -118,16 +118,15 @@ body::before {
     padding-bottom: 72px;
   }
 
-  #tab-overtime,
-  #tab-leave,
-  #tab-feedback {
+  /* 모든 탭 콘텐츠: 데스크탑에서도 모바일 폭 유지 */
+  .tab-content {
     max-width: 600px;
     margin: 0 auto;
   }
 }
 
 .header-inner {
-  max-width: 1200px;
+  max-width: 640px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -245,7 +244,7 @@ html[data-theme="neo"] .logo .logo-main-title {
 
 /* ── Main ── */
 .main {
-  max-width: 1200px;
+  max-width: 640px;
   margin: 0 auto;
   padding: 24px;
   padding-bottom: 100px; /* 하단 고정 탭바 공간 확보 (데스크탑) */
