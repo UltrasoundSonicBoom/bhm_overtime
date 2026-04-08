@@ -362,69 +362,23 @@
 
   <main class="main">
 
-    <!-- ═══════════ 📢 글로벌 공지 배너 ═══════════ -->
-    <div id="globalNoticeBanner" class="info-note-banner"
-      style="display:none; justify-content:space-between; align-items:center; border: 1.5px solid var(--accent-indigo); background: rgba(99, 102, 241, 0.1); border-radius: 12px; margin-bottom: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); padding: 12px 16px; margin-left: 16px; margin-right: 16px; margin-top: 4px;">
-      <div style="display:flex; align-items:center; gap:10px; width:100%;">
-        <span style="font-size: 1.3em;">🎉</span>
-        <span style="font-weight:600; color:var(--text-primary); font-size:var(--text-body-normal); line-height:1.4;">
-          에러, 개선, 요청사항 등은 <a onclick="switchTab('feedback')"
-            style="color:var(--accent-indigo); text-decoration:underline; cursor:pointer;">Feedback</a>에서 입력해주세요!
-        </span>
-      </div>
-      <button onclick="dismissNotice('notice_2026_update_v1')"
-        style="background:none; border:none; padding:4px; font-size:20px; cursor:pointer; color:var(--text-muted); flex-shrink: 0; margin-left: 8px;">&times;</button>
-    </div>
-    <script>
-      function dismissNotice(noticeId) {
-        const banner = document.getElementById('globalNoticeBanner');
-        banner.style.opacity = '0';
-        banner.style.transform = 'translateY(-10px)';
-        banner.style.transition = 'all 0.3s ease-out';
-        setTimeout(() => banner.style.display = 'none', 300);
-        localStorage.setItem('dismissed_' + noticeId, 'true');
-      }
-      setTimeout(() => {
-        if (!localStorage.getItem('dismissed_notice_2026_update_v1')) {
-          const banner = document.getElementById('globalNoticeBanner');
-          if (banner) {
-            banner.style.opacity = '0';
-            banner.style.transform = 'translateY(-10px)';
-            banner.style.display = 'flex';
-
-            // force reflow
-            void banner.offsetWidth;
-
-            banner.style.transition = 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
-            banner.style.opacity = '1';
-            banner.style.transform = 'translateY(0)';
-          }
-        }
-      }, 600);
-    </script>
-
     <!-- ═══════════ 🏠 홈 ═══════════ -->
-    <div class="tab-content" id="tab-home">
+    <div class="tab-content active" id="tab-home">
 
       <!-- 내 현황 요약 카드 -->
       <div class="home-summary-grid">
-
-        <!-- 시간외/온콜 카드 -->
         <div class="home-summary-card" onclick="switchTab('overtime')">
           <img src="./overtime.png" alt="시간외" class="home-card-img" id="homeOtImg">
           <div class="home-card-body" id="homeOtBody" style="display:none;">
             <div class="home-card-stats" id="homeOtStats"></div>
           </div>
         </div>
-
-        <!-- 휴가 카드 -->
         <div class="home-summary-card" onclick="switchTab('leave')">
           <img src="./vacation.png" alt="휴가" class="home-card-img" id="homeLeaveImg">
           <div class="home-card-body" id="homeLeaveBody" style="display:none;">
             <div class="home-card-stats" id="homeLeaveStats"></div>
           </div>
         </div>
-
       </div>
 
       <!-- 사용자 한마디 -->
@@ -462,17 +416,30 @@
         </div>
       </div>
 
-      <!-- 업데이트 내역 -->
-      <div class="card home-changelog-card">
-        <div class="card-title" style="font-size:var(--text-body-large); margin-bottom:8px;">
-          <span class="icon" style="color:var(--accent-indigo);">🎉</span> 업데이트 내역
+      <!-- 공지사항 및 업데이트 -->
+      <div class="card home-newsboard">
+        <div class="newsboard-tabs">
+          <button class="newsboard-tab active" data-newstab="notice" onclick="switchNewsTab('notice')">📢 공지사항</button>
+          <button class="newsboard-tab" data-newstab="changelog" onclick="switchNewsTab('changelog')">🎉 업데이트</button>
         </div>
-        <div class="changelog-pager">
-          <div class="changelog-pager-content" id="changelogContent"></div>
-          <div class="changelog-pager-nav">
-            <button class="changelog-nav-btn" id="changelogPrev" onclick="changelogPage(-1)">‹</button>
-            <span class="changelog-pager-indicator" id="changelogIndicator"></span>
-            <button class="changelog-nav-btn" id="changelogNext" onclick="changelogPage(1)">›</button>
+        <div class="newsboard-body">
+          <!-- 공지사항 패널 -->
+          <div class="newsboard-panel active" id="newsNoticePanel">
+            <div class="changelog-pager-content" id="noticeContent"></div>
+            <div class="changelog-pager-nav" id="noticeNav" style="display:none;">
+              <button class="changelog-nav-btn" onclick="noticePage(-1)">‹</button>
+              <span class="changelog-pager-indicator" id="noticeIndicator"></span>
+              <button class="changelog-nav-btn" onclick="noticePage(1)">›</button>
+            </div>
+          </div>
+          <!-- 업데이트 패널 -->
+          <div class="newsboard-panel" id="newsChangelogPanel">
+            <div class="changelog-pager-content" id="changelogContent"></div>
+            <div class="changelog-pager-nav">
+              <button class="changelog-nav-btn" id="changelogPrev" onclick="changelogPage(-1)">‹</button>
+              <span class="changelog-pager-indicator" id="changelogIndicator"></span>
+              <button class="changelog-nav-btn" id="changelogNext" onclick="changelogPage(1)">›</button>
+            </div>
           </div>
         </div>
       </div>
@@ -482,6 +449,12 @@
         <span>🔐</span>
         <span>모든 데이터는 내 브라우저에만 저장됩니다.<br> 개발자도, 서버도 절대 볼 수 없어요.</span>
       </div>
+
+      <!-- 시작 가이드 -->
+      <button onclick="showOnboarding()" class="btn btn-outline"
+        style="width:100%; font-size:var(--text-body-normal); padding:10px; color:var(--accent-indigo); border-color:var(--accent-indigo);">
+        🚀 시작 가이드 보기
+      </button>
 
     </div>
 
@@ -783,7 +756,7 @@
             style="flex:1; display:none; border-color:transparent; background:rgba(244,63,94,0.08); color:var(--accent-rose); font-size:var(--text-body-large); font-weight:600; padding:14px; justify-content:center; border-radius:12px; transition:all 0.2s;"
             id="otDeleteBtn">삭제</button>
           <button class="btn btn-primary" onclick="saveOtRecord()"
-            style="flex:2; font-size:var(--text-title-large); padding:14px; justify-content:center; border-radius:12px;"
+            style="flex:1; font-size:var(--text-title-large); padding:14px; justify-content:center; border-radius:12px;"
             id="otSaveBtn" disabled>저장</button>
         </div>
         <input type="hidden" id="otEditId" value="">
@@ -804,7 +777,7 @@
     </div>
 
     <!-- ═══════════ 📅 휴가 관리 ═══════════ -->
-    <div class="tab-content active" id="tab-leave">
+    <div class="tab-content" id="tab-leave">
 
       <!-- 연차 기준 안내 배너 -->
       <div class="info-note-banner" id="lvAnnualInfoNote">
@@ -888,13 +861,13 @@
           <input type="text" id="lvMemo" placeholder="예: 개인사유">
         </div>
 
-        <div style="display:flex; flex-direction:column; margin-top:16px; gap:8px;">
-          <button class="btn btn-primary" onclick="saveLvRecord()"
-            style="width:100%; font-size:var(--text-title-large); padding:14px; justify-content:center; border-radius:12px;"
-            id="lvSaveBtn">💾 저장하기</button>
+        <div style="display:flex; flex-direction:row; margin-top:16px; gap:12px;">
           <button class="btn btn-outline" onclick="deleteLvRecord()"
-            style="width:100%; display:none; border-color:transparent; background:rgba(244,63,94,0.08); color:var(--accent-rose); font-size:var(--text-body-large); font-weight:600; padding:12px; justify-content:center; border-radius:12px; transition:all 0.2s;"
-            id="lvDeleteBtn">🗑 이 휴가 삭제하기</button>
+            style="flex:1; display:none; border-color:transparent; background:rgba(244,63,94,0.08); color:var(--accent-rose); font-size:var(--text-body-large); font-weight:600; padding:14px; justify-content:center; border-radius:12px; transition:all 0.2s;"
+            id="lvDeleteBtn">삭제</button>
+          <button class="btn btn-primary" onclick="saveLvRecord()"
+            style="flex:1; font-size:var(--text-title-large); padding:14px; justify-content:center; border-radius:12px;"
+            id="lvSaveBtn">저장</button>
         </div>
         <input type="hidden" id="lvEditId" value="">
       </div>
@@ -1007,18 +980,6 @@
 
     <!-- ═══════════ 👤 개인정보 ═══════════ -->
     <div class="tab-content" id="tab-profile">
-      <!-- 시작 가이드 및 업데이트 내역 버튼 -->
-      <div style="max-width:600px; margin:0 auto 16px; display: flex; flex-direction: column; gap: 8px;">
-        <button onclick="showOnboarding()" class="btn btn-outline"
-          style="width:100%; font-size:var(--text-body-normal); padding:10px; color:var(--accent-indigo); border-color:var(--accent-indigo);">
-          🚀 시작 가이드 보기
-        </button>
-        <button onclick="document.getElementById('updateHistoryModal').style.display='flex';" class="btn btn-outline"
-          style="width:100%; font-size:var(--text-body-normal); padding:10px; color:var(--text-secondary); border-color:var(--border-glass);">
-          📢 공지 및 업데이트 내역
-        </button>
-      </div>
-
       <div class="card" style="max-width:600px; margin:0 auto;">
         <div class="card-title"><span class="icon indigo">👤</span> <span id="pfTitleName">내 정보</span>
           <span class="badge emerald" id="profileStatus">미저장</span>
@@ -1199,50 +1160,6 @@
       </div>
 
 
-    </div>
-
-    <!-- ═══════════ 공지 및 업데이트 내역 모달 ═══════════ -->
-    <div id="updateHistoryModal" class="migration-overlay"
-      style="display:none; align-items:center; justify-content:center; padding: 16px;">
-      <div class="migration-card"
-        style="max-height: 80vh; display:flex; flex-direction:column; padding: 24px 20px; text-align: left;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
-          <h2 style="font-size: var(--text-title-large); margin: 0; font-weight: 800;">🎉 업데이트 내역</h2>
-          <button onclick="document.getElementById('updateHistoryModal').style.display='none'"
-            style="background:none; border:none; font-size:24px; cursor:pointer; color:var(--text-muted);">&times;</button>
-        </div>
-        <div
-          style="overflow-y: auto; flex: 1; margin: 0 -8px; padding: 0 8px; display: flex; flex-direction: column; gap: 16px;">
-
-          <div style="border-left: 3px solid var(--accent-indigo); padding-left: 12px;">
-            <div style="font-size: var(--text-body-small); color: var(--text-muted); margin-bottom: 2px;">2026.04.08
-            </div>
-            <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">2026년 임금협상안 반영 및 사용성 개선</div>
-            <ul
-              style="margin: 0; padding-left: 16px; font-size: var(--text-body-normal); color: var(--text-secondary); line-height: 1.5;">
-              <li>2026년 새로운 임금협상안(가안) 및 야간근무가산 로직이 업데이트 되었습니다! 🥳</li>
-              <li>"시급을 자동으로 계산해줬으면 좋겠어요"라는 많은 선생님들의 피드백을 반영하여, 내 정보 탭에서 직급/호봉을 입력하면 시급이 자동 저장됩니다.</li>
-              <li>기본 화면(홈)에 주요 공지 배너가 추가되었습니다.</li>
-            </ul>
-          </div>
-
-          <div style="border-left: 3px solid var(--border-active); padding-left: 12px; opacity: 0.8;">
-            <div style="font-size: var(--text-body-small); color: var(--text-muted); margin-bottom: 2px;">2025.10.15
-            </div>
-            <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">무급휴가(연차, 시간차) 계산 로직 정확도 강화
-            </div>
-            <ul
-              style="margin: 0; padding-left: 16px; font-size: var(--text-body-normal); color: var(--text-secondary); line-height: 1.5;">
-              <li>무급휴가 시 차감되는 급여 계산식 오류를 바로잡았습니다.</li>
-              <li>달력 인터페이스에서 여러 날짜에 걸친 휴가도 쉽게 등록/확인할 수 있도록 개선되었습니다.</li>
-            </ul>
-          </div>
-
-        </div>
-        <button onclick="document.getElementById('updateHistoryModal').style.display='none'"
-          class="migration-btn secondary"
-          style="width: 100%; margin-top: 20px; font-size: var(--text-body-normal);">닫기</button>
-      </div>
     </div>
 
     <!-- ═══════════ 📢 피드백 방 ═══════════ -->
@@ -1484,13 +1401,6 @@
         if (!hasSeen) {
           showOnboarding();
           localStorage.setItem('onboarding_seen_v2', 'true');
-        } else {
-          const CURRENT_UPDATE_VERSION = '2026.04.08';
-          const lastSeenUpdate = localStorage.getItem('last_seen_update');
-          if (lastSeenUpdate !== CURRENT_UPDATE_VERSION) {
-            document.getElementById('updateHistoryModal').style.display = 'flex';
-            localStorage.setItem('last_seen_update', CURRENT_UPDATE_VERSION);
-          }
         }
       }
     });

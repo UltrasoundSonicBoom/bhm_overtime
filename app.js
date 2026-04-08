@@ -98,10 +98,85 @@ function initHomeTab() {
   }
 
 
+  // ── 공지사항 (notice.md에서 로드) ──
+  loadNotice();
+
   // ── 업데이트 내역 (CHANGELOG.md에서 로드) ──
   loadChangelog();
 }
 window.initHomeTab = initHomeTab;
+
+// ── Newsboard 탭 전환 ──
+function switchNewsTab(tab) {
+  document.querySelectorAll('.newsboard-tab').forEach(t => t.classList.toggle('active', t.dataset.newstab === tab));
+  document.getElementById('newsNoticePanel').classList.toggle('active', tab === 'notice');
+  document.getElementById('newsChangelogPanel').classList.toggle('active', tab === 'changelog');
+  // 본문 상단 테두리 색상 연동
+  const body = document.querySelector('.newsboard-body');
+  if (body) {
+    body.style.borderTopColor = tab === 'changelog'
+      ? 'rgba(16, 185, 129, 0.25)' : 'rgba(99, 102, 241, 0.25)';
+  }
+}
+
+// ── Notice: fetch & parse notice.md (pager 형식) ──
+let _noticeItems = null;
+let _noticeIdx = 0;
+
+function parseNotice(md) {
+  const blocks = md.split(/^## /m).filter(b => b.trim());
+  for (const block of blocks) {
+    const lines = block.trim().split('\n');
+    if (!/^\d{4}\.\d{2}\.\d{2}/.test(lines[0])) continue;
+    return lines.slice(1)
+      .map(l => l.replace(/^- /, '').trim())
+      .filter(l => l.length > 0 && !l.startsWith('<!--'));
+  }
+  return [];
+}
+
+function renderNoticePager(items) {
+  if (!items || !items.length) return;
+  const content = document.getElementById('noticeContent');
+  const nav = document.getElementById('noticeNav');
+  const indicator = document.getElementById('noticeIndicator');
+  if (!content) return;
+
+  _noticeIdx = Math.max(0, Math.min(_noticeIdx, items.length - 1));
+  content.innerHTML = `<div style="font-size:var(--text-body-normal); color:var(--text-secondary); line-height:1.5;">${items[_noticeIdx]}</div>`;
+
+  if (items.length > 1 && nav && indicator) {
+    nav.style.display = 'flex';
+    indicator.textContent = `${_noticeIdx + 1} / ${items.length}`;
+  }
+}
+
+function noticePage(dir) {
+  if (!_noticeItems || !_noticeItems.length) return;
+  _noticeIdx = (_noticeIdx + dir + _noticeItems.length) % _noticeItems.length;
+  renderNoticePager(_noticeItems);
+}
+
+const NOTICE_FALLBACK = [
+  'SNUH 메이트는 모바일 전용입니다<br>(보안을 위해서도 핸드폰에서 기록해주세요)',
+  '에러, 개선, 요청사항 등은 피드백 탭에서 입력해주세요!',
+  '내 정보 탭에서 직급/호봉을 입력하면 시급이 자동 계산됩니다.'
+];
+
+function loadNotice() {
+  if (_noticeItems) { renderNoticePager(_noticeItems); return; }
+  fetch('./notice.md?v=' + Date.now())
+    .then(r => r.ok ? r.text() : '')
+    .then(md => {
+      _noticeItems = parseNotice(md);
+      if (!_noticeItems || _noticeItems.length === 0) _noticeItems = NOTICE_FALLBACK;
+      renderNoticePager(_noticeItems);
+    })
+    .catch(() => {
+      _noticeItems = NOTICE_FALLBACK;
+      renderNoticePager(_noticeItems);
+    });
+}
 
 // ── Changelog: fetch & parse CHANGELOG.md ──
 let _changelogEntries = null;
@@ -359,8 +434,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const params = getCaptureParams();
     const requestedTab = params.get('tab');
-    if (!switchTab(requestedTab || 'leave')) {
-      switchTab('leave');
+    if (!switchTab(requestedTab || 'home')) {
+      switchTab('home');
     }
   }
   activateV1DefaultTab();
@@ -3981,7 +4056,7 @@ function editLvRecord(id) {
 function deleteLvRecord() {
   const id = document.getElementById('lvEditId').value;
   if (!id) return;
-  if (!confirm('이 휴가 기록을 삭제하시겠습니까?')) return;
+  // confirm 없이 즉시 삭제 (confirm이 환경에 따라 블록될 수 있음 — 초과근무 삭제와 동일 패턴)
   LEAVE.deleteRecord(id);
   closeLvBottomSheet();
   refreshLvCalendar();
