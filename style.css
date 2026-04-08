@@ -2378,7 +2378,20 @@ html[data-theme="neo"] .logo .logo-main-title {
   }
 
   .qa-cards-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .qa-card {
+    padding: 10px 12px;
+  }
+
+  .qa-card-header {
+    gap: 8px;
+  }
+
+  .qa-card-icon {
+    font-size: var(--text-title-large);
   }
 
   .ot-main-grid {
