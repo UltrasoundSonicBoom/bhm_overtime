@@ -29,7 +29,7 @@ const PROFILE_FIELDS = {
   hasSeniority: 'pfSeniority',
   numFamily: 'pfFamily',
   numChildren: 'pfChildren',
-  numChildrenUnder6: 'pfChildrenUnder6',
+  childrenUnder6Pay: 'pfChildrenUnder6Pay',
   specialPay: 'pfSpecial',
   positionPay: 'pfPosition',
   workSupportPay: 'pfWorkSupport',
@@ -40,19 +40,145 @@ function getCaptureParams() {
   return new URLSearchParams(window.location.search);
 }
 
+// ── 홈 탭 ──
+function initHomeTab() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+
+  // ── 시간외/온콜 요약 ──
+  const otStats = OVERTIME.calcMonthlyStats(year, month);
+  const otBody = document.getElementById('homeOtBody');
+  const otStatsEl = document.getElementById('homeOtStats');
+
+  if (otStats.recordCount > 0) {
+    const lines = [];
+    if (otStats.byType.overtime.count > 0) {
+      lines.push(`<div class="home-stat-row"><span class="home-stat-label">시간외</span><span class="home-stat-value">${otStats.byType.overtime.hours}시간</span></div>`);
+    }
+    if (otStats.byType.oncall_standby.count > 0) {
+      lines.push(`<div class="home-stat-row"><span class="home-stat-label">온콜 대기</span><span class="home-stat-value">${otStats.byType.oncall_standby.count}일</span></div>`);
+    }
+    if (otStats.byType.oncall_callout.count > 0) {
+      lines.push(`<div class="home-stat-row"><span class="home-stat-label">온콜 출동</span><span class="home-stat-value">${otStats.byType.oncall_callout.count}회</span></div>`);
+    }
+    if (otStats.totalPay > 0) {
+      lines.push(`<div class="home-stat-row"><span class="home-stat-label">예상 수당</span><span class="home-stat-value amber">₩${otStats.totalPay.toLocaleString()}</span></div>`);
+    }
+    otStatsEl.innerHTML = lines.join('');
+    otBody.style.display = '';
+  } else {
+    otBody.style.display = 'none';
+  }
+
+  // ── 휴가 요약 ──
+  const profile = PROFILE.load();
+  const leaveBody = document.getElementById('homeLeaveBody');
+  const leaveStatsEl = document.getElementById('homeLeaveStats');
+
+  let totalAnnual = 0;
+  if (profile && profile.hireDate) {
+    const parsed = PROFILE.parseDate(profile.hireDate);
+    if (parsed) {
+      const result = CALC.calcAnnualLeave(new Date(parsed));
+      if (result) totalAnnual = result.totalLeave;
+    }
+  }
+
+  if (totalAnnual > 0) {
+    const summary = LEAVE.calcAnnualSummary(year, totalAnnual);
+    const pct = summary.usagePercent;
+    leaveStatsEl.innerHTML = `
+      <div class="home-stat-row"><span class="home-stat-label">연차</span><span class="home-stat-value emerald">${summary.usedAnnual} / ${summary.totalAnnual}일</span></div>
+      <div class="home-progress-wrap"><div class="home-progress-bar" style="width:${pct}%"></div></div>
+    `;
+    leaveBody.style.display = '';
+  } else {
+    leaveBody.style.display = 'none';
+  }
+
+
+  // ── 업데이트 내역 (CHANGELOG.md에서 로드) ──
+  loadChangelog();
+}
+window.initHomeTab = initHomeTab;
+
+// ── Changelog: fetch & parse CHANGELOG.md ──
+let _changelogEntries = null;
+let _changelogIdx = 0;
+
+function parseChangelog(md) {
+  const entries = [];
+  const blocks = md.split(/^## /m).filter(b => b.trim());
+  for (const block of blocks) {
+    const lines = block.trim().split('\n');
+    const header = lines[0];
+    const match = header.match(/^(\d{4}\.\d{2}\.\d{2})\s*[—–-]\s*(.+)/);
+    if (!match) continue;
+    const items = lines.slice(1)
+      .map(l => l.replace(/^- /, '').trim())
+      .filter(l => l.length > 0);
+    entries.push({ date: match[1], title: match[2], items });
+  }
+  return entries.slice(0, 3);
+}
+
+function renderChangelogPage() {
+  const el = document.getElementById('changelogContent');
+  const indicator = document.getElementById('changelogIndicator');
+  const prevBtn = document.getElementById('changelogPrev');
+  const nextBtn = document.getElementById('changelogNext');
+  if (!_changelogEntries || !_changelogEntries.length || !el) return;
+
+  const e = _changelogEntries[_changelogIdx];
+  el.innerHTML = `
+    <div class="home-changelog-date">${e.date}</div>
+    <div class="home-changelog-title">${e.title}</div>
+    <ul class="home-changelog-list">${e.items.map(i => `<li>${i}</li>`).join('')}</ul>
+  `;
+  indicator.textContent = `${_changelogIdx + 1} / ${_changelogEntries.length}`;
+  prevBtn.disabled = _changelogIdx === 0;
+  nextBtn.disabled = _changelogIdx === _changelogEntries.length - 1;
+}
+
+function changelogPage(dir) {
+  if (!_changelogEntries) return;
+  _changelogIdx = Math.max(0, Math.min(_changelogEntries.length - 1, _changelogIdx + dir));
+  renderChangelogPage();
+}
+window.changelogPage = changelogPage;
+
+function loadChangelog() {
+  if (_changelogEntries) { renderChangelogPage(); return; }
+  fetch('./CHANGELOG.md?v=' + Date.now())
+    .then(r => r.ok ? r.text() : '')
+    .then(md => {
+      _changelogEntries = parseChangelog(md);
+      _changelogIdx = 0;
+      renderChangelogPage();
+    })
+    .catch(() => {
+      const el = document.getElementById('changelogContent');
+      if (el) el.innerHTML = '<span style="color:var(--text-muted);">업데이트 내역을 불러올 수 없습니다.</span>';
+    });
+}
+
+
 // ── 탭 전환 ──
 function switchTab(tabName) {
   if (!tabName) return false;
 
-  const targetTab = document.querySelector(`.nav-tab[data-tab="${tabName}"]`);
   const targetContent = document.getElementById('tab-' + tabName);
-  if (!targetTab || !targetContent) return false;
+  if (!targetContent) return false;
+
+  const targetTab = document.querySelector(`.nav-tab[data-tab="${tabName}"]`);
 
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-  targetTab.classList.add('active');
+  if (targetTab) targetTab.classList.add('active');
   targetContent.classList.add('active');
 
+  if (tabName === 'home') initHomeTab();
   if (tabName === 'payroll') { applyProfileToPayroll(); if (typeof PAYROLL !== 'undefined') PAYROLL.init(); }
   if (tabName === 'overtime') { applyProfileToOvertime(); initOvertimeTab(); }
   if (tabName === 'leave') { applyProfileToLeave(); initLeaveTab(); }
@@ -193,7 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const saved = PROFILE.load();
   if (saved) {
     PROFILE.applyToForm(saved, PROFILE_FIELDS);
-    toggleUnder6Field(); // 자녀 수 기반 6세이하 행 표시
+    toggleChildFields(); // 자녀 수 기반 6세이하 행 표시
     updateProfileSummary(saved);
     updateProfileTitle(saved.name);
     const profileStatusEl = document.getElementById('profileStatus');
@@ -233,8 +359,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const params = getCaptureParams();
     const requestedTab = params.get('tab');
-    if (!switchTab(requestedTab || 'leave')) {
-      switchTab('leave');
+    if (!switchTab(requestedTab || 'home')) {
+      switchTab('home');
     }
   }
   activateV1DefaultTab();
@@ -418,12 +544,14 @@ function updateProfileGrades() {
     gradeInput.value = 'J3';
   }
 }
-// 자녀 수가 1 이상일 때 6세이하 행 표시
-function toggleUnder6Field() {
+// 자녀 수가 1 이상일 때 6세이하 자녀수당 행 표시
+function toggleChildFields() {
   const numChildren = parseInt(document.getElementById('pfChildren')?.value) || 0;
-  const row = document.getElementById('under6Row');
+  const row = document.getElementById('childExtraRow');
   if (row) row.style.display = numChildren >= 1 ? 'grid' : 'none';
 }
+// 하위 호환
+function toggleUnder6Field() { toggleChildFields(); }
 
 function saveProfile() {
   const data = PROFILE.collectFromForm(PROFILE_FIELDS);
@@ -607,6 +735,25 @@ function updateProfileSummary(profile) {
     }
   });
 
+  // 가족수당 계산 (통상임금 미포함 — 별도 지급)
+  const numFamily = parseInt(profile.numFamily) || 0;
+  const numChildren = parseInt(profile.numChildren) || 0;
+  const childrenUnder6Pay = parseInt(profile.childrenUnder6Pay) || 0;
+  const familyResult = CALC.calcFamilyAllowance(numFamily, numChildren);
+  const totalFamilyPay = familyResult.월수당 + childrenUnder6Pay;
+
+  if (totalFamilyPay > 0) {
+    html += `<div class="result-row" style="border-top:1px dashed var(--border); margin-top:8px; padding-top:8px;">
+      <span class="key" style="color:var(--text-muted);">▸ 가족수당 (비통상임금)</span><span class="val"></span></div>`;
+    Object.entries(familyResult.breakdown).forEach(([key, val]) => {
+      html += `<div class="result-row"><span class="key">${escapeHtml(key)}</span><span class="val">${CALC.formatCurrency(val)}</span></div>`;
+    });
+    if (childrenUnder6Pay > 0) {
+      html += `<div class="result-row"><span class="key">6세이하 자녀수당</span><span class="val">${CALC.formatCurrency(childrenUnder6Pay)}</span></div>`;
+    }
+    html += `<div class="result-row" style="font-weight:600;"><span class="key">가족수당 소계</span><span class="val">${CALC.formatCurrency(totalFamilyPay)}</span></div>`;
+  }
+
   const gradeDisplay = `${profile.jobType} ${gradeLabel}(${profile.grade}) ${profile.year}년차${serviceYears > 0 ? ` · 근속 ${serviceYears}년` : ''}`;
   html += `
     <div class="result-row" style="border-top:2px solid var(--border); margin-top:8px; padding-top:8px; font-weight:600;">
@@ -620,6 +767,30 @@ function updateProfileSummary(profile) {
     </div>
     ${!profile.adjustPay ? '<div class="warning-box" style="margin-top:8px; border-color:var(--accent-amber);">⚠️ 조정급 미입력 시 근속가산기본급·명절지원비가 과소 계산됩니다. 내 정보에서 조정급을 입력해주세요.</div>' : ''}
     <div class="warning-box" style="margin-top:8px;">💡 이 시급이 시간외·온콜 탭에 자동 반영됩니다.</div>`;
+
+  // 가족/자녀 기반 휴가·복지 안내
+  const familyTips = [];
+  if (numFamily >= 1) {
+    familyTips.push('진료비 감면: 배우자·부모·자녀(만25세 미만) 보험/비보험 50% (제67조)');
+  }
+  if (numChildren >= 1) {
+    familyTips.push('가족돌봄휴가(유급): ' + (numChildren >= 2 ? '3일 (다자녀)' : '2일') + ' (제42조)');
+    familyTips.push('육아휴직: 만 8세 이하 자녀, 최초 1년 (제26조)');
+    familyTips.push('복지포인트: 자녀 1인당 100P' + (numChildren >= 3 ? ', 셋째부터 200P' : '') + ' (제58조)');
+  }
+  if (numChildren >= 1 && childrenUnder6Pay > 0) {
+    familyTips.push('어린이집: 보라매병원 1동 3층 (1~5세, 07:30~19:30) (제62조)');
+  }
+
+  if (familyTips.length > 0) {
+    html += `<div style="margin-top:12px; padding:10px 12px; background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.2); border-radius:8px; font-size:var(--text-body-normal); line-height:1.6;">
+      <strong style="color:var(--accent-indigo);">📌 가족 관련 휴가·복지 안내</strong>
+      <ul style="margin:6px 0 0; padding-left:18px; color:var(--text-secondary);">
+        ${familyTips.map(t => '<li>' + t + '</li>').join('')}
+      </ul>
+    </div>`;
+  }
+
   document.getElementById('profileSummary').innerHTML = html;
 }
 
@@ -726,10 +897,9 @@ function calculateWage() {
   const specialPay = parseInt(document.getElementById('wSpecial').value) || 0;
   const numFamily = parseInt(document.getElementById('wFamily')?.value) || 0;
   const numChildren = parseInt(document.getElementById('wChildren').value) || 0;
-  const numChildrenUnder6 = parseInt(document.getElementById('wChildrenUnder6')?.value) || 0;
+  const childrenUnder6Pay = parseInt(document.getElementById('wChildrenUnder6Pay')?.value) || 0;
 
   const familyResult = CALC.calcFamilyAllowance(numFamily, numChildren);
-  const childrenUnder6Pay = numChildrenUnder6 * 130000;
 
   // 가족수당은 통상임금 계산에서 제외 (보수규정 제44조 2항)
   const result = CALC.calcOrdinaryWage(jobType, grade, year, {
@@ -1003,7 +1173,7 @@ function calculatePayroll() {
       longServiceYears: serviceYears,
       numFamily: parseInt(profile.numFamily) || 0,
       numChildren: parseInt(profile.numChildren) || 0,
-      numChildrenUnder6: parseInt(profile.numChildrenUnder6) || 0,
+      childrenUnder6Pay: parseInt(profile.childrenUnder6Pay) || 0,
       specialPay: parseInt(profile.specialPay) || 0,
       positionPay: parseInt(profile.positionPay) || 0,
       workSupportPay: parseInt(profile.workSupportPay) || 0,
@@ -1021,7 +1191,7 @@ function calculatePayroll() {
       hasSeniority: document.getElementById('psSeniority')?.checked || false,
       seniorityYears: document.getElementById('psSeniority')?.checked ? serviceYears : 0,
       longServiceYears: serviceYears,
-      numFamily: 0, numChildren: 0, numChildrenUnder6: 0,
+      numFamily: 0, numChildren: 0, childrenUnder6Pay: 0,
     };
   }
 
@@ -3075,6 +3245,18 @@ const LV_CAT_ICONS = {
   special: '🔷', other: '⬜'
 };
 
+// 카테고리별 색상 (캘린더 뷰와 동일)
+const LV_CAT_COLORS = {
+  legal:     { bg: 'rgba(16,185,129,0.15)',  accent: 'rgba(16,185,129,0.25)',  header: 'rgba(16,185,129,0.10)' },
+  health:    { bg: 'rgba(244,63,94,0.12)',    accent: 'rgba(244,63,94,0.22)',   header: 'rgba(244,63,94,0.08)' },
+  education: { bg: 'rgba(139,92,246,0.12)',   accent: 'rgba(139,92,246,0.22)',  header: 'rgba(139,92,246,0.08)' },
+  family:    { bg: 'rgba(99,102,241,0.12)',   accent: 'rgba(99,102,241,0.22)',  header: 'rgba(99,102,241,0.08)' },
+  ceremony:  { bg: 'rgba(245,158,11,0.12)',   accent: 'rgba(245,158,11,0.22)',  header: 'rgba(245,158,11,0.08)' },
+  maternity: { bg: 'rgba(6,182,212,0.12)',    accent: 'rgba(6,182,212,0.22)',   header: 'rgba(6,182,212,0.08)' },
+  special:   { bg: 'rgba(99,102,241,0.12)',   accent: 'rgba(99,102,241,0.22)',  header: 'rgba(99,102,241,0.08)' },
+};
+const LV_CAT_DEFAULT_COLOR = { bg: 'rgba(99,102,241,0.10)', accent: 'rgba(99,102,241,0.20)', header: 'rgba(99,102,241,0.06)' };
+
 // 유형 select 동적 생성 (성별 필터 + optgroup)
 function populateLvTypeSelect() {
   const container = document.getElementById('lvTypeSelectContainer');
@@ -3084,6 +3266,10 @@ function populateLvTypeSelect() {
   const profile = PROFILE.load();
   const gender = profile ? profile.gender : '';
   const groups = LEAVE.getGroupedTypes(gender);
+
+  // 현재 선택된 유형
+  const lvTypeInput = document.getElementById('lvType');
+  const selectedType = lvTypeInput ? lvTypeInput.value : '';
 
   // 기본적으로 토글이 펼쳐진 그룹들
   const defaultOpenGroups = ['legal', 'education', 'health', 'family'];
@@ -3100,13 +3286,15 @@ function populateLvTypeSelect() {
   });
 
   groups.forEach(group => {
+    const colors = LV_CAT_COLORS[group.id] || LV_CAT_DEFAULT_COLOR;
+
     const groupDiv = document.createElement('div');
     groupDiv.style.marginBottom = '6px';
     groupDiv.style.background = 'var(--bg-card)';
     groupDiv.style.borderRadius = 'var(--radius-sm)';
     groupDiv.style.overflow = 'hidden';
     groupDiv.style.border = '1px solid var(--border-glass)';
-    groupDiv.style.flexShrink = '0'; // 컨테이너가 찌그러지지 않도록 설정
+    groupDiv.style.flexShrink = '0';
 
     // 제목 (토글 버튼)
     const titleDiv = document.createElement('div');
@@ -3118,7 +3306,7 @@ function populateLvTypeSelect() {
     titleDiv.style.display = 'flex';
     titleDiv.style.alignItems = 'center';
     titleDiv.style.justifyContent = 'space-between';
-    titleDiv.style.background = 'var(--bg-secondary)';
+    titleDiv.style.background = colors.header;
 
     const isOpenByDefault = defaultOpenGroups.includes(group.id);
 
@@ -3157,46 +3345,51 @@ function populateLvTypeSelect() {
     };
 
     group.items.forEach(t => {
-      let label = t.label; // 아이콘, [무급] 태그 제거
-      if (t.isTimeBased && t.id !== 'time_leave') label += ' (시간단위)'; // (시간단위) 제거
+      let label = t.label;
+      if (t.isTimeBased && t.id !== 'time_leave') label += ' (시간단위)';
 
       const usedRaw = usage[t.id] || 0;
       const usedDays = Math.round(usedRaw * 10) / 10;
       let statusHtml = '';
 
       if (t.id === 'annual' || t.usesAnnual) {
-        // 연차의 경우
         const annualData = LEAVE.calcAnnualSummary(year, typeof lvTotalAnnual !== 'undefined' ? lvTotalAnnual : 15);
         if (t.id === 'time_leave') {
-          statusHtml = `<span style="color: #00B894; font-size: 11px; font-weight: 700; margin-left: auto;">${timeLeaveHours}h 사용</span>`;
+          statusHtml = `<span style="color: var(--accent-emerald); font-size: var(--text-body-normal); font-weight: 700; margin-left: auto;">${timeLeaveHours}h 사용</span>`;
         } else {
-          statusHtml = `<span style="color: #00B894; font-size: 11px; font-weight: 700; margin-left: auto;">${annualData.usedAnnual}/${annualData.totalAnnual}</span>`;
+          statusHtml = `<span style="color: var(--accent-emerald); font-size: var(--text-body-normal); font-weight: 700; margin-left: auto;">${annualData.usedAnnual}/${annualData.totalAnnual}</span>`;
         }
       } else if (t.quota !== null) {
-        statusHtml = `<span style="color: #00B894; font-size: 11px; font-weight: 700; margin-left: auto;">${usedDays}/${t.quota}</span>`;
+        statusHtml = `<span style="color: var(--accent-emerald); font-size: var(--text-body-normal); font-weight: 700; margin-left: auto;">${usedDays}/${t.quota}</span>`;
       } else {
-        statusHtml = `<span style="color: #00B894; font-size: 11px; font-weight: 700; margin-left: auto;">${usedDays}일 사용</span>`;
+        statusHtml = `<span style="color: var(--accent-emerald); font-size: var(--text-body-normal); font-weight: 700; margin-left: auto;">${usedDays}일 사용</span>`;
       }
+
+      const isSelected = t.id === selectedType;
 
       const btn = document.createElement('button');
       btn.className = 'btn';
       btn.style.width = '100%';
-      btn.style.display = 'flex'; // flex박스 사용
+      btn.style.display = 'flex';
       btn.style.alignItems = 'center';
-      btn.style.justifyContent = 'space-between'; // 양끝 정렬
+      btn.style.justifyContent = 'space-between';
       btn.style.marginBottom = group.id !== 'other' ? '0' : '4px';
       btn.style.padding = '10px 12px';
-      btn.style.background = 'var(--bg-glass)';
-      btn.style.border = '1px solid var(--border-active)';
+      btn.style.background = isSelected ? colors.accent : colors.bg;
+      btn.style.border = isSelected ? '2px solid var(--accent-emerald)' : '1px solid var(--border-glass)';
       btn.style.borderRadius = 'var(--radius-sm)';
       btn.style.color = 'var(--text-primary)';
       btn.style.fontSize = 'var(--text-body-normal)';
       btn.style.fontWeight = '600';
       btn.onclick = () => selectLvType(t.id, t.label);
-      btn.innerHTML = `<span>${label}</span>${statusHtml}`;
+      btn.innerHTML = `<span>${isSelected ? '✓ ' : ''}${label}</span>${statusHtml}`;
 
-      btn.onmouseover = () => btn.style.background = 'var(--bg-glass-hover)';
-      btn.onmouseout = () => btn.style.background = 'var(--bg-glass)';
+      const baseBg = colors.bg;
+      const hoverBg = colors.accent;
+      if (!isSelected) {
+        btn.onmouseover = () => btn.style.background = hoverBg;
+        btn.onmouseout = () => btn.style.background = baseBg;
+      }
 
       itemsContainer.appendChild(btn);
     });
@@ -3225,6 +3418,7 @@ function selectLvType(id, label) {
     onLvTypeChange();
   }
   closeLvTypeBottomSheet();
+  populateLvTypeSelect(); // 선택 상태 갱신
 }
 
 function updateLvTypeBtnText(id) {
@@ -3522,14 +3716,20 @@ function onLvTypeChange() {
   const quotaBadge = document.getElementById('lvQuotaBadge');
   const year = lvCurrentYear;
   if (typeInfo && typeInfo.quota !== null && !typeInfo.usesAnnual) {
+    let effectiveQuota = typeInfo.quota;
+    // 가족돌봄(유급): 자녀 2명 이상 → 3일 (제42조, 2021.11 단협)
+    if (typeInfo.id === 'family_care_paid') {
+      const _pf = typeof PROFILE !== 'undefined' ? PROFILE.load() : null;
+      if (_pf && (parseInt(_pf.numChildren) || 0) >= 2) effectiveQuota = 3;
+    }
     const records = LEAVE.getYearRecords(year);
     const usedRaw = records.filter(r => r.type === type).reduce((sum, r) => sum + (r.days || 0), 0);
     const used = Math.round(usedRaw * 10) / 10;
-    const remain = Math.round((typeInfo.quota - usedRaw) * 10) / 10;
+    const remain = Math.round((effectiveQuota - usedRaw) * 10) / 10;
     const color = remain <= 0 ? 'var(--accent-rose)' : 'var(--accent-emerald)';
     const refNote = typeInfo.ref ? `<br><span style="color:var(--text-muted); font-size:var(--text-body-normal);">📖 ${typeInfo.ref}</span>` : '';
     quotaBadge.innerHTML = `<div style="padding:6px 10px; border-radius:6px; background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.15); font-size:var(--text-body-normal);">
-      📊 <strong>${typeInfo.label}</strong> 한도: ${typeInfo.quota}일 | 사용: ${used}일 | <span style="color:${color}; font-weight:700;">잔여: ${remain}일</span>
+      📊 <strong>${typeInfo.label}</strong> 한도: ${effectiveQuota}일 | 사용: ${used}일 | <span style="color:${color}; font-weight:700;">잔여: ${remain}일</span>
       ${remain <= 0 ? '<br><span style="color:var(--accent-rose)">⚠️ 한도 초과!</span>' : ''}${refNote}
     </div>`;
     quotaBadge.style.display = 'block';
@@ -3848,6 +4048,8 @@ function renderLvRecordList(year) {
   const records = LEAVE.getYearRecords(year);
   if (records.length === 0) {
     container.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:24px;">캘린더에서 날짜를 클릭하여 휴가를 등록하세요.</p>';
+    const extra = document.getElementById('lvQuotaExtra');
+    if (extra) extra.innerHTML = '';
     return;
   }
 
@@ -3875,7 +4077,7 @@ function renderLvRecordList(year) {
   let html = '';
 
   // ── 요약 카드 ──
-  const round1 = v => (Math.round(v * 10) / 10).toFixed(1);
+  const round1 = v => Math.round(v);
   html += `<div class="lv-stats-grid">
     <div class="lv-stat-card">
       <div class="lv-stat-num">${round1(totalDays)}</div>
@@ -3895,69 +4097,82 @@ function renderLvRecordList(year) {
     </div>
   </div>`;
 
-  // ── 월별 히트맵 바 ──
+  container.innerHTML = html;
+
+  // ── 월별사용 + 상세기록 → lvQuotaExtra로 이동 ──
+  const extraContainer = document.getElementById('lvQuotaExtra');
+  if (!extraContainer) return;
+  let extraHtml = '';
+
+  // ── 월별 바 차트 (반기 2줄) ──
   const maxMonthDays = Math.max(...Object.values(byMonth), 1);
-  html += '<div style="margin:12px 0 8px; font-size:var(--text-body-normal); font-weight:600; color:var(--text-muted);">월별 사용</div>';
-  html += '<div class="lv-month-bars">';
+  extraHtml += '<div style="margin:12px 0 8px; font-size:var(--text-body-normal); font-weight:600; color:var(--text-muted);">월별 사용</div>';
+  extraHtml += '<div class="lv-month-bars">';
   for (let m = 1; m <= 12; m++) {
     const d = byMonth[m] || 0;
     const pct = Math.round((d / maxMonthDays) * 100);
     const isCurrentMonth = (m === lvCurrentMonth && year === lvCurrentYear);
-    html += `<div class="lv-month-bar${isCurrentMonth ? ' current' : ''}">
-      <div class="lv-month-bar-fill" style="height:${Math.max(pct, d > 0 ? 8 : 0)}%"></div>
+    const valInside = pct >= 25 && d > 0;
+    extraHtml += `<div class="lv-month-bar${isCurrentMonth ? ' current' : ''}">
+      ${d > 0 && !valInside ? `<span class="lv-month-bar-val above">${round1(d)}</span>` : ''}
+      <div class="lv-month-bar-fill" style="height:${Math.max(pct, d > 0 ? 10 : 0)}%">
+        ${valInside ? `<span class="lv-month-bar-val">${round1(d)}</span>` : ''}
+      </div>
       <span class="lv-month-bar-label">${m}월</span>
-      ${d > 0 ? `<span class="lv-month-bar-val">${round1(d)}</span>` : ''}
     </div>`;
   }
-  html += '</div>';
+  extraHtml += '</div>';
 
-  // ── 유형별 분포 ──
-  const catEntries = Object.entries(byCategory).sort((a, b) => b[1] - a[1]);
-  if (catEntries.length > 0) {
-    html += '<div style="margin:12px 0 6px; font-size:var(--text-body-normal); font-weight:600; color:var(--text-muted);">유형별 분포</div>';
-    html += '<div style="display:flex; flex-wrap:wrap; gap:4px;">';
-    const colors = ['var(--accent-indigo)', 'var(--accent-emerald)', 'var(--accent-amber)', 'var(--accent-rose)', 'var(--accent-cyan)', 'var(--accent-violet)'];
-    catEntries.forEach(([cat, days], i) => {
-      html += `<span style="display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border-radius:12px; font-size:var(--text-body-normal); background:rgba(99,102,241,0.08); border:1px solid var(--border-glass);">
-        <i style="width:6px;height:6px;border-radius:50%;background:${colors[i % colors.length]};display:inline-block;"></i>
-        ${cat} <strong>${days}일</strong>
-      </span>`;
-    });
-    html += '</div>';
-  }
+  // ── 상세 기록 (유형별 그룹, 접이식) ──
+  // 유형별로 그룹핑
+  const grouped = {};
+  sorted.forEach(r => {
+    if (!grouped[r.type]) grouped[r.type] = [];
+    grouped[r.type].push(r);
+  });
 
-  // ── 상세 기록 (최근순, 접이식) ──
-  html += `<div style="margin-top:12px;">
+  extraHtml += `<div style="margin-top:12px;">
     <div class="collapsible-header" onclick="toggleCollapsible('lvRecordDetail')">
       <span style="display:flex; align-items:center; gap:8px;"><span class="toggle-icon">▸</span> 상세 기록 (${sorted.length}건)</span>
     </div>
-    <div class="collapsible-body" id="lvRecordDetail" style="display:none; max-height:300px; overflow-y:auto;">`;
+    <div class="collapsible-body" id="lvRecordDetail" style="display:none; max-height:400px; overflow-y:auto;">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">`;
 
-  sorted.forEach(r => {
-    const typeInfo = LEAVE.getTypeById(r.type);
-    const dateDisplay = r.startDate === r.endDate
-      ? r.startDate.substring(5)
-      : r.startDate.substring(5) + ' ~ ' + r.endDate.substring(5);
-    let timeDisplay = '';
-    if (r.type === 'time_leave' && r.hours) {
-      timeDisplay = ` ${r.startTime || ''}~${r.endTime || ''} (${(r.hours || 0).toFixed(1)}h)`;
-    } else {
-      timeDisplay = ` ${(r.days || 0).toFixed(1)}일`;
-    }
-    html += `<div class="lv-record-item" onclick="editLvRecord('${r.id}')">
-      <span class="lv-record-type ${r.isPaid ? 'paid' : 'unpaid'}">${typeInfo ? typeInfo.label : r.type}</span>
-      <div style="flex:1; font-size:var(--text-body-normal); color:var(--text-secondary)">
-        ${dateDisplay}${timeDisplay}
-        ${r.memo ? ' <span style="color:var(--text-muted)">' + escapeHtml(r.memo) + '</span>' : ''}
+  Object.entries(grouped).forEach(([type, records]) => {
+    const typeInfo = LEAVE.getTypeById(type);
+    const label = typeInfo ? typeInfo.label : type;
+    const isPaid = records[0].isPaid;
+    const totalDaysGroup = records.reduce((s, r) => s + (r.days || 0), 0);
+    const totalImpact = records.reduce((s, r) => s + (r.salaryImpact ? Math.abs(r.salaryImpact) : 0), 0);
+
+    extraHtml += `<div class="lv-record-item" style="flex-direction:column; align-items:stretch; gap:4px; cursor:default; padding:6px 10px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span class="lv-record-type ${isPaid ? 'paid' : 'unpaid'}">${label}</span>
+        <span style="font-size:var(--text-body-normal); font-weight:700; color:${totalImpact ? 'var(--accent-rose)' : 'var(--accent-emerald)'}">
+          ${totalImpact ? '-₩' + totalImpact.toLocaleString() : '유급'} · ${Math.round(totalDaysGroup)}일
+        </span>
       </div>
-      <div style="font-size:var(--text-body-normal); font-weight:700; color:${r.salaryImpact ? 'var(--accent-rose)' : 'var(--accent-emerald)'}">
-        ${r.salaryImpact ? '-₩' + Math.abs(r.salaryImpact).toLocaleString() : '유급'}
-      </div>
-    </div>`;
+      <div style="display:flex; flex-direction:column; gap:1px; padding-left:4px; max-height:calc(var(--text-body-normal, 14px) * 4.8); overflow-y:auto;">`;
+
+    records.forEach(r => {
+      const dateDisplay = r.startDate === r.endDate
+        ? r.startDate.substring(5)
+        : r.startDate.substring(5) + ' ~ ' + r.endDate.substring(5);
+      let detail = `${dateDisplay} ${Math.round(r.days || 0)}일`;
+      if (r.type === 'time_leave' && r.hours) {
+        detail = `${dateDisplay} ${r.startTime || ''}~${r.endTime || ''} (${Math.round(r.hours || 0)}h)`;
+      }
+      extraHtml += `<div style="display:flex; justify-content:space-between; align-items:center; font-size:var(--text-body-normal); color:var(--text-secondary); cursor:pointer; padding:1px 0;" onclick="editLvRecord('${r.id}')">
+        <span>${detail}${r.memo ? ' <span style="color:var(--text-muted)">' + escapeHtml(r.memo) + '</span>' : ''}</span>
+      </div>`;
+    });
+
+    extraHtml += `</div></div>`;
   });
-  html += '</div></div>';
 
-  container.innerHTML = html;
+  extraHtml += '</div></div></div>';
+
+  extraContainer.innerHTML = extraHtml;
 }
 
 function exportLvData() {

@@ -489,7 +489,7 @@ const CALC = {
             hasMilitary = false, militaryMonths = 24,
             hasSeniority = false, seniorityYears = 0,
             longServiceYears = 0,
-            numFamily = 0, numChildren = 0, numChildrenUnder6 = 0,
+            numFamily = 0, numChildren = 0, childrenUnder6Pay = 0,
             specialPay = 0, positionPay = 0, workSupportPay = 0,
             workDays = 22, isHolidayMonth = false, isFamilySupportMonth = true,
             overtimeHours = 0, nightHours = 0, holidayWorkHours = 0,
@@ -499,7 +499,6 @@ const CALC = {
         // 1. 가족수당 계산
         const familyResult = this.calcFamilyAllowance(numFamily, numChildren);
         const familyAllowance = familyResult.월수당;
-        const childrenUnder6Pay = numChildrenUnder6 * 130000;
 
         // 2. 통상임금 계산 (가족수당 제외 — 보수규정 제44조 2항 미포함)
         const wage = this.calcOrdinaryWage(jobType, grade, year, {

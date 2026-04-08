@@ -2088,8 +2088,6 @@ html[data-theme="neo"] .logo .logo-main-title {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
   gap: 3px;
-  height: 60px;
-  align-items: end;
 }
 
 .lv-month-bar {
@@ -2097,7 +2095,7 @@ html[data-theme="neo"] .logo .logo-main-title {
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  height: 100%;
+  height: 72px;
   position: relative;
 }
 
@@ -2106,12 +2104,20 @@ html[data-theme="neo"] .logo .logo-main-title {
   font-weight: 700;
 }
 
+.lv-month-bar.current .lv-month-bar-fill {
+  background: var(--accent-emerald);
+}
+
 .lv-month-bar-fill {
   width: 100%;
   border-radius: 3px 3px 0 0;
   background: var(--accent-indigo);
   min-width: 4px;
   transition: height 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
 }
 
 .lv-month-bar-label {
@@ -2121,11 +2127,20 @@ html[data-theme="neo"] .logo .logo-main-title {
 }
 
 .lv-month-bar-val {
-  position: absolute;
-  top: -2px;
-  font-size: var(--text-label-small);
+  font-size: var(--text-body-normal, 14px);
   font-weight: 700;
+  color: #fff;
+  line-height: 1;
+}
+
+.lv-month-bar-val.above {
+  position: absolute;
+  top: -1px;
   color: var(--accent-indigo);
+}
+
+.lv-month-bar.current .lv-month-bar-val.above {
+  color: var(--accent-emerald);
 }
 
 /* ── Calendar badge (for day annotations) ── */
@@ -2361,8 +2376,8 @@ html[data-theme="neo"] .logo .logo-main-title {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .lv-month-bars {
-    height: 48px;
+  .lv-month-bar {
+    height: 56px;
   }
 
   .modal-content {
@@ -3051,6 +3066,10 @@ html[data-theme="neo"] .lv-stat-card {
 html[data-theme="neo"] .lv-month-bar-fill {
   border-radius: 0;
   border: 1px solid #1a1a1a;
+}
+
+html[data-theme="neo"] .lv-month-bar-val.above {
+  color: #1a1a1a;
 }
 
 /* ── Neo: Input Panel ── */

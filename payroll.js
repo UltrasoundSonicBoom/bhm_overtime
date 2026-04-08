@@ -138,7 +138,7 @@ const PAYROLL = {
           parseInt(profile.numFamily) || 0,
           parseInt(profile.numChildren) || 0
         );
-        const under6Pay = (parseInt(profile.numChildrenUnder6) || 0) * 130000;
+        const under6Pay = parseInt(profile.childrenUnder6Pay) || 0;
         const details = Object.entries(r.breakdown).map(([key, val]) => ({
           key, val: CALC.formatCurrency(val)
         }));

@@ -331,7 +331,7 @@
   <header class="header">
     <div class="header-inner">
       <div class="header-top-row">
-        <div class="logo">
+        <div class="logo" onclick="switchTab('home')" style="cursor:pointer;">
           <img src="logo.png" alt="SNUH Mate"
             style="width:81px; height:81px; object-fit:contain; flex-shrink:0; border-radius:10px;">
           <div>
@@ -351,7 +351,7 @@
         </div>
       </div>
       <nav class="nav-tabs" id="navTabs">
-        <button class="nav-tab active" data-tab="leave">📅 휴가</button>
+        <button class="nav-tab" data-tab="leave">📅 휴가</button>
         <button class="nav-tab" data-tab="overtime">⏰ 시간외·온콜</button>
         <button class="nav-tab" data-tab="payroll" style="display:none;">💰 급여</button>
         <button class="nav-tab" data-tab="profile">👤 개인정보</button>
@@ -361,6 +361,129 @@
   </header>
 
   <main class="main">
+
+    <!-- ═══════════ 📢 글로벌 공지 배너 ═══════════ -->
+    <div id="globalNoticeBanner" class="info-note-banner"
+      style="display:none; justify-content:space-between; align-items:center; border: 1.5px solid var(--accent-indigo); background: rgba(99, 102, 241, 0.1); border-radius: 12px; margin-bottom: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); padding: 12px 16px; margin-left: 16px; margin-right: 16px; margin-top: 4px;">
+      <div style="display:flex; align-items:center; gap:10px; width:100%;">
+        <span style="font-size: 1.3em;">🎉</span>
+        <span style="font-weight:600; color:var(--text-primary); font-size:var(--text-body-normal); line-height:1.4;">
+          에러, 개선, 요청사항 등은 <a onclick="switchTab('feedback')"
+            style="color:var(--accent-indigo); text-decoration:underline; cursor:pointer;">Feedback</a>에서 입력해주세요!
+        </span>
+      </div>
+      <button onclick="dismissNotice('notice_2026_update_v1')"
+        style="background:none; border:none; padding:4px; font-size:20px; cursor:pointer; color:var(--text-muted); flex-shrink: 0; margin-left: 8px;">&times;</button>
+    </div>
+    <script>
+      function dismissNotice(noticeId) {
+        const banner = document.getElementById('globalNoticeBanner');
+        banner.style.opacity = '0';
+        banner.style.transform = 'translateY(-10px)';
+        banner.style.transition = 'all 0.3s ease-out';
+        setTimeout(() => banner.style.display = 'none', 300);
+        localStorage.setItem('dismissed_' + noticeId, 'true');
+      }
+      setTimeout(() => {
+        if (!localStorage.getItem('dismissed_notice_2026_update_v1')) {
+          const banner = document.getElementById('globalNoticeBanner');
+          if (banner) {
+            banner.style.opacity = '0';
+            banner.style.transform = 'translateY(-10px)';
+            banner.style.display = 'flex';
+
+            // force reflow
+            void banner.offsetWidth;
+
+            banner.style.transition = 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
+            banner.style.opacity = '1';
+            banner.style.transform = 'translateY(0)';
+          }
+        }
+      }, 600);
+    </script>
+
+    <!-- ═══════════ 🏠 홈 ═══════════ -->
+    <div class="tab-content active" id="tab-home">
+
+      <!-- 내 현황 요약 카드 -->
+      <div class="home-summary-grid">
+
+        <!-- 시간외/온콜 카드 -->
+        <div class="home-summary-card" onclick="switchTab('overtime')">
+          <img src="./overtime.png" alt="시간외" class="home-card-img" id="homeOtImg">
+          <div class="home-card-body" id="homeOtBody" style="display:none;">
+            <div class="home-card-stats" id="homeOtStats"></div>
+          </div>
+        </div>
+
+        <!-- 휴가 카드 -->
+        <div class="home-summary-card" onclick="switchTab('leave')">
+          <img src="./vacation.png" alt="휴가" class="home-card-img" id="homeLeaveImg">
+          <div class="home-card-body" id="homeLeaveBody" style="display:none;">
+            <div class="home-card-stats" id="homeLeaveStats"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 사용자 한마디 -->
+      <div class="card home-testimonial-card">
+        <div class="card-title" style="font-size:var(--text-body-large); margin-bottom:8px;">
+          <span class="icon" style="color:var(--accent-violet);">💬</span> 사용자 한마디
+        </div>
+        <div class="testimonial-slider">
+          <div class="testimonial-track">
+            <div class="testimonial-item">
+              <span class="testimonial-quote">"휴가 얼마나 남았는지 금방 알 수 있어서 휴가계획 짜기 좋아요"</span>
+              <span class="testimonial-author">핵의학과 · 보건직</span>
+            </div>
+            <div class="testimonial-item">
+              <span class="testimonial-quote">"이번달 온콜 몇 번 했는지 까먹었는데 이제 바로 기록할 수 있어서 최고!"</span>
+              <span class="testimonial-author">영상의학과 · 보건직</span>
+            </div>
+            <div class="testimonial-item">
+              <span class="testimonial-quote">"연차 남은 거 휴대폰에서 바로 알 수 있어서 좋아요"</span>
+              <span class="testimonial-author">원무과 · 사무직</span>
+            </div>
+            <div class="testimonial-item">
+              <span class="testimonial-quote">"이제야 내 통상임금이 어떻게 계산하는지 알겠네요 ㅎㅎ"</span>
+              <span class="testimonial-author">영상의학과 · 보건직</span>
+            </div>
+            <div class="testimonial-item">
+              <span class="testimonial-quote">"야근했는데 기록이 없어서 수당 빠진 적 있거든요. 이제 미리 확인해요"</span>
+              <span class="testimonial-author">진단검사의학과 · 보건직</span>
+            </div>
+            <div class="testimonial-item">
+              <span class="testimonial-quote">"내 시간외 근무 수당을 바로 알 수 있어서 좋아요 ㅋㅋ"</span>
+              <span class="testimonial-author">외래 간호사 · 3교대</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 업데이트 내역 -->
+      <div class="card home-changelog-card">
+        <div class="card-title" style="font-size:var(--text-body-large); margin-bottom:8px;">
+          <span class="icon" style="color:var(--accent-indigo);">🎉</span> 업데이트 내역
+        </div>
+        <div class="changelog-pager">
+          <div class="changelog-pager-content" id="changelogContent"></div>
+          <div class="changelog-pager-nav">
+            <button class="changelog-nav-btn" id="changelogPrev" onclick="changelogPage(-1)">‹</button>
+            <span class="changelog-pager-indicator" id="changelogIndicator"></span>
+            <button class="changelog-nav-btn" id="changelogNext" onclick="changelogPage(1)">›</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 프라이버시 안내 -->
+      <div class="home-privacy-banner">
+        <span>🔐</span>
+        <span>모든 데이터는 내 브라우저에만 저장됩니다.<br> 개발자도, 서버도 절대 볼 수 없어요.</span>
+      </div>
+
+    </div>
 
     <!-- ═══════════ 💰 급여 섹션 ═══════════ -->
     <div class="tab-content" id="tab-payroll">
@@ -681,7 +804,7 @@
     </div>
 
     <!-- ═══════════ 📅 휴가 관리 ═══════════ -->
-    <div class="tab-content active" id="tab-leave">
+    <div class="tab-content" id="tab-leave">
 
       <!-- 연차 기준 안내 배너 -->
       <div class="info-note-banner" id="lvAnnualInfoNote">
@@ -821,6 +944,7 @@
           </div>
           <div id="lvQuotaTableWrap" class="collapsible-body" style="display:block;">
             <div id="lvQuotaTable"></div>
+            <div id="lvQuotaExtra"></div>
           </div>
         </div>
       </div>
@@ -883,6 +1007,18 @@
 
     <!-- ═══════════ 👤 개인정보 ═══════════ -->
     <div class="tab-content" id="tab-profile">
+      <!-- 시작 가이드 및 업데이트 내역 버튼 -->
+      <div style="max-width:600px; margin:0 auto 16px; display: flex; flex-direction: column; gap: 8px;">
+        <button onclick="showOnboarding()" class="btn btn-outline"
+          style="width:100%; font-size:var(--text-body-normal); padding:10px; color:var(--accent-indigo); border-color:var(--accent-indigo);">
+          🚀 시작 가이드 보기
+        </button>
+        <button onclick="document.getElementById('updateHistoryModal').style.display='flex';" class="btn btn-outline"
+          style="width:100%; font-size:var(--text-body-normal); padding:10px; color:var(--text-secondary); border-color:var(--border-glass);">
+          📢 공지 및 업데이트 내역
+        </button>
+      </div>
+
       <div class="card" style="max-width:600px; margin:0 auto;">
         <div class="card-title"><span class="icon indigo">👤</span> <span id="pfTitleName">내 정보</span>
           <span class="badge emerald" id="profileStatus">미저장</span>
@@ -920,7 +1056,7 @@
             <div class="form-group">
               <label>직급·등급</label>
               <input type="text" id="pfGrade" placeholder="예: J3" autocomplete="off">
-            </div>
+            </div>₩
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -958,11 +1094,11 @@
           <div class="form-row">
             <div class="form-group">
               <label>조정급 <small style="color:#e53e3e; font-weight:600;">★필수</small></label>
-              <input type="number" id="pfAdjust" value="0" min="0" placeholder="급여명세서 확인">
+              <input type="number" id="pfAdjust" value="0" placeholder="급여명세서 확인">
             </div>
             <div class="form-group">
               <label>승급조정급</label>
-              <input type="number" id="pfUpgradeAdjust" value="0" min="0">
+              <input type="number" id="pfUpgradeAdjust" value="0">
             </div>
           </div>
           <div class="form-row">
@@ -992,29 +1128,28 @@
             </div>
           </div>
 
-          <!-- ▸ 가족수당 (숨김 처리 — 급여 탭에서 활성화 예정) -->
-          <div id="familyAllowanceSection" style="display:none;">
-            <p
-              style="font-size:var(--text-body-normal); color:var(--accent-indigo); margin:16px 0 4px; font-weight:600;">
-              ▸ 가족수당 <small style="font-weight:400; color:var(--text-muted)">(통상임금 미포함 — 별도 지급)</small></p>
-            <div class="form-row">
-              <div class="form-group">
-                <label>가족 수 <small style="color:var(--text-muted)">(자녀 제외·최대 5인)</small></label>
-                <input type="number" id="pfFamily" value="0" min="0" max="5">
-                <small style="color:var(--text-muted)">1인 40,000원 / 추가 1인당 20,000원</small>
-              </div>
-              <div class="form-group">
-                <label>자녀 수</label>
-                <input type="number" id="pfChildren" value="0" min="0" max="10" onchange="toggleUnder6Field()">
-              </div>
+          <!-- ▸ 가족수당 (통상임금 미포함 — 별도 지급) -->
+          <p style="font-size:var(--text-body-normal); color:#000000; margin:16px 0 4px; font-weight:600;">▸
+            가족수당 <small style="font-weight:400; color:var(--text-muted)">통상임금 미포함 — 별도 지급 (제49조)</small></p>
+          <div class="form-row">
+            <div class="form-group">
+              <label>가족 수 <small style="color:var(--text-muted)">(자녀 제외·최대 5인)</small></label>
+              <input type="number" id="pfFamily" value="0" min="0" max="5">
+              <small style="color:var(--text-muted)">배우자 40,000원 / 추가 1인당 20,000원</small>
             </div>
-            <div class="form-row" id="under6Row" style="display:none;">
-              <div class="form-group">
-                <label>6세 이하 자녀 수 <small style="color:var(--text-muted)">(1인당 130,000원)</small></label>
-                <input type="number" id="pfChildrenUnder6" value="0" min="0" max="10">
-              </div>
-              <div class="form-group"></div>
+            <div class="form-group">
+              <label>자녀 수</label>
+              <input type="number" id="pfChildren" value="0" min="0" max="10" onchange="toggleChildFields()">
+              <small style="color:var(--text-muted)">첫째 3만 / 둘째 7만 / 셋째 11만</small>
             </div>
+          </div>
+          <div class="form-row" id="childExtraRow" style="display:none;">
+            <div class="form-group">
+              <label>6세이하 자녀수당 <small style="color:var(--text-muted)">(월액 직접 입력)</small></label>
+              <input type="number" id="pfChildrenUnder6Pay" value="0" min="0" step="10000" placeholder="급여명세서 확인">
+              <small style="color:var(--text-muted)">급여명세서의 6세이하자녀수당 금액 그대로 입력</small>
+            </div>
+            <div class="form-group"></div>
           </div>
           <!-- 근속가산기본급: 입사일로 자동 계산, 별도 입력 불필요 -->
           <input type="checkbox" id="pfSeniority" style="display:none;">
@@ -1063,12 +1198,50 @@
         </div>
       </div>
 
-      <!-- 시작 가이드 버튼 -->
-      <div style="max-width:600px; margin:16px auto 0;">
-        <button onclick="showOnboarding()" class="btn btn-outline"
-          style="width:100%; font-size:var(--text-body-normal); padding:10px; color:var(--accent-indigo); border-color:var(--accent-indigo);">
-          🚀 시작 가이드 보기
-        </button>
+
+    </div>
+
+    <!-- ═══════════ 공지 및 업데이트 내역 모달 ═══════════ -->
+    <div id="updateHistoryModal" class="migration-overlay"
+      style="display:none; align-items:center; justify-content:center; padding: 16px;">
+      <div class="migration-card"
+        style="max-height: 80vh; display:flex; flex-direction:column; padding: 24px 20px; text-align: left;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+          <h2 style="font-size: var(--text-title-large); margin: 0; font-weight: 800;">🎉 업데이트 내역</h2>
+          <button onclick="document.getElementById('updateHistoryModal').style.display='none'"
+            style="background:none; border:none; font-size:24px; cursor:pointer; color:var(--text-muted);">&times;</button>
+        </div>
+        <div
+          style="overflow-y: auto; flex: 1; margin: 0 -8px; padding: 0 8px; display: flex; flex-direction: column; gap: 16px;">
+
+          <div style="border-left: 3px solid var(--accent-indigo); padding-left: 12px;">
+            <div style="font-size: var(--text-body-small); color: var(--text-muted); margin-bottom: 2px;">2026.04.08
+            </div>
+            <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">2026년 임금협상안 반영 및 사용성 개선</div>
+            <ul
+              style="margin: 0; padding-left: 16px; font-size: var(--text-body-normal); color: var(--text-secondary); line-height: 1.5;">
+              <li>2026년 새로운 임금협상안(가안) 및 야간근무가산 로직이 업데이트 되었습니다! 🥳</li>
+              <li>"시급을 자동으로 계산해줬으면 좋겠어요"라는 많은 선생님들의 피드백을 반영하여, 내 정보 탭에서 직급/호봉을 입력하면 시급이 자동 저장됩니다.</li>
+              <li>기본 화면(홈)에 주요 공지 배너가 추가되었습니다.</li>
+            </ul>
+          </div>
+
+          <div style="border-left: 3px solid var(--border-active); padding-left: 12px; opacity: 0.8;">
+            <div style="font-size: var(--text-body-small); color: var(--text-muted); margin-bottom: 2px;">2025.10.15
+            </div>
+            <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">무급휴가(연차, 시간차) 계산 로직 정확도 강화
+            </div>
+            <ul
+              style="margin: 0; padding-left: 16px; font-size: var(--text-body-normal); color: var(--text-secondary); line-height: 1.5;">
+              <li>무급휴가 시 차감되는 급여 계산식 오류를 바로잡았습니다.</li>
+              <li>달력 인터페이스에서 여러 날짜에 걸친 휴가도 쉽게 등록/확인할 수 있도록 개선되었습니다.</li>
+            </ul>
+          </div>
+
+        </div>
+        <button onclick="document.getElementById('updateHistoryModal').style.display='none'"
+          class="migration-btn secondary"
+          style="width: 100%; margin-top: 20px; font-size: var(--text-body-normal);">닫기</button>
       </div>
     </div>
 
@@ -1212,6 +1385,7 @@
           </div>
         </div>
       </div>
+
       <button onclick="dismissOnboarding(false)" class="btn btn-primary btn-full"
         style="font-size:var(--text-body-large); padding:12px;">
         🚀 시작하기
@@ -1234,6 +1408,7 @@
     function applyCaptureTitle() {
       const params = getCaptureParams();
       const titleMap = {
+        home: 'SNUH 메이트 - 홈',
         leave: 'SNUH 메이트 - 휴가',
         overtime: 'SNUH 메이트 - 시간외·온콜',
         profile: 'SNUH 메이트 - 개인정보',
@@ -1309,6 +1484,13 @@
         if (!hasSeen) {
           showOnboarding();
           localStorage.setItem('onboarding_seen_v2', 'true');
+        } else {
+          const CURRENT_UPDATE_VERSION = '2026.04.08';
+          const lastSeenUpdate = localStorage.getItem('last_seen_update');
+          if (lastSeenUpdate !== CURRENT_UPDATE_VERSION) {
+            document.getElementById('updateHistoryModal').style.display = 'flex';
+            localStorage.setItem('last_seen_update', CURRENT_UPDATE_VERSION);
+          }
         }
       }
     });

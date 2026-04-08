@@ -300,6 +300,14 @@ const LEAVE = {
 
             let quota = t.quota;
 
+            // 가족돌봄(유급): 자녀 2명 이상 → 3일 (제42조, 2021.11 단협)
+            if (t.id === 'family_care_paid') {
+                const profile = typeof PROFILE !== 'undefined' ? PROFILE.load() : null;
+                if (profile && (parseInt(profile.numChildren) || 0) >= 2) {
+                    quota = 3;
+                }
+            }
+
             // 연차는 동적 한도
             if (t.usesAnnual) {
                 quota = totalAnnual;

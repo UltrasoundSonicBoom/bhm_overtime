@@ -22,7 +22,7 @@ const PROFILE = {
         hasSeniority: false,
         numFamily: 0,              // 가족 수 (자녀 제외)
         numChildren: 0,            // 자녀 수
-        numChildrenUnder6: 0,      // 6세이하 자녀 수 (인원 수, 비통상임금)
+        childrenUnder6Pay: 0,      // 6세이하 자녀수당 월액 (직접 입력, 비통상임금)
         specialPay: 0,
         positionPay: 0,
         workSupportPay: 0,
@@ -55,7 +55,14 @@ const PROFILE = {
         try {
             const raw = localStorage.getItem(this.STORAGE_KEY);
             if (!raw) return null;
-            return JSON.parse(raw);
+            const data = JSON.parse(raw);
+            // 마이그레이션: numChildrenUnder6 (인원수×130000) → childrenUnder6Pay (직접 금액)
+            if (data.numChildrenUnder6 !== undefined && data.childrenUnder6Pay === undefined) {
+                data.childrenUnder6Pay = (parseInt(data.numChildrenUnder6) || 0) * 130000;
+                delete data.numChildrenUnder6;
+                localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
+            }
+            return data;
         } catch (e) {
             return null;
         }
