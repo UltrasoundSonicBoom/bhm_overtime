@@ -245,17 +245,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const authContainer = document.getElementById('authContainer');
   const backupSection = document.getElementById('localBackupSection');
-  
+
   if (!window.isFamilyMode) {
-      if (authContainer) authContainer.style.display = 'none';
-      if (backupSection) backupSection.style.display = 'block';
+    if (authContainer) authContainer.style.display = 'none';
+    if (backupSection) backupSection.style.display = 'block';
   } else {
-      if (authContainer) authContainer.style.display = 'flex';
-      if (backupSection) backupSection.style.display = 'none'; // 가족 모드에서는 백업 UI 숨김 (원하면 유지 가능하지만 클라우드가 있으므로 숨김)
+    if (authContainer) authContainer.style.display = 'flex';
+    if (backupSection) backupSection.style.display = 'none'; // 가족 모드에서는 백업 UI 숨김 (원하면 유지 가능하지만 클라우드가 있으므로 숨김)
   }
 
   // ── [Supabase Cloud Sync Callback] ──
-  window.syncCloudData = function(cloudData) {
+  window.syncCloudData = function (cloudData) {
     if (!cloudData) return;
 
     // ✅ 수정: 클라우드 조회 실패 시 로컬 데이터를 건드리지 않고 경고만 표시
@@ -275,15 +275,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // 클라우드에 이미 데이터가 있으면 클라우드 우선, guest 데이터는 폐기.
     // 어느 쪽이든 로그인 후에는 _guest 키를 삭제해 공용 기기 개인정보 방치를 방지.
     const GUEST_KEYS = {
-      profile:  'bhm_hr_profile_guest',
+      profile: 'bhm_hr_profile_guest',
       overtime: 'overtimeRecords_guest',
-      leave:    'leaveRecords_guest',
-      manual:   'otManualHourly_guest'
+      leave: 'leaveRecords_guest',
+      manual: 'otManualHourly_guest'
     };
     const rawGuestProfile = localStorage.getItem(GUEST_KEYS.profile);
-    const rawGuestOt      = localStorage.getItem(GUEST_KEYS.overtime);
-    const rawGuestLeave   = localStorage.getItem(GUEST_KEYS.leave);
-    const rawGuestManual  = localStorage.getItem(GUEST_KEYS.manual);
+    const rawGuestOt = localStorage.getItem(GUEST_KEYS.overtime);
+    const rawGuestLeave = localStorage.getItem(GUEST_KEYS.leave);
+    const rawGuestManual = localStorage.getItem(GUEST_KEYS.manual);
     let migrated = false;
 
     if (rawGuestProfile || rawGuestOt || rawGuestLeave) {
@@ -296,7 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const pf = JSON.parse(rawGuestProfile);
           pf.id = window.SupabaseUser.id;
           window.SupabaseSync.pushCloudData('profiles', pf);
-        } catch(e) { console.warn('[migrate] profile push 실패', e); }
+        } catch (e) { console.warn('[migrate] profile push 실패', e); }
         migrated = true;
       }
 
@@ -308,7 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
           Object.values(otMap).flat().forEach(r =>
             window.SupabaseSync.pushCloudData('overtime_records', { ...r })
           );
-        } catch(e) { console.warn('[migrate] overtime push 실패', e); }
+        } catch (e) { console.warn('[migrate] overtime push 실패', e); }
         migrated = true;
       }
 
@@ -320,7 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
           Object.values(lvMap).flat().forEach(r =>
             window.SupabaseSync.pushCloudData('leave_records', { ...r })
           );
-        } catch(e) { console.warn('[migrate] leave push 실패', e); }
+        } catch (e) { console.warn('[migrate] leave push 실패', e); }
         migrated = true;
       }
 
@@ -389,7 +389,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       if (typeof applyProfileToOvertime === 'function') applyProfileToOvertime();
       if (typeof initOvertimeTab === 'function') initOvertimeTab();
-      
+
       const toast = document.getElementById('otToast');
       if (toast) {
         toast.textContent = migrated
@@ -407,7 +407,7 @@ function updateProfileGrades() {
   const jobType = document.getElementById('pfJobType').value;
   const gradeInput = document.getElementById('pfGrade');
   const table = DATA.payTables[CALC.resolvePayTable(jobType)];
-  
+
   // NOTE: pfGrade가 input으로 변경됨에 따라 자동 채우기 대신 데이터 제공(Datalist 등)이나 
   // 기본값 제안 용도로만 사용하거나, 혹은 현재는 placeholder 유지만 하도록 함.
   if (!gradeInput || !table) return;
@@ -441,9 +441,9 @@ function saveProfile() {
   if (typeof PAYROLL !== 'undefined') PAYROLL.init();
   // 휴가 연차 한도 갱신 및 UI 리렌더링
   if (typeof applyProfileToLeave === 'function') {
-      applyProfileToLeave();
-      if (typeof populateLvTypeSelect === 'function') populateLvTypeSelect();
-      if (typeof refreshLvCalendar === 'function' && typeof lvInitialized !== 'undefined' && lvInitialized) refreshLvCalendar();
+    applyProfileToLeave();
+    if (typeof populateLvTypeSelect === 'function') populateLvTypeSelect();
+    if (typeof refreshLvCalendar === 'function' && typeof lvInitialized !== 'undefined' && lvInitialized) refreshLvCalendar();
   }
 }
 
@@ -526,67 +526,67 @@ function _suggestYear(hireDateStr) {
 
 // ═══════════ 데이터 백업 및 복구 ═══════════
 function downloadBackup() {
-    const data = {
-        version: "1.0",
-        exportDate: new Date().toISOString(),
-        profile: localStorage.getItem(PROFILE.STORAGE_KEY),
-        overtime: localStorage.getItem(OVERTIME.STORAGE_KEY),
-        leave: localStorage.getItem(LEAVE.STORAGE_KEY)
-    };
-    const jsonStr = JSON.stringify(data, null, 2);
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    const yyyymmdd = new Date().toISOString().split('T')[0];
-    a.download = `snuh_backup_${yyyymmdd}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  const data = {
+    version: "1.0",
+    exportDate: new Date().toISOString(),
+    profile: localStorage.getItem(PROFILE.STORAGE_KEY),
+    overtime: localStorage.getItem(OVERTIME.STORAGE_KEY),
+    leave: localStorage.getItem(LEAVE.STORAGE_KEY)
+  };
+  const jsonStr = JSON.stringify(data, null, 2);
+  const blob = new Blob([jsonStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const yyyymmdd = new Date().toISOString().split('T')[0];
+  a.download = `snuh_backup_${yyyymmdd}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 
-    const toast = document.getElementById('otToast');
-    if (toast) {
-        toast.textContent = "백업 파일이 안전하게 다운로드되었습니다. 📥";
-        toast.style.display = 'block';
-        setTimeout(() => toast.style.display = 'none', 3000);
-    } else {
-        alert("백업 파일이 다운로드되었습니다.");
-    }
+  const toast = document.getElementById('otToast');
+  if (toast) {
+    toast.textContent = "백업 파일이 안전하게 다운로드되었습니다. 📥";
+    toast.style.display = 'block';
+    setTimeout(() => toast.style.display = 'none', 3000);
+  } else {
+    alert("백업 파일이 다운로드되었습니다.");
+  }
 }
 
 async function uploadBackup(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    try {
-        const text = await file.text();
-        const data = JSON.parse(text);
+  const file = event.target.files[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
 
-        // 백업 파일 내 각 필드는 localStorage 저장용 JSON 문자열이어야 함.
-        // 수동 편집 등으로 객체로 들어온 경우 다시 직렬화하고,
-        // 최종적으로 JSON.parse 검증을 통과해야만 저장 — 무음 손상 방지.
-        const toStorable = v => {
-            if (!v) return null;
-            const s = typeof v === 'string' ? v : JSON.stringify(v);
-            JSON.parse(s); // 유효하지 않으면 여기서 throw → catch로 이동
-            return s;
-        };
+    // 백업 파일 내 각 필드는 localStorage 저장용 JSON 문자열이어야 함.
+    // 수동 편집 등으로 객체로 들어온 경우 다시 직렬화하고,
+    // 최종적으로 JSON.parse 검증을 통과해야만 저장 — 무음 손상 방지.
+    const toStorable = v => {
+      if (!v) return null;
+      const s = typeof v === 'string' ? v : JSON.stringify(v);
+      JSON.parse(s); // 유효하지 않으면 여기서 throw → catch로 이동
+      return s;
+    };
 
-        const profileStr  = toStorable(data.profile);
-        const overtimeStr = toStorable(data.overtime);
-        const leaveStr    = toStorable(data.leave);
+    const profileStr = toStorable(data.profile);
+    const overtimeStr = toStorable(data.overtime);
+    const leaveStr = toStorable(data.leave);
 
-        if (profileStr)  localStorage.setItem(PROFILE.STORAGE_KEY,  profileStr);
-        if (overtimeStr) localStorage.setItem(OVERTIME.STORAGE_KEY, overtimeStr);
-        if (leaveStr)    localStorage.setItem(LEAVE.STORAGE_KEY,    leaveStr);
+    if (profileStr) localStorage.setItem(PROFILE.STORAGE_KEY, profileStr);
+    if (overtimeStr) localStorage.setItem(OVERTIME.STORAGE_KEY, overtimeStr);
+    if (leaveStr) localStorage.setItem(LEAVE.STORAGE_KEY, leaveStr);
 
-        alert("데이터가 성공적으로 복원되었습니다! 앱을 새로고침합니다.");
-        window.location.reload();
-    } catch (e) {
-        alert("복원 실패: 올바른 백업 파일이 아닙니다.");
-    } finally {
-        event.target.value = '';
-    }
+    alert("데이터가 성공적으로 복원되었습니다! 앱을 새로고침합니다.");
+    window.location.reload();
+  } catch (e) {
+    alert("복원 실패: 올바른 백업 파일이 아닙니다.");
+  } finally {
+    event.target.value = '';
+  }
 }
 
 function updateProfileSummary(profile) {
@@ -655,7 +655,7 @@ function applyProfileToLeave() {
   if (profile.hireDate) {
     const hireDateEl = document.getElementById('lvHireDate');
     if (hireDateEl) hireDateEl.value = profile.hireDate;
-    
+
     // 입사일이 있으면 배너 숨김
     const infoNote = document.getElementById('lvAnnualInfoNote');
     if (infoNote) infoNote.style.display = 'none';
@@ -1776,7 +1776,7 @@ function updateQuickActionPrices() {
     const pay2 = OVERTIME.calcEstimatedPay(bd2, hourlyRate, 'overtime');
     const el2 = document.getElementById('otQuick2hPay');
     if (el2) el2.textContent = '₩' + pay2.toLocaleString();
-  } catch(e) {}
+  } catch (e) { }
 
   // 온콜대기
   const elStandby = document.getElementById('otQuickStandbyPay');
@@ -1791,7 +1791,7 @@ function updateQuickActionPrices() {
     const payC = OVERTIME.calcEstimatedPay(tempBd, hourlyRate, 'oncall_callout');
     const elC = document.getElementById('otQuickCalloutPay');
     if (elC) elC.textContent = '₩' + payC.toLocaleString();
-  } catch(e) {}
+  } catch (e) { }
 }
 
 // ⚡ 퀵 기록: 1-click 저장 (시간외/온콜대기 전용)
@@ -2034,7 +2034,7 @@ async function refreshOtCalendar() {
     if (!recordsByDay[day]) recordsByDay[day] = [];
     recordsByDay[day].push(r);
   });
-  
+
   // 기본 달력 틀과 기존 기록을 먼저 그림
   renderOtCalendar(year, month, recordsByDay);
   renderOtRecordList(records);
@@ -2507,7 +2507,7 @@ function checkOtOverlap(dateStr, startTime, endTime, type, excludeId) {
   const [y, m, d] = dateStr.split('-').map(Number);
   const checkDates = [-1, 0, 1].map(offset => {
     const dt = new Date(y, m - 1, d + offset);
-    return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+    return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
   });
 
   for (const dStr of checkDates) {
@@ -3084,7 +3084,7 @@ function populateLvTypeSelect() {
   const profile = PROFILE.load();
   const gender = profile ? profile.gender : '';
   const groups = LEAVE.getGroupedTypes(gender);
-  
+
   // 기본적으로 토글이 펼쳐진 그룹들
   const defaultOpenGroups = ['legal', 'education', 'health', 'family'];
 
@@ -3107,7 +3107,7 @@ function populateLvTypeSelect() {
     groupDiv.style.overflow = 'hidden';
     groupDiv.style.border = '1px solid var(--border-glass)';
     groupDiv.style.flexShrink = '0'; // 컨테이너가 찌그러지지 않도록 설정
-    
+
     // 제목 (토글 버튼)
     const titleDiv = document.createElement('div');
     titleDiv.style.fontSize = 'var(--text-body-normal)';
@@ -3119,9 +3119,9 @@ function populateLvTypeSelect() {
     titleDiv.style.alignItems = 'center';
     titleDiv.style.justifyContent = 'space-between';
     titleDiv.style.background = 'var(--bg-secondary)';
-    
+
     const isOpenByDefault = defaultOpenGroups.includes(group.id);
-    
+
     titleDiv.innerHTML = `<span>${group.label}</span><span class="toggle-icon" style="color:var(--text-muted); transition:transform 0.2s;">${isOpenByDefault ? '▲' : '▼'}</span>`;
     groupDiv.appendChild(titleDiv);
 
@@ -3129,7 +3129,7 @@ function populateLvTypeSelect() {
     itemsContainer.style.padding = '8px 12px';
     itemsContainer.style.borderTop = '1px solid var(--border-glass)';
     itemsContainer.style.display = isOpenByDefault ? 'block' : 'none';
-    
+
     // 2컬럼 레이아웃 적용
     if (group.id !== 'other') {
       itemsContainer.style.display = isOpenByDefault ? 'grid' : 'none';
@@ -3138,16 +3138,16 @@ function populateLvTypeSelect() {
         itemsContainer.style.gap = '6px';
       }
     }
-    
+
     titleDiv.onclick = () => {
       const icon = titleDiv.querySelector('.toggle-icon');
       if (itemsContainer.style.display === 'none') {
         if (group.id !== 'other') {
-           itemsContainer.style.display = 'grid';
-           itemsContainer.style.gridTemplateColumns = '1fr 1fr';
-           itemsContainer.style.gap = '6px';
+          itemsContainer.style.display = 'grid';
+          itemsContainer.style.gridTemplateColumns = '1fr 1fr';
+          itemsContainer.style.gap = '6px';
         } else {
-           itemsContainer.style.display = 'block';
+          itemsContainer.style.display = 'block';
         }
         icon.textContent = '▲';
       } else {
@@ -3159,7 +3159,7 @@ function populateLvTypeSelect() {
     group.items.forEach(t => {
       let label = t.label; // 아이콘, [무급] 태그 제거
       if (t.isTimeBased && t.id !== 'time_leave') label += ' (시간단위)'; // (시간단위) 제거
-      
+
       const usedRaw = usage[t.id] || 0;
       const usedDays = Math.round(usedRaw * 10) / 10;
       let statusHtml = '';
@@ -3168,9 +3168,9 @@ function populateLvTypeSelect() {
         // 연차의 경우
         const annualData = LEAVE.calcAnnualSummary(year, typeof lvTotalAnnual !== 'undefined' ? lvTotalAnnual : 15);
         if (t.id === 'time_leave') {
-           statusHtml = `<span style="color: #00B894; font-size: 11px; font-weight: 700; margin-left: auto;">${timeLeaveHours}h 사용</span>`;
+          statusHtml = `<span style="color: #00B894; font-size: 11px; font-weight: 700; margin-left: auto;">${timeLeaveHours}h 사용</span>`;
         } else {
-           statusHtml = `<span style="color: #00B894; font-size: 11px; font-weight: 700; margin-left: auto;">${annualData.usedAnnual}/${annualData.totalAnnual}</span>`;
+          statusHtml = `<span style="color: #00B894; font-size: 11px; font-weight: 700; margin-left: auto;">${annualData.usedAnnual}/${annualData.totalAnnual}</span>`;
         }
       } else if (t.quota !== null) {
         statusHtml = `<span style="color: #00B894; font-size: 11px; font-weight: 700; margin-left: auto;">${usedDays}/${t.quota}</span>`;
@@ -3194,13 +3194,13 @@ function populateLvTypeSelect() {
       btn.style.fontWeight = '600';
       btn.onclick = () => selectLvType(t.id, t.label);
       btn.innerHTML = `<span>${label}</span>${statusHtml}`;
-      
+
       btn.onmouseover = () => btn.style.background = 'var(--bg-glass-hover)';
       btn.onmouseout = () => btn.style.background = 'var(--bg-glass)';
 
       itemsContainer.appendChild(btn);
     });
-    
+
     groupDiv.appendChild(itemsContainer);
     container.appendChild(groupDiv);
   });
@@ -3230,7 +3230,7 @@ function selectLvType(id, label) {
 function updateLvTypeBtnText(id) {
   const typeInfo = LEAVE.getTypeById(id);
   if (!typeInfo) return;
-  
+
   let label = typeInfo.label; // 아이콘, [무급] 태그 제거
   if (typeInfo.isTimeBased && id !== 'time_leave') label += ' (시간단위)'; // (시간단위) 제거
   const btnText = document.getElementById('lvTypeBtnText');
@@ -3372,7 +3372,7 @@ function renderLvCalendar(year, month, recordsByDay) {
   html += '</div>';
 
   let legendHtml = '';
-  
+
   if (hasHolidayInMonth) {
     legendHtml += `<span style="display:flex; align-items:center; gap:4px;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--accent-rose);"></span> <span style="font-size:12px; color:var(--text-secondary);">공휴일</span></span>`;
   }
@@ -3482,7 +3482,7 @@ function resetLvPanel() {
 
   // 오늘 날짜 기본 설정
   const now = new Date();
-  const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   document.getElementById('lvStartDate').value = todayStr;
   document.getElementById('lvEndDate').value = todayStr;
   document.getElementById('lvType').value = 'annual';
@@ -3809,19 +3809,19 @@ function renderLvQuotaTable(year) {
     let pct = 0;
     let remainText = '-';
     let quotaText = '-';
-    
+
     if (q.quota !== null) {
-        pct = q.quota > 0 ? Math.min(100, Math.round((q.used / q.quota) * 100)) : 0;
-        remainText = `${q.remaining}일`;
-        quotaText = `${q.quota}일`;
+      pct = q.quota > 0 ? Math.min(100, Math.round((q.used / q.quota) * 100)) : 0;
+      remainText = `${q.remaining}일`;
+      quotaText = `${q.quota}일`;
     } else {
-        pct = 100; // 한도 없는 경우 막대를 꽉 채우거나 마음대로
-        remainText = `제한없음`;
+      pct = 100; // 한도 없는 경우 막대를 꽉 채우거나 마음대로
+      remainText = `제한없음`;
     }
 
     const barColor = q.overQuota ? 'var(--accent-rose)' : 'var(--accent-emerald)';
     const remainColor = q.overQuota ? 'var(--accent-rose)' : (q.quota !== null ? 'var(--accent-emerald)' : 'var(--text-muted)');
-    
+
     html += `<div style="padding:8px 10px; border-radius:8px; background:var(--bg-glass); border:1px solid var(--border-glass);">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
         <span style="font-weight:600; font-size:var(--text-body-large);">${q.label}</span>
