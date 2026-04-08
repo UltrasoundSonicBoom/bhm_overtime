@@ -748,7 +748,8 @@
       </div>
 
       <!-- 서브탭 1: 급여 명세서 (숨김) -->
-      <div class="sub-content" id="sub-payslip" style="display:none;" <div class="card">
+      <div class="sub-content" id="sub-payslip" style="display:none;">
+        <div class="card">
         <div class="card-title"><span class="icon" style="color:var(--accent-indigo);">📄</span> 급여 명세서 업로드</div>
 
         <!-- 업로드 영역 -->
@@ -769,22 +770,23 @@
 
         <!-- 파싱 결과 -->
         <div id="payslipResult" style="margin-top:16px;"></div>
+        </div>
       </div>
-    </div>
 
-    <!-- 서브탭 2: 급여 검증 (숨김) -->
-    <div class="sub-content" id="sub-verify" style="display:none;" <div class="card">
-      <div class="card-title"><span class="icon" style="color:var(--accent-emerald);">✅</span> 앱 계산값 vs 명세서 비교</div>
-      <div id="verifyResult">
-        <p style="color:var(--text-muted); font-size:var(--text-body-normal); text-align:center; padding:24px 0;">
-          먼저 <strong>📄 급여 명세서</strong> 탭에서 파일을 업로드하면<br>자동으로 비교 결과를 보여줍니다.
-        </p>
+      <!-- 서브탭 2: 급여 검증 (숨김) -->
+      <div class="sub-content" id="sub-verify" style="display:none;">
+        <div class="card">
+        <div class="card-title"><span class="icon" style="color:var(--accent-emerald);">✅</span> 앱 계산값 vs 명세서 비교</div>
+        <div id="verifyResult">
+          <p style="color:var(--text-muted); font-size:var(--text-body-normal); text-align:center; padding:24px 0;">
+            먼저 <strong>📄 급여 명세서</strong> 탭에서 파일을 업로드하면<br>자동으로 비교 결과를 보여줍니다.
+          </p>
+        </div>
+        </div>
       </div>
-    </div>
-    </div>
 
-    <!-- 서브탭 3: 맞춤 시뮬레이터 (Q&A 카드 + 기존 급여시뮬) -->
-    <div class="sub-content active" id="sub-simulator">
+      <!-- 서브탭 3: 맞춤 시뮬레이터 (Q&A 카드 + 기존 급여시뮬) -->
+      <div class="sub-content active" id="sub-simulator">
       <!-- Q&A 카드 영역 -->
       <div id="qaCardsContainer"></div>
 
@@ -1294,7 +1296,7 @@
             </div>
             <div class="form-group">
               <label>직급·등급</label>
-              <input type="text" id="pfGrade" placeholder="예: J3" autocomplete="off">
+              <select id="pfGrade"></select>
             </div>
           </div>
           <div class="form-row">
