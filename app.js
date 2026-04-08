@@ -85,6 +85,19 @@ function initProfileTab() {
   const saved = PROFILE.load();
   if (saved) {
     updateProfileSummary(saved);
+    updateProfileTitle(saved.name);
+  } else {
+    updateProfileTitle('');
+  }
+}
+
+function updateProfileTitle(name) {
+  const titleEl = document.getElementById('pfTitleName');
+  if (!titleEl) return;
+  if (name && name.trim()) {
+    titleEl.textContent = `${name.trim()}님 정보`;
+  } else {
+    titleEl.textContent = '내 정보';
   }
 }
 
@@ -182,6 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
     PROFILE.applyToForm(saved, PROFILE_FIELDS);
     toggleUnder6Field(); // 자녀 수 기반 6세이하 행 표시
     updateProfileSummary(saved);
+    updateProfileTitle(saved.name);
     const profileStatusEl = document.getElementById('profileStatus');
     if (profileStatusEl) {
       profileStatusEl.textContent = '저장됨 ✓';
@@ -366,6 +380,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (profile) {
         PROFILE.applyToForm(profile, PROFILE_FIELDS);
         updateProfileSummary(profile);
+        updateProfileTitle(profile.name);
         const profileStatusEl = document.getElementById('profileStatus');
         if (profileStatusEl) {
           profileStatusEl.textContent = '저장됨 ✓';
@@ -390,18 +405,17 @@ document.addEventListener('DOMContentLoaded', () => {
 // ═══════════ 📌 프로필 관리 ═══════════
 function updateProfileGrades() {
   const jobType = document.getElementById('pfJobType').value;
-  const gradeSelect = document.getElementById('pfGrade');
+  const gradeInput = document.getElementById('pfGrade');
   const table = DATA.payTables[CALC.resolvePayTable(jobType)];
-  if (!gradeSelect || !table) return;
-  gradeSelect.innerHTML = '';
-  table.grades.forEach(g => {
-    const opt = document.createElement('option');
-    opt.value = g;
-    opt.textContent = g;
-    gradeSelect.appendChild(opt);
-  });
-  if (!gradeSelect.value || gradeSelect.value === 'J1') {
-    gradeSelect.value = 'J3';
+  
+  // NOTE: pfGrade가 input으로 변경됨에 따라 자동 채우기 대신 데이터 제공(Datalist 등)이나 
+  // 기본값 제안 용도로만 사용하거나, 혹은 현재는 placeholder 유지만 하도록 함.
+  if (!gradeInput || !table) return;
+
+  // 기존 select value가 있고 그게 table에 있다면 유지, 
+  // 없거나 비어있으면 J3로 제안
+  if (!gradeInput.value || gradeInput.value === 'J1') {
+    gradeInput.value = 'J3';
   }
 }
 // 자녀 수가 1 이상일 때 6세이하 행 표시
@@ -415,6 +429,7 @@ function saveProfile() {
   const data = PROFILE.collectFromForm(PROFILE_FIELDS);
   const profile = PROFILE.save(data);
   updateProfileSummary(profile);
+  updateProfileTitle(profile.name);
   document.getElementById('profileStatus').textContent = '저장됨 ✓';
   document.getElementById('profileStatus').className = 'badge emerald';
   // 저장 후 입력 폼 접기
@@ -447,6 +462,8 @@ function clearProfile() {
   document.getElementById('pfServiceDisplay').textContent = '';
   document.getElementById('profileStatus').textContent = '미저장';
   document.getElementById('profileStatus').className = 'badge amber';
+  // 초기화 후 타이틀 초기화
+  updateProfileTitle('');
   // 초기화 후 입력 폼 열기
   const pfInput = document.getElementById('pfInputFields');
   if (pfInput) pfInput.style.display = 'block';
