@@ -1119,15 +1119,7 @@
       }
     }
   </script>
-  <script>
-    // ── 테스트 데이터 초기화 스크립트 ──
-    if (!localStorage.getItem('cleared_v1')) {
-      localStorage.clear();
-      localStorage.setItem('cleared_v1', 'true');
-      console.log("Test data cleared automatically.");
-      setTimeout(() => location.reload(), 500);
-    }
-  </script>
+
   <script>
     // ── 구글 로그인 UI 업데이트 함수 ──
     function updateAuthUI(user) {
