@@ -210,6 +210,58 @@
       font-weight: 600;
     }
 
+    /* ── 시간외 도움말 ── */
+    .ot-help-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .ot-help-item {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(99,102,241,0.12);
+      border-radius: 8px;
+      cursor: pointer;
+      overflow: hidden;
+      transition: background 0.2s;
+    }
+    .ot-help-item:active {
+      background: rgba(99,102,241,0.08);
+    }
+    .ot-help-q {
+      display: flex;
+      align-items: center;
+      padding: 10px 12px;
+      font-size: var(--text-body-normal);
+      font-weight: 600;
+      color: var(--text-primary);
+      gap: 6px;
+    }
+    .ot-help-a {
+      display: none;
+      padding: 0 12px 10px 12px;
+      font-size: 12px;
+      line-height: 1.65;
+      color: var(--text-secondary);
+      border-top: 1px solid rgba(99,102,241,0.08);
+    }
+    .ot-help-item.open .ot-help-a {
+      display: block;
+    }
+    .ot-help-ref {
+      display: inline-block;
+      margin-top: 4px;
+      font-size: 11px;
+      color: var(--accent-indigo);
+      opacity: 0.7;
+    }
+    html[data-theme="neo"] .ot-help-item {
+      background: #f5f3ff;
+      border: 1.5px solid #c4b5fd;
+    }
+    html[data-theme="neo"] .ot-help-a {
+      border-top: 1.5px solid #c4b5fd;
+    }
+
     /* ── Migration Modal ── */
     .migration-overlay {
       position: fixed;
@@ -945,11 +997,83 @@
 
     <!-- ═══════════ ⏰ 시간외·온콜 관리 ═══════════ -->
     <div class="tab-content" id="tab-overtime">
-      <!-- 참고용 안내 배너 -->
-      <div class="info-note-banner">
-        <span>ℹ️</span>
-        <div>현재는 시간외나 온콜을 언제 했는지 기록하는 기능 구현에 집중했습니다. <br>정확한 금액은 근속연수, 조정급 등 개인차에 따라 실제 수당과 차이가 있을 수 있으니 급여 명세서를 기준으로
-          확인하세요.</br></div>
+      <!-- 참고용 안내 배너 + 도움말 -->
+      <div class="info-note-banner" style="flex-direction:column; gap:4px;">
+        <div style="display:flex; align-items:center; gap:8px; width:100%; cursor:pointer;" onclick="toggleOtHelp()">
+          <span>ℹ️</span>
+          <div style="flex:1;">수당 계산이 궁금하신가요? <strong style="color:var(--accent-indigo);">도움말 보기</strong></div>
+          <span id="otHelpArrow" style="transition:transform 0.3s; font-size:12px; color:var(--text-muted);">▼</span>
+        </div>
+        <div id="otHelpContent" style="display:none; width:100%; margin-top:8px;">
+          <div class="ot-help-grid">
+            <div class="ot-help-item" onclick="toggleOtHelpDetail(this, event)">
+              <div class="ot-help-q">⏰ 연장근무 수당은 어떻게 계산되나요?</div>
+              <div class="ot-help-a">
+                <strong>통상임금 × 150%</strong>로 계산됩니다.<br>
+                • 소정근로시간(09:00~18:00) 이후 근무분<br>
+                • 15분 단위로 절삭하여 계산<br>
+                • 시급 = 월 통상임금 ÷ 209시간<br>
+                <span class="ot-help-ref">근거: 취업규칙 제34조, 제47조</span>
+              </div>
+            </div>
+            <div class="ot-help-item" onclick="toggleOtHelpDetail(this, event)">
+              <div class="ot-help-q">🌙 야간근무 수당 기준은?</div>
+              <div class="ot-help-a">
+                <strong>22:00 ~ 06:00</strong> 사이 근무 시 적용됩니다.<br>
+                • 통상근무자가 연장→야간: <strong>200%</strong><br>
+                • 휴일 + 야간 겹칠 경우: <strong>200%</strong><br>
+                • 이브닝(E) 근무 시 22:00~23:00 <strong>1시간은 자동으로 야간</strong> 분리 계산<br>
+                <span class="ot-help-ref">근거: 취업규칙 제34조</span>
+              </div>
+            </div>
+            <div class="ot-help-item" onclick="toggleOtHelpDetail(this, event)">
+              <div class="ot-help-q">📅 공휴일 근무 수당은?</div>
+              <div class="ot-help-a">
+                <strong>통상임금 × 150%</strong> (8시간 이내)<br>
+                • 공휴일 + 야간(22~06시): <strong>200%</strong><br>
+                • 날짜 선택 시 공휴일 여부 <strong>자동 판별</strong><br>
+                • 공공데이터포털 API로 매년 공휴일 자동 갱신<br>
+                <span class="ot-help-ref">근거: 취업규칙 제34조</span>
+              </div>
+            </div>
+            <div class="ot-help-item" onclick="toggleOtHelpDetail(this, event)">
+              <div class="ot-help-q">🔧 근로자의 날(5/1)도 휴일수당 받나요?</div>
+              <div class="ot-help-a">
+                <strong>네, 유급휴일</strong>입니다.<br>
+                • 「근로자의 날 제정에 관한 법률」에 의한 법정 유급휴일<br>
+                • 취업규칙 제35조에도 유급휴일로 명시<br>
+                • 근무 시 <strong>휴일근로수당(150%)</strong> 지급 대상<br>
+                • 개원기념일(10/15)도 유급휴일로 동일 적용<br>
+                <span class="ot-help-ref">근거: 근로자의 날 제정에 관한 법률, 취업규칙 제35조</span>
+              </div>
+            </div>
+            <div class="ot-help-item" onclick="toggleOtHelpDetail(this, event)">
+              <div class="ot-help-q">📞 온콜 수당은 어떻게 되나요?</div>
+              <div class="ot-help-a">
+                <strong>온콜대기:</strong> 1일 10,000원 (대기만 한 경우)<br>
+                <strong>온콜출근:</strong><br>
+                • 교통비 50,000원 별도 지급<br>
+                • 실근무시간 + 출퇴근 2시간 인정<br>
+                • 출근 시 대기수당과 중복 지급 안 됨<br>
+                <span class="ot-help-ref">근거: 단체협약 온콜 조항</span>
+              </div>
+            </div>
+            <div class="ot-help-item" onclick="toggleOtHelpDetail(this, event)">
+              <div class="ot-help-q">🌃 야간근무가산금 & 리커버리데이는?</div>
+              <div class="ot-help-a">
+                <strong>야간근무가산금:</strong> 야간 1회당 10,000원 (3교대 대상)<br>
+                <strong>리커버리데이:</strong><br>
+                • 월 7일 이상 야간 → 1일 부여<br>
+                • 누적 15일당 추가 1일 부여<br>
+                • 월 9일 초과 금지 (10일↑ 시간외수당 처리)<br>
+                <span class="ot-help-ref">근거: 별도합의 (2015.05), 취업규칙 제32조</span>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:8px; font-size:11px; color:var(--text-muted); text-align:center;">
+            ※ 정확한 금액은 개인별 근속연수·조정급 등에 따라 차이가 있을 수 있습니다. 급여 명세서 기준으로 확인하세요.
+          </div>
+        </div>
       </div>
       <!-- Zone A: 모바일 캘린더 -->
       <div class="card" style="margin-bottom: 12px; padding: 12px;">

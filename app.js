@@ -2296,6 +2296,20 @@ function showOtToast(message, type = 'success') {
 }
 
 // 시급 수동 입력 시 저장
+// ── 시간외 도움말 토글 ──
+function toggleOtHelp() {
+  const content = document.getElementById('otHelpContent');
+  const arrow = document.getElementById('otHelpArrow');
+  const isOpen = content.style.display !== 'none';
+  content.style.display = isOpen ? 'none' : 'block';
+  arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+
+function toggleOtHelpDetail(el, e) {
+  e.stopPropagation();
+  el.classList.toggle('open');
+}
+
 function onOtHourlyInput() {
   const val = parseInt(document.getElementById('otHourly').value) || 0;
   const hint = document.getElementById('otHourlyHint');

@@ -100,6 +100,12 @@ const HOLIDAYS = {
         ]
     },
 
+    // ── 병원 자체 유급휴일 (API 미제공, 취업규칙 제35조) ──
+    hospitalHolidays: [
+        { name: '근로자의 날', month: 5, day: 1 },
+        { name: '개원기념일', month: 10, day: 15 },
+    ],
+
     // ── 기념일 정적 폴백 데이터 (비휴일) ──
     staticAnniversaryData: {
         // 매년 고정 기념일 (음력 제외)
@@ -235,6 +241,14 @@ const HOLIDAYS = {
                     // 7일 이내 캐시
                     const age = Date.now() - parsed.timestamp;
                     if (age < 7 * 24 * 60 * 60 * 1000) {
+                        // 캐시에도 병원 유급휴일 보장
+                        const cachedDates = new Set(parsed.data.map(h => String(h.date)));
+                        this.hospitalHolidays.forEach(h => {
+                            const ds = `${year}${String(h.month).padStart(2, '0')}${String(h.day).padStart(2, '0')}`;
+                            if (!cachedDates.has(ds)) {
+                                parsed.data.push({ name: h.name, date: ds, isHoliday: true });
+                            }
+                        });
                         this._cache[year] = parsed.data;
                         console.log(`💾 ${year}년 공휴일 localStorage 캐시 사용 (${parsed.data.length}건)`);
                         return parsed.data;
@@ -245,25 +259,34 @@ const HOLIDAYS = {
 
         // API 시도
         const apiData = await this.fetchFromAPI(year);
+        let holidays;
         if (apiData && apiData.length > 0) {
-            this._cache[year] = apiData;
-            // localStorage에 저장
-            try {
-                localStorage.setItem(lsKey, JSON.stringify({ data: apiData, timestamp: Date.now() }));
-            } catch (e) { /* 저장 실패 무시 */ }
+            holidays = apiData;
             console.log(`✅ ${year}년 공휴일 API 로드 성공 (${apiData.length}건)`);
-            return apiData;
+        } else {
+            holidays = [...(this.staticData[year] || [])];
+            if (holidays.length > 0) {
+                console.log(`📋 ${year}년 공휴일 정적 데이터 사용 (${holidays.length}건)`);
+            } else {
+                console.warn(`⚠️ ${year}년 공휴일 데이터 없음`);
+            }
         }
 
-        // 정적 데이터 폴백
-        const fallback = this.staticData[year] || [];
-        if (fallback.length > 0) {
-            this._cache[year] = fallback;
-            console.log(`📋 ${year}년 공휴일 정적 데이터 사용 (${fallback.length}건)`);
-        } else {
-            console.warn(`⚠️ ${year}년 공휴일 데이터 없음`);
-        }
-        return fallback;
+        // 병원 자체 유급휴일 병합 (취업규칙 제35조: 근로자의 날, 개원기념일)
+        const existingDates = new Set(holidays.map(h => String(h.date)));
+        this.hospitalHolidays.forEach(h => {
+            const dateStr = `${year}${String(h.month).padStart(2, '0')}${String(h.day).padStart(2, '0')}`;
+            if (!existingDates.has(dateStr)) {
+                holidays.push({ name: h.name, date: dateStr, isHoliday: true });
+            }
+        });
+
+        this._cache[year] = holidays;
+        // localStorage에 저장
+        try {
+            localStorage.setItem(lsKey, JSON.stringify({ data: holidays, timestamp: Date.now() }));
+        } catch (e) { /* 저장 실패 무시 */ }
+        return holidays;
     },
 
     /**
