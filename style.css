@@ -3098,3 +3098,280 @@ html[data-theme="neo"] .theme-toggle-btn:hover {
   transform: translate(-1px, -1px);
   box-shadow: 3px 3px 0px #1a1a1a;
 }
+
+/* ============================================
+   HOME TAB
+   ============================================ */
+
+/* ── Summary Grid ── */
+.home-summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.home-summary-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  flex-direction: column;
+}
+
+.home-summary-card:hover {
+  border-color: var(--border-active);
+}
+
+.home-card-img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  display: block;
+}
+
+.home-card-body {
+  padding: 6px 12px 8px;
+  border-top: 1px solid var(--border-glass);
+}
+
+.home-card-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.home-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--text-body-normal);
+  line-height: 1.3;
+}
+
+.home-stat-label {
+  color: var(--text-muted);
+  font-size: var(--text-label-small);
+}
+
+.home-stat-value {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: var(--text-body-large);
+}
+
+.home-stat-value.amber { color: var(--accent-amber); }
+.home-stat-value.emerald { color: var(--accent-emerald); }
+
+/* Progress bar */
+.home-progress-wrap {
+  width: 100%;
+  height: 6px;
+  background: var(--bg-glass);
+  border-radius: var(--radius-full);
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+.home-progress-bar {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--accent-emerald);
+  transition: width 0.6s ease;
+}
+
+/* ── Testimonial Slider (5 items) ── */
+.testimonial-slider {
+  margin: 16px 0;
+  height: 64px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  background: rgba(99, 102, 241, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.testimonial-track {
+  animation: scrollTestimonial 28s infinite;
+  position: absolute;
+  width: 100%;
+  top: 0;
+}
+
+.testimonial-item {
+  height: 64px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 0 16px;
+}
+
+.testimonial-quote {
+  font-size: var(--text-body-normal);
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.testimonial-author {
+  font-size: var(--text-label-small);
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* 7 items × 64px = 448px total */
+@keyframes scrollTestimonial {
+  0%, 11.5%    { transform: translateY(0); }
+  14.3%, 25.7% { transform: translateY(-64px); }
+  28.6%, 40%   { transform: translateY(-128px); }
+  42.8%, 54.3% { transform: translateY(-192px); }
+  57.1%, 68.6% { transform: translateY(-256px); }
+  71.4%, 82.8% { transform: translateY(-320px); }
+  85.7%, 97.1% { transform: translateY(-384px); }
+  100%         { transform: translateY(0); }
+}
+
+.home-testimonial-card {
+  padding: 16px !important;
+}
+
+.home-testimonial-card .testimonial-slider {
+  margin: 0;
+}
+
+/* ── Changelog Pager ── */
+.home-changelog-card {
+  padding: 16px !important;
+}
+
+.changelog-pager-content {
+  border-left: 3px solid var(--accent-indigo);
+  padding-left: 12px;
+  min-height: 60px;
+}
+
+.home-changelog-date {
+  font-size: var(--text-label-small);
+  color: var(--text-muted);
+  margin-bottom: 1px;
+}
+
+.home-changelog-title {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: var(--text-body-normal);
+  margin-bottom: 2px;
+}
+
+.home-changelog-list {
+  margin: 0;
+  padding-left: 16px;
+  font-size: var(--text-label-small);
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.changelog-pager-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.changelog-nav-btn {
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  color: var(--text-primary);
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+
+.changelog-nav-btn:hover {
+  border-color: var(--border-active);
+  background: var(--bg-glass-hover);
+}
+
+.changelog-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.changelog-pager-indicator {
+  font-size: var(--text-label-small);
+  color: var(--text-muted);
+}
+
+html[data-theme="neo"] .changelog-nav-btn {
+  border: 2px solid #1a1a1a;
+  box-shadow: 2px 2px 0px #1a1a1a;
+}
+
+html[data-theme="neo"] .changelog-nav-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0px #1a1a1a;
+}
+
+/* ── Privacy Banner ── */
+.home-privacy-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--accent-emerald);
+  background: rgba(16, 185, 129, 0.08);
+  font-size: var(--text-label-small);
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+
+/* ── Neo overrides ── */
+html[data-theme="neo"] .home-summary-card {
+  border: 3px solid #1a1a1a;
+  box-shadow: 4px 4px 0px #1a1a1a;
+}
+
+html[data-theme="neo"] .home-summary-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px #1a1a1a;
+}
+
+html[data-theme="neo"] .home-card-body {
+  border-top: 3px solid #1a1a1a;
+}
+
+html[data-theme="neo"] .home-privacy-banner {
+  border: 3px solid #1a1a1a;
+  box-shadow: 2px 2px 0px #1a1a1a;
+  background: rgba(0, 184, 148, 0.12);
+}
+
+html[data-theme="neo"] .changelog-pager-content {
+  border-left: 4px solid #1a1a1a;
+}
+
+@media (max-width: 380px) {
+  .home-summary-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .home-card-body {
+    padding: 10px 10px 12px;
+  }
+}
