@@ -4341,16 +4341,14 @@ const TUTORIAL_STEPS = [
     target: '.nav-tab[data-tab="profile"]',
     title: '👤 먼저, 개인정보 등록',
     body: '여기서 <span class="tut-highlight">직종·호봉·입사일</span>을 등록하면<br>시급과 연차가 <span class="tut-highlight">자동 계산</span>됩니다.',
-    position: 'below',
-    beforeShow: null,
+    position: 'auto',
   },
   // ── 2: 휴가 탭으로 이동 ──
   {
     target: '.nav-tab[data-tab="leave"]',
     title: '📅 휴가 탭으로 이동',
     body: '휴가를 기록하고 관리하는 곳이에요.<br>탭을 눌러볼게요!',
-    position: 'below',
-    beforeShow: null,
+    position: 'auto',
     autoAction: () => switchTab('leave'),
   },
   // ── 3: 캘린더에서 날짜 선택 ──
@@ -4359,38 +4357,42 @@ const TUTORIAL_STEPS = [
     title: '📆 캘린더에서 날짜 선택',
     body: '기록하고 싶은 <span class="tut-highlight">날짜를 탭</span>하면<br>아래에서 입력 창이 올라와요.',
     position: 'below',
-    beforeShow: null,
   },
-  // ── 4: 모의 입력 화면 (연차 저장) ──
+  // ── 4: 실제 연차 저장 ──
   {
     target: null,
-    title: '🏖️ 연차 등록 예시',
+    title: '🏖️ 연차 등록 — 직접 저장해보세요!',
     body: '',
     position: 'mock-save',
-    mockSheet: () => `
-      <div style="text-align:center; margin-bottom:12px;">
-        <span style="font-weight:700; font-size:var(--text-title-large); color:var(--text-primary);">4월 15일 (화)</span>
-      </div>
-      <div class="tut-mock-field active-field">
-        <span class="label">유형</span>
-        <span style="font-weight:600;">🏖️ 연차</span>
-        <span style="margin-left:auto; color:var(--text-muted); font-size:12px;">▼</span>
-      </div>
-      <div class="tut-mock-field">
-        <span class="label">종료일</span>
-        <span>2026-04-15</span>
-      </div>
-      <div class="tut-mock-field">
-        <span class="label">메모</span>
-        <span style="color:var(--text-muted);">예: 개인사유</span>
-      </div>
-      <div style="margin-top:14px;">
-        <div class="tut-mock-btn save">💾 저장</div>
-      </div>
-      <p style="text-align:center; margin-top:10px; font-size:var(--text-body-normal); color:var(--text-muted);">
-        ↑ 이렇게 유형 선택 후 저장하면 기록 완료!
-      </p>
-    `,
+    mockSheet: () => {
+      const now = new Date();
+      const y = now.getFullYear(), m = now.getMonth() + 1, d = now.getDate();
+      const dow = ['일','월','화','수','목','금','토'][now.getDay()];
+      const dateStr = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      return `
+        <div style="text-align:center; margin-bottom:12px;">
+          <span style="font-weight:700; font-size:var(--text-title-large); color:var(--text-primary);">${m}월 ${d}일 (${dow})</span>
+        </div>
+        <div class="tut-mock-field active-field">
+          <span class="label">유형</span>
+          <span style="font-weight:600;">🏖️ 연차</span>
+        </div>
+        <div class="tut-mock-field">
+          <span class="label">종료일</span>
+          <span>${dateStr}</span>
+        </div>
+        <div class="tut-mock-field">
+          <span class="label">메모</span>
+          <span style="color:var(--text-muted);">튜토리얼 연습</span>
+        </div>
+        <div style="margin-top:14px;">
+          <button class="tut-mock-btn save" style="border:none; cursor:pointer; width:100%;" onclick="tutSaveDemoLeave()">💾 저장하기</button>
+        </div>
+        <p id="tutSaveResult" style="text-align:center; margin-top:10px; font-size:var(--text-body-normal); color:var(--text-muted);">
+          ↑ 버튼을 눌러 실제로 저장해보세요!
+        </p>
+      `;
+    },
   },
   // ── 5: 수정·삭제 방법 (모의 화면) ──
   {
@@ -4398,36 +4400,37 @@ const TUTORIAL_STEPS = [
     title: '✏️ 수정 & 삭제 방법',
     body: '',
     position: 'mock-edit',
-    mockSheet: () => `
-      <div style="text-align:center; margin-bottom:12px;">
-        <span style="font-weight:700; font-size:var(--text-title-large); color:var(--text-primary);">4월 15일 (화)</span>
-        <span style="font-size:var(--text-body-normal); color:var(--accent-indigo); font-weight:600; display:block; margin-top:2px;">✏️ 수정 모드</span>
-      </div>
-      <div class="tut-mock-field active-field">
-        <span class="label">유형</span>
-        <span style="font-weight:600;">🏖️ 연차 → 🩺 병가</span>
-        <span style="margin-left:auto; color:var(--accent-indigo); font-size:12px; font-weight:700;">변경!</span>
-      </div>
-      <div class="tut-mock-field">
-        <span class="label">종료일</span>
-        <span>2026-04-15</span>
-      </div>
-      <div style="display:flex; gap:10px; margin-top:14px;">
-        <div class="tut-mock-btn delete" style="flex:1;">🗑 삭제</div>
-        <div class="tut-mock-btn save" style="flex:1;">💾 수정</div>
-      </div>
-      <p style="text-align:center; margin-top:10px; font-size:var(--text-body-normal); color:var(--text-secondary); line-height:1.6;">
-        같은 날짜를 다시 탭하면 <span style="color:var(--accent-indigo); font-weight:600;">수정 모드</span>로 열려요.<br>
-        <span style="color:var(--accent-indigo); font-weight:600;">유형을 바꿔서 저장</span>하거나 <span style="color:var(--accent-rose); font-weight:600;">삭제</span>할 수 있어요!
-      </p>
-    `,
+    mockSheet: () => {
+      const now = new Date();
+      const m = now.getMonth() + 1, d = now.getDate();
+      const dow = ['일','월','화','수','목','금','토'][now.getDay()];
+      return `
+        <div style="text-align:center; margin-bottom:12px;">
+          <span style="font-weight:700; font-size:var(--text-title-large); color:var(--text-primary);">${m}월 ${d}일 (${dow})</span>
+          <span style="font-size:var(--text-body-normal); color:var(--accent-indigo); font-weight:600; display:block; margin-top:2px;">✏️ 수정 모드</span>
+        </div>
+        <div class="tut-mock-field active-field">
+          <span class="label">유형</span>
+          <span style="font-weight:600;">🏖️ 연차 → 🩺 병가</span>
+          <span style="margin-left:auto; color:var(--accent-indigo); font-size:12px; font-weight:700;">변경!</span>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:14px;">
+          <button class="tut-mock-btn delete" style="flex:1; border:none; cursor:pointer;" onclick="tutDeleteDemoLeave()">🗑 삭제</button>
+          <div class="tut-mock-btn save" style="flex:1; opacity:0.5;">💾 수정</div>
+        </div>
+        <p id="tutDeleteResult" style="text-align:center; margin-top:10px; font-size:var(--text-body-normal); color:var(--text-secondary); line-height:1.6;">
+          같은 날짜를 다시 탭하면 <span style="color:var(--accent-indigo); font-weight:600;">수정 모드</span>로 열려요.<br>
+          유형을 바꿔서 저장하거나, <span style="color:var(--accent-rose); font-weight:600;">삭제</span>를 눌러 방금 저장한 기록을 지워보세요!
+        </p>
+      `;
+    },
   },
   // ── 6: 시간외 탭 안내 ──
   {
     target: '.nav-tab[data-tab="overtime"]',
     title: '⏰ 시간외·온콜도 동일!',
     body: '시간외·온콜 기록도 <span class="tut-highlight">같은 방식</span>이에요.<br><br>📆 날짜 탭 → 유형·시간 입력 → 저장<br>✏️ 같은 날짜 다시 탭 → 수정 또는 삭제<br><br><span style="font-size:0.9em; color:var(--text-muted);">캘린더 사용법이 휴가와 동일합니다!</span>',
-    position: 'below',
+    position: 'auto',
     autoAction: () => switchTab('overtime'),
   },
   // ── 7: 완료 ──
@@ -4497,25 +4500,29 @@ function showTutorialStep(idx) {
   document.getElementById('tutorialTitle').innerHTML = step.title;
   document.getElementById('tutorialBody').innerHTML = step.body;
 
-  // 모의 바텀시트 스텝
+  // 모의 바텀시트 스텝 — 제목/버튼을 시트 안에 통합
   if (step.position === 'mock-save' || step.position === 'mock-edit') {
     spotlight.style.display = 'none';
     arrow.style.display = 'none';
-    mockSheet.innerHTML = step.mockSheet();
+    tooltip.style.display = 'none'; // 별도 툴팁 숨김
+
+    const stepTotal = tutSteps.length;
+    const isLast = !!step.isLast;
+    const nextLabel = isLast ? '완료! 🚀' : '다음 →';
+    const skipHtml = isLast ? '' : `<button class="tutorial-btn" onclick="endTutorial()" style="font-size:var(--text-body-normal);">건너뛰기</button>`;
+
+    mockSheet.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <div class="tutorial-tooltip-title" style="margin:0;">${step.title}</div>
+        <span class="tutorial-progress">${idx + 1} / ${stepTotal}</span>
+      </div>
+      ${step.mockSheet()}
+      <div style="display:flex; justify-content:flex-end; align-items:center; gap:8px; margin-top:16px; padding-top:12px; border-top:1px solid var(--border-glass);">
+        ${skipHtml}
+        <button class="tutorial-btn primary" onclick="nextTutorialStep()">${nextLabel}</button>
+      </div>
+    `;
     mockSheet.style.display = 'block';
-
-    // 툴팁을 모의시트 위에 배치
-    tooltip.style.display = 'block';
-    tooltip.style.left = '50%';
-    tooltip.style.transform = 'translateX(-50%)';
-    tooltip.style.bottom = '';
-    tooltip.style.top = '';
-
-    requestAnimationFrame(() => {
-      const sheetRect = mockSheet.getBoundingClientRect();
-      const tooltipH = tooltip.offsetHeight;
-      tooltip.style.top = (sheetRect.top - tooltipH - 16) + 'px';
-    });
     return;
   }
 
@@ -4561,14 +4568,21 @@ function showTutorialStep(idx) {
     tooltip.style.left = tooltipLeft + 'px';
     tooltip.style.width = tooltipW + 'px';
 
-    if (step.position === 'below') {
+    // 위치 결정: 'auto'면 요소가 화면 하단 절반에 있으면 위에, 아니면 아래에 배치
+    let pos = step.position;
+    if (pos === 'auto') {
+      const midY = window.innerHeight / 2;
+      pos = (rect.top > midY) ? 'above' : 'below';
+    }
+
+    if (pos === 'below') {
       tooltip.style.top = (rect.bottom + pad + 16) + 'px';
       tooltip.style.bottom = '';
       arrow.style.display = 'block';
       arrow.className = 'tutorial-tooltip-arrow top';
-    } else if (step.position === 'above') {
-      tooltip.style.bottom = (window.innerHeight - rect.top + pad + 16) + 'px';
+    } else if (pos === 'above') {
       tooltip.style.top = '';
+      tooltip.style.bottom = (window.innerHeight - rect.top + pad + 16) + 'px';
       arrow.style.display = 'block';
       arrow.className = 'tutorial-tooltip-arrow bottom';
     }
@@ -4581,16 +4595,67 @@ function nextTutorialStep() {
     endTutorial();
     return;
   }
-  // 리셋 애니메이션
-  const tooltip = document.getElementById('tutorialTooltip');
-  tooltip.style.display = 'none';
+  // 리셋: 모든 요소 숨기고 애니메이션 초기화
+  document.getElementById('tutorialTooltip').style.display = 'none';
   document.getElementById('tutorialMockSheet').style.display = 'none';
-  document.getElementById('tutorialSpotlight').classList.remove('tutorial-spotlight-pulse');
+  const sl = document.getElementById('tutorialSpotlight');
+  sl.classList.remove('tutorial-spotlight-pulse');
+  sl.style.display = 'none';
 
-  setTimeout(() => showTutorialStep(tutCurrentStep), 200);
+  setTimeout(() => showTutorialStep(tutCurrentStep), 250);
+}
+
+// ── 튜토리얼 실제 저장/삭제 헬퍼 ──
+let tutDemoRecordId = null;
+
+function tutSaveDemoLeave() {
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  const record = LEAVE.addRecord({
+    type: 'annual',
+    startDate: dateStr,
+    endDate: dateStr,
+    memo: '튜토리얼 연습',
+  });
+  tutDemoRecordId = record.id;
+
+  const resultEl = document.getElementById('tutSaveResult');
+  if (resultEl) {
+    resultEl.innerHTML = '✅ <span style="color:var(--accent-emerald); font-weight:700;">저장 완료!</span> 다음 단계에서 삭제할 수 있어요.';
+  }
+  // 저장 버튼 비활성화
+  const btn = document.querySelector('#tutorialMockSheet .tut-mock-btn.save');
+  if (btn) {
+    btn.style.opacity = '0.5';
+    btn.style.pointerEvents = 'none';
+    btn.textContent = '✅ 저장됨';
+  }
+}
+
+function tutDeleteDemoLeave() {
+  if (tutDemoRecordId) {
+    LEAVE.deleteRecord(tutDemoRecordId);
+    tutDemoRecordId = null;
+  }
+  const resultEl = document.getElementById('tutDeleteResult');
+  if (resultEl) {
+    resultEl.innerHTML = '🗑 <span style="color:var(--accent-rose); font-weight:700;">삭제 완료!</span> 깔끔하게 지워졌어요.';
+  }
+  const btn = document.querySelector('#tutorialMockSheet .tut-mock-btn.delete');
+  if (btn) {
+    btn.style.opacity = '0.5';
+    btn.style.pointerEvents = 'none';
+    btn.textContent = '✅ 삭제됨';
+  }
 }
 
 function endTutorial() {
+  // 튜토리얼 중 저장한 데모 기록이 남아있으면 자동 삭제
+  if (tutDemoRecordId) {
+    LEAVE.deleteRecord(tutDemoRecordId);
+    tutDemoRecordId = null;
+  }
+
   const overlay = document.getElementById('tutorialOverlay');
   overlay.classList.remove('active');
   overlay.style.display = 'none';
