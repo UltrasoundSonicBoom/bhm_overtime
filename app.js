@@ -607,18 +607,31 @@ document.addEventListener('DOMContentLoaded', () => {
 // ═══════════ 📌 프로필 관리 ═══════════
 function updateProfileGrades() {
   const jobType = document.getElementById('pfJobType').value;
-  const gradeInput = document.getElementById('pfGrade');
+  const gradeSelect = document.getElementById('pfGrade');
   const table = DATA.payTables[CALC.resolvePayTable(jobType)];
+  if (!gradeSelect || !table) return;
 
-  // NOTE: pfGrade가 input으로 변경됨에 따라 자동 채우기 대신 데이터 제공(Datalist 등)이나 
-  // 기본값 제안 용도로만 사용하거나, 혹은 현재는 placeholder 유지만 하도록 함.
-  if (!gradeInput || !table) return;
+  const prevValue = gradeSelect.value;
+  gradeSelect.innerHTML = '';
 
-  // 기존 select value가 있고 그게 table에 있다면 유지, 
-  // 없거나 비어있으면 J3로 제안
-  if (!gradeInput.value || gradeInput.value === 'J1') {
-    gradeInput.value = 'J3';
+  table.grades.forEach(g => {
+    const label = table.gradeLabels?.[g] || g;
+    const opt = document.createElement('option');
+    opt.value = g;
+    opt.textContent = `${label} (${g})`;
+    gradeSelect.appendChild(opt);
+  });
+
+  // 이전 선택값이 새 목록에 있으면 유지, 없으면 기본값 선택
+  if (table.grades.includes(prevValue)) {
+    gradeSelect.value = prevValue;
+  } else {
+    gradeSelect.value = table.grades[table.grades.length - 1];
   }
+
+  // 호봉 자동 제안 갱신
+  const hireDateStr = document.getElementById('pfHireDate')?.value;
+  if (hireDateStr) _suggestYear(hireDateStr);
 }
 // 자녀 수가 1 이상일 때 6세이하 자녀수당 행 표시
 function toggleChildFields() {
