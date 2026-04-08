@@ -367,18 +367,32 @@ html[data-theme="neo"] .logo .logo-main-title {
   display: block;
 }
 
+/* ── Q&A Categories ── */
+.qa-category {
+  margin-bottom: 20px;
+}
+
+.qa-category-title {
+  font-size: var(--text-body-large);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--border-glass);
+}
+
 /* ── Q&A Cards ── */
 .qa-cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
 }
 
 .qa-card {
   background: var(--bg-card);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-md);
-  padding: 16px;
+  padding: 14px;
   cursor: pointer;
   transition: var(--transition);
 }
@@ -411,15 +425,19 @@ html[data-theme="neo"] .logo .logo-main-title {
 }
 
 .qa-card-title {
-  font-size: var(--text-body-large);
+  font-size: var(--text-body-normal);
   font-weight: 600;
   color: var(--text-primary);
+  line-height: 1.3;
 }
 
 .qa-card-desc {
-  font-size: var(--text-body-normal);
+  font-size: var(--text-label-small);
   color: var(--text-muted);
   margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .qa-card-body {
@@ -2361,7 +2379,7 @@ html[data-theme="neo"] .logo .logo-main-title {
   }
 
   .qa-cards-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .ot-main-grid {

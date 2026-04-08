@@ -33,7 +33,8 @@ const PROFILE_FIELDS = {
   specialPay: 'pfSpecial',
   positionPay: 'pfPosition',
   workSupportPay: 'pfWorkSupport',
-  weeklyHours: 'pfWeeklyHours'
+  weeklyHours: 'pfWeeklyHours',
+  promotionDate: 'pfPromotionDate'
 };
 
 function getCaptureParams() {
@@ -725,6 +726,48 @@ function _suggestYear(hireDateStr) {
   const sel = document.getElementById('pfYear');
   if (sel) sel.value = String(suggested);
   hint.textContent = `→ 입사일 기준 자동 계산: ${suggested}년차`;
+}
+
+// ═══════════ 승진일 적용 ═══════════
+function applyPromotionDate() {
+  const hint = document.getElementById('pfPromotionHint');
+  const promoDateStr = document.getElementById('pfPromotionDate')?.value;
+  const parsed = PROFILE.parseDate(promoDateStr);
+  if (!parsed) {
+    if (hint) hint.textContent = '⚠️ 날짜 형식을 확인하세요 (예: 2024-03-01)';
+    return;
+  }
+
+  const jobType = document.getElementById('pfJobType')?.value;
+  const currentGrade = document.getElementById('pfGrade')?.value;
+  if (!jobType || !currentGrade) {
+    if (hint) hint.textContent = '⚠️ 직종과 현재 직급을 먼저 입력하세요';
+    return;
+  }
+
+  const payTableName = CALC.resolvePayTable(jobType);
+  const table = DATA.payTables[payTableName];
+  if (!table || !table.autoPromotion[currentGrade]) {
+    if (hint) hint.textContent = '⚠️ 해당 직급의 승진 정보가 없습니다';
+    return;
+  }
+
+  const promo = table.autoPromotion[currentGrade];
+  const nextGrade = promo.next;
+  const nextLabel = table.gradeLabels?.[nextGrade] || nextGrade;
+  const currentLabel = table.gradeLabels?.[currentGrade] || currentGrade;
+
+  // 승진일 기준으로 호봉 재계산 (승진 후 1년차부터)
+  const promoDate = new Date(parsed);
+  const now = new Date();
+  const yearsAfterPromo = Math.floor((now - promoDate) / (1000 * 60 * 60 * 24 * 365.25));
+  const newYear = Math.min(8, Math.max(1, yearsAfterPromo + 1));
+
+  // 직급과 호봉 업데이트
+  document.getElementById('pfGrade').value = nextGrade;
+  document.getElementById('pfYear').value = String(newYear);
+
+  if (hint) hint.textContent = `✅ ${currentLabel} → ${nextLabel} ${newYear}년차 적용됨`;
 }
 
 // ═══════════ 데이터 백업 및 복구 ═══════════
@@ -1499,23 +1542,26 @@ function calculatePromotion() {
 
 // ═══════════ 🏦 퇴직금 시뮬레이터 ═══════════
 function calculateSeverance() {
-  const avgPay = parseInt(document.getElementById('svAvgPay').value) || 0;
-  const years = parseInt(document.getElementById('svYears').value) || 0;
+  const avgPay = parseInt(document.getElementById('svAvgPay')?.value) || 0;
+  const years = parseInt(document.getElementById('svYears')?.value) || 0;
+  const hireDateStr = document.getElementById('svHireDate')?.value || null;
 
   if (avgPay === 0) {
     document.getElementById('severanceResult').innerHTML = '<div class="warning-box">⚠️ 월 평균임금을 입력하세요.</div>';
     return;
   }
 
-  const r = CALC.calcSeverancePay(avgPay, years);
+  const r = CALC.calcSeveranceFullPay(avgPay, years, hireDateStr);
 
   document.getElementById('severanceResult').innerHTML = `
     <div class="result-box success">
-      <div class="result-label">예상 퇴직수당</div>
+      <div class="result-label">예상 퇴직금</div>
       <div class="result-total green">${CALC.formatCurrency(r.퇴직금)}</div>
+      <div class="result-row"><span class="key">근속기간</span><span class="val">${r.근속기간 || years + '년'}</span></div>
+      <div class="result-row"><span class="key">기본 퇴직금</span><span class="val">${CALC.formatCurrency(r.기본퇴직금 || 0)}</span></div>
+      <div class="result-row"><span class="key">퇴직수당</span><span class="val">${r.퇴직수당 > 0 ? CALC.formatCurrency(r.퇴직수당) : '해당없음'}</span></div>
       <div class="result-row"><span class="key">산식</span><span class="val">${r.산식 || '-'}</span></div>
-      <div class="result-row"><span class="key">적용 계수</span><span class="val accent">${r.적용계수}</span></div>
-      <div class="result-row"><span class="key">비고</span><span class="val">${r.note}</span></div>
+      <div class="result-row"><span class="key">비고</span><span class="val">${r.퇴직수당비고 || '해당없음'}</span></div>
     </div>
   `;
 }
@@ -4273,4 +4319,287 @@ function importLvData(event) {
   };
   reader.readAsText(file);
   event.target.value = '';
+}
+
+// ============================================
+// 🎓 인터랙티브 튜토리얼 시스템
+// ============================================
+
+let tutCurrentStep = 0;
+let tutSteps = [];
+
+const TUTORIAL_STEPS = [
+  // ── 0: 시작 인사 (화면 중앙, 스포트라이트 없음) ──
+  {
+    target: null,
+    title: '🎓 사용법을 알려드릴게요!',
+    body: '실제 화면을 보면서 사용법을 안내해 드릴게요.<br>언제든 <span class="tut-highlight">건너뛰기</span>를 누르면 종료됩니다.',
+    position: 'center',
+  },
+  // ── 1: 개인정보 탭 ──
+  {
+    target: '.nav-tab[data-tab="profile"]',
+    title: '👤 먼저, 개인정보 등록',
+    body: '여기서 <span class="tut-highlight">직종·호봉·입사일</span>을 등록하면<br>시급과 연차가 <span class="tut-highlight">자동 계산</span>됩니다.',
+    position: 'below',
+    beforeShow: null,
+  },
+  // ── 2: 휴가 탭으로 이동 ──
+  {
+    target: '.nav-tab[data-tab="leave"]',
+    title: '📅 휴가 탭으로 이동',
+    body: '휴가를 기록하고 관리하는 곳이에요.<br>탭을 눌러볼게요!',
+    position: 'below',
+    beforeShow: null,
+    autoAction: () => switchTab('leave'),
+  },
+  // ── 3: 캘린더에서 날짜 선택 ──
+  {
+    target: '#lvCalendar',
+    title: '📆 캘린더에서 날짜 선택',
+    body: '기록하고 싶은 <span class="tut-highlight">날짜를 탭</span>하면<br>아래에서 입력 창이 올라와요.',
+    position: 'below',
+    beforeShow: null,
+  },
+  // ── 4: 모의 입력 화면 (연차 저장) ──
+  {
+    target: null,
+    title: '🏖️ 연차 등록 예시',
+    body: '',
+    position: 'mock-save',
+    mockSheet: () => `
+      <div style="text-align:center; margin-bottom:12px;">
+        <span style="font-weight:700; font-size:var(--text-title-large); color:var(--text-primary);">4월 15일 (화)</span>
+      </div>
+      <div class="tut-mock-field active-field">
+        <span class="label">유형</span>
+        <span style="font-weight:600;">🏖️ 연차</span>
+        <span style="margin-left:auto; color:var(--text-muted); font-size:12px;">▼</span>
+      </div>
+      <div class="tut-mock-field">
+        <span class="label">종료일</span>
+        <span>2026-04-15</span>
+      </div>
+      <div class="tut-mock-field">
+        <span class="label">메모</span>
+        <span style="color:var(--text-muted);">예: 개인사유</span>
+      </div>
+      <div style="margin-top:14px;">
+        <div class="tut-mock-btn save">💾 저장</div>
+      </div>
+      <p style="text-align:center; margin-top:10px; font-size:var(--text-body-normal); color:var(--text-muted);">
+        ↑ 이렇게 유형 선택 후 저장하면 기록 완료!
+      </p>
+    `,
+  },
+  // ── 5: 수정·삭제 방법 (모의 화면) ──
+  {
+    target: null,
+    title: '✏️ 수정 & 삭제 방법',
+    body: '',
+    position: 'mock-edit',
+    mockSheet: () => `
+      <div style="text-align:center; margin-bottom:12px;">
+        <span style="font-weight:700; font-size:var(--text-title-large); color:var(--text-primary);">4월 15일 (화)</span>
+        <span style="font-size:var(--text-body-normal); color:var(--accent-indigo); font-weight:600; display:block; margin-top:2px;">✏️ 수정 모드</span>
+      </div>
+      <div class="tut-mock-field active-field">
+        <span class="label">유형</span>
+        <span style="font-weight:600;">🏖️ 연차 → 🩺 병가</span>
+        <span style="margin-left:auto; color:var(--accent-indigo); font-size:12px; font-weight:700;">변경!</span>
+      </div>
+      <div class="tut-mock-field">
+        <span class="label">종료일</span>
+        <span>2026-04-15</span>
+      </div>
+      <div style="display:flex; gap:10px; margin-top:14px;">
+        <div class="tut-mock-btn delete" style="flex:1;">🗑 삭제</div>
+        <div class="tut-mock-btn save" style="flex:1;">💾 수정</div>
+      </div>
+      <p style="text-align:center; margin-top:10px; font-size:var(--text-body-normal); color:var(--text-secondary); line-height:1.6;">
+        같은 날짜를 다시 탭하면 <span style="color:var(--accent-indigo); font-weight:600;">수정 모드</span>로 열려요.<br>
+        <span style="color:var(--accent-indigo); font-weight:600;">유형을 바꿔서 저장</span>하거나 <span style="color:var(--accent-rose); font-weight:600;">삭제</span>할 수 있어요!
+      </p>
+    `,
+  },
+  // ── 6: 시간외 탭 안내 ──
+  {
+    target: '.nav-tab[data-tab="overtime"]',
+    title: '⏰ 시간외·온콜도 동일!',
+    body: '시간외·온콜 기록도 <span class="tut-highlight">같은 방식</span>이에요.<br><br>📆 날짜 탭 → 유형·시간 입력 → 저장<br>✏️ 같은 날짜 다시 탭 → 수정 또는 삭제<br><br><span style="font-size:0.9em; color:var(--text-muted);">캘린더 사용법이 휴가와 동일합니다!</span>',
+    position: 'below',
+    autoAction: () => switchTab('overtime'),
+  },
+  // ── 7: 완료 ──
+  {
+    target: null,
+    title: '🎉 튜토리얼 완료!',
+    body: '이제 직접 사용해보세요!<br><br>💡 <span class="tut-highlight">개인정보 먼저 등록</span>하면<br>시급·연차가 자동으로 계산됩니다.<br><br><span style="font-size:0.85em; color:var(--text-muted);">홈 탭 하단에서 튜토리얼을 다시 볼 수 있어요.</span>',
+    position: 'center',
+    isLast: true,
+  },
+];
+
+function startTutorial() {
+  // 온보딩 모달 닫기
+  const onb = document.getElementById('onboardingModal');
+  if (onb) onb.style.display = 'none';
+
+  tutCurrentStep = 0;
+  tutSteps = TUTORIAL_STEPS;
+
+  const overlay = document.getElementById('tutorialOverlay');
+  overlay.classList.add('active');
+  overlay.style.display = '';
+
+  // backdrop 클릭 시 아무 동작 안 하게
+  document.getElementById('tutorialBackdrop').onclick = (e) => e.stopPropagation();
+
+  showTutorialStep(0);
+  localStorage.setItem('tutorial_completed', 'true');
+}
+
+function showTutorialStep(idx) {
+  tutCurrentStep = idx;
+  const step = tutSteps[idx];
+  if (!step) { endTutorial(); return; }
+
+  const spotlight = document.getElementById('tutorialSpotlight');
+  const tooltip = document.getElementById('tutorialTooltip');
+  const arrow = document.getElementById('tutorialArrow');
+  const mockSheet = document.getElementById('tutorialMockSheet');
+  const progress = document.getElementById('tutorialProgress');
+  const nextBtn = document.getElementById('tutorialNext');
+  const skipBtn = document.getElementById('tutorialSkip');
+
+  // 모의 시트 숨기기
+  mockSheet.style.display = 'none';
+
+  // autoAction 실행
+  if (step.autoAction) step.autoAction();
+  if (step.beforeShow) step.beforeShow();
+
+  // 진행률
+  progress.textContent = `${idx + 1} / ${tutSteps.length}`;
+
+  // 마지막 스텝
+  if (step.isLast) {
+    nextBtn.textContent = '완료! 🚀';
+    nextBtn.onclick = () => endTutorial();
+    skipBtn.style.display = 'none';
+  } else {
+    nextBtn.textContent = '다음 →';
+    nextBtn.onclick = () => nextTutorialStep();
+    skipBtn.style.display = '';
+  }
+
+  // 제목/본문
+  document.getElementById('tutorialTitle').innerHTML = step.title;
+  document.getElementById('tutorialBody').innerHTML = step.body;
+
+  // 모의 바텀시트 스텝
+  if (step.position === 'mock-save' || step.position === 'mock-edit') {
+    spotlight.style.display = 'none';
+    arrow.style.display = 'none';
+    mockSheet.innerHTML = step.mockSheet();
+    mockSheet.style.display = 'block';
+
+    // 툴팁을 모의시트 위에 배치
+    tooltip.style.display = 'block';
+    tooltip.style.left = '50%';
+    tooltip.style.transform = 'translateX(-50%)';
+    tooltip.style.bottom = '';
+    tooltip.style.top = '';
+
+    requestAnimationFrame(() => {
+      const sheetRect = mockSheet.getBoundingClientRect();
+      const tooltipH = tooltip.offsetHeight;
+      tooltip.style.top = (sheetRect.top - tooltipH - 16) + 'px';
+    });
+    return;
+  }
+
+  // 센터 모드 (타겟 없음)
+  if (step.position === 'center' || !step.target) {
+    spotlight.style.display = 'none';
+    arrow.style.display = 'none';
+
+    tooltip.style.display = 'block';
+    tooltip.style.left = '50%';
+    tooltip.style.top = '50%';
+    tooltip.style.transform = 'translate(-50%, -50%)';
+    tooltip.style.bottom = '';
+    return;
+  }
+
+  // 타겟 요소 하이라이트
+  const el = document.querySelector(step.target);
+  if (!el) { nextTutorialStep(); return; }
+
+  // 스크롤하여 보이게
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  setTimeout(() => {
+    const rect = el.getBoundingClientRect();
+    const pad = 6;
+
+    spotlight.style.display = 'block';
+    spotlight.style.left = (rect.left - pad) + 'px';
+    spotlight.style.top = (rect.top - pad) + 'px';
+    spotlight.style.width = (rect.width + pad * 2) + 'px';
+    spotlight.style.height = (rect.height + pad * 2) + 'px';
+    spotlight.classList.add('tutorial-spotlight-pulse');
+
+    // 툴팁 위치
+    tooltip.style.display = 'block';
+    tooltip.style.transform = '';
+
+    const tooltipW = Math.min(320, window.innerWidth - 48);
+    let tooltipLeft = rect.left + rect.width / 2 - tooltipW / 2;
+    tooltipLeft = Math.max(16, Math.min(tooltipLeft, window.innerWidth - tooltipW - 16));
+
+    tooltip.style.left = tooltipLeft + 'px';
+    tooltip.style.width = tooltipW + 'px';
+
+    if (step.position === 'below') {
+      tooltip.style.top = (rect.bottom + pad + 16) + 'px';
+      tooltip.style.bottom = '';
+      arrow.style.display = 'block';
+      arrow.className = 'tutorial-tooltip-arrow top';
+    } else if (step.position === 'above') {
+      tooltip.style.bottom = (window.innerHeight - rect.top + pad + 16) + 'px';
+      tooltip.style.top = '';
+      arrow.style.display = 'block';
+      arrow.className = 'tutorial-tooltip-arrow bottom';
+    }
+  }, 350);
+}
+
+function nextTutorialStep() {
+  tutCurrentStep++;
+  if (tutCurrentStep >= tutSteps.length) {
+    endTutorial();
+    return;
+  }
+  // 리셋 애니메이션
+  const tooltip = document.getElementById('tutorialTooltip');
+  tooltip.style.display = 'none';
+  document.getElementById('tutorialMockSheet').style.display = 'none';
+  document.getElementById('tutorialSpotlight').classList.remove('tutorial-spotlight-pulse');
+
+  setTimeout(() => showTutorialStep(tutCurrentStep), 200);
+}
+
+function endTutorial() {
+  const overlay = document.getElementById('tutorialOverlay');
+  overlay.classList.remove('active');
+  overlay.style.display = 'none';
+
+  document.getElementById('tutorialTooltip').style.display = 'none';
+  document.getElementById('tutorialMockSheet').style.display = 'none';
+  document.getElementById('tutorialSpotlight').style.display = 'none';
+  document.getElementById('tutorialSpotlight').classList.remove('tutorial-spotlight-pulse');
+
+  // 홈 탭으로 이동
+  switchTab('home');
 }

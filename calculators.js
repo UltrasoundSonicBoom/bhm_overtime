@@ -269,38 +269,52 @@ const CALC = {
 
     /**
      * 퇴직금 통합 계산 (2001.08.31 이전 입사자 누진배수 + 2015.06.30 이전 퇴직수당 포함)
-     * @param {number} avgMonthlyPay - 월 평균임금
-     * @param {number} totalYears - 총 근속연수
+     * 법정 퇴직금 공식: 1일 평균임금 × 30 × (총 근속일수 / 365)
+     * @param {number} avgMonthlyPay - 월 평균임금 (= 1일 평균임금 × 30)
+     * @param {number} totalYearsInt - 총 근속연수 (정수, 누진배수/퇴직수당 구간 판정용)
      * @param {string} hireDateStr - 입사일 문자열 (YYYY-MM-DD)
      * @returns {object}
      */
-    calcSeveranceFullPay(avgMonthlyPay, totalYears, hireDateStr) {
-        if (totalYears < 1) return { 퇴직금: 0, note: '근속 1년 미만 해당없음' };
+    calcSeveranceFullPay(avgMonthlyPay, totalYearsInt, hireDateStr) {
+        const hireDate = hireDateStr ? new Date(hireDateStr) : null;
+
+        // 정밀 근속연수 계산 (일 단위)
+        let preciseYears = totalYearsInt;
+        let totalDays = 0;
+        if (hireDate && !isNaN(hireDate)) {
+            const now = new Date();
+            totalDays = Math.floor((now - hireDate) / (1000 * 60 * 60 * 24));
+            preciseYears = totalDays / 365;
+        }
+
+        if (preciseYears < 1) return { 퇴직금: 0, note: '근속 1년 미만 해당없음' };
 
         const cutoff2001 = new Date('2001-08-31');
         const cutoff2015 = new Date('2015-06-30');
-        const hireDate = hireDateStr ? new Date(hireDateStr) : null;
 
-        // 기본 퇴직금
-        let baseSeverance = Math.round(avgMonthlyPay * totalYears);
-        let method = '법정 퇴직금 (근속연수 × 평균임금)';
+        // 기본 퇴직금: 월 평균임금 × (총 근속일수 / 365)
+        let baseSeverance = Math.round(avgMonthlyPay * preciseYears);
+        const yearsDisplay = totalDays > 0
+            ? `${Math.floor(preciseYears)}년 ${Math.floor((preciseYears % 1) * 12)}개월`
+            : `${totalYearsInt}년`;
+        let method = `법정 퇴직금 (평균임금 × ${yearsDisplay})`;
 
-        // 2001.08.31 이전 입사자: 누진배수 적용
+        // 2001.08.31 이전 입사자: 누진배수 적용 (정수 연수로 구간 판정)
         if (hireDate && hireDate <= cutoff2001) {
-            const row = DATA.severanceMultipliersPre2001.find(r => totalYears >= r.min);
+            const row = DATA.severanceMultipliersPre2001.find(r => totalYearsInt >= r.min);
             if (row) {
                 baseSeverance = Math.round(avgMonthlyPay * row.multiplier);
                 method = `누진배수 적용 (×${row.multiplier}, 2001년 이전 입사자)`;
             }
         }
 
-        // 2015.06.30 이전 입사자: 퇴직수당 가산
+        // 2015.06.30 이전 입사자: 퇴직수당 가산 (정수 연수로 구간 판정, 정밀 연수로 금액 계산)
         let addon = 0;
         let addonNote = '해당없음';
         if (hireDate && hireDate <= cutoff2015) {
-            const sp = DATA.severancePay.find(s => totalYears >= s.min);
+            const sp = DATA.severancePay.find(s => totalYearsInt >= s.min);
             if (sp) {
-                addon = Math.round(avgMonthlyPay * totalYears * sp.rate);
+                addon = Math.round(avgMonthlyPay * preciseYears * sp.rate);
                 addonNote = `퇴직수당 ${sp.rate * 100}% 가산 (2015년 이전 입사자)`;
             }
         }
@@ -312,10 +326,11 @@ const CALC = {
             퇴직수당: addon,
             산정방법: method,
             퇴직수당비고: addonNote,
+            근속기간: yearsDisplay,
             산식: addon > 0
                 ? `기본 ${baseSeverance.toLocaleString()}원 + 수당 ${addon.toLocaleString()}원`
                 : `${baseSeverance.toLocaleString()}원 (${method})`,
-            note: `근속 ${totalYears}년 기준`
+            note: `근속 ${yearsDisplay} 기준`
         };
     },
 

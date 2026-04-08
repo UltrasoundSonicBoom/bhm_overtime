@@ -269,6 +269,209 @@
       background: #ffffff;
       color: #1a1a1a;
     }
+
+    /* ── Interactive Tutorial ── */
+    .tutorial-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 20000;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .tutorial-overlay.active { pointer-events: auto; }
+
+    .tutorial-backdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 20000;
+    }
+
+    .tutorial-spotlight {
+      position: absolute;
+      z-index: 20001;
+      border-radius: 12px;
+      box-shadow: 0 0 0 9999px rgba(0,0,0,0.72);
+      transition: all 0.4s cubic-bezier(.4,0,.2,1);
+      pointer-events: none;
+    }
+
+    .tutorial-tooltip {
+      position: absolute;
+      z-index: 20002;
+      background: var(--bg-card);
+      border: 2.5px solid var(--border-active);
+      border-radius: 16px;
+      padding: 20px 18px 16px;
+      max-width: 320px;
+      width: calc(100vw - 48px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+      animation: tutTooltipIn 0.35s cubic-bezier(.34,1.56,.64,1);
+      pointer-events: auto;
+    }
+
+    html[data-theme="neo"] .tutorial-tooltip {
+      border: 3px solid #1a1a1a;
+      box-shadow: 5px 5px 0 #1a1a1a;
+    }
+
+    @keyframes tutTooltipIn {
+      from { opacity: 0; transform: translateY(12px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .tutorial-tooltip-arrow {
+      position: absolute;
+      width: 14px; height: 14px;
+      background: var(--bg-card);
+      border: 2.5px solid var(--border-active);
+      transform: rotate(45deg);
+      z-index: -1;
+    }
+
+    html[data-theme="neo"] .tutorial-tooltip-arrow {
+      border: 3px solid #1a1a1a;
+    }
+
+    .tutorial-tooltip-arrow.top {
+      top: -8px; left: 50%; margin-left: -7px;
+      border-bottom: none; border-right: none;
+    }
+    .tutorial-tooltip-arrow.bottom {
+      bottom: -8px; left: 50%; margin-left: -7px;
+      border-top: none; border-left: none;
+    }
+
+    .tutorial-tooltip-title {
+      font-size: var(--text-title-large);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .tutorial-tooltip-body {
+      font-size: var(--text-body-large);
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    .tutorial-tooltip-body .tut-highlight {
+      color: var(--accent-indigo);
+      font-weight: 600;
+    }
+
+    .tutorial-tooltip-body .tut-warn {
+      color: var(--accent-rose);
+      font-weight: 600;
+    }
+
+    .tutorial-tooltip-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .tutorial-progress {
+      font-size: var(--text-body-normal);
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .tutorial-btn-group {
+      display: flex; gap: 8px;
+    }
+
+    .tutorial-btn {
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: var(--text-body-large);
+      cursor: pointer;
+      border: 1.5px solid var(--border-glass);
+      background: var(--bg-glass);
+      color: var(--text-secondary);
+      transition: all 0.15s;
+    }
+
+    .tutorial-btn:active { transform: scale(0.96); }
+
+    .tutorial-btn.primary {
+      background: var(--accent-indigo);
+      color: #fff;
+      border-color: var(--accent-indigo);
+    }
+
+    html[data-theme="neo"] .tutorial-btn {
+      border: 2px solid #1a1a1a;
+      box-shadow: 3px 3px 0 #1a1a1a;
+    }
+    html[data-theme="neo"] .tutorial-btn:active {
+      transform: translate(2px,2px);
+      box-shadow: 1px 1px 0 #1a1a1a;
+    }
+    html[data-theme="neo"] .tutorial-btn.primary {
+      background: var(--accent-violet);
+      border-color: #1a1a1a;
+    }
+
+    .tutorial-spotlight-pulse {
+      animation: spotPulse 1.8s ease-in-out infinite;
+    }
+    @keyframes spotPulse {
+      0%, 100% { box-shadow: 0 0 0 9999px rgba(0,0,0,0.72), 0 0 0 4px rgba(99,102,241,0.4); }
+      50% { box-shadow: 0 0 0 9999px rgba(0,0,0,0.72), 0 0 0 8px rgba(99,102,241,0.25); }
+    }
+
+    .tutorial-mock-sheet {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: var(--bg-card);
+      border-top: 2px solid var(--border-active);
+      border-radius: 20px 20px 0 0;
+      padding: 24px 20px 32px;
+      z-index: 20003;
+      animation: tutSheetUp 0.35s cubic-bezier(.34,1.56,.64,1);
+      pointer-events: auto;
+    }
+    html[data-theme="neo"] .tutorial-mock-sheet {
+      border: 3px solid #1a1a1a;
+      border-bottom: none;
+      box-shadow: 0 -4px 0 #1a1a1a;
+    }
+    @keyframes tutSheetUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .tut-mock-field {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; margin-bottom: 8px;
+      background: var(--bg-glass);
+      border: 1.5px solid var(--border-glass);
+      border-radius: 10px;
+      font-size: var(--text-body-large);
+      color: var(--text-primary);
+    }
+    .tut-mock-field .label {
+      color: var(--text-muted); font-size: var(--text-body-normal); min-width: 60px;
+    }
+    .tut-mock-field.active-field {
+      border-color: var(--accent-indigo);
+      background: rgba(99,102,241,0.06);
+    }
+    .tut-mock-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 12px; border-radius: 12px; font-weight: 700;
+      font-size: var(--text-title-large); width: 100%; cursor: default;
+    }
+    .tut-mock-btn.save { background: var(--accent-indigo); color: #fff; }
+    .tut-mock-btn.delete { background: rgba(244,63,94,0.1); color: var(--accent-rose); }
+
+    html[data-theme="neo"] .tut-mock-btn {
+      border: 2px solid #1a1a1a; box-shadow: 3px 3px 0 #1a1a1a;
+    }
   </style>
 </head>
 
@@ -353,7 +556,7 @@
       <nav class="nav-tabs" id="navTabs">
         <button class="nav-tab" data-tab="leave">📅 휴가</button>
         <button class="nav-tab" data-tab="overtime">⏰ 시간외·온콜</button>
-        <button class="nav-tab" data-tab="payroll" style="display:none;">💰 급여</button>
+        <button class="nav-tab" data-tab="payroll">💰 급여 Q&A</button>
         <button class="nav-tab" data-tab="profile">👤 개인정보</button>
         <button class="nav-tab" data-tab="feedback">📢 피드백</button>
       </nav>
@@ -450,25 +653,31 @@
         <span>모든 데이터는 내 브라우저에만 저장됩니다.<br> 개발자도, 서버도 절대 볼 수 없어요.</span>
       </div>
 
-      <!-- 시작 가이드 -->
-      <button onclick="showOnboarding()" class="btn btn-outline"
-        style="width:100%; font-size:var(--text-body-normal); padding:10px; color:var(--accent-indigo); border-color:var(--accent-indigo);">
-        🚀 시작 가이드 보기
-      </button>
+      <!-- 시작 가이드 & 튜토리얼 -->
+      <div style="display:flex; gap:8px;">
+        <button onclick="startTutorial()" class="btn btn-outline"
+          style="flex:1; font-size:var(--text-body-normal); padding:10px; color:var(--accent-indigo); border-color:var(--accent-indigo);">
+          🎓 사용법 튜토리얼
+        </button>
+        <button onclick="showOnboarding()" class="btn btn-outline"
+          style="flex:1; font-size:var(--text-body-normal); padding:10px; color:var(--text-muted); border-color:var(--border-glass);">
+          📖 시작 가이드
+        </button>
+      </div>
 
     </div>
 
     <!-- ═══════════ 💰 급여 섹션 ═══════════ -->
     <div class="tab-content" id="tab-payroll">
       <!-- 서브탭 네비게이션 -->
-      <div class="sub-tabs">
+      <div class="sub-tabs" style="display:none;">
         <button class="sub-tab" data-subtab="payslip">📄 급여 명세서</button>
         <button class="sub-tab" data-subtab="verify">✅ 급여 검증</button>
         <button class="sub-tab active" data-subtab="simulator">🧮 맞춤 시뮬레이터</button>
       </div>
 
-      <!-- 서브탭 1: 급여 명세서 -->
-      <div class="sub-content" id="sub-payslip">
+      <!-- 서브탭 1: 급여 명세서 (숨김) -->
+      <div class="sub-content" id="sub-payslip" style="display:none;"
         <div class="card">
           <div class="card-title"><span class="icon" style="color:var(--accent-indigo);">📄</span> 급여 명세서 업로드</div>
 
@@ -493,8 +702,8 @@
         </div>
       </div>
 
-      <!-- 서브탭 2: 급여 검증 -->
-      <div class="sub-content" id="sub-verify">
+      <!-- 서브탭 2: 급여 검증 (숨김) -->
+      <div class="sub-content" id="sub-verify" style="display:none;"
         <div class="card">
           <div class="card-title"><span class="icon" style="color:var(--accent-emerald);">✅</span> 앱 계산값 vs 명세서 비교</div>
           <div id="verifyResult">
@@ -1042,6 +1251,16 @@
           </div>
           <div class="form-row">
             <div class="form-group">
+              <label>최근 승진일 <small style="font-weight:400; color:var(--text-muted)">선택</small></label>
+              <input type="text" id="pfPromotionDate" placeholder="예: 2024-03-01">
+              <small id="pfPromotionHint" style="color:var(--text-muted)"></small>
+            </div>
+            <div class="form-group" style="display:flex; align-items:flex-end;">
+              <button class="btn btn-secondary btn-full" onclick="applyPromotionDate()" style="margin-bottom:2px;">승진 적용</button>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
               <label>월 소정근로시간 <small style="font-weight:400; color:var(--text-muted)">기본 209h</small></label>
               <input type="number" id="pfWeeklyHours" value="209" min="1" max="300" placeholder="209">
               <small style="color:var(--text-muted)">시급 계산 기준 · 일반 전일제 근무자는 209h 그대로</small>
@@ -1154,7 +1373,7 @@
             style="flex:1; font-weight:600; text-align:center; cursor:pointer; font-size:var(--text-body-normal); padding:8px 4px;">
             📤 불러오기 (복원)
           </button>
-          <input type="file" id="backupFileInput" style="display:none" accept=".json,application/json,text/plain,*/*"
+          <input type="file" id="backupFileInput" style="display:none" accept=".json,application/json"
             onclick="this.value = null;" onchange="uploadBackup(event)">
         </div>
       </div>
@@ -1192,6 +1411,26 @@
     </div>
 
   </main>
+
+  <!-- ═══════════ 🎓 인터랙티브 튜토리얼 ═══════════ -->
+  <div id="tutorialOverlay" class="tutorial-overlay" style="display:none;">
+    <div id="tutorialBackdrop" class="tutorial-backdrop"></div>
+    <div id="tutorialSpotlight" class="tutorial-spotlight" style="display:none;"></div>
+    <div id="tutorialTooltip" class="tutorial-tooltip" style="display:none;">
+      <div id="tutorialArrow" class="tutorial-tooltip-arrow top"></div>
+      <div id="tutorialTitle" class="tutorial-tooltip-title"></div>
+      <div id="tutorialBody" class="tutorial-tooltip-body"></div>
+      <div class="tutorial-tooltip-footer">
+        <span id="tutorialProgress" class="tutorial-progress"></span>
+        <div class="tutorial-btn-group">
+          <button id="tutorialSkip" class="tutorial-btn" onclick="endTutorial()">건너뛰기</button>
+          <button id="tutorialNext" class="tutorial-btn primary" onclick="nextTutorialStep()">다음</button>
+        </div>
+      </div>
+    </div>
+    <!-- 모의 바텀시트 (특정 스텝에서만 표시) -->
+    <div id="tutorialMockSheet" class="tutorial-mock-sheet" style="display:none;"></div>
+  </div>
 
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -1303,13 +1542,18 @@
         </div>
       </div>
 
-      <button onclick="dismissOnboarding(false)" class="btn btn-primary btn-full"
+      <button onclick="startTutorial()" class="btn btn-primary btn-full"
         style="font-size:var(--text-body-large); padding:12px;">
-        🚀 시작하기
+        🎓 사용법 보기 (튜토리얼)
       </button>
-      <a onclick="dismissOnboarding(true)" class="onboarding-link">
-        👤 개인정보 먼저 입력하러 가기
-      </a>
+      <div style="display:flex; gap:10px; margin-top:10px;">
+        <a onclick="dismissOnboarding(false)" class="onboarding-link" style="flex:1;">
+          🚀 바로 시작하기
+        </a>
+        <a onclick="dismissOnboarding(true)" class="onboarding-link" style="flex:1;">
+          👤 개인정보 먼저 입력
+        </a>
+      </div>
       <p
         style="margin-top:14px; font-size:var(--text-body-normal); color:var(--text-muted); text-align:center; border-top:1px solid var(--border-glass); padding-top:12px;">
         만든 사람: 김계환 (핵의학과)
