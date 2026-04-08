@@ -359,8 +359,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const params = getCaptureParams();
     const requestedTab = params.get('tab');
-    if (!switchTab(requestedTab || 'home')) {
-      switchTab('home');
+    if (!switchTab(requestedTab || 'leave')) {
+      switchTab('leave');
     }
   }
   activateV1DefaultTab();
