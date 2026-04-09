@@ -1,0 +1,7 @@
+{
+  "version": "1.0",
+  "exportDate": "2026-04-09T02:53:31.670Z",
+  "profile": "{\"name\":\"\",\"gender\":\"\",\"jobType\":\"간호직\",\"grade\":\"J1\",\"year\":\"1\",\"hireDate\":\"\",\"adjustPay\":0,\"upgradeAdjustPay\":0,\"hasMilitary\":false,\"militaryMonths\":24,\"hasSeniority\":false,\"numFamily\":0,\"numChildren\":0,\"childrenUnder6Pay\":0,\"specialPay\":0,\"positionPay\":0,\"workSupportPay\":0,\"nightShiftsUnrewarded\":0,\"weeklyHours\":209,\"promotionDate\":\"\",\"savedAt\":\"2026-04-09T02:53:30.187Z\"}",
+  "overtime": null,
+  "leave": null
+}

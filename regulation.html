@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="SNUH 메이트: 단체협약 규정 원문, AI 상담, FAQ">
+  <meta name="description" content="SNUH 메이트: 단체협약 규정 검색, AI 상담, FAQ">
   <title>SNUH 메이트 - 규정/상담</title>
   <link rel="manifest" href="manifest.json?v=1.3">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -16,25 +16,420 @@
   <link rel="shortcut icon" href="snuhmaterect.png?v=1.3">
   <link rel="stylesheet" href="style.css?v=2.5">
   <style>
-    /* regulation.html overrides */
-    .main { max-width: 900px; }
-    .handbook-grid {
-      display: grid;
-      grid-template-columns: 220px 1fr;
-      gap: 16px;
-      align-items: start;
+    /* ═══════════ regulation.html — page-scoped styles ═══════════ */
+    .main { max-width: 640px; }
+    .theme-toggle-btn {
+      width: 36px; height: 36px; border-radius: 8px;
+      border: 1px solid var(--border-glass); background: var(--bg-card);
+      cursor: pointer; font-size: var(--text-title-large);
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s ease-out; flex-shrink: 0;
     }
-    /* FINDING-002: theme toggle touch target */
-    .theme-toggle-btn { min-width: 44px; min-height: 44px; }
-    /* FINDING-006: H1 page title size */
-    .logo-main-title { font-size: 1.4rem !important; }
-    /* FINDING-007: home link touch target */
-    .header-right .btn-outline { min-height: 44px; display: inline-flex; align-items: center; }
-    /* FINDING-005: chat container responsive height */
+    .theme-toggle-btn:hover { border-color: var(--border-active); }
+
+    /* ── Shared search input ── */
+    .reg-search-input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-full);
+      background: var(--bg-glass);
+      color: var(--text-primary);
+      font-size: var(--text-body-large);
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .reg-search-input:focus {
+      border-color: var(--accent-indigo);
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+    }
+    .reg-search-input::placeholder { color: var(--text-muted); }
+
+    html[data-theme="neo"] .reg-search-input {
+      border: 2px solid #1a1a1a;
+      border-radius: var(--radius-full);
+      background: var(--bg-card);
+    }
+    html[data-theme="neo"] .reg-search-input:focus {
+      box-shadow: 3px 3px 0px var(--accent-indigo);
+    }
+
+    /* ═══════════ 찾아보기: Drill-down category list ═══════════ */
+    .reg-category-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .reg-category-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 18px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all 0.15s ease-out;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .reg-category-item:active {
+      transform: scale(0.98);
+    }
+    .reg-category-item:hover {
+      border-color: var(--border-active);
+      background: var(--bg-glass-hover);
+    }
+    .reg-cat-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+    .reg-cat-icon {
+      font-size: 22px;
+      flex-shrink: 0;
+      width: 36px;
+      text-align: center;
+    }
+    .reg-cat-name {
+      font-size: var(--text-body-large);
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .reg-cat-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .reg-cat-count {
+      font-size: var(--text-body-normal);
+      color: var(--text-muted);
+    }
+    .reg-cat-chevron {
+      color: var(--text-muted);
+      font-size: 16px;
+      transition: transform 0.2s;
+    }
+
+    html[data-theme="neo"] .reg-category-item {
+      border: 2.5px solid #1a1a1a;
+      box-shadow: 3px 3px 0px #1a1a1a;
+    }
+    html[data-theme="neo"] .reg-category-item:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: 4px 4px 0px #1a1a1a;
+    }
+    html[data-theme="neo"] .reg-category-item:active {
+      transform: translate(1px, 1px);
+      box-shadow: 1px 1px 0px #1a1a1a;
+    }
+
+    /* ── Detail view: back nav + article accordion ── */
+    .reg-detail-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .reg-back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border-glass);
+      background: var(--bg-glass);
+      color: var(--text-secondary);
+      font-size: var(--text-body-normal);
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s ease-out;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .reg-back-btn:hover {
+      border-color: var(--border-active);
+      color: var(--text-primary);
+    }
+    html[data-theme="neo"] .reg-back-btn {
+      border: 2px solid #1a1a1a;
+      box-shadow: 2px 2px 0px #1a1a1a;
+      background: var(--bg-card);
+      font-weight: 600;
+    }
+    html[data-theme="neo"] .reg-back-btn:active {
+      transform: translate(1px, 1px);
+      box-shadow: 0 0 0 #1a1a1a;
+    }
+
+    .reg-detail-title {
+      font-size: var(--text-title-large);
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    /* ── Accordion articles ── */
+    .reg-article {
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-md);
+      margin-bottom: 8px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .reg-article.open {
+      border-color: var(--accent-indigo);
+    }
+
+    .reg-article-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      cursor: pointer;
+      background: var(--bg-card);
+      transition: background 0.15s;
+      -webkit-tap-highlight-color: transparent;
+      gap: 8px;
+    }
+    .reg-article-header:active {
+      background: var(--bg-glass);
+    }
+    .reg-article-title-group {
+      min-width: 0;
+      flex: 1;
+    }
+    .reg-article-title {
+      font-size: var(--text-body-large);
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.3;
+    }
+    .reg-article-ref {
+      font-size: var(--text-label-small);
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .reg-article-chevron {
+      flex-shrink: 0;
+      font-size: 14px;
+      color: var(--text-muted);
+      transition: transform 0.25s ease;
+    }
+    .reg-article.open .reg-article-chevron {
+      transform: rotate(90deg);
+      color: var(--accent-indigo);
+    }
+
+    .reg-article-body {
+      display: none;
+      padding: 0 16px 16px;
+      animation: regFadeIn 0.2s ease;
+    }
+    .reg-article.open .reg-article-body {
+      display: block;
+    }
+    .reg-article-content {
+      font-size: var(--text-body-large);
+      line-height: 1.75;
+      color: var(--text-secondary);
+      white-space: pre-line;
+    }
+    .reg-article-content .bullet {
+      color: var(--accent-indigo);
+    }
+    .reg-article-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+    .reg-article-actions .btn-outline {
+      font-size: var(--text-body-normal);
+      padding: 6px 12px;
+      border-radius: var(--radius-full);
+    }
+
+    @keyframes regFadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    html[data-theme="neo"] .reg-article {
+      border: 2.5px solid #1a1a1a;
+      box-shadow: 3px 3px 0px #1a1a1a;
+    }
+    html[data-theme="neo"] .reg-article.open {
+      border-color: var(--accent-violet);
+      box-shadow: 3px 3px 0px var(--accent-violet);
+    }
+    html[data-theme="neo"] .reg-article-header:active {
+      background: var(--bg-glass);
+    }
+    html[data-theme="neo"] .reg-article.open .reg-article-chevron {
+      color: var(--accent-violet);
+    }
+
+    /* ── Search results highlight ── */
+    .reg-highlight {
+      background: rgba(251,191,36,0.3);
+      padding: 0 2px;
+      border-radius: 2px;
+    }
+    html[data-theme="neo"] .reg-highlight {
+      background: rgba(253,203,110,0.5);
+    }
+
+    /* ── Empty/placeholder state ── */
+    .reg-empty {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--text-muted);
+    }
+    .reg-empty-icon {
+      font-size: 40px;
+      margin-bottom: 12px;
+      opacity: 0.6;
+    }
+    .reg-empty-text {
+      font-size: var(--text-body-large);
+      line-height: 1.6;
+    }
+
+    /* ═══════════ 물어보기: chat sizing ═══════════ */
     .chat-container { height: clamp(400px, 60vh, 700px); }
+
+    /* ── PDF bottom sheet ── */
+    .pdf-sheet-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 500;
+      animation: regFadeIn 0.15s ease;
+    }
+    .pdf-sheet-overlay.active { display: block; }
+
+    .pdf-sheet {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      max-height: 85vh;
+      background: var(--bg-primary);
+      border-radius: 16px 16px 0 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      z-index: 501;
+      animation: sheetSlideUp 0.3s ease;
+    }
+    @keyframes sheetSlideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    html[data-theme="neo"] .pdf-sheet {
+      border: 3px solid #1a1a1a;
+      border-bottom: none;
+      background: var(--bg-card);
+    }
+
+    .pdf-sheet-handle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+    }
+    .pdf-sheet-handle::after {
+      content: '';
+      width: 36px;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--border-glass);
+    }
+    html[data-theme="neo"] .pdf-sheet-handle::after {
+      background: #1a1a1a;
+    }
+
+    .pdf-sheet-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px 12px;
+      border-bottom: 1px solid var(--border-glass);
+    }
+    html[data-theme="neo"] .pdf-sheet-header {
+      border-bottom: 2px solid #1a1a1a;
+    }
+    .pdf-sheet-title {
+      font-size: var(--text-body-large);
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .pdf-sheet-close {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1px solid var(--border-glass);
+      background: var(--bg-glass);
+      color: var(--text-secondary);
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+    .pdf-sheet-close:hover {
+      border-color: var(--border-active);
+      color: var(--text-primary);
+    }
+    html[data-theme="neo"] .pdf-sheet-close {
+      border: 2px solid #1a1a1a;
+      background: var(--bg-card);
+      font-weight: 700;
+    }
+
+    .pdf-sheet-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border-glass);
+    }
+    .pdf-sheet-controls .btn-outline {
+      padding: 6px 14px;
+      font-size: var(--text-body-normal);
+    }
+    .pdf-page-info {
+      font-size: var(--text-body-normal);
+      color: var(--text-secondary);
+      min-width: 60px;
+      text-align: center;
+    }
+
+    .pdf-sheet-body {
+      flex: 1;
+      overflow: auto;
+      padding: 16px;
+      text-align: center;
+      -webkit-overflow-scrolling: touch;
+    }
+    .pdf-sheet-body canvas {
+      max-width: 100%;
+      border-radius: var(--radius-md);
+    }
+
+    /* ═══════════ Mobile ═══════════ */
     @media (max-width: 768px) {
-      .main { max-width: 100%; }
-      .handbook-grid { grid-template-columns: 1fr; }
+      .main { max-width: 100%; padding: 16px 12px 88px; }
+      .reg-category-item { padding: 14px 14px; }
+      .reg-cat-icon { font-size: 20px; width: 32px; }
+      .reg-article-header { padding: 12px 14px; }
     }
   </style>
 </head>
@@ -47,137 +442,34 @@
           <img src="snuhmaterect.png" alt="SNUH 메이트"
             style="width:81px; height:81px; object-fit:contain; flex-shrink:0; border-radius:10px;">
           <div>
-            <h1 class="logo-main-title">규정 / AI 상담</h1>
+            <h1 class="logo-main-title">규정 / 상담</h1>
             <p class="logo-sub-title">2026 단체협약 기준 규정 원문, AI 상담, FAQ</p>
           </div>
         </div>
         <div class="header-right">
           <a href="index.html" class="btn btn-outline"
-            style="padding:6px 12px; font-size:var(--text-body-normal); border-radius:20px; text-decoration:none;">
-            홈으로
+            style="padding:4px 10px; font-size:var(--text-body-normal); border-color:var(--text-muted); color:var(--text-muted); border-radius:20px; text-decoration:none;">
+            ◂ 홈으로
           </a>
           <button class="theme-toggle-btn" id="themeToggle" title="테마 전환" onclick="toggleTheme()">🎨</button>
         </div>
       </div>
       <nav class="sub-tabs" id="regSubTabs" style="margin-bottom:0;">
-        <button class="sub-tab active" data-subtab="handbook">📖 규정</button>
-        <button class="sub-tab" data-subtab="pdf">📄 PDF</button>
-        <button class="sub-tab" data-subtab="ai-chat">💬 AI</button>
-        <button class="sub-tab" data-subtab="faq">❓ FAQ</button>
+        <button class="sub-tab active" data-subtab="faq">❓ FAQ</button>
+        <button class="sub-tab" data-subtab="browse">📖 찾아보기</button>
+        <button class="sub-tab" data-subtab="ask">💬 물어보기</button>
       </nav>
     </div>
   </header>
 
   <main class="main">
 
-    <!-- ═══════════ 📖 규정 원문 ═══════════ -->
-    <div class="sub-content active" id="subtab-handbook">
-      <!-- 검색 -->
-      <div class="card" style="padding:12px 16px; margin-bottom:16px;">
-        <div style="display:flex; gap:8px;">
-          <input type="text" id="wikiSearch" placeholder="🔍 규정 검색... (예: 온콜, 연차, 경조비)" style="flex:1;"
-            oninput="searchHandbook()">
-          <button class="btn btn-outline" onclick="clearWikiSearch()" style="white-space:nowrap;">초기화</button>
-        </div>
-        <div id="wikiSearchCount"
-          style="font-size:var(--text-body-normal); color:var(--text-muted); margin-top:6px; display:none;"></div>
-      </div>
-
-      <!-- 목차 + 본문 -->
-      <div class="handbook-grid">
-        <!-- 좌측: 카테고리 목차 -->
-        <div>
-          <div class="card" style="position:sticky; top:80px;">
-            <div class="card-title"><span class="icon emerald">📑</span> 목차</div>
-            <div id="wikiToc"></div>
-          </div>
-        </div>
-        <!-- 우측: 본문 -->
-        <div>
-          <div id="wikiContent">
-            <div class="card" style="text-align:center; padding:40px 20px; color:var(--text-muted);">
-              <div style="font-size:var(--text-amount-huge); margin-bottom:12px;">📖</div>
-              목차에서 카테고리를 선택하거나,<br>
-              상단 검색창에 키워드를 입력하세요.
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══════════ 📄 PDF 뷰어 ═══════════ -->
-    <div class="sub-content" id="subtab-pdf">
-      <div class="card" style="padding:12px 16px; margin-bottom:16px;">
-        <div class="card-title"><span class="icon cyan">📄</span> 조합원 수첩 PDF</div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:8px;">
-          <select id="pdfSelect" style="flex:1; min-width:200px; padding:8px 12px; border-radius:var(--radius-md); border:1px solid var(--border-glass); background:var(--bg-glass); color:var(--text-primary); font-size:var(--text-body-normal); font-family:inherit;">
-            <option value="data/2026_조합원_수첩_최종파일.pdf">조합원 수첩 (전체)</option>
-            <option value="data/2026_조합원_수첩_임금 구성 및 년 보수표.pdf">임금 구성 및 년 보수표</option>
-            <option value="data/2026_조합원_수첩_임금 및 퇴직금.pdf">임금 및 퇴직금</option>
-            <option value="data/2026_조합원_수첩_근로시간.pdf">근로시간</option>
-            <option value="data/2602 salary.pdf">급여 명세서 (2602)</option>
-          </select>
-          <button class="btn btn-outline" onclick="loadSelectedPdf()" style="white-space:nowrap;">열기</button>
-        </div>
-      </div>
-      <!-- PDF 컨트롤 -->
-      <div id="pdfControls" style="display:none;">
-        <div class="card" style="padding:8px 12px; margin-bottom:8px;">
-          <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
-            <div style="display:flex; align-items:center; gap:8px;">
-              <button class="btn btn-outline" onclick="pdfPrevPage()" style="padding:4px 10px;">◀</button>
-              <span id="pdfPageInfo" style="font-size:var(--text-body-normal); color:var(--text-secondary);">- / -</span>
-              <button class="btn btn-outline" onclick="pdfNextPage()" style="padding:4px 10px;">▶</button>
-            </div>
-            <div style="display:flex; align-items:center; gap:8px;">
-              <button class="btn btn-outline" onclick="pdfZoom(-0.25)" style="padding:4px 10px;">−</button>
-              <span id="pdfZoomInfo" style="font-size:var(--text-body-normal); color:var(--text-secondary);">100%</span>
-              <button class="btn btn-outline" onclick="pdfZoom(0.25)" style="padding:4px 10px;">+</button>
-              <button class="btn btn-outline" onclick="pdfFitWidth()" style="padding:4px 10px;">맞춤</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <!-- PDF 캔버스 -->
-      <div id="pdfCanvasContainer" style="text-align:center; overflow:auto; display:none;">
-        <canvas id="pdfCanvas" style="max-width:100%; border-radius:var(--radius-md); box-shadow:var(--shadow-md);"></canvas>
-      </div>
-      <div id="pdfPlaceholder" class="card" style="text-align:center; padding:40px 20px; color:var(--text-muted);">
-        <div style="font-size:var(--text-amount-huge); margin-bottom:12px;">📄</div>
-        위에서 PDF를 선택하고 "열기"를 눌러주세요.
-      </div>
-    </div>
-
-    <!-- ═══════════ 💬 AI 상담 ═══════════ -->
-    <div class="sub-content" id="subtab-ai-chat">
-      <div class="card chat-container">
-        <div class="card-title">
-          <span class="icon indigo">💬</span> 규정 AI 상담
-          <span class="badge indigo">2026 단체협약</span>
-        </div>
-        <div class="quick-tags" id="chatQuickTags"></div>
-        <div class="chat-messages" id="chatMessages">
-          <div class="chat-msg bot">
-            궁금한 규정을 물어보세요!<br>
-            <small style="color:var(--text-muted)">예: "온콜 수당 얼마?", "외할머니 돌아가시면 휴가 며칠?", "연차 몇 일?"</small>
-          </div>
-        </div>
-        <div class="chat-input-row">
-          <input type="text" class="chat-input" id="chatInput" placeholder="궁금한 점을 입력하세요..." autocomplete="off">
-          <button class="chat-send" id="chatSend" title="전송">➤</button>
-        </div>
-      </div>
-      <div style="text-align:center; margin-top:8px;">
-        <small style="color:var(--text-muted);">AI 답변은 참고용입니다. 정확한 내용은 규정 원문을 확인하세요.</small>
-      </div>
-    </div>
-
     <!-- ═══════════ ❓ FAQ ═══════════ -->
-    <div class="sub-content" id="subtab-faq">
+    <div class="sub-content active" id="subtab-faq">
       <!-- 검색 -->
       <div class="card" style="padding:12px 16px; margin-bottom:16px;">
         <div style="display:flex; gap:8px;">
-          <input type="text" id="faqSearchInput" placeholder="FAQ 검색... (예: 온콜 수당, 야간근무)" style="flex:1;">
+          <input type="text" id="faqSearchInput" class="reg-search-input" placeholder="FAQ 검색... (예: 온콜 수당, 야간근무)">
           <button class="btn btn-outline" id="faqSearchBtn" style="white-space:nowrap;">검색</button>
         </div>
       </div>
@@ -187,11 +479,87 @@
       <div id="faqList"></div>
     </div>
 
+    <!-- ═══════════ 📖 찾아보기 ═══════════ -->
+    <div class="sub-content" id="subtab-browse">
+      <!-- 검색 -->
+      <div class="card" style="padding:12px 16px; margin-bottom:16px;">
+        <input type="text" id="browseSearch" class="reg-search-input"
+          placeholder="규정 검색... (예: 온콜, 연차, 경조비)" style="width:100%;">
+      </div>
+
+      <!-- 카테고리 목록 (drill-down 루트) -->
+      <div id="browseRoot">
+        <div id="browseCategoryList" class="reg-category-list"></div>
+      </div>
+
+      <!-- 카테고리 상세 (drill-down 상세) -->
+      <div id="browseDetail" style="display:none;">
+        <div class="reg-detail-header">
+          <button class="reg-back-btn" id="browseBackBtn">◂ 목차</button>
+          <span class="reg-detail-title" id="browseDetailTitle"></span>
+        </div>
+        <div id="browseArticles"></div>
+      </div>
+
+      <!-- 검색 결과 -->
+      <div id="browseSearchResults" style="display:none;"></div>
+    </div>
+
+    <!-- ═══════════ 💬 물어보기 ═══════════ -->
+    <div class="sub-content" id="subtab-ask">
+      <div class="card chat-container">
+        <div class="card-title">
+          <span class="icon indigo">💬</span> 규정 AI 상담
+          <span class="badge indigo">2026 단체협약</span>
+        </div>
+        <div class="quick-tags" id="askTopics"></div>
+        <div class="chat-messages" id="chatMessages">
+          <div class="chat-msg bot">
+            궁금한 규정을 물어보세요!<br>
+            <small style="color:var(--text-muted)">예: "온콜 수당 얼마?", "연차 몇 일?", "경조 휴가"</small>
+          </div>
+        </div>
+        <div class="chat-input-row">
+          <input type="text" class="chat-input" id="chatInput"
+            placeholder="궁금한 점을 입력하세요..." autocomplete="off">
+          <button class="chat-send" id="chatSend" title="전송">➤</button>
+        </div>
+      </div>
+      <div style="text-align:center; margin-top:8px;">
+        <small style="color:var(--text-muted);">AI 답변은 참고용입니다. 정확한 내용은 규정 원문을 확인하세요.</small>
+      </div>
+    </div>
+
   </main>
+
+  <!-- ═══════════ PDF 바텀시트 ═══════════ -->
+  <div class="pdf-sheet-overlay" id="pdfOverlay">
+    <div class="pdf-sheet" id="pdfSheet">
+      <div class="pdf-sheet-handle"></div>
+      <div class="pdf-sheet-header">
+        <span class="pdf-sheet-title" id="pdfSheetTitle">PDF 원문</span>
+        <button class="pdf-sheet-close" id="pdfClose" title="닫기">✕</button>
+      </div>
+      <div class="pdf-sheet-controls">
+        <button class="btn btn-outline" onclick="pdfPrevPage()">◀</button>
+        <span id="pdfPageInfo" class="pdf-page-info">- / -</span>
+        <button class="btn btn-outline" onclick="pdfNextPage()">▶</button>
+        <span style="width:1px; height:20px; background:var(--border-glass);"></span>
+        <button class="btn btn-outline" onclick="pdfZoom(-0.25)">−</button>
+        <span id="pdfZoomInfo" class="pdf-page-info">100%</span>
+        <button class="btn btn-outline" onclick="pdfZoom(0.25)">+</button>
+      </div>
+      <div class="pdf-sheet-body" id="pdfSheetBody">
+        <canvas id="pdfCanvas"></canvas>
+      </div>
+    </div>
+  </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="data.js?v=2.5"></script>
-  <script src="regulation.js?v=1.0"></script>
+  <script src="profile.js?v=2.5"></script>
+  <script src="calculators.js?v=2.5"></script>
+  <script src="regulation.js?v=2.1"></script>
 </body>
 
 </html>
