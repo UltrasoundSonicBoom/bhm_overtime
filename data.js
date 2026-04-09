@@ -573,9 +573,50 @@ const DATA_STATIC = {
 
 // DATA 객체: 초기값은 static, API 로드 성공 시 덮어쓰기
 let DATA = DATA_STATIC;
+let dataLoadPromise = null;
+
+const DATA_BUNDLE_CACHE_KEY = 'data_bundle_cache_2026-04';
+const DATA_BUNDLE_STATUS_KEY = 'data_bundle_status_2026-04';
+
+function getCurrentMonthKey() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function readStorageJSON(key) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function writeStorageJSON(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (e) { /* 저장 실패 무시 */ }
+}
 
 // API에서 최신 데이터 로드 (비동기, 실패 시 static fallback 유지)
 async function loadDataFromAPI() {
+  if (dataLoadPromise) return dataLoadPromise;
+
+  const monthKey = getCurrentMonthKey();
+  const cached = readStorageJSON(DATA_BUNDLE_CACHE_KEY);
+  if (cached?.monthKey === monthKey && cached?.data) {
+    DATA = { ...DATA_STATIC, ...cached.data };
+    console.log('[DATA] 월간 캐시 사용');
+    return;
+  }
+
+  const status = readStorageJSON(DATA_BUNDLE_STATUS_KEY);
+  if (status?.monthKey === monthKey && status?.state === 'skip') {
+    console.log('[DATA] 월간 재시도 대기 중, static fallback 사용');
+    return;
+  }
+
+  dataLoadPromise = (async () => {
   try {
     const res = await fetch('/api/data/bundle');
     if (!res.ok) throw new Error(`API ${res.status}`);
@@ -585,9 +626,22 @@ async function loadDataFromAPI() {
     }
     const apiData = await res.json();
     DATA = { ...DATA_STATIC, ...apiData };
+    writeStorageJSON(DATA_BUNDLE_CACHE_KEY, { monthKey, data: apiData, fetchedAt: Date.now() });
+    writeStorageJSON(DATA_BUNDLE_STATUS_KEY, { monthKey, state: 'ok', checkedAt: Date.now() });
     console.log('[DATA] API 데이터 로드 완료');
   } catch (e) {
+    writeStorageJSON(DATA_BUNDLE_STATUS_KEY, {
+      monthKey,
+      state: 'skip',
+      checkedAt: Date.now(),
+      reason: e.message || String(e)
+    });
     console.log('[DATA] API 로드 실패, static fallback 사용:', e.message || e);
+  } finally {
+    dataLoadPromise = null;
   }
+  })();
+
+  return dataLoadPromise;
 }
 loadDataFromAPI();

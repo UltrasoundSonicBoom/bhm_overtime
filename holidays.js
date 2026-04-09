@@ -7,12 +7,19 @@ const HOLIDAYS = {
     // API 설정 (공공데이터포털 특일 정보서비스)
     API_BASE: 'https://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService',
     API_KEY: '590ecdf5a2e2ea517c853271d834f47f0d0cef966ec408e467106f063aa49e2c',
-    APP_API_BASE: '/api/calendar',
 
     // 캐시 (연도별)
     _cache: {},
     _anniversaryCache: {},
     _disabledOperations: {},
+    _pending: {},
+    _anniversaryPending: {},
+    _cacheMeta: {},
+    _anniversaryCacheMeta: {},
+
+    CACHE_VERSION: '2026-04',
+    REFRESH_MONTHS: [12, 3, 6, 9],
+    ANNIVERSARY_API_ENABLED: false,
 
     // ── 요일 라벨 ──
     _dayLabels: ['일', '월', '화', '수', '목', '금', '토'],
@@ -120,6 +127,64 @@ const HOLIDAYS = {
         ]
     },
 
+    _getCurrentMonthKey() {
+        const now = new Date();
+        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    },
+
+    _getStorageKey(kind, year) {
+        return `holidays_${this.CACHE_VERSION}_${kind}_${year}`;
+    },
+
+    _readStorage(key) {
+        try {
+            const raw = localStorage.getItem(key);
+            return raw ? JSON.parse(raw) : null;
+        } catch (e) {
+            return null;
+        }
+    },
+
+    _writeStorage(key, value) {
+        try {
+            localStorage.setItem(key, JSON.stringify(value));
+        } catch (e) { /* 저장 실패 무시 */ }
+    },
+
+    _isRefreshMonth() {
+        const now = new Date();
+        return this.REFRESH_MONTHS.includes(now.getMonth() + 1);
+    },
+
+    _shouldUseCachedEntry(entry) {
+        if (!entry || !Array.isArray(entry.data) || entry.data.length === 0) return false;
+        if (!this._isRefreshMonth()) return true;
+        return entry.refreshMonthKey === this._getCurrentMonthKey();
+    },
+
+    _mergeHospitalHolidays(year, holidays) {
+        const merged = [...holidays];
+        const existingDates = new Set(merged.map(h => String(h.date)));
+
+        this.hospitalHolidays.forEach(h => {
+            const dateStr = `${year}${String(h.month).padStart(2, '0')}${String(h.day).padStart(2, '0')}`;
+            if (!existingDates.has(dateStr)) {
+                merged.push({ name: h.name, date: dateStr, isHoliday: true });
+            }
+        });
+
+        return merged;
+    },
+
+    _buildFallbackAnniversaries(year) {
+        return this.staticAnniversaryData.fixed.map(a => ({
+            name: a.name,
+            date: `${year}${String(a.month).padStart(2, '0')}${String(a.day).padStart(2, '0')}`,
+            isHoliday: false,
+            dateKind: '기념일'
+        }));
+    },
+
     // ══════════════════════════════════════════
     // ── API 호출 ──
     // ══════════════════════════════════════════
@@ -185,25 +250,6 @@ const HOLIDAYS = {
         }
     },
 
-    async _fetchFromAppAPI(kind, year) {
-        try {
-            const resp = await fetch(`${this.APP_API_BASE}/${kind}?year=${year}`);
-            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-
-            const contentType = resp.headers.get('content-type') || '';
-            if (!contentType.includes('application/json')) {
-                throw new Error(`Expected JSON but received ${contentType || 'unknown content-type'}`);
-            }
-
-            const data = await resp.json();
-            const items = Array.isArray(data?.items) ? data.items : [];
-            return items;
-        } catch (e) {
-            console.warn(`APP API ${kind} 실패 (${year}):`, e.message);
-            return null;
-        }
-    },
-
     /**
      * API에서 공휴일 데이터 가져오기
      * getRestDeInfo (공휴일) + getHoliDeInfo (국경일) 병합
@@ -211,9 +257,6 @@ const HOLIDAYS = {
      * @returns {Promise<Array>} [{ name, date(YYYYMMDD), isHoliday }]
      */
     async fetchFromAPI(year) {
-        const appData = await this._fetchFromAppAPI('holidays', year);
-        if (appData !== null) return appData;
-
         // 공휴일 조회 (설날, 추석, 어린이날, 대체공휴일 등)
         const restDays = await this._fetchOperation('getRestDeInfo', year);
         if (!restDays) return null;
@@ -244,12 +287,8 @@ const HOLIDAYS = {
      * @returns {Promise<Array>} [{ name, date(YYYYMMDD), isHoliday }]
      */
     async fetchAnniversariesFromAPI(year) {
-        const appData = await this._fetchFromAppAPI('anniversaries', year);
-        if (appData !== null) return appData;
-
-        const data = await this._fetchOperation('getAnniversaryInfo', year);
-        if (!data) return null;
-        return data.length > 0 ? data : null;
+        if (!this.ANNIVERSARY_API_ENABLED) return null;
+        return null;
     },
 
     // ══════════════════════════════════════════
@@ -259,68 +298,79 @@ const HOLIDAYS = {
     /**
      * 연도별 공휴일 가져오기 (API → 캐시 → 정적 폴백)
      * @param {number} year
+     * @param {number=} focusMonth
      * @returns {Promise<Array>}
      */
-    async getHolidays(year) {
+    async getHolidays(year, focusMonth, options = {}) {
         // 캐시 확인
-        if (this._cache[year]) return this._cache[year];
-
-        // localStorage 캐시 확인
-        const lsKey = `holidays_${year}`;
-        try {
-            const stored = localStorage.getItem(lsKey);
-            if (stored) {
-                const parsed = JSON.parse(stored);
-                if (parsed.data && parsed.timestamp) {
-                    // 7일 이내 캐시
-                    const age = Date.now() - parsed.timestamp;
-                    if (age < 7 * 24 * 60 * 60 * 1000) {
-                        // 캐시에도 병원 유급휴일 보장
-                        const cachedDates = new Set(parsed.data.map(h => String(h.date)));
-                        this.hospitalHolidays.forEach(h => {
-                            const ds = `${year}${String(h.month).padStart(2, '0')}${String(h.day).padStart(2, '0')}`;
-                            if (!cachedDates.has(ds)) {
-                                parsed.data.push({ name: h.name, date: ds, isHoliday: true });
-                            }
-                        });
-                        this._cache[year] = parsed.data;
-                        console.log(`💾 ${year}년 공휴일 localStorage 캐시 사용 (${parsed.data.length}건)`);
-                        return parsed.data;
-                    }
-                }
-            }
-        } catch (e) { /* localStorage 접근 실패 무시 */ }
-
-        // API 시도
-        const apiData = await this.fetchFromAPI(year);
-        let holidays;
-        if (apiData && apiData.length > 0) {
-            holidays = apiData;
-            console.log(`✅ ${year}년 공휴일 API 로드 성공 (${apiData.length}건)`);
-        } else {
-            holidays = [...(this.staticData[year] || [])];
-            if (holidays.length > 0) {
-                console.log(`📋 ${year}년 공휴일 정적 데이터 사용 (${holidays.length}건)`);
-            } else {
-                console.warn(`⚠️ ${year}년 공휴일 데이터 없음`);
-            }
+        if (!options.force && this._cache[year] && this._shouldUseCachedEntry(this._cacheMeta[year])) {
+            return this._cache[year];
         }
 
-        // 병원 자체 유급휴일 병합 (취업규칙 제35조: 근로자의 날, 개원기념일)
-        const existingDates = new Set(holidays.map(h => String(h.date)));
-        this.hospitalHolidays.forEach(h => {
-            const dateStr = `${year}${String(h.month).padStart(2, '0')}${String(h.day).padStart(2, '0')}`;
-            if (!existingDates.has(dateStr)) {
-                holidays.push({ name: h.name, date: dateStr, isHoliday: true });
-            }
-        });
+        // localStorage 캐시 확인
+        const lsKey = this._getStorageKey('holidays', year);
+        const storedEntry = this._readStorage(lsKey);
+        if (!options.force && this._shouldUseCachedEntry(storedEntry)) {
+            const merged = this._mergeHospitalHolidays(year, storedEntry.data);
+            this._cache[year] = merged;
+            this._cacheMeta[year] = storedEntry;
+            console.log(`💾 ${year}년 공휴일 localStorage 캐시 사용 (${merged.length}건)`);
+            return merged;
+        }
 
-        this._cache[year] = holidays;
-        // localStorage에 저장
+        if (!options.force && !storedEntry && !this._isRefreshMonth()) {
+            const fallback = this._mergeHospitalHolidays(year, this.staticData[year] || []);
+            const entry = {
+                data: fallback,
+                source: 'static',
+                refreshMonthKey: null,
+                checkedAt: Date.now()
+            };
+            this._cache[year] = fallback;
+            this._cacheMeta[year] = entry;
+            this._writeStorage(lsKey, entry);
+            console.log(`📋 ${year}년 공휴일 정적 데이터 사용 (${fallback.length}건)`);
+            return fallback;
+        }
+
+        if (this._pending[year]) return this._pending[year];
+
+        this._pending[year] = (async () => {
+            const apiData = await this.fetchFromAPI(year);
+            let holidays;
+            let source = 'static';
+            if (apiData && apiData.length > 0) {
+                holidays = apiData;
+                source = 'api';
+                console.log(`✅ ${year}년 공휴일 API 로드 성공 (${apiData.length}건)`);
+            } else {
+                holidays = [...(this.staticData[year] || [])];
+                if (holidays.length > 0) {
+                    console.log(`📋 ${year}년 공휴일 정적 데이터 사용 (${holidays.length}건)`);
+                } else {
+                    console.warn(`⚠️ ${year}년 공휴일 데이터 없음`);
+                }
+            }
+
+            const merged = this._mergeHospitalHolidays(year, holidays);
+            const entry = {
+                data: merged,
+                source,
+                refreshMonthKey: this._getCurrentMonthKey(),
+                checkedAt: Date.now()
+            };
+
+            this._cache[year] = merged;
+            this._cacheMeta[year] = entry;
+            this._writeStorage(lsKey, entry);
+            return merged;
+        })();
+
         try {
-            localStorage.setItem(lsKey, JSON.stringify({ data: holidays, timestamp: Date.now() }));
-        } catch (e) { /* 저장 실패 무시 */ }
-        return holidays;
+            return await this._pending[year];
+        } finally {
+            delete this._pending[year];
+        }
     },
 
     /**
@@ -329,26 +379,51 @@ const HOLIDAYS = {
      * @returns {Promise<Array>}
      */
     async getAnniversaries(year) {
-        if (this._anniversaryCache[year]) return this._anniversaryCache[year];
-
-        // API 시도
-        const apiData = await this.fetchAnniversariesFromAPI(year);
-        if (apiData && apiData.length > 0) {
-            this._anniversaryCache[year] = apiData;
-            console.log(`✅ ${year}년 기념일 API 로드 성공 (${apiData.length}건)`);
-            return apiData;
+        if (this._anniversaryCache[year] && this._anniversaryCacheMeta[year]?.refreshMonthKey === this._getCurrentMonthKey()) {
+            return this._anniversaryCache[year];
         }
 
-        // 정적 폴백: 고정 기념일로 생성
-        const fallback = this.staticAnniversaryData.fixed.map(a => ({
-            name: a.name,
-            date: `${year}${String(a.month).padStart(2, '0')}${String(a.day).padStart(2, '0')}`,
-            isHoliday: false,
-            dateKind: '기념일'
-        }));
-        this._anniversaryCache[year] = fallback;
-        console.log(`📋 ${year}년 기념일 정적 데이터 사용 (${fallback.length}건)`);
-        return fallback;
+        const lsKey = this._getStorageKey('anniversaries', year);
+        const storedEntry = this._readStorage(lsKey);
+        if (storedEntry && storedEntry.refreshMonthKey === this._getCurrentMonthKey() && Array.isArray(storedEntry.data)) {
+            this._anniversaryCache[year] = storedEntry.data;
+            this._anniversaryCacheMeta[year] = storedEntry;
+            return storedEntry.data;
+        }
+
+        if (this._anniversaryPending[year]) return this._anniversaryPending[year];
+
+        this._anniversaryPending[year] = (async () => {
+            const apiData = await this.fetchAnniversariesFromAPI(year);
+            const anniversaries = (apiData && apiData.length > 0)
+                ? apiData
+                : this._buildFallbackAnniversaries(year);
+
+            const source = (apiData && apiData.length > 0) ? 'api' : 'static';
+            const entry = {
+                data: anniversaries,
+                source,
+                refreshMonthKey: this._getCurrentMonthKey(),
+                checkedAt: Date.now()
+            };
+
+            this._anniversaryCache[year] = anniversaries;
+            this._anniversaryCacheMeta[year] = entry;
+            this._writeStorage(lsKey, entry);
+
+            if (source === 'api') {
+                console.log(`✅ ${year}년 기념일 API 로드 성공 (${anniversaries.length}건)`);
+            } else {
+                console.log(`📋 ${year}년 기념일 정적 데이터 사용 (${anniversaries.length}건)`);
+            }
+            return anniversaries;
+        })();
+
+        try {
+            return await this._anniversaryPending[year];
+        } finally {
+            delete this._anniversaryPending[year];
+        }
     },
 
     /**
@@ -358,7 +433,7 @@ const HOLIDAYS = {
      * @returns {Promise<Array>} [{ name, date, day, dayOfWeek }]
      */
     async getMonthHolidays(year, month) {
-        const holidays = await this.getHolidays(year);
+        const holidays = await this.getHolidays(year, month);
         const mm = String(month).padStart(2, '0');
         const prefix = `${year}${mm}`;
         return holidays
@@ -650,10 +725,7 @@ const HOLIDAYS = {
      */
     getSourceLabel(year) {
         if (!this._cache[year]) return '미로드';
-        // API에서 가져왔는지 정적 데이터인지 구분
-        const staticDates = (this.staticData[year] || []).map(h => h.date).sort().join(',');
-        const cachedDates = this._cache[year].map(h => h.date).sort().join(',');
-        return staticDates === cachedDates ? '정적 데이터' : 'API';
+        return this._cacheMeta[year]?.source === 'api' ? 'API' : '정적 데이터';
     },
 
     /**
@@ -662,9 +734,30 @@ const HOLIDAYS = {
     clearCache() {
         this._cache = {};
         this._anniversaryCache = {};
+        this._pending = {};
+        this._anniversaryPending = {};
+        this._cacheMeta = {};
+        this._anniversaryCacheMeta = {};
         for (let y = 2025; y <= 2030; y++) {
-            try { localStorage.removeItem(`holidays_${y}`); } catch (e) { }
+            try { localStorage.removeItem(this._getStorageKey('holidays', y)); } catch (e) { }
+            try { localStorage.removeItem(this._getStorageKey('anniversaries', y)); } catch (e) { }
         }
         console.log('🗑️ 공휴일 캐시 초기화 완료');
+    },
+
+    async forceRefreshYear(year) {
+        const data = await this.getHolidays(year, undefined, { force: true });
+        this._anniversaryCache[year] = this._buildFallbackAnniversaries(year);
+        this._anniversaryCacheMeta[year] = {
+            data: this._anniversaryCache[year],
+            source: 'static',
+            refreshMonthKey: this._getCurrentMonthKey(),
+            checkedAt: Date.now()
+        };
+        this._writeStorage(this._getStorageKey('anniversaries', year), this._anniversaryCacheMeta[year]);
+        return {
+            holidays: data,
+            anniversaries: this._anniversaryCache[year]
+        };
     }
 };

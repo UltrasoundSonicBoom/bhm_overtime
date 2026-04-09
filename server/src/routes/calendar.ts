@@ -1,6 +1,8 @@
 import { Hono } from 'hono'
+import postgres from 'postgres'
 
 const calendarRoutes = new Hono()
+const sql = postgres(process.env.DATABASE_URL!, { prepare: false })
 
 const API_BASE = 'https://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService'
 const DEFAULT_API_KEY = '590ecdf5a2e2ea517c853271d834f47f0d0cef966ec408e467106f063aa49e2c'
@@ -10,6 +12,35 @@ type CalendarItem = {
   date: string
   isHoliday: boolean
   dateKind: string
+}
+
+async function ensureCalendarSnapshotTable() {
+  await sql`
+    CREATE TABLE IF NOT EXISTS calendar_snapshots (
+      id serial PRIMARY KEY,
+      year integer NOT NULL,
+      kind text NOT NULL,
+      items jsonb NOT NULL DEFAULT '[]'::jsonb,
+      source text NOT NULL DEFAULT 'manual',
+      refreshed_at timestamptz NOT NULL DEFAULT now(),
+      refreshed_by uuid
+    )
+  `
+  await sql`
+    CREATE UNIQUE INDEX IF NOT EXISTS calendar_snapshots_year_kind_idx
+    ON calendar_snapshots (year, kind)
+  `
+}
+
+async function readSnapshot(year: number, kind: 'holidays' | 'anniversaries') {
+  await ensureCalendarSnapshotTable()
+  const rows = await sql`
+    SELECT items, source, refreshed_at
+    FROM calendar_snapshots
+    WHERE year = ${year} AND kind = ${kind}
+    LIMIT 1
+  `
+  return rows[0] || null
 }
 
 const getServiceKey = () =>
@@ -64,6 +95,15 @@ calendarRoutes.get('/holidays', async (c) => {
   }
 
   try {
+    const snapshot = await readSnapshot(year, 'holidays')
+    if (snapshot) {
+      return c.json({
+        source: snapshot.source || 'snapshot',
+        items: Array.isArray(snapshot.items) ? snapshot.items : [],
+        refreshedAt: snapshot.refreshed_at,
+      })
+    }
+
     const [restDays, holiDays] = await Promise.all([
       fetchOperation('getRestDeInfo', year),
       fetchOperation('getHoliDeInfo', year),
@@ -93,6 +133,15 @@ calendarRoutes.get('/anniversaries', async (c) => {
   }
 
   try {
+    const snapshot = await readSnapshot(year, 'anniversaries')
+    if (snapshot) {
+      return c.json({
+        source: snapshot.source || 'snapshot',
+        items: Array.isArray(snapshot.items) ? snapshot.items : [],
+        refreshedAt: snapshot.refreshed_at,
+      })
+    }
+
     const items = await fetchOperation('getAnniversaryInfo', year)
     return c.json({
       source: items ? 'api' : 'fallback',

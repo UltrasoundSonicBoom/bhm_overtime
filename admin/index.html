@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SNUH Mate Admin</title>
+  <link rel="stylesheet" href="./admin.css">
+</head>
+<body>
+  <main class="admin-shell">
+    <section class="admin-card">
+      <p class="eyebrow">Admin</p>
+      <h1>공휴일 스냅샷 갱신</h1>
+      <p class="sub">분기 자동 갱신과 별개로, 특별 공휴일 같은 예외가 생기면 여기서 수동 반영합니다.</p>
+
+      <div class="auth-row">
+        <button id="loginBtn" class="btn secondary">구글 로그인</button>
+        <span id="authStatus">로그인 필요</span>
+      </div>
+
+      <div class="control-row">
+        <label for="yearInput">연도</label>
+        <input id="yearInput" type="number" min="2025" max="2100" step="1">
+      </div>
+
+      <div class="action-row">
+        <button id="refreshBtn" class="btn primary" disabled>선택 연도 갱신</button>
+        <button id="refreshNextBtn" class="btn secondary" disabled>올해+내년 갱신</button>
+      </div>
+
+      <pre id="resultBox" class="result-box">대기 중</pre>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./admin.js"></script>
+</body>
+</html>
