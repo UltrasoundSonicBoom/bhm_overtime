@@ -528,7 +528,15 @@ function initFaq() {
   });
 
   renderFaqCategories();
+  // Start with first category selected instead of all 50 items
+  if (DATA.faq) {
+    const categories = [...new Set(DATA.faq.map(f => f.category))];
+    if (categories.length > 0) {
+      faqActiveCategory = categories[0];
+    }
+  }
   renderFaqList();
+  updateFaqCategoryActive();
 }
 
 function renderFaqCategories() {
