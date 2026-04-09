@@ -7,10 +7,12 @@ const HOLIDAYS = {
     // API 설정 (공공데이터포털 특일 정보서비스)
     API_BASE: 'https://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService',
     API_KEY: '590ecdf5a2e2ea517c853271d834f47f0d0cef966ec408e467106f063aa49e2c',
+    APP_API_BASE: '/api/calendar',
 
     // 캐시 (연도별)
     _cache: {},
     _anniversaryCache: {},
+    _disabledOperations: {},
 
     // ── 요일 라벨 ──
     _dayLabels: ['일', '월', '화', '수', '목', '금', '토'],
@@ -129,6 +131,10 @@ const HOLIDAYS = {
      * @returns {Promise<Array|null>}
      */
     async _fetchOperation(operation, year) {
+        if (this._disabledOperations[operation]) {
+            return null;
+        }
+
         const url = `${this.API_BASE}/${operation}?ServiceKey=${this.API_KEY}&solYear=${year}&numOfRows=100&_type=json`;
         try {
             const resp = await fetch(url);
@@ -171,7 +177,29 @@ const HOLIDAYS = {
                 dateKind: item.querySelector('dateKind')?.textContent || ''
             }));
         } catch (e) {
+            if ((e.message || '').includes('HTTP 403')) {
+                this._disabledOperations[operation] = true;
+            }
             console.warn(`API ${operation} 실패 (${year}):`, e.message);
+            return null;
+        }
+    },
+
+    async _fetchFromAppAPI(kind, year) {
+        try {
+            const resp = await fetch(`${this.APP_API_BASE}/${kind}?year=${year}`);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+            const contentType = resp.headers.get('content-type') || '';
+            if (!contentType.includes('application/json')) {
+                throw new Error(`Expected JSON but received ${contentType || 'unknown content-type'}`);
+            }
+
+            const data = await resp.json();
+            const items = Array.isArray(data?.items) ? data.items : [];
+            return items;
+        } catch (e) {
+            console.warn(`APP API ${kind} 실패 (${year}):`, e.message);
             return null;
         }
     },
@@ -183,6 +211,9 @@ const HOLIDAYS = {
      * @returns {Promise<Array>} [{ name, date(YYYYMMDD), isHoliday }]
      */
     async fetchFromAPI(year) {
+        const appData = await this._fetchFromAppAPI('holidays', year);
+        if (appData !== null) return appData;
+
         // 공휴일 조회 (설날, 추석, 어린이날, 대체공휴일 등)
         const restDays = await this._fetchOperation('getRestDeInfo', year);
         if (!restDays) return null;
@@ -213,6 +244,9 @@ const HOLIDAYS = {
      * @returns {Promise<Array>} [{ name, date(YYYYMMDD), isHoliday }]
      */
     async fetchAnniversariesFromAPI(year) {
+        const appData = await this._fetchFromAppAPI('anniversaries', year);
+        if (appData !== null) return appData;
+
         const data = await this._fetchOperation('getAnniversaryInfo', year);
         if (!data) return null;
         return data.length > 0 ? data : null;

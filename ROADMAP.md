@@ -1,38 +1,90 @@
-# 프로젝트 진행 상황 및 로드맵 (BHM Overtime)
+# 프로젝트 로드맵 (BHM Overtime)
 
-## ✅ 최근 완료된 작업 (Phase 1: 핵심 기능 오류 수정 및 안정화)
+> Last Updated: 2026-04-09
 
-1. **공휴일 API 비동기 처리 개선 (app.js)**
-   - 문제: 공휴일 외부 API(`apis.data.go.kr`) 응답이 네트워크 문제로 지연되거나 실패할 경우, 캘린더 전체 렌더링이 중단되고 화면이 백지로 표시되는 심각한 결함이 있었습니다.
-   - 해결: `refreshOtCalendar`와 `refreshLvCalendar` 함수를 **이중 렌더링(Double Rendering) 아키텍처**로 재설계했습니다. 이제는 로컬 캐시 데이터를 이용해 달력 UI 프레임을 1차로 즉시 그리고, 백그라운드에서 공휴일 데이터를 가져온 뒤 2차로 마커만 깜빡임 없이 업데이트합니다.
+## 현재 상태 요약
 
-2. **초기 렌더링 충돌 (빈 화면 버그) 수정 (app.js)**
-   - 문제: 페이지 최초 로드 시 DOM 요소가 누락되어 캘린더 렌더링 함수(`initOvertimeTab()`) 자체가 호출되지 않는 버그가 있었습니다. 원인은 사용자가 화면 단순화를 위해 `index.html`에서 불필요한 UI(`wJobType`, `psPayTable` 등)를 제거했음에도 불구하고, 초기 로딩(`DOMContentLoaded`)을 담당하는 JS 이벤트 리스너가 이를 강제로 참조하려다 발생한 `TypeError`였습니다.
-   - 해결: `app.js`의 `updateGrades` 함수 등에 방어 로직(Null Check)을 도입하여, HTML 요소가 존재하지 않을 때 스크립트가 강제 종료되지 않고 안전하게 초기화를 마칠 수 있도록 처리했습니다.
+이미 구현되어 있는 것:
 
-3. **버그 픽스 사항 Git 저장소 반영**
-## ✅ 최근 완료된 작업 (내역 업데이트)
+- 공개 웹 계산기와 규정 화면
+- `data.js` 기반 정적 fallback
+- `/api/data/bundle`, `/api/faq`, `/api/chat`
+- Supabase Family mode 로그인/동기화
+- Hono + Drizzle + Supabase/Postgres 기반 서버
+- RAG 기본 구조와 FAQ 벡터 검색
+- 관리자 권한용 `admin_users` 및 `requireAdmin` 미들웨어
 
-1. **Supabase 연동 및 Google OAuth 인증 구현**
-   - 로컬 환경(Local-first)과 클라우드 백엔드(Family mode)를 분리하는 투트랙(Two-track) 구조를 성공적으로 구축했습니다.
-   - `?mode=family` 파라미터 접속 시에만 구글 로그인이 트리거되며, 로그인 시 Supabase 데이터베이스와 데이터가 동기화됩니다.
-   - 일반 URL 접속 시에는 철저히 로컬스토리지에만 저장되어 사용자 개인정보를 보호합니다.
+아직 없는 것:
 
-2. **Vercel 플랫폼 무중단 웹 배포**
-   - 별도의 빌드 과정 없이 Vercel을 통해 글로벌 정적 배포를 완료했습니다. (주소: `https://snuhmoney.vercel.app`)
-   - 환경 변수에 의존하지 않고 `window.location.origin`을 이용하는 동적 리디렉션 로직을 적용하여 배포 환경과 로컬 환경 양쪽에서 URL 허용 설정(Supabase API)만으로 즉시 작동하도록 구현했습니다.
+- 운영자가 직접 쓰는 Admin UI
+- `/api/admin/*` CRUD
+- 운영 콘텐츠 계층
+- revision / approval / audit 흐름
+- Preview 기반 게시 프로세스
 
----
+## 방향 전환
 
-## 🔜 앞으로 진행할 작업 (핵심 포커스: UX/UI 개선 및 버그 헌팅)
+이제 핵심 목표는 단순 기능 추가가 아니라, 아래 운영 플랫폼으로 전환하는 것이다.
 
-주요 기능의 아키텍처와 배포 인프라가 완성되었으므로, 이제부터는 기획과 사용성(디자인, 버그)에 온전히 집중합니다.
+```text
+web + admin + content(md) + ai harness + preview/review/publish
+```
 
-### 🎨 디자인(Design) 및 UX 고도화
-- **사용자 피드백 중심 UI 개편:** 시간외·온콜 입력 폼과 캘린더 인터페이스의 시각적 계층 구조(Visual Hierarchy)를 재정비합니다. 금액 및 입력 버튼들이 직관적으로 보일 수 있도록 여백, 폰트 비율, 컴포넌트 대비를 최적화합니다.
-- **반응형(Responsive) 환경 테스트:** PC뿐만 아니라 모바일 브라우저에서도 버튼 터치, 모달 레이아웃이 화면에 알맞게 표시되도록 `Impeccable` 플러그인(`audit`, `polish` 등)을 적극 활용합니다.
-- **마이크로 인터랙션 추가:** 데이터가 저장되거나 삭제될 때 명확한 시각적/동적 피드백을 제공합니다.
+## 우선순위
 
-### 🐛 버그 사냥(Bug Hunting) 및 엣지 케이스 점검
-- 캘린더 입력 및 급여 계산에서 발생하는 엣지 케이스(예: 온콜과 시간외 중복 입력, 누락 데이터 처리, 주말 스크립트 분기 등)들을 찾아내어 논리 오류를 수정합니다.
-- 콘솔 로그 및 런타임 에러 모니터링을 통해 예상치 못한 버그를 방어하는 예외 처리 코드를 강화합니다.
+### Phase 1. 문서와 기준선 정리
+
+- 실제 코드 기준으로 SPEC 정리
+- 구현 순서와 checkpoint 문서화
+- 콘텐츠/운영 디렉토리 규칙 정의
+
+### Phase 2. Admin 데이터 기반
+
+- 콘텐츠 운영용 테이블 추가
+- approval / revision / audit 로그 추가
+- Admin API 계약 정의
+
+### Phase 3. 운영 가치 높은 데이터 이관
+
+- 공지
+- FAQ
+- 규정 원문/핸드북
+- 보수표/수당 일부
+
+### Phase 4. Admin MVP
+
+- Dashboard
+- Content
+- FAQ
+- Regulation Versions
+- Review
+- Roles/Logs
+
+### Phase 5. AI Harness + Preview
+
+- Markdown/PDF -> 초안 생성
+- 검증기 실행
+- review queue
+- preview 확인
+- publish
+
+## 운영 원칙
+
+- 계산 로직은 코드에 남긴다.
+- 운영 콘텐츠는 Admin/DB/MD로 분리한다.
+- AI는 초안과 검수 보조를 맡고 게시 결정은 사람이 한다.
+- 공개 웹은 fallback을 유지해 운영 리스크를 낮춘다.
+- Preview 없는 직접 게시를 기본값으로 두지 않는다.
+
+## 다음 액션
+
+현재 다음 작업의 기준 문서는 아래다.
+
+- [`SPEC.md`](/Users/momo/Documents/GitHub/bhm_overtime/SPEC.md)
+- [`tasks/plan.md`](/Users/momo/Documents/GitHub/bhm_overtime/tasks/plan.md)
+
+다음 실제 구현 시작점은:
+
+1. Admin 운영용 테이블 설계
+2. Admin API 계약 정의
+3. 공지/FAQ를 먼저 관리 가능하게 이관

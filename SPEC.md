@@ -1,464 +1,523 @@
-# SPEC: BHM Overtime Backend Architecture Upgrade
+# SPEC: BHM Overtime Admin & Content Operating Platform
 
-> Version: 1.0 | Date: 2026-04-08 | Status: Draft
+> Version: 2.0 | Date: 2026-04-09 | Status: Draft for Review
+
+---
+
+## Assumptions I'm Making
+
+1. 이 프로젝트는 당분간 현재 정적 웹 구조(`index.html`, `regulation.html`, `app.js`, `data.js`)를 유지한다.
+2. 다음 단계의 핵심 목표는 "새 계산기 개발"이 아니라 "운영 가능한 Admin + 콘텐츠 관리 체계"를 구축하는 것이다.
+3. 비개발자 운영자가 HTML/CSS/JS를 직접 수정하지 않고도 공지, FAQ, 규정, 버전 상태를 관리할 수 있어야 한다.
+4. 현재 `server/`의 Hono + Drizzle + Supabase/Postgres 기반은 유지하고 그 위에 Admin API를 증설한다.
+5. 콘텐츠 게시 흐름은 `draft -> review -> published -> archived` 상태 관리와 Preview 확인을 기본값으로 삼는다.
+
+이 가정이 틀리면 지금 정리한 스펙과 태스크 순서를 바꾸겠습니다.
 
 ---
 
 ## 1. Objective
 
-### What
-병원 노동조합 급여/근태 관리 앱(SNUH Mate)에 **RAG 챗봇**, **FAQ 시스템**, **PDF 뷰어**, **Admin 대시보드**를 추가한다.
-규정 데이터를 코드(data.js)에서 DB로 이관하여 매년 코드 배포 없이 규정을 갱신할 수 있게 한다.
+### What We Are Building
+
+현재 공개 서비스에 이미 존재하는 계산기, 규정 조회, FAQ, AI 상담 기능을 바탕으로, 다음 운영 계층을 추가한다.
+
+- 운영자용 Admin
+- Markdown 원본 콘텐츠 체계
+- DB 기반 콘텐츠/규정 운영 계층
+- AI Harness 기반 초안 생성 및 검수 흐름
+- Vercel Preview 중심의 승인형 게시 프로세스
 
 ### Why
-- 현재 `data.js`(564줄)에 보수표/수당/FAQ/핸드북이 하드코딩되어 매년 수동 수정 필요
-- 챗봇이 키워드 매칭(`CHAT_ALIASES` + 점수 기반)으로 동작하여 자연어 이해 불가
-- 규정 PDF 원본을 앱에서 직접 열람 불가
-- Admin이 규정 데이터를 관리할 UI 없음
 
-### Target Users
+현재 코드베이스는 이미 동작하는 서비스이지만 운영 관점에서는 다음 문제가 남아 있다.
+
+- 규정/FAQ/핸드북/수당 데이터의 상당 부분이 여전히 [`data.js`](/Users/momo/Documents/GitHub/bhm_overtime/data.js)에 정적으로 남아 있다.
+- 공지사항과 업데이트는 [`notice.md`](/Users/momo/Documents/GitHub/bhm_overtime/notice.md), [`CHANGELOG.md`](/Users/momo/Documents/GitHub/bhm_overtime/CHANGELOG.md)에서 읽어오지만 운영 UI는 없다.
+- [`server/src/db/schema.ts`](/Users/momo/Documents/GitHub/bhm_overtime/server/src/db/schema.ts), [`server/src/routes/data.ts`](/Users/momo/Documents/GitHub/bhm_overtime/server/src/routes/faq.ts), [`server/src/routes/chat.ts`](/Users/momo/Documents/GitHub/bhm_overtime/server/src/routes/chat.ts)에 이미 규정/FAQ/RAG/관리자 권한 기반이 있으나 `/admin` 화면과 `/api/admin/*` API가 없다.
+- Preview, 승인, 변경 로그, 롤백 관점의 운영 모델이 문서화되어 있지 않다.
+
+### Users
+
 | 사용자 | 역할 |
 |--------|------|
-| 병원 조합원 (직원) | 급여 계산, 규정 검색, 챗봇 질의, FAQ 열람, PDF 원본 확인 |
-| HR/노조 관리자 | 연간 규정 갱신, 보수표 업데이트, FAQ 관리, 사용 분석 |
+| 병원 직원 | 급여 계산, 시간외 계산, 휴가 계산, 규정 조회, FAQ 검색, AI 상담 |
+| 운영 관리자 | 공지/FAQ/규정/수당/버전/게시 상태 관리 |
+| 리뷰어/승인자 | 초안 검토, 변경 diff 확인, Preview 승인 |
 
 ### Success Criteria
-- [ ] 챗봇이 "온콜 출근하면 수당 얼마?" 같은 자연어 질문에 조항 근거와 함께 답변
-- [ ] Admin이 코드 배포 없이 2027년 규정을 등록하면 프론트엔드에 즉시 반영
-- [ ] PDF 3종을 앱 내에서 페이지별로 열람 가능
-- [ ] 기존 계산기(calculators.js) 결과가 DB 마이그레이션 전후 100% 동일
+
+- [ ] 운영자가 코드 수정 없이 공지, FAQ, 규정 버전 상태를 변경할 수 있다.
+- [ ] 규정 데이터 갱신 시 공개 웹은 DB 값을 우선 사용하고, 장애 시 정적 fallback으로 동작한다.
+- [ ] Admin 변경사항은 곧바로 프로덕션에 반영되지 않고 Draft/Review 단계를 거친다.
+- [ ] Preview 링크로 게시 전 화면을 검토할 수 있다.
+- [ ] AI가 Markdown 원문을 읽어 FAQ/요약/메타데이터 초안을 만들 수 있지만, 최종 게시 권한은 사람에게 남는다.
+- [ ] 기존 계산 결과와 Family mode 흐름은 유지된다.
 
 ---
 
-## 2. Architecture
+## 2. Current State From Real Files
 
-### Page Structure
+### Public Web
 
-```
-index.html (기존, 경량화)
-  └── 규정 탭 → regulation.html로 이동 링크
+- [`index.html`](/Users/momo/Documents/GitHub/bhm_overtime/index.html)
+  - 메인 계산기/랜딩/공지/업데이트 화면
+  - `notice.md`, `CHANGELOG.md`를 프런트에서 직접 fetch
+  - `?mode=family` 기반 Family mode 진입
+- [`regulation.html`](/Users/momo/Documents/GitHub/bhm_overtime/regulation.html)
+  - FAQ / 찾아보기 / 물어보기 3개 탭
+  - `pdf.js`, `data.js`, `regulation.js` 사용
 
-regulation.html (신규)
-  ├── 📖 규정 원문 서브탭 (목차 + 본문 + PDF 뷰어)
-  ├── 💬 AI 상담 서브탭 (RAG 챗봇)
-  └── ❓ FAQ 서브탭 (카테고리별 Q&A)
+### Frontend Data Model
 
-admin.html (신규)
-  ├── 규정 버전 관리
-  ├── 보수표/수당 편집
-  ├── FAQ 관리
-  └── 분석 대시보드
+- [`data.js`](/Users/momo/Documents/GitHub/bhm_overtime/data.js)
+  - `DATA_STATIC`에 보수표, 수당, FAQ, 핸드북, 휴가, 경조사 등 정적 데이터 보관
+  - `/api/data/bundle` 성공 시 API 값으로 덮어쓰기
+  - 실패 시 fallback 유지
+- [`supabaseClient.js`](/Users/momo/Documents/GitHub/bhm_overtime/supabaseClient.js)
+  - Family mode 전용 Google OAuth
+  - overtime / profile / leave 동기화
 
-server/ (신규 - Hono API)
-  ├── /api/chat        (RAG)
-  ├── /api/faq         (FAQ)
-  ├── /api/data/bundle (data.js 대체)
-  └── /api/admin/*     (Admin CRUD)
-```
+### Backend
 
-### Tech Stack
+- [`server/src/index.ts`](/Users/momo/Documents/GitHub/bhm_overtime/server/src/index.ts)
+  - `/api/data`
+  - `/api/faq`
+  - `/api/chat`
+- [`server/src/db/schema.ts`](/Users/momo/Documents/GitHub/bhm_overtime/server/src/db/schema.ts)
+  - `regulation_versions`, `regulation_documents`, `pay_tables`, `allowances`, `calculation_rules`, `faq_entries`, `chat_history`, `admin_users`, `leave_types`, `ceremonies`
+- [`server/src/middleware/auth.ts`](/Users/momo/Documents/GitHub/bhm_overtime/server/src/middleware/auth.ts)
+  - `requireAdmin` 이미 존재
+- [`server/scripts/seed-from-data-js.ts`](/Users/momo/Documents/GitHub/bhm_overtime/server/scripts/seed-from-data-js.ts)
+  - 정적 `data.js`를 DB로 시딩하는 전환 스크립트 존재
 
-| Layer | Technology | Reason |
-|-------|-----------|--------|
-| API Server | **Hono** (on Vercel Serverless) | 경량, Vercel 네이티브, React 불필요 |
-| ORM | **Drizzle** | 타입 안전, 경량, PostgreSQL 최적화 |
-| Database | **Supabase PostgreSQL** | 기존 사용 중, Auth/RLS 활용 |
-| Vector Search | **pgvector** (Supabase 내장) | 별도 서비스 불필요, HNSW 인덱스 |
-| Embeddings | **OpenAI text-embedding-3-small** (1536d) | 한국어 성능 우수, 저비용 |
-| LLM | **gpt-4o-mini** | 비용 효율적, 충분한 한국어 품질 |
-| PDF Viewer | **pdf.js** (CDN, 이미 로드됨) | 추가 의존성 없음 |
-| Frontend | **Vanilla JS** (기존 유지) | 프레임워크 마이그레이션 없음 |
-| Deploy | **Vercel** (기존) | 정적 + Serverless 동시 배포 |
+### Deploy / Infra
 
-### Data Flow
+- [`vercel.json`](/Users/momo/Documents/GitHub/bhm_overtime/vercel.json)
+  - `/api/:path* -> /server/src/index.ts` rewrite
+- [`.vercel/project.json`](/Users/momo/Documents/GitHub/bhm_overtime/.vercel/project.json)
+  - 현재 Vercel 프로젝트 연결 상태 존재
 
-```
-[regulation.html]
-  │
-  ├── 규정 원문/PDF ──→ 정적 data.js (fallback) + /api/data/bundle
-  │
-  ├── AI 챗봇 ──→ POST /api/chat
-  │                  ├── embed query (OpenAI)
-  │                  ├── vector search (pgvector)
-  │                  │   ├── regulation_documents (top 5)
-  │                  │   └── faq_entries (top 3)
-  │                  ├── FAQ score > 0.92? → direct return
-  │                  └── else → LLM (gpt-4o-mini) → response + sources
-  │
-  └── FAQ ──→ GET /api/faq + GET /api/faq/search
+### Missing Pieces
 
-[admin.html]
-  └── CRUD ──→ /api/admin/* (JWT + admin role check)
-
-[index.html]
-  └── 기존 계산기 ──→ data.js (API loader with static fallback)
-```
+- `admin.html` 또는 별도 admin 앱
+- `/api/admin/*` CRUD
+- 콘텐츠 엔트리/리비전/승인/감사 로그 테이블
+- 콘텐츠 원본 디렉토리(`content/`)
+- AI 운영용 프롬프트/에이전트/스킬 디렉토리(`ops/`)
+- 게시 전 검증 및 Preview 승인 흐름
 
 ---
 
-## 3. Database Schema (10 tables)
+## 3. Target Operating Model
 
-### 3.1 regulation_versions
-연도별 규정 세트 관리. 모든 데이터 테이블의 부모.
+### Service Topology
 
-| Column | Type | Description |
-|--------|------|-------------|
-| id | serial PK | |
-| year | integer | 2026 |
-| title | text | "2026 조합원 수첩" |
-| status | enum | 'draft' / 'active' / 'archived' |
-| effective_date | date | "2025-10-23" |
-| source_files | jsonb | ["file1.pdf", "file2.pdf"] |
-| created_by | uuid | admin user ref |
-| created_at | timestamptz | |
+```text
+Public User
+  -> web
+  -> calculators + regulations + faq + ai chat
 
-### 3.2 regulation_documents (RAG vector store)
-PDF 텍스트를 조항 단위로 청킹 + 임베딩.
+Operator
+  -> admin
+  -> content/version/rule/publish management
 
-| Column | Type | Description |
-|--------|------|-------------|
-| id | serial PK | |
-| version_id | FK → regulation_versions | |
-| chunk_index | integer | 청크 순서 |
-| source_file | text | 원본 PDF 파일명 |
-| section_title | text | "제34조(시간외/연장근로)" |
-| content | text | 청크 텍스트 (~500 토큰) |
-| embedding | vector(1536) | OpenAI embedding |
-| token_count | integer | |
-| metadata | jsonb | { page, category, article_ref } |
+Content Source
+  -> content/*.md
+  -> policy originals, notices, landing copy, release notes
 
-### 3.3 pay_tables (data.js 대체)
-직급별 보수표. 기존 `DATA.payTables` 구조 유지.
+AI Harness
+  -> read md
+  -> generate draft
+  -> summarize diff
+  -> validate impact
+  -> send to review queue
 
-| Column | Type | Description |
-|--------|------|-------------|
-| id | serial PK | |
-| version_id | FK | |
-| pay_table_name | text | "일반직", "운영기능직", "환경유지지원직" |
-| grade | text | "M3", "J1", "A2" |
-| grade_label | text | "매니저3", "주니어1" |
-| base_pay | jsonb | [54482400, 54944400, ...] (8호봉) |
-| ability_pay | integer | |
-| bonus | integer | |
-| family_support | integer | |
+Deploy / Review
+  -> Vercel Preview
+  -> Draft Mode / review / approve / publish
+```
 
-### 3.4 allowances
-수당 요율 및 고정 금액. 기존 `DATA.allowances` 대체.
+### What Lives Where
 
-| Column | Type | Description |
-|--------|------|-------------|
-| id | serial PK | |
-| version_id | FK | |
-| key | text | "mealSubsidy", "overtimeRates" |
-| value | jsonb | 150000 또는 { extended: 1.5, ... } |
-| label | text | "급식보조비" |
-| category | text | "fixed", "rate", "shift" |
+#### Code
 
-### 3.5 calculation_rules
-계산 공식, 배수, 조건. 기존 `DATA.longServicePay`, `seniorityRates`, `autoPromotion` 등 대체.
+- 계산 로직
+- 인증/권한
+- API 계약
+- 검증 규칙
+- fallback 로직
 
-| Column | Type | Description |
-|--------|------|-------------|
-| id | serial PK | |
-| version_id | FK | |
-| rule_type | text | "autoPromotion", "seniorityRate", "longServicePay" |
-| rule_key | text | "J1_to_J2", "5_to_10" |
-| rule_data | jsonb | { years: 4, next: "J2" } |
-| description | text | |
+#### Admin-managed Data
 
-### 3.6 faq_entries
-FAQ Q&A 쌍 + 벡터 임베딩. 기존 `DATA.faq` (68개) 대체.
+- 공지
+- FAQ
+- 규정 버전 상태
+- 보수표/수당 일부
+- 홈 카피 / 배너 / 도움말 블록
+- 게시 상태
 
-| Column | Type | Description |
-|--------|------|-------------|
-| id | serial PK | |
-| version_id | FK (nullable) | |
-| category | text | "근로시간", "온콜", "휴가", "경조", "수당", "휴직", "승진", "복지" |
-| question | text | |
-| answer | text | |
-| article_ref | text | "제32조" |
-| embedding | vector(1536) | |
-| sort_order | integer | |
-| is_published | boolean | |
+#### Markdown-managed Source
 
-### 3.7 chat_history
-챗봇 대화 로그.
+- 규정 원문
+- 운영 메모
+- 변경 근거
+- 릴리스 노트
+- AI 프롬프트와 운영 규칙
 
-| Column | Type | Description |
-|--------|------|-------------|
-| id | serial PK | |
-| user_id | uuid (nullable) | |
-| session_id | text | |
-| role | text | "user" / "assistant" |
-| content | text | |
-| source_docs | jsonb | [{ chunkId, score, snippet }] |
-| model | text | "gpt-4o-mini" / "faq-direct" |
-| token_usage | jsonb | { prompt, completion } |
-| created_at | timestamptz | |
+#### AI-managed Draft Outputs
 
-### 3.8 admin_users
-관리자 역할 관리.
-
-| Column | Type | Description |
-|--------|------|-------------|
-| id | serial PK | |
-| user_id | uuid UNIQUE | Supabase auth.users ref |
-| email | text | |
-| role | enum | 'super_admin', 'hr_admin', 'union_admin', 'viewer' |
-| is_active | boolean | |
-
-### 3.9 leave_types
-휴가 유형 정의. 기존 `DATA.leaveQuotas` 대체.
-
-| Column | Type | Description |
-|--------|------|-------------|
-| id | serial PK | |
-| version_id | FK | |
-| type_id | text | "annual", "sick", "maternity" |
-| label | text | |
-| category | text | "legal", "health", "family" |
-| is_paid | boolean | |
-| quota | integer | |
-| uses_annual | boolean | |
-| deduct_type | text | "none", "ordinary" |
-| gender | text | "F" or null |
-| article_ref | text | |
-| extra_data | jsonb | ceremony days/pay 등 |
-
-### 3.10 ceremonies
-경조사 정보. 기존 `DATA.ceremonies` 대체.
-
-| Column | Type | Description |
-|--------|------|-------------|
-| id | serial PK | |
-| version_id | FK | |
-| event_type | text | "본인 결혼", "배우자 사망" |
-| leave_days | text | "5" |
-| hospital_pay | integer | 300000 |
-| pension_pay | text | |
-| coop_pay | text | |
-| docs | text | |
+- FAQ 후보 초안
+- 사용자용 설명문 초안
+- 연도별 diff 요약
+- 영향도 분석 메모
 
 ---
 
-## 4. API Endpoints
+## 4. Architecture
 
-### 4.1 Public (인증 불필요)
-```
-GET  /api/data/bundle?year=2026    → DATA 객체 형태 전체 반환 (Cache-Control: 1h)
-GET  /api/faq?category=근로시간     → FAQ 목록 (카테고리 필터)
-GET  /api/faq/search?q=온콜수당     → FAQ 시맨틱 검색
-```
+### Phase 1 Target Structure
 
-### 4.2 User (Supabase JWT 필요)
-```
-POST /api/chat                     → RAG 챗봇 대화
-  Body: { message, sessionId }
-  Response: { answer, sources: [{ title, ref, score }], isFaqMatch }
-
-GET  /api/chat/history?sessionId=  → 대화 이력 조회
-```
-
-### 4.3 Admin (JWT + admin role 필요)
-```
-# 규정 버전
-POST   /api/admin/regulations              → 버전 생성
-GET    /api/admin/regulations              → 버전 목록
-PUT    /api/admin/regulations/:id          → 버전 수정 (상태 전환 포함)
-POST   /api/admin/regulations/:id/ingest   → PDF 업로드 → 청킹 → 임베딩
-DELETE /api/admin/regulations/:id          → 버전 삭제 (draft만)
-
-# 보수표
-GET    /api/admin/pay-tables?versionId=    → 보수표 조회
-PUT    /api/admin/pay-tables/:id           → 보수표 수정
-POST   /api/admin/pay-tables/import        → CSV/Excel 일괄 임포트
-
-# 수당
-GET    /api/admin/allowances?versionId=    → 수당 목록
-PUT    /api/admin/allowances/:id           → 수당 수정
-
-# 계산 규칙
-GET    /api/admin/rules?versionId=&type=   → 규칙 조회
-PUT    /api/admin/rules/:id               → 규칙 수정
-
-# FAQ
-GET    /api/admin/faq?versionId=           → FAQ 목록
-POST   /api/admin/faq                      → FAQ 추가 (임베딩 자동 생성)
-PUT    /api/admin/faq/:id                  → FAQ 수정 (임베딩 재생성)
-DELETE /api/admin/faq/:id                  → FAQ 삭제
-
-# 분석
-GET    /api/admin/analytics                → 챗봇 사용 통계
-GET    /api/admin/analytics/top-questions  → 빈출 질문
-GET    /api/admin/analytics/unanswered     → 미응답 쿼리
-```
-
----
-
-## 5. Frontend Pages
-
-### 5.1 regulation.html (신규)
-
-**서브탭 3개:**
-
-#### 📖 규정 원문
-- 기존 `index.html` `tab-reference`의 목차/본문/검색을 이관
-- 검색: 기존 키워드 검색 + API 벡터 검색 통합
-- PDF 뷰어: pdf.js 기반, 3개 PDF 선택 드롭다운, 페이지 네비게이션, 확대/축소
-- 모바일: PDF는 전체화면 모달
-
-#### 💬 AI 상담
-- 기존 `quickTags` 유지 (빠른 질문 태그)
-- 채팅 영역: RAG 기반 답변 + 출처(조항 번호) 표시
-- 로딩: 타이핑 애니메이션 인디케이터
-- Fallback: API 불가 시 기존 키워드 매칭 (`searchChat()`)
-
-#### ❓ FAQ
-- 카테고리 필터 버튼 (8개: 근로시간, 온콜, 야간근무, 휴가, 경조, 수당, 휴직, 복지)
-- 아코디언 카드 (질문 클릭 → 답변 펼침 + 조항 ref)
-- 검색: API 시맨틱 검색
-
-### 5.2 index.html 수정
-- `tab-reference` 내용을 regulation.html 이동 카드로 교체:
-  ```
-  ┌──────────────────────────────┐
-  │ 📖 규정 원문 · AI 상담 · FAQ  │
-  │                              │
-  │  [규정 페이지로 이동 →]       │
-  │                              │
-  │  빠른 링크:                   │
-  │  📄 PDF 원본 보기             │
-  │  💬 AI에게 규정 물어보기       │
-  │  ❓ 자주 묻는 질문            │
-  └──────────────────────────────┘
-  ```
-- 기존 `searchHandbook()`, `handleChat()`, `renderQuickTags()` 등 제거 → `regulation.js`로 이관
-
-### 5.3 admin.html (신규)
-- 사이드바 네비게이션: 규정 관리 / 보수표 / 수당 / FAQ / 분석
-- Admin 인증: Supabase JWT + admin_users 테이블 체크
-- 규정 버전 관리: 생성/활성화/보관 상태 전환
-- PDF 인제스트: 업로드 → 진행 바 → 완료 알림
-- 보수표: 스프레드시트형 그리드 + CSV 임포트
-- FAQ: CRUD 폼 + 실시간 미리보기
-
----
-
-## 6. data.js Migration Strategy
-
-### Phase 1: Seed DB (기존 코드 변경 없음)
-`seed-from-data-js.ts` 스크립트로 현재 DATA 객체를 DB에 삽입.
-
-### Phase 2: /api/data/bundle
-DB에서 active 버전 데이터를 DATA 객체와 동일한 JSON 형태로 반환.
-
-### Phase 3: data.js → API Loader
-```javascript
-const DATA_STATIC = { /* 기존 564줄 (fallback) */ };
-let DATA = DATA_STATIC;
-
-async function loadDataFromAPI() {
-  try {
-    const res = await fetch('/api/data/bundle?year=2026');
-    if (res.ok) DATA = { ...DATA_STATIC, ...await res.json() };
-  } catch (e) { /* static fallback 사용 */ }
-}
-loadDataFromAPI();
-```
-
-### Phase 4: Static 제거 (안정화 후)
-DATA_STATIC 스켈레톤으로 축소, 로딩 스피너 추가.
-
-**검증:** calculators.js의 모든 함수에 대해 API on/off 양쪽 결과 비교.
-
----
-
-## 7. Project Structure
-
-```
-bhm_overtime/
+```text
+/
+  index.html
+  regulation.html
+  app.js
+  data.js
+  notice.md
+  CHANGELOG.md
+  content/
+    notices/
+    policies/
+    faq-seeds/
+    landing/
+  admin/
+    index.html
+    admin.js
+    admin.css
+  ops/
+    prompts/
+    skills/
+    agents/
   server/
-    src/
-      db/
-        schema.ts              # Drizzle schema (10 tables + pgvector)
-        client.ts              # Drizzle + Supabase connection
-      routes/
-        chat.ts                # POST /api/chat
-        faq.ts                 # GET /api/faq, /api/faq/search
-        data.ts                # GET /api/data/bundle
-        admin.ts               # /api/admin/* CRUD
-      services/
-        rag.ts                 # embed → search → LLM pipeline
-        embedding.ts           # OpenAI embedding wrapper
-        pdf-ingest.ts          # PDF parse → chunk → embed
-      middleware/
-        auth.ts                # JWT verify + admin check
-      scripts/
-        seed-from-data-js.ts   # data.js → DB migration
-      index.ts                 # Hono app entry
-    drizzle.config.ts
-    package.json
-    tsconfig.json
-  regulation.html              # NEW - 규정 페이지
-  regulation.js                # NEW - 규정 페이지 로직
-  admin.html                   # NEW - Admin 대시보드
-  admin.js                     # NEW - Admin 로직
-  index.html                   # MODIFY - 규정탭 경량화
-  app.js                       # MODIFY - 규정 관련 코드 이관
-  data.js                      # MODIFY - API loader 추가
-  supabaseClient.js            # MODIFY - API 헬퍼 추가
-  vercel.json                  # MODIFY - API 리라이트
-  style.css                    # MODIFY - 신규 컴포넌트 스타일
+  tasks/
 ```
 
+### Phase 2 Target Structure
+
+```text
+/apps
+  /web
+  /admin
+  /api
+/packages
+  /shared-schema
+  /content-types
+  /ui
+  /ai-harness
+/content
+  /policies
+  /notices
+  /landing
+/ops
+  /prompts
+  /skills
+  /agents
+```
+
+### Why Phase 1 First
+
+- 현재 웹과 API는 이미 운영 중이다.
+- 당장 monorepo 전환보다 Admin MVP가 가치가 크다.
+- `data.js -> DB -> Admin` 순서가 가장 리스크가 낮다.
+- 정적 웹 + Hono API 구조에서도 운영 체계는 충분히 붙일 수 있다.
+
 ---
 
-## 8. Code Style
+## 5. Tech Stack
 
-| Rule | Detail |
-|------|--------|
-| Language | Server: TypeScript (strict), Frontend: Vanilla JS (ES6+) |
-| Naming | camelCase (JS/TS), snake_case (DB columns) |
-| Formatting | 2-space indent, single quotes, no semicolons in TS |
-| Frontend pattern | 기존 모듈 패턴 유지 (CALC, OVERTIME, PROFILE 등) |
-| Server pattern | Hono route handlers, service layer for business logic |
-| Error handling | Server: try/catch + structured JSON errors, Frontend: toast notifications |
-| Comments | 한국어 주석 허용, 복잡한 계산 로직에만 |
-
----
-
-## 9. Testing Strategy
-
-| What | How | Criteria |
-|------|-----|----------|
-| DB 시딩 무결성 | `/api/data/bundle` 응답 vs `DATA` 객체 JSON deep diff | 100% 일치 |
-| RAG 답변 정확도 | 10개 테스트 쿼리 (온콜, 연차, 경조비 등) | 8/10 이상 정확 |
-| 계산기 호환성 | API on/off 상태에서 calcOrdinaryWage 등 비교 | 결과 동일 |
-| PDF 뷰어 | 3개 PDF × 데스크톱/모바일 렌더링 | 모든 페이지 정상 표시 |
-| Admin E2E | 2027 규정 생성 → PDF 업로드 → 보수표 → 활성화 | 프론트엔드 반영 확인 |
-| 보안 | 비 Admin 사용자의 admin API 접근 | 403 반환 |
-| Fallback | API 서버 다운 시 index.html 정상 동작 | 기존 기능 100% 유지 |
+| Layer | Current | Target Decision |
+|-------|---------|-----------------|
+| Public Web | Vanilla HTML/CSS/JS | 유지 |
+| Regulation UI | `regulation.html` + `regulation.js` | 유지, 데이터 소스만 개선 |
+| Admin | 없음 | 1차는 정적/Vanilla 또는 소형 앱, API 기반 |
+| API | Hono | 유지 |
+| ORM | Drizzle | 유지 |
+| DB | Supabase PostgreSQL | 유지 |
+| Auth | Supabase Auth (Family mode already used) | 유지, Admin role 확장 |
+| RAG | OpenAI + pgvector | 유지 |
+| Deploy | Vercel | 유지 |
 
 ---
 
-## 10. Boundaries
+## 6. Commands
 
-### Always Do
-- 기존 index.html 계산기 기능은 절대 깨뜨리지 않는다
-- data.js static fallback을 항상 유지한다
-- DB 스키마 변경 시 Drizzle migration 파일 생성
-- API 키(OpenAI)는 서버 사이드에서만 사용
-- Supabase RLS 정책 적용
+현재 레포에서 실제로 쓸 수 있는 기준 명령은 아래와 같다.
 
-### Ask First
-- DB 스키마 구조 변경 (컬럼 추가/삭제)
-- 기존 파일(app.js, calculators.js 등) 수정
-- 외부 API 요금 발생 변경 (embedding 모델 교체 등)
-- 배포 환경 설정 변경
+```bash
+# Static web local preview
+python3 -m http.server 4173
 
-### Never Do
-- React/Vue 등 프레임워크 도입
-- 기존 3개 테이블(profiles, overtime_records, leave_records) 스키마 수정
-- OpenAI API 키를 프론트엔드에 노출
-- index.html에 규정 관련 복잡한 UI 추가 (regulation.html로 분리됨)
-- 기존 localStorage 기반 동작 제거 (cloud sync는 선택적)
+# API dev server
+cd server && npm run dev
+
+# API prod-like local start
+cd server && npm run start
+
+# Generate Drizzle SQL
+cd server && npm run db:generate
+
+# Push Drizzle schema
+cd server && npm run db:push
+
+# Open Drizzle Studio
+cd server && npm run db:studio
+
+# Seed DB from data.js
+cd server && npm run seed
+
+# Manual Vercel preview deploy
+vercel
+```
+
+Notes:
+
+- 루트 `package.json`은 현재 비어 있어 공통 `npm run build/test` 체계는 아직 없다.
+- 따라서 테스트/빌드 체계는 이번 전환 작업에서 별도 설계 대상이다.
+
+---
+
+## 7. Project Structure and Boundaries
+
+### Code Style
+
+현재 코드베이스는 다음 스타일을 따른다.
+
+```ts
+chatRoutes.post('/', optionalAuth, async (c) => {
+  const body = await c.req.json<{ message: string; sessionId?: string }>()
+  const { message, sessionId = `anon-${Date.now()}` } = body
+
+  if (!message?.trim()) {
+    return c.json({ error: 'message is required' }, 400)
+  }
+
+  const result = await ragAnswer(message.trim(), sessionId)
+  return c.json({ answer: result.answer, sources: result.sources })
+})
+```
+
+Conventions:
+
+- 프런트는 기존 Vanilla JS 스타일을 유지한다.
+- 서버는 TypeScript + Hono 스타일을 유지한다.
+- 큰 전환 전까지는 기존 구조를 존중하며 incremental migration만 수행한다.
+
+### Boundaries
+
+Always:
+
+- 현재 공개 웹 기능을 깨지지 않게 유지한다.
+- DB 우선 + 정적 fallback 구조를 유지한다.
+- Admin 변경은 게시 상태와 검증 단계를 거친다.
+- 변경 사항은 문서와 태스크에 반영한다.
+
+Ask first:
+
+- root build system 도입
+- 프런트 프레임워크 전환
+- DB 스키마의 파괴적 변경
+- Family mode 데이터 모델 변경
+
+Never:
+
+- 기존 계산 로직을 콘텐츠 엔트리 에디터로 열어버리지 않는다.
+- 운영자가 DOM/CSS/JS를 직접 수정하는 구조를 기본으로 삼지 않는다.
+- 프로덕션 게시를 Preview/검토 없이 바로 실행하는 흐름을 기본값으로 두지 않는다.
+
+---
+
+## 8. Data Model Evolution
+
+### Existing Tables to Keep
+
+- `regulation_versions`
+- `regulation_documents`
+- `pay_tables`
+- `allowances`
+- `calculation_rules`
+- `faq_entries`
+- `chat_history`
+- `admin_users`
+- `leave_types`
+- `ceremonies`
+
+### New Tables to Add
+
+#### content_entries
+
+운영 콘텐츠의 현재 상태를 저장한다.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | serial PK | |
+| slug | text unique | `home-hero`, `main-banner-april` |
+| type | text | `notice`, `landing`, `help`, `testimonial` |
+| title | text | |
+| body_md | text nullable | markdown source |
+| body_json | jsonb nullable | structured body for rich blocks |
+| locale | text default 'ko-KR' | |
+| status | text | `draft`, `review`, `published`, `archived` |
+| published_at | timestamptz nullable | |
+| created_by | uuid nullable | |
+| updated_by | uuid nullable | |
+| created_at | timestamptz | |
+| updated_at | timestamptz | |
+
+#### content_revisions
+
+리비전 이력과 diff 보관.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | serial PK | |
+| entry_id | FK | |
+| revision_no | integer | |
+| snapshot_md | text nullable | |
+| snapshot_json | jsonb nullable | |
+| diff_summary | text nullable | AI/운영자 요약 |
+| created_by | uuid nullable | |
+| approved_by | uuid nullable | |
+| created_at | timestamptz | |
+
+#### approval_tasks
+
+검토 대기 큐.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | serial PK | |
+| target_type | text | `content`, `regulation_version`, `faq_batch` |
+| target_id | integer | |
+| status | text | `pending`, `approved`, `rejected` |
+| reviewer_id | uuid nullable | |
+| review_note | text nullable | |
+| created_at | timestamptz | |
+| decided_at | timestamptz nullable | |
+
+#### audit_logs
+
+운영 감사 로그.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | serial PK | |
+| actor_id | uuid nullable | |
+| action | text | |
+| resource_type | text | |
+| resource_id | text | |
+| metadata | jsonb | |
+| created_at | timestamptz | |
+
+#### media_assets
+
+배너/이미지 리소스 메타데이터.
+
+#### feature_flags
+
+Admin과 공개 웹 분리 배포 단계에서 점진 공개 제어.
+
+---
+
+## 9. Admin Information Architecture
+
+운영자가 실제로 써야 하는 화면은 아래 7개를 MVP 기준으로 삼는다.
+
+1. Dashboard
+   - 최근 수정 내역
+   - 검토 대기 항목
+   - 규정 버전 상태
+   - 최근 FAQ 검색어
+   - AI 초안 큐
+2. Content
+   - 홈 히어로, 배너, 공지, 후기, 도움말 블록
+3. Regulation Versions
+   - 버전 생성, 복제, active 전환, diff 보기
+4. Rules
+   - 보수표, 수당, 계산 규칙의 구조화 편집
+5. FAQ
+   - 질문/답변/카테고리/근거 조항/공개 여부
+6. Review
+   - 초안 diff, Preview, 승인/반려
+7. Roles & Logs
+   - 관리자 역할, 감사 로그, 게시 이력
+
+---
+
+## 10. AI Harness Workflow
+
+```text
+Markdown or PDF source added
+  -> parser extracts sections
+  -> AI generates FAQ/summary/metadata draft
+  -> validator checks required fields and conflicts
+  -> draft stored in review queue
+  -> operator opens preview
+  -> reviewer approves
+  -> publish to public web
+  -> audit log written
+```
+
+Validation rules:
+
+- 필수 필드 누락 금지
+- 조항 번호 형식 검증
+- 기존 active 버전과 충돌 검사
+- 계산기 영향 가능성 표시
+- 공개 금지 문구 또는 민감정보 포함 여부 검사
+
+---
+
+## 11. Testing Strategy
+
+현재 상태:
+
+- 루트 자동 테스트 체계 없음
+- 서버 자동 테스트도 아직 없음
+- 수동 검증과 시드/스크립트 중심
+
+이번 전환에서 필요한 검증 축:
+
+1. Data parity
+   - `data.js`와 `/api/data/bundle` 결과 비교
+2. Admin API contract
+   - CRUD / 상태 전환 / 권한 검증
+3. Publish flow
+   - draft/review/published 상태 전환
+4. Regression
+   - 공개 계산기와 Family mode 유지
+5. Manual browser verification
+   - `index.html`, `regulation.html`, `admin`
+
+---
+
+## 12. Risks and Mitigations
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| `data.js`와 DB 데이터 불일치 | High | parity 비교 스크립트와 단계적 이관 |
+| 운영자가 자유 편집기로 구조를 깨뜨림 | High | 구조화된 폼 입력 우선 |
+| Admin 권한 오남용 | High | `admin_users`, audit log, approval flow |
+| Preview 없이 게시 | High | published 전 review gate 강제 |
+| Family mode 회귀 | Medium | 기존 Supabase sync 경로 untouched 원칙 |
+| 문서와 코드 드리프트 | Medium | SPEC/PLAN을 living docs로 유지 |
+
+---
+
+## 13. Open Questions
+
+1. Admin UI를 1차에 Vanilla로 만들지, 별도 소형 앱으로 분리할지
+2. 운영 콘텐츠 저장 포맷을 `body_md` 중심으로 할지 `body_json` 블록 중심으로 할지
+3. Preview 확인을 Vercel Preview만으로 할지, Admin 내부 초안 렌더를 병행할지
+4. 규정 PDF 업로드 저장소를 Supabase Storage로 둘지, 다른 스토리지로 분리할지
+

@@ -255,7 +255,7 @@ function switchTab(tabName) {
   targetContent.classList.add('active');
 
   if (tabName === 'home') initHomeTab();
-  if (tabName === 'payroll') { applyProfileToPayroll(); if (typeof PAYROLL !== 'undefined') PAYROLL.init(); renderPayslipMgmt(); }
+  if (tabName === 'payroll') { applyProfileToPayroll(); initPayrollTab(); }
   if (tabName === 'overtime') { applyProfileToOvertime(); initOvertimeTab(); }
   if (tabName === 'leave') { applyProfileToLeave(); initLeaveTab(); }
   if (tabName === 'reference') renderWikiToc();
@@ -272,14 +272,17 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
   });
 });
 
-// ── 서브탭 전환 (payroll 탭 내부 스코핑) ──
-document.querySelectorAll('#tab-payroll .sub-tab').forEach(tab => {
+// ── 서브탭 전환 (payroll 탭 — 책갈피 탭) ──
+document.querySelectorAll('#tab-payroll .pay-bookmark-tab').forEach(tab => {
   tab.addEventListener('click', () => {
-    document.querySelectorAll('#tab-payroll .sub-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('#tab-payroll .pay-bookmark-tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('#tab-payroll .sub-content').forEach(c => c.classList.remove('active'));
     tab.classList.add('active');
     document.getElementById('sub-' + tab.dataset.subtab).classList.add('active');
-    if (tab.dataset.subtab === 'payslip-mgmt') renderPayslipMgmt();
+    const name = tab.dataset.subtab;
+    if (name === 'pay-history') renderPayHistory();
+    if (name === 'pay-payslip') renderPayPayslip();
+    if (name === 'pay-calc') { if (typeof PAYROLL !== 'undefined') PAYROLL.init(); }
   });
 });
 
@@ -3505,25 +3508,8 @@ function renderVerification(data) {
   verifyEl.innerHTML = html;
 }
 
-// renderSavedMonths/loadSavedMonth — replaced by renderPayslipMgmt
+// renderSavedMonths — legacy 호환
 function renderSavedMonths() { renderPayslipMgmt(); }
-
-function switchPayrollSubTab(name) {
-  document.querySelectorAll('#tab-payroll .sub-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('#tab-payroll .sub-content').forEach(c => c.classList.remove('active'));
-  const tab = document.querySelector(`#tab-payroll .sub-tab[data-subtab="${name}"]`);
-  const content = document.getElementById(`sub-${name}`);
-  if (tab) tab.classList.add('active');
-  if (content) content.classList.add('active');
-  if (name === 'payslip-mgmt') renderPayslipMgmt();
-}
-
-// 급여 탭 진입 시 급여명세서 관리 뷰 갱신
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelector('.nav-tab[data-tab="payroll"]')?.addEventListener('click', () => {
-    renderPayslipMgmt();
-  });
-});
 
 // ── 급여명세서 조회 뷰: 통계 + 월별 카드 ──
 function renderPayslipMgmt() {

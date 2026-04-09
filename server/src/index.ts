@@ -4,6 +4,7 @@ import { serve } from '@hono/node-server'
 import dataRoutes from './routes/data'
 import faqRoutes from './routes/faq'
 import chatRoutes from './routes/chat'
+import calendarRoutes from './routes/calendar'
 
 const app = new Hono().basePath('/api')
 
@@ -23,6 +24,7 @@ app.get('/health', (c) => {
 app.route('/data', dataRoutes)
 app.route('/faq', faqRoutes)
 app.route('/chat', chatRoutes)
+app.route('/calendar', calendarRoutes)
 
 // Vercel serverless export
 export default app

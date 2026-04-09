@@ -579,6 +579,10 @@ async function loadDataFromAPI() {
   try {
     const res = await fetch('/api/data/bundle');
     if (!res.ok) throw new Error(`API ${res.status}`);
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      throw new Error(`Expected JSON but received ${contentType || 'unknown content-type'}`);
+    }
     const apiData = await res.json();
     DATA = { ...DATA_STATIC, ...apiData };
     console.log('[DATA] API 데이터 로드 완료');

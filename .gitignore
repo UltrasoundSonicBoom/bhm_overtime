@@ -4,6 +4,9 @@
 *.pdf
 *.docx
 
+# 웹에서 사용하는 PDF는 허용
+!data/2026_handbook.pdf
+
 # OS 파일
 .DS_Store
 Thumbs.db

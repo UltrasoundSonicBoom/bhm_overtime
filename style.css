@@ -3470,3 +3470,514 @@ html[data-theme="neo"] .changelog-pager-content {
     padding: 10px 10px 12px;
   }
 }
+
+/* ═══════════ 급여 탭 — 책갈피 탭 + 시각화 ═══════════ */
+
+/* ── Bookmark Tabs ── */
+.pay-bookmark-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 0 16px;
+  max-width: 640px;
+  margin: 0 auto;
+}
+.pay-bookmark-tab {
+  flex: 1;
+  padding: 12px 8px 10px;
+  border: none;
+  border-radius: 12px 12px 0 0;
+  font-size: var(--text-body-large);
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s ease-out;
+  -webkit-tap-highlight-color: transparent;
+  text-align: center;
+}
+/* 히스토리 — indigo/violet */
+.pay-bookmark-tab[data-subtab="pay-history"] {
+  background: rgba(99, 102, 241, 0.12);
+  color: #4f46e5;
+  border-bottom: 3px solid transparent;
+}
+.pay-bookmark-tab[data-subtab="pay-history"].active {
+  background: #6366f1;
+  color: #fff;
+  border-bottom: 3px solid #4338ca;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+/* 명세서 — emerald */
+.pay-bookmark-tab[data-subtab="pay-payslip"] {
+  background: rgba(16, 185, 129, 0.12);
+  color: #047857;
+  border-bottom: 3px solid transparent;
+}
+.pay-bookmark-tab[data-subtab="pay-payslip"].active {
+  background: #10b981;
+  color: #fff;
+  border-bottom: 3px solid #059669;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+/* 계산기 — amber */
+.pay-bookmark-tab[data-subtab="pay-calc"] {
+  background: rgba(245, 158, 11, 0.12);
+  color: #b45309;
+  border-bottom: 3px solid transparent;
+}
+.pay-bookmark-tab[data-subtab="pay-calc"].active {
+  background: #f59e0b;
+  color: #fff;
+  border-bottom: 3px solid #d97706;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+/* Neo theme bookmark overrides */
+html[data-theme="neo"] .pay-bookmark-tab {
+  border: 2.5px solid #1a1a1a;
+  border-bottom: none;
+}
+html[data-theme="neo"] .pay-bookmark-tab[data-subtab="pay-history"] {
+  background: #eef2ff;
+  color: #1a1a1a;
+}
+html[data-theme="neo"] .pay-bookmark-tab[data-subtab="pay-history"].active {
+  background: #818cf8;
+  color: #1a1a1a;
+  box-shadow: 3px -2px 0px #1a1a1a;
+}
+html[data-theme="neo"] .pay-bookmark-tab[data-subtab="pay-payslip"] {
+  background: #d1fae5;
+  color: #1a1a1a;
+}
+html[data-theme="neo"] .pay-bookmark-tab[data-subtab="pay-payslip"].active {
+  background: #34d399;
+  color: #1a1a1a;
+  box-shadow: 3px -2px 0px #1a1a1a;
+}
+html[data-theme="neo"] .pay-bookmark-tab[data-subtab="pay-calc"] {
+  background: #fef3c7;
+  color: #1a1a1a;
+}
+html[data-theme="neo"] .pay-bookmark-tab[data-subtab="pay-calc"].active {
+  background: #fbbf24;
+  color: #1a1a1a;
+  box-shadow: 3px -2px 0px #1a1a1a;
+}
+
+/* Accent bar under tabs */
+.pay-tab-accent {
+  height: 3px;
+  border-radius: 0;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 16px;
+  transition: background 0.2s;
+}
+
+/* ── Big Number ── */
+.pay-big-number {
+  font-size: var(--text-amount-huge);
+  font-weight: 700;
+  letter-spacing: -1px;
+  line-height: 1.1;
+}
+.pay-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-body-normal);
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  margin-top: 6px;
+}
+.pay-delta.up { background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); }
+.pay-delta.down { background: rgba(244, 63, 94, 0.15); color: var(--accent-rose); }
+html[data-theme="neo"] .pay-delta.up { background: rgba(0, 184, 148, 0.2); color: #059669; }
+html[data-theme="neo"] .pay-delta.down { background: rgba(253, 121, 168, 0.2); color: #e11d48; }
+
+/* ── Bar Chart ── */
+.pay-bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 120px;
+  padding: 0 4px;
+  margin: 16px 0 8px;
+}
+.pay-bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  position: relative;
+}
+.pay-bar {
+  width: 100%;
+  border-radius: 6px 6px 4px 4px;
+  transition: all 0.3s ease;
+  min-height: 8px;
+}
+html[data-theme="neo"] .pay-bar {
+  border: 2px solid #1a1a1a;
+}
+.pay-bar-col:hover .pay-bar { opacity: 0.8; }
+.pay-bar-col .pay-bar-label {
+  font-size: var(--text-label-small);
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.pay-bar-col .pay-bar-value {
+  font-size: var(--text-label-small);
+  font-weight: 700;
+  color: var(--text-primary);
+  position: absolute;
+  top: -18px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.pay-bar-col:hover .pay-bar-value,
+.pay-bar-col.current .pay-bar-value { opacity: 1; }
+.pay-bar-col.current .pay-bar {
+  border: 2px solid var(--accent-indigo);
+}
+
+/* ── Change Factors ── */
+.pay-factor-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  font-size: var(--text-body-normal);
+  margin-bottom: 8px;
+}
+html[data-theme="neo"] .pay-factor-row {
+  border: 2px solid #1a1a1a;
+}
+.pay-factor-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+.pay-factor-icon {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+.pay-factor-name { flex: 1; font-weight: 500; }
+.pay-factor-icon.up { color: var(--accent-emerald); }
+.pay-factor-icon.down { color: var(--accent-rose); }
+.pay-factor-amount { font-weight: 700; font-size: var(--text-body-large); }
+.pay-factor-amount.up, .pay-factor-amount.plus { color: var(--accent-emerald); }
+.pay-factor-amount.down, .pay-factor-amount.minus { color: var(--accent-rose); }
+
+/* ── Stats Row ── */
+.pay-stats-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.pay-stat-card {
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  padding: 14px;
+}
+html[data-theme="neo"] .pay-stat-card {
+  border: 2px solid #1a1a1a;
+  box-shadow: 2px 2px 0px #1a1a1a;
+}
+.pay-stat-label { font-size: var(--text-label-small); color: var(--text-muted); font-weight: 500; margin-bottom: 4px; }
+.pay-stat-value { font-size: 18px; font-weight: 700; }
+.pay-stat-sub { font-size: var(--text-label-small); color: var(--text-muted); margin-top: 2px; }
+
+/* ── Banner ── */
+.pay-banner {
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-glass);
+  font-size: var(--text-body-normal);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-glass);
+  margin-top: 12px;
+}
+html[data-theme="neo"] .pay-banner {
+  border: 2px solid #1a1a1a;
+  box-shadow: 2px 2px 0px #1a1a1a;
+}
+
+/* ── Donut Chart ── */
+.pay-donut-container {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin: 16px 0;
+}
+.pay-donut {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  position: relative;
+  flex-shrink: 0;
+}
+html[data-theme="neo"] .pay-donut {
+  border: 2px solid #1a1a1a;
+}
+.pay-donut-hole {
+  position: absolute;
+  top: 18px; left: 18px; right: 18px; bottom: 18px;
+  border-radius: 50%;
+  background: var(--bg-card);
+}
+html[data-theme="neo"] .pay-donut-hole {
+  border: 2px solid #1a1a1a;
+}
+.pay-donut-center {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 1;
+}
+.pay-donut-center .label { font-size: var(--text-label-small); color: var(--text-muted); }
+.pay-donut-center .value { font-size: 18px; font-weight: 700; }
+
+.pay-donut-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+.pay-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--text-body-normal);
+}
+.pay-legend-dot {
+  width: 10px; height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+/* ── Horizontal Bar (payslip items) ── */
+.pay-hbar-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  font-size: var(--text-body-normal);
+}
+.pay-hbar-name {
+  width: 76px;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-align: right;
+  font-size: var(--text-label-small);
+}
+.pay-hbar-track {
+  flex: 1;
+  height: 18px;
+  background: var(--bg-glass);
+  border-radius: 4px;
+  overflow: hidden;
+}
+html[data-theme="neo"] .pay-hbar-track {
+  border: 1.5px solid #1a1a1a;
+}
+.pay-hbar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+.pay-hbar-amount {
+  width: 72px;
+  flex-shrink: 0;
+  text-align: right;
+  font-weight: 600;
+  font-size: var(--text-label-small);
+}
+.pay-hbar-diff {
+  width: 56px;
+  flex-shrink: 0;
+  text-align: right;
+  font-size: var(--text-label-small);
+  font-weight: 600;
+}
+
+/* ── Month Slider ── */
+.pay-month-slider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+  padding: 12px 0;
+}
+.pay-month-slider button {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border-glass);
+  background: var(--bg-card);
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex; align-items: center; justify-content: center;
+  font-family: inherit;
+}
+html[data-theme="neo"] .pay-month-slider button {
+  border: 2px solid #1a1a1a;
+  box-shadow: 2px 2px 0px #1a1a1a;
+}
+.pay-month-display {
+  font-size: 18px;
+  font-weight: 700;
+  min-width: 120px;
+  text-align: center;
+}
+
+/* ── Compare Grid ── */
+.pay-compare-grid {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 4px 8px;
+  font-size: var(--text-body-normal);
+}
+.pay-compare-grid .cg-header {
+  font-weight: 700;
+  font-size: var(--text-label-small);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-glass);
+}
+.pay-compare-grid .cg-name {
+  font-weight: 500;
+  padding: 6px 0;
+}
+.pay-compare-grid .cg-val {
+  text-align: right;
+  padding: 6px 0;
+  font-weight: 600;
+}
+.pay-compare-grid .cg-diff {
+  text-align: right;
+  padding: 6px 0;
+  font-weight: 700;
+  font-size: var(--text-label-small);
+}
+
+/* ── Net Pay Card (inverted) ── */
+.pay-net-card {
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 12px;
+}
+html[data-theme="neo"] .pay-net-card {
+  border: 3px solid #1a1a1a;
+  box-shadow: 4px 4px 0px #1a1a1a;
+}
+.pay-net-label {
+  font-size: var(--text-body-small);
+  opacity: 0.7;
+  margin-bottom: 4px;
+}
+.pay-net-amount {
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin-bottom: 4px;
+}
+.pay-net-diff {
+  font-size: var(--text-body-normal);
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 12px;
+  margin-top: 4px;
+}
+.pay-net-diff.up {
+  background: rgba(52, 199, 89, 0.2);
+  color: #34c759;
+}
+.pay-net-diff.down {
+  background: rgba(255, 59, 48, 0.15);
+  color: #ff3b30;
+}
+.pay-net-card .pay-stats-row {
+  width: 100%;
+  margin-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.15);
+  padding-top: 12px;
+}
+.pay-net-card .pay-stat-card {
+  color: var(--bg-primary);
+}
+
+/* ── Upload Zone ── */
+.pay-upload-zone {
+  border: 2px dashed var(--border-glass);
+  border-radius: var(--radius-lg);
+  padding: 28px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--bg-glass);
+  margin-bottom: 12px;
+}
+html[data-theme="neo"] .pay-upload-zone {
+  border: 2.5px dashed #1a1a1a;
+}
+.pay-upload-zone:hover {
+  border-color: var(--accent-indigo);
+  background: var(--bg-glass-hover);
+}
+
+/* ── Verify Row ── */
+.pay-verify-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: var(--text-body-normal);
+  border-bottom: 1px solid var(--bg-glass);
+}
+.pay-verify-row:last-child { border-bottom: none; }
+.pay-verify-match { color: var(--accent-emerald); font-weight: 600; }
+.pay-verify-diff { color: var(--accent-rose); font-weight: 600; }
+
+/* ── Empty State ── */
+.pay-empty-state {
+  text-align: center;
+  padding: 48px 16px;
+}
+.pay-empty-icon { font-size: 48px; margin-bottom: 12px; }
+.pay-empty-title { font-size: var(--text-body-large); font-weight: 700; margin-bottom: 4px; }
+.pay-empty-desc { font-size: var(--text-body-normal); color: var(--text-muted); margin-bottom: 16px; }
+
+/* ── Responsive ── */
+@media (max-width: 380px) {
+  .pay-bookmark-tabs { padding: 0 12px; }
+  .pay-bookmark-tab { font-size: var(--text-body-normal); padding: 10px 6px 8px; }
+  .pay-hbar-name { width: 60px; }
+  .pay-hbar-amount { width: 60px; }
+  .pay-hbar-diff { width: 48px; }
+}

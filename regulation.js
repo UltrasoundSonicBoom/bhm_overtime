@@ -316,13 +316,13 @@ function escapeHtml(str) {
 }
 
 function openPdfPicker() {
-  openPdfSheet('data/2026_조합원_수첩_최종파일.pdf', '조합원 수첩 (전체)');
+  openPdfSheet('data/2026_handbook.pdf', '조합원 수첩 (전체)');
 }
 
 function openPdfForRef(ref) {
   var page = getPdfPageForRef(ref);
   var label = ref ? '조합원 수첩 — ' + ref : '조합원 수첩';
-  openPdfSheet('data/2026_조합원_수첩_최종파일.pdf', label, page);
+  openPdfSheet('data/2026_handbook.pdf', label, page);
 }
 
 function askAboutArticle(title) {
