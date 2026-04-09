@@ -195,6 +195,7 @@ async function loadPdf(url) {
     pdfScale = 1.0;
 
     document.getElementById('pdfControls').style.display = 'block';
+    document.getElementById('pdfCanvasContainer').style.display = 'block';
     document.getElementById('pdfPlaceholder').style.display = 'none';
 
     renderPdfPage();
