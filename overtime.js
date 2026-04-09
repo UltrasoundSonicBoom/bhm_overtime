@@ -117,8 +117,8 @@ const OVERTIME = {
         const isRestDay = isWeekend || isHoliday;
 
         let extendedMin = 0;   // 연장 (150%)
-        let nightMin = 0;      // 야간 (200% or 150%)
-        let holidayMin = 0;    // 휴일 (150%)
+        let nightMin = 0;      // 야간 (200%)
+        let holidayMin = 0;    // 휴일 (8h 이내 150%, 초과 200%)
         let holidayNightMin = 0; // 휴일야간 (200%)
 
         // 분 단위로 각 구간 계산
@@ -164,8 +164,12 @@ const OVERTIME = {
         let pay = 0;
 
         pay += breakdown.extended * hourlyRate * rates.extended;
-        pay += breakdown.night * hourlyRate * rates.extendedNight; // 통상→야간 200%
-        pay += breakdown.holiday * hourlyRate * rates.holiday;
+        pay += breakdown.night * hourlyRate * rates.night;
+        // 휴일근무: 8시간 이내 150%, 초과 200%
+        const holBase = Math.min(breakdown.holiday, 8);
+        const holOver = Math.max(breakdown.holiday - 8, 0);
+        pay += holBase * hourlyRate * rates.holiday;
+        pay += holOver * hourlyRate * rates.holidayOver8;
         pay += breakdown.holidayNight * hourlyRate * rates.holidayNight;
 
         // 온콜 추가 수당

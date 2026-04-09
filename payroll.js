@@ -38,14 +38,19 @@ const PAYROLL = {
       calc(profile, wage, inputs) {
         const hours = inputs.hours || 8;
         const r = CALC.calcOvertimePay(wage.hourlyRate, 0, 0, hours);
+        const holBase = Math.min(hours, 8);
+        const holOver = Math.max(hours - 8, 0);
+        const details = [
+          { key: '시급', val: CALC.formatCurrency(wage.hourlyRate) },
+          { key: '8h 이내 (150%)', val: `${CALC.formatNumber(wage.hourlyRate)} × 1.5 × ${holBase}h = ${CALC.formatCurrency(Math.round(wage.hourlyRate * 1.5 * holBase))}` }
+        ];
+        if (holOver > 0) {
+          details.push({ key: '8h 초과 (200%)', val: `${CALC.formatNumber(wage.hourlyRate)} × 2.0 × ${holOver}h = ${CALC.formatCurrency(Math.round(wage.hourlyRate * 2.0 * holOver))}` });
+        }
         return {
           value: CALC.formatCurrency(r.휴일근무수당),
           label: `휴일근무 ${hours}시간 수당`,
-          details: [
-            { key: '시급', val: CALC.formatCurrency(wage.hourlyRate) },
-            { key: '요율', val: '150%' },
-            { key: '계산', val: `${CALC.formatNumber(wage.hourlyRate)} × 1.5 × ${hours}h` }
-          ]
+          details
         };
       },
       renderInput() {

@@ -21,8 +21,9 @@ document.addEventListener('DOMContentLoaded', () => {
 // ═══════════ Sub-tab 전환 ═══════════
 
 function initSubTabs() {
-  const tabButtons = document.querySelectorAll('#regSubTabs .sub-tab');
+  const tabButtons = document.querySelectorAll('#regSubTabs .reg-bookmark-tab');
   const tabContents = document.querySelectorAll('.sub-content');
+  const accent = document.getElementById('regTabAccent');
 
   tabButtons.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -32,13 +33,17 @@ function initSubTabs() {
       tabContents.forEach(c => c.classList.remove('active'));
       const targetEl = document.getElementById(`subtab-${target}`);
       if (targetEl) targetEl.classList.add('active');
+      // Update accent bar color
+      if (accent) {
+        accent.className = 'reg-tab-accent ' + target;
+      }
     });
   });
 
   // URL hash로 서브탭 직접 진입
   const hash = window.location.hash.replace('#', '');
   if (hash) {
-    const matchBtn = document.querySelector(`#regSubTabs .sub-tab[data-subtab="${hash}"]`);
+    const matchBtn = document.querySelector(`#regSubTabs .reg-bookmark-tab[data-subtab="${hash}"]`);
     if (matchBtn) matchBtn.click();
   }
 }
@@ -62,7 +67,7 @@ function initTheme() {
 
 // ═══════════ 📖 찾아보기 ═══════════
 
-let browseCurrentCategory = null;
+var browseActiveCategory = null;
 
 // ── PDF page mapping (2026_조합원_수첩_최종파일.pdf) ──
 // More specific patterns first; getPdfPageForRef matches the first hit.
@@ -112,70 +117,81 @@ function getPdfPageForRef(ref) {
 }
 
 function initBrowse() {
-  renderCategoryList();
+  renderBrowseCategories();
 
-  document.getElementById('browseBackBtn').addEventListener('click', showCategoryList);
+  // Start with first category selected
+  if (DATA.handbook && DATA.handbook.length > 0) {
+    browseActiveCategory = DATA.handbook[0].category;
+  }
+  renderBrowseList();
+  updateBrowseCategoryActive();
 
-  const searchInput = document.getElementById('browseSearch');
-  let debounceTimer;
-  searchInput.addEventListener('input', () => {
+  var searchInput = document.getElementById('browseSearch');
+  var debounceTimer;
+  searchInput.addEventListener('input', function() {
     clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => searchBrowse(searchInput.value.trim()), 200);
+    debounceTimer = setTimeout(function() { searchBrowse(searchInput.value.trim()); }, 200);
   });
 }
 
-// Renders the top-level category list from trusted DATA.handbook
-function renderCategoryList() {
-  const container = document.getElementById('browseCategoryList');
+function renderBrowseCategories() {
+  var container = document.getElementById('browseCategoryTags');
   if (!container || !DATA.handbook) return;
 
-  let html = '';
-  DATA.handbook.forEach((section, idx) => {
-    const count = section.articles.length;
-    // section.icon and section.category come from hardcoded DATA.handbook
-    html += '<div class="reg-category-item" onclick="showCategoryDetail(' + idx + ')">'
-      + '<div class="reg-cat-left">'
-      + '<span class="reg-cat-icon">' + section.icon + '</span>'
-      + '<span class="reg-cat-name">' + escapeHtml(section.category) + '</span>'
-      + '</div>'
-      + '<div class="reg-cat-right">'
-      + '<span class="reg-cat-count">' + count + '개 조항</span>'
-      + '<span class="reg-cat-chevron">▸</span>'
-      + '</div>'
-      + '</div>';
+  // "전체" tag
+  var allTag = document.createElement('button');
+  allTag.className = 'quick-tag';
+  allTag.textContent = '전체';
+  allTag.style.fontWeight = '600';
+  allTag.onclick = function() {
+    browseActiveCategory = null;
+    document.getElementById('browseSearch').value = '';
+    renderBrowseList();
+    updateBrowseCategoryActive();
+  };
+  container.appendChild(allTag);
+
+  DATA.handbook.forEach(function(section) {
+    var tag = document.createElement('button');
+    tag.className = 'quick-tag';
+    tag.textContent = section.category;
+    tag.dataset.category = section.category;
+    tag.onclick = function() {
+      browseActiveCategory = section.category;
+      document.getElementById('browseSearch').value = '';
+      renderBrowseList();
+      updateBrowseCategoryActive();
+    };
+    container.appendChild(tag);
   });
-  container.innerHTML = html; // trusted DATA.handbook content only
 }
 
-function showCategoryDetail(idx) {
-  const section = DATA.handbook[idx];
-  if (!section) return;
-
-  browseCurrentCategory = idx;
-
-  // Hide root, show detail
-  document.getElementById('browseRoot').style.display = 'none';
-  document.getElementById('browseSearchResults').style.display = 'none';
-  const detail = document.getElementById('browseDetail');
-  detail.style.display = 'block';
-
-  document.getElementById('browseDetailTitle').textContent =
-    section.icon + ' ' + section.category;
-
-  renderArticles(section.articles, document.getElementById('browseArticles'));
-
-  // Scroll to top of detail
-  detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+function updateBrowseCategoryActive() {
+  document.querySelectorAll('#browseCategoryTags .quick-tag').forEach(function(tag) {
+    var isActive = (!browseActiveCategory && !tag.dataset.category) ||
+                   (tag.dataset.category === browseActiveCategory);
+    tag.style.borderColor = isActive ? 'var(--accent-indigo)' : '';
+    tag.style.color = isActive ? 'var(--accent-indigo)' : '';
+  });
 }
 
-function showCategoryList() {
-  browseCurrentCategory = null;
-  document.getElementById('browseDetail').style.display = 'none';
-  document.getElementById('browseSearchResults').style.display = 'none';
-  document.getElementById('browseRoot').style.display = 'block';
+function renderBrowseList() {
+  var container = document.getElementById('browseArticles');
+  if (!container || !DATA.handbook) return;
 
-  // Clear search when going back
-  document.getElementById('browseSearch').value = '';
+  var articles = [];
+  DATA.handbook.forEach(function(section) {
+    if (!browseActiveCategory || section.category === browseActiveCategory) {
+      section.articles.forEach(function(a) {
+        articles.push(Object.assign({}, a, {
+          _category: section.category,
+          _categoryIcon: section.icon
+        }));
+      });
+    }
+  });
+
+  renderArticles(articles, container, { showCategory: !browseActiveCategory });
 }
 
 // Renders article accordion from trusted DATA.handbook articles
@@ -239,19 +255,10 @@ function toggleArticle(headerEl) {
 }
 
 function searchBrowse(query) {
-  var root = document.getElementById('browseRoot');
-  var detail = document.getElementById('browseDetail');
-  var resultsContainer = document.getElementById('browseSearchResults');
+  var container = document.getElementById('browseArticles');
 
   if (!query) {
-    resultsContainer.style.display = 'none';
-    if (browseCurrentCategory !== null) {
-      detail.style.display = 'block';
-      root.style.display = 'none';
-    } else {
-      root.style.display = 'block';
-      detail.style.display = 'none';
-    }
+    renderBrowseList();
     return;
   }
 
@@ -272,22 +279,17 @@ function searchBrowse(query) {
     });
   });
 
-  root.style.display = 'none';
-  detail.style.display = 'none';
-  resultsContainer.style.display = 'block';
-
   if (results.length === 0) {
-    // escapeHtml ensures the query display is safe
-    resultsContainer.innerHTML = '<div class="reg-empty">'
+    container.innerHTML = '<div class="reg-empty">'
       + '<div class="reg-empty-icon">\uD83D\uDD0D</div>'
       + '<div class="reg-empty-text">"' + escapeHtml(query) + '" 검색 결과가 없습니다.<br>다른 키워드로 검색해보세요.</div>'
       + '</div>';
     return;
   }
 
-  resultsContainer.innerHTML = '<div style="font-size:var(--text-body-normal); color:var(--text-muted); margin-bottom:12px;">' + results.length + '개 결과</div>';
+  container.innerHTML = '<div style="font-size:var(--text-body-normal); color:var(--text-muted); margin-bottom:12px;">' + results.length + '개 결과</div>';
   var articlesDiv = document.createElement('div');
-  resultsContainer.appendChild(articlesDiv);
+  container.appendChild(articlesDiv);
   renderArticles(results, articlesDiv, { highlight: q, showCategory: true });
 }
 
@@ -325,7 +327,7 @@ function openPdfForRef(ref) {
 
 function askAboutArticle(title) {
   // Switch to 물어보기 tab and pre-fill
-  var askTab = document.querySelector('#regSubTabs .sub-tab[data-subtab="ask"]');
+  var askTab = document.querySelector('#regSubTabs .reg-bookmark-tab[data-subtab="ask"]');
   if (askTab) askTab.click();
   var input = document.getElementById('chatInput');
   if (input) {
@@ -348,25 +350,6 @@ function initAsk() {
       if (e.key === 'Enter') handleChat();
     });
   }
-
-  renderAskTopics();
-}
-
-function renderAskTopics() {
-  var container = document.getElementById('askTopics');
-  if (!container || !DATA.faq) return;
-
-  var topics = ['온콜', '연차', '야간', '수당', '경조', '출산', '복지', '승진'];
-  topics.forEach(function(topic) {
-    var tag = document.createElement('button');
-    tag.className = 'quick-tag';
-    tag.textContent = topic;
-    tag.onclick = function() {
-      addChatMessage(topic, 'user');
-      handleChatQuery(topic);
-    };
-    container.appendChild(tag);
-  });
 }
 
 // ── Chat messages ──
@@ -744,7 +727,8 @@ var FAQ_CALCULATORS = {
         ['내 시급', CALC.formatCurrency(wage.hourlyRate)],
         ['연장 1시간', CALC.formatCurrency(Math.round(wage.hourlyRate * 1.5))],
         ['야간 1시간', CALC.formatCurrency(Math.round(wage.hourlyRate * 2.0))],
-        ['휴일 1시간', CALC.formatCurrency(Math.round(wage.hourlyRate * 1.5))]
+        ['휴일 1시간 (8h 이내)', CALC.formatCurrency(Math.round(wage.hourlyRate * 1.5))],
+        ['휴일 1시간 (8h 초과)', CALC.formatCurrency(Math.round(wage.hourlyRate * 2.0))]
       ]
     };
   },
@@ -828,6 +812,44 @@ var FAQ_CALCULATORS = {
         ['1~3개월', CALC.formatCurrency(Math.min(m, 2500000)) + ' (100%, 상한 250만)'],
         ['4~6개월', CALC.formatCurrency(Math.min(m, 2000000)) + ' (100%, 상한 200만)'],
         ['7~12개월', CALC.formatCurrency(Math.min(Math.round(m * 0.8), 1600000)) + ' (80%, 상한 160만)']
+      ]
+    };
+  },
+  '무급휴가 쓰면 얼마 공제되나요?': function(_p, wage) {
+    if (!wage) return null;
+    var daily = Math.round(wage.monthlyWage / 30);
+    return {
+      label: '무급휴가 1일 공제액',
+      rows: [
+        ['통상임금 월액', CALC.formatCurrency(wage.monthlyWage)],
+        ['1일 공제액 (÷30)', CALC.formatCurrency(daily)]
+      ]
+    };
+  },
+  '미사용 연차 보상금은?': function(_p, wage) {
+    if (!wage) return null;
+    var daily = wage.hourlyRate * 8;
+    return {
+      label: '미사용 연차 1일 보상금',
+      rows: [
+        ['시급', CALC.formatCurrency(wage.hourlyRate)],
+        ['1일 (8시간)', CALC.formatCurrency(daily)],
+        ['5일 예시', CALC.formatCurrency(daily * 5)]
+      ]
+    };
+  },
+  '퇴직금은 어떻게 계산하나요?': function(profile, wage) {
+    if (!wage || !profile || !profile.hireDate) return null;
+    var years = Math.floor((new Date() - new Date(profile.hireDate)) / (365.25 * 24 * 60 * 60 * 1000));
+    if (years < 1) return { label: '퇴직금', rows: [['상태', '근속 1년 미만 (해당없음)']] };
+    var avg = CALC.calcAverageWage(wage.monthlyWage, 3);
+    var r = CALC.calcSeveranceFullPay(avg.monthlyAvgWage, years, profile.hireDate);
+    return {
+      label: '내 예상 퇴직금',
+      rows: [
+        ['월 평균임금', CALC.formatCurrency(avg.monthlyAvgWage)],
+        ['근속기간', r.근속기간 || (years + '년')],
+        ['예상 퇴직금', CALC.formatCurrency(r.퇴직금)]
       ]
     };
   }

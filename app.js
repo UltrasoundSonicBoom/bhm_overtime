@@ -1118,8 +1118,8 @@ function calculateOvertime() {
       <div class="result-total">${CALC.formatCurrency(r.합계)}</div>
     </div>
     <div class="result-row"><span class="key">연장근무수당 (${r.detail.extHours}h × ${hourly.toLocaleString()}원 × 150%)</span><span class="val accent">${CALC.formatCurrency(r.연장근무수당)}</span></div>
-    <div class="result-row"><span class="key">야간근무수당 (${r.detail.nightHours}h × ${isExtN ? '200%' : '150%'})</span><span class="val accent">${CALC.formatCurrency(r.야간근무수당)}</span></div>
-    <div class="result-row"><span class="key">휴일근무수당 (${r.detail.holidayHours}h × 150%)</span><span class="val accent">${CALC.formatCurrency(r.휴일근무수당)}</span></div>
+    <div class="result-row"><span class="key">야간근무수당 (${r.detail.nightHours}h × 200%)</span><span class="val accent">${CALC.formatCurrency(r.야간근무수당)}</span></div>
+    <div class="result-row"><span class="key">휴일근무수당 (${r.detail.holidayBase}h×150%${r.detail.holidayOver > 0 ? ' + ' + r.detail.holidayOver + 'h×200%' : ''})</span><span class="val accent">${CALC.formatCurrency(r.휴일근무수당)}</span></div>
     <div class="result-row"><span class="key">적용 시급</span><span class="val">${CALC.formatCurrency(hourly)}</span></div>
   `;
 }
@@ -2813,7 +2813,11 @@ function previewOtCalc() {
     html += `<div class="preview-row"><span>야간 ${tempBreakdown.night}h × 200%</span><span class="val">${(tempBreakdown.night * hourlyRate * 2.0).toLocaleString()}원</span></div>`;
   }
   if (tempBreakdown.holiday > 0) {
-    html += `<div class="preview-row"><span>휴일 ${tempBreakdown.holiday}h × 150%</span><span class="val">${(tempBreakdown.holiday * hourlyRate * 1.5).toLocaleString()}원</span></div>`;
+    const holBase = Math.min(tempBreakdown.holiday, 8);
+    const holOver = Math.max(tempBreakdown.holiday - 8, 0);
+    const holPay = Math.round(holBase * hourlyRate * 1.5) + Math.round(holOver * hourlyRate * 2.0);
+    const holLabel = holOver > 0 ? `휴일 ${holBase}h×150% + ${holOver}h×200%` : `휴일 ${holBase}h × 150%`;
+    html += `<div class="preview-row"><span>${holLabel}</span><span class="val">${holPay.toLocaleString()}원</span></div>`;
   }
   if (tempBreakdown.holidayNight > 0) {
     html += `<div class="preview-row"><span>휴일야간 ${tempBreakdown.holidayNight}h × 200%</span><span class="val">${(tempBreakdown.holidayNight * hourlyRate * 2.0).toLocaleString()}원</span></div>`;
@@ -3596,7 +3600,7 @@ function renderPayslipMgmt() {
     const toggle = document.createElement('span');
     toggle.className = 'toggle-icon';
     toggle.style.cssText = 'font-size:var(--text-body-normal); color:var(--text-muted);';
-    toggle.textContent = idx === 0 ? '▾' : '▸';
+    toggle.textContent = '▸';
     left.appendChild(toggle);
     const monthLabel = document.createElement('span');
     monthLabel.style.cssText = 'font-weight:700; font-size:var(--text-body-large);';
@@ -3605,22 +3609,39 @@ function renderPayslipMgmt() {
     header.appendChild(left);
 
     const right = document.createElement('div');
-    right.style.cssText = 'text-align:right;';
-    const netLabel = document.createElement('div');
-    netLabel.style.cssText = 'font-size:var(--text-body-small); color:var(--text-muted);';
-    netLabel.textContent = '실지급액';
-    right.appendChild(netLabel);
-    const netVal = document.createElement('div');
-    netVal.style.cssText = 'font-weight:700; font-size:var(--text-body-large); color:var(--text-primary);';
-    netVal.textContent = fmt(data.summary?.netPay || 0);
-    right.appendChild(netVal);
+    right.style.cssText = 'text-align:right; display:flex; flex-direction:column; gap:2px;';
+    // 지급 합계
+    const grossRow = document.createElement('div');
+    grossRow.style.cssText = 'font-size:var(--text-body-small); color:var(--text-muted);';
+    const grossLabel = document.createTextNode('지급 ');
+    const grossVal = document.createElement('b');
+    grossVal.style.color = 'var(--accent-indigo)';
+    grossVal.textContent = fmt(data.summary?.grossPay || 0);
+    grossRow.appendChild(grossLabel);
+    grossRow.appendChild(grossVal);
+    right.appendChild(grossRow);
+    // 공제 합계
+    const dedRow = document.createElement('div');
+    dedRow.style.cssText = 'font-size:var(--text-body-small); color:var(--text-muted);';
+    const dedLabel = document.createTextNode('공제 ');
+    const dedVal = document.createElement('b');
+    dedVal.style.color = 'var(--accent-rose)';
+    dedVal.textContent = '-' + fmt(data.summary?.totalDeduction || 0);
+    dedRow.appendChild(dedLabel);
+    dedRow.appendChild(dedVal);
+    right.appendChild(dedRow);
+    // 실지급액
+    const netRow2 = document.createElement('div');
+    netRow2.style.cssText = 'font-weight:700; font-size:var(--text-body-large); color:var(--text-primary); border-top:1px solid var(--border-glass); padding-top:2px; margin-top:1px;';
+    netRow2.textContent = fmt(data.summary?.netPay || 0);
+    right.appendChild(netRow2);
     header.appendChild(right);
     card.appendChild(header);
 
     // 카드 바디 (접이식 — 첫 번째만 펼침)
     const body = document.createElement('div');
     body.id = `payslipCard_${year}_${month}`;
-    body.style.display = idx === 0 ? 'block' : 'none';
+    body.style.display = 'none';
     body.style.cssText += ';margin-top:12px; border-top:1px solid var(--border-glass); padding-top:12px;';
 
     // 지급 내역

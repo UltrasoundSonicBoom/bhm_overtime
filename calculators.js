@@ -124,7 +124,13 @@ const CALC = {
 
         const extPay = Math.round(hourlyRate * rates.extended * extHours);
         const nightPay = Math.round(hourlyRate * nightRate * nightHours);
-        const holidayPay = Math.round(hourlyRate * rates.holiday * holidayHours);
+
+        // 휴일근무: 8시간 이내 150%, 8시간 초과 200% (제34조)
+        const holidayBase = Math.min(holidayHours, 8);
+        const holidayOver = Math.max(holidayHours - 8, 0);
+        const holidayPay = Math.round(hourlyRate * rates.holiday * holidayBase)
+                         + Math.round(hourlyRate * rates.holidayOver8 * holidayOver);
+
         const total = extPay + nightPay + holidayPay;
 
         return {
@@ -132,7 +138,7 @@ const CALC = {
             야간근무수당: nightPay,
             휴일근무수당: holidayPay,
             합계: total,
-            detail: { extHours, nightHours, holidayHours, hourlyRate }
+            detail: { extHours, nightHours, holidayHours, holidayBase, holidayOver, hourlyRate }
         };
     },
 
