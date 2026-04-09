@@ -114,7 +114,7 @@ function searchHandbook() {
     countEl.style.display = 'none';
     container.innerHTML = `<div class="card" style="text-align:center; padding:40px 20px; color:var(--text-muted);">
       <div style="font-size:var(--text-amount-huge); margin-bottom:12px;">📖</div>
-      좌측 목차에서 카테고리를 선택하거나,<br>상단 검색창에 키워드를 입력하세요.
+      목차에서 카테고리를 선택하거나,<br>상단 검색창에 키워드를 입력하세요.
     </div>`;
     document.querySelectorAll('.wiki-toc-item').forEach(el => {
       el.style.background = 'transparent';
