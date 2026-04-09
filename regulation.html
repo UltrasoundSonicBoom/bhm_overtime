@@ -27,6 +27,111 @@
     }
     .theme-toggle-btn:hover { border-color: var(--border-active); }
 
+    /* ═══════════ Bookmark Tabs ═══════════ */
+    .reg-bookmark-tabs {
+      display: flex;
+      gap: 6px;
+      padding: 0 16px;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+    .reg-bookmark-tab {
+      flex: 1;
+      padding: 12px 8px 10px;
+      border: none;
+      border-radius: 12px 12px 0 0;
+      font-size: var(--text-body-large);
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s ease-out;
+      -webkit-tap-highlight-color: transparent;
+      position: relative;
+      text-align: center;
+    }
+    /* FAQ tab — orange/amber */
+    .reg-bookmark-tab[data-subtab="faq"] {
+      background: rgba(251, 146, 60, 0.15);
+      color: #c2410c;
+      border-bottom: 3px solid transparent;
+    }
+    .reg-bookmark-tab[data-subtab="faq"].active {
+      background: #fb923c;
+      color: #fff;
+      border-bottom: 3px solid #ea580c;
+      box-shadow: 0 2px 8px rgba(251, 146, 60, 0.3);
+    }
+    /* Browse tab — blue */
+    .reg-bookmark-tab[data-subtab="browse"] {
+      background: rgba(96, 165, 250, 0.15);
+      color: #1d4ed8;
+      border-bottom: 3px solid transparent;
+    }
+    .reg-bookmark-tab[data-subtab="browse"].active {
+      background: #60a5fa;
+      color: #fff;
+      border-bottom: 3px solid #2563eb;
+      box-shadow: 0 2px 8px rgba(96, 165, 250, 0.3);
+    }
+    /* Ask tab — green */
+    .reg-bookmark-tab[data-subtab="ask"] {
+      background: rgba(74, 222, 128, 0.15);
+      color: #15803d;
+      border-bottom: 3px solid transparent;
+    }
+    .reg-bookmark-tab[data-subtab="ask"].active {
+      background: #4ade80;
+      color: #fff;
+      border-bottom: 3px solid #16a34a;
+      box-shadow: 0 2px 8px rgba(74, 222, 128, 0.3);
+    }
+
+    /* Neo theme bookmark overrides */
+    html[data-theme="neo"] .reg-bookmark-tab {
+      border: 2.5px solid #1a1a1a;
+      border-bottom: none;
+    }
+    html[data-theme="neo"] .reg-bookmark-tab[data-subtab="faq"] {
+      background: #fff3e0;
+      color: #1a1a1a;
+    }
+    html[data-theme="neo"] .reg-bookmark-tab[data-subtab="faq"].active {
+      background: #fb923c;
+      color: #1a1a1a;
+      box-shadow: 3px -2px 0px #1a1a1a;
+    }
+    html[data-theme="neo"] .reg-bookmark-tab[data-subtab="browse"] {
+      background: #e0f2fe;
+      color: #1a1a1a;
+    }
+    html[data-theme="neo"] .reg-bookmark-tab[data-subtab="browse"].active {
+      background: #60a5fa;
+      color: #1a1a1a;
+      box-shadow: 3px -2px 0px #1a1a1a;
+    }
+    html[data-theme="neo"] .reg-bookmark-tab[data-subtab="ask"] {
+      background: #dcfce7;
+      color: #1a1a1a;
+    }
+    html[data-theme="neo"] .reg-bookmark-tab[data-subtab="ask"].active {
+      background: #4ade80;
+      color: #1a1a1a;
+      box-shadow: 3px -2px 0px #1a1a1a;
+    }
+
+    /* Tab content accent border top matching active tab color */
+    .reg-tab-accent {
+      height: 3px;
+      border-radius: 0;
+      margin: 0 16px;
+      max-width: 640px;
+      margin: 0 auto;
+      transition: background 0.2s;
+    }
+    .reg-tab-accent.faq { background: #fb923c; }
+    .reg-tab-accent.browse { background: #60a5fa; }
+    .reg-tab-accent.ask { background: #4ade80; }
+
     /* ── Shared search input ── */
     .reg-search-input {
       flex: 1;
@@ -53,121 +158,6 @@
     }
     html[data-theme="neo"] .reg-search-input:focus {
       box-shadow: 3px 3px 0px var(--accent-indigo);
-    }
-
-    /* ═══════════ 찾아보기: Drill-down category list ═══════════ */
-    .reg-category-list {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .reg-category-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px 18px;
-      background: var(--bg-card);
-      border: 1px solid var(--border-glass);
-      border-radius: var(--radius-md);
-      cursor: pointer;
-      transition: all 0.15s ease-out;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .reg-category-item:active {
-      transform: scale(0.98);
-    }
-    .reg-category-item:hover {
-      border-color: var(--border-active);
-      background: var(--bg-glass-hover);
-    }
-    .reg-cat-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      min-width: 0;
-    }
-    .reg-cat-icon {
-      font-size: 22px;
-      flex-shrink: 0;
-      width: 36px;
-      text-align: center;
-    }
-    .reg-cat-name {
-      font-size: var(--text-body-large);
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-    .reg-cat-right {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-shrink: 0;
-    }
-    .reg-cat-count {
-      font-size: var(--text-body-normal);
-      color: var(--text-muted);
-    }
-    .reg-cat-chevron {
-      color: var(--text-muted);
-      font-size: 16px;
-      transition: transform 0.2s;
-    }
-
-    html[data-theme="neo"] .reg-category-item {
-      border: 2.5px solid #1a1a1a;
-      box-shadow: 3px 3px 0px #1a1a1a;
-    }
-    html[data-theme="neo"] .reg-category-item:hover {
-      transform: translate(-1px, -1px);
-      box-shadow: 4px 4px 0px #1a1a1a;
-    }
-    html[data-theme="neo"] .reg-category-item:active {
-      transform: translate(1px, 1px);
-      box-shadow: 1px 1px 0px #1a1a1a;
-    }
-
-    /* ── Detail view: back nav + article accordion ── */
-    .reg-detail-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-    .reg-back-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 14px;
-      border-radius: var(--radius-full);
-      border: 1px solid var(--border-glass);
-      background: var(--bg-glass);
-      color: var(--text-secondary);
-      font-size: var(--text-body-normal);
-      font-family: inherit;
-      cursor: pointer;
-      transition: all 0.15s ease-out;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .reg-back-btn:hover {
-      border-color: var(--border-active);
-      color: var(--text-primary);
-    }
-    html[data-theme="neo"] .reg-back-btn {
-      border: 2px solid #1a1a1a;
-      box-shadow: 2px 2px 0px #1a1a1a;
-      background: var(--bg-card);
-      font-weight: 600;
-    }
-    html[data-theme="neo"] .reg-back-btn:active {
-      transform: translate(1px, 1px);
-      box-shadow: 0 0 0 #1a1a1a;
-    }
-
-    .reg-detail-title {
-      font-size: var(--text-title-large);
-      font-weight: 700;
-      color: var(--text-primary);
     }
 
     /* ── Accordion articles ── */
@@ -297,8 +287,86 @@
       line-height: 1.6;
     }
 
-    /* ═══════════ 물어보기: chat sizing ═══════════ */
-    .chat-container { height: clamp(400px, 60vh, 700px); }
+    /* ═══════════ 물어보기: chat ═══════════ */
+    .reg-chat-container {
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-card);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-md);
+      height: calc(100vh - 220px);
+      min-height: 300px;
+      max-height: 700px;
+    }
+    html[data-theme="neo"] .reg-chat-container {
+      border: 2.5px solid #1a1a1a;
+      box-shadow: 3px 3px 0px #1a1a1a;
+    }
+    .reg-chat-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-glass);
+      flex-shrink: 0;
+    }
+    html[data-theme="neo"] .reg-chat-header {
+      border-bottom: 2px solid #1a1a1a;
+    }
+    .reg-chat-test-notice {
+      font-size: var(--text-body-normal);
+      color: #16a34a;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+    .reg-chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .reg-chat-messages::-webkit-scrollbar { width: 4px; }
+    .reg-chat-messages::-webkit-scrollbar-thumb {
+      background: var(--border-glass);
+      border-radius: var(--radius-full);
+    }
+    /* user = left, bot = right */
+    .reg-chat-messages .chat-msg.user {
+      align-self: flex-start;
+      background: var(--bg-glass);
+      border: 1px solid var(--border-glass);
+      color: var(--text-primary);
+    }
+    .reg-chat-messages .chat-msg.bot {
+      align-self: flex-end;
+      background: var(--accent-indigo);
+      color: #fff;
+    }
+    html[data-theme="neo"] .reg-chat-messages .chat-msg.user {
+      border: 2px solid #1a1a1a;
+      box-shadow: 2px 2px 0px #1a1a1a;
+      background: var(--bg-card);
+    }
+    html[data-theme="neo"] .reg-chat-messages .chat-msg.bot {
+      border: 2px solid #1a1a1a;
+      box-shadow: 2px 2px 0px #1a1a1a;
+    }
+    .reg-chat-messages .chat-msg.bot .ref {
+      color: rgba(255,255,255,0.9);
+      background: rgba(255,255,255,0.15);
+    }
+    .reg-chat-messages .chat-msg.bot small {
+      color: rgba(255,255,255,0.8);
+    }
+    .reg-chat-input-row {
+      display: flex;
+      gap: 8px;
+      padding: 12px 16px;
+      border-top: 1px solid var(--border-glass);
+      flex-shrink: 0;
+    }
+    html[data-theme="neo"] .reg-chat-input-row {
+      border-top: 2px solid #1a1a1a;
+    }
 
     /* ── PDF bottom sheet ── */
     .pdf-sheet-overlay {
@@ -427,44 +495,48 @@
     /* ═══════════ Mobile ═══════════ */
     @media (max-width: 768px) {
       .main { max-width: 100%; padding: 16px 12px 88px; }
-      .reg-category-item { padding: 14px 14px; }
-      .reg-cat-icon { font-size: 20px; width: 32px; }
+      .reg-bookmark-tabs { padding: 0 12px; }
+      .reg-bookmark-tab { font-size: var(--text-body-normal); padding: 10px 6px 8px; }
       .reg-article-header { padding: 12px 14px; }
+      .reg-chat-container {
+        height: calc(100vh - 200px);
+        max-height: none;
+      }
     }
   </style>
 </head>
 
 <body>
+  <!-- ═══════════ Header — matches index.html ═══════════ -->
   <header class="header">
     <div class="header-inner">
       <div class="header-top-row">
-        <div class="logo">
-          <img src="snuhmaterect.png" alt="SNUH 메이트"
+        <a href="https://www.snuhmate.com" class="logo" style="text-decoration: none; color: inherit;">
+          <img src="logo.png" alt="SNUH Mate"
             style="width:81px; height:81px; object-fit:contain; flex-shrink:0; border-radius:10px;">
           <div>
-            <h1 class="logo-main-title">규정 / 상담</h1>
-            <p class="logo-sub-title">2026 단체협약 기준 규정 원문, AI 상담, FAQ</p>
+            <h1 class="logo-main-title">슬기로운 병원 생활 메이트</h1>
+            <p class="logo-sub-title">휴가, 시간외/온콜 등의 기록을 직접 관리해보세요. <br>기록들은 이 브라우저에만 저장되서 개발자나 볼 수 없어요!</p>
           </div>
-        </div>
+        </a>
         <div class="header-right">
-          <a href="index.html" class="btn btn-outline"
-            style="padding:4px 10px; font-size:var(--text-body-normal); border-color:var(--text-muted); color:var(--text-muted); border-radius:20px; text-decoration:none;">
-            ◂ 홈으로
-          </a>
           <button class="theme-toggle-btn" id="themeToggle" title="테마 전환" onclick="toggleTheme()">🎨</button>
         </div>
       </div>
-      <nav class="sub-tabs" id="regSubTabs" style="margin-bottom:0;">
-        <button class="sub-tab active" data-subtab="faq">❓ FAQ</button>
-        <button class="sub-tab" data-subtab="browse">📖 찾아보기</button>
-        <button class="sub-tab" data-subtab="ask">💬 물어보기</button>
-      </nav>
     </div>
   </header>
 
+  <!-- ═══════════ Bookmark Tabs — below header ═══════════ -->
+  <nav class="reg-bookmark-tabs" id="regSubTabs">
+    <button class="reg-bookmark-tab active" data-subtab="faq">FAQ</button>
+    <button class="reg-bookmark-tab" data-subtab="browse">찾아보기</button>
+    <button class="reg-bookmark-tab" data-subtab="ask">물어보기</button>
+  </nav>
+  <div class="reg-tab-accent faq" id="regTabAccent"></div>
+
   <main class="main">
 
-    <!-- ═══════════ ❓ FAQ ═══════════ -->
+    <!-- ═══════════ FAQ ═══════════ -->
     <div class="sub-content active" id="subtab-faq">
       <!-- 검색 -->
       <div class="card" style="padding:12px 16px; margin-bottom:16px;">
@@ -479,54 +551,40 @@
       <div id="faqList"></div>
     </div>
 
-    <!-- ═══════════ 📖 찾아보기 ═══════════ -->
+    <!-- ═══════════ 찾아보기 ═══════════ -->
     <div class="sub-content" id="subtab-browse">
       <!-- 검색 -->
       <div class="card" style="padding:12px 16px; margin-bottom:16px;">
         <input type="text" id="browseSearch" class="reg-search-input"
           placeholder="규정 검색... (예: 온콜, 연차, 경조비)" style="width:100%;">
       </div>
-
-      <!-- 카테고리 목록 (drill-down 루트) -->
-      <div id="browseRoot">
-        <div id="browseCategoryList" class="reg-category-list"></div>
-      </div>
-
-      <!-- 카테고리 상세 (drill-down 상세) -->
-      <div id="browseDetail" style="display:none;">
-        <div class="reg-detail-header">
-          <button class="reg-back-btn" id="browseBackBtn">◂ 목차</button>
-          <span class="reg-detail-title" id="browseDetailTitle"></span>
-        </div>
-        <div id="browseArticles"></div>
-      </div>
-
-      <!-- 검색 결과 -->
-      <div id="browseSearchResults" style="display:none;"></div>
+      <!-- 카테고리 필터 -->
+      <div class="quick-tags" id="browseCategoryTags" style="margin-bottom:16px;"></div>
+      <!-- 규정 목록 -->
+      <div id="browseArticles"></div>
     </div>
 
-    <!-- ═══════════ 💬 물어보기 ═══════════ -->
+    <!-- ═══════════ 물어보기 ═══════════ -->
     <div class="sub-content" id="subtab-ask">
-      <div class="card chat-container">
-        <div class="card-title">
-          <span class="icon indigo">💬</span> 규정 AI 상담
-          <span class="badge indigo">2026 단체협약</span>
+      <div class="reg-chat-container">
+        <div class="reg-chat-header">
+          <div class="card-title" style="margin-bottom:0;">
+            <span class="icon indigo">💬</span> 규정 AI 상담
+            <span class="badge indigo">2026 단체협약</span>
+          </div>
+          <div class="reg-chat-test-notice">AI 답변은 현재는 예시입니다. 현재 테스트 중입니다.</div>
         </div>
-        <div class="quick-tags" id="askTopics"></div>
-        <div class="chat-messages" id="chatMessages">
+        <div class="reg-chat-messages" id="chatMessages">
           <div class="chat-msg bot">
             궁금한 규정을 물어보세요!<br>
-            <small style="color:var(--text-muted)">예: "온콜 수당 얼마?", "연차 몇 일?", "경조 휴가"</small>
+            <small style="opacity:0.85">예: "온콜 수당 얼마?", "연차 몇 일?", "경조 휴가"</small>
           </div>
         </div>
-        <div class="chat-input-row">
+        <div class="reg-chat-input-row">
           <input type="text" class="chat-input" id="chatInput"
             placeholder="궁금한 점을 입력하세요..." autocomplete="off">
           <button class="chat-send" id="chatSend" title="전송">➤</button>
         </div>
-      </div>
-      <div style="text-align:center; margin-top:8px;">
-        <small style="color:var(--text-muted);">AI 답변은 참고용입니다. 정확한 내용은 규정 원문을 확인하세요.</small>
       </div>
     </div>
 
@@ -555,11 +613,21 @@
     </div>
   </div>
 
+  <!-- ═══════════ Footer Nav — matches index.html ═══════════ -->
+  <nav class="nav-tabs" id="navTabs">
+    <a href="index.html?tab=leave" class="nav-tab" style="text-decoration:none;">📅 휴가</a>
+    <a href="index.html?tab=overtime" class="nav-tab" style="text-decoration:none;">⏰ 시간외</a>
+    <a href="index.html?tab=payroll" class="nav-tab" style="text-decoration:none;">💰 급여</a>
+    <a class="nav-tab active" style="cursor:default;">📖 규정</a>
+    <a href="index.html?tab=profile" class="nav-tab" style="text-decoration:none;">👤 info</a>
+    <a href="index.html?tab=feedback" class="nav-tab" style="text-decoration:none;">📢 피드백</a>
+  </nav>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="data.js?v=2.5"></script>
   <script src="profile.js?v=2.5"></script>
   <script src="calculators.js?v=2.5"></script>
-  <script src="regulation.js?v=2.1"></script>
+  <script src="regulation.js?v=2.2"></script>
 </body>
 
 </html>
