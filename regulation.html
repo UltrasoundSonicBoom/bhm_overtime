@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="neo">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SNUH 메이트: 단체협약 규정 원문, AI 상담, FAQ">
+  <title>SNUH 메이트 - 규정/상담</title>
+  <link rel="manifest" href="manifest.json?v=1.3">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="SNUH 메이트">
+  <link rel="apple-touch-icon" href="snuhmaterect.png?v=1.3">
+  <link rel="icon" type="image/png" sizes="32x32" href="snuhmaterect.png?v=1.3">
+  <link rel="icon" type="image/png" sizes="16x16" href="snuhmaterect.png?v=1.3">
+  <link rel="shortcut icon" href="snuhmaterect.png?v=1.3">
+  <link rel="stylesheet" href="style.css?v=2.5">
+</head>
+
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <div class="header-top-row">
+        <div class="logo">
+          <img src="snuhmaterect.png" alt="SNUH 메이트"
+            style="width:81px; height:81px; object-fit:contain; flex-shrink:0; border-radius:10px;">
+          <div>
+            <h1 class="logo-main-title">규정 / AI 상담</h1>
+            <p class="logo-sub-title">2026 단체협약 기준 규정 원문, AI 상담, FAQ</p>
+          </div>
+        </div>
+        <div class="header-right">
+          <a href="index.html" class="btn btn-outline"
+            style="padding:6px 12px; font-size:var(--text-body-normal); border-radius:20px; text-decoration:none;">
+            홈으로
+          </a>
+          <button class="theme-toggle-btn" id="themeToggle" title="테마 전환" onclick="toggleTheme()">🎨</button>
+        </div>
+      </div>
+      <nav class="sub-tabs" id="regSubTabs" style="margin-bottom:0;">
+        <button class="sub-tab active" data-subtab="handbook">📖 규정</button>
+        <button class="sub-tab" data-subtab="pdf">📄 PDF</button>
+        <button class="sub-tab" data-subtab="ai-chat">💬 AI</button>
+        <button class="sub-tab" data-subtab="faq">❓ FAQ</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <!-- ═══════════ 📖 규정 원문 ═══════════ -->
+    <div class="sub-content active" id="subtab-handbook">
+      <!-- 검색 -->
+      <div class="card" style="padding:12px 16px; margin-bottom:16px;">
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="wikiSearch" placeholder="규정 검색... (예: 온콜, 연차, 경조비)" style="flex:1;"
+            oninput="searchHandbook()">
+          <button class="btn btn-outline" onclick="clearWikiSearch()" style="white-space:nowrap;">초기화</button>
+        </div>
+        <div id="wikiSearchCount"
+          style="font-size:var(--text-body-normal); color:var(--text-muted); margin-top:6px; display:none;"></div>
+      </div>
+
+      <!-- 목차 + 본문 -->
+      <div class="grid-2" style="align-items:start;">
+        <!-- 좌측: 카테고리 목차 -->
+        <div>
+          <div class="card" style="position:sticky; top:80px;">
+            <div class="card-title"><span class="icon emerald">📑</span> 목차</div>
+            <div id="wikiToc"></div>
+          </div>
+        </div>
+        <!-- 우측: 본문 -->
+        <div>
+          <div id="wikiContent">
+            <div class="card" style="text-align:center; padding:40px 20px; color:var(--text-muted);">
+              <div style="font-size:var(--text-amount-huge); margin-bottom:12px;">📖</div>
+              좌측 목차에서 카테고리를 선택하거나,<br>
+              상단 검색창에 키워드를 입력하세요.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ 📄 PDF 뷰어 ═══════════ -->
+    <div class="sub-content" id="subtab-pdf">
+      <div class="card" style="padding:12px 16px; margin-bottom:16px;">
+        <div class="card-title"><span class="icon cyan">📄</span> 조합원 수첩 PDF</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:8px;">
+          <select id="pdfSelect" style="flex:1; min-width:200px; padding:8px 12px; border-radius:var(--radius-md); border:1px solid var(--border-glass); background:var(--bg-glass); color:var(--text-primary); font-size:var(--text-body-normal); font-family:inherit;">
+            <option value="data/2026_조합원_수첩_최종파일.pdf">조합원 수첩 (전체)</option>
+            <option value="data/2026_조합원_수첩_임금 구성 및 년 보수표.pdf">임금 구성 및 년 보수표</option>
+            <option value="data/2026_조합원_수첩_임금 및 퇴직금.pdf">임금 및 퇴직금</option>
+            <option value="data/2026_조합원_수첩_근로시간.pdf">근로시간</option>
+            <option value="data/2602 salary.pdf">급여 명세서 (2602)</option>
+          </select>
+          <button class="btn btn-outline" onclick="loadSelectedPdf()" style="white-space:nowrap;">열기</button>
+        </div>
+      </div>
+      <!-- PDF 컨트롤 -->
+      <div id="pdfControls" style="display:none;">
+        <div class="card" style="padding:8px 12px; margin-bottom:8px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button class="btn btn-outline" onclick="pdfPrevPage()" style="padding:4px 10px;">◀</button>
+              <span id="pdfPageInfo" style="font-size:var(--text-body-normal); color:var(--text-secondary);">- / -</span>
+              <button class="btn btn-outline" onclick="pdfNextPage()" style="padding:4px 10px;">▶</button>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button class="btn btn-outline" onclick="pdfZoom(-0.25)" style="padding:4px 10px;">−</button>
+              <span id="pdfZoomInfo" style="font-size:var(--text-body-normal); color:var(--text-secondary);">100%</span>
+              <button class="btn btn-outline" onclick="pdfZoom(0.25)" style="padding:4px 10px;">+</button>
+              <button class="btn btn-outline" onclick="pdfFitWidth()" style="padding:4px 10px;">맞춤</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- PDF 캔버스 -->
+      <div id="pdfCanvasContainer" style="text-align:center; overflow:auto;">
+        <canvas id="pdfCanvas" style="max-width:100%; border-radius:var(--radius-md); box-shadow:var(--shadow-md);"></canvas>
+      </div>
+      <div id="pdfPlaceholder" class="card" style="text-align:center; padding:40px 20px; color:var(--text-muted);">
+        <div style="font-size:var(--text-amount-huge); margin-bottom:12px;">📄</div>
+        위에서 PDF를 선택하고 "열기"를 눌러주세요.
+      </div>
+    </div>
+
+    <!-- ═══════════ 💬 AI 상담 ═══════════ -->
+    <div class="sub-content" id="subtab-ai-chat">
+      <div class="card chat-container">
+        <div class="card-title">
+          <span class="icon indigo">💬</span> 규정 AI 상담
+          <span class="badge indigo">2026 단체협약</span>
+        </div>
+        <div class="quick-tags" id="chatQuickTags"></div>
+        <div class="chat-messages" id="chatMessages">
+          <div class="chat-msg bot">
+            궁금한 규정을 물어보세요!<br>
+            <small style="color:var(--text-muted)">예: "온콜 수당 얼마?", "외할머니 돌아가시면 휴가 며칠?", "연차 몇 일?"</small>
+          </div>
+        </div>
+        <div class="chat-input-row">
+          <input type="text" class="chat-input" id="chatInput" placeholder="궁금한 점을 입력하세요..." autocomplete="off">
+          <button class="chat-send" id="chatSend" title="전송">➤</button>
+        </div>
+      </div>
+      <div style="text-align:center; margin-top:8px;">
+        <small style="color:var(--text-muted);">AI 답변은 참고용입니다. 정확한 내용은 규정 원문을 확인하세요.</small>
+      </div>
+    </div>
+
+    <!-- ═══════════ ❓ FAQ ═══════════ -->
+    <div class="sub-content" id="subtab-faq">
+      <!-- 검색 -->
+      <div class="card" style="padding:12px 16px; margin-bottom:16px;">
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="faqSearchInput" placeholder="FAQ 검색... (예: 온콜 수당, 야간근무)" style="flex:1;">
+          <button class="btn btn-outline" id="faqSearchBtn" style="white-space:nowrap;">검색</button>
+        </div>
+      </div>
+      <!-- 카테고리 필터 -->
+      <div class="quick-tags" id="faqCategoryTags" style="margin-bottom:16px;"></div>
+      <!-- FAQ 목록 -->
+      <div id="faqList"></div>
+    </div>
+
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="data.js?v=2.5"></script>
+  <script src="regulation.js?v=1.0"></script>
+</body>
+
+</html>

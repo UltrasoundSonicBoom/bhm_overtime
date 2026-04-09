@@ -41,7 +41,7 @@ const CALC = {
         let seniorityBasePay = 0;
         if (extras.hasSeniority && extras.seniorityYears) {
             const rate = DATA.seniorityRates.find(r => extras.seniorityYears >= r.min && extras.seniorityYears < r.max);
-            seniorityBasePay = rate ? Math.round((monthlyBase + adjustPay / 2) * rate.rate) : 0;
+            seniorityBasePay = rate ? Math.floor((monthlyBase + adjustPay / 2) * rate.rate) : 0;
         }
 
         // 군복무수당: 월할 계산 지원 (기본 24개월, 개인별 복무기간에 따라 조정)

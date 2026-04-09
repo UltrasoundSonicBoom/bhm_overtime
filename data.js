@@ -3,7 +3,8 @@
 // 기준: 2026 조합원 수첩 (2025.10.23 단체협약 갱신)
 // ============================================
 
-const DATA = {
+// Static fallback — API 실패 시에도 기존 기능 100% 동작
+const DATA_STATIC = {
   // ── 직종 → 보수표 매핑 ──
   jobTypes: {
     '사무직': { payTable: '일반직', label: '사무직 (일반직 보수표)' },
@@ -562,3 +563,20 @@ const DATA = {
     otherCumulativeTrigger: 20    // 시설·이송·미화 등 누적 기준
   }
 };
+
+// DATA 객체: 초기값은 static, API 로드 성공 시 덮어쓰기
+let DATA = DATA_STATIC;
+
+// API에서 최신 데이터 로드 (비동기, 실패 시 static fallback 유지)
+async function loadDataFromAPI() {
+  try {
+    const res = await fetch('/api/data/bundle');
+    if (!res.ok) throw new Error(`API ${res.status}`);
+    const apiData = await res.json();
+    DATA = { ...DATA_STATIC, ...apiData };
+    console.log('[DATA] API 데이터 로드 완료');
+  } catch (e) {
+    console.log('[DATA] API 로드 실패, static fallback 사용:', e.message || e);
+  }
+}
+loadDataFromAPI();
