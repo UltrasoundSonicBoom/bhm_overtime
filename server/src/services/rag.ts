@@ -30,21 +30,40 @@ export async function ragAnswer(
 
   // 2. FAQ 시맨틱 검색 (top 3)
   const faqResults = await sql`
-    SELECT id, category, question, answer, article_ref,
-      1 - (embedding <=> ${vecStr}::vector) as score
+    SELECT
+      faq_entries.id,
+      faq_entries.category,
+      faq_entries.question,
+      faq_entries.answer,
+      faq_entries.article_ref,
+      1 - (faq_entries.embedding <=> ${vecStr}::vector) as score
     FROM faq_entries
-    WHERE embedding IS NOT NULL AND is_published = true
-    ORDER BY embedding <=> ${vecStr}::vector
+    LEFT JOIN regulation_versions
+      ON regulation_versions.id = faq_entries.version_id
+    WHERE faq_entries.embedding IS NOT NULL
+      AND faq_entries.is_published = true
+      AND (
+        faq_entries.version_id IS NULL
+        OR regulation_versions.status = 'active'
+      )
+    ORDER BY faq_entries.embedding <=> ${vecStr}::vector
     LIMIT 3
   `
 
   // 3. regulation_documents 시맨틱 검색 (top 5)
   const docResults = await sql`
-    SELECT id, section_title, content, metadata,
-      1 - (embedding <=> ${vecStr}::vector) as score
+    SELECT
+      regulation_documents.id,
+      regulation_documents.section_title,
+      regulation_documents.content,
+      regulation_documents.metadata,
+      1 - (regulation_documents.embedding <=> ${vecStr}::vector) as score
     FROM regulation_documents
-    WHERE embedding IS NOT NULL
-    ORDER BY embedding <=> ${vecStr}::vector
+    INNER JOIN regulation_versions
+      ON regulation_versions.id = regulation_documents.version_id
+    WHERE regulation_documents.embedding IS NOT NULL
+      AND regulation_versions.status = 'active'
+    ORDER BY regulation_documents.embedding <=> ${vecStr}::vector
     LIMIT 5
   `
 
