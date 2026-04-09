@@ -111,6 +111,37 @@
 
 ## 3. Target Operating Model
 
+### Two-Track Delivery Strategy
+
+이 프로젝트의 다음 단계는 하나의 큰 작업이 아니라 아래 두 트랙으로 분리해 추진한다.
+
+#### Track A: RAG Completion
+
+목표:
+
+- `regulation_documents` ingest 파이프라인 완성
+- 규정 원문 임베딩 생성
+- FAQ direct match와 regulation document 검색 충만도 점검
+- 챗봇 답변 품질 검증
+
+이 트랙은 "챗봇/규정 검색이 실제 운영 가능한 품질로 완성되었는가"를 다룬다.
+
+#### Track B: Admin & Content Operations
+
+목표:
+
+- 운영자가 규정 버전과 FAQ를 관리할 수 있는 Admin 구축
+- 콘텐츠 리비전/승인/감사 로그 추가
+- Draft/Review/Published 운영 흐름 구축
+
+이 트랙은 "완성된 RAG와 콘텐츠를 누가 어떻게 계속 운영할 것인가"를 다룬다.
+
+#### Execution Order
+
+1. Track A를 먼저 안정화한다.
+2. Track B는 Track A의 결과물을 운영할 수 있게 만드는 방향으로 잇는다.
+3. 단, 사용자 영향이 없는 Admin 기반 공사는 Track A와 병렬로 일부 진행 가능하다.
+
 ### Service Topology
 
 ```text
@@ -478,7 +509,65 @@ Validation rules:
 
 ---
 
-## 11. Testing Strategy
+## 11. Track A: RAG Completion Scope
+
+### Current Status
+
+- FAQ 스키마와 임베딩 스크립트는 존재한다.
+- RAG 서비스와 `/api/chat` 경로는 존재한다.
+- `regulation_documents` 테이블은 존재한다.
+- 하지만 실제 PDF/MD 원문 -> 청킹 -> 저장 -> 임베딩 -> 검색 품질 검증의 end-to-end 파이프라인은 아직 완료되지 않았다.
+
+### Required Deliverables
+
+1. PDF/MD ingest script
+2. chunking strategy definition
+3. `regulation_documents` population
+4. regulation embedding generation
+5. retrieval quality checks
+6. chatbot answer evaluation set
+
+### Acceptance Criteria
+
+- [ ] 2026 규정 원문이 `regulation_documents`에 실제 chunk로 저장된다.
+- [ ] chunk마다 `source_file`, `section_title`, `metadata.article_ref`를 최대한 채운다.
+- [ ] 챗봇 질문 시 FAQ-only가 아니라 regulation chunk도 근거로 반환 가능하다.
+- [ ] 최소 샘플 질문 세트로 답변 품질을 점검할 수 있다.
+- [ ] direct FAQ match와 regulation retrieval의 사용 비율/결과 품질을 파악할 수 있다.
+
+### Known Constraint
+
+현재 로컬 실행 환경에서 DB 접속 대상이 `localhost:5432`를 바라보며, 이 세션에서는 연결이 거부되었다. 따라서 Track A의 첫 작업은 "DB 기준선 확인"을 포함해야 한다.
+
+---
+
+## 12. Track B: Admin & Content Operations Scope
+
+### Current Status
+
+- `admin_users` 및 `requireAdmin`은 이미 존재한다.
+- 공개 웹과 규정 화면은 이미 운영 중이다.
+- Admin UI와 Admin CRUD, revision/approval/audit 계층은 아직 없다.
+
+### Required Deliverables
+
+1. 운영용 테이블
+2. Admin CRUD API
+3. 규정 버전 관리 흐름
+4. FAQ 관리 흐름
+5. review / publish 흐름
+6. audit log
+
+### Acceptance Criteria
+
+- [ ] 운영자가 FAQ와 규정 버전을 직접 수정할 수 있다.
+- [ ] 변경 사항은 revision과 audit log를 남긴다.
+- [ ] published만 공개 웹에 반영된다.
+- [ ] 규정 버전 active 전환 전에 review 단계가 존재한다.
+
+---
+
+## 13. Testing Strategy
 
 현재 상태:
 
@@ -499,9 +588,23 @@ Validation rules:
 5. Manual browser verification
    - `index.html`, `regulation.html`, `admin`
 
+Track A 추가 검증:
+
+6. Retrieval quality
+   - 대표 질문 세트에 대한 FAQ/direct/RAG 응답 확인
+7. Source quality
+   - citation에 실제 조항/원문 출처가 포함되는지 확인
+
+Track B 추가 검증:
+
+8. Publish workflow
+   - draft/review/published 상태 전환
+9. Access control
+   - admin/non-admin 권한 차단
+
 ---
 
-## 12. Risks and Mitigations
+## 14. Risks and Mitigations
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
@@ -511,13 +614,15 @@ Validation rules:
 | Preview 없이 게시 | High | published 전 review gate 강제 |
 | Family mode 회귀 | Medium | 기존 Supabase sync 경로 untouched 원칙 |
 | 문서와 코드 드리프트 | Medium | SPEC/PLAN을 living docs로 유지 |
+| RAG가 FAQ-only 상태로 머무름 | High | regulation ingest와 retrieval 검증 선행 |
+| 로컬 DB 기준선 확인 실패 | Medium | Track A 시작 시 DB 연결 상태 확인 및 환경 정리 |
 
 ---
 
-## 13. Open Questions
+## 15. Open Questions
 
 1. Admin UI를 1차에 Vanilla로 만들지, 별도 소형 앱으로 분리할지
 2. 운영 콘텐츠 저장 포맷을 `body_md` 중심으로 할지 `body_json` 블록 중심으로 할지
 3. Preview 확인을 Vercel Preview만으로 할지, Admin 내부 초안 렌더를 병행할지
 4. 규정 PDF 업로드 저장소를 Supabase Storage로 둘지, 다른 스토리지로 분리할지
-
+5. 로컬 개발용 DB를 계속 쓸지, 원격 Supabase 개발 DB를 기본으로 전환할지

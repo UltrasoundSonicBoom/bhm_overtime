@@ -3610,13 +3610,24 @@ html[data-theme="neo"] .pay-delta.down { background: rgba(253, 121, 168, 0.2); c
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   cursor: pointer;
   position: relative;
+  height: 100%;
+}
+.pay-bar-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  position: relative;
+  width: 100%;
 }
 .pay-bar {
   width: 100%;
   border-radius: 6px 6px 4px 4px;
+  background: var(--accent-indigo);
   transition: all 0.3s ease;
   min-height: 8px;
 }
@@ -3629,18 +3640,13 @@ html[data-theme="neo"] .pay-bar {
   color: var(--text-muted);
   font-weight: 500;
 }
-.pay-bar-col .pay-bar-value {
+.pay-bar-value {
   font-size: var(--text-label-small);
   font-weight: 700;
   color: var(--text-primary);
-  position: absolute;
-  top: -18px;
   white-space: nowrap;
-  opacity: 0;
-  transition: opacity 0.2s;
+  margin-bottom: 2px;
 }
-.pay-bar-col:hover .pay-bar-value,
-.pay-bar-col.current .pay-bar-value { opacity: 1; }
 .pay-bar-col.current .pay-bar {
   border: 2px solid var(--accent-indigo);
 }
@@ -3817,6 +3823,10 @@ html[data-theme="neo"] .pay-hbar-track {
   font-size: var(--text-label-small);
   font-weight: 600;
 }
+.pay-hbar-diff.up { color: var(--accent-emerald); }
+.pay-hbar-diff.down { color: var(--accent-rose); }
+.cg-diff.up { color: var(--accent-emerald); }
+.cg-diff.down { color: var(--accent-rose); }
 
 /* ── Month Slider ── */
 .pay-month-slider {
@@ -3880,12 +3890,12 @@ html[data-theme="neo"] .pay-month-slider button {
   font-size: var(--text-label-small);
 }
 
-/* ── Net Pay Card (inverted) ── */
+/* ── Net Pay Card (indigo/violet gradient) ── */
 .pay-net-card {
-  background: var(--text-primary);
-  color: var(--bg-primary);
+  background: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
+  color: #fff;
   border-radius: var(--radius-lg);
-  padding: 20px;
+  padding: 24px 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -3893,16 +3903,18 @@ html[data-theme="neo"] .pay-month-slider button {
   margin-bottom: 12px;
 }
 html[data-theme="neo"] .pay-net-card {
+  background: #a5b4fc;
+  color: #1a1a1a;
   border: 3px solid #1a1a1a;
   box-shadow: 4px 4px 0px #1a1a1a;
 }
 .pay-net-label {
-  font-size: var(--text-body-small);
-  opacity: 0.7;
-  margin-bottom: 4px;
+  font-size: var(--text-body-normal);
+  opacity: 0.9;
+  margin-bottom: 6px;
 }
 .pay-net-amount {
-  font-size: 1.8rem;
+  font-size: 2rem;
   font-weight: 800;
   letter-spacing: -0.5px;
   margin-bottom: 4px;
@@ -3910,26 +3922,77 @@ html[data-theme="neo"] .pay-net-card {
 .pay-net-diff {
   font-size: var(--text-body-normal);
   font-weight: 600;
-  padding: 2px 10px;
+  padding: 3px 12px;
   border-radius: 12px;
-  margin-top: 4px;
+  margin-top: 6px;
 }
 .pay-net-diff.up {
-  background: rgba(52, 199, 89, 0.2);
-  color: #34c759;
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
 }
 .pay-net-diff.down {
-  background: rgba(255, 59, 48, 0.15);
-  color: #ff3b30;
+  background: rgba(255, 59, 48, 0.25);
+  color: #fecaca;
+}
+html[data-theme="neo"] .pay-net-diff.up {
+  background: rgba(0, 0, 0, 0.1);
+  color: #1a1a1a;
+}
+html[data-theme="neo"] .pay-net-diff.down {
+  background: rgba(220, 38, 38, 0.15);
+  color: #991b1b;
 }
 .pay-net-card .pay-stats-row {
   width: 100%;
-  margin-top: 12px;
-  border-top: 1px solid rgba(255,255,255,0.15);
-  padding-top: 12px;
+  margin-top: 14px;
+  border-top: 1px solid rgba(255,255,255,0.2);
+  padding-top: 14px;
 }
-.pay-net-card .pay-stat-card {
-  color: var(--bg-primary);
+/* 지급합계 — emerald (보색) */
+.pay-net-card .pay-stat-card.stat-gross {
+  background: rgba(16, 185, 129, 0.25);
+  border-radius: var(--radius-md);
+  padding: 10px 8px;
+  color: #d1fae5;
+}
+/* 공제합계 — amber/orange (보색) */
+.pay-net-card .pay-stat-card.stat-deduction {
+  background: rgba(251, 146, 60, 0.25);
+  border-radius: var(--radius-md);
+  padding: 10px 8px;
+  color: #ffedd5;
+}
+html[data-theme="neo"] .pay-net-card .pay-stat-card.stat-gross {
+  background: #d1fae5;
+  color: #065f46;
+  border: 2px solid #1a1a1a;
+}
+html[data-theme="neo"] .pay-net-card .pay-stat-card.stat-deduction {
+  background: #ffedd5;
+  color: #9a3412;
+  border: 2px solid #1a1a1a;
+}
+/* 업로드 인라인 버튼 */
+.pay-upload-btn {
+  min-width: 36px;
+  height: 36px;
+  padding: 6px 10px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--border-glass);
+  background: var(--bg-glass);
+  cursor: pointer;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.pay-upload-btn:hover {
+  border-color: var(--accent-emerald);
+  background: var(--bg-glass-hover);
+}
+html[data-theme="neo"] .pay-upload-btn {
+  border: 2px solid #1a1a1a;
 }
 
 /* ── Upload Zone ── */
@@ -3946,7 +4009,8 @@ html[data-theme="neo"] .pay-net-card {
 html[data-theme="neo"] .pay-upload-zone {
   border: 2.5px dashed #1a1a1a;
 }
-.pay-upload-zone:hover {
+.pay-upload-zone:hover,
+.pay-upload-zone.dragover {
   border-color: var(--accent-indigo);
   background: var(--bg-glass-hover);
 }
