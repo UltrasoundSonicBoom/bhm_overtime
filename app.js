@@ -89,8 +89,9 @@ function initHomeTab() {
   if (totalAnnual > 0) {
     const summary = LEAVE.calcAnnualSummary(year, totalAnnual);
     const pct = summary.usagePercent;
+    const otNote = summary.otEarnedDays > 0 ? ` (시간외 ${summary.otEarnedDays}일 회복)` : '';
     leaveStatsEl.innerHTML = `
-      <div class="home-stat-row"><span class="home-stat-label">연차</span><span class="home-stat-value emerald">${summary.usedAnnual} / ${summary.totalAnnual}일</span></div>
+      <div class="home-stat-row"><span class="home-stat-label">연차</span><span class="home-stat-value emerald">${summary.effectiveUsed} / ${summary.totalAnnual}일${otNote}</span></div>
       <div class="home-progress-wrap"><div class="home-progress-bar" style="width:${pct}%"></div></div>
     `;
     leaveBody.style.display = '';
@@ -3705,15 +3706,22 @@ async function handlePayslipUpload(file) {
     const ym = SALARY_PARSER.parsePeriodYearMonth(parsed);
     if (!ym) throw new Error('급여 기간을 인식하지 못했습니다. 파일을 확인해주세요.');
 
-    SALARY_PARSER.saveMonthlyData(ym.year, ym.month, parsed);
+    SALARY_PARSER.saveMonthlyData(ym.year, ym.month, parsed, ym.type);
     const stableRes = SALARY_PARSER.applyStableItemsToProfile(parsed);
     const profileUpdated = stableRes && stableRes.changed;
 
-    renderPayslip(parsed, ym, profileUpdated);
+    // 자동 검증 (콘솔에 결과 출력)
+    if (typeof SALARY_TEST !== 'undefined') {
+      SALARY_TEST.postParseValidation(parsed);
+      SALARY_TEST.validateStorage(parsed, ym);
+      SALARY_TEST.validateProfileApply(parsed, stableRes);
+    }
+
+    renderPayslip(parsed, ym, profileUpdated, stableRes);
     renderVerification(parsed);
     // 급여명세서 관리 뷰 갱신 (업로드한 월 선택)
     const mgmtContainer = document.getElementById('payslipMgmtView');
-    if (mgmtContainer) mgmtContainer.dataset.activeMonth = `${ym.year}_${ym.month}`;
+    if (mgmtContainer) mgmtContainer.dataset.activeMonth = `${ym.year}_${ym.month}_${ym.type || '급여'}`;
     renderPayslipMgmt();
   } catch (e) {
     resultEl.textContent = '';
@@ -3887,7 +3895,7 @@ async function handleProfilePayslipUpload(file) {
       ym = { year: now.getFullYear(), month: now.getMonth() + 1 };
       console.warn('[PayslipUpload] 기간 인식 실패 — 현재 월로 저장:', ym);
     }
-    SALARY_PARSER.saveMonthlyData(ym.year, ym.month, parsed);
+    SALARY_PARSER.saveMonthlyData(ym.year, ym.month, parsed, ym.type);
 
   } catch (e) {
     progressEl.textContent = '';
@@ -3900,23 +3908,48 @@ async function handleProfilePayslipUpload(file) {
   }
 }
 
-function renderPayslip(data, ym, profileUpdated) {
+function renderPayslip(data, ym, profileUpdated, stableRes) {
   const resultEl = document.getElementById('payslipResult');
-  const fmt = n => n > 0 ? n.toLocaleString() + '원' : '-';
+  const fmt = n => n != null && n !== 0 ? n.toLocaleString() + '원' : '-';
   const info = data.employeeInfo;
   const meta = data.metadata;
+  const typeLabel = ym.type && ym.type !== '급여' ? ` (${ym.type})` : '';
 
   let html = `
     <div style="margin-bottom:12px; padding:10px 12px; background:var(--bg-hover); border-radius:8px; font-size:var(--text-body-normal); color:var(--text-muted);">
-      <strong style="color:var(--text-primary);">${ym.year}년 ${ym.month}월 급여명세서</strong>
+      <strong style="color:var(--text-primary);">${ym.year}년 ${ym.month}월 급여명세서${typeLabel}</strong>
       ${info.name ? `· ${info.name}` : ''}
       ${info.jobType ? `· ${info.jobType}` : ''}
       ${info.payGrade ? `· ${info.payGrade}` : ''}
       ${meta.payDate ? `<br>지급일: ${meta.payDate}` : ''}
     </div>`;
 
-  if (profileUpdated) {
+  if (profileUpdated && stableRes && stableRes.applied && stableRes.applied.length > 0) {
+    const warnings = stableRes.applied.filter(a => a.note && a.note.startsWith('⚠️'));
+    const normals = stableRes.applied.filter(a => !a.note || !a.note.startsWith('⚠️'));
+    if (normals.length > 0) {
+      const details = normals.map(a => `${a.name}${a.note ? ` (${a.note})` : ''}`).join(', ');
+      html += `<div class="warning-box" style="border-color:var(--accent-emerald); margin-bottom:8px;">✅ 자동 반영: ${details}</div>`;
+    }
+    warnings.forEach(w => {
+      html += `<div class="warning-box" style="border-color:var(--accent-amber); margin-bottom:8px;">${w.note}</div>`;
+    });
+  } else if (profileUpdated) {
     html += `<div class="warning-box" style="border-color:var(--accent-emerald); margin-bottom:8px;">✅ 조정급 등 변경되지 않는 항목을 내 정보에 자동 반영했습니다.</div>`;
+  }
+
+  // 파싱 신뢰도 경고
+  if (data._parseInfo) {
+    const pi = data._parseInfo;
+    if (pi.confidence < 70) {
+      html += `<div class="warning-box" style="border-color:var(--accent-amber); margin-bottom:8px;">⚠️ 파싱 정확도가 낮습니다 (${pi.confidence}/100). 항목과 금액을 직접 확인해주세요.${pi.method === 'textFallback' ? ' (텍스트 폴백 모드)' : ''}</div>`;
+    }
+    if (Math.abs(pi.grossDiff || 0) > 1 || Math.abs(pi.deductionDiff || 0) > 1) {
+      const details = [];
+      if (Math.abs(pi.grossDiff || 0) > 1) details.push('지급 ' + (pi.grossDiff > 0 ? '+' : '') + pi.grossDiff.toLocaleString() + '원');
+      if (Math.abs(pi.deductionDiff || 0) > 1) details.push('공제 ' + (pi.deductionDiff > 0 ? '+' : '') + pi.deductionDiff.toLocaleString() + '원');
+      html += `<div class="warning-box" style="border-color:var(--accent-rose); margin-bottom:8px;">❌ 항목 합산과 총액이 불일치합니다 (${details.join(', ')})</div>`;
+    }
   }
 
   // 지급 내역 테이블
@@ -4051,11 +4084,11 @@ function renderPayslipMgmt() {
 
   // ── 모든 월 데이터 로드 ──
   const allData = months.map(m => {
-    const d = SALARY_PARSER.loadMonthlyData(m.year, m.month);
-    return { year: m.year, month: m.month, data: d };
+    const d = SALARY_PARSER.loadMonthlyData(m.year, m.month, m.type);
+    return { year: m.year, month: m.month, type: m.type || '급여', data: d };
   }).filter(m => m.data);
 
-  const fmt = n => n != null && n > 0 ? n.toLocaleString() + '원' : '-';
+  const fmt = n => n != null && n !== 0 ? n.toLocaleString() + '원' : '-';
   const fmtSign = n => {
     if (n == null || n === 0) return '-';
     const prefix = n > 0 ? '+' : '';
@@ -4067,7 +4100,8 @@ function renderPayslipMgmt() {
 
   // ── 월별 카드 목록 (접이식) ──
   listEl.textContent = '';
-  allData.forEach(({ year, month, data }, idx) => {
+  allData.forEach(({ year, month, type, data }, idx) => {
+    const cardId = `payslipCard_${year}_${month}_${type}`;
     const card = document.createElement('div');
     card.className = 'card';
     card.style.marginBottom = '12px';
@@ -4076,7 +4110,7 @@ function renderPayslipMgmt() {
     const header = document.createElement('div');
     header.style.cssText = 'display:flex; justify-content:space-between; align-items:center; cursor:pointer; padding:4px 0;';
     header.addEventListener('click', () => {
-      const body = document.getElementById(`payslipCard_${year}_${month}`);
+      const body = document.getElementById(cardId);
       if (body) body.style.display = body.style.display === 'none' ? 'block' : 'none';
       const icon = header.querySelector('.toggle-icon');
       if (icon) icon.textContent = body.style.display === 'none' ? '▸' : '▾';
@@ -4091,7 +4125,8 @@ function renderPayslipMgmt() {
     left.appendChild(toggle);
     const monthLabel = document.createElement('span');
     monthLabel.style.cssText = 'font-weight:700; font-size:var(--text-body-large);';
-    monthLabel.textContent = `${year}년 ${month}월`;
+    const typeLabel = type !== '급여' ? ` (${type})` : '';
+    monthLabel.textContent = `${year}년 ${month}월${typeLabel}`;
     left.appendChild(monthLabel);
     header.appendChild(left);
 
@@ -4127,7 +4162,7 @@ function renderPayslipMgmt() {
 
     // 카드 바디 (접이식 — 첫 번째만 펼침)
     const body = document.createElement('div');
-    body.id = `payslipCard_${year}_${month}`;
+    body.id = cardId;
     body.style.display = 'none';
     body.style.cssText += ';margin-top:12px; border-top:1px solid var(--border-glass); padding-top:12px;';
 
@@ -4230,7 +4265,7 @@ function renderPayslipMgmt() {
     delBtn.className = 'btn btn-outline';
     delBtn.style.cssText = 'font-size:var(--text-body-small); padding:4px 10px; color:var(--accent-rose); border-color:var(--accent-rose);';
     delBtn.textContent = '🗑 삭제';
-    delBtn.addEventListener('click', () => deletePayslipMonth(year, month));
+    delBtn.addEventListener('click', () => deletePayslipMonth(year, month, type));
     delWrap.appendChild(delBtn);
     body.appendChild(delWrap);
 
@@ -4651,9 +4686,11 @@ function renderOvertimeAnalysis(container, data) {
   container.appendChild(section);
 }
 
-function deletePayslipMonth(year, month) {
-  if (!confirm(`${year}년 ${month}월 급여명세서를 삭제하시겠습니까?`)) return;
-  const key = `payslip_${year}_${String(month).padStart(2, '0')}`;
+function deletePayslipMonth(year, month, type) {
+  const typeLabel = type && type !== '급여' ? ` (${type})` : '';
+  if (!confirm(`${year}년 ${month}월${typeLabel} 급여명세서를 삭제하시겠습니까?`)) return;
+  const base = `payslip_${year}_${String(month).padStart(2, '0')}`;
+  const key = (type && type !== '급여') ? `${base}_${type}` : base;
   localStorage.removeItem(key);
   renderPayslipMgmt();
 }
@@ -4736,9 +4773,22 @@ function renderLvDashboard(year) {
   const checkup = usage['checkup'] || 0;
   const blood = usage['blood_donation'] || 0;
 
+  // 시간외 8h → 연차 1일 회복
+  let otEarnedDays = 0;
+  let otTotalHours = 0;
+  if (typeof OVERTIME !== 'undefined') {
+    for (let m = 1; m <= 12; m++) {
+      const stats = OVERTIME.calcMonthlyStats(year, m);
+      otTotalHours += stats.overtimeHours || 0;
+    }
+    otEarnedDays = Math.floor(otTotalHours / 8);
+  }
+  const effectiveUsed = Math.max(0, Math.round((annualUsed - otEarnedDays) * 10) / 10);
+
   const items = [
-    { label: '연차', used: annualUsed, total: lvTotalAnnual || '?', key: true },
+    { label: '연차', used: effectiveUsed, total: lvTotalAnnual || '?', key: true },
     { label: '시간차', used: timeLeaveHours, total: null, suffix: 'h', show: timeLeaveHours > 0 },
+    { label: '시간외회복', used: otEarnedDays, total: null, suffix: '일', show: otEarnedDays > 0 },
     { label: '교육연수', used: eduTraining, total: 3 },
     { label: '필수교육', used: eduMandatory, total: 3 },
     { label: '검진휴가', used: checkup, total: 1 },
@@ -5260,8 +5310,9 @@ function onLvTypeChange() {
   } else if (typeInfo && typeInfo.usesAnnual) {
     if (lvTotalAnnual > 0) {
       const summary = LEAVE.calcAnnualSummary(year, lvTotalAnnual);
+      const otInfo = summary.otEarnedDays > 0 ? ` | 시간외회복: ${summary.otEarnedDays}일` : '';
       quotaBadge.innerHTML = `<div style="padding:6px 10px; border-radius:6px; background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.15); font-size:var(--text-body-normal);">
-        📅 연차 한도: ${lvTotalAnnual}일 | 사용: ${summary.usedAnnual}일 | <span style="color:var(--accent-emerald); font-weight:700;">잔여: ${summary.remainingAnnual}일</span>
+        📅 연차 한도: ${lvTotalAnnual}일 | 사용: ${summary.effectiveUsed}일${otInfo} | <span style="color:var(--accent-emerald); font-weight:700;">잔여: ${summary.remainingAnnual}일</span>
       </div>`;
     } else {
       quotaBadge.innerHTML = `<div style="padding:6px 10px; border-radius:6px; background:rgba(251,191,36,0.06); border:1px solid rgba(251,191,36,0.2); font-size:var(--text-body-normal); color:var(--text-primary); font-weight:600;">
@@ -5546,6 +5597,11 @@ function renderLvQuotaTable(year) {
     const barColor = q.overQuota ? 'var(--accent-rose)' : 'var(--accent-emerald)';
     const remainColor = q.overQuota ? 'var(--accent-rose)' : (q.quota !== null ? 'var(--accent-emerald)' : 'var(--text-muted)');
 
+    // 연차에 시간외 회복 표시
+    const otNote = (q.id === 'annual' && q.otEarnedDays > 0)
+      ? `<div style="font-size:11px; color:var(--accent-indigo); margin-top:3px;">시간외 ${q.otEarnedDays}일 회복 (실사용 ${q.rawUsed}일 - ${q.otEarnedDays}일)</div>`
+      : '';
+
     html += `<div style="padding:8px 10px; border-radius:8px; background:var(--bg-glass); border:1px solid var(--border-glass);">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
         <span style="font-weight:600; font-size:var(--text-body-large);">${q.label}</span>
@@ -5555,6 +5611,7 @@ function renderLvQuotaTable(year) {
         <div class="lv-progress-fill" style="width:${pct}%; height:100%; background:${barColor}"></div>
       </div>
       <div style="font-size:var(--text-body-normal); color:var(--text-muted);">${q.used}${q.quota !== null ? '/' + quotaText : '일'} 사용 ${q.overQuota ? '⚠️' : ''}</div>
+      ${otNote}
     </div>`;
   });
   html += '</div>';

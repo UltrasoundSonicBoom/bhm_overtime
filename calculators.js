@@ -555,9 +555,9 @@ const CALC = {
             '직책급': positionPay,
             '업무보조비': workSupportPay
         };
-        // 가족수당은 통상임금에 포함되지 않는 별도 지급 항목
-        if (familyAllowance > 0) 지급내역['가족수당(비통상임금)'] = familyAllowance;
-        if (childrenUnder6Pay > 0) 지급내역['6세이하자녀수당(비통상임금)'] = childrenUnder6Pay;
+        // 가족수당은 통상임금에 포함되지 않는 별도 지급 항목 (명세서 항목명과 일치시킴)
+        if (familyAllowance > 0) 지급내역['가족수당'] = familyAllowance;
+        if (childrenUnder6Pay > 0) 지급내역['6세이하자녀수당'] = childrenUnder6Pay;
 
         // 가계지원비: 11개월 지급 (3,4,5,6,7,8,10,11,12 + 설/추석월)
         if (isFamilySupportMonth) {

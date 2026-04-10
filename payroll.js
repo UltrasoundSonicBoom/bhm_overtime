@@ -1,158 +1,296 @@
 // ============================================
-// 병원 HR 종합 시스템 - 급여 Q&A 카드 모듈
+// 병원 HR 종합 시스템 - 급여 계산 모듈
 // ============================================
 
 const PAYROLL = {
   // ── 카테고리 정의 ──
   categories: [
-    { id: 'overtime', label: '수당·시간외', icon: '⏰' },
-    { id: 'leave',    label: '휴가·휴직',  icon: '📅' },
-    { id: 'career',   label: '승진·근속',  icon: '📈' },
-    { id: 'welfare',  label: '복지·감면',  icon: '🎁' },
+    { id: 'overtime', label: '시간외·수당', icon: '⏰' },
+    { id: 'deduction', label: '공제·보험', icon: '📋' },
+    { id: 'leave', label: '휴가·휴직', icon: '📅' },
+    { id: 'career', label: '승진·근속', icon: '📈' },
+    { id: 'welfare', label: '복지·감면', icon: '🎁' },
   ],
 
   cards: [
-    // ═══════════ 수당·시간외 ═══════════
+    // ═══════════ 시간외·수당 ═══════════
+
+    // ── 시간외근무 종합 계산기 ──
     {
-      id: 'overtime1h', category: 'overtime',
-      icon: '⏰', title: '시간외 1시간 수당',
-      desc: '연장근무 시급 × 150%',
-      calc(profile, wage) {
-        const r = CALC.calcOvertimePay(wage.hourlyRate, 1, 0, 0);
-        return {
-          value: CALC.formatCurrency(r.연장근무수당),
-          label: '연장근무 1시간 수당',
-          details: [
-            { key: '시급', val: CALC.formatCurrency(wage.hourlyRate) },
-            { key: '요율', val: '150%' },
-            { key: '계산', val: `${CALC.formatNumber(wage.hourlyRate)} × 1.5 × 1h` }
-          ]
-        };
-      }
-    },
-    {
-      id: 'holidayWork', category: 'overtime',
-      icon: '🔴', title: '휴일근무 하면 얼마?',
-      desc: '휴일근무 8시간 기준 수당',
+      id: 'overtimeCalc', category: 'overtime',
+      icon: '⏰', title: '시간외근무 수당 계산',
+      desc: '연장·야간·휴일 통합 계산',
       hasInput: true,
       calc(profile, wage, inputs) {
-        const hours = inputs.hours || 8;
-        const r = CALC.calcOvertimePay(wage.hourlyRate, 0, 0, hours);
-        const holBase = Math.min(hours, 8);
-        const holOver = Math.max(hours - 8, 0);
+        const ext = inputs.extHours || 0;
+        const ngt = inputs.nightHours || 0;
+        const hol = inputs.holHours || 0;
+        const holNgt = inputs.holNightHours || 0;
+        const rate = wage.hourlyRate;
+        const rates = DATA.allowances.overtimeRates;
+
+        const extPay = Math.round(rate * rates.extended * ext);
+        const ngtPay = Math.round(rate * rates.night * ngt);
+        const holBase = Math.min(hol, 8);
+        const holOver = Math.max(hol - 8, 0);
+        const holPay = Math.round(rate * rates.holiday * holBase)
+                     + Math.round(rate * rates.holidayOver8 * holOver);
+        const holNgtPay = Math.round(rate * rates.holidayNight * holNgt);
+        const total = extPay + ngtPay + holPay + holNgtPay;
+
         const details = [
-          { key: '시급', val: CALC.formatCurrency(wage.hourlyRate) },
-          { key: '8h 이내 (150%)', val: `${CALC.formatNumber(wage.hourlyRate)} × 1.5 × ${holBase}h = ${CALC.formatCurrency(Math.round(wage.hourlyRate * 1.5 * holBase))}` }
+          { key: '통상시급 (월급÷209h)', val: CALC.formatCurrency(rate) },
         ];
-        if (holOver > 0) {
-          details.push({ key: '8h 초과 (200%)', val: `${CALC.formatNumber(wage.hourlyRate)} × 2.0 × ${holOver}h = ${CALC.formatCurrency(Math.round(wage.hourlyRate * 2.0 * holOver))}` });
+        if (ext > 0) details.push({ key: '연장 ' + ext + 'h \u00d7 ' + CALC.formatNumber(rate) + ' \u00d7 150%', val: CALC.formatCurrency(extPay) });
+        if (ngt > 0) details.push({ key: '야간 ' + ngt + 'h \u00d7 ' + CALC.formatNumber(rate) + ' \u00d7 200%', val: CALC.formatCurrency(ngtPay) });
+        if (hol > 0) {
+          if (holOver > 0) {
+            details.push({ key: '휴일 ' + holBase + 'h \u00d7 150% + ' + holOver + 'h \u00d7 200%', val: CALC.formatCurrency(holPay) });
+          } else {
+            details.push({ key: '휴일 ' + hol + 'h \u00d7 ' + CALC.formatNumber(rate) + ' \u00d7 150%', val: CALC.formatCurrency(holPay) });
+          }
         }
-        return {
-          value: CALC.formatCurrency(r.휴일근무수당),
-          label: `휴일근무 ${hours}시간 수당`,
-          details
-        };
+        if (holNgt > 0) details.push({ key: '휴일야간 ' + holNgt + 'h \u00d7 ' + CALC.formatNumber(rate) + ' \u00d7 200%', val: CALC.formatCurrency(holNgtPay) });
+        details.push({ key: '합계', val: CALC.formatCurrency(total) });
+        details.push({ key: '산정 기준', val: '취업규칙 제34조, 제47조 / 15분 단위 절삭' });
+
+        return { value: CALC.formatCurrency(total), label: '시간외근무 수당 합계', details };
       },
       renderInput() {
-        return `<div class="form-group" style="margin-top:12px;">
-          <label>휴일근무 시간</label>
-          <input type="number" id="qaHolidayHours" value="8" min="1" max="24" onchange="PAYROLL.recalc('holidayWork')">
-        </div>`;
+        return '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px;">'
+          + '<div class="form-group"><label>연장근무 (h)</label>'
+          + '<input type="number" id="qaExtHours" value="1" min="0" max="100" step="0.25" onchange="PAYROLL.recalc(\'overtimeCalc\')"></div>'
+          + '<div class="form-group"><label>야간근무 (h)</label>'
+          + '<input type="number" id="qaNightHours" value="0" min="0" max="100" step="0.25" onchange="PAYROLL.recalc(\'overtimeCalc\')"></div>'
+          + '<div class="form-group"><label>휴일근무 (h)</label>'
+          + '<input type="number" id="qaHolHours" value="0" min="0" max="24" step="0.25" onchange="PAYROLL.recalc(\'overtimeCalc\')"></div>'
+          + '<div class="form-group"><label>휴일야간 (h)</label>'
+          + '<input type="number" id="qaHolNightHours" value="0" min="0" max="24" step="0.25" onchange="PAYROLL.recalc(\'overtimeCalc\')"></div>'
+          + '</div>';
       },
       getInputs() {
-        const el = document.getElementById('qaHolidayHours');
-        return { hours: el ? parseInt(el.value) || 8 : 8 };
+        return {
+          extHours: parseFloat(document.getElementById('qaExtHours')?.value) || 0,
+          nightHours: parseFloat(document.getElementById('qaNightHours')?.value) || 0,
+          holHours: parseFloat(document.getElementById('qaHolHours')?.value) || 0,
+          holNightHours: parseFloat(document.getElementById('qaHolNightHours')?.value) || 0
+        };
       }
     },
+
+    // ── 야간근무 가산금 + 리커버리데이 ──
     {
       id: 'nightShift', category: 'overtime',
-      icon: '🌙', title: '야간근무 N회 수당',
-      desc: '가산금 + 리커버리데이 발생 여부',
+      icon: '🌙', title: '야간근무 가산금',
+      desc: '회당 1만원 + 리커버리데이 발생',
       hasInput: true,
       calc(profile, wage, inputs) {
         const count = inputs.count || 7;
-        const r = CALC.calcNightShiftBonus(count);
+        const prevCumulative = (profile && profile.nightShiftsUnrewarded != null)
+          ? profile.nightShiftsUnrewarded : 0;
+        const r = CALC.calcNightShiftBonus(count, prevCumulative);
         const details = [
-          { key: '야간근무 횟수', val: `${count}회` },
-          { key: '가산금 (회당 1만원)', val: CALC.formatCurrency(r.야간근무가산금) },
-          { key: '리커버리데이', val: r.리커버리데이 > 0 ? `${r.리커버리데이}일 발생` : '해당없음' },
+          { key: '야간근무 횟수', val: count + '회' },
+          { key: '가산금 (' + count + '회 \u00d7 ' + CALC.formatNumber(DATA.allowances.nightShiftBonus) + ')', val: CALC.formatCurrency(r.야간근무가산금) },
+          { key: '리커버리데이', val: r.리커버리데이 > 0 ? r.리커버리데이 + '일 발생' : '해당없음 (7회 미만)' },
+          { key: '이월 누적', val: prevCumulative + '회 \u2192 정산 후 ' + r.누적리커버리데이 + '회' },
+          { key: '기준', val: '당월 7일\u2191 \u2192 1일, 누적 ' + DATA.recoveryDay.nurseCumulativeTrigger + '일\u2191 \u2192 1일 추가' },
         ];
-        if (r.초과경고) details.push({ key: '경고', val: r.초과경고 });
+        if (r.초과경고) details.push({ key: '\u26a0\ufe0f 경고', val: r.초과경고 });
         return {
           value: CALC.formatCurrency(r.야간근무가산금),
-          label: `야간 ${count}회 가산금` + (r.리커버리데이 > 0 ? ` + 리커버리 ${r.리커버리데이}일` : ''),
+          label: '야간 ' + count + '회 가산금' + (r.리커버리데이 > 0 ? ' + 리커버리 ' + r.리커버리데이 + '일' : ''),
           details
         };
       },
       renderInput() {
-        return `<div class="form-group" style="margin-top:12px;">
-          <label>이번 달 야간근무 횟수</label>
-          <input type="number" id="qaNightCount" value="7" min="0" max="15" onchange="PAYROLL.recalc('nightShift')">
-        </div>`;
+        return '<div class="form-group" style="margin-top:12px;">'
+          + '<label>이번 달 야간근무 횟수</label>'
+          + '<input type="number" id="qaNightCount" value="7" min="0" max="15" onchange="PAYROLL.recalc(\'nightShift\')">'
+          + '</div>';
       },
       getInputs() {
-        const el = document.getElementById('qaNightCount');
+        var el = document.getElementById('qaNightCount');
         return { count: el ? parseInt(el.value) || 7 : 7 };
       }
     },
+
+    // ── 온콜 수당 종합 ──
     {
       id: 'oncall', category: 'overtime',
-      icon: '📞', title: '온콜 1회 출근하면?',
-      desc: '대기수당 + 교통비 + 시간외 합산',
+      icon: '📞', title: '온콜 수당 계산',
+      desc: '대기수당 + 교통비 + 시간외 통합',
       hasInput: true,
       calc(profile, wage, inputs) {
         const standby = inputs.standby || 1;
+        const callouts = inputs.callouts || 1;
         const hours = inputs.hours || 2;
-        const r = CALC.calcOnCallPay(wage.hourlyRate, standby, 1, hours, false);
+        const isNight = inputs.isNight || false;
+        const r = CALC.calcOnCallPay(wage.hourlyRate, standby, callouts, hours, isNight);
+        const commuteH = DATA.allowances.onCallCommuteHours;
+        const rateLabel = isNight ? '200%' : '150%';
         return {
           value: CALC.formatCurrency(r.합계),
-          label: `온콜 대기${standby}일 + 출근1회 (${hours}h 근무)`,
+          label: '온콜 대기' + standby + '일 + 출근' + callouts + '회',
           details: [
-            { key: '온콜대기수당', val: CALC.formatCurrency(r.온콜대기수당) + ` (${standby}일 × 1만원)` },
-            { key: '온콜교통비', val: CALC.formatCurrency(r.온콜교통비) + ' (1회 5만원)' },
-            { key: '시간외근무수당', val: CALC.formatCurrency(r.시간외근무수당) + ` (근무${hours}h+출퇴근2h)` },
+            { key: '대기수당 (' + standby + '일 \u00d7 ' + CALC.formatNumber(DATA.allowances.onCallStandby) + ')', val: CALC.formatCurrency(r.온콜대기수당) },
+            { key: '교통비 (' + callouts + '회 \u00d7 ' + CALC.formatNumber(DATA.allowances.onCallTransport) + ')', val: CALC.formatCurrency(r.온콜교통비) },
+            { key: '시간외 (근무' + hours + 'h+출퇴근' + commuteH + 'h)\u00d7' + rateLabel + '\u00d7' + callouts + '회', val: CALC.formatCurrency(r.시간외근무수당) },
+            { key: '합계', val: CALC.formatCurrency(r.합계) },
+            { key: '야간 포함 여부', val: isNight ? '예 (22:00~06:00 \u2192 200%)' : '아니오 (주간 \u2192 150%)' },
           ]
         };
       },
       renderInput() {
-        return `<div style="display:flex; gap:8px; margin-top:12px;">
-          <div class="form-group" style="flex:1;">
-            <label>대기 일수</label>
-            <input type="number" id="qaOncallStandby" value="1" min="0" max="7" onchange="PAYROLL.recalc('oncall')">
-          </div>
-          <div class="form-group" style="flex:1;">
-            <label>실 근무시간</label>
-            <input type="number" id="qaOncallHours" value="2" min="0" max="12" onchange="PAYROLL.recalc('oncall')">
-          </div>
-        </div>`;
+        return '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px;">'
+          + '<div class="form-group"><label>대기 일수</label>'
+          + '<input type="number" id="qaOncallStandby" value="1" min="0" max="7" onchange="PAYROLL.recalc(\'oncall\')"></div>'
+          + '<div class="form-group"><label>출근 횟수</label>'
+          + '<input type="number" id="qaOncallCallouts" value="1" min="0" max="7" onchange="PAYROLL.recalc(\'oncall\')"></div>'
+          + '<div class="form-group"><label>실 근무시간</label>'
+          + '<input type="number" id="qaOncallHours" value="2" min="0" max="12" onchange="PAYROLL.recalc(\'oncall\')"></div>'
+          + '<div class="form-group"><label style="font-size:12px;">야간 포함</label>'
+          + '<select id="qaOncallNight" onchange="PAYROLL.recalc(\'oncall\')" style="padding:8px; border:1.5px solid var(--border); border-radius:8px; font-size:var(--text-body-normal); background:var(--bg-card);">'
+          + '<option value="0">아니오 (150%)</option>'
+          + '<option value="1">예 (200%)</option>'
+          + '</select></div>'
+          + '</div>';
       },
       getInputs() {
         return {
           standby: parseInt(document.getElementById('qaOncallStandby')?.value) || 1,
-          hours: parseInt(document.getElementById('qaOncallHours')?.value) || 2
+          callouts: parseInt(document.getElementById('qaOncallCallouts')?.value) || 1,
+          hours: parseInt(document.getElementById('qaOncallHours')?.value) || 2,
+          isNight: document.getElementById('qaOncallNight')?.value === '1'
         };
       }
     },
+
+    // ── 일직/숙직비 ──
+    {
+      id: 'dutyPay', category: 'overtime',
+      icon: '🛏️', title: '일직/숙직비',
+      desc: '일당 5만원 \u00d7 횟수',
+      hasInput: true,
+      calc(profile, wage, inputs) {
+        const count = inputs.count || 1;
+        const perDay = DATA.allowances.dutyAllowance;
+        const total = perDay * count;
+        return {
+          value: CALC.formatCurrency(total),
+          label: '일직/숙직 ' + count + '회 수당',
+          details: [
+            { key: '일당', val: CALC.formatCurrency(perDay) },
+            { key: '횟수', val: count + '회' },
+            { key: '합계', val: CALC.formatCurrency(total) }
+          ]
+        };
+      },
+      renderInput() {
+        return '<div class="form-group" style="margin-top:12px;">'
+          + '<label>이번 달 일직/숙직 횟수</label>'
+          + '<input type="number" id="qaDutyCount" value="1" min="1" max="10" onchange="PAYROLL.recalc(\'dutyPay\')">'
+          + '</div>';
+      },
+      getInputs() {
+        var el = document.getElementById('qaDutyCount');
+        return { count: el ? parseInt(el.value) || 1 : 1 };
+      }
+    },
+
+    // ── 가족수당 ──
     {
       id: 'familyAllowance', category: 'overtime',
-      icon: '👨‍👩‍👧', title: '가족수당 계산',
-      desc: '가족·자녀 수 기준 (6세 이하 별도)',
+      icon: '👨‍👩‍👧', title: '가족수당',
+      desc: '배우자·자녀·6세이하 별도',
       calc(profile, wage) {
         const r = CALC.calcFamilyAllowance(
           parseInt(profile.numFamily) || 0,
           parseInt(profile.numChildren) || 0
         );
         const under6Pay = parseInt(profile.childrenUnder6Pay) || 0;
-        const details = Object.entries(r.breakdown).map(([key, val]) => ({
-          key, val: CALC.formatCurrency(val)
-        }));
-        if (under6Pay > 0) {
-          details.push({ key: '6세 이하 자녀수당', val: CALC.formatCurrency(under6Pay) });
+        const fa = DATA.familyAllowance;
+        const details = [];
+        if (Object.keys(r.breakdown).length > 0) {
+          Object.entries(r.breakdown).forEach(function(entry) {
+            details.push({ key: entry[0], val: CALC.formatCurrency(entry[1]) });
+          });
         }
+        if (under6Pay > 0) {
+          details.push({ key: '6세이하자녀수당', val: CALC.formatCurrency(under6Pay) });
+        }
+        details.push({ key: '기준', val: '배우자 ' + CALC.formatNumber(fa.spouse) + ', 자녀1 ' + CALC.formatNumber(fa.child1) + ', 자녀2 ' + CALC.formatNumber(fa.child2) + ', 자녀3+ ' + CALC.formatNumber(fa.child3Plus) });
         return {
           value: CALC.formatCurrency(r.월수당 + under6Pay),
-          label: '월 가족수당 합계',
-          details: details.length > 0 ? details : [{ key: '해당', val: '없음 (가족정보 미입력)' }]
+          label: '월 가족수당 (비통상임금)',
+          details: details.length > 1 ? details : [{ key: '해당', val: '없음 (가족정보 미입력)' }]
+        };
+      }
+    },
+
+    // ═══════════ 공제·보험 ═══════════
+
+    // ── 4대보험 + 세금 공제 시뮬레이션 ──
+    {
+      id: 'deductionCalc', category: 'deduction',
+      icon: '🏛️', title: '4대보험·세금 공제',
+      desc: '급여총액 기준 공제 시뮬레이션',
+      calc(profile, wage) {
+        var grossPay = wage.monthlyWage;
+        var ded = DATA.deductions || {};
+        var healthIns = Math.round(grossPay * (ded.nationalHealth || 0.03545));
+        var longTermCare = Math.round(healthIns * (ded.longTermCare || 0.1295));
+        var pension = Math.round(grossPay * (ded.nationalPension || 0.045));
+        var employment = Math.round(grossPay * (ded.employmentInsurance || 0.009));
+        var mealDed = 22 * (ded.mealDeduction || 3000);
+        var insTotal = healthIns + longTermCare + pension + employment;
+
+        // 소득세 근사
+        var taxableIncome = grossPay - pension - healthIns - longTermCare - employment;
+        var incomeTax = 0;
+        if (taxableIncome > 10000000) incomeTax = Math.round(taxableIncome * 0.15);
+        else if (taxableIncome > 5000000) incomeTax = Math.round(taxableIncome * 0.10);
+        else if (taxableIncome > 3000000) incomeTax = Math.round(taxableIncome * 0.06);
+        else incomeTax = Math.round(taxableIncome * 0.03);
+        var residentTax = Math.round(incomeTax * 0.1);
+        var totalDed = insTotal + mealDed + incomeTax + residentTax;
+
+        return {
+          value: CALC.formatCurrency(totalDed),
+          label: '통상임금 ' + CALC.formatCurrency(grossPay) + ' 기준 예상 공제',
+          details: [
+            { key: '국민건강보험 (3.545%)', val: CALC.formatCurrency(healthIns) },
+            { key: '장기요양보험 (건보\u00d712.95%)', val: CALC.formatCurrency(longTermCare) },
+            { key: '국민연금 (4.5%)', val: CALC.formatCurrency(pension) },
+            { key: '고용보험 (0.9%)', val: CALC.formatCurrency(employment) },
+            { key: '4대보험 소계', val: CALC.formatCurrency(insTotal) },
+            { key: '식대공제 (22일\u00d73,000)', val: CALC.formatCurrency(mealDed) },
+            { key: '소득세 (근사)', val: CALC.formatCurrency(incomeTax) },
+            { key: '주민세 (소득세\u00d710%)', val: CALC.formatCurrency(residentTax) },
+            { key: '공제 합계', val: CALC.formatCurrency(totalDed) },
+            { key: '참고', val: '사학연금부담금·노조비 등 개인별 공제 미반영' },
+          ]
+        };
+      }
+    },
+
+    // ── 무급휴가 공제액 ──
+    {
+      id: 'unpaidLeave', category: 'deduction',
+      icon: '📋', title: '무급휴가 1일 공제액',
+      desc: '통상임금 월액 \u00f7 30',
+      calc(profile, wage) {
+        var dailyOrdinary = Math.round(wage.monthlyWage / 30);
+        var dailyBasePay = Math.round((wage.breakdown['기준기본급'] || 0) / 30);
+        return {
+          value: CALC.formatCurrency(dailyOrdinary),
+          label: '무급휴가 1일 공제액 (통상임금 기준)',
+          details: [
+            { key: '통상임금 월액', val: CALC.formatCurrency(wage.monthlyWage) },
+            { key: '통상임금 일액 (\u00f730)', val: CALC.formatCurrency(dailyOrdinary) },
+            { key: '기본급 일액 (\u00f730)', val: CALC.formatCurrency(dailyBasePay) + ' \u2190 생리휴가 기준' },
+            { key: '근거', val: '보수규정 제7조\u2461' }
+          ]
         };
       }
     },
@@ -164,36 +302,17 @@ const PAYROLL = {
       desc: '입사일 기준 올해 연차 일수',
       calc(profile, wage) {
         if (!profile.hireDate) return { value: '입사일 필요', label: '프로필에 입사일을 입력하세요', details: [] };
-        const parsed = PROFILE.parseDate(profile.hireDate);
+        var parsed = PROFILE.parseDate(profile.hireDate);
         if (!parsed) return { value: '입사일 오류', label: '', details: [] };
-        const r = CALC.calcAnnualLeave(new Date(parsed));
+        var r = CALC.calcAnnualLeave(new Date(parsed));
         return {
-          value: `${r.totalLeave}일`,
+          value: r.totalLeave + '일',
           label: r.explanation,
           details: [
             { key: '입사일', val: parsed },
-            { key: '근속', val: r.diffYears >= 1 ? `${r.diffYears}년차` : `${r.diffMonths}개월` },
-            { key: '연차일수', val: `${r.totalLeave}일` },
+            { key: '근속', val: r.diffYears >= 1 ? r.diffYears + '년차' : r.diffMonths + '개월' },
+            { key: '연차일수', val: r.totalLeave + '일' },
             { key: '근거', val: '보수규정 제36조' }
-          ]
-        };
-      }
-    },
-    {
-      id: 'unpaidLeave', category: 'leave',
-      icon: '📋', title: '무급휴가 1일 공제액',
-      desc: '통상임금 월액 / 30',
-      calc(profile, wage) {
-        const dailyOrdinary = Math.round(wage.monthlyWage / 30);
-        const dailyBasePay = Math.round((wage.breakdown['기준기본급'] || 0) / 30);
-        return {
-          value: CALC.formatCurrency(dailyOrdinary),
-          label: '무급휴가 1일 공제액 (통상임금 기준)',
-          details: [
-            { key: '통상임금 월액', val: CALC.formatCurrency(wage.monthlyWage) },
-            { key: '통상임금 일액 (÷30)', val: CALC.formatCurrency(dailyOrdinary) },
-            { key: '기본급 일액 (÷30)', val: CALC.formatCurrency(dailyBasePay) + ' ← 생리휴가 기준' },
-            { key: '근거', val: '보수규정 제7조②' }
           ]
         };
       }
@@ -201,61 +320,67 @@ const PAYROLL = {
     {
       id: 'unusedLeave', category: 'leave',
       icon: '💰', title: '미사용 연차 보상금',
-      desc: '시급 × 8h × 잔여일수',
+      desc: '시급 \u00d7 8h \u00d7 잔여일수',
       hasInput: true,
       calc(profile, wage, inputs) {
-        const days = inputs.days || 1;
-        const daily = wage.hourlyRate * 8;
-        const total = daily * days;
+        var days = inputs.days || 1;
+        var daily = Math.round(wage.hourlyRate * 8);
+        var total = daily * days;
         return {
           value: CALC.formatCurrency(total),
-          label: `미사용 연차 ${days}일 보상금`,
+          label: '미사용 연차 ' + days + '일 보상금',
           details: [
-            { key: '1일 금액', val: CALC.formatCurrency(daily) },
-            { key: '잔여일수', val: `${days}일` },
-            { key: '계산', val: `${CALC.formatNumber(daily)} × ${days}일` }
+            { key: '시급', val: CALC.formatCurrency(wage.hourlyRate) },
+            { key: '1일 금액 (시급\u00d78h)', val: CALC.formatCurrency(daily) },
+            { key: '잔여일수', val: days + '일' },
+            { key: '합계', val: CALC.formatNumber(daily) + ' \u00d7 ' + days + '일 = ' + CALC.formatCurrency(total) }
           ]
         };
       },
       renderInput() {
-        return `<div class="form-group" style="margin-top:12px;">
-          <label>잔여 연차 일수</label>
-          <input type="number" id="qaUnusedDays" value="5" min="1" max="30" onchange="PAYROLL.recalc('unusedLeave')">
-        </div>`;
+        return '<div class="form-group" style="margin-top:12px;">'
+          + '<label>잔여 연차 일수</label>'
+          + '<input type="number" id="qaUnusedDays" value="5" min="1" max="30" onchange="PAYROLL.recalc(\'unusedLeave\')">'
+          + '</div>';
       },
       getInputs() {
-        const el = document.getElementById('qaUnusedDays');
+        var el = document.getElementById('qaUnusedDays');
         return { days: el ? parseInt(el.value) || 1 : 1 };
       }
     },
     {
       id: 'parentalLeave', category: 'leave',
-      icon: '👶', title: '육아휴직 급여는?',
+      icon: '👶', title: '육아휴직 급여',
       desc: '월별 급여 + 상한선 시뮬레이션',
       hasInput: true,
       calc(profile, wage, inputs) {
-        const months = inputs.months || 12;
-        const r = CALC.calcParentalLeavePay(wage.monthlyWage, months);
-        const details = [
+        var months = inputs.months || 12;
+        var r = CALC.calcParentalLeavePay(wage.monthlyWage, months);
+        var details = [
           { key: '월 통상임금', val: CALC.formatCurrency(wage.monthlyWage) },
+          { key: '기준', val: '1~3개월: 100%(상한250만), 4~6: 100%(200만), 7~12: 80%(160만), 13+: 무급' },
         ];
-        r.monthly.forEach(m => {
-          details.push({ key: `${m.month}개월차`, val: CALC.formatCurrency(m.pay) + ` (${m.explanation.split(':')[1]?.trim() || ''})` });
+        r.monthly.forEach(function(m) {
+          details.push({
+            key: m.month + '개월차',
+            val: m.pay > 0 ? CALC.formatCurrency(m.pay) : '무급'
+          });
         });
+        details.push({ key: '총 예상 급여', val: CALC.formatCurrency(r.total) });
         return {
           value: CALC.formatCurrency(r.total),
-          label: `육아휴직 ${months}개월 총 예상 급여`,
-          details
+          label: '육아휴직 ' + months + '개월 총 예상 급여',
+          details: details
         };
       },
       renderInput() {
-        return `<div class="form-group" style="margin-top:12px;">
-          <label>육아휴직 개월수</label>
-          <input type="number" id="qaParentalMonths" value="12" min="1" max="18" onchange="PAYROLL.recalc('parentalLeave')">
-        </div>`;
+        return '<div class="form-group" style="margin-top:12px;">'
+          + '<label>육아휴직 개월수</label>'
+          + '<input type="number" id="qaParentalMonths" value="12" min="1" max="18" onchange="PAYROLL.recalc(\'parentalLeave\')">'
+          + '</div>';
       },
       getInputs() {
-        const el = document.getElementById('qaParentalMonths');
+        var el = document.getElementById('qaParentalMonths');
         return { months: el ? parseInt(el.value) || 12 : 12 };
       }
     },
@@ -266,28 +391,29 @@ const PAYROLL = {
       icon: '📈', title: '승진하면 얼마나 올라?',
       desc: '현재 vs 다음 등급 통상임금 비교',
       calc(profile, wage) {
-        const table = DATA.payTables[CALC.resolvePayTable(profile.jobType)];
+        var table = DATA.payTables[CALC.resolvePayTable(profile.jobType)];
         if (!table || !table.autoPromotion[profile.grade]) {
           return { value: '해당없음', label: '자동승격 정보 없음', details: [] };
         }
-        const nextGrade = table.autoPromotion[profile.grade].next;
-        const nextWage = CALC.calcOrdinaryWage(profile.jobType, nextGrade, 1, {
+        var nextGrade = table.autoPromotion[profile.grade].next;
+        var nextWage = CALC.calcOrdinaryWage(profile.jobType, nextGrade, 1, {
           hasMilitary: profile.hasMilitary, militaryMonths: profile.militaryMonths || 24,
           hasSeniority: profile.hasSeniority,
           seniorityYears: profile.hireDate ? PROFILE.calcServiceYears(profile.hireDate) : 0,
           adjustPay: parseInt(profile.adjustPay) || 0
         });
         if (!nextWage) return { value: '계산 불가', label: '', details: [] };
-        const diff = nextWage.monthlyWage - wage.monthlyWage;
-        const currentLabel = table.gradeLabels?.[profile.grade] || profile.grade;
-        const nextLabel = table.gradeLabels?.[nextGrade] || nextGrade;
+        var diff = nextWage.monthlyWage - wage.monthlyWage;
+        var currentLabel = table.gradeLabels?.[profile.grade] || profile.grade;
+        var nextLabel = table.gradeLabels?.[nextGrade] || nextGrade;
         return {
           value: (diff > 0 ? '+' : '') + CALC.formatCurrency(diff),
-          label: `${currentLabel} → ${nextLabel} 월급 차이`,
+          label: currentLabel + ' \u2192 ' + nextLabel + ' 월급 차이',
           details: [
-            { key: `현재 (${currentLabel})`, val: CALC.formatCurrency(wage.monthlyWage) },
-            { key: `승진 후 (${nextLabel})`, val: CALC.formatCurrency(nextWage.monthlyWage) },
-            { key: '월 차액', val: (diff > 0 ? '+' : '') + CALC.formatCurrency(diff) }
+            { key: '현재 (' + currentLabel + ')', val: CALC.formatCurrency(wage.monthlyWage) },
+            { key: '승진 후 (' + nextLabel + ')', val: CALC.formatCurrency(nextWage.monthlyWage) },
+            { key: '월 차액', val: (diff > 0 ? '+' : '') + CALC.formatCurrency(diff) },
+            { key: '연 차액', val: (diff > 0 ? '+' : '') + CALC.formatCurrency(diff * 12) }
           ]
         };
       }
@@ -298,18 +424,18 @@ const PAYROLL = {
       desc: '자동승격 예상일 타임라인',
       calc(profile, wage) {
         if (!profile.hireDate) return { value: '입사일 필요', label: '프로필에 입사일을 입력하세요', details: [] };
-        const parsed = PROFILE.parseDate(profile.hireDate);
+        var parsed = PROFILE.parseDate(profile.hireDate);
         if (!parsed) return { value: '입사일 오류', label: '', details: [] };
-        const r = CALC.calcPromotionDate(profile.jobType, profile.grade, new Date(parsed));
+        var r = CALC.calcPromotionDate(profile.jobType, profile.grade, new Date(parsed));
         if (r.message) return { value: '해당없음', label: r.message, details: [] };
-        const isPast = r.남은일수 === 0;
+        var isPast = r.남은일수 === 0;
         return {
-          value: isPast ? '이미 도래' : `D-${r.남은일수}`,
+          value: isPast ? '이미 도래' : 'D-' + r.남은일수,
           label: r.label,
           details: [
             { key: '소요 연수', val: r.소요연수 },
             { key: '예상 승격일', val: r.예상승격일 },
-            { key: '남은 일수', val: isPast ? '이미 도래' : `${r.남은일수}일` }
+            { key: '남은 일수', val: isPast ? '이미 도래' : r.남은일수 + '일' }
           ]
         };
       }
@@ -319,15 +445,19 @@ const PAYROLL = {
       icon: '🏅', title: '장기근속수당',
       desc: '근속연수 기반 월 수당',
       calc(profile, wage) {
-        const years = profile.hireDate ? PROFILE.calcServiceYears(profile.hireDate) : 0;
-        const r = CALC.calcLongServicePay(years);
+        var years = profile.hireDate ? PROFILE.calcServiceYears(profile.hireDate) : 0;
+        var r = CALC.calcLongServicePay(years);
+        var tiers = DATA.longServicePay.filter(function(t) { return t.amount > 0; }).map(function(t) {
+          return t.min + '~' + (t.max === 99 ? '' : t.max) + '년: ' + CALC.formatNumber(t.amount) + '원';
+        }).join(', ');
         return {
           value: r.월수당 > 0 ? CALC.formatCurrency(r.월수당) : '해당없음',
-          label: r.월수당 > 0 ? `근속 ${years}년 (${r.구간})` : `근속 ${years}년 (5년 미만 해당없음)`,
+          label: r.월수당 > 0 ? '근속 ' + years + '년 (' + r.구간 + ')' : '근속 ' + years + '년 (5년 미만 해당없음)',
           details: [
-            { key: '근속연수', val: `${years}년` },
+            { key: '근속연수', val: years + '년' },
             { key: '적용 구간', val: r.구간 },
-            { key: '월 수당', val: r.월수당 > 0 ? CALC.formatCurrency(r.월수당) : '0원' }
+            { key: '월 수당', val: r.월수당 > 0 ? CALC.formatCurrency(r.월수당) : '0원' },
+            { key: '구간표', val: tiers }
           ]
         };
       }
@@ -335,20 +465,20 @@ const PAYROLL = {
     {
       id: 'severance', category: 'career',
       icon: '🏦', title: '퇴직금 시뮬레이션',
-      desc: '최근 3개월 평균임금 자동 계산',
+      desc: '최근 3개월 평균임금 기준',
       calc(profile, wage) {
-        const years = profile.hireDate ? PROFILE.calcServiceYears(profile.hireDate) : 0;
-        const avg = CALC.calcAverageWage(wage.monthlyWage, 3);
-        const r = CALC.calcSeveranceFullPay(avg.monthlyAvgWage, years, profile.hireDate || null);
-        const hasOt = avg.totalOtPay > 0;
+        var years = profile.hireDate ? PROFILE.calcServiceYears(profile.hireDate) : 0;
+        var avg = CALC.calcAverageWage(wage.monthlyWage, 3);
+        var r = CALC.calcSeveranceFullPay(avg.monthlyAvgWage, years, profile.hireDate || null);
+        var hasOt = avg.totalOtPay > 0;
         return {
           value: r.퇴직금 > 0 ? CALC.formatCurrency(r.퇴직금) : '해당없음',
-          label: r.퇴직금 > 0 ? `근속 ${r.근속기간 || years + '년'} 기준 예상 퇴직금` : (r.note || '근속 1년 미만'),
+          label: r.퇴직금 > 0 ? '근속 ' + (r.근속기간 || years + '년') + ' 기준 예상 퇴직금' : (r.note || '근속 1년 미만'),
           details: [
             { key: '월 통상임금', val: CALC.formatCurrency(wage.monthlyWage) },
             { key: '시간외 수당 (3개월)', val: CALC.formatCurrency(avg.totalOtPay) + (hasOt ? '' : ' (없음)') },
-            { key: '월 평균임금 (×30)', val: CALC.formatCurrency(avg.monthlyAvgWage) + (hasOt ? ' ↑시간외 반영' : '') },
-            { key: '근속기간', val: r.근속기간 || `${years}년` },
+            { key: '월 평균임금 (\u00d730)', val: CALC.formatCurrency(avg.monthlyAvgWage) + (hasOt ? ' \u2191시간외 반영' : '') },
+            { key: '근속기간', val: r.근속기간 || years + '년' },
             { key: '기본 퇴직금', val: CALC.formatCurrency(r.기본퇴직금 || 0) },
             { key: '퇴직수당', val: r.퇴직수당 > 0 ? CALC.formatCurrency(r.퇴직수당) : '해당없음' },
             { key: '산식', val: r.산식 || '-' }
@@ -363,16 +493,16 @@ const PAYROLL = {
       icon: '🏥', title: '진료비 감면 혜택',
       desc: '본인·배우자·가족별 감면율',
       calc(profile, wage) {
-        const md = DATA.medicalDiscount;
+        var md = DATA.medicalDiscount;
         return {
           value: '최대 100%',
           label: '본인 선택진료비 100% 감면',
           details: [
-            { key: '본인 접수비', val: `${md.self.registration}% 감면` },
-            { key: '본인 보험/비보험', val: `${md.self.insurance}% 감면` },
-            { key: '본인 선택진료비', val: `${md.self.selectDoctor}% 감면` },
-            { key: '배우자 보험/비보험', val: `${md.spouse.insurance}% 감면` },
-            { key: '가족 보험/비보험', val: `${md.family.insurance}% 감면` },
+            { key: '본인 접수비', val: md.self.registration + '% 감면' },
+            { key: '본인 보험/비보험', val: md.self.insurance + '% 감면' },
+            { key: '본인 선택진료비', val: md.self.selectDoctor + '% 감면' },
+            { key: '배우자 보험/비보험', val: md.spouse.insurance + '% 감면' },
+            { key: '가족 보험/비보험', val: md.family.insurance + '% 감면' },
             { key: '적용병원', val: '본원·보라매·분당·치과병원' }
           ]
         };
@@ -381,136 +511,160 @@ const PAYROLL = {
     {
       id: 'welfarePoint', category: 'welfare',
       icon: '🎫', title: '내 복지포인트',
-      desc: '근속연수 기반 자동 계산 (1P=1,000원)',
+      desc: '근속연수 기반 (1P=1,000원)',
       calc(profile, wage) {
-        const years = profile.hireDate ? PROFILE.calcServiceYears(profile.hireDate) : 0;
-        const base = 700;
-        const serviceBonus = Math.min(years * 10, 300);
-        const total = base + serviceBonus;
+        var years = profile.hireDate ? PROFILE.calcServiceYears(profile.hireDate) : 0;
+        var base = 700;
+        var serviceBonus = Math.min(years * 10, 300);
+        var total = base + serviceBonus;
         return {
-          value: `${total.toLocaleString()}P`,
-          label: `${CALC.formatCurrency(total * 1000)} 상당`,
+          value: total.toLocaleString() + 'P',
+          label: CALC.formatCurrency(total * 1000) + ' 상당',
           details: [
             { key: '기본', val: '700P' },
-            { key: '근속 가산', val: `${serviceBonus}P (${years}년 × 10P, 최대 300P)` },
-            { key: '합계', val: `${total}P = ${CALC.formatCurrency(total * 1000)}` },
+            { key: '근속 가산', val: serviceBonus + 'P (' + years + '년 \u00d7 10P, 최대 300P)' },
+            { key: '합계', val: total + 'P = ' + CALC.formatCurrency(total * 1000) },
             { key: '참고', val: '가족포인트·자녀학자금(1,200P) 별도' }
           ]
         };
       }
     },
-    {
-      id: 'dutyPay', category: 'welfare',
-      icon: '🛏️', title: '일직/숙직비',
-      desc: '일당 5만원 × 횟수',
-      hasInput: true,
-      calc(profile, wage, inputs) {
-        const count = inputs.count || 1;
-        const perDay = DATA.allowances.dutyAllowance;
-        const total = perDay * count;
-        return {
-          value: CALC.formatCurrency(total),
-          label: `일직/숙직 ${count}회 수당`,
-          details: [
-            { key: '일당', val: CALC.formatCurrency(perDay) },
-            { key: '횟수', val: `${count}회` },
-            { key: '합계', val: CALC.formatCurrency(total) }
-          ]
-        };
-      },
-      renderInput() {
-        return `<div class="form-group" style="margin-top:12px;">
-          <label>이번 달 일직/숙직 횟수</label>
-          <input type="number" id="qaDutyCount" value="1" min="1" max="10" onchange="PAYROLL.recalc('dutyPay')">
-        </div>`;
-      },
-      getInputs() {
-        const el = document.getElementById('qaDutyCount');
-        return { count: el ? parseInt(el.value) || 1 : 1 };
-      }
-    }
   ],
 
   expandedCard: null,
 
   init() {
-    const container = document.getElementById('qaCardsContainer');
+    var container = document.getElementById('qaCardsContainer');
     if (!container) return;
 
-    const profile = PROFILE.load();
-    const wage = profile ? PROFILE.calcWage(profile) : null;
+    var profile = PROFILE.load();
+    var wage = profile ? PROFILE.calcWage(profile) : null;
+    var self = this;
 
-    let html = '';
+    var html = '';
 
     // 프로필 미저장 경고
     if (!profile) {
-      html += `<div class="qa-profile-warning">
-        ⚠️ 내 정보를 먼저 저장하면 자동 계산됩니다.
-        <a onclick="switchToProfileTab()">내 정보 설정 →</a>
-      </div>`;
+      html += '<div class="qa-profile-warning">'
+        + '내 정보를 먼저 저장하면 자동 계산됩니다. '
+        + '<a onclick="switchToProfileTab()">내 정보 설정 \u2192</a>'
+        + '</div>';
+    }
+
+    // 명세서 vs 앱 비교 배너 (업로드된 명세서가 있을 때)
+    if (profile && wage) {
+      var payslipCompare = this._buildPayslipCompare(profile, wage);
+      if (payslipCompare) html += payslipCompare;
     }
 
     // 카테고리별 렌더링
-    this.categories.forEach(cat => {
-      const catCards = this.cards.filter(c => c.category === cat.id);
+    this.categories.forEach(function(cat) {
+      var catCards = self.cards.filter(function(c) { return c.category === cat.id; });
       if (catCards.length === 0) return;
 
-      html += `<div class="qa-category">`;
-      html += `<div class="qa-category-title">${cat.icon} ${cat.label}</div>`;
-      html += `<div class="qa-cards-grid">`;
+      html += '<div class="qa-category">';
+      html += '<div class="qa-category-title">' + cat.icon + ' ' + cat.label + '</div>';
+      html += '<div class="qa-cards-grid">';
 
-      catCards.forEach(card => {
-        const isExpanded = this.expandedCard === card.id;
-        let result = null;
+      catCards.forEach(function(card) {
+        var isExpanded = self.expandedCard === card.id;
+        var result = null;
         if (profile && wage) {
           try {
-            const inputs = card.getInputs ? card.getInputs() : {};
+            var inputs = card.getInputs ? card.getInputs() : {};
             result = card.calc(profile, wage, inputs);
           } catch (e) { result = null; }
         }
 
-        html += `<div class="qa-card ${isExpanded ? 'expanded' : ''}" id="qa-${card.id}" onclick="PAYROLL.toggle('${card.id}')">`;
-        html += `<div class="qa-card-header">`;
-        html += `<span class="qa-card-icon">${card.icon}</span>`;
-        html += `<div style="flex:1; min-width:0;">`;
-        html += `<div class="qa-card-title">${card.title}</div>`;
-        html += `<div class="qa-card-desc">${card.desc}</div>`;
-        html += `</div>`;
+        html += '<div class="qa-card ' + (isExpanded ? 'expanded' : '') + '" id="qa-' + card.id + '" onclick="PAYROLL.toggle(\'' + card.id + '\')">';
+        html += '<div class="qa-card-header">';
+        html += '<span class="qa-card-icon">' + card.icon + '</span>';
+        html += '<div style="flex:1; min-width:0;">';
+        html += '<div class="qa-card-title">' + card.title + '</div>';
+        html += '<div class="qa-card-desc">' + card.desc + '</div>';
+        html += '</div>';
 
         // 미리보기 값 (접힌 상태)
         if (!isExpanded && result && result.value) {
-          html += `<div style="margin-left:auto; text-align:right; flex-shrink:0;">`;
-          html += `<div style="font-size:var(--text-body-large); font-weight:700; color:var(--accent-emerald);">${result.value}</div>`;
-          html += `</div>`;
+          html += '<div style="margin-left:auto; text-align:right; flex-shrink:0;">';
+          html += '<div style="font-size:var(--text-body-large); font-weight:700; color:var(--accent-emerald);">' + result.value + '</div>';
+          html += '</div>';
         }
-        html += `</div>`;
+        html += '</div>';
 
         // 확장 본문
         if (isExpanded) {
-          html += `<div class="qa-card-body" onclick="event.stopPropagation()">`;
+          html += '<div class="qa-card-body" onclick="event.stopPropagation()">';
           if (!profile || !wage) {
-            html += `<p style="color:var(--accent-amber);">내 정보를 먼저 저장해주세요. <a onclick="switchToProfileTab()" style="color:var(--accent-indigo); cursor:pointer; text-decoration:underline;">내 정보 설정 →</a></p>`;
+            html += '<p style="color:var(--accent-amber);">내 정보를 먼저 저장해주세요. <a onclick="switchToProfileTab()" style="color:var(--accent-indigo); cursor:pointer; text-decoration:underline;">내 정보 설정 \u2192</a></p>';
           } else if (result) {
             if (card.renderInput) html += card.renderInput();
-            html += `<div class="qa-card-result">`;
-            html += `<div class="result-value">${result.value}</div>`;
-            html += `<div class="result-label">${result.label}</div>`;
-            html += `</div>`;
+            html += '<div class="qa-card-result">';
+            html += '<div class="result-value">' + result.value + '</div>';
+            html += '<div class="result-label">' + result.label + '</div>';
+            html += '</div>';
             if (result.details && result.details.length > 0) {
-              result.details.forEach(d => {
-                html += `<div class="result-row"><span class="key">${d.key}</span><span class="val">${d.val}</span></div>`;
+              result.details.forEach(function(d) {
+                html += '<div class="result-row"><span class="key">' + d.key + '</span><span class="val">' + d.val + '</span></div>';
               });
             }
           }
-          html += `</div>`;
+          html += '</div>';
         }
-        html += `</div>`;
+        html += '</div>';
       });
 
-      html += `</div></div>`;
+      html += '</div></div>';
     });
 
     container.innerHTML = html;
+  },
+
+  // ── 명세서 vs 앱 비교 배너 ──
+  _buildPayslipCompare(profile, wage) {
+    // 최근 업로드된 명세서 찾기
+    var now = new Date();
+    var found = null;
+    for (var i = 0; i < 3; i++) {
+      var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      var key = 'salary_' + d.getFullYear() + '_' + (d.getMonth() + 1);
+      var raw = localStorage.getItem(key);
+      if (raw) {
+        try {
+          found = { data: JSON.parse(raw), year: d.getFullYear(), month: d.getMonth() + 1 };
+          break;
+        } catch (e) { /* skip */ }
+      }
+    }
+    if (!found || !found.data.summary) return null;
+
+    var actual = found.data.summary;
+    var est = (typeof calcMonthEstimate === 'function') ? calcMonthEstimate(found.year, found.month) : null;
+    if (!est) return null;
+
+    var appGross = est.result.급여총액;
+    var appNet = est.result.실지급액;
+    var realGross = actual.grossPay || 0;
+    var realNet = actual.netPay || 0;
+
+    if (realGross === 0) return null;
+
+    var grossDiff = appGross - realGross;
+    var netDiff = appNet - realNet;
+    var grossPct = realGross > 0 ? Math.abs(Math.round((grossDiff / realGross) * 100)) : 0;
+
+    var matchClass = grossPct <= 3 ? 'success' : (grossPct <= 10 ? 'warning' : 'error');
+    var matchLabel = grossPct <= 3 ? '거의 일치' : (grossPct <= 10 ? '차이 있음' : '크게 다름');
+
+    var html = '<div class="qa-compare-banner ' + matchClass + '">';
+    html += '<div class="qa-compare-title">' + found.year + '년 ' + found.month + '월 명세서 vs 앱 계산</div>';
+    html += '<div class="qa-compare-grid">';
+    html += '<div><span class="qa-compare-label">급여총액</span><span class="qa-compare-real">' + CALC.formatCurrency(realGross) + '</span><span class="qa-compare-diff">' + (grossDiff >= 0 ? '+' : '') + CALC.formatCurrency(grossDiff) + '</span></div>';
+    html += '<div><span class="qa-compare-label">실지급액</span><span class="qa-compare-real">' + CALC.formatCurrency(realNet) + '</span><span class="qa-compare-diff">' + (netDiff >= 0 ? '+' : '') + CALC.formatCurrency(netDiff) + '</span></div>';
+    html += '</div>';
+    html += '<div class="qa-compare-status ' + matchClass + '">' + matchLabel + ' (차이 ' + grossPct + '%)</div>';
+    html += '</div>';
+    return html;
   },
 
   toggle(cardId) {
