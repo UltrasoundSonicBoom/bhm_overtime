@@ -1902,9 +1902,8 @@ html[data-theme="neo"] .logo .logo-main-title {
 
 .ot-record-row {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
+  flex-direction: column;
+  padding: 10px 12px;
   cursor: pointer;
   border-bottom: 1px solid var(--border-glass);
   transition: background 0.1s;
@@ -1918,26 +1917,17 @@ html[data-theme="neo"] .logo .logo-main-title {
   background: rgba(99, 102, 241, 0.04);
 }
 
+.ot-row-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
 .ot-row-date {
   font-size: var(--text-body-normal);
   font-weight: 600;
   color: var(--text-primary);
-  min-width: 36px;
-  flex-shrink: 0;
-}
-
-.ot-row-detail {
-  flex: 1;
-  font-size: var(--text-body-normal);
-  color: var(--text-secondary);
-  line-height: 1.4;
-}
-
-.ot-row-tags {
-  display: block;
-  font-size: var(--text-label-small);
-  color: var(--text-muted);
-  margin-top: 1px;
 }
 
 .ot-row-pay {
@@ -1946,6 +1936,24 @@ html[data-theme="neo"] .logo .logo-main-title {
   color: var(--accent-emerald);
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+.ot-row-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ot-row-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-label-small);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.ot-row-line.dim {
+  color: var(--text-muted);
 }
 
 /* ── Leave: Dashboard ── */

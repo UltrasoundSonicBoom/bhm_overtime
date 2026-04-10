@@ -3113,21 +3113,69 @@ function renderOtRecordList(records) {
       const day = parseInt(r.date.split('-')[2]);
       const dow = new Date(r.date).getDay();
       const timeStr = r.startTime && r.endTime ? `${r.startTime}~${r.endTime}` : '';
-      const hoursStr = r.totalHours ? `${r.totalHours}h` : '';
-
-      // breakdown 태그 (연장/야간/휴일)
       const bd = r.breakdown || {};
-      const tags = [];
-      if (bd.extended > 0) tags.push(`연장${bd.extended}h`);
-      if (bd.night > 0) tags.push(`야간${bd.night}h`);
-      if (bd.holiday > 0) tags.push(`휴일${bd.holiday}h`);
-      if (bd.holidayNight > 0) tags.push(`휴일야간${bd.holidayNight}h`);
-      const tagStr = tags.length > 0 ? `<span class="ot-row-tags">${tags.join(' · ')}</span>` : '';
+      const rate = r.hourlyRate || 0;
+      const rates = DATA.allowances.overtimeRates;
+
+      // 세부 내역 행 생성
+      const details = [];
+
+      if (type === 'oncall_standby') {
+        details.push({ label: '대기수당', value: `₩${DATA.allowances.onCallStandby.toLocaleString()}` });
+      } else {
+        // 실제 근무시간 (온콜은 출퇴근 제외한 순수 근무)
+        if (timeStr) {
+          const workHours = type === 'oncall_callout'
+            ? (r.totalHours - 2) : r.totalHours;
+          details.push({ label: '실제근무', value: `${timeStr} (${workHours}h)`, cls: 'dim' });
+        }
+
+        // 온콜 출퇴근 안내
+        if (type === 'oncall_callout') {
+          const startMin = OVERTIME._parseTime(r.startTime);
+          let endMin = OVERTIME._parseTime(r.endTime);
+          if (endMin <= startMin) endMin += 1440;
+          const fmt = (m) => { const mm = ((m % 1440) + 1440) % 1440; return `${String(Math.floor(mm/60)).padStart(2,'0')}:${String(mm%60).padStart(2,'0')}`; };
+          details.push({ label: '출퇴근 인정', value: `${fmt(startMin-60)}~${r.startTime} + ${r.endTime}~${fmt(endMin+60)} (2h)`, cls: 'dim' });
+        }
+
+        // 연장/야간/휴일 breakdown + 금액
+        if (bd.extended > 0) {
+          const pay = Math.round(bd.extended * rate * rates.extended);
+          details.push({ label: `연장 ${bd.extended}h × ${(rates.extended*100).toFixed(0)}%`, value: `₩${pay.toLocaleString()}` });
+        }
+        if (bd.night > 0) {
+          const pay = Math.round(bd.night * rate * rates.night);
+          details.push({ label: `야간 ${bd.night}h × ${(rates.night*100).toFixed(0)}%`, value: `₩${pay.toLocaleString()}` });
+        }
+        if (bd.holiday > 0) {
+          const holBase = Math.min(bd.holiday, 8);
+          const holOver = Math.max(bd.holiday - 8, 0);
+          const pay = Math.round(holBase * rate * rates.holiday + holOver * rate * rates.holidayOver8);
+          const rateLabel = holOver > 0 ? `${(rates.holiday*100).toFixed(0)}%/${(rates.holidayOver8*100).toFixed(0)}%` : `${(rates.holiday*100).toFixed(0)}%`;
+          details.push({ label: `휴일 ${bd.holiday}h × ${rateLabel}`, value: `₩${pay.toLocaleString()}` });
+        }
+        if (bd.holidayNight > 0) {
+          const pay = Math.round(bd.holidayNight * rate * rates.holidayNight);
+          details.push({ label: `휴일야간 ${bd.holidayNight}h × ${(rates.holidayNight*100).toFixed(0)}%`, value: `₩${pay.toLocaleString()}` });
+        }
+
+        // 온콜 교통비
+        if (type === 'oncall_callout') {
+          details.push({ label: '온콜교통비', value: `₩${DATA.allowances.onCallTransport.toLocaleString()}` });
+        }
+      }
+
+      const detailHtml = details.map(d =>
+        `<div class="ot-row-line ${d.cls || ''}"><span>${d.label}</span><span>${d.value}</span></div>`
+      ).join('');
 
       html += `<div class="ot-record-row" onclick="event.stopPropagation(); editOtRecord('${r.id}')">
-        <span class="ot-row-date">${day} ${dowNames[dow]}</span>
-        <span class="ot-row-detail">${timeStr} ${hoursStr}${tagStr}</span>
-        <span class="ot-row-pay">₩${(r.estimatedPay || 0).toLocaleString()}</span>
+        <div class="ot-row-head">
+          <span class="ot-row-date">${day} ${dowNames[dow]}</span>
+          <span class="ot-row-pay">₩${(r.estimatedPay || 0).toLocaleString()}</span>
+        </div>
+        <div class="ot-row-breakdown">${detailHtml}</div>
       </div>`;
     });
 
