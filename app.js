@@ -1646,45 +1646,89 @@ function renderPayEstDetail() {
   const r = est.result;
   const otStats = est.otStats;
 
-  // ── 지급내역 테이블 ──
+  // ── 지급내역 테이블 (설명 없이 항목+금액만) ──
   let payRows = '';
   for (const [name, amount] of Object.entries(r.지급내역)) {
     if (amount <= 0) continue;
-    // 항목별 설명 추가
-    const desc = getItemDesc(name, payEstYear, payEstMonth, est);
     payRows += `
       <div class="pe-item-row">
         <div class="pe-item-name">${escapeHtml(name)}</div>
         <div class="pe-item-amount">${fmtW(amount)}</div>
-      </div>
-      ${desc ? `<div class="pe-item-desc">${escapeHtml(desc)}</div>` : ''}`;
+      </div>`;
   }
 
-  // ── 공제내역 테이블 ──
-  let dedRows = '';
-  for (const [name, amount] of Object.entries(r.공제내역)) {
-    if (amount <= 0) continue;
-    const desc = getDeductionDesc(name, r);
-    dedRows += `
-      <div class="pe-item-row">
-        <div class="pe-item-name">${escapeHtml(name)}</div>
-        <div class="pe-item-amount ded">-${fmtW(amount)}</div>
-      </div>
-      ${desc ? `<div class="pe-item-desc">${escapeHtml(desc)}</div>` : ''}`;
-  }
-
-  // ── 시간외·온콜 요약 (기록이 있을 때) ──
+  // ── 시간외·온콜 상세 내역 (기록이 있을 때) ──
   let otSummary = '';
   if (otStats.recordCount > 0) {
-    const items = [];
-    if (otStats.byType.overtime.count > 0) items.push(`시간외 ${otStats.byType.overtime.count}건 (${otStats.byType.overtime.hours.toFixed(1)}h)`);
-    if (otStats.byType.oncall_standby.count > 0) items.push(`온콜대기 ${otStats.byType.oncall_standby.count}일`);
-    if (otStats.byType.oncall_callout.count > 0) items.push(`온콜출근 ${otStats.byType.oncall_callout.count}건 (${otStats.byType.oncall_callout.hours.toFixed(1)}h)`);
+    const records = OVERTIME.getMonthRecords(payEstYear, payEstMonth);
+    const profile = PROFILE.load();
+    const hourlyRate = r.시급 || 0;
+    const rates = DATA.allowances.overtimeRates;
+
+    // 시간외 기록별 breakdown 합산
+    let totalExt = 0, totalNgt = 0, totalHol = 0, totalHolNgt = 0;
+    records.forEach(rec => {
+      if (rec.type === 'overtime' || rec.type === 'oncall_callout') {
+        totalExt += rec.breakdown?.extended || 0;
+        totalNgt += rec.breakdown?.night || 0;
+        totalHol += rec.breakdown?.holiday || 0;
+        totalHolNgt += rec.breakdown?.holidayNight || 0;
+      }
+    });
+
+    const extPay = Math.round(totalExt * hourlyRate * rates.extended);
+    const ngtPay = Math.round(totalNgt * hourlyRate * rates.night);
+    const holBasePay = Math.round(Math.min(totalHol, 8) * hourlyRate * rates.holiday);
+    const holOverPay = Math.round(Math.max(totalHol - 8, 0) * hourlyRate * rates.holidayOver8);
+    const holPay = holBasePay + holOverPay;
+    const holNgtPay = Math.round(totalHolNgt * hourlyRate * rates.holidayNight);
+    const standbyPay = otStats.byType.oncall_standby.pay;
+    const transportPay = otStats.byType.oncall_callout.count * DATA.allowances.onCallTransport;
+
+    let otRows = '';
+
+    // 시간외 근무
+    if (otStats.byType.overtime.count > 0) {
+      otRows += `<div class="pe-ot-category-title">시간외근무 ${otStats.byType.overtime.count}건</div>`;
+    }
+
+    // 연장
+    if (totalExt > 0) {
+      otRows += `<div class="pe-item-row"><div class="pe-item-name">연장 ${totalExt.toFixed(1)}h × ${fmtW(hourlyRate)} × 150%</div><div class="pe-item-amount">${fmtW(extPay)}</div></div>`;
+    }
+    // 야간
+    if (totalNgt > 0) {
+      otRows += `<div class="pe-item-row"><div class="pe-item-name">야간 ${totalNgt.toFixed(1)}h × ${fmtW(hourlyRate)} × 200%</div><div class="pe-item-amount">${fmtW(ngtPay)}</div></div>`;
+    }
+    // 휴일
+    if (totalHol > 0) {
+      otRows += `<div class="pe-item-row"><div class="pe-item-name">휴일 ${totalHol.toFixed(1)}h × ${fmtW(hourlyRate)} × 150~200%</div><div class="pe-item-amount">${fmtW(holPay)}</div></div>`;
+    }
+    // 휴일야간
+    if (totalHolNgt > 0) {
+      otRows += `<div class="pe-item-row"><div class="pe-item-name">휴일야간 ${totalHolNgt.toFixed(1)}h × ${fmtW(hourlyRate)} × 200%</div><div class="pe-item-amount">${fmtW(holNgtPay)}</div></div>`;
+    }
+
+    // 온콜대기
+    if (otStats.byType.oncall_standby.count > 0) {
+      otRows += `<div class="pe-ot-category-title">온콜대기 ${otStats.byType.oncall_standby.count}일</div>`;
+      otRows += `<div class="pe-item-row"><div class="pe-item-name">대기수당 ${otStats.byType.oncall_standby.count}일 × ${fmtW(DATA.allowances.onCallStandby)}</div><div class="pe-item-amount">${fmtW(standbyPay)}</div></div>`;
+    }
+
+    // 온콜출근
+    if (otStats.byType.oncall_callout.count > 0) {
+      otRows += `<div class="pe-ot-category-title">온콜출근 ${otStats.byType.oncall_callout.count}건</div>`;
+      otRows += `<div class="pe-item-row"><div class="pe-item-name">교통비 ${otStats.byType.oncall_callout.count}건 × ${fmtW(DATA.allowances.onCallTransport)}</div><div class="pe-item-amount">${fmtW(transportPay)}</div></div>`;
+    }
+
     otSummary = `
       <div class="pe-section-card pe-ot-summary">
         <div class="pe-section-title">시간외·온콜 반영 내역</div>
-        <div class="pe-ot-items">${items.map(i => `<span class="pe-ot-chip">${i}</span>`).join('')}</div>
-        <div class="pe-ot-total">합계 ${fmtW(otStats.totalPay)}</div>
+        ${otRows}
+        <div class="pe-item-row pe-total-row">
+          <div class="pe-item-name">시간외·온콜 합계</div>
+          <div class="pe-item-amount">${fmtW(otStats.totalPay)}</div>
+        </div>
       </div>`;
   }
 
@@ -1738,14 +1782,6 @@ function renderPayEstDetail() {
       <div class="pe-item-row pe-total-row">
         <div class="pe-item-name">지급 합계</div>
         <div class="pe-item-amount">${fmtW(r.급여총액)}</div>
-      </div>
-    </div>
-    <div class="pe-section-card">
-      <div class="pe-section-title">공제내역</div>
-      ${dedRows}
-      <div class="pe-item-row pe-total-row">
-        <div class="pe-item-name">공제 합계</div>
-        <div class="pe-item-amount ded">-${fmtW(r.공제총액)}</div>
       </div>
     </div>
     ${otSummary}

@@ -790,7 +790,8 @@
         <!-- ② 상세 명세서 카드 (지급/공제/시간외/연간요약) -->
         <div id="payEstTimeline"></div>
 
-        <!-- ③ 상세 시뮬레이션 (접이식) -->
+        <!-- ③ 상세 시뮬레이션 (숨김 — 급여예상 카드뷰로 대체) -->
+        <div style="display:none;">
         <div class="collapsible-header" onclick="toggleCollapsible('payEstDetailForm')" style="margin-top:12px;">
           <span style="display:flex; align-items:center; gap:8px;"><span class="toggle-icon">▸</span> 상세 시뮬레이션 설정</span>
         </div>
@@ -937,8 +938,9 @@
           <div id="payrollResult" style="margin-top:16px;">
             <p style="color:var(--text-muted)">위에서 정보를 입력하고 [급여 시뮬레이션]을 눌러주세요.</p>
           </div>
-        </div><!-- /시뮬레이터 card -->
-        </div><!-- /payEstDetailForm collapsible-body -->
+        </div>
+        </div>
+        </div><!-- /상세 시뮬레이션 숨김 wrapper -->
 
         <!-- 급여 검증 (숨김, 명세서 업로드 후 활성화) -->
         <div id="verifyCard" class="card" style="display:none;">

@@ -4274,27 +4274,25 @@ html[data-theme="neo"] .pay-upload-zone {
 .pe-ot-summary {
   background: rgba(251, 191, 36, 0.06);
 }
-.pe-ot-items {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 8px;
-}
-.pe-ot-chip {
-  font-size: 12px;
-  padding: 4px 10px;
-  border-radius: 6px;
-  background: var(--bg-card);
-  border: 2px solid #1a1a1a;
-  font-weight: 600;
-  color: var(--text-primary);
-  box-shadow: 2px 2px 0px #1a1a1a;
-}
-.pe-ot-total {
+.pe-ot-category-title {
   font-size: var(--text-body-normal);
-  font-weight: 800;
+  font-weight: 700;
   color: var(--accent-amber);
-  text-align: right;
+  margin-top: 8px;
+  margin-bottom: 2px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border-glass);
+}
+.pe-ot-category-title:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+.pe-ot-summary .pe-item-row .pe-item-name {
+  font-size: 13px;
+}
+.pe-ot-summary .pe-item-row .pe-item-amount {
+  font-size: 13px;
 }
 
 /* ── 연간 요약 ── */
