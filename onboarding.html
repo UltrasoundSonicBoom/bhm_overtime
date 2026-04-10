@@ -154,16 +154,41 @@
     .scroll-hint {
       position: absolute;
       bottom: 28px;
+      left: 0;
+      right: 0;
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
       align-items: center;
+      justify-content: center;
       gap: 6px;
       color: var(--ink);
       opacity: 0.7;
       font-size: 13px;
       font-weight: 700;
       animation: bounce 2s infinite;
+      padding: 0 24px;
     }
+    .scroll-hint-down {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      flex: 1;
+    }
+    .scroll-hint-end {
+      position: absolute;
+      right: 24px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+      opacity: 0.7;
+      animation: bounce 2s infinite;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .scroll-hint-end:hover { opacity: 1; }
 
     @keyframes bounce {
 
@@ -177,9 +202,14 @@
       }
     }
 
-    .scroll-hint svg {
+    .scroll-hint-down svg {
       width: 22px;
       height: 22px;
+      stroke: var(--ink);
+    }
+    .scroll-hint-end svg {
+      width: 16px;
+      height: 16px;
       stroke: var(--ink);
     }
 
@@ -574,10 +604,18 @@
       </p>
     </div>
     <div class="scroll-hint">
-      아래로 스크롤하세요
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round">
-        <path d="M12 5v14M19 12l-7 7-7-7" />
-      </svg>
+      <div class="scroll-hint-down">
+        아래로 스크롤하세요
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round">
+          <path d="M12 5v14M19 12l-7 7-7-7" />
+        </svg>
+      </div>
+      <div class="scroll-hint-end" onclick="window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})">
+        끝으로
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" width="16" height="16">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      </div>
     </div>
   </section>
 
