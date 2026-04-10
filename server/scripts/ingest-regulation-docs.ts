@@ -24,8 +24,11 @@ type VersionRow = {
 
 type ChunkMetadata = {
   source_type: 'pdf' | 'md'
+  source_scope?: 'repo' | 'external'
+  original_source_path?: string
   article_ref?: string
   article_refs?: string[]
+  version_markers?: string[]
   page?: number
   page_start?: number
   page_end?: number
@@ -168,9 +171,82 @@ function extractArticleRefs(text: string): string[] {
   return Array.from(new Set(matches.map((match) => match.replace(/\s+/g, ''))))
 }
 
+function extractVersionMarkers(text: string): string[] {
+  const matches = text.match(
+    /<\d{4}\.\d{2}>|\d{4}\.\d{2}\.\d{2}|\d{4}\.\d{2}|\d{4}년\s*\d{1,2}월(?:\s*\d{1,2}일)?/g,
+  ) || []
+  return Array.from(new Set(matches))
+}
+
+function splitOversizedParagraph(paragraph: string, maxChars: number): string[] {
+  const normalized = normalizeWhitespace(paragraph)
+  if (normalized.length <= maxChars) {
+    return [normalized]
+  }
+
+  const lines = normalized
+    .split(/\n+/)
+    .map((line) => normalizeWhitespace(line))
+    .filter(Boolean)
+
+  if (lines.length > 1) {
+    const pieces: string[] = []
+    let buffer = ''
+
+    for (const line of lines) {
+      const nextValue = buffer ? `${buffer}\n${line}` : line
+      if (nextValue.length > maxChars && buffer) {
+        pieces.push(buffer)
+        buffer = line
+        continue
+      }
+      buffer = nextValue
+    }
+
+    if (buffer) {
+      pieces.push(buffer)
+    }
+
+    return pieces.flatMap((piece) => splitOversizedParagraph(piece, maxChars))
+  }
+
+  const sentences = normalized
+    .split(/(?<=[.!?])\s+|(?<=다\.)\s+|(?<=요\.)\s+/)
+    .map((sentence) => normalizeWhitespace(sentence))
+    .filter(Boolean)
+
+  if (sentences.length > 1) {
+    const pieces: string[] = []
+    let buffer = ''
+
+    for (const sentence of sentences) {
+      const nextValue = buffer ? `${buffer} ${sentence}` : sentence
+      if (nextValue.length > maxChars && buffer) {
+        pieces.push(buffer)
+        buffer = sentence
+        continue
+      }
+      buffer = nextValue
+    }
+
+    if (buffer) {
+      pieces.push(buffer)
+    }
+
+    return pieces.flatMap((piece) => splitOversizedParagraph(piece, maxChars))
+  }
+
+  const pieces: string[] = []
+  for (let index = 0; index < normalized.length; index += maxChars) {
+    pieces.push(normalized.slice(index, index + maxChars))
+  }
+  return pieces
+}
+
 function splitIntoChunks(section: Section, maxChars: number): Section[] {
   const paragraphs = section.content
     .split(/\n{2,}/)
+    .flatMap((part) => splitOversizedParagraph(part, maxChars))
     .map((part) => normalizeWhitespace(part))
     .filter(Boolean)
 
@@ -183,7 +259,8 @@ function splitIntoChunks(section: Section, maxChars: number): Section[] {
       return
     }
 
-    const articleRefs = extractArticleRefs(content)
+    const articleRefs = extractArticleRefs(`${section.sectionTitle}\n${content}`)
+    const versionMarkers = extractVersionMarkers(content)
     chunks.push({
       sourceFile: section.sourceFile,
       sectionTitle: section.sectionTitle,
@@ -192,6 +269,7 @@ function splitIntoChunks(section: Section, maxChars: number): Section[] {
         ...section.metadata,
         article_ref: articleRefs[0] || section.metadata.article_ref,
         article_refs: articleRefs,
+        version_markers: versionMarkers,
       },
     })
     buffer = ''
@@ -216,13 +294,25 @@ function resolveSourcePath(inputPath: string) {
     ? inputPath
     : resolve(repoRoot, inputPath)
 
+  const isInsideRepo = absolutePath.startsWith(`${repoRoot}/`) || absolutePath === repoRoot
+  const sourceFile = isInsideRepo
+    ? relative(repoRoot, absolutePath)
+    : `external/${basename(absolutePath)}`
+
   return {
     absolutePath,
-    relativePath: relative(repoRoot, absolutePath),
+    relativePath: sourceFile,
+    sourceScope: isInsideRepo ? 'repo' : 'external' as const,
+    originalSourcePath: absolutePath,
   }
 }
 
-function extractMarkdownSections(relativePath: string, absolutePath: string): Section[] {
+function extractMarkdownSections(
+  relativePath: string,
+  absolutePath: string,
+  sourceScope: 'repo' | 'external',
+  originalSourcePath: string,
+): Section[] {
   const content = readFileSync(absolutePath, 'utf8')
   const lines = content.split(/\r?\n/)
   const sections: Section[] = []
@@ -235,16 +325,20 @@ function extractMarkdownSections(relativePath: string, absolutePath: string): Se
     if (!text) {
       return
     }
-    const articleRefs = extractArticleRefs(text)
+    const articleRefs = extractArticleRefs(`${currentTitle}\n${text}`)
+    const versionMarkers = extractVersionMarkers(text)
     sections.push({
       sourceFile: relativePath,
       sectionTitle: currentTitle,
       content: text,
       metadata: {
         source_type: 'md',
+        source_scope: sourceScope,
+        original_source_path: originalSourcePath,
         heading_path: [...headingPath],
         article_ref: articleRefs[0],
         article_refs: articleRefs,
+        version_markers: versionMarkers,
         source_title: basename(relativePath),
       },
     })
@@ -329,7 +423,12 @@ function isPdfHeading(line: string): boolean {
   return /^(제\s*\d+\s*장|제\s*\d+\s*조(?:의\s*\d+)?(?:\([^)]*\))?|부칙|별표|\[[^\]]+\])/.test(line)
 }
 
-async function extractPdfSections(relativePath: string, absolutePath: string): Promise<Section[]> {
+async function extractPdfSections(
+  relativePath: string,
+  absolutePath: string,
+  sourceScope: 'repo' | 'external',
+  originalSourcePath: string,
+): Promise<Section[]> {
   const lines = await extractPdfLines(absolutePath)
   const sections: Section[] = []
   let currentTitle = basename(relativePath)
@@ -343,15 +442,19 @@ async function extractPdfSections(relativePath: string, absolutePath: string): P
       return
     }
 
-    const articleRefs = extractArticleRefs(text)
+    const articleRefs = extractArticleRefs(`${currentTitle}\n${text}`)
+    const versionMarkers = extractVersionMarkers(text)
     sections.push({
       sourceFile: relativePath,
       sectionTitle: currentTitle,
       content: text,
       metadata: {
         source_type: 'pdf',
+        source_scope: sourceScope,
+        original_source_path: originalSourcePath,
         article_ref: articleRefs[0],
         article_refs: articleRefs,
+        version_markers: versionMarkers,
         page: pageStart,
         page_start: pageStart,
         page_end: pageEnd,
@@ -392,13 +495,28 @@ async function extractPdfSections(relativePath: string, absolutePath: string): P
   return sections
 }
 
-async function collectSections(relativePath: string, absolutePath: string): Promise<Section[]> {
+async function collectSections(
+  relativePath: string,
+  absolutePath: string,
+  sourceScope: 'repo' | 'external',
+  originalSourcePath: string,
+): Promise<Section[]> {
   const extension = extname(absolutePath).toLowerCase()
   if (extension === '.md') {
-    return extractMarkdownSections(relativePath, absolutePath)
+    return extractMarkdownSections(
+      relativePath,
+      absolutePath,
+      sourceScope,
+      originalSourcePath,
+    )
   }
   if (extension === '.pdf') {
-    return extractPdfSections(relativePath, absolutePath)
+    return extractPdfSections(
+      relativePath,
+      absolutePath,
+      sourceScope,
+      originalSourcePath,
+    )
   }
   throw new Error(`Unsupported source type: ${relativePath}`)
 }
@@ -428,6 +546,8 @@ async function main() {
     const parsedSections = await collectSections(
       resolvedSource.relativePath,
       resolvedSource.absolutePath,
+      resolvedSource.sourceScope,
+      resolvedSource.originalSourcePath,
     )
     sections.push(...parsedSections)
   }
