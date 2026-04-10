@@ -4102,6 +4102,174 @@ html[data-theme="neo"] .pay-upload-zone {
 .pay-empty-title { font-size: var(--text-body-large); font-weight: 700; margin-bottom: 4px; }
 .pay-empty-desc { font-size: var(--text-body-normal); color: var(--text-muted); margin-bottom: 16px; }
 
+/* ── 급여 예상 히어로 카드 ── */
+.pay-est-hero-card {
+  background: linear-gradient(135deg, var(--bg-card) 0%, rgba(99, 102, 241, 0.08) 100%);
+  border: 1.5px solid var(--border-active);
+  border-radius: 16px;
+  padding: 28px 20px 20px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+.pay-est-hero-label {
+  font-size: var(--text-body-normal);
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+.pay-est-hero-amount {
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -1px;
+  line-height: 1.1;
+  margin-bottom: 8px;
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+}
+.pay-est-hero-sub {
+  font-size: var(--text-label-small);
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.pay-est-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 6px;
+}
+.pay-est-tag {
+  display: inline-block;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-glass);
+  font-weight: 500;
+}
+.pay-est-tag.ot {
+  background: rgba(251, 191, 36, 0.12);
+  color: var(--accent-amber);
+  border-color: rgba(251, 191, 36, 0.2);
+}
+
+/* ── 급여 예상 타임라인 ── */
+.pay-est-timeline {
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.pay-est-tl-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-glass);
+}
+.pay-est-tl-title {
+  font-size: var(--text-body-normal);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.pay-est-tl-avg {
+  font-size: var(--text-label-small);
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.pay-est-tl-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  font-size: var(--text-label-small);
+}
+.pay-est-tl-row.current {
+  background: rgba(99, 102, 241, 0.08);
+  border-radius: 8px;
+  padding: 6px 8px;
+  margin: 0 -8px;
+}
+.pay-est-tl-row.current .pay-est-tl-month {
+  color: var(--accent-indigo);
+  font-weight: 700;
+}
+.pay-est-tl-month {
+  width: 36px;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-align: right;
+}
+.pay-est-tl-bar-wrap {
+  flex: 1;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 7px;
+  overflow: hidden;
+}
+.pay-est-tl-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-indigo) 0%, var(--accent-cyan) 100%);
+  border-radius: 7px;
+  min-width: 4px;
+  transition: width 0.4s ease;
+}
+.pay-est-tl-row.current .pay-est-tl-bar {
+  background: linear-gradient(90deg, var(--accent-indigo) 0%, #818cf8 100%);
+}
+.pay-est-tl-amount {
+  width: 52px;
+  flex-shrink: 0;
+  text-align: right;
+  color: var(--text-primary);
+  font-weight: 600;
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+}
+.pay-est-tl-tags {
+  width: 80px;
+  flex-shrink: 0;
+  font-size: 10px;
+  color: var(--text-muted);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.pay-est-tl-footer {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-glass);
+  font-size: var(--text-label-small);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* ── Neo theme overrides for pay estimate ── */
+html[data-theme="neo"] .pay-est-hero-card {
+  background: var(--bg-card);
+  border: var(--neo-border);
+  box-shadow: var(--neo-shadow);
+}
+html[data-theme="neo"] .pay-est-hero-amount {
+  color: var(--text-primary);
+}
+html[data-theme="neo"] .pay-est-timeline {
+  border: var(--neo-border);
+  box-shadow: var(--neo-shadow);
+}
+html[data-theme="neo"] .pay-est-tag {
+  border: 1.5px solid var(--text-primary);
+}
+html[data-theme="neo"] .pay-est-tl-bar {
+  background: var(--text-primary);
+}
+html[data-theme="neo"] .pay-est-tl-row.current .pay-est-tl-bar {
+  background: var(--accent-indigo);
+}
+
 /* ── Responsive ── */
 @media (max-width: 380px) {
   .pay-bookmark-tabs { padding: 0 12px; }
@@ -4109,4 +4277,6 @@ html[data-theme="neo"] .pay-upload-zone {
   .pay-hbar-name { width: 76px; }
   .pay-hbar-amount { width: 60px; }
   .pay-hbar-diff { width: 48px; }
+  .pay-est-tl-tags { display: none; }
+  .pay-est-hero-amount { font-size: 28px; }
 }

@@ -759,7 +759,7 @@
       <nav class="pay-bookmark-tabs" id="payrollSubTabs">
         <button class="pay-bookmark-tab active" data-subtab="pay-history">히스토리</button>
         <button class="pay-bookmark-tab" data-subtab="pay-payslip">명세서</button>
-        <button class="pay-bookmark-tab" data-subtab="pay-calc">계산기</button>
+        <button class="pay-bookmark-tab" data-subtab="pay-calc">급여 예상</button>
       </nav>
       <div class="pay-tab-accent" id="payTabAccent"></div>
 
@@ -781,10 +781,21 @@
         <div id="payArchiveList"></div>
       </div>
 
-      <!-- ── 서브탭 3: 계산기 (시뮬레이터 + Q&A) ── -->
+      <!-- ── 서브탭 3: 급여 예상 ── -->
       <div class="sub-content" id="sub-pay-calc">
-        <!-- 전체 급여 시뮬레이터 (승격 배치) -->
-        <div class="card" style="border-color:var(--accent-indigo); border-width:2px;">
+
+        <!-- ① 히어로 카드: 이번달 예상 실수령액 -->
+        <div id="payEstHero"></div>
+
+        <!-- ② 월별 타임라인 (1년) -->
+        <div id="payEstTimeline"></div>
+
+        <!-- ③ 상세 시뮬레이션 (접이식) -->
+        <div class="collapsible-header" onclick="toggleCollapsible('payEstDetailForm')" style="margin-top:12px;">
+          <span style="display:flex; align-items:center; gap:8px;"><span class="toggle-icon">▸</span> 상세 시뮬레이션 설정</span>
+        </div>
+        <div class="collapsible-body" id="payEstDetailForm" style="display:none;">
+        <div class="card" style="border-color:var(--accent-indigo); border-width:2px; margin-top:8px;">
           <div class="card-title"><span class="icon" style="color:var(--accent-indigo);">🧾</span> 전체 급여 시뮬레이션</div>
           <p style="font-size:var(--text-body-normal); color:var(--text-muted); margin-bottom:12px;">📌 내 정보가 저장되어 있으면
             자동 반영됩니다. 월별 변동사항만 입력하세요.</p>
@@ -927,6 +938,7 @@
             <p style="color:var(--text-muted)">위에서 정보를 입력하고 [급여 시뮬레이션]을 눌러주세요.</p>
           </div>
         </div><!-- /시뮬레이터 card -->
+        </div><!-- /payEstDetailForm collapsible-body -->
 
         <!-- 급여 검증 (숨김, 명세서 업로드 후 활성화) -->
         <div id="verifyCard" class="card" style="display:none;">
@@ -934,8 +946,13 @@
           <div id="verifyResult"></div>
         </div>
 
-        <!-- Q&A 카드 영역 -->
-        <div id="qaCardsContainer"></div>
+        <!-- ④ 수당 바로 계산 (접이식) -->
+        <div class="collapsible-header" onclick="toggleCollapsible('payEstQaSection')" style="margin-top:12px;">
+          <span style="display:flex; align-items:center; gap:8px;"><span class="toggle-icon">▸</span> 수당 바로 계산</span>
+        </div>
+        <div class="collapsible-body" id="payEstQaSection" style="display:none;">
+          <div id="qaCardsContainer"></div>
+        </div>
       </div><!-- /sub-pay-calc -->
     </div><!-- /tab-payroll -->
 
@@ -1305,7 +1322,7 @@
           <button class="btn btn-outline"
             style="width:100%; margin-bottom:12px; font-size:var(--text-body-small); padding:6px; color:var(--text-muted); border-color:var(--border-glass);"
             onclick="var el=document.getElementById('pfPayslipArea'); el.style.display=el.style.display==='none'?'block':'none';">
-            🧪 급여명세서(PDF)로 자동 입력 (테스트 중)
+            🧪 급여명세서(PDF)로 자동 입력해주세요
           </button>
           <div id="pfPayslipArea"
             style="display:none; border:2px dashed var(--accent-indigo); border-radius:12px; padding:16px; text-align:center; margin-bottom:16px; background:var(--bg-hover);">
@@ -1380,10 +1397,7 @@
               <input type="text" id="pfPromotionDate" placeholder="예: 2024-03-01">
               <small id="pfPromotionHint" style="color:var(--text-muted)"></small>
             </div>
-            <div class="form-group" style="display:flex; align-items:flex-end;">
-              <button class="btn btn-secondary btn-full" onclick="applyPromotionDate()" style="margin-bottom:2px;">승진
-                적용</button>
-            </div>
+            <div class="form-group"></div>
           </div>
           <div class="form-row">
             <div class="form-group">
