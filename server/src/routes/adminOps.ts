@@ -1,7 +1,12 @@
 import { Hono } from 'hono'
 import postgres from 'postgres'
 import { requireAdmin } from '../middleware/auth'
-import { canTransitionStatus, normalizeSlug } from '../services/admin-ops'
+import {
+  canRequestReview,
+  canTransitionStatus,
+  normalizeSlug,
+  resolveApprovalDecision,
+} from '../services/admin-ops'
 
 const adminOpsRoutes = new Hono()
 const sql = postgres(process.env.DATABASE_URL!, { prepare: false })
@@ -63,6 +68,42 @@ adminOpsRoutes.get('/versions', async (c) => {
   `
 
   return c.json({ results: rows })
+})
+
+adminOpsRoutes.get('/dashboard', async (c) => {
+  const [versionCounts] = await sql`
+    select
+      count(*)::int as total_versions,
+      count(*) filter (where status = 'active')::int as active_versions,
+      count(*) filter (where status = 'draft')::int as draft_versions
+    from regulation_versions
+  `
+  const [contentCounts] = await sql`
+    select
+      count(*)::int as total_content_entries,
+      count(*) filter (where status = 'review')::int as review_entries,
+      count(*) filter (where status = 'published')::int as published_entries
+    from content_entries
+  `
+  const [approvalCounts] = await sql`
+    select
+      count(*)::int as total_approvals,
+      count(*) filter (where status = 'pending')::int as pending_approvals
+    from approval_tasks
+  `
+  const [auditCounts] = await sql`
+    select count(*)::int as total_audit_logs
+    from audit_logs
+  `
+
+  return c.json({
+    result: {
+      ...versionCounts,
+      ...contentCounts,
+      ...approvalCounts,
+      ...auditCounts,
+    },
+  })
 })
 
 adminOpsRoutes.post('/versions', async (c) => {
@@ -279,6 +320,75 @@ adminOpsRoutes.get('/content', async (c) => {
   `
 
   return c.json({ results: rows })
+})
+
+adminOpsRoutes.get('/content/:id', async (c) => {
+  const id = Number(c.req.param('id'))
+  const [entry] = await sql`
+    select *
+    from content_entries
+    where id = ${id}
+    limit 1
+  `
+
+  if (!entry) {
+    return c.json({ error: 'Content entry not found' }, 404)
+  }
+
+  const [revisions, approvals, auditLogs] = await Promise.all([
+    sql`
+      select *
+      from content_revisions
+      where entry_id = ${id}
+      order by revision_number desc
+    `,
+    sql`
+      select *
+      from approval_tasks
+      where entry_id = ${id}
+      order by created_at desc
+    `,
+    sql`
+      select *
+      from audit_logs
+      where entity_type = 'content_entry'
+        and entity_id = ${String(id)}
+      order by created_at desc
+      limit 50
+    `,
+  ])
+
+  return c.json({
+    result: {
+      entry,
+      revisions,
+      approvals,
+      auditLogs,
+    },
+  })
+})
+
+adminOpsRoutes.get('/content/:id/revisions', async (c) => {
+  const id = Number(c.req.param('id'))
+  const [entry] = await sql`
+    select id
+    from content_entries
+    where id = ${id}
+    limit 1
+  `
+
+  if (!entry) {
+    return c.json({ error: 'Content entry not found' }, 404)
+  }
+
+  const revisions = await sql`
+    select *
+    from content_revisions
+    where entry_id = ${id}
+    order by revision_number desc
+  `
+
+  return c.json({ results: revisions })
 })
 
 adminOpsRoutes.post('/content', async (c) => {
@@ -510,8 +620,28 @@ adminOpsRoutes.post('/content/:id/request-review', async (c) => {
     return c.json({ error: 'Reviewable content entry not found' }, 404)
   }
 
-  if (!canTransitionStatus(entry.status, 'review')) {
-    return c.json({ error: `Invalid status transition: ${entry.status} -> review` }, 400)
+  const [pendingCountRow] = await sql`
+    select count(*)::int as pending_count
+    from approval_tasks
+    where entry_id = ${id}
+      and revision_id = ${entry.current_revision_id}
+      and status = 'pending'
+  `
+
+  const pendingApprovalCount = Number(pendingCountRow?.pending_count || 0)
+
+  if (
+    !canRequestReview({
+      status: entry.status,
+      currentRevisionId: entry.current_revision_id,
+      pendingApprovalCount,
+    })
+  ) {
+    const message =
+      pendingApprovalCount > 0
+        ? 'Approval already pending for current revision'
+        : `Invalid status transition: ${entry.status} -> review`
+    return c.json({ error: message }, pendingApprovalCount > 0 ? 409 : 400)
   }
 
   const [task] = await sql`
@@ -536,6 +666,12 @@ adminOpsRoutes.post('/content/:id/request-review', async (c) => {
     update content_entries
     set status = 'review', updated_by = ${admin.userId}, updated_at = now()
     where id = ${id}
+  `
+
+  await sql`
+    update content_revisions
+    set status = 'review'
+    where id = ${entry.current_revision_id}
   `
 
   await writeAuditLog({
@@ -586,6 +722,20 @@ adminOpsRoutes.post('/approvals/:id/decision', async (c) => {
     return c.json({ error: 'Approval task not found' }, 404)
   }
 
+  if (task.status !== 'pending') {
+    return c.json({ error: 'Approval task already decided' }, 409)
+  }
+
+  const [entry] = await sql`
+    select id, published_revision_id
+    from content_entries
+    where id = ${task.entry_id}
+    limit 1
+  `
+  if (!entry) {
+    return c.json({ error: 'Content entry not found' }, 404)
+  }
+
   const [updatedTask] = await sql`
     update approval_tasks
     set
@@ -597,12 +747,17 @@ adminOpsRoutes.post('/approvals/:id/decision', async (c) => {
     returning *
   `
 
-  const nextStatus = body.decision === 'approved' ? 'published' : 'draft'
+  const outcome = resolveApprovalDecision({
+    decision: body.decision,
+    currentRevisionId: task.revision_id,
+    existingPublishedRevisionId: entry.published_revision_id ?? null,
+  })
+
   await sql`
     update content_entries
     set
-      status = ${nextStatus},
-      published_revision_id = case when ${body.decision} = 'approved' then ${task.revision_id} else published_revision_id end,
+      status = ${outcome.entryStatus},
+      published_revision_id = ${outcome.publishedRevisionId},
       updated_by = ${admin.userId},
       updated_at = now()
     where id = ${task.entry_id}
@@ -611,8 +766,23 @@ adminOpsRoutes.post('/approvals/:id/decision', async (c) => {
   if (task.revision_id) {
     await sql`
       update content_revisions
-      set status = ${nextStatus}
+      set status = ${outcome.revisionStatus}
       where id = ${task.revision_id}
+    `
+  }
+
+  if (outcome.closeOtherPendingTasks) {
+    await sql`
+      update approval_tasks
+      set
+        status = 'cancelled',
+        decision_note = 'Superseded by final decision on the same revision',
+        decision_by = ${admin.userId},
+        decided_at = now()
+      where entry_id = ${task.entry_id}
+        and revision_id = ${task.revision_id}
+        and status = 'pending'
+        and id <> ${id}
     `
   }
 

@@ -11,6 +11,7 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "seed": "tsx scripts/seed-from-data-js.ts",
+    "admin:smoke": "tsx scripts/smoke-admin-ops.ts",
     "rag:baseline": "tsx scripts/check-rag-baseline.ts",
     "rag:ingest": "tsx scripts/ingest-regulation-docs.ts",
     "rag:embed:regulations": "tsx scripts/embed-regulation-docs.ts",
