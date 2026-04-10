@@ -100,6 +100,37 @@ const OVERTIME = {
         return Math.round(min / 15) * 15 / 60; // 15분 단위 반올림
     },
 
+    // ── 출퇴근 시간 시간대별 분류 (온콜용) ──
+    // 출근 전 1시간 + 퇴근 후 1시간을 시간대에 따라 연장/야간/휴일/휴일야간으로 분류
+    _calcCommuteBreakdown(startMin, endMin, isRestDay) {
+        let ext = 0, ngt = 0, hol = 0, holNgt = 0;
+
+        // 출근 전 1시간: (startMin - 60) ~ startMin
+        const commuteBefore = startMin - 60;
+        for (let m = commuteBefore; m < startMin; m++) {
+            const hourInDay = ((m % 1440) + 1440) % 1440; // 음수 대응
+            const isNight = (hourInDay >= 1320 || hourInDay < 360);
+            if (isRestDay) { isNight ? holNgt++ : hol++; }
+            else { isNight ? ngt++ : ext++; }
+        }
+
+        // 퇴근 후 1시간: endMin ~ (endMin + 60)
+        for (let m = endMin; m < endMin + 60; m++) {
+            const hourInDay = m % 1440;
+            const isNight = (hourInDay >= 1320 || hourInDay < 360);
+            if (isRestDay) { isNight ? holNgt++ : hol++; }
+            else { isNight ? ngt++ : ext++; }
+        }
+
+        return {
+            extended: this._minutesToHours(ext),
+            night: this._minutesToHours(ngt),
+            holiday: this._minutesToHours(hol),
+            holidayNight: this._minutesToHours(holNgt),
+            totalMinutes: 120,
+        };
+    },
+
     // ── 자동 요율 분리 계산 ──
     // date: 'YYYY-MM-DD', startTime/endTime: 'HH:MM', isHoliday: boolean
     calcTimeBreakdown(date, startTime, endTime, type, isHoliday) {
@@ -199,13 +230,20 @@ const OVERTIME = {
             breakdown = this.calcTimeBreakdown(date, startTime, endTime, type, isHoliday);
             totalHours = breakdown.totalHours;
 
-            // 온콜 출근 시 출퇴근 2시간 가산
+            // 온콜 출근 시 출퇴근 2시간 가산 (시간대별 야간/휴일 반영)
             if (type === 'oncall_callout') {
-                const commuteHours = DATA.allowances.onCallCommuteHours;
-                // 출퇴근 시간은 연장근무로 처리
-                breakdown.extended += commuteHours;
-                breakdown.totalHours += commuteHours;
-                totalHours += commuteHours;
+                const startMin = this._parseTime(startTime);
+                let endMin = this._parseTime(endTime);
+                if (endMin <= startMin) endMin += 1440;
+                const isRestDay = breakdown.isWeekend || isHoliday;
+                const commute = this._calcCommuteBreakdown(startMin, endMin, isRestDay);
+
+                breakdown.extended += commute.extended;
+                breakdown.night += commute.night;
+                breakdown.holiday += commute.holiday;
+                breakdown.holidayNight += commute.holidayNight;
+                breakdown.totalHours += this._minutesToHours(commute.totalMinutes);
+                totalHours += this._minutesToHours(commute.totalMinutes);
             }
 
             estimatedPay = this.calcEstimatedPay(breakdown, hourlyRate, type);
@@ -246,11 +284,20 @@ const OVERTIME = {
         } else {
             breakdown = this.calcTimeBreakdown(date, startTime, endTime, type, isHoliday);
             totalHours = breakdown.totalHours;
+            // 온콜 출근 시 출퇴근 2시간 가산 (시간대별 야간/휴일 반영)
             if (type === 'oncall_callout') {
-                const commuteHours = DATA.allowances.onCallCommuteHours;
-                breakdown.extended += commuteHours;
-                breakdown.totalHours += commuteHours;
-                totalHours += commuteHours;
+                const startMin = this._parseTime(startTime);
+                let endMin = this._parseTime(endTime);
+                if (endMin <= startMin) endMin += 1440;
+                const isRestDay = breakdown.isWeekend || isHoliday;
+                const commute = this._calcCommuteBreakdown(startMin, endMin, isRestDay);
+
+                breakdown.extended += commute.extended;
+                breakdown.night += commute.night;
+                breakdown.holiday += commute.holiday;
+                breakdown.holidayNight += commute.holidayNight;
+                breakdown.totalHours += this._minutesToHours(commute.totalMinutes);
+                totalHours += this._minutesToHours(commute.totalMinutes);
             }
             estimatedPay = this.calcEstimatedPay(breakdown, hourlyRate, type);
         }
@@ -307,7 +354,6 @@ const OVERTIME = {
                 stats.byType.oncall_standby.pay += r.estimatedPay || 0;
             } else if (r.type === 'oncall_callout') {
                 stats.oncallCalloutCount++;
-                stats.overtimeHours += r.totalHours || 0;
                 stats.byType.oncall_callout.count++;
                 stats.byType.oncall_callout.hours += r.totalHours || 0;
                 stats.byType.oncall_callout.pay += r.estimatedPay || 0;

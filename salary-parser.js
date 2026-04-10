@@ -24,7 +24,7 @@ const SALARY_PARSER = (() => {
     /의학연구지원금/, /원외근무수당/,
     /시간외수당|시간외근무수당/, /야간근무가산|야간수당/, /야간근무가산금/,
     /당직비|숙직비/, /기타지급\d?/, /대체근무가산금/, /휴일수당|휴일근무수당/, /주치의수당/,
-    /대체근무 통상야근수당/, /별정수당\(약제부/, /군복무수당/, /간호간병특별수당/,
+    /대체근무 통상야근수당/, /별정수당\(약제부\)/, /군복무수당/, /간호간병특별수당/,
     /통상야간/, /산전후보전급여/, /육아휴직수당/, /연차수당|연차보상비/,
     /가족수당/, /연차보전수당/, /법정공휴일수당/, /자격수당/,
     /학술수당/, /학비보조/, /포상금/, /성과연봉/, /격려금/,
@@ -524,10 +524,10 @@ const SALARY_PARSER = (() => {
           const gap = row[i].x - (cur.x + cur.w);
           const curCol = findGlobalCol(globalGrid, cur.x + cur.w / 2);
           const nextCol = findGlobalCol(globalGrid, row[i].x + row[i].w / 2);
-          // 글자 수준(w < 15pt) 아이템은 항상 WORD_GAP 내에서 병합
-          // 단어 수준(w ≥ 15pt) 아이템은 같은 글로벌 열일 때만 병합
-          const bothWords = cur.w > 15 && row[i].w > 15;
-          if (gap < WORD_GAP && (!bothWords || curCol === nextCol)) {
+          // 누적된 cur이 단어 수준(≥15pt)이면 같은 열일 때만 병합
+          // (개별 글자 w가 작아도, 이미 단어가 된 cur과 다른 열 글자는 분리)
+          const curIsWord = cur.w > 15;
+          if (gap < WORD_GAP && (!curIsWord || curCol === nextCol)) {
             cur.str += (gap > CHAR_GAP ? '' : '') + row[i].str;
             cur.w = (row[i].x + row[i].w) - cur.x;
           } else {
@@ -539,6 +539,50 @@ const SALARY_PARSER = (() => {
         return merged;
       });
       console.log('[PayslipParser] 2-pass 그리드 기반 재병합 완료: ' + rows.length + '행');
+
+      // ── 3-pass: 패턴 기반 연결 항목명 분리 ──
+      // 2-pass 후에도 여러 급여/공제 항목명이 하나로 붙어있으면
+      // 알려진 패턴으로 분리하여 각각 올바른 x좌표 → 글로벌 열 매핑 복원
+      const allKnownPatterns = SALARY_PATTERNS.concat(DEDUCTION_PATTERNS);
+      // 패턴에서 실제 매칭용 문자열 추출 (긴 것 우선)
+      const knownNames = allKnownPatterns
+        .map(p => p.source.replace(/\\\(/g, '(').replace(/\\\)/g, ')'))
+        .join('|').split('|')
+        .filter(s => s.length >= 2 && !/[.*+?^${}()[\]\\]/.test(s)) // 순수 문자열만
+        .sort((a, b) => b.length - a.length);
+      const splitItemRe = new RegExp('(' + knownNames.join('|') + ')', 'g');
+
+      let splitCount = 0;
+      rows = rows.map(row => {
+        const newRow = [];
+        for (const item of row) {
+          const name = item.str.trim();
+          // 숫자만 있는 아이템은 건너뜀
+          if (/^[\d,.]+$/.test(name)) { newRow.push(item); continue; }
+          // 패턴 매칭으로 여러 항목명이 붙어있는지 확인
+          const matches = name.match(splitItemRe);
+          if (matches && matches.length > 1 && matches.join('') === name) {
+            // 붙어있는 항목명을 분리 — 각각 x좌표를 균등 분배
+            const unitW = item.w / matches.length;
+            matches.forEach((m, idx) => {
+              newRow.push({
+                str: m,
+                x: item.x + unitW * idx,
+                y: item.y,
+                w: unitW
+              });
+            });
+            splitCount++;
+            console.log('[PayslipParser] 3-pass 분리: "' + name + '" → ' + JSON.stringify(matches));
+          } else {
+            newRow.push(item);
+          }
+        }
+        return newRow;
+      });
+      if (splitCount > 0) {
+        console.log('[PayslipParser] 3-pass 패턴 기반 분리: ' + splitCount + '건 분리됨');
+      }
     }
 
     let salaryItems = [];

@@ -18,14 +18,6 @@
   <style>
     /* ═══════════ regulation.html — page-scoped styles ═══════════ */
     .main { max-width: 640px; }
-    .theme-toggle-btn {
-      width: 36px; height: 36px; border-radius: 8px;
-      border: 1px solid var(--border-glass); background: var(--bg-card);
-      cursor: pointer; font-size: var(--text-title-large);
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.15s ease-out; flex-shrink: 0;
-    }
-    .theme-toggle-btn:hover { border-color: var(--border-active); }
 
     /* ═══════════ Bookmark Tabs ═══════════ */
     .reg-bookmark-tabs {
@@ -48,18 +40,6 @@
       -webkit-tap-highlight-color: transparent;
       position: relative;
       text-align: center;
-    }
-    /* FAQ tab — orange/amber */
-    .reg-bookmark-tab[data-subtab="faq"] {
-      background: rgba(251, 146, 60, 0.15);
-      color: #c2410c;
-      border-bottom: 3px solid transparent;
-    }
-    .reg-bookmark-tab[data-subtab="faq"].active {
-      background: #fb923c;
-      color: #fff;
-      border-bottom: 3px solid #ea580c;
-      box-shadow: 0 2px 8px rgba(251, 146, 60, 0.3);
     }
     /* Browse tab — blue */
     .reg-bookmark-tab[data-subtab="browse"] {
@@ -91,15 +71,6 @@
       border: 2.5px solid #1a1a1a;
       border-bottom: none;
     }
-    html[data-theme="neo"] .reg-bookmark-tab[data-subtab="faq"] {
-      background: #fff3e0;
-      color: #1a1a1a;
-    }
-    html[data-theme="neo"] .reg-bookmark-tab[data-subtab="faq"].active {
-      background: #fb923c;
-      color: #1a1a1a;
-      box-shadow: 3px -2px 0px #1a1a1a;
-    }
     html[data-theme="neo"] .reg-bookmark-tab[data-subtab="browse"] {
       background: #e0f2fe;
       color: #1a1a1a;
@@ -128,7 +99,6 @@
       margin: 0 auto;
       transition: background 0.2s;
     }
-    .reg-tab-accent.faq { background: #fb923c; }
     .reg-tab-accent.browse { background: #60a5fa; }
     .reg-tab-accent.ask { background: #4ade80; }
 
@@ -507,60 +477,30 @@
 </head>
 
 <body>
-  <!-- ═══════════ Header — matches index.html ═══════════ -->
-  <header class="header">
-    <div class="header-inner">
-      <div class="header-top-row">
-        <a href="https://www.snuhmate.com" class="logo" style="text-decoration: none; color: inherit;">
-          <img src="logo.png" alt="SNUH Mate"
-            style="width:81px; height:81px; object-fit:contain; flex-shrink:0; border-radius:10px;">
-          <div>
-            <h1 class="logo-main-title">슬기로운 병원 생활 메이트</h1>
-            <p class="logo-sub-title">휴가, 시간외/온콜 등의 기록을 직접 관리해보세요. <br>기록들은 이 브라우저에만 저장되서 개발자나 볼 수 없어요!</p>
-          </div>
-        </a>
-        <div class="header-right">
-          <button class="theme-toggle-btn" id="themeToggle" title="테마 전환" onclick="toggleTheme()">🎨</button>
-        </div>
-      </div>
-    </div>
-  </header>
+  <!-- ═══════════ Header & Footer (shared-layout.js에서 렌더) ═══════════ -->
+  <header id="sharedHeader"></header>
+  <nav id="sharedFooter"></nav>
+  <script src="shared-layout.js?v=1.0"></script>
 
   <!-- ═══════════ Bookmark Tabs — below header ═══════════ -->
   <nav class="reg-bookmark-tabs" id="regSubTabs">
-    <button class="reg-bookmark-tab active" data-subtab="faq">FAQ</button>
-    <button class="reg-bookmark-tab" data-subtab="browse">찾아보기</button>
+    <button class="reg-bookmark-tab active" data-subtab="browse">찾아보기</button>
     <button class="reg-bookmark-tab" data-subtab="ask">물어보기</button>
   </nav>
-  <div class="reg-tab-accent faq" id="regTabAccent"></div>
+  <div class="reg-tab-accent browse" id="regTabAccent"></div>
 
   <main class="main">
 
-    <!-- ═══════════ FAQ ═══════════ -->
-    <div class="sub-content active" id="subtab-faq">
-      <!-- 검색 -->
-      <div class="card" style="padding:12px 16px; margin-bottom:16px;">
-        <div style="display:flex; gap:8px;">
-          <input type="text" id="faqSearchInput" class="reg-search-input" placeholder="FAQ 검색... (예: 온콜 수당, 야간근무)">
-          <button class="btn btn-outline" id="faqSearchBtn" style="white-space:nowrap;">검색</button>
-        </div>
-      </div>
-      <!-- 카테고리 필터 -->
-      <div class="quick-tags" id="faqCategoryTags" style="margin-bottom:16px;"></div>
-      <!-- FAQ 목록 -->
-      <div id="faqList"></div>
-    </div>
-
-    <!-- ═══════════ 찾아보기 ═══════════ -->
-    <div class="sub-content" id="subtab-browse">
+    <!-- ═══════════ 찾아보기 (FAQ 통합) ═══════════ -->
+    <div class="sub-content active" id="subtab-browse">
       <!-- 검색 -->
       <div class="card" style="padding:12px 16px; margin-bottom:16px;">
         <input type="text" id="browseSearch" class="reg-search-input"
-          placeholder="규정 검색... (예: 온콜, 연차, 경조비)" style="width:100%;">
+          placeholder="규정·FAQ 검색... (예: 온콜 수당, 연차, 경조비)" style="width:100%;">
       </div>
       <!-- 카테고리 필터 -->
       <div class="quick-tags" id="browseCategoryTags" style="margin-bottom:16px;"></div>
-      <!-- 규정 목록 -->
+      <!-- 규정 + FAQ 통합 목록 -->
       <div id="browseArticles"></div>
     </div>
 
@@ -613,21 +553,16 @@
     </div>
   </div>
 
-  <!-- ═══════════ Footer Nav — matches index.html ═══════════ -->
-  <nav class="nav-tabs" id="navTabs">
-    <a href="index.html?tab=leave" class="nav-tab" style="text-decoration:none;">📅 휴가</a>
-    <a href="index.html?tab=overtime" class="nav-tab" style="text-decoration:none;">⏰ 시간외</a>
-    <a href="index.html?tab=payroll" class="nav-tab" style="text-decoration:none;">💰 급여</a>
-    <a class="nav-tab active" style="cursor:default;">📖 규정</a>
-    <a href="index.html?tab=profile" class="nav-tab" style="text-decoration:none;">👤 info</a>
-    <a href="index.html?tab=feedback" class="nav-tab" style="text-decoration:none;">📢 피드백</a>
-  </nav>
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabaseClient.js?v=1.4"></script>
   <script src="data.js?v=2.5"></script>
   <script src="profile.js?v=2.5"></script>
   <script src="calculators.js?v=2.5"></script>
-  <script src="regulation.js?v=2.2"></script>
+  <script src="regulation.js?v=2.3"></script>
+  <style>
+    #ch-plugin-script-iframe { max-width: 500px !important; }
+  </style>
 </body>
 
 </html>

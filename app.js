@@ -3001,8 +3001,8 @@ function renderOtDashboard(year, month) {
   const container = document.getElementById('otDashboard');
   if (container) {
     const detailItems = [
-      { label: '온콜출근', value: stats.oncallCalloutCount + '회', cls: 'indigo' },
       { label: '시간외', value: stats.overtimeHours.toFixed(1) + 'h', cls: 'rose' },
+      { label: '온콜출근', value: stats.byType.oncall_callout.hours.toFixed(1) + 'h', cls: 'indigo' },
       { label: '온콜대기', value: stats.oncallStandbyDays + '일', cls: 'cyan' },
     ];
     const detailsHtml = detailItems
@@ -3027,6 +3027,17 @@ function renderOtDashboard(year, month) {
 
 // 하위 호환
 function renderOtStats(year, month) { renderOtDashboard(year, month); }
+
+// 통계 카드 클릭 → 해당 그룹 열기 + 스크롤
+function scrollToOtGroup(type) {
+  const groupEl = document.getElementById('otGroup_' + type);
+  if (!groupEl) return;
+  const wrapper = groupEl.closest('.ot-group');
+  if (wrapper && !wrapper.classList.contains('open')) {
+    wrapper.classList.add('open');
+  }
+  wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 
 // 기록 목록 렌더링 (통계그리드 + 유형분포 + 접이식 상세기록)
 function renderOtRecordList(records) {
@@ -3061,60 +3072,69 @@ function renderOtRecordList(records) {
 
   let html = '';
 
-  // 통계 그리드 (4칸)
+  // 통계 그리드 (4칸) — 시간외 시간은 순수 시간외만 (온콜 제외)
+  const pureOvertimeHours = byType.overtime.hours;
+  const oncallHours = byType.oncall_callout.hours;
   html += `<div class="lv-stats-grid">
-    <div class="lv-stat-card"><div class="lv-stat-num">${totalHours.toFixed(1)}</div><div class="lv-stat-label">총 시간</div></div>
-    <div class="lv-stat-card"><div class="lv-stat-num" style="color:var(--accent-rose)">${byType.overtime.count}</div><div class="lv-stat-label">시간외</div></div>
-    <div class="lv-stat-card"><div class="lv-stat-num" style="color:var(--accent-cyan)">${byType.oncall_standby.count + byType.oncall_callout.count}</div><div class="lv-stat-label">온콜</div></div>
+    <div class="lv-stat-card" onclick="scrollToOtGroup('overtime')" style="cursor:pointer"><div class="lv-stat-num" style="color:var(--accent-rose)">${pureOvertimeHours.toFixed(1)}h</div><div class="lv-stat-label">시간외</div></div>
+    <div class="lv-stat-card" onclick="scrollToOtGroup('oncall_callout')" style="cursor:pointer"><div class="lv-stat-num" style="color:var(--accent-indigo)">${oncallHours.toFixed(1)}h</div><div class="lv-stat-label">온콜출근</div></div>
+    <div class="lv-stat-card" onclick="scrollToOtGroup('oncall_standby')" style="cursor:pointer"><div class="lv-stat-num" style="color:var(--accent-cyan)">${byType.oncall_standby.count}일</div><div class="lv-stat-label">온콜대기</div></div>
     <div class="lv-stat-card"><div class="lv-stat-num" style="color:var(--accent-emerald); font-size:var(--text-title-large);">₩${totalPay.toLocaleString()}</div><div class="lv-stat-label">예상수당</div></div>
   </div>`;
 
-  // 유형별 분포
-  const typeEntries = Object.entries(byType).filter(([, v]) => v.count > 0);
-  if (typeEntries.length > 0) {
-    const colors = { overtime: 'var(--accent-rose)', oncall_standby: 'var(--accent-cyan)', oncall_callout: 'var(--accent-indigo)' };
-    html += '<div style="margin:12px 0 8px; font-size:var(--text-body-normal); font-weight:600; color:var(--text-muted);">유형별 분포</div>';
-    html += '<div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:12px;">';
-    typeEntries.forEach(([type, data]) => {
-      const hoursStr = data.hours > 0 ? ` (${data.hours.toFixed(1)}h)` : '';
-      html += `<span style="display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:12px; font-size:var(--text-body-normal); background:var(--bg-glass); border:1px solid var(--border-glass);">
-        <i style="width:6px;height:6px;border-radius:50%;background:${colors[type]};display:inline-block;"></i>
-        ${OVERTIME.typeLabel(type)} <strong>${data.count}건</strong>${hoursStr} ₩${data.pay.toLocaleString()}
-      </span>`;
-    });
-    html += '</div>';
-  }
-
-  // 상세 기록 (접이식)
-  html += `<div>
-    <div class="collapsible-header" onclick="toggleCollapsible('otRecordDetail')">
-      <span style="display:flex; align-items:center; gap:8px;"><span class="toggle-icon">▸</span> 상세 기록 (${sorted.length}건)</span>
-    </div>
-    <div class="collapsible-body" id="otRecordDetail" style="display:none; max-height:400px; overflow-y:auto;">`;
-
+  // 상세 기록 — 카테고리별 그룹, 접힌 토글, 데이터 있는 것만 표시
   const dowNames = ['일', '월', '화', '수', '목', '금', '토'];
-  sorted.forEach(r => {
-    const day = parseInt(r.date.split('-')[2]);
-    const dow = new Date(r.date).getDay();
-    const timeStr = r.startTime && r.endTime ? `${r.startTime}~${r.endTime}` : '종일';
-    const hoursStr = r.totalHours ? `${r.totalHours}h` : '';
+  const typeOrder = ['overtime', 'oncall_standby', 'oncall_callout'];
+  const typeColors = { overtime: 'var(--accent-rose)', oncall_standby: 'var(--accent-cyan)', oncall_callout: 'var(--accent-indigo)' };
 
-    html += `<div class="ot-record-item" onclick="editOtRecord('${r.id}')">
-      <div class="ot-record-date">${day}<br><span style="font-size:var(--text-label-small);color:var(--text-muted)">${dowNames[dow]}</span></div>
-      <span class="ot-record-type ${r.type}">${OVERTIME.typeLabel(r.type)}</span>
-      <div class="ot-record-info">${timeStr} ${hoursStr}${r.memo ? '<br><span style="color:var(--text-muted)">' + escapeHtml(r.memo) + '</span>' : ''}</div>
-      <div class="ot-record-pay">₩${(r.estimatedPay || 0).toLocaleString()}</div>
-    </div>`;
+  const grouped = {};
+  sorted.forEach(r => {
+    if (!grouped[r.type]) grouped[r.type] = [];
+    grouped[r.type].push(r);
   });
 
-  html += '</div></div>';
+  typeOrder.forEach(type => {
+    const items = grouped[type];
+    if (!items || items.length === 0) return;
+    const typeData = byType[type];
+    const label = OVERTIME.typeLabel(type);
+    const groupId = 'otGroup_' + type;
 
-  // 합계
-  html += `<div class="ot-record-summary">
-    <span>합계 (${sorted.length}건)</span>
-    <span>₩${totalPay.toLocaleString()}</span>
-  </div>`;
+    html += `<div class="ot-group" onclick="this.classList.toggle('open')">
+      <div class="ot-group-header" style="--group-color:${typeColors[type]}">
+        <span class="ot-group-chevron">▸</span>
+        <span class="ot-group-label">${label}</span>
+        <span class="ot-group-summary">${typeData.count}건 · ${typeData.hours.toFixed(1)}h</span>
+        <span class="ot-group-pay">₩${typeData.pay.toLocaleString()}</span>
+      </div>
+      <div class="ot-group-body" id="${groupId}">`;
 
+    items.forEach(r => {
+      const day = parseInt(r.date.split('-')[2]);
+      const dow = new Date(r.date).getDay();
+      const timeStr = r.startTime && r.endTime ? `${r.startTime}~${r.endTime}` : '';
+      const hoursStr = r.totalHours ? `${r.totalHours}h` : '';
+
+      // breakdown 태그 (연장/야간/휴일)
+      const bd = r.breakdown || {};
+      const tags = [];
+      if (bd.extended > 0) tags.push(`연장${bd.extended}h`);
+      if (bd.night > 0) tags.push(`야간${bd.night}h`);
+      if (bd.holiday > 0) tags.push(`휴일${bd.holiday}h`);
+      if (bd.holidayNight > 0) tags.push(`휴일야간${bd.holidayNight}h`);
+      const tagStr = tags.length > 0 ? `<span class="ot-row-tags">${tags.join(' · ')}</span>` : '';
+
+      html += `<div class="ot-record-row" onclick="event.stopPropagation(); editOtRecord('${r.id}')">
+        <span class="ot-row-date">${day} ${dowNames[dow]}</span>
+        <span class="ot-row-detail">${timeStr} ${hoursStr}${tagStr}</span>
+        <span class="ot-row-pay">₩${(r.estimatedPay || 0).toLocaleString()}</span>
+      </div>`;
+    });
+
+    html += '</div></div>';
+  });
+
+  // Trusted internal OVERTIME data — no user-supplied HTML
   container.innerHTML = html;
 }
 

@@ -1,6 +1,6 @@
 /* ============================================
-   regulation.js — 규정/상담 페이지 로직 v2
-   3-tab structure: FAQ / 찾아보기 / 물어보기
+   regulation.js — 규정/상담 페이지 로직 v3
+   2-tab structure: 찾아보기 (FAQ 통합) / 물어보기
 
    Security note: All innerHTML usage in this file renders content from
    DATA.handbook and DATA.faq — trusted, hardcoded internal data sources
@@ -8,11 +8,23 @@
    This matches the existing pattern used in app.js.
    ============================================ */
 
+// ── handbook 조항 제목 → 계산기 매핑 (FAQ 중간 레이어 제거) ──
+var ARTICLE_CALCULATORS = {
+  '시간외근무': '시간외근무는 어떻게 계산하나요?',
+  '온콜출근 수당': '온콜 출근하면 수당이 얼마인가요?',
+  '통상임금 구성': '통상임금이 뭐에요?',
+  '가족수당': '가족수당은 얼마인가요?',
+  '연차유급휴가': '연차가 몇 일이에요?',
+  '장기근속수당': '장기근속수당은?',
+  '명절지원비': '명절지원비는 언제?',
+  '육아휴직': '육아휴직 급여는?',
+  '퇴직수당': '퇴직금은 어떻게 계산하나요?'
+};
+
 // ── Init ──
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
   initSubTabs();
-  initFaq();
   initBrowse();
   initAsk();
   initPdfSheet();
@@ -117,6 +129,9 @@ function getPdfPageForRef(ref) {
 }
 
 function initBrowse() {
+  // Load profile for calculator blocks
+  loadProfileForFaq();
+
   renderBrowseCategories();
 
   // Start with first category selected
@@ -133,6 +148,7 @@ function initBrowse() {
     debounceTimer = setTimeout(function() { searchBrowse(searchInput.value.trim()); }, 200);
   });
 }
+
 
 function renderBrowseCategories() {
   var container = document.getElementById('browseCategoryTags');
@@ -194,12 +210,14 @@ function renderBrowseList() {
   renderArticles(articles, container, { showCategory: !browseActiveCategory });
 }
 
-// Renders article accordion from trusted DATA.handbook articles
+// Renders article accordion from trusted DATA.handbook, with direct calculator blocks
+// Security: All content from trusted DATA.handbook (hardcoded in data.js)
 function renderArticles(articles, container, options) {
   const opts = options || {};
   const highlightQuery = opts.highlight;
   const showCategory = opts.showCategory;
-  let html = '';
+
+  var parts = [];
 
   articles.forEach(function(article, i) {
     const bodyFormatted = formatBody(article.body, highlightQuery);
@@ -212,7 +230,11 @@ function renderArticles(articles, container, options) {
     const escapedTitle = escapeHtml(article.title).replace(/'/g, "\\'");
     const escapedRef = escapeHtml(article.ref || '').replace(/'/g, "\\'");
 
-    html += '<div class="reg-article" data-index="' + i + '">'
+    // Direct calculator block (no FAQ intermediary)
+    var calcKey = ARTICLE_CALCULATORS[article.title];
+    var calcBlock = calcKey ? renderCalcBlock(calcKey) : '';
+
+    parts.push('<div class="reg-article" data-index="' + i + '">'
       + '<div class="reg-article-header" onclick="toggleArticle(this)">'
       + '<div class="reg-article-title-group">'
       + '<div class="reg-article-title">' + titleText + categoryLabel + '</div>'
@@ -222,16 +244,33 @@ function renderArticles(articles, container, options) {
       + '</div>'
       + '<div class="reg-article-body">'
       + '<div class="reg-article-content">' + bodyFormatted + '</div>'
+      + calcBlock
       + '<div class="reg-article-actions">'
       + '<button class="btn btn-outline" onclick="openPdfForRef(\'' + escapedRef + '\')">\uD83D\uDCC4 PDF 원문 보기</button>'
       + '<button class="btn btn-outline" onclick="askAboutArticle(\'' + escapedTitle + '\')">\uD83D\uDCAC 이 규정 질문하기</button>'
       + '</div>'
       + '</div>'
-      + '</div>';
+      + '</div>');
   });
 
-  // All content from trusted DATA.handbook
-  container.innerHTML = html || '<div class="reg-empty"><div class="reg-empty-icon">\uD83D\uDCED</div><div class="reg-empty-text">조항이 없습니다.</div></div>';
+  var result = parts.join('');
+  container.textContent = '';
+  if (!result) {
+    var emptyDiv = document.createElement('div');
+    emptyDiv.className = 'reg-empty';
+    var iconDiv = document.createElement('div');
+    iconDiv.className = 'reg-empty-icon';
+    iconDiv.textContent = '\uD83D\uDCED';
+    var textDiv = document.createElement('div');
+    textDiv.className = 'reg-empty-text';
+    textDiv.textContent = '조항이 없습니다.';
+    emptyDiv.appendChild(iconDiv);
+    emptyDiv.appendChild(textDiv);
+    container.appendChild(emptyDiv);
+  } else {
+    // Content from trusted DATA.handbook — no user input
+    container.innerHTML = result;
+  }
 }
 
 function toggleArticle(headerEl) {
@@ -265,11 +304,13 @@ function searchBrowse(query) {
   var q = query.toLowerCase();
   var results = [];
 
+  // Search handbook articles
   DATA.handbook.forEach(function(section) {
     section.articles.forEach(function(article) {
       var inTitle = article.title.toLowerCase().includes(q);
       var inBody = article.body.toLowerCase().includes(q);
       var inRef = article.ref.toLowerCase().includes(q);
+
       if (inTitle || inBody || inRef) {
         results.push(Object.assign({}, article, {
           _category: section.category,
@@ -280,14 +321,26 @@ function searchBrowse(query) {
   });
 
   if (results.length === 0) {
-    container.innerHTML = '<div class="reg-empty">'
-      + '<div class="reg-empty-icon">\uD83D\uDD0D</div>'
-      + '<div class="reg-empty-text">"' + escapeHtml(query) + '" 검색 결과가 없습니다.<br>다른 키워드로 검색해보세요.</div>'
-      + '</div>';
+    container.textContent = '';
+    var emptyDiv = document.createElement('div');
+    emptyDiv.className = 'reg-empty';
+    var iconDiv = document.createElement('div');
+    iconDiv.className = 'reg-empty-icon';
+    iconDiv.textContent = '\uD83D\uDD0D';
+    var textDiv = document.createElement('div');
+    textDiv.className = 'reg-empty-text';
+    textDiv.textContent = '"' + query + '" 검색 결과가 없습니다. 다른 키워드로 검색해보세요.';
+    emptyDiv.appendChild(iconDiv);
+    emptyDiv.appendChild(textDiv);
+    container.appendChild(emptyDiv);
     return;
   }
 
-  container.innerHTML = '<div style="font-size:var(--text-body-normal); color:var(--text-muted); margin-bottom:12px;">' + results.length + '개 결과</div>';
+  container.textContent = '';
+  var countDiv = document.createElement('div');
+  countDiv.style.cssText = 'font-size:var(--text-body-normal); color:var(--text-muted); margin-bottom:12px;';
+  countDiv.textContent = results.length + '개 결과';
+  container.appendChild(countDiv);
   var articlesDiv = document.createElement('div');
   container.appendChild(articlesDiv);
   renderArticles(results, articlesDiv, { highlight: q, showCategory: true });
@@ -315,14 +368,22 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
+function getHandbookPdfUrl() {
+  // file:// 프로토콜에서는 PDF.js가 상대경로를 못 읽으므로 절대 URL 사용
+  if (window.location.protocol === 'file:') {
+    return window.location.href.replace(/\/[^/]*$/, '/data/2026_handbook.pdf');
+  }
+  return 'data/2026_handbook.pdf';
+}
+
 function openPdfPicker() {
-  openPdfSheet('data/2026_handbook.pdf', '조합원 수첩 (전체)');
+  openPdfSheet(getHandbookPdfUrl(), '조합원 수첩 (전체)');
 }
 
 function openPdfForRef(ref) {
   var page = getPdfPageForRef(ref);
   var label = ref ? '조합원 수첩 — ' + ref : '조합원 수첩';
-  openPdfSheet('data/2026_handbook.pdf', label, page);
+  openPdfSheet(getHandbookPdfUrl(), label, page);
 }
 
 function askAboutArticle(title) {
@@ -619,80 +680,8 @@ function renderHandbookSource(articles) {
   return html;
 }
 
-// ═══════════ ❓ FAQ (독립 탭) ═══════════
+// ═══════════ FAQ 포맷팅/계산기 (찾아보기 내 인라인용) ═══════════
 
-var faqActiveCategory = null;
-
-function initFaq() {
-  var searchBtn = document.getElementById('faqSearchBtn');
-  var searchInput = document.getElementById('faqSearchInput');
-  if (!searchBtn || !searchInput) return;
-
-  searchBtn.addEventListener('click', function() { searchFaq(searchInput.value.trim()); });
-  searchInput.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') searchFaq(searchInput.value.trim());
-  });
-
-  renderFaqCategories();
-  // Start with first category selected
-  if (DATA.faq) {
-    var categories = [];
-    DATA.faq.forEach(function(f) {
-      if (categories.indexOf(f.category) === -1) categories.push(f.category);
-    });
-    if (categories.length > 0) {
-      faqActiveCategory = categories[0];
-    }
-  }
-  renderFaqList();
-  updateFaqCategoryActive();
-}
-
-function renderFaqCategories() {
-  var container = document.getElementById('faqCategoryTags');
-  if (!container || !DATA.faq) return;
-
-  var categories = [];
-  DATA.faq.forEach(function(f) {
-    if (categories.indexOf(f.category) === -1) categories.push(f.category);
-  });
-
-  // "전체" tag
-  var allTag = document.createElement('button');
-  allTag.className = 'quick-tag';
-  allTag.textContent = '전체';
-  allTag.style.fontWeight = '600';
-  allTag.onclick = function() {
-    faqActiveCategory = null;
-    document.getElementById('faqSearchInput').value = '';
-    renderFaqList();
-    updateFaqCategoryActive();
-  };
-  container.appendChild(allTag);
-
-  categories.forEach(function(cat) {
-    var tag = document.createElement('button');
-    tag.className = 'quick-tag';
-    tag.textContent = cat;
-    tag.dataset.category = cat;
-    tag.onclick = function() {
-      faqActiveCategory = cat;
-      document.getElementById('faqSearchInput').value = '';
-      renderFaqList();
-      updateFaqCategoryActive();
-    };
-    container.appendChild(tag);
-  });
-}
-
-function updateFaqCategoryActive() {
-  document.querySelectorAll('#faqCategoryTags .quick-tag').forEach(function(tag) {
-    var isActive = (!faqActiveCategory && !tag.dataset.category) ||
-                   (tag.dataset.category === faqActiveCategory);
-    tag.style.borderColor = isActive ? 'var(--accent-indigo)' : '';
-    tag.style.color = isActive ? 'var(--accent-indigo)' : '';
-  });
-}
 
 // ── FAQ 답변 포맷팅 엔진 ──
 // 플레인 텍스트를 구조화된 HTML로 변환
@@ -910,106 +899,6 @@ function renderCalcBlock(question) {
   return html;
 }
 
-// Renders FAQ as reg-article accordion (same style as 찾아보기)
-// Trusted DATA.faq content only
-function renderFaqList(items) {
-  var container = document.getElementById('faqList');
-  if (!container) return;
-
-  var faqItems = items || DATA.faq;
-  if (!faqItems) return;
-
-  var filtered = faqActiveCategory
-    ? faqItems.filter(function(f) { return f.category === faqActiveCategory; })
-    : faqItems;
-
-  if (filtered.length === 0) {
-    container.innerHTML = '<div class="reg-empty" style="padding:30px;"><div class="reg-empty-text">검색 결과가 없습니다.</div></div>';
-    return;
-  }
-
-  // Load profile for calculations
-  loadProfileForFaq();
-
-  var html = '';
-  filtered.forEach(function(item, i) {
-    var refText = item.ref ? escapeHtml(item.ref) : '';
-    var catText = escapeHtml(item.category);
-    var answerHtml = formatFaqAnswer(item.a);
-    var calcHtml = renderCalcBlock(item.q);
-
-    html += '<div class="reg-article" data-index="' + i + '">'
-      + '<div class="reg-article-header" onclick="toggleFaqItem(this)">'
-      + '<div class="reg-article-title-group">'
-      + '<div class="reg-article-title">' + escapeHtml(item.q) + '</div>'
-      + '<div class="reg-article-ref">'
-      + '<span style="margin-right:6px;">' + catText + '</span>'
-      + (refText ? '\uD83D\uDCCC ' + refText : '')
-      + '</div>'
-      + '</div>'
-      + '<span class="reg-article-chevron">▸</span>'
-      + '</div>'
-      + '<div class="reg-article-body">'
-      + '<div class="reg-article-content">' + answerHtml + '</div>'
-      + calcHtml
-      + '</div>'
-      + '</div>';
-  });
-
-  container.innerHTML = html;
-}
-
-function toggleFaqItem(headerEl) {
-  var article = headerEl.closest('.reg-article');
-  var wasOpen = article.classList.contains('open');
-
-  // Accordion: close all siblings
-  article.parentElement.querySelectorAll('.reg-article.open').forEach(function(s) {
-    s.classList.remove('open');
-  });
-
-  if (!wasOpen) {
-    article.classList.add('open');
-    if (window.innerWidth <= 768) {
-      setTimeout(function() {
-        article.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }, 50);
-    }
-  }
-}
-
-async function searchFaq(query) {
-  if (!query) {
-    renderFaqList();
-    return;
-  }
-
-  try {
-    var res = await fetch(API_BASE + '/faq/search?q=' + encodeURIComponent(query));
-    if (!res.ok) throw new Error('API error: ' + res.status);
-    var data = await res.json();
-    if (data.results && data.results.length > 0) {
-      faqActiveCategory = null;
-      updateFaqCategoryActive();
-      renderFaqList(data.results.map(function(r) {
-        return { q: r.question, a: r.answer, category: r.category, ref: r.articleRef };
-      }));
-      return;
-    }
-  } catch (err) {
-    // Fallback to local search
-  }
-
-  // Local fallback
-  var q = query.toLowerCase();
-  var localResults = DATA.faq.filter(function(f) {
-    return f.q.toLowerCase().includes(q) || f.a.toLowerCase().includes(q) ||
-      (f.category && f.category.toLowerCase().includes(q));
-  });
-  faqActiveCategory = null;
-  updateFaqCategoryActive();
-  renderFaqList(localResults);
-}
 
 // ═══════════ 📄 PDF 바텀시트 ═══════════
 

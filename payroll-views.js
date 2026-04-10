@@ -300,27 +300,54 @@
   let currentPayslipIdx = 0;
 
   window.renderPayPayslip = function () {
+    const headerEl = document.getElementById('payPayslipHeader');
     const sliderEl = document.getElementById('payMonthSlider');
     const visualEl = document.getElementById('payPayslipVisual');
     const archiveEl = document.getElementById('payArchiveList');
     if (!visualEl) return;
 
+    // 헤더 영역 (슬라이더 바로 아래, 우측 정렬)
+    if (headerEl) {
+      headerEl.textContent = '';
+      headerEl.style.display = 'flex';
+      headerEl.style.justifyContent = 'flex-end';
+      headerEl.style.padding = '0';
+      headerEl.style.marginTop = '-40px';
+      headerEl.style.marginBottom = '6px';
+      headerEl.appendChild(buildTextUploadBtn());
+    }
+
     const allData = getAllMonthData();
 
     if (allData.length === 0) {
-      if (sliderEl) sliderEl.textContent = '';
+      // 월 슬라이더: 현재 월 표시 (업로드 버튼은 헤더에 이미 있으므로 중복 안 함)
+      if (sliderEl) {
+        sliderEl.textContent = '';
+        const now = new Date();
+        const slider = el('div', {
+          style: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', padding: '8px 0' }
+        });
+        const prevBtn = el('button', { className: 'btn', textContent: '◀', style: { minWidth: '10px', padding: '6px' } });
+        prevBtn.disabled = true;
+        const nextBtn = el('button', { className: 'btn', textContent: '▶', style: { minWidth: '10px', padding: '6px' } });
+        nextBtn.disabled = true;
+        const label = el('span', {
+          style: { fontWeight: '700', fontSize: 'var(--text-title-medium)' },
+          textContent: now.getFullYear() + '년 ' + (now.getMonth() + 1) + '월'
+        });
+        slider.appendChild(prevBtn);
+        slider.appendChild(label);
+        slider.appendChild(nextBtn);
+        sliderEl.appendChild(slider);
+      }
       visualEl.textContent = '';
       if (archiveEl) archiveEl.textContent = '';
-      // 빈 상태: 업로드 버튼 포함
       const empty = buildEmptyState(
         '급여명세서',
         '아직 등록된 명세서가 없습니다.',
-        '급여명세서 파일을 업로드해주세요.',
+        '우측 상단 버튼으로 급여명세서를 업로드해주세요.',
         null, null
       );
-      // 빈 상태에 업로드 버튼 추가
-      const uploadBtn = buildInlineUploadBtn();
-      empty.appendChild(uploadBtn);
       visualEl.appendChild(empty);
       return;
     }
@@ -344,8 +371,10 @@
   function buildMonthSlider(container, allData, idx) {
     container.textContent = '';
     const slider = el('div', {
-      style: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', padding: '8px 0' }
+      style: { display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 0' }
     });
+    // 좌측 여백 (우측 업로드 버튼과 균형)
+    slider.appendChild(el('div', { style: { flex: '1' } }));
 
     const prevBtn = el('button', {
       className: 'btn',
@@ -381,22 +410,19 @@
     slider.appendChild(prevBtn);
     slider.appendChild(label);
     slider.appendChild(nextBtn);
-
-    // 업로드 버튼 (우측)
-    slider.appendChild(buildInlineUploadBtn());
+    slider.appendChild(el('div', { style: { flex: '1' } }));
 
     container.appendChild(slider);
   }
 
-  // ── 인라인 업로드 버튼 ──
-  function buildInlineUploadBtn() {
+  // ── 텍스트 업로드 버튼 (명세서 탭 상단 우측) ──
+  function buildTextUploadBtn() {
     const fileInput = el('input', { type: 'file', accept: '.pdf,.xlsx,.xls,.csv,.png,.jpg,.jpeg,.gif,.bmp,.webp' });
     fileInput.style.display = 'none';
 
     const btn = el('button', {
-      className: 'pay-upload-btn',
-      title: '급여명세서 업로드',
-      textContent: '📎',
+      className: 'pay-text-upload-btn',
+      textContent: '급여 PDF 업로드',
       onClick: function () { fileInput.click(); }
     });
 
@@ -406,14 +432,13 @@
       }
     });
 
-    const wrap = el('div', { style: { position: 'relative', display: 'inline-flex' } });
+    const wrap = el('div', { style: { display: 'inline-flex' } });
     wrap.appendChild(btn);
     wrap.appendChild(fileInput);
     return wrap;
   }
 
   async function handleInlineUpload(file) {
-    // 간단 로딩 표시
     const visualEl = document.getElementById('payPayslipVisual');
     if (visualEl) {
       const loading = el('div', {
@@ -432,7 +457,6 @@
         SALARY_PARSER.saveMonthlyData(ym.year, ym.month, result);
         currentPayslipIdx = 0;
         renderPayPayslip();
-        // 히스토리도 갱신
         if (typeof renderPayHistory === 'function') renderPayHistory();
       } else {
         alert('급여 기간을 인식할 수 없습니다. 파일을 확인해주세요.');
@@ -468,21 +492,6 @@
         prev ? prev.data.deductionItems : null));
     }
 
-    // 실지급액 결과 카드
-    const netCard = el('div', { className: 'card pay-net-card' });
-    netCard.appendChild(el('div', { className: 'pay-net-label', textContent: '실지급액' }));
-    netCard.appendChild(el('div', { className: 'pay-net-amount', textContent: fmtNum(net) + '원' }));
-    if (prev) {
-      const prevNet = prev.data.summary?.netPay || 0;
-      const d = net - prevNet;
-      if (d !== 0) {
-        netCard.appendChild(el('div', {
-          className: 'pay-net-diff ' + (d > 0 ? 'up' : 'down'),
-          textContent: '전월 대비 ' + (d > 0 ? '+' : '') + fmtNum(d) + '원'
-        }));
-      }
-    }
-    container.appendChild(netCard);
 
     // 전월 비교 그리드
     if (prev) {
@@ -490,41 +499,55 @@
     }
   }
 
-  // ── 도넛 차트 ──
+  // ── 급여 구성 컬러바 ──
   function buildDonutChart(gross, deduction, net, total) {
     const card = el('div', { className: 'card' });
-    const wrapper = el('div', { style: { display: 'flex', alignItems: 'center', gap: '20px', justifyContent: 'center', flexWrap: 'wrap' } });
 
+    // 실지급액 큰 숫자
+    card.appendChild(el('div', {
+      style: { fontSize: 'var(--text-label-small)', color: 'var(--text-muted)', fontWeight: '600', marginBottom: '6px' },
+      textContent: '실지급액'
+    }));
+    card.appendChild(el('div', {
+      style: { fontSize: '1.5rem', fontWeight: '800', marginBottom: '4px' },
+      textContent: fmtNum(net) + '원'
+    }));
+
+    // 컬러바
     const grossPct = pct(gross, total);
     const dedPct = 100 - grossPct;
 
-    const donut = el('div', { className: 'pay-donut' });
-    donut.style.background = 'conic-gradient(var(--accent-emerald) 0% ' + grossPct + '%, var(--accent-rose) ' + grossPct + '% 100%)';
-    const hole = el('div', { className: 'pay-donut-hole' });
-    const center = el('div', { className: 'pay-donut-center' });
-    center.appendChild(el('div', { style: { fontSize: 'var(--text-body-small)', color: 'var(--text-muted)' }, textContent: '실지급' }));
-    center.appendChild(el('div', { style: { fontWeight: '700', fontSize: 'var(--text-body-large)' }, textContent: fmtNum(net) + '원' }));
-    hole.appendChild(center);
-    donut.appendChild(hole);
-    wrapper.appendChild(donut);
+    const bar = el('div', { className: 'pay-colorbar' });
+    const grossFill = el('div', { className: 'pay-colorbar-fill' });
+    grossFill.style.flex = String(grossPct);
+    grossFill.style.background = 'var(--accent-emerald)';
+    const dedFill = el('div', { className: 'pay-colorbar-fill' });
+    dedFill.style.flex = String(dedPct);
+    dedFill.style.background = 'var(--accent-rose)';
+    bar.appendChild(grossFill);
+    bar.appendChild(dedFill);
+    card.appendChild(bar);
 
-    const legend = el('div', { className: 'pay-donut-legend' });
-    legend.appendChild(buildLegendItem('지급', grossPct, gross, 'var(--accent-emerald)'));
-    legend.appendChild(buildLegendItem('공제', dedPct, deduction, 'var(--accent-rose)'));
-    wrapper.appendChild(legend);
+    // 레전드
+    const legend = el('div', { className: 'pay-colorbar-legend' });
+    legend.appendChild(buildColorbarLegendItem('지급 ' + grossPct + '%', gross, 'var(--accent-emerald)'));
+    legend.appendChild(buildColorbarLegendItem('공제 ' + dedPct + '%', deduction, 'var(--accent-rose)'));
+    card.appendChild(legend);
 
-    card.appendChild(wrapper);
     return card;
   }
 
-  function buildLegendItem(label, pctVal, amount, color) {
-    const row = el('div', { style: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' } });
-    row.appendChild(el('div', { style: { width: '12px', height: '12px', borderRadius: '3px', background: color, flexShrink: '0' } }));
+  function buildColorbarLegendItem(label, amount, color) {
+    const item = el('div', { style: { display: 'flex', alignItems: 'center', gap: '6px' } });
+    item.appendChild(el('div', {
+      className: 'pay-colorbar-dot',
+      style: { background: color }
+    }));
     const text = el('div');
-    text.appendChild(el('div', { style: { fontWeight: '600', fontSize: 'var(--text-body-normal)' }, textContent: label + ' ' + pctVal + '%' }));
-    text.appendChild(el('div', { style: { fontSize: 'var(--text-body-small)', color: 'var(--text-muted)' }, textContent: fmt(amount) }));
-    row.appendChild(text);
-    return row;
+    text.appendChild(el('div', { style: { fontWeight: '600', fontSize: 'var(--text-body-normal)' }, textContent: label }));
+    text.appendChild(el('div', { style: { fontSize: 'var(--text-label-small)', color: 'var(--text-muted)' }, textContent: fmt(amount) }));
+    item.appendChild(text);
+    return item;
   }
 
   // ── 수평 바 섹션 ──

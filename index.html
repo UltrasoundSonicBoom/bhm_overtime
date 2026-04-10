@@ -25,25 +25,6 @@
   </script>
   <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
   <style>
-    .theme-toggle-btn {
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
-      border: 1px solid var(--border-glass);
-      background: var(--bg-card);
-      cursor: pointer;
-      font-size: var(--text-title-large);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.15s ease-out;
-      flex-shrink: 0;
-    }
-
-    .theme-toggle-btn:hover {
-      border-color: var(--border-active);
-    }
-
     /* ── Onboarding Modal ── */
     .onboarding-overlay {
       position: fixed;
@@ -661,39 +642,10 @@
     </div>
   </div>
 
-  <!-- ═══════════ Header ═══════════ -->
-  <header class="header">
-    <div class="header-inner">
-      <div class="header-top-row">
-        <div class="logo" onclick="switchTab('home')" style="cursor:pointer;">
-          <img src="logo.png" alt="SNUH Mate"
-            style="width:81px; height:81px; object-fit:contain; flex-shrink:0; border-radius:10px;">
-          <div>
-            <h1 class="logo-main-title">슬기로운 병원 생활 메이트</h1>
-            <p class="logo-sub-title">휴가, 시간외/온콜 등의 기록을 직접 관리해보세요. <br>기록은 이 브라우저에만 저장되서 개발자도 볼 수 없어요!v
-            </p>
-          </div>
-        </div>
-        <div class="header-right">
-          <div id="authContainer" class="auth-container" style="display:none; align-items:center; gap:8px;">
-            <button onclick="if(window.SupabaseSync) window.SupabaseSync.signInWithGoogle()" class="btn btn-outline"
-              style="padding:4px 10px; font-size:var(--text-body-normal); border-color:var(--text-muted); color:var(--text-muted); border-radius:20px;">
-              접속 확인 중...
-            </button>
-          </div>
-          <button class="theme-toggle-btn" id="themeToggle" title="테마 전환" onclick="toggleTheme()">🎨</button>
-        </div>
-      </div>
-      <nav class="nav-tabs" id="navTabs">
-        <button class="nav-tab" data-tab="leave">📅 휴가</button>
-        <button class="nav-tab" data-tab="overtime">⏰ 시간외</button>
-        <button class="nav-tab" data-tab="payroll">💰 급여</button>
-        <a href="regulation.html" class="nav-tab" style="text-decoration:none;">📖 규정</a>
-        <button class="nav-tab" data-tab="profile">👤 info</button>
-        <button class="nav-tab" data-tab="feedback">📢 피드백</button>
-      </nav>
-    </div>
-  </header>
+  <!-- ═══════════ Header & Footer (shared-layout.js에서 렌더) ═══════════ -->
+  <header id="sharedHeader"></header>
+  <nav id="sharedFooter"></nav>
+  <script src="shared-layout.js?v=1.0"></script>
 
   <main class="main">
 
@@ -754,12 +706,13 @@
       <!-- 공지사항 및 업데이트 -->
       <div class="card home-newsboard">
         <div class="newsboard-tabs">
-          <button class="newsboard-tab active" data-newstab="notice" onclick="switchNewsTab('notice')">📢 공지사항</button>
-          <button class="newsboard-tab" data-newstab="changelog" onclick="switchNewsTab('changelog')">🎉 업데이트</button>
+          <button class="newsboard-tab" data-newstab="notice" onclick="switchNewsTab('notice')">📢 공지사항</button>
+          <button class="newsboard-tab active" data-newstab="changelog" onclick="switchNewsTab('changelog')">🎉
+            업데이트</button>
         </div>
-        <div class="newsboard-body">
+        <div class="newsboard-body" style="border-top-color: rgba(16, 185, 129, 0.25);">
           <!-- 공지사항 패널 -->
-          <div class="newsboard-panel active" id="newsNoticePanel">
+          <div class="newsboard-panel" id="newsNoticePanel">
             <div class="changelog-pager-content" id="noticeContent"></div>
             <div class="changelog-pager-nav" id="noticeNav" style="display:none;">
               <button class="changelog-nav-btn" onclick="noticePage(-1)">‹</button>
@@ -768,7 +721,7 @@
             </div>
           </div>
           <!-- 업데이트 패널 -->
-          <div class="newsboard-panel" id="newsChangelogPanel">
+          <div class="newsboard-panel active" id="newsChangelogPanel">
             <div class="changelog-pager-content" id="changelogContent"></div>
             <div class="changelog-pager-nav">
               <button class="changelog-nav-btn" id="changelogPrev" onclick="changelogPage(-1)">‹</button>
@@ -797,6 +750,7 @@
         </button>
       </div>
 
+
     </div>
 
     <!-- ═══════════ 💰 급여 섹션 ═══════════ -->
@@ -818,6 +772,9 @@
       <div class="sub-content" id="sub-pay-payslip">
         <!-- 월 슬라이더 -->
         <div class="pay-month-slider" id="payMonthSlider"></div>
+        <!-- 업로드 버튼 (슬라이더 바로 아래, 우측 정렬) -->
+        <div id="payPayslipHeader"
+          style="display:flex; justify-content:flex-end; padding:0; margin-top:-20px; margin-bottom:20px;"></div>
         <!-- 시각적 명세서 뷰어 -->
         <div id="payPayslipVisual"></div>
         <!-- 아카이브 목록 -->
@@ -1363,8 +1320,7 @@
                 📂 PDF 파일 선택
               </label>
             </div>
-            <input type="file" id="pfPayslipFileInput"
-              accept=".pdf" style="display:none"
+            <input type="file" id="pfPayslipFileInput" accept=".pdf" style="display:none"
               onchange="handleProfilePayslipUpload(this.files[0]); this.value='';">
 
             <div id="pfPayslipProgress" style="display:none; margin-top:10px;"></div>
@@ -1846,6 +1802,13 @@
   </script>
 
   <script>var d = document, w = "https://tally.so/widgets/embed.js", v = function () { "undefined" != typeof Tally ? Tally.loadEmbeds() : d.querySelectorAll("iframe[data-tally-src]:not([src])").forEach((function (e) { e.src = e.dataset.tallySrc })) }; if ("undefined" != typeof Tally) v(); else if (d.querySelector('script[src="' + w + '"]') == null) { var s = d.createElement("script"); s.src = w, s.onload = v, s.onerror = v, d.body.appendChild(s); }</script>
+
+  <style>
+    /* ChannelIO 채팅창 너비 제한 */
+    #ch-plugin-script-iframe {
+      max-width: 500px !important;
+    }
+  </style>
 </body>
 
 </html>
