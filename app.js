@@ -280,9 +280,9 @@ document.querySelectorAll('#tab-payroll .pay-bookmark-tab').forEach(tab => {
     tab.classList.add('active');
     document.getElementById('sub-' + tab.dataset.subtab).classList.add('active');
     const name = tab.dataset.subtab;
-    if (name === 'pay-history') renderPayHistory();
     if (name === 'pay-payslip') renderPayPayslip();
     if (name === 'pay-calc') { initPayEstimate(); if (typeof PAYROLL !== 'undefined') PAYROLL.init(); }
+    if (name === 'pay-qa') { if (typeof PAYROLL !== 'undefined') PAYROLL.init(); }
   });
 });
 
@@ -1657,6 +1657,17 @@ function renderPayEstDetail() {
       </div>`;
   }
 
+  // ── 공제내역 테이블 ──
+  let dedRows = '';
+  for (const [name, amount] of Object.entries(r.공제내역)) {
+    if (amount <= 0) continue;
+    dedRows += `
+      <div class="pe-item-row">
+        <div class="pe-item-name">${escapeHtml(name)}</div>
+        <div class="pe-item-amount ded">${fmtW(amount)}</div>
+      </div>`;
+  }
+
   // ── 시간외·온콜 상세 내역 (기록이 있을 때) ──
   let otSummary = '';
   if (otStats.recordCount > 0) {
@@ -1775,17 +1786,44 @@ function renderPayEstDetail() {
       </div>`;
   }
 
+  // ── 지급/공제 책갈피 토글 현재 상태 유지 ──
+  const curToggle = el.querySelector('.pe-detail-toggle .active');
+  const activeView = curToggle ? curToggle.dataset.view : 'pay';
+
   el.innerHTML = `
     <div class="pe-section-card">
-      <div class="pe-section-title">지급내역</div>
-      ${payRows}
-      <div class="pe-item-row pe-total-row">
-        <div class="pe-item-name">지급 합계</div>
-        <div class="pe-item-amount">${fmtW(r.급여총액)}</div>
+      <nav class="pe-detail-toggle">
+        <button class="pe-toggle-btn ${activeView === 'pay' ? 'active' : ''}" data-view="pay">예상 지급 내역</button>
+        <button class="pe-toggle-btn ${activeView === 'ded' ? 'active' : ''}" data-view="ded">예상 공제 내역</button>
+      </nav>
+      <div class="pe-detail-pane ${activeView === 'pay' ? 'active' : ''}" id="peDetailPay">
+        ${payRows}
+        <div class="pe-item-row pe-total-row">
+          <div class="pe-item-name">지급 합계</div>
+          <div class="pe-item-amount">${fmtW(r.급여총액)}</div>
+        </div>
+      </div>
+      <div class="pe-detail-pane ${activeView === 'ded' ? 'active' : ''}" id="peDetailDed">
+        ${dedRows}
+        <div class="pe-item-row pe-total-row">
+          <div class="pe-item-name">공제 합계</div>
+          <div class="pe-item-amount ded">${fmtW(r.공제총액)}</div>
+        </div>
+        <div class="pe-ded-note">소득세·주민세는 간이세액표 기반 근사치입니다.<br>사학연금부담금, 노동조합비 등 개인별 공제는 미반영.</div>
       </div>
     </div>
     ${otSummary}
     ${yearSummary}`;
+
+  // ── 토글 이벤트 바인딩 ──
+  el.querySelectorAll('.pe-toggle-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      el.querySelectorAll('.pe-toggle-btn').forEach(b => b.classList.remove('active'));
+      el.querySelectorAll('.pe-detail-pane').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      el.querySelector('#peDetail' + (btn.dataset.view === 'pay' ? 'Pay' : 'Ded')).classList.add('active');
+    });
+  });
 }
 
 // 지급 항목별 계산 근거 설명

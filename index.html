@@ -757,19 +757,14 @@
     <div class="tab-content" id="tab-payroll">
       <!-- 책갈피 서브탭 -->
       <nav class="pay-bookmark-tabs" id="payrollSubTabs">
-        <button class="pay-bookmark-tab active" data-subtab="pay-history">히스토리</button>
-        <button class="pay-bookmark-tab" data-subtab="pay-payslip">명세서</button>
+        <button class="pay-bookmark-tab active" data-subtab="pay-payslip">급여명세서 관리</button>
         <button class="pay-bookmark-tab" data-subtab="pay-calc">급여 예상</button>
+        <button class="pay-bookmark-tab" data-subtab="pay-qa">급여 계산</button>
       </nav>
       <div class="pay-tab-accent" id="payTabAccent"></div>
 
-      <!-- ── 서브탭 1: 히스토리 (급여 대시보드) ── -->
-      <div class="sub-content active" id="sub-pay-history">
-        <div id="payHistoryView"></div>
-      </div>
-
-      <!-- ── 서브탭 2: 명세서 (시각적 뷰어 + 업로드 + 아카이브) ── -->
-      <div class="sub-content" id="sub-pay-payslip">
+      <!-- ── 서브탭 1: 급여명세서 관리 (시각적 뷰어 + 업로드 + 아카이브) ── -->
+      <div class="sub-content active" id="sub-pay-payslip">
         <!-- 월 슬라이더 -->
         <div class="pay-month-slider" id="payMonthSlider"></div>
         <!-- 업로드 버튼 (슬라이더 바로 아래, 우측 정렬) -->
@@ -948,14 +943,12 @@
           <div id="verifyResult"></div>
         </div>
 
-        <!-- ④ 수당 바로 계산 (접이식) -->
-        <div class="collapsible-header" onclick="toggleCollapsible('payEstQaSection')" style="margin-top:12px;">
-          <span style="display:flex; align-items:center; gap:8px;"><span class="toggle-icon">▸</span> 수당 바로 계산</span>
-        </div>
-        <div class="collapsible-body" id="payEstQaSection" style="display:none;">
-          <div id="qaCardsContainer"></div>
-        </div>
       </div><!-- /sub-pay-calc -->
+
+      <!-- ── 서브탭 4: 급여 계산 (수당 바로 계산) ── -->
+      <div class="sub-content" id="sub-pay-qa">
+        <div id="qaCardsContainer"></div>
+      </div><!-- /sub-pay-qa -->
     </div><!-- /tab-payroll -->
 
     <!-- ═══════════ ⏰ 시간외·온콜 관리 ═══════════ -->

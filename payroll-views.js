@@ -58,10 +58,10 @@
   // ── initPayrollTab ──
   window.initPayrollTab = function () {
     const active = document.querySelector('#tab-payroll .pay-bookmark-tab.active');
-    const name = active ? active.dataset.subtab : 'pay-history';
-    if (name === 'pay-history') renderPayHistory();
-    else if (name === 'pay-payslip') renderPayPayslip();
+    const name = active ? active.dataset.subtab : 'pay-payslip';
+    if (name === 'pay-payslip') renderPayPayslip();
     else if (name === 'pay-calc') { if (typeof PAYROLL !== 'undefined') PAYROLL.init(); }
+    else if (name === 'pay-qa') { if (typeof PAYROLL !== 'undefined') PAYROLL.init(); }
   };
 
   // ══════════════════════════════════════════════
@@ -457,7 +457,6 @@
         SALARY_PARSER.saveMonthlyData(ym.year, ym.month, result);
         currentPayslipIdx = 0;
         renderPayPayslip();
-        if (typeof renderPayHistory === 'function') renderPayHistory();
       } else {
         alert('급여 기간을 인식할 수 없습니다. 파일을 확인해주세요.');
         renderPayPayslip();

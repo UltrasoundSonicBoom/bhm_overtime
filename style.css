@@ -3533,19 +3533,7 @@ html[data-theme="neo"] .changelog-pager-content {
   -webkit-tap-highlight-color: transparent;
   text-align: center;
 }
-/* 히스토리 — indigo/violet */
-.pay-bookmark-tab[data-subtab="pay-history"] {
-  background: rgba(99, 102, 241, 0.12);
-  color: #4f46e5;
-  border-bottom: 3px solid transparent;
-}
-.pay-bookmark-tab[data-subtab="pay-history"].active {
-  background: #6366f1;
-  color: #fff;
-  border-bottom: 3px solid #4338ca;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
-}
-/* 명세서 — emerald */
+/* 급여명세서 관리 — emerald */
 .pay-bookmark-tab[data-subtab="pay-payslip"] {
   background: rgba(16, 185, 129, 0.12);
   color: #047857;
@@ -3570,19 +3558,23 @@ html[data-theme="neo"] .changelog-pager-content {
   box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
 }
 
+/* 급여 계산 — indigo */
+.pay-bookmark-tab[data-subtab="pay-qa"] {
+  background: rgba(99, 102, 241, 0.12);
+  color: #4f46e5;
+  border-bottom: 3px solid transparent;
+}
+.pay-bookmark-tab[data-subtab="pay-qa"].active {
+  background: #6366f1;
+  color: #fff;
+  border-bottom: 3px solid #4338ca;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
 /* Neo theme bookmark overrides */
 html[data-theme="neo"] .pay-bookmark-tab {
   border: 2.5px solid #1a1a1a;
   border-bottom: none;
-}
-html[data-theme="neo"] .pay-bookmark-tab[data-subtab="pay-history"] {
-  background: #eef2ff;
-  color: #1a1a1a;
-}
-html[data-theme="neo"] .pay-bookmark-tab[data-subtab="pay-history"].active {
-  background: #818cf8;
-  color: #1a1a1a;
-  box-shadow: 3px -2px 0px #1a1a1a;
 }
 html[data-theme="neo"] .pay-bookmark-tab[data-subtab="pay-payslip"] {
   background: #d1fae5;
@@ -3599,6 +3591,15 @@ html[data-theme="neo"] .pay-bookmark-tab[data-subtab="pay-calc"] {
 }
 html[data-theme="neo"] .pay-bookmark-tab[data-subtab="pay-calc"].active {
   background: #fbbf24;
+  color: #1a1a1a;
+  box-shadow: 3px -2px 0px #1a1a1a;
+}
+html[data-theme="neo"] .pay-bookmark-tab[data-subtab="pay-qa"] {
+  background: #eef2ff;
+  color: #1a1a1a;
+}
+html[data-theme="neo"] .pay-bookmark-tab[data-subtab="pay-qa"].active {
+  background: #818cf8;
   color: #1a1a1a;
   box-shadow: 3px -2px 0px #1a1a1a;
 }
@@ -4247,6 +4248,64 @@ html[data-theme="neo"] .pay-upload-zone {
 }
 .pe-item-amount.ded {
   color: var(--accent-rose);
+}
+
+/* ── 지급/공제 책갈피 토글 ── */
+.pe-detail-toggle {
+  display: flex;
+  gap: 0;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1.5px solid var(--border);
+}
+.pe-toggle-btn {
+  flex: 1;
+  padding: 10px 8px;
+  border: none;
+  background: var(--bg-card);
+  font-size: var(--text-body-normal);
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: all 0.15s ease-out;
+  -webkit-tap-highlight-color: transparent;
+}
+.pe-toggle-btn[data-view="pay"].active {
+  background: var(--accent-emerald);
+  color: #fff;
+}
+.pe-toggle-btn[data-view="ded"].active {
+  background: var(--accent-rose);
+  color: #fff;
+}
+.pe-detail-pane {
+  display: none;
+}
+.pe-detail-pane.active {
+  display: block;
+}
+.pe-ded-note {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: rgba(239, 68, 68, 0.06);
+  border-radius: 8px;
+  line-height: 1.5;
+}
+
+/* Neo theme toggle overrides */
+html[data-theme="neo"] .pe-detail-toggle {
+  border: 2.5px solid #1a1a1a;
+  border-radius: 0;
+}
+html[data-theme="neo"] .pe-toggle-btn[data-view="pay"].active {
+  box-shadow: inset 0 -3px 0 #1a1a1a;
+}
+html[data-theme="neo"] .pe-toggle-btn[data-view="ded"].active {
+  box-shadow: inset 0 -3px 0 #1a1a1a;
 }
 .pe-item-desc {
   font-size: 11px;
