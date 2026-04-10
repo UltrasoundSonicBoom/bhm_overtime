@@ -42,8 +42,10 @@
 
     html {
       scroll-behavior: smooth;
+      -webkit-scroll-snap-type: y mandatory;
       scroll-snap-type: y mandatory;
       overflow-y: scroll;
+      -webkit-overflow-scrolling: touch;
     }
 
     body {
@@ -62,7 +64,9 @@
       align-items: center;
       justify-content: center;
       padding: 60px 24px;
+      -webkit-scroll-snap-align: start;
       scroll-snap-align: start;
+      scroll-snap-stop: always;
       position: relative;
       overflow: hidden;
     }
@@ -79,29 +83,37 @@
     /* ── Reveal animation ── */
     .reveal {
       opacity: 0;
+      -webkit-transform: translateY(24px);
       transform: translateY(24px);
+      -webkit-transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+        -webkit-transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
       transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1),
         transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .reveal.visible {
       opacity: 1;
+      -webkit-transform: translateY(0);
       transform: translateY(0);
     }
 
     .reveal.d1 {
+      -webkit-transition-delay: 0.08s;
       transition-delay: 0.08s;
     }
 
     .reveal.d2 {
+      -webkit-transition-delay: 0.16s;
       transition-delay: 0.16s;
     }
 
     .reveal.d3 {
+      -webkit-transition-delay: 0.2s;
       transition-delay: 0.2s;
     }
 
     .reveal.d4 {
+      -webkit-transition-delay: 0.28s;
       transition-delay: 0.28s;
     }
 
@@ -168,6 +180,7 @@
       animation: bounce 2s infinite;
       padding: 0 24px;
     }
+
     .scroll-hint-down {
       display: flex;
       flex-direction: column;
@@ -175,6 +188,7 @@
       gap: 4px;
       flex: 1;
     }
+
     .scroll-hint-end {
       position: absolute;
       right: 24px;
@@ -188,7 +202,10 @@
       animation: bounce 2s infinite;
       -webkit-tap-highlight-color: transparent;
     }
-    .scroll-hint-end:hover { opacity: 1; }
+
+    .scroll-hint-end:hover {
+      opacity: 1;
+    }
 
     @keyframes bounce {
 
@@ -207,6 +224,7 @@
       height: 22px;
       stroke: var(--ink);
     }
+
     .scroll-hint-end svg {
       width: 16px;
       height: 16px;
@@ -613,7 +631,7 @@
       <div class="scroll-hint-end" onclick="window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})">
         끝으로
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" width="16" height="16">
-          <path d="M5 12h14M12 5l7 7-7 7"/>
+          <path d="M5 12h14M12 5l7 7-7 7" />
         </svg>
       </div>
     </div>
@@ -626,7 +644,7 @@
       <h2 class="feat-title reveal d1">
         내 시간외 기록,<br>한눈에 모아볼 수 있어요.
       </h2>
-      <p class="feat-desc reveal d2">
+      <p class="feat-desc reveal d2" style="color:white">
         언제, 얼마나 일했는지 기록하면<br>
         예상 수당까지 자동으로 계산돼요.<br>
         이제 엑셀 안 써도 돼요!
@@ -860,12 +878,36 @@
   </section>
 
   <script>
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
+    // ── Reveal animation observer ──
+    // Safari: snap이 빠르게 끝나도 잡히도록 threshold 낮추고 rootMargin 추가
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
         if (entry.isIntersecting) entry.target.classList.add('visible');
       });
-    }, { threshold: 0.15 });
-    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    }, { threshold: 0.05, rootMargin: '0px 0px -5% 0px' });
+    document.querySelectorAll('.reveal').forEach(function(el) { observer.observe(el); });
+
+    // ── 다음 섹션으로 스크롤 ──
+    function scrollToNextSection() {
+      var sections = Array.prototype.slice.call(document.querySelectorAll('.section'));
+      var scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+      var current = sections.find(function(s) {
+        return s.offsetTop >= scrollTop + 10;
+      });
+      if (current) {
+        var target = current.offsetTop;
+        // Safari: window.scrollTo with behavior:'smooth' may be ignored under snap
+        // Use scrollTo on documentElement as fallback
+        try {
+          document.documentElement.scrollTo({ top: target, behavior: 'smooth' });
+        } catch(e) {
+          window.scrollTo(0, target);
+        }
+      }
+    }
+
+    var hintDown = document.querySelector('.scroll-hint-down');
+    if (hintDown) hintDown.addEventListener('click', scrollToNextSection);
   </script>
 </body>
 
