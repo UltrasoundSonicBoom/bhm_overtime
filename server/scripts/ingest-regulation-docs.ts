@@ -295,6 +295,7 @@ function resolveSourcePath(inputPath: string) {
     : resolve(repoRoot, inputPath)
 
   const isInsideRepo = absolutePath.startsWith(`${repoRoot}/`) || absolutePath === repoRoot
+  const sourceScope: 'repo' | 'external' = isInsideRepo ? 'repo' : 'external'
   const sourceFile = isInsideRepo
     ? relative(repoRoot, absolutePath)
     : `external/${basename(absolutePath)}`
@@ -302,7 +303,7 @@ function resolveSourcePath(inputPath: string) {
   return {
     absolutePath,
     relativePath: sourceFile,
-    sourceScope: isInsideRepo ? 'repo' : 'external' as const,
+    sourceScope,
     originalSourcePath: absolutePath,
   }
 }

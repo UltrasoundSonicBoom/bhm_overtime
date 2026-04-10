@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import postgres from 'postgres'
 import { embed } from '../src/services/embedding'
+import { classifyRagMode, rerankMatches } from '../src/services/rag-ranking'
 
 type CliOptions = {
   versionId?: number
@@ -14,8 +15,22 @@ type VersionRow = {
 }
 
 const sql = postgres(process.env.DATABASE_URL!, { prepare: false })
-const FAQ_DIRECT_THRESHOLD = 0.85
-const DOC_RETRIEVAL_THRESHOLD = 0.75
+
+type FaqRow = {
+  id: number
+  question: string
+  article_ref: string | null
+  answer?: string
+  score: number | string
+}
+
+type DocRow = {
+  id: number
+  section_title: string | null
+  metadata: Record<string, unknown> | null
+  content?: string
+  score: number | string
+}
 
 const evaluationQuestions = [
   '온콜 출근하면 몇 시간 인정되나요?',
@@ -85,6 +100,7 @@ async function main() {
       select
         id,
         question,
+        answer,
         article_ref,
         1 - (embedding <=> ${vector}::vector) as score
       from faq_entries
@@ -92,47 +108,64 @@ async function main() {
         and embedding is not null
         and is_published = true
       order by embedding <=> ${vector}::vector
-      limit 3
+      limit 8
     `
 
     const docMatches = await sql`
       select
         id,
         section_title,
+        content,
         metadata,
         1 - (embedding <=> ${vector}::vector) as score
       from regulation_documents
       where version_id = ${version.id}
         and embedding is not null
       order by embedding <=> ${vector}::vector
-      limit 3
+      limit 8
     `
 
-    const topFaqScore = Number(faqMatches[0]?.score || 0)
-    const topDocScore = Number(docMatches[0]?.score || 0)
-    const classification =
-      topFaqScore >= FAQ_DIRECT_THRESHOLD
-        ? 'faq-direct'
-        : topDocScore >= DOC_RETRIEVAL_THRESHOLD
-          ? 'regulation-doc'
-          : 'fallback'
+    const rerankedFaqMatches = rerankMatches(
+      question,
+      (faqMatches as unknown as FaqRow[]).map((match) => ({
+        ...match,
+        score: Number(match.score),
+      })),
+      (match) => `${match.question}\n${match.answer || ''}\n${match.article_ref || ''}`,
+    )
+
+    const rerankedDocMatches = rerankMatches(
+      question,
+      (docMatches as unknown as DocRow[]).map((match) => ({
+        ...match,
+        score: Number(match.score),
+      })),
+      (match) => {
+        const metadata = match.metadata as Record<string, unknown> | null
+        return `${match.section_title || ''}\n${String(metadata?.article_ref || '')}\n${match.content || ''}`
+      },
+    )
+
+    const topFaqScore = Number(rerankedFaqMatches[0]?.rerankedScore || 0)
+    const topDocScore = Number(rerankedDocMatches[0]?.rerankedScore || 0)
+    const classification = classifyRagMode({ faqScore: topFaqScore, docScore: topDocScore })
 
     results.push({
       question,
       classification,
       topFaqScore,
       topDocScore,
-      faqMatches: faqMatches.map((match) => ({
+      faqMatches: rerankedFaqMatches.slice(0, 3).map((match) => ({
         question: match.question,
         articleRef: match.article_ref,
-        score: Number(match.score),
+        score: Number(match.rerankedScore),
       })),
-      docMatches: docMatches.map((match) => {
+      docMatches: rerankedDocMatches.slice(0, 3).map((match) => {
         const metadata = match.metadata as Record<string, unknown> | null
         return {
           sectionTitle: match.section_title,
           articleRef: metadata?.article_ref ?? null,
-          score: Number(match.score),
+          score: Number(match.rerankedScore),
         }
       }),
     })

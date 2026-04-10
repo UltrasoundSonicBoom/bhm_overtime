@@ -2,12 +2,29 @@ import OpenAI from 'openai'
 import postgres from 'postgres'
 import 'dotenv/config'
 import { embed } from './embedding'
+import { classifyRagMode, rerankMatches } from './rag-ranking'
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 const sql = postgres(process.env.DATABASE_URL!, { prepare: false })
 
 const LLM_MODEL = 'gpt-4o-mini'
-const FAQ_DIRECT_THRESHOLD = 0.85
+
+type FaqRow = {
+  id: number
+  category: string
+  question: string
+  answer: string
+  article_ref: string | null
+  score: number | string
+}
+
+type DocRow = {
+  id: number
+  section_title: string | null
+  content: string
+  metadata: Record<string, unknown> | null
+  score: number | string
+}
 
 interface RagResult {
   answer: string
@@ -47,8 +64,16 @@ export async function ragAnswer(
         OR regulation_versions.status = 'active'
       )
     ORDER BY faq_entries.embedding <=> ${vecStr}::vector
-    LIMIT 3
+    LIMIT 8
   `
+  const rerankedFaqResults = rerankMatches(
+    query,
+    (faqResults as unknown as FaqRow[]).map((faq) => ({
+      ...faq,
+      score: Number(faq.score),
+    })),
+    (faq) => `${faq.question}\n${faq.answer}\n${faq.article_ref || ''}`,
+  )
 
   // 3. regulation_documents 시맨틱 검색 (top 5)
   const docResults = await sql`
@@ -64,18 +89,34 @@ export async function ragAnswer(
     WHERE regulation_documents.embedding IS NOT NULL
       AND regulation_versions.status = 'active'
     ORDER BY regulation_documents.embedding <=> ${vecStr}::vector
-    LIMIT 5
+    LIMIT 8
   `
+  const rerankedDocResults = rerankMatches(
+    query,
+    (docResults as unknown as DocRow[]).map((doc) => ({
+      ...doc,
+      score: Number(doc.score),
+    })),
+    (doc) => {
+      const metadata = doc.metadata as Record<string, unknown> | null
+      return `${doc.section_title || ''}\n${String(metadata?.article_ref || '')}\n${doc.content}`
+    },
+  )
+
+  const retrievalMode = classifyRagMode({
+    faqScore: Number(rerankedFaqResults[0]?.rerankedScore || 0),
+    docScore: Number(rerankedDocResults[0]?.rerankedScore || 0),
+  })
 
   // 4. FAQ 직접 매치 (높은 유사도 시 LLM 호출 생략)
-  if (faqResults.length > 0 && Number(faqResults[0].score) > FAQ_DIRECT_THRESHOLD) {
-    const best = faqResults[0]
+  if (retrievalMode === 'faq-direct' && rerankedFaqResults.length > 0) {
+    const best = rerankedFaqResults[0]
     return {
       answer: best.answer,
       sources: [{
         title: best.question,
         ref: best.article_ref || '',
-        score: Number(best.score),
+        score: Number(best.rerankedScore),
       }],
       isFaqMatch: true,
       model: 'faq-direct',
@@ -85,18 +126,18 @@ export async function ragAnswer(
   // 5. LLM 호출 (컨텍스트 구성)
   let context = ''
 
-  if (faqResults.length > 0) {
+  if (rerankedFaqResults.length > 0) {
     context += '## 관련 FAQ\n'
-    for (const faq of faqResults) {
+    for (const faq of rerankedFaqResults.slice(0, 3)) {
       context += `Q: ${faq.question}\nA: ${faq.answer}\n(${faq.article_ref || ''})\n\n`
     }
   }
 
-  if (docResults.length > 0) {
+  if (rerankedDocResults.length > 0) {
     context += '## 관련 규정 원문\n'
-    for (const doc of docResults) {
-      const meta = doc.metadata as any
-      context += `### ${doc.section_title || '(제목 없음)'} ${meta?.article_ref || ''}\n${doc.content}\n\n`
+    for (const doc of rerankedDocResults.slice(0, 5)) {
+      const meta = doc.metadata as Record<string, unknown> | null
+      context += `### ${doc.section_title || '(제목 없음)'} ${String(meta?.article_ref || '')}\n${doc.content}\n\n`
     }
   }
 
@@ -124,19 +165,19 @@ export async function ragAnswer(
 
   // sources 조합
   const sources: RagResult['sources'] = []
-  for (const faq of faqResults.slice(0, 2)) {
+  for (const faq of rerankedFaqResults.slice(0, 2)) {
     sources.push({
       title: faq.question,
       ref: faq.article_ref || '',
-      score: Number(faq.score),
+      score: Number(faq.rerankedScore),
     })
   }
-  for (const doc of docResults.slice(0, 3)) {
-    const meta = doc.metadata as any
+  for (const doc of rerankedDocResults.slice(0, 3)) {
+    const meta = doc.metadata as Record<string, unknown> | null
     sources.push({
       title: doc.section_title || '',
-      ref: meta?.article_ref || '',
-      score: Number(doc.score),
+      ref: String(meta?.article_ref || ''),
+      score: Number(doc.rerankedScore),
     })
   }
 
