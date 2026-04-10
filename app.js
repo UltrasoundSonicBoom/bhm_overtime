@@ -89,9 +89,8 @@ function initHomeTab() {
   if (totalAnnual > 0) {
     const summary = LEAVE.calcAnnualSummary(year, totalAnnual);
     const pct = summary.usagePercent;
-    const otNote = summary.otEarnedDays > 0 ? ` (시간외 ${summary.otEarnedDays}일 회복)` : '';
     leaveStatsEl.innerHTML = `
-      <div class="home-stat-row"><span class="home-stat-label">연차</span><span class="home-stat-value emerald">${summary.effectiveUsed} / ${summary.totalAnnual}일${otNote}</span></div>
+      <div class="home-stat-row"><span class="home-stat-label">연차</span><span class="home-stat-value emerald">${summary.usedAnnual} / ${summary.totalAnnual}일</span></div>
       <div class="home-progress-wrap"><div class="home-progress-bar" style="width:${pct}%"></div></div>
     `;
     leaveBody.style.display = '';
@@ -4773,22 +4772,9 @@ function renderLvDashboard(year) {
   const checkup = usage['checkup'] || 0;
   const blood = usage['blood_donation'] || 0;
 
-  // 시간외 8h → 연차 1일 회복
-  let otEarnedDays = 0;
-  let otTotalHours = 0;
-  if (typeof OVERTIME !== 'undefined') {
-    for (let m = 1; m <= 12; m++) {
-      const stats = OVERTIME.calcMonthlyStats(year, m);
-      otTotalHours += stats.overtimeHours || 0;
-    }
-    otEarnedDays = Math.floor(otTotalHours / 8);
-  }
-  const effectiveUsed = Math.max(0, Math.round((annualUsed - otEarnedDays) * 10) / 10);
-
   const items = [
-    { label: '연차', used: effectiveUsed, total: lvTotalAnnual || '?', key: true },
-    { label: '시간차', used: timeLeaveHours, total: null, suffix: 'h', show: timeLeaveHours > 0 },
-    { label: '시간외회복', used: otEarnedDays, total: null, suffix: '일', show: otEarnedDays > 0 },
+    { label: '연차', used: annualUsed, total: lvTotalAnnual || '?', key: true },
+    { label: '시간차', used: timeLeaveHours, total: null, suffix: 'h', show: timeLeaveHours > 0, annualDays: Math.round(timeLeaveHours / 8 * 10) / 10 },
     { label: '교육연수', used: eduTraining, total: 3 },
     { label: '필수교육', used: eduMandatory, total: 3 },
     { label: '검진휴가', used: checkup, total: 1 },
@@ -4799,7 +4785,8 @@ function renderLvDashboard(year) {
   items.forEach(item => {
     if (item.show === false) return;
     if (item.suffix) {
-      html += `<div class="lv-dash-item">${item.label} <span class="lv-dash-value">${item.used}${item.suffix}</span></div>`;
+      const annualNote = item.annualDays ? ` (=${item.annualDays}일)` : '';
+      html += `<div class="lv-dash-item">${item.label} <span class="lv-dash-value">${item.used}${item.suffix}${annualNote}</span></div>`;
       return;
     }
     const remain = typeof item.total === 'number' ? item.total - item.used : null;
@@ -5310,9 +5297,8 @@ function onLvTypeChange() {
   } else if (typeInfo && typeInfo.usesAnnual) {
     if (lvTotalAnnual > 0) {
       const summary = LEAVE.calcAnnualSummary(year, lvTotalAnnual);
-      const otInfo = summary.otEarnedDays > 0 ? ` | 시간외회복: ${summary.otEarnedDays}일` : '';
       quotaBadge.innerHTML = `<div style="padding:6px 10px; border-radius:6px; background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.15); font-size:var(--text-body-normal);">
-        📅 연차 한도: ${lvTotalAnnual}일 | 사용: ${summary.effectiveUsed}일${otInfo} | <span style="color:var(--accent-emerald); font-weight:700;">잔여: ${summary.remainingAnnual}일</span>
+        📅 연차 한도: ${lvTotalAnnual}일 | 사용: ${summary.usedAnnual}일 | <span style="color:var(--accent-emerald); font-weight:700;">잔여: ${summary.remainingAnnual}일</span>
       </div>`;
     } else {
       quotaBadge.innerHTML = `<div style="padding:6px 10px; border-radius:6px; background:rgba(251,191,36,0.06); border:1px solid rgba(251,191,36,0.2); font-size:var(--text-body-normal); color:var(--text-primary); font-weight:600;">
@@ -5597,11 +5583,6 @@ function renderLvQuotaTable(year) {
     const barColor = q.overQuota ? 'var(--accent-rose)' : 'var(--accent-emerald)';
     const remainColor = q.overQuota ? 'var(--accent-rose)' : (q.quota !== null ? 'var(--accent-emerald)' : 'var(--text-muted)');
 
-    // 연차에 시간외 회복 표시
-    const otNote = (q.id === 'annual' && q.otEarnedDays > 0)
-      ? `<div style="font-size:11px; color:var(--accent-indigo); margin-top:3px;">시간외 ${q.otEarnedDays}일 회복 (실사용 ${q.rawUsed}일 - ${q.otEarnedDays}일)</div>`
-      : '';
-
     html += `<div style="padding:8px 10px; border-radius:8px; background:var(--bg-glass); border:1px solid var(--border-glass);">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
         <span style="font-weight:600; font-size:var(--text-body-large);">${q.label}</span>
@@ -5611,7 +5592,6 @@ function renderLvQuotaTable(year) {
         <div class="lv-progress-fill" style="width:${pct}%; height:100%; background:${barColor}"></div>
       </div>
       <div style="font-size:var(--text-body-normal); color:var(--text-muted);">${q.used}${q.quota !== null ? '/' + quotaText : '일'} 사용 ${q.overQuota ? '⚠️' : ''}</div>
-      ${otNote}
     </div>`;
   });
   html += '</div>';
@@ -5724,13 +5704,19 @@ function renderLvRecordList(year) {
     const label = typeInfo ? typeInfo.label : type;
     const isPaid = records[0].isPaid;
     const totalDaysGroup = records.reduce((s, r) => s + (r.days || 0), 0);
+    const totalHoursGroup = type === 'time_leave' ? records.reduce((s, r) => s + (r.hours || 0), 0) : 0;
     const totalImpact = records.reduce((s, r) => s + (r.salaryImpact ? Math.abs(r.salaryImpact) : 0), 0);
+
+    // 시간차: 총 시간 + 연차 환산일 표시
+    const daysDisplay = type === 'time_leave'
+      ? `${totalHoursGroup}h = 연차 ${Math.round(totalDaysGroup * 10) / 10}일`
+      : `${Math.round(totalDaysGroup)}일`;
 
     extraHtml += `<div class="lv-record-item" style="flex-direction:column; align-items:stretch; gap:4px; cursor:default; padding:6px 10px;">
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <span class="lv-record-type ${isPaid ? 'paid' : 'unpaid'}">${label}</span>
         <span style="font-size:var(--text-body-normal); font-weight:700; color:${totalImpact ? 'var(--accent-rose)' : 'var(--accent-emerald)'}">
-          ${totalImpact ? '-₩' + totalImpact.toLocaleString() : '유급'} · ${Math.round(totalDaysGroup)}일
+          ${totalImpact ? '-₩' + totalImpact.toLocaleString() : '유급'} · ${daysDisplay}
         </span>
       </div>
       <div style="display:flex; flex-direction:column; gap:1px; padding-left:4px; max-height:calc(var(--text-body-normal, 14px) * 4.8); overflow-y:auto;">`;
@@ -5741,7 +5727,8 @@ function renderLvRecordList(year) {
         : r.startDate.substring(5) + ' ~ ' + r.endDate.substring(5);
       let detail = `${dateDisplay} ${Math.round(r.days || 0)}일`;
       if (r.type === 'time_leave' && r.hours) {
-        detail = `${dateDisplay} ${r.startTime || ''}~${r.endTime || ''} (${Math.round(r.hours || 0)}h)`;
+        const tlDays = Math.round((r.hours / 8) * 10) / 10;
+        detail = `${dateDisplay} ${r.startTime || ''}~${r.endTime || ''} (${r.hours}h = ${tlDays}일)`;
       }
       extraHtml += `<div style="display:flex; justify-content:space-between; align-items:center; font-size:var(--text-body-normal); color:var(--text-secondary); cursor:pointer; padding:1px 0;" onclick="editLvRecord('${r.id}')">
         <span>${detail}${r.memo ? ' <span style="color:var(--text-muted)">' + escapeHtml(r.memo) + '</span>' : ''}</span>

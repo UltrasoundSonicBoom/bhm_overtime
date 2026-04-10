@@ -286,25 +286,13 @@ const LEAVE = {
         // 연차 계열 합산 (annual + time_leave)
         const annualUsed = round1((usage['annual'] || 0) + (usage['time_leave'] || 0));
 
-        // 시간외 8시간 → 연차 1일 회복
-        let otEarnedDays = 0;
-        if (typeof OVERTIME !== 'undefined') {
-            let otHours = 0;
-            for (let m = 1; m <= 12; m++) {
-                const stats = OVERTIME.calcMonthlyStats(year, m);
-                otHours += stats.overtimeHours || 0;
-            }
-            otEarnedDays = Math.floor(otHours / 8);
-        }
-        const effectiveAnnualUsed = round1(Math.max(0, annualUsed - otEarnedDays));
-
         // 항상 표시할 기본 휴가 목록
         const alwaysShow = ['annual', 'checkup', 'edu_training', 'edu_mandatory'];
 
         const result = [];
         this.getTypes().forEach(t => {
             const used = round1(usage[t.id] || 0);
-
+            
             // 항상 표시 항목이 아니고, 사용량이 0이면 숨김 처리
             if (!alwaysShow.includes(t.id) && used === 0) {
                 return;
@@ -320,18 +308,16 @@ const LEAVE = {
                 }
             }
 
-            // 연차는 동적 한도 (시간외 회복 반영)
+            // 연차는 동적 한도
             if (t.usesAnnual) {
                 quota = totalAnnual;
                 // 시간차는 연차에서 사용 → 별도 표시하지 않음
                 if (t.id === 'time_leave') return;
                 result.push({
                     id: t.id, label: t.label, category: t.category,
-                    used: effectiveAnnualUsed, quota: quota, remaining: round1(quota - effectiveAnnualUsed),
-                    overQuota: quota !== null && effectiveAnnualUsed > quota,
+                    used: annualUsed, quota: quota, remaining: round1(quota - annualUsed),
+                    overQuota: quota !== null && annualUsed > quota,
                     isPaid: t.isPaid,
-                    otEarnedDays: otEarnedDays,
-                    rawUsed: annualUsed,
                 });
                 return;
             }
@@ -372,36 +358,20 @@ const LEAVE = {
             }
         });
 
-        // 시간외근무 8시간 이상 → 연차 1일 회복 (대체휴무)
-        let otEarnedDays = 0;
-        let otTotalHours = 0;
-        if (typeof OVERTIME !== 'undefined') {
-            for (let m = 1; m <= 12; m++) {
-                const stats = OVERTIME.calcMonthlyStats(year, m);
-                otTotalHours += stats.overtimeHours || 0;
-            }
-            otEarnedDays = Math.floor(otTotalHours / 8);
-        }
-
         // 소수점 1자리로 반올림 (부동소수점 오류 방지)
         const round1 = v => Math.round(v * 10) / 10;
-
-        const effectiveUsed = round1(Math.max(0, usedAnnual - otEarnedDays));
 
         return {
             totalAnnual,
             usedAnnual: round1(usedAnnual),
-            otEarnedDays,
-            otTotalHours: round1(otTotalHours),
-            effectiveUsed,
-            remainingAnnual: round1(totalAnnual - effectiveUsed),
+            remainingAnnual: round1(totalAnnual - usedAnnual),
             sickDays: round1(sickDays),
             unpaidDays: round1(unpaidDays),
             totalDeduction: Math.round(totalDeduction),
             timeLeaveHours: round1(timeLeaveHours),
             timeLeaveDays: round1(timeLeaveDays),
             recordCount: records.length,
-            usagePercent: totalAnnual > 0 ? Math.round((effectiveUsed / totalAnnual) * 100) : 0,
+            usagePercent: totalAnnual > 0 ? Math.round((usedAnnual / totalAnnual) * 100) : 0,
         };
     },
 
