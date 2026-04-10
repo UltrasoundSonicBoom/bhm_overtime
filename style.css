@@ -485,6 +485,54 @@ html[data-theme="neo"] .logo .logo-main-title {
   cursor: pointer;
 }
 
+/* ── 명세서 vs 앱 비교 배너 ── */
+.qa-compare-banner {
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+  border: 1.5px solid var(--border);
+}
+.qa-compare-banner.success { background: rgba(16, 185, 129, 0.08); border-color: rgba(16, 185, 129, 0.3); }
+.qa-compare-banner.warning { background: rgba(245, 158, 11, 0.08); border-color: rgba(245, 158, 11, 0.3); }
+.qa-compare-banner.error { background: rgba(239, 68, 68, 0.08); border-color: rgba(239, 68, 68, 0.3); }
+.qa-compare-title {
+  font-size: var(--text-body-normal);
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.qa-compare-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.qa-compare-grid > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.qa-compare-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.qa-compare-real {
+  font-size: var(--text-body-normal);
+  font-weight: 700;
+}
+.qa-compare-diff {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.qa-compare-status {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: right;
+}
+.qa-compare-status.success { color: var(--accent-emerald); }
+.qa-compare-status.warning { color: var(--accent-amber); }
+.qa-compare-status.error { color: var(--accent-rose); }
+
 /* ── Cards (Linear: solid bg, thin border, no blur/glow) ── */
 .card {
   background: var(--bg-card);

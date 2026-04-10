@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,7 +9,11 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Noto+Sans+KR:wght@400;500;600;700;900&display=swap');
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
     :root {
       --cream: #FFFDF5;
@@ -76,16 +81,29 @@
       opacity: 0;
       transform: translateY(24px);
       transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1),
-                  transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+        transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
     }
+
     .reveal.visible {
       opacity: 1;
       transform: translateY(0);
     }
-    .reveal.d1 { transition-delay: 0.08s; }
-    .reveal.d2 { transition-delay: 0.16s; }
-    .reveal.d3 { transition-delay: 0.2s; }
-    .reveal.d4 { transition-delay: 0.28s; }
+
+    .reveal.d1 {
+      transition-delay: 0.08s;
+    }
+
+    .reveal.d2 {
+      transition-delay: 0.16s;
+    }
+
+    .reveal.d3 {
+      transition-delay: 0.2s;
+    }
+
+    .reveal.d4 {
+      transition-delay: 0.28s;
+    }
 
     /* ── Neo card base ── */
     .neo-card {
@@ -99,10 +117,13 @@
     }
 
     /* ── Hero ── */
-    .hero { background: var(--amber); }
+    .hero {
+      background: var(--amber);
+    }
 
     .hero-logo {
-      width: 100px; height: 100px;
+      width: 100px;
+      height: 100px;
       border-radius: 24px;
       border: var(--border);
       box-shadow: var(--shadow-md);
@@ -143,12 +164,22 @@
       font-weight: 700;
       animation: bounce 2s infinite;
     }
+
     @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(6px); }
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(6px);
+      }
     }
+
     .scroll-hint svg {
-      width: 22px; height: 22px;
+      width: 22px;
+      height: 22px;
       stroke: var(--ink);
     }
 
@@ -186,11 +217,25 @@
     }
 
     /* ── Colored sections ── */
-    .sec-violet { background: var(--violet-light); }
-    .sec-emerald { background: #b8f0de; }
-    .sec-blue { background: #d4e9ff; }
-    .sec-rose { background: #ffe0ee; }
-    .sec-cream { background: var(--cream); }
+    .sec-violet {
+      background: var(--violet-light);
+    }
+
+    .sec-emerald {
+      background: #b8f0de;
+    }
+
+    .sec-blue {
+      background: #d4e9ff;
+    }
+
+    .sec-rose {
+      background: #ffe0ee;
+    }
+
+    .sec-cream {
+      background: var(--cream);
+    }
 
     /* ── Mock card rows ── */
     .mock-row {
@@ -199,11 +244,14 @@
       gap: 12px;
       padding: 10px 0;
     }
-    .mock-row + .mock-row {
+
+    .mock-row+.mock-row {
       border-top: 2px dashed #e5e5e5;
     }
+
     .mock-icon {
-      width: 36px; height: 36px;
+      width: 36px;
+      height: 36px;
       border-radius: 10px;
       border: 2px solid var(--ink);
       display: flex;
@@ -212,16 +260,19 @@
       font-size: 18px;
       flex-shrink: 0;
     }
+
     .mock-label {
       font-size: 14px;
       font-weight: 700;
       color: var(--ink);
     }
+
     .mock-sub {
       font-size: 12px;
       color: var(--muted);
       margin-top: 1px;
     }
+
     .mock-value {
       margin-left: auto;
       font-size: 15px;
@@ -237,11 +288,13 @@
       border-top: 3px solid var(--ink);
       margin-top: 4px;
     }
+
     .mock-total-label {
       font-size: 14px;
       font-weight: 700;
       color: var(--muted);
     }
+
     .mock-total-value {
       font-size: 22px;
       font-weight: 900;
@@ -256,6 +309,7 @@
       line-height: 1.5;
       max-width: 85%;
     }
+
     .chat-user {
       align-self: flex-end;
       background: var(--violet);
@@ -263,6 +317,7 @@
       border-radius: 16px 16px 4px 16px;
       box-shadow: var(--shadow-sm);
     }
+
     .chat-bot {
       align-self: flex-start;
       background: var(--white);
@@ -278,6 +333,7 @@
       flex-wrap: wrap;
       justify-content: center;
     }
+
     .badge {
       display: flex;
       align-items: center;
@@ -293,7 +349,8 @@
 
     /* ── Shield ── */
     .shield {
-      width: 72px; height: 72px;
+      width: 72px;
+      height: 72px;
       background: var(--violet);
       border: var(--border);
       border-radius: 20px;
@@ -324,10 +381,12 @@
       transition: transform 0.1s, box-shadow 0.1s;
       font-family: inherit;
     }
+
     .cta-primary:hover {
       transform: translate(-2px, -2px);
       box-shadow: var(--shadow-lg);
     }
+
     .cta-primary:active {
       transform: translate(2px, 2px);
       box-shadow: none;
@@ -351,6 +410,7 @@
       transition: transform 0.1s, box-shadow 0.1s;
       font-family: inherit;
     }
+
     .cta-secondary:hover {
       transform: translate(-1px, -1px);
       box-shadow: var(--shadow-md);
@@ -381,7 +441,10 @@
       overflow: hidden;
       border: 2px solid var(--ink);
     }
-    .color-bar > div { border-radius: 3px; }
+
+    .color-bar>div {
+      border-radius: 3px;
+    }
 
     .legend {
       display: flex;
@@ -389,6 +452,7 @@
       flex-wrap: wrap;
       margin-top: 12px;
     }
+
     .legend-item {
       display: flex;
       align-items: center;
@@ -397,11 +461,44 @@
       font-weight: 600;
       color: var(--muted);
     }
+
     .legend-dot {
-      width: 8px; height: 8px;
+      width: 8px;
+      height: 8px;
       border-radius: 3px;
       border: 1.5px solid var(--ink);
     }
+
+    /* ── Regulation mock table ── */
+    .reg-mock-table {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .reg-mock-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px dashed #e0e0e0;
+    }
+
+    .reg-mock-row:last-child {
+      border-bottom: none;
+    }
+
+    .reg-mock-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .reg-mock-val {
+      font-size: 14px;
+      font-weight: 800;
+    }
+
     /* ── Leave Status Specific ── */
     .lv-stat-grid-onboarding {
       display: grid;
@@ -409,6 +506,7 @@
       gap: 6px;
       width: 100%;
     }
+
     .lv-stat-item {
       padding: 10px;
       border-radius: 12px;
@@ -416,6 +514,7 @@
       border: var(--border);
       box-shadow: 2px 2px 0px var(--ink);
     }
+
     .lv-progress-bar {
       height: 10px;
       background: #f0f0f0;
@@ -425,11 +524,13 @@
       overflow: hidden;
       position: relative;
     }
+
     .lv-progress-fill {
       height: 100%;
       background: var(--accent-emerald);
       transition: width 0.3s ease;
     }
+
     .lv-header-mock {
       display: flex;
       align-items: center;
@@ -442,8 +543,10 @@
       width: 100%;
       margin-bottom: 12px;
     }
+
     .icon-box {
-      width: 32px; height: 32px;
+      width: 32px;
+      height: 32px;
       background: var(--amber);
       border: 2px solid var(--ink);
       border-radius: 8px;
@@ -454,6 +557,7 @@
     }
   </style>
 </head>
+
 <body>
 
   <!-- ════════ 1. Hero ════════ -->
@@ -462,17 +566,17 @@
       <img src="./snuhmatecircle.png" alt="SNUH 메이트" class="hero-logo reveal">
       <h1 class="hero-title reveal d1">
         안녕하세요,<br>
-        바쁜 하루를 보내고 계시죠?
+
       </h1>
       <p class="hero-sub reveal d2">
-        수당 계산, 연차 확인, 급여 분석, 규정 검색<br>
-        귀찮았던 것들, SNUH Mate가 도와드릴게요 :)
+        내 휴가, 시간외, 급여 분석 등 , 궁금한 규정<br>
+        등등 <b>SNUH Mate</b>가 도와드릴게요 :)
       </p>
     </div>
     <div class="scroll-hint">
       아래로 스크롤하세요
       <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round">
-        <path d="M12 5v14M19 12l-7 7-7-7"/>
+        <path d="M12 5v14M19 12l-7 7-7-7" />
       </svg>
     </div>
   </section>
@@ -612,32 +716,71 @@
           <div style="flex:1; background:#e5e5e5;"></div>
         </div>
         <div class="legend">
-          <div class="legend-item"><div class="legend-dot" style="background:var(--blue);"></div>기본급</div>
-          <div class="legend-item"><div class="legend-dot" style="background:var(--emerald);"></div>수당</div>
-          <div class="legend-item"><div class="legend-dot" style="background:var(--amber);"></div>시간외</div>
-          <div class="legend-item"><div class="legend-dot" style="background:#e5e5e5;"></div>공제</div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:var(--blue);"></div>기본급
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:var(--emerald);"></div>수당
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:var(--amber);"></div>시간외
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#e5e5e5;"></div>공제
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ════════ 5. 규정/AI ════════ -->
+  <!-- ════════ 5. 규정 ════════ -->
   <section class="section sec-rose">
     <div class="section-inner">
       <div class="pain-tag reveal">&#x1f4d6; 이거 규정에 있는 건데... 어디서 찾지?</div>
       <h2 class="feat-title reveal d1">
-        궁금한 건<br>AI한테 바로 물어보세요.
+        단체협약 규정,<br>직접 찾아볼 수 있어요.
       </h2>
       <p class="feat-desc reveal d2">
-        단체협약 원문 검색, FAQ,<br>
-        AI 챗봇까지 한 곳에 모았어요.<br>
-        규정 PDF도 바로 열어볼 수 있어요.
+        FAQ, 원문 검색, PDF 뷰어까지<br>
+        한 곳에서 바로 확인하세요.
       </p>
-      <div class="neo-card reveal d3" style="display:flex; flex-direction:column; gap:12px;">
-        <div class="chat-bubble chat-user">경조사 휴가 며칠이에요?</div>
-        <div class="chat-bubble chat-bot">
-          결혼 시 본인 5일, 자녀 1일이에요.
-          <br><span style="color:var(--muted); font-size:12px; font-weight:600;">단체협약 제42조 참조</span>
+      <div class="neo-card reveal d3" style="padding:20px;">
+        <!-- 규정 헤더 -->
+        <div style="font-size:16px; font-weight:800; margin-bottom:4px;">시간외근무</div>
+        <div style="font-size:12px; color:var(--muted); font-weight:600; margin-bottom:12px;">&#x1f4cc; 제34조, 제47조</div>
+        <!-- 규정 요약 -->
+        <div style="font-size:13px; line-height:1.7; color:var(--ink); margin-bottom:14px;">
+          주 최대 52시간 (소정 40 + 연장 12).<br>
+          15분 단위 계산 (2020년~).<br>
+          <span style="color:var(--muted);">&bull;</span> 연장근무: 통상임금 &times; 1/209 &times; 150%<br>
+          <span style="color:var(--muted);">&bull;</span> 야간가산: 통상임금 &times; 1/209 &times; 200%<br>
+          <span style="color:var(--muted);">&bull;</span> 휴일근무: 150% (8h 이내), 200% (초과)
+        </div>
+        <!-- 내 수당 테이블 -->
+        <div style="border-top:3px solid var(--ink); padding-top:12px;">
+          <div style="font-size:13px; font-weight:700; margin-bottom:8px;">&#x1f4ca; 내 시간외수당 (1시간 기준)</div>
+          <div class="reg-mock-table">
+            <div class="reg-mock-row">
+              <span class="reg-mock-label">내 시급</span>
+              <span class="reg-mock-val" style="color:var(--ink);">32,424원</span>
+            </div>
+            <div class="reg-mock-row">
+              <span class="reg-mock-label">연장 1시간</span>
+              <span class="reg-mock-val" style="color:var(--violet);">48,636원</span>
+            </div>
+            <div class="reg-mock-row">
+              <span class="reg-mock-label">야간 1시간</span>
+              <span class="reg-mock-val" style="color:var(--rose);">64,848원</span>
+            </div>
+            <div class="reg-mock-row">
+              <span class="reg-mock-label">휴일 1시간 (8h 이내)</span>
+              <span class="reg-mock-val" style="color:var(--violet);">48,636원</span>
+            </div>
+            <div class="reg-mock-row">
+              <span class="reg-mock-label">휴일 1시간 (8h 초과)</span>
+              <span class="reg-mock-val" style="color:var(--rose);">64,848원</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -672,7 +815,7 @@
       <p class="feat-desc reveal d1" style="color:var(--ink); opacity:0.6;">설치 없이, 웹에서 바로.</p>
       <div class="cta-group reveal d2">
         <a href="./index.html" class="cta-primary">시작하기 &rarr;</a>
-        <a href="./index.html?tab=profile" class="cta-secondary">&#x1f464; 내 정보 먼저 등록하기</a>
+        <a href="./index.html?tutorial=1" class="cta-secondary">&#x1f393; 사용법 익히기 [튜토리얼]</a>
       </div>
     </div>
     <div class="footer-text">만든 사람: 김계환 (핵의학과)</div>
@@ -687,4 +830,5 @@
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
   </script>
 </body>
+
 </html>

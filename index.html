@@ -1595,7 +1595,8 @@
   <script src="leave.js?v=1.1"></script>
   <script src="payroll.js?v=1.4"></script>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-  <script src="salary-parser.js?v=2.2"></script>
+  <script src="salary-parser.js?v=2.3"></script>
+  <script src="salary-parser-test.js?v=1.0"></script>
   <script src="payroll-views.js?v=1.0"></script>
   <script src="app.js?v=1.8"></script>
   <script>
@@ -1740,38 +1741,37 @@
 
     applyCaptureTitle();
 
-    // ── 온보딩 로직 (최대 3회, 프로필 없을 때만) ──
+    // ── 온보딩 로직: 프로필 없으면 onboarding.html로 이동 ──
     (function checkOnboarding() {
       const params = getCaptureParams();
       if (params.get('hideOnboarding') === '1' || params.get('capture') === '1') return;
+      if (params.get('tutorial') === '1') {
+        // 튜토리얼 파라미터로 진입 시 튜토리얼 시작
+        setTimeout(() => { if (typeof startTutorial === 'function') startTutorial(); }, 800);
+        return;
+      }
       const profile = localStorage.getItem('profile');
-      if (profile) return; // 프로필 저장된 경우 표시 안 함
-      const count = parseInt(localStorage.getItem('onboarding_count') || '0');
-      if (count < 3) {
-        setTimeout(() => {
-          const modal = document.getElementById('onboardingModal');
-          if (modal) modal.style.display = 'flex';
-          localStorage.setItem('onboarding_count', String(count + 1));
-        }, 600);
+      if (profile) return;
+      const hasSeen = localStorage.getItem('onboarding_page_seen');
+      if (!hasSeen) {
+        localStorage.setItem('onboarding_page_seen', 'true');
+        window.location.replace('./onboarding.html');
+        return;
       }
     })();
 
     function showOnboarding() {
-      const modal = document.getElementById('onboardingModal');
-      if (modal) modal.style.display = 'flex';
+      window.location.href = './onboarding.html';
     }
 
     function dismissOnboarding(goProfile) {
-      const modal = document.getElementById('onboardingModal');
-      if (modal) modal.style.display = 'none';
       if (goProfile) switchTab('profile');
     }
 
     document.addEventListener('DOMContentLoaded', () => {
       const params = getCaptureParams();
       if (params.get('showOnboarding') === '1') {
-        const modal = document.getElementById('onboardingModal');
-        if (modal) modal.style.display = 'flex';
+        window.location.replace('./onboarding.html');
       }
     });
 
@@ -1792,12 +1792,12 @@
       if (host.includes('vercel.app')) {
         document.getElementById('migrationOverlay').style.display = 'flex';
       }
-      // 새 도메인 접속 시 온보딩 자동 노출보장 (기존 로직이 있지만 명시적으로 추가)
+      // 새 도메인 접속 시 온보딩 자동 노출보장
       if (host === 'snuhmate.com' || host === 'www.snuhmate.com') {
         const hasSeen = localStorage.getItem('onboarding_seen_v2');
         if (!hasSeen) {
-          showOnboarding();
           localStorage.setItem('onboarding_seen_v2', 'true');
+          // 프로필 없으면 onboarding.html로 (checkOnboarding에서 처리)
         }
       }
     });
