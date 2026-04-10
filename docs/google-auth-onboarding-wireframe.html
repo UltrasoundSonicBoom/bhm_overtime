@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google Auth Onboarding Wireframe</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: oklch(98.1% 0.01 240);
+      --bg-soft: oklch(95.6% 0.014 240);
+      --surface: oklch(99.2% 0.005 240);
+      --surface-strong: oklch(97.1% 0.012 245);
+      --line: oklch(89.1% 0.014 245);
+      --text: oklch(24.5% 0.02 255);
+      --muted: oklch(55.8% 0.03 252);
+      --blue: oklch(58% 0.18 253);
+      --blue-strong: oklch(51% 0.2 255);
+      --mint: oklch(84% 0.08 171);
+      --green: oklch(67% 0.15 162);
+      --amber: oklch(82% 0.12 84);
+      --shadow: 0 22px 60px rgba(77, 99, 130, 0.12);
+      --radius-xl: 32px;
+      --radius-lg: 24px;
+      --radius-md: 18px;
+      --radius-sm: 14px;
+      --ease: cubic-bezier(.22, 1, .36, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans KR", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(83, 130, 255, 0.12), transparent 32%),
+        radial-gradient(circle at bottom right, rgba(67, 201, 160, 0.1), transparent 28%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .page {
+      width: min(1320px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 44px 0 72px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap: 28px;
+      align-items: start;
+    }
+
+    .panel {
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.65);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+    }
+
+    .narrative {
+      padding: 34px 34px 30px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(76, 120, 255, 0.09);
+      color: var(--blue-strong);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+
+    h1 {
+      margin: 18px 0 14px;
+      font-family: "Manrope", sans-serif;
+      font-size: clamp(2.2rem, 3vw, 3.4rem);
+      line-height: .98;
+      letter-spacing: -0.05em;
+    }
+
+    .lead {
+      margin: 0;
+      max-width: 52ch;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.75;
+    }
+
+    .principles,
+    .issues {
+      margin-top: 26px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .principles h2,
+    .issues h2,
+    .wireframe-meta h2 {
+      margin: 0 0 8px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .principle-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .card {
+      padding: 18px;
+      border-radius: 22px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+    }
+
+    .card strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 16px;
+    }
+
+    .card p,
+    .issue-list li,
+    .bullet-list li {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: 14px;
+    }
+
+    .issue-list,
+    .bullet-list {
+      margin: 0;
+      padding-left: 18px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .wireframe-panel {
+      padding: 24px;
+      position: sticky;
+      top: 20px;
+    }
+
+    .wireframe-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .wireframe-meta p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .step-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .step-pill {
+      border: none;
+      background: var(--surface);
+      color: var(--muted);
+      padding: 10px 14px;
+      border-radius: 999px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      border: 1px solid var(--line);
+      cursor: pointer;
+      transition: transform .28s var(--ease), background .28s var(--ease), color .28s var(--ease), border-color .28s var(--ease);
+    }
+
+    .step-pill:hover,
+    .step-pill.active {
+      transform: translateY(-1px);
+      background: rgba(76, 120, 255, 0.1);
+      color: var(--blue-strong);
+      border-color: rgba(76, 120, 255, 0.24);
+    }
+
+    .device-wrap {
+      display: grid;
+      grid-template-columns: 1fr 250px;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .phone {
+      border-radius: 42px;
+      padding: 14px;
+      background: linear-gradient(180deg, oklch(22% 0.015 255), oklch(18% 0.015 255));
+      box-shadow: 0 26px 60px rgba(17, 26, 53, 0.22);
+    }
+
+    .screen {
+      position: relative;
+      overflow: hidden;
+      min-height: 760px;
+      border-radius: 30px;
+      background:
+        radial-gradient(circle at top right, rgba(84, 129, 255, 0.14), transparent 28%),
+        linear-gradient(180deg, #f7fbff 0%, #f4f8fe 100%);
+      border: 1px solid rgba(255, 255, 255, 0.78);
+      padding: 18px 18px 22px;
+    }
+
+    .notch {
+      width: 38%;
+      height: 28px;
+      margin: 0 auto 16px;
+      border-radius: 999px;
+      background: rgba(18, 25, 44, 0.88);
+    }
+
+    .appbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .appbar .left,
+    .appbar .right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .app-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+    }
+
+    .app-logo {
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(83, 130, 255, 0.14), rgba(67, 201, 160, 0.14));
+      display: grid;
+      place-items: center;
+      color: var(--blue-strong);
+      font-family: "Manrope", sans-serif;
+      font-weight: 800;
+    }
+
+    .status-stack {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .status-banner,
+    .mini-panel {
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid rgba(221, 229, 240, 0.9);
+      border-radius: 22px;
+      padding: 16px;
+    }
+
+    .status-banner strong,
+    .mini-panel strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 15px;
+    }
+
+    .status-banner p,
+    .mini-panel p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .chip {
+      padding: 9px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #eef3fb;
+      color: #5d6b83;
+    }
+
+    .chip.safe {
+      background: rgba(67, 201, 160, 0.12);
+      color: oklch(48% 0.14 165);
+    }
+
+    .chip.warn {
+      background: rgba(245, 184, 72, 0.16);
+      color: oklch(55% 0.13 74);
+    }
+
+    .section-title {
+      margin: 20px 0 10px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .action-card {
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(218, 227, 239, 0.96);
+      border-radius: 24px;
+      padding: 18px;
+      margin-bottom: 14px;
+    }
+
+    .action-card strong {
+      display: block;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+    }
+
+    .action-card p {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .list {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .list-item,
+    .setting-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      padding: 14px 0;
+      border-top: 1px solid rgba(226, 233, 242, 0.9);
+    }
+
+    .list-item:first-child,
+    .setting-item:first-child {
+      border-top: none;
+      padding-top: 0;
+    }
+
+    .item-copy small {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .badge {
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(83, 130, 255, 0.08);
+      color: var(--blue-strong);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .badge.green {
+      background: rgba(67, 201, 160, 0.12);
+      color: oklch(48% 0.14 165);
+    }
+
+    .badge.gray {
+      background: #edf1f6;
+      color: #6b778d;
+    }
+
+    .primary,
+    .secondary,
+    .ghost {
+      width: 100%;
+      border: none;
+      border-radius: 18px;
+      font: inherit;
+      cursor: pointer;
+      transition: transform .28s var(--ease), box-shadow .28s var(--ease), background .28s var(--ease);
+    }
+
+    .primary {
+      padding: 16px 18px;
+      background: linear-gradient(180deg, #4f86ff, #3a73ef);
+      color: white;
+      font-weight: 700;
+      box-shadow: 0 16px 28px rgba(61, 108, 221, 0.22);
+    }
+
+    .secondary {
+      padding: 14px 18px;
+      background: #edf3ff;
+      color: var(--blue-strong);
+      font-weight: 700;
+    }
+
+    .ghost {
+      padding: 14px 18px;
+      background: rgba(255, 255, 255, 0.7);
+      color: var(--muted);
+      border: 1px solid rgba(222, 230, 240, 0.95);
+      font-weight: 600;
+    }
+
+    .primary:hover,
+    .secondary:hover,
+    .ghost:hover {
+      transform: translateY(-1px);
+    }
+
+    .button-stack {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .helper-note {
+      margin-top: 12px;
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(79, 134, 255, 0.08);
+      color: #4f628a;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .switch {
+      width: 48px;
+      height: 29px;
+      border-radius: 999px;
+      background: #d8dfeb;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .switch::after {
+      content: "";
+      width: 23px;
+      height: 23px;
+      border-radius: 50%;
+      background: white;
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      box-shadow: 0 3px 8px rgba(18, 28, 54, 0.16);
+    }
+
+    .switch.on {
+      background: linear-gradient(180deg, #5b91ff, #3b74ef);
+    }
+
+    .switch.on::after {
+      left: 22px;
+    }
+
+    .calendar-option {
+      display: grid;
+      gap: 4px;
+      padding: 16px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid rgba(223, 231, 241, 0.95);
+    }
+
+    .calendar-option.active {
+      background: rgba(79, 134, 255, 0.08);
+      border-color: rgba(79, 134, 255, 0.28);
+    }
+
+    .calendar-option strong {
+      margin: 0;
+      font-size: 15px;
+    }
+
+    .calendar-option p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .preview-panel {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .preview-card {
+      padding: 16px;
+      border-radius: 22px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+    }
+
+    .preview-card strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 15px;
+    }
+
+    .preview-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .calendar-preview {
+      margin-top: 12px;
+      padding: 14px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, #f8fbff, #eef5ff);
+      border: 1px solid rgba(217, 228, 245, 0.96);
+    }
+
+    .calendar-preview .date {
+      font-family: "Manrope", sans-serif;
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      margin-bottom: 8px;
+    }
+
+    .calendar-event {
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: white;
+      border-left: 4px solid #4f86ff;
+      font-size: 13px;
+      color: #49607f;
+      line-height: 1.55;
+    }
+
+    .screen-panel {
+      display: none;
+      animation: rise .38s var(--ease);
+    }
+
+    .screen-panel.active {
+      display: block;
+    }
+
+    .navigator {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .nav-btn {
+      flex: 1;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      border-radius: 18px;
+      padding: 14px 16px;
+      font: inherit;
+      cursor: pointer;
+      font-weight: 700;
+      color: var(--text);
+      transition: transform .28s var(--ease), background .28s var(--ease);
+    }
+
+    .nav-btn:hover {
+      transform: translateY(-1px);
+      background: rgba(79, 134, 255, 0.05);
+    }
+
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(14px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 1100px) {
+      .hero,
+      .device-wrap {
+        grid-template-columns: 1fr;
+      }
+
+      .wireframe-panel {
+        position: static;
+      }
+
+      .screen {
+        min-height: 720px;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .page {
+        width: min(100% - 20px, 100%);
+        padding-top: 20px;
+      }
+
+      .narrative,
+      .wireframe-panel {
+        padding: 20px;
+      }
+
+      .principle-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .screen {
+        min-height: 690px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <article class="panel narrative">
+        <div class="eyebrow">Toss-style onboarding direction</div>
+        <h1>토스라면 로그인보다<br>안심 구조를 먼저 설계합니다.</h1>
+        <p class="lead">
+          핵심은 “Google 로그인” 자체가 아니라 사용자가 어떤 순간에 무엇을 허용하는지
+          분리해서 보여주는 것입니다. 첫 연결은 가볍게, 민감한 권한은 정말 필요해지는 순간에만,
+          그리고 모든 단계에서 “아직 로컬만 쓰는 중”인지 “내 Google에만 저장되는 중”인지
+          상태를 분명하게 드러내야 합니다.
+        </p>
+
+        <section class="principles">
+          <h2>Toss라면 이렇게 풀 것</h2>
+          <div class="principle-grid">
+            <div class="card">
+              <strong>1. 로그인과 저장을 분리</strong>
+              <p>처음 계정 연결은 가볍게 끝내고, Drive 권한은 백업을 켤 때, Calendar 권한은 일정 반영을 켤 때만 요청합니다.</p>
+            </div>
+            <div class="card">
+              <strong>2. 상태를 문장으로 설명</strong>
+              <p>“계정 연결됨”, “Google 백업 꺼짐”, “캘린더 연동 꺼짐”처럼 현재 상태를 바로 이해할 수 있게 보여줍니다.</p>
+            </div>
+            <div class="card">
+              <strong>3. 불안을 줄이는 카피</strong>
+              <p>“개발자 DB가 아니라 내 Google 저장공간의 앱 전용 영역” 같은 문장을 권한 요청 직전에 명확하게 배치합니다.</p>
+            </div>
+            <div class="card">
+              <strong>4. 하나의 강한 CTA</strong>
+              <p>매 화면마다 주 행동은 하나만 둡니다. 나머지는 보조 버튼이나 나중에 하기 선택지로 내려 사용자의 부담을 줄입니다.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="issues">
+          <h2>지금 흐름에서 보완할 부분</h2>
+          <ul class="issue-list">
+            <li>로그인하자마자 데이터가 올라가는 것처럼 보이면 민감한 사용자가 바로 이탈할 수 있습니다.</li>
+            <li>백업과 캘린더 권한을 동시에 요청하면 “왜 여기까지 허용해야 하지?”라는 저항이 생깁니다.</li>
+            <li>다른 기기에서 처음 로그인할 때 복원 선택권이 없으면 데이터 충돌 상황이 혼란스럽습니다.</li>
+            <li>캘린더 제목 기본값이 상세 유형이면 병가나 가족돌봄 같은 민감 정보가 너무 쉽게 노출됩니다.</li>
+          </ul>
+        </section>
+
+        <section class="issues">
+          <h2>권장 UX 결정</h2>
+          <ul class="bullet-list">
+            <li>첫 로그인 후 기본 상태는 `계정 연결만 됨`으로 유지</li>
+            <li>백업은 명시적 opt-in, 캘린더는 별도 opt-in</li>
+            <li>캘린더 기본 제목은 `휴가`</li>
+            <li>전용 캘린더 `SNUH Mate 휴가` 생성 기본값</li>
+            <li>공용 기기 경고는 로그인 후에도 상단에 유지</li>
+          </ul>
+        </section>
+      </article>
+
+      <aside class="panel wireframe-panel">
+        <div class="wireframe-meta">
+          <div>
+            <h2>HTML Preview</h2>
+            <p>모바일 온보딩 흐름 프로토타입</p>
+          </div>
+          <div class="badge">7 screens</div>
+        </div>
+
+        <div class="step-pills" id="stepPills">
+          <button class="step-pill active" data-step="0">1. 로컬 상태</button>
+          <button class="step-pill" data-step="1">2. 계정 연결</button>
+          <button class="step-pill" data-step="2">3. 백업 안내</button>
+          <button class="step-pill" data-step="3">4. 백업 완료</button>
+          <button class="step-pill" data-step="4">5. 캘린더 제안</button>
+          <button class="step-pill" data-step="5">6. 캘린더 선택</button>
+          <button class="step-pill" data-step="6">7. 완료 상태</button>
+        </div>
+
+        <div class="device-wrap">
+          <div class="phone">
+            <div class="screen">
+              <div class="notch"></div>
+              <div class="appbar">
+                <div class="left">9:41</div>
+                <div class="app-title">
+                  <div class="app-logo">S</div>
+                  <div>슬기로운 병원 생활 메이트</div>
+                </div>
+                <div class="right">5G 82%</div>
+              </div>
+
+              <section class="screen-panel active" data-screen="0">
+                <div class="status-stack">
+                  <div class="status-banner">
+                    <strong>이 브라우저에만 저장 중</strong>
+                    <p>지금은 휴가와 시간외 기록이 이 기기에만 저장돼요. 휴대폰을 바꾸거나 브라우저 데이터를 지우면 함께 사라질 수 있어요.</p>
+                    <div class="chip-row">
+                      <span class="chip">Google 연결 안 됨</span>
+                      <span class="chip warn">백업 꺼짐</span>
+                      <span class="chip warn">캘린더 연동 꺼짐</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="action-card">
+                  <strong>기록을 내 Google 계정에 보관할 수 있어요</strong>
+                  <p>원하면 나중에 새 휴대폰에서도 바로 이어볼 수 있어요. 로그인만으로는 백업이나 캘린더 연동이 자동으로 켜지지 않아요.</p>
+                  <div class="button-stack">
+                    <button class="primary">Google로 연결</button>
+                    <button class="ghost">계속 로컬만 사용</button>
+                  </div>
+                  <div class="helper-note">공용 기기라면 로그인 후에도 자동 백업을 켜지 않고 로컬 모드로만 계속 사용할 수 있어요.</div>
+                </div>
+              </section>
+
+              <section class="screen-panel" data-screen="1">
+                <div class="status-banner">
+                  <strong>Google 계정이 연결됐어요</strong>
+                  <p>아직 백업도, 캘린더 연동도 켜지지 않았어요. 먼저 계정만 확인한 상태예요.</p>
+                  <div class="chip-row">
+                    <span class="chip safe">계정 연결됨</span>
+                    <span class="chip warn">Google 백업 꺼짐</span>
+                    <span class="chip warn">캘린더 연동 꺼짐</span>
+                  </div>
+                </div>
+
+                <div class="section-title">지금 선택할 수 있어요</div>
+                <div class="action-card">
+                  <strong>내 기록을 Google에 백업할까요?</strong>
+                  <p>프로필, 휴가, 시간외 기록을 내 Google 저장공간의 앱 전용 영역에 저장해요. 개발자 DB에 보관하지 않는 방향을 기본으로 둡니다.</p>
+                  <div class="list">
+                    <div class="list-item">
+                      <div class="item-copy">
+                        <strong style="margin:0;font-size:15px;">저장 위치</strong>
+                        <small>내 Google Drive 앱 전용 영역</small>
+                      </div>
+                      <span class="badge green">내 계정만</span>
+                    </div>
+                    <div class="list-item">
+                      <div class="item-copy">
+                        <strong style="margin:0;font-size:15px;">지금 당장 자동 업로드</strong>
+                        <small>아니요. 허용 후에만 시작돼요</small>
+                      </div>
+                      <span class="badge gray">선택</span>
+                    </div>
+                  </div>
+                  <div class="button-stack">
+                    <button class="primary">Google 백업 켜기</button>
+                    <button class="secondary">나중에 하기</button>
+                  </div>
+                </div>
+              </section>
+
+              <section class="screen-panel" data-screen="2">
+                <div class="action-card">
+                  <strong>Google 백업을 켜기 전에</strong>
+                  <p>이 단계에서만 Drive 접근 권한을 요청해요. 지금 저장 중인 기록이 있는 경우, 먼저 이 기기 데이터가 내 Google에 백업됩니다.</p>
+                  <div class="list">
+                    <div class="list-item">
+                      <div class="item-copy">
+                        <strong style="margin:0;font-size:15px;">업로드될 항목</strong>
+                        <small>프로필 · 휴가 · 시간외 기록</small>
+                      </div>
+                      <span class="badge">3개 데이터</span>
+                    </div>
+                    <div class="list-item">
+                      <div class="item-copy">
+                        <strong style="margin:0;font-size:15px;">업로드되지 않는 것</strong>
+                        <small>캘린더 일정, 팀 공유 정보</small>
+                      </div>
+                      <span class="badge gray">분리됨</span>
+                    </div>
+                  </div>
+                  <div class="button-stack">
+                    <button class="primary">권한 확인하고 백업 시작</button>
+                    <button class="ghost">설명 다시 보기</button>
+                  </div>
+                </div>
+              </section>
+
+              <section class="screen-panel" data-screen="3">
+                <div class="status-banner">
+                  <strong>백업이 켜졌어요</strong>
+                  <p>이제 이 기기에서 저장하는 기록이 내 Google에 함께 보관돼요. 원하면 다른 기기에서 로그인해 복원할 수 있어요.</p>
+                  <div class="chip-row">
+                    <span class="chip safe">계정 연결됨</span>
+                    <span class="chip safe">Google 백업 켜짐</span>
+                    <span class="chip warn">캘린더 연동 꺼짐</span>
+                  </div>
+                </div>
+
+                <div class="action-card">
+                  <strong>이제 휴가를 캘린더에도 표시할 수 있어요</strong>
+                  <p>휴가를 입력하면 내 Google Calendar에 자동으로 넣어주는 기능이에요. 이 권한은 백업과 별도로 요청됩니다.</p>
+                  <div class="button-stack">
+                    <button class="primary">캘린더 연동 설정</button>
+                    <button class="secondary">지금은 백업만 사용할래요</button>
+                  </div>
+                  <div class="helper-note">민감한 사용자를 위해 캘린더 제목 기본값은 `휴가`로 두고, 세부 유형 노출은 선택 옵션으로 둡니다.</div>
+                </div>
+              </section>
+
+              <section class="screen-panel" data-screen="4">
+                <div class="action-card">
+                  <strong>휴가를 Google Calendar에도 반영할까요?</strong>
+                  <p>휴가를 저장하면 내 일정에도 같이 보여서 놓치기 쉬운 휴가 날짜를 더 쉽게 관리할 수 있어요. 캘린더 접근 권한은 이 기능을 켤 때만 요청해요.</p>
+                  <div class="list">
+                    <div class="list-item">
+                      <div class="item-copy">
+                        <strong style="margin:0;font-size:15px;">기본 제목</strong>
+                        <small>민감정보 보호를 위해 `휴가`로 표시</small>
+                      </div>
+                      <span class="badge green">권장</span>
+                    </div>
+                    <div class="list-item">
+                      <div class="item-copy">
+                        <strong style="margin:0;font-size:15px;">동기화 방향</strong>
+                        <small>앱에서 캘린더로만 보내고, 캘린더 수정은 앱에 반영하지 않음</small>
+                      </div>
+                      <span class="badge gray">단방향</span>
+                    </div>
+                  </div>
+                  <div class="button-stack">
+                    <button class="primary">캘린더 접근 권한 허용</button>
+                    <button class="ghost">나중에 하기</button>
+                  </div>
+                </div>
+              </section>
+
+              <section class="screen-panel" data-screen="5">
+                <div class="action-card">
+                  <strong>어느 캘린더에 넣을까요?</strong>
+                  <p>개인 일정과 섞이지 않게 전용 캘린더를 새로 만드는 방식을 기본으로 추천합니다.</p>
+                  <div class="list">
+                    <div class="calendar-option active">
+                      <strong>새 전용 캘린더 만들기</strong>
+                      <p>`SNUH Mate 휴가` 캘린더를 만들고 휴가 일정만 따로 넣어요. 숨기거나 공유 범위를 관리하기도 편해요.</p>
+                    </div>
+                    <div class="calendar-option">
+                      <strong>기본 캘린더에 넣기</strong>
+                      <p>내 메인 일정과 함께 보이게 해요. 빠르지만 개인 일정과 섞일 수 있어요.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="action-card">
+                  <strong>표시 방식</strong>
+                  <div class="setting-item">
+                    <div class="item-copy">
+                      <strong style="margin:0;font-size:15px;">민감 정보 보호 제목</strong>
+                      <small>`연차`, `병가` 대신 기본값으로 `휴가` 사용</small>
+                    </div>
+                    <div class="switch on"></div>
+                  </div>
+                  <div class="setting-item">
+                    <div class="item-copy">
+                      <strong style="margin:0;font-size:15px;">자동 반영</strong>
+                      <small>휴가 저장/수정/삭제 시 캘린더도 같이 업데이트</small>
+                    </div>
+                    <div class="switch on"></div>
+                  </div>
+                  <div class="button-stack">
+                    <button class="primary">이 설정으로 시작</button>
+                  </div>
+                </div>
+              </section>
+
+              <section class="screen-panel" data-screen="6">
+                <div class="status-banner">
+                  <strong>준비가 끝났어요</strong>
+                  <p>이제 로컬 기록은 유지하면서, 원하면 내 Google에도 백업되고 휴가 일정은 전용 캘린더에 자동 반영됩니다.</p>
+                  <div class="chip-row">
+                    <span class="chip safe">계정 연결됨</span>
+                    <span class="chip safe">Google 백업 켜짐</span>
+                    <span class="chip safe">캘린더 연동 켜짐</span>
+                  </div>
+                </div>
+
+                <div class="action-card">
+                  <strong>다음에 사용자가 체감하는 것</strong>
+                  <div class="list">
+                    <div class="list-item">
+                      <div class="item-copy">
+                        <strong style="margin:0;font-size:15px;">휴가 저장</strong>
+                        <small>앱에 저장한 뒤 캘린더도 자동 업데이트</small>
+                      </div>
+                      <span class="badge green">자동</span>
+                    </div>
+                    <div class="list-item">
+                      <div class="item-copy">
+                        <strong style="margin:0;font-size:15px;">새 기기 로그인</strong>
+                        <small>Google에 저장된 기록을 바로 복원 가능</small>
+                      </div>
+                      <span class="badge green">복원</span>
+                    </div>
+                    <div class="list-item">
+                      <div class="item-copy">
+                        <strong style="margin:0;font-size:15px;">연동 해제</strong>
+                        <small>설정에서 언제든 백업/캘린더를 각각 끌 수 있음</small>
+                      </div>
+                      <span class="badge gray">선택</span>
+                    </div>
+                  </div>
+                  <div class="button-stack">
+                    <button class="primary">휴가 기록하러 가기</button>
+                    <button class="secondary">설정 다시 보기</button>
+                  </div>
+                </div>
+              </section>
+
+              <div class="navigator">
+                <button class="nav-btn" id="prevBtn">이전 화면</button>
+                <button class="nav-btn" id="nextBtn">다음 화면</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="preview-panel">
+            <div class="preview-card">
+              <strong>핵심 UX 포인트</strong>
+              <p>첫 로그인 직후에는 아무것도 자동으로 올라가지 않는다는 안심 구조를 제일 먼저 노출합니다. 권한 요청은 기능을 켤 때로 뒤로 미룹니다.</p>
+            </div>
+            <div class="preview-card">
+              <strong>토스식 톤</strong>
+              <p>카피는 짧지만 설명은 충분하게, UI는 매우 단정하지만 정보 상태는 분명하게. 선택지는 많아 보여도 매 순간 CTA는 하나만 강하게 둡니다.</p>
+            </div>
+            <div class="preview-card">
+              <strong>캘린더 미리보기</strong>
+              <div class="calendar-preview">
+                <div class="date">4.18</div>
+                <div class="calendar-event">
+                  휴가<br>
+                  오전 9:00 - 오후 6:00<br>
+                  SNUH Mate 휴가 캘린더
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const pills = [...document.querySelectorAll(".step-pill")];
+    const panels = [...document.querySelectorAll(".screen-panel")];
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    let step = 0;
+
+    function renderStep(nextStep) {
+      step = Math.max(0, Math.min(panels.length - 1, nextStep));
+      panels.forEach((panel, index) => {
+        panel.classList.toggle("active", index === step);
+      });
+      pills.forEach((pill, index) => {
+        pill.classList.toggle("active", index === step);
+      });
+      prevBtn.disabled = step === 0;
+      nextBtn.disabled = step === panels.length - 1;
+      prevBtn.style.opacity = step === 0 ? ".45" : "1";
+      nextBtn.style.opacity = step === panels.length - 1 ? ".45" : "1";
+    }
+
+    pills.forEach((pill) => {
+      pill.addEventListener("click", () => {
+        renderStep(Number(pill.dataset.step));
+      });
+    });
+
+    prevBtn.addEventListener("click", () => renderStep(step - 1));
+    nextBtn.addEventListener("click", () => renderStep(step + 1));
+
+    renderStep(0);
+  </script>
+</body>
+</html>
