@@ -1456,222 +1456,341 @@ function calculatePayroll() {
   document.getElementById('payrollResult').innerHTML = html;
 }
 
-// ═══════════ 💰 급여 예상 (히어로 + 타임라인) ═══════════
+// ═══════════ 💰 급여 예상 (명세서 스타일 카드뷰) ═══════════
+
+// 현재 선택된 예상 월 (전역)
+let payEstYear = new Date().getFullYear();
+let payEstMonth = new Date().getMonth() + 1;
 
 // 월별 특이사항 판별
 function getMonthFlags(year, month) {
   const flags = {
-    isFamilySupportMonth: true,  // 가계지원비 지급 여부
-    isHolidayBonus: false,       // 명절지원비
-    isPerformanceBonus: false,   // 성과급
-    isYearEndAdj: false,         // 연말정산
-    isResidentTaxExtra: false,   // 주민세 정기분
-    isAnnualLeaveComp: false,    // 연차수당
+    isFamilySupportMonth: true,
+    isHolidayBonus: false,
+    isPerformanceBonus: false,
+    isYearEndAdj: false,
+    isResidentTaxExtra: false,
     tags: []
   };
 
-  // 가계지원비: 11개월 균등 (1,2,9월 미지급 — 단, 설/추석 해당월은 지급)
-  // 보수표 주석: 3,4,5,6,7,8,10,11,12 + 설과 추석이 있는 달
   const familySkipMonths = [1, 2, 9];
   if (familySkipMonths.includes(month)) {
     flags.isFamilySupportMonth = false;
-    flags.tags.push('가계×');
+    flags.tags.push('가계지원비 미지급월');
   }
 
-  // 명절지원비: 설(1~2월), 추석(9~10월), 5월
-  // 간이 판별: 1월=설, 9월=추석, 5월=근로자의날
   if (month === 1 || month === 2) { flags.isHolidayBonus = true; flags.isFamilySupportMonth = true; flags.tags.push('설 명절지원비'); }
   if (month === 9) { flags.isHolidayBonus = true; flags.isFamilySupportMonth = true; flags.tags.push('추석 명절지원비'); }
   if (month === 5) { flags.isHolidayBonus = true; flags.tags.push('5월 명절지원비'); }
-
-  // 성과급: 8월 50%, 11월 50%
   if (month === 8) { flags.isPerformanceBonus = true; flags.tags.push('성과급 50%'); }
   if (month === 11) { flags.isPerformanceBonus = true; flags.tags.push('성과급 50%'); }
-
-  // 연말정산: 2월
   if (month === 2) { flags.isYearEndAdj = true; flags.tags.push('연말정산'); }
-
-  // 주민세 정기분: 6월
-  if (month === 6) { flags.isResidentTaxExtra = true; flags.tags.push('주민세↑'); }
+  if (month === 6) { flags.isResidentTaxExtra = true; flags.tags.push('주민세 정기분'); }
 
   return flags;
 }
 
-// 12개월 시뮬레이션
-function calcYearlyEstimate(year) {
+// 단월 시뮬레이션 (시간외·휴가 실시간 반영)
+function calcMonthEstimate(year, month) {
   const profile = PROFILE.load();
   if (!profile) return null;
 
   const serviceYears = profile.hireDate ? PROFILE.calcServiceYears(profile.hireDate) : 0;
-  const results = [];
+  const flags = getMonthFlags(year, month);
+  const otStats = OVERTIME.calcMonthlyStats(year, month);
 
-  for (let m = 1; m <= 12; m++) {
-    const flags = getMonthFlags(year, m);
+  // 시간외 기록에서 연장/야간/휴일 시간 분리
+  const otRecords = OVERTIME.getMonthRecords(year, month);
+  let extHours = 0, nightHours = 0, holHours = 0;
+  otRecords.forEach(r => {
+    if (r.type === 'overtime' || r.type === 'oncall_callout') {
+      extHours += r.breakdown?.extended || 0;
+      nightHours += r.breakdown?.night || 0;
+      holHours += (r.breakdown?.holiday || 0) + (r.breakdown?.holidayNight || 0);
+    }
+  });
 
-    // 시간외 데이터 자동 반영
-    const otStats = OVERTIME.calcMonthlyStats(year, m);
+  const params = {
+    jobType: profile.jobType,
+    grade: profile.grade,
+    year: parseInt(profile.year),
+    adjustPay: parseInt(profile.adjustPay) || 0,
+    upgradeAdjustPay: parseInt(profile.upgradeAdjustPay) || 0,
+    hasMilitary: profile.hasMilitary,
+    militaryMonths: parseInt(profile.militaryMonths) || 24,
+    hasSeniority: profile.hasSeniority,
+    seniorityYears: profile.hasSeniority ? serviceYears : 0,
+    longServiceYears: serviceYears,
+    numFamily: parseInt(profile.numFamily) || 0,
+    numChildren: parseInt(profile.numChildren) || 0,
+    childrenUnder6Pay: parseInt(profile.childrenUnder6Pay) || 0,
+    specialPay: parseInt(profile.specialPay) || 0,
+    positionPay: parseInt(profile.positionPay) || 0,
+    workSupportPay: parseInt(profile.workSupportPay) || 0,
+    workDays: 22,
+    isHolidayMonth: flags.isHolidayBonus,
+    isFamilySupportMonth: flags.isFamilySupportMonth,
+    overtimeHours: extHours,
+    nightHours: nightHours,
+    holidayWorkHours: holHours,
+    nightShiftCount: otStats.nightShiftCount || 0,
+  };
 
-    const params = {
-      jobType: profile.jobType,
-      grade: profile.grade,
-      year: parseInt(profile.year),
-      adjustPay: parseInt(profile.adjustPay) || 0,
-      upgradeAdjustPay: parseInt(profile.upgradeAdjustPay) || 0,
-      hasMilitary: profile.hasMilitary,
-      militaryMonths: parseInt(profile.militaryMonths) || 24,
-      hasSeniority: profile.hasSeniority,
-      seniorityYears: profile.hasSeniority ? serviceYears : 0,
-      longServiceYears: serviceYears,
-      numFamily: parseInt(profile.numFamily) || 0,
-      numChildren: parseInt(profile.numChildren) || 0,
-      childrenUnder6Pay: parseInt(profile.childrenUnder6Pay) || 0,
-      specialPay: parseInt(profile.specialPay) || 0,
-      positionPay: parseInt(profile.positionPay) || 0,
-      workSupportPay: parseInt(profile.workSupportPay) || 0,
-      workDays: 22,
-      isHolidayMonth: flags.isHolidayBonus,
-      isFamilySupportMonth: flags.isFamilySupportMonth,
-      overtimeHours: otStats.byType.overtime.hours || 0,
-      nightHours: 0,
-      holidayWorkHours: 0,
-      nightShiftCount: otStats.nightShiftCount || 0,
-    };
+  const r = CALC.calcPayrollSimulation(params);
+  if (!r) return null;
 
-    const r = CALC.calcPayrollSimulation(params);
-    if (!r) continue;
+  const oncallPay = otStats.byType.oncall_standby.pay + otStats.byType.oncall_callout.pay;
 
-    // 온콜 수당 추가
-    const oncallPay = otStats.byType.oncall_standby.pay + otStats.byType.oncall_callout.pay;
-
-    results.push({
-      month: m,
-      gross: r.급여총액 + oncallPay,
-      deductions: r.공제총액,
-      net: r.실지급액 + oncallPay,
-      flags,
-      otPay: otStats.totalPay,
-      detail: r
-    });
+  // 온콜 수당을 지급내역에 추가
+  if (otStats.byType.oncall_standby.pay > 0) {
+    r.지급내역['온콜대기수당'] = otStats.byType.oncall_standby.pay;
+  }
+  if (otStats.byType.oncall_callout.pay > 0) {
+    r.지급내역['온콜출근수당'] = otStats.byType.oncall_callout.pay;
   }
 
+  r.급여총액 += oncallPay;
+  r.실지급액 += oncallPay;
+
+  return { result: r, flags, otStats };
+}
+
+// 12개월 시뮬레이션 (연간 요약용)
+function calcYearlyEstimate(year) {
+  const results = [];
+  for (let m = 1; m <= 12; m++) {
+    const est = calcMonthEstimate(year, m);
+    if (!est) continue;
+    results.push({
+      month: m,
+      gross: est.result.급여총액,
+      deductions: est.result.공제총액,
+      net: est.result.실지급액,
+      flags: est.flags,
+      otPay: est.otStats.totalPay
+    });
+  }
   return results;
 }
 
-// 히어로 카드 렌더링
+// 금액 포맷
+function fmtW(n) { return '₩' + Math.round(n).toLocaleString(); }
+
+// 히어로 카드 + 월 선택 슬라이더 렌더링
 function renderPayEstHero() {
   const el = document.getElementById('payEstHero');
   if (!el) return;
 
   const profile = PROFILE.load();
   if (!profile) {
-    el.innerHTML = `<div class="card" style="text-align:center; padding:24px;">
-      <div style="font-size:var(--text-title-large); margin-bottom:8px;">💰 급여 예상</div>
-      <p style="color:var(--text-muted);">내 정보를 저장하면 이번달 예상 급여가 자동 계산됩니다.</p>
+    el.innerHTML = `<div class="card" style="text-align:center; padding:28px;">
+      <div style="font-size:var(--text-title-large); margin-bottom:8px; font-weight:800;">급여 예상</div>
+      <p style="color:var(--text-muted);">내 정보를 저장하면 월별 예상 급여가 자동 계산됩니다.</p>
       <button class="btn btn-primary" onclick="switchToProfileTab()" style="margin-top:12px;">내 정보 입력하기</button>
     </div>`;
     return;
   }
 
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
-  const flags = getMonthFlags(year, month);
-
-  // 시간외 자동반영
-  const otStats = OVERTIME.calcMonthlyStats(year, month);
-  const serviceYears = profile.hireDate ? PROFILE.calcServiceYears(profile.hireDate) : 0;
-
-  const params = {
-    jobType: profile.jobType, grade: profile.grade, year: parseInt(profile.year),
-    adjustPay: parseInt(profile.adjustPay) || 0, upgradeAdjustPay: parseInt(profile.upgradeAdjustPay) || 0,
-    hasMilitary: profile.hasMilitary, militaryMonths: parseInt(profile.militaryMonths) || 24,
-    hasSeniority: profile.hasSeniority, seniorityYears: profile.hasSeniority ? serviceYears : 0,
-    longServiceYears: serviceYears,
-    numFamily: parseInt(profile.numFamily) || 0, numChildren: parseInt(profile.numChildren) || 0,
-    childrenUnder6Pay: parseInt(profile.childrenUnder6Pay) || 0,
-    specialPay: parseInt(profile.specialPay) || 0, positionPay: parseInt(profile.positionPay) || 0,
-    workSupportPay: parseInt(profile.workSupportPay) || 0,
-    workDays: 22, isHolidayMonth: flags.isHolidayBonus, isFamilySupportMonth: flags.isFamilySupportMonth,
-    overtimeHours: otStats.byType.overtime.hours || 0,
-    nightShiftCount: otStats.nightShiftCount || 0,
-  };
-
-  const r = CALC.calcPayrollSimulation(params);
-  if (!r) { el.innerHTML = ''; return; }
-
-  const oncallPay = otStats.byType.oncall_standby.pay + otStats.byType.oncall_callout.pay;
-  const totalNet = r.실지급액 + oncallPay;
-  const totalGross = r.급여총액 + oncallPay;
-
-  // 지급/공제 요약
-  const payItems = Object.values(r.지급내역).reduce((a, b) => a + b, 0) + oncallPay;
+  const est = calcMonthEstimate(payEstYear, payEstMonth);
+  if (!est) { el.innerHTML = ''; return; }
+  const r = est.result;
+  const flags = est.flags;
+  const otStats = est.otStats;
 
   // 특이사항 태그
   let tagsHtml = '';
   if (flags.tags.length > 0) {
-    tagsHtml = `<div class="pay-est-tags">${flags.tags.map(t => `<span class="pay-est-tag">${t}</span>`).join('')}</div>`;
+    tagsHtml = flags.tags.map(t => `<span class="pe-tag">${escapeHtml(t)}</span>`).join('');
   }
   if (otStats.totalPay > 0) {
-    tagsHtml += `<div class="pay-est-tags"><span class="pay-est-tag ot">시간외·온콜 ₩${otStats.totalPay.toLocaleString()} 반영</span></div>`;
+    tagsHtml += `<span class="pe-tag ot">시간외·온콜 ${fmtW(otStats.totalPay)} 반영</span>`;
   }
 
-  el.innerHTML = `<div class="pay-est-hero-card">
-    <div class="pay-est-hero-label">💰 ${month}월 예상 실수령액</div>
-    <div class="pay-est-hero-amount">₩${totalNet.toLocaleString()}</div>
-    <div class="pay-est-hero-sub">세전 ₩${totalGross.toLocaleString()} · 공제 ₩${r.공제총액.toLocaleString()}</div>
-    ${tagsHtml}
-  </div>`;
+  el.innerHTML = `
+    <div class="pe-month-slider">
+      <button class="pe-nav-btn" onclick="changePayEstMonth(-1)">◀</button>
+      <span class="pe-month-label">${payEstYear}년 ${payEstMonth}월 예상</span>
+      <button class="pe-nav-btn" onclick="changePayEstMonth(1)">▶</button>
+    </div>
+    <div class="pe-hero-card">
+      <div class="pe-hero-net-label">예상 실수령액</div>
+      <div class="pe-hero-net">${fmtW(r.실지급액)}</div>
+      <div class="pe-hero-summary">
+        <span class="pe-hero-gross">지급 ${fmtW(r.급여총액)}</span>
+        <span class="pe-hero-sep">—</span>
+        <span class="pe-hero-ded">공제 ${fmtW(r.공제총액)}</span>
+      </div>
+      ${tagsHtml ? `<div class="pe-tags">${tagsHtml}</div>` : ''}
+    </div>`;
 }
 
-// 타임라인 렌더링
-function renderPayEstTimeline() {
+// 월 변경
+function changePayEstMonth(delta) {
+  payEstMonth += delta;
+  if (payEstMonth > 12) { payEstMonth = 1; payEstYear++; }
+  if (payEstMonth < 1) { payEstMonth = 12; payEstYear--; }
+  renderPayEstHero();
+  renderPayEstDetail();
+}
+
+// 상세 명세서 스타일 카드 렌더링
+function renderPayEstDetail() {
   const el = document.getElementById('payEstTimeline');
   if (!el) return;
 
   const profile = PROFILE.load();
   if (!profile) { el.innerHTML = ''; return; }
 
-  const now = new Date();
-  const year = now.getFullYear();
-  const currentMonth = now.getMonth() + 1;
-  const results = calcYearlyEstimate(year);
-  if (!results || results.length === 0) { el.innerHTML = ''; return; }
+  const est = calcMonthEstimate(payEstYear, payEstMonth);
+  if (!est) { el.innerHTML = ''; return; }
+  const r = est.result;
+  const otStats = est.otStats;
 
-  const maxNet = Math.max(...results.map(r => r.net));
-  const totalNet = results.reduce((a, r) => a + r.net, 0);
-  const avgNet = Math.round(totalNet / results.length);
-
-  let html = `<div class="pay-est-timeline">
-    <div class="pay-est-tl-header">
-      <span class="pay-est-tl-title">📊 ${year}년 급여 흐름</span>
-      <span class="pay-est-tl-avg">월평균 ₩${avgNet.toLocaleString()}</span>
-    </div>`;
-
-  results.forEach(r => {
-    const pct = maxNet > 0 ? Math.round((r.net / maxNet) * 100) : 0;
-    const isCurrent = r.month === currentMonth;
-    const tags = r.flags.tags.length > 0 ? r.flags.tags.join(' · ') : '';
-
-    html += `<div class="pay-est-tl-row ${isCurrent ? 'current' : ''}">
-      <span class="pay-est-tl-month">${isCurrent ? '●' : ''}${r.month}월</span>
-      <div class="pay-est-tl-bar-wrap">
-        <div class="pay-est-tl-bar" style="width:${pct}%"></div>
+  // ── 지급내역 테이블 ──
+  let payRows = '';
+  for (const [name, amount] of Object.entries(r.지급내역)) {
+    if (amount <= 0) continue;
+    // 항목별 설명 추가
+    const desc = getItemDesc(name, payEstYear, payEstMonth, est);
+    payRows += `
+      <div class="pe-item-row">
+        <div class="pe-item-name">${escapeHtml(name)}</div>
+        <div class="pe-item-amount">${fmtW(amount)}</div>
       </div>
-      <span class="pay-est-tl-amount">₩${(r.net / 10000).toFixed(0)}만</span>
-      <span class="pay-est-tl-tags">${tags}</span>
-    </div>`;
-  });
+      ${desc ? `<div class="pe-item-desc">${escapeHtml(desc)}</div>` : ''}`;
+  }
 
-  html += `<div class="pay-est-tl-footer">연간 합계 ₩${totalNet.toLocaleString()} · 월평균 ₩${avgNet.toLocaleString()}</div>`;
-  html += `</div>`;
+  // ── 공제내역 테이블 ──
+  let dedRows = '';
+  for (const [name, amount] of Object.entries(r.공제내역)) {
+    if (amount <= 0) continue;
+    const desc = getDeductionDesc(name, r);
+    dedRows += `
+      <div class="pe-item-row">
+        <div class="pe-item-name">${escapeHtml(name)}</div>
+        <div class="pe-item-amount ded">-${fmtW(amount)}</div>
+      </div>
+      ${desc ? `<div class="pe-item-desc">${escapeHtml(desc)}</div>` : ''}`;
+  }
 
-  el.innerHTML = html;
+  // ── 시간외·온콜 요약 (기록이 있을 때) ──
+  let otSummary = '';
+  if (otStats.recordCount > 0) {
+    const items = [];
+    if (otStats.byType.overtime.count > 0) items.push(`시간외 ${otStats.byType.overtime.count}건 (${otStats.byType.overtime.hours.toFixed(1)}h)`);
+    if (otStats.byType.oncall_standby.count > 0) items.push(`온콜대기 ${otStats.byType.oncall_standby.count}일`);
+    if (otStats.byType.oncall_callout.count > 0) items.push(`온콜출근 ${otStats.byType.oncall_callout.count}건 (${otStats.byType.oncall_callout.hours.toFixed(1)}h)`);
+    otSummary = `
+      <div class="pe-section-card pe-ot-summary">
+        <div class="pe-section-title">시간외·온콜 반영 내역</div>
+        <div class="pe-ot-items">${items.map(i => `<span class="pe-ot-chip">${i}</span>`).join('')}</div>
+        <div class="pe-ot-total">합계 ${fmtW(otStats.totalPay)}</div>
+      </div>`;
+  }
+
+  // ── 연간 미니 요약 ──
+  const yearly = calcYearlyEstimate(payEstYear);
+  let yearSummary = '';
+  if (yearly && yearly.length > 0) {
+    const totalNet = yearly.reduce((a, r) => a + r.net, 0);
+    const avgNet = Math.round(totalNet / yearly.length);
+    const maxR = yearly.reduce((a, b) => a.net > b.net ? a : b);
+    const minR = yearly.reduce((a, b) => a.net < b.net ? a : b);
+
+    yearSummary = `
+      <div class="pe-section-card pe-year-summary">
+        <div class="pe-section-title">${payEstYear}년 연간 요약</div>
+        <div class="pe-year-grid">
+          <div class="pe-year-item">
+            <div class="pe-year-label">연간 합계</div>
+            <div class="pe-year-value">${fmtW(totalNet)}</div>
+          </div>
+          <div class="pe-year-item">
+            <div class="pe-year-label">월평균</div>
+            <div class="pe-year-value">${fmtW(avgNet)}</div>
+          </div>
+          <div class="pe-year-item">
+            <div class="pe-year-label">최고 (${maxR.month}월)</div>
+            <div class="pe-year-value">${fmtW(maxR.net)}</div>
+          </div>
+          <div class="pe-year-item">
+            <div class="pe-year-label">최저 (${minR.month}월)</div>
+            <div class="pe-year-value">${fmtW(minR.net)}</div>
+          </div>
+        </div>
+        <div class="pe-year-bars">
+          ${yearly.map(yr => {
+            const pct = Math.round((yr.net / maxR.net) * 100);
+            const isCur = yr.month === payEstMonth;
+            return `<div class="pe-bar-col ${isCur ? 'cur' : ''}" onclick="payEstMonth=${yr.month};initPayEstimate();" title="${yr.month}월: ${fmtW(yr.net)}">
+              <div class="pe-bar" style="height:${pct}%"></div>
+              <span class="pe-bar-label">${yr.month}</span>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+  }
+
+  el.innerHTML = `
+    <div class="pe-section-card">
+      <div class="pe-section-title">지급내역</div>
+      ${payRows}
+      <div class="pe-item-row pe-total-row">
+        <div class="pe-item-name">지급 합계</div>
+        <div class="pe-item-amount">${fmtW(r.급여총액)}</div>
+      </div>
+    </div>
+    <div class="pe-section-card">
+      <div class="pe-section-title">공제내역</div>
+      ${dedRows}
+      <div class="pe-item-row pe-total-row">
+        <div class="pe-item-name">공제 합계</div>
+        <div class="pe-item-amount ded">-${fmtW(r.공제총액)}</div>
+      </div>
+    </div>
+    ${otSummary}
+    ${yearSummary}`;
+}
+
+// 지급 항목별 계산 근거 설명
+function getItemDesc(name, year, month, est) {
+  const flags = est.flags;
+  if (name === '가계지원비') return '연간 11개월 균등 지급 (1·2·9월 미지급, 단 설/추석월은 지급)';
+  if (name === '명절지원비') {
+    if (month === 1 || month === 2) return '설 명절지원비 — 기준기본급 기준';
+    if (month === 9) return '추석 명절지원비 — 기준기본급 기준';
+    if (month === 5) return '5월 명절지원비';
+    return '';
+  }
+  if (name === '시간외수당') return `연장근무 시간 × 통상시급 × 1.5`;
+  if (name === '야간수당') return `야간근무(22~06시) × 통상시급 × 2.0`;
+  if (name === '휴일수당') return `휴일근무 시간 × 통상시급 × 1.5~2.0`;
+  if (name === '온콜대기수당') return `온콜대기 ${est.otStats.byType.oncall_standby.count}일 × 대기수당`;
+  if (name === '온콜출근수당') return `온콜출근 ${est.otStats.byType.oncall_callout.count}건 (실근무+출퇴근 인정)`;
+  if (name === '야간근무가산금') return `야간근무 ${est.otStats.nightShiftCount}회 × 가산금`;
+  if (name === '급식보조비') return '비과세 한도 내 지급';
+  if (name === '교통보조비') return '비과세 한도 내 지급';
+  if (name === '장기근속수당') return '근속연수 기준 정액';
+  if (name === '군복무수당') return '군복무 개월수 기준 산정';
+  return '';
+}
+
+// 공제 항목별 설명
+function getDeductionDesc(name, r) {
+  if (name === '국민건강보험') return `급여총액 × 3.545%`;
+  if (name === '장기요양보험') return `건강보험료 × 12.95%`;
+  if (name === '국민연금') return `급여총액 × 4.5%`;
+  if (name === '고용보험') return `급여총액 × 0.9%`;
+  if (name === '식대공제') return `근무일수 × 3,000원`;
+  if (name.includes('소득세')) return `간이세액표 기준 근사치`;
+  if (name.includes('주민세')) return `소득세 × 10%`;
+  return '';
 }
 
 // 급여 예상 탭 초기화
 function initPayEstimate() {
   renderPayEstHero();
-  renderPayEstTimeline();
+  renderPayEstDetail();
 }
 
 // ═══════════ 📅 연차 계산 ═══════════
