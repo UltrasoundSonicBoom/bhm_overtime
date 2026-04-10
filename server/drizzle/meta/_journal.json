@@ -8,6 +8,13 @@
       "when": 1775653911165,
       "tag": "0000_silent_human_torch",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1775786248364,
+      "tag": "0001_tough_the_captain",
+      "breakpoints": true
     }
   ]
 }

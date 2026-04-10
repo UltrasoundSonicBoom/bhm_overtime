@@ -40,7 +40,7 @@ chatRoutes.post('/', optionalAuth, async (c) => {
     return c.json({ error: 'Rate limit exceeded (20/min)' }, 429)
   }
 
-  const userId = c.get('userId') as string | null
+  const userId = (c as any).get('userId') as string | null
 
   // 사용자 메시지 저장
   await sql`

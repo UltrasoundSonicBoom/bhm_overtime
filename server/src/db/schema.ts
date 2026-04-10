@@ -46,6 +46,28 @@ export const adminRoleEnum = pgEnum('admin_role', [
   'viewer',
 ])
 
+export const contentStatusEnum = pgEnum('content_status', [
+  'draft',
+  'review',
+  'published',
+  'archived',
+])
+
+export const contentTypeEnum = pgEnum('content_type', [
+  'policy',
+  'faq',
+  'notice',
+  'landing',
+  'dataset',
+])
+
+export const approvalStatusEnum = pgEnum('approval_status', [
+  'pending',
+  'approved',
+  'rejected',
+  'cancelled',
+])
+
 // ── 3.1 regulation_versions ──
 
 export const regulationVersions = pgTable('regulation_versions', {
@@ -253,5 +275,101 @@ export const ceremonies = pgTable(
   },
   (table) => [
     index('ceremonies_version_idx').on(table.versionId),
+  ],
+)
+
+// ── 3.11 content_entries ──
+
+export const contentEntries = pgTable(
+  'content_entries',
+  {
+    id: serial('id').primaryKey(),
+    contentType: contentTypeEnum('content_type').notNull(),
+    slug: text('slug').notNull(),
+    title: text('title').notNull(),
+    status: contentStatusEnum('status').notNull().default('draft'),
+    currentRevisionId: integer('current_revision_id'),
+    publishedRevisionId: integer('published_revision_id'),
+    metadata: jsonb('metadata').$type<Record<string, unknown>>().default({}),
+    createdBy: uuid('created_by'),
+    updatedBy: uuid('updated_by'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('content_entries_type_slug_uidx').on(table.contentType, table.slug),
+    index('content_entries_status_idx').on(table.status),
+  ],
+)
+
+// ── 3.12 content_revisions ──
+
+export const contentRevisions = pgTable(
+  'content_revisions',
+  {
+    id: serial('id').primaryKey(),
+    entryId: integer('entry_id')
+      .notNull()
+      .references(() => contentEntries.id, { onDelete: 'cascade' }),
+    revisionNumber: integer('revision_number').notNull(),
+    status: contentStatusEnum('status').notNull().default('draft'),
+    summary: text('summary'),
+    body: text('body').notNull(),
+    metadata: jsonb('metadata').$type<Record<string, unknown>>().default({}),
+    createdBy: uuid('created_by'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('content_revisions_entry_revision_uidx').on(
+      table.entryId,
+      table.revisionNumber,
+    ),
+    index('content_revisions_entry_idx').on(table.entryId),
+  ],
+)
+
+// ── 3.13 approval_tasks ──
+
+export const approvalTasks = pgTable(
+  'approval_tasks',
+  {
+    id: serial('id').primaryKey(),
+    entryId: integer('entry_id')
+      .notNull()
+      .references(() => contentEntries.id, { onDelete: 'cascade' }),
+    revisionId: integer('revision_id')
+      .notNull()
+      .references(() => contentRevisions.id, { onDelete: 'cascade' }),
+    status: approvalStatusEnum('status').notNull().default('pending'),
+    requestedBy: uuid('requested_by'),
+    assignedTo: uuid('assigned_to'),
+    decisionBy: uuid('decision_by'),
+    decisionNote: text('decision_note'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+    decidedAt: timestamp('decided_at', { withTimezone: true }),
+  },
+  (table) => [
+    index('approval_tasks_entry_idx').on(table.entryId),
+    index('approval_tasks_status_idx').on(table.status),
+  ],
+)
+
+// ── 3.14 audit_logs ──
+
+export const auditLogs = pgTable(
+  'audit_logs',
+  {
+    id: serial('id').primaryKey(),
+    actorUserId: uuid('actor_user_id'),
+    actorRole: adminRoleEnum('actor_role'),
+    action: text('action').notNull(),
+    entityType: text('entity_type').notNull(),
+    entityId: text('entity_id').notNull(),
+    diff: jsonb('diff').$type<Record<string, unknown>>().default({}),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index('audit_logs_entity_idx').on(table.entityType, table.entityId),
+    index('audit_logs_actor_idx').on(table.actorUserId),
   ],
 )

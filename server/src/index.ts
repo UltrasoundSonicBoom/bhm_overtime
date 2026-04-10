@@ -6,6 +6,7 @@ import faqRoutes from './routes/faq'
 import chatRoutes from './routes/chat'
 import calendarRoutes from './routes/calendar'
 import adminCalendarRoutes from './routes/adminCalendar'
+import adminOpsRoutes from './routes/adminOps'
 
 const app = new Hono().basePath('/api')
 
@@ -27,6 +28,7 @@ app.route('/faq', faqRoutes)
 app.route('/chat', chatRoutes)
 app.route('/calendar', calendarRoutes)
 app.route('/admin/calendar', adminCalendarRoutes)
+app.route('/admin', adminOpsRoutes)
 
 // Vercel serverless export
 export default app

@@ -88,7 +88,7 @@ async function main() {
     const [label, category] = allowanceLabels[key] || [key, 'fixed']
     await sqlClient`
       INSERT INTO allowances (version_id, key, value, label, category)
-      VALUES (${vId}, ${key}, ${sqlClient.json(value)}, ${label}, ${category})
+      VALUES (${vId}, ${key}, ${sqlClient.json(value as any)}, ${label}, ${category})
     `
     allowCount++
   }
@@ -146,7 +146,7 @@ async function main() {
   for (const r of rules) {
     await sqlClient`
       INSERT INTO calculation_rules (version_id, rule_type, rule_key, rule_data, description)
-      VALUES (${vId}, ${r.type}, ${r.key}, ${sqlClient.json(r.data)}, ${r.desc})
+      VALUES (${vId}, ${r.type}, ${r.key}, ${sqlClient.json(r.data as any)}, ${r.desc})
     `
     ruleCount++
   }
