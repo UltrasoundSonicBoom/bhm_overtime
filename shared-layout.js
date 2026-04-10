@@ -94,11 +94,11 @@
 
     if (isRegulation) {
       var items = [
-        { label: '📅 휴가', href: 'index.html?tab=leave' },
-        { label: '⏰ 시간외', href: 'index.html?tab=overtime' },
-        { label: '💰 급여', href: 'index.html?tab=payroll' },
+        { label: '📅 휴가', href: 'index.html?app=1&tab=leave' },
+        { label: '⏰ 시간외', href: 'index.html?app=1&tab=overtime' },
+        { label: '💰 급여', href: 'index.html?app=1&tab=payroll' },
         { label: '📖 규정', active: true },
-        { label: '👤 info', href: 'index.html?tab=profile' }
+        { label: '👤 info', href: 'index.html?app=1&tab=profile' }
       ];
       items.forEach(function (t) {
         var a = el('a', { className: 'nav-tab' + (t.active ? ' active' : ''), textContent: t.label });
