@@ -164,6 +164,8 @@ function renderBrowseCategories() {
     document.getElementById('browseSearch').value = '';
     renderBrowseList();
     updateBrowseCategoryActive();
+    var el = document.getElementById('browseArticles');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
   container.appendChild(allTag);
 
@@ -177,6 +179,8 @@ function renderBrowseCategories() {
       document.getElementById('browseSearch').value = '';
       renderBrowseList();
       updateBrowseCategoryActive();
+      var el = document.getElementById('browseArticles');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
     container.appendChild(tag);
   });
@@ -232,7 +236,10 @@ function renderArticles(articles, container, options) {
 
     // Direct calculator block (no FAQ intermediary)
     var calcKey = ARTICLE_CALCULATORS[article.title];
-    var calcBlock = calcKey ? renderCalcBlock(calcKey) : '';
+    var calcBlock = '';
+    if (calcKey) {
+      try { calcBlock = renderCalcBlock(calcKey) || ''; } catch (e) { calcBlock = ''; }
+    }
 
     parts.push('<div class="reg-article" data-index="' + i + '">'
       + '<div class="reg-article-header" onclick="toggleArticle(this)">'
