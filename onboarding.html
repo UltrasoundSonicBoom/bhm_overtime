@@ -521,6 +521,26 @@
       font-weight: 600;
     }
 
+    .final-section {
+      min-height: auto;
+      justify-content: flex-start;
+      padding-top: clamp(48px, 8vh, 72px);
+      padding-bottom: 32px;
+      -webkit-scroll-snap-align: end;
+      scroll-snap-align: end;
+      overflow: visible;
+    }
+
+    .final-section .section-inner {
+      gap: 0;
+    }
+
+    .final-section .footer-text {
+      position: static;
+      margin-top: 18px;
+      color: rgba(26, 26, 26, 0.62);
+    }
+
     .legal-card {
       width: 100%;
       max-width: 420px;
@@ -948,7 +968,7 @@
   </section>
 
   <!-- ════════ 7. CTA ════════ -->
-  <section class="section" style="background: var(--amber);">
+  <section class="section final-section" style="background: var(--amber);">
     <div class="section-inner">
       <h2 class="feat-title reveal" style="font-size:clamp(26px, 7vw, 42px);">
         이제 복잡한 건<br>SNUH Mate에서 관리하세요.
