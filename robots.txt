@@ -1,0 +1,127 @@
+# robots.txt — SNUH 메이트 (snuhmate.com)
+# 최종 수정: 2026-04-11
+#
+# ★ AI 학습 크롤러 전면 차단
+# 사용자 데이터 및 서비스 콘텐츠의 AI 학습 목적 수집을 금지합니다.
+
+# OpenAI GPTBot
+User-agent: GPTBot
+Disallow: /
+
+# OpenAI ChatGPT-User
+User-agent: ChatGPT-User
+Disallow: /
+
+# Anthropic Claude
+User-agent: ClaudeBot
+Disallow: /
+
+# Anthropic Claude (구버전)
+User-agent: Claude-Web
+Disallow: /
+
+# Common Crawl (AI 학습 데이터셋 주요 소스)
+User-agent: CCBot
+Disallow: /
+
+# Google Bard / Gemini 학습 크롤러
+User-agent: Google-Extended
+Disallow: /
+
+# Meta AI
+User-agent: FacebookBot
+Disallow: /
+
+# Cohere AI
+User-agent: cohere-ai
+Disallow: /
+
+# Perplexity AI
+User-agent: PerplexityBot
+Disallow: /
+
+# Diffbot (AI 데이터 추출)
+User-agent: Diffbot
+Disallow: /
+
+# Bytedance / TikTok AI
+User-agent: Bytespider
+Disallow: /
+
+# Apple AI (Applebot-Extended)
+User-agent: Applebot-Extended
+Disallow: /
+
+# DataForSEO
+User-agent: DataForSeoBot
+Disallow: /
+
+# ImagesiftBot
+User-agent: ImagesiftBot
+Disallow: /
+
+# OmgiliBot
+User-agent: omgili
+Disallow: /
+
+# Omgilibot
+User-agent: omgilibot
+Disallow: /
+
+# Webz.io
+User-agent: Webzio-Extended
+Disallow: /
+
+# AI2 (Allen Institute for AI)
+User-agent: AwarioRssBot
+Disallow: /
+
+# AI 학습용 아카이브 크롤러 차단
+User-agent: ia_archiver
+Disallow: /
+
+# ★ 일반 검색 엔진 (허용, 단 민감 경로 제외)
+User-agent: Googlebot
+Allow: /
+Disallow: /admin/
+Disallow: /data/
+Disallow: /docs/
+Disallow: /server/
+Disallow: /.gemini/
+
+User-agent: Bingbot
+Allow: /
+Disallow: /admin/
+Disallow: /data/
+Disallow: /docs/
+Disallow: /server/
+Disallow: /.gemini/
+
+User-agent: Yeti
+Allow: /
+Disallow: /admin/
+Disallow: /data/
+Disallow: /docs/
+Disallow: /server/
+
+# ★ 기타 모든 봇: 공개 페이지만 허용
+User-agent: *
+Allow: /index.html
+Allow: /regulation.html
+Allow: /onboarding.html
+Allow: /privacy.html
+Allow: /style.css
+Allow: /logo.png
+Allow: /snuhmaterect.png
+Allow: /snuhmatecircle.png
+Allow: /manifest.json
+Disallow: /admin/
+Disallow: /data/
+Disallow: /docs/
+Disallow: /server/
+Disallow: /.gemini/
+Disallow: /*.js$
+Disallow: /*.json$
+
+# 사이트맵
+Sitemap: https://www.snuhmate.com/sitemap.xml

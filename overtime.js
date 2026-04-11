@@ -48,6 +48,7 @@ const OVERTIME = {
         if (window.SupabaseSync) {
             window.SupabaseSync.pushCloudData('overtime_records', record);
         }
+        if (window.SyncManager) window.SyncManager.enqueuePush('overtime');
 
         return record;
     },
@@ -59,11 +60,12 @@ const OVERTIME = {
             if (idx !== -1) {
                 all[key][idx] = { ...all[key][idx], ...updates, id };
                 this._saveAll(all);
-                
+
                 // Sync to Supabase async
                 if (window.SupabaseSync) {
                     window.SupabaseSync.pushCloudData('overtime_records', all[key][idx]);
                 }
+                if (window.SyncManager) window.SyncManager.enqueuePush('overtime');
 
                 return all[key][idx];
             }
@@ -83,6 +85,7 @@ const OVERTIME = {
                 if (window.SupabaseSync) {
                     window.SupabaseSync.deleteCloudRecord('overtime_records', id);
                 }
+                if (window.SyncManager) window.SyncManager.enqueuePush('overtime');
 
                 return true;
             }

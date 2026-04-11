@@ -38,11 +38,12 @@ const PROFILE = {
         const profile = { ...this.defaults, ...data, savedAt: new Date().toISOString() };
         localStorage.setItem(this.STORAGE_KEY, JSON.stringify(profile));
         
-        // Sync to Supabase async (로그인 상태일 때만)
+        // Sync to Supabase async (로그인 상태일 때만) — TODO Phase 5: 제거
         if (window.isFamilyMode && window.SupabaseSync && window.SupabaseUser) {
             profile.id = window.SupabaseUser.id;
             window.SupabaseSync.pushCloudData('profiles', profile);
         }
+        if (window.SyncManager) window.SyncManager.enqueuePush('profile');
 
         return profile;
     },

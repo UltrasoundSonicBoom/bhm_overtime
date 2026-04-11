@@ -907,6 +907,7 @@ const SALARY_PARSER = (() => {
   function saveMonthlyData(year, month, data, type) {
     const key = storageKey(year, month, type);
     localStorage.setItem(key, JSON.stringify({ ...data, savedAt: new Date().toISOString() }));
+    if (window.SyncManager) window.SyncManager.enqueuePush('payslip', year, month);
   }
 
   function loadMonthlyData(year, month, type) {

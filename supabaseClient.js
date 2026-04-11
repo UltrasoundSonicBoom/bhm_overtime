@@ -5,20 +5,26 @@
 const SUPABASE_URL = 'https://ulamqyarenzjdxlisijl.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_Mg-Uzj8SwPBaXi3-d-E8PQ_ojRdKASi';
 
-// app.js보다 먼저 로드되므로 여기서 isFamilyMode를 먼저 설정
-const urlParams = new URLSearchParams(window.location.search);
-window.isFamilyMode = urlParams.get('mode') === 'family';
+// TODO Phase 5: supabaseClient.js는 앱 인프라(Admin, RAG)용으로 유지
+// 사용자 데이터 sync는 googleAuth.js + syncManager.js로 이전됨
 
 let supabaseClient = null;
 window.SupabaseUser = null;
 
 // ── 사용자별 localStorage 키 생성 ──
-// 로그인 유저: 'baseKey_<userId>', 비로그인: 'baseKey_guest'
-function getUserStorageKey(baseKey) {
-    const uid = window.SupabaseUser ? window.SupabaseUser.id : 'guest';
-    return `${baseKey}_${uid}`;
+// googleAuth.js가 먼저 로드되어 window.getUserStorageKey를 재정의함
+// 이 함수는 googleAuth.js 로드 실패 시 fallback으로만 사용됨
+if (!window.getUserStorageKey) {
+    window.getUserStorageKey = function getUserStorageKey(baseKey) {
+        try {
+            var settings = JSON.parse(localStorage.getItem('bhm_settings') || '{}');
+            var uid = settings.googleSub || 'guest';
+            return baseKey + '_' + uid;
+        } catch (e) {
+            return baseKey + '_guest';
+        }
+    };
 }
-window.getUserStorageKey = getUserStorageKey;
 
 // Initialize Supabase Client if URL and Key are provided
 if (SUPABASE_URL !== 'YOUR_SUPABASE_URL' && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY') {

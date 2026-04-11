@@ -58,13 +58,9 @@
     // Header right
     var right = el('div', { className: 'header-right' });
 
-    // Auth container
+    // Auth container — updateAuthUI()로 내용이 채워짐
     var auth = el('div', { id: 'authContainer', className: 'auth-container' });
-    auth.style.cssText = 'display:none;align-items:center;gap:8px;';
-    var authBtn = el('button', { className: 'btn btn-outline', textContent: '접속 확인 중...' });
-    authBtn.style.cssText = 'padding:4px 10px;font-size:var(--text-body-normal);border-color:var(--text-muted);color:var(--text-muted);border-radius:20px;';
-    authBtn.onclick = function () { if (window.SupabaseSync) window.SupabaseSync.signInWithGoogle(); };
-    auth.appendChild(authBtn);
+    auth.style.cssText = 'display:flex;align-items:center;gap:8px;';
     right.appendChild(auth);
 
     // Theme toggle

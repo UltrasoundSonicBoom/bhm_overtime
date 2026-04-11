@@ -445,20 +445,24 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   activateV1DefaultTab();
 
-  // ── [URL 파라미터 듀얼 모드 감지] ──
-  const urlParams = new URLSearchParams(window.location.search);
-  window.isFamilyMode = urlParams.get('mode') === 'family';
-
-  const authContainer = document.getElementById('authContainer');
-  const backupSection = document.getElementById('localBackupSection');
-
-  if (!window.isFamilyMode) {
-    if (authContainer) authContainer.style.display = 'none';
-    if (backupSection) backupSection.style.display = 'block';
-  } else {
-    if (authContainer) authContainer.style.display = 'flex';
-    if (backupSection) backupSection.style.display = 'none'; // 가족 모드에서는 백업 UI 숨김 (원하면 유지 가능하지만 클라우드가 있으므로 숨김)
+  // ── [?mode=family 안내 배너] ──
+  // ?mode=family는 더 이상 사용하지 않음 → Google 로그인으로 대체됨
+  if (new URLSearchParams(window.location.search).get('mode') === 'family') {
+    var modeFamilyToast = document.getElementById('otToast');
+    if (modeFamilyToast) {
+      modeFamilyToast.textContent = '💡 이제 Google 로그인으로 기록을 보관할 수 있어요. 우측 상단에서 연결해보세요!';
+      modeFamilyToast.style.display = 'block';
+      setTimeout(function () { modeFamilyToast.style.display = 'none'; }, 6000);
+    }
   }
+
+  // authContainer: 항상 표시 (Google 로그인 UI)
+  const authContainer = document.getElementById('authContainer');
+  if (authContainer) authContainer.style.display = 'flex';
+
+  // backupSection: 항상 표시
+  const backupSection = document.getElementById('localBackupSection');
+  if (backupSection) backupSection.style.display = 'block';
 
   // ── [Supabase Cloud Sync Callback] ──
   window.syncCloudData = function (cloudData) {
@@ -1576,7 +1580,90 @@ function calcYearlyEstimate(year) {
 // 금액 포맷
 function fmtW(n) { return '₩' + Math.round(n).toLocaleString(); }
 
+// ── 실제 급여 데이터 감지 ──
+// 해당 월에 실제 급여명세서가 업로드되어 있으면 반환, 없으면 null
+function getActualPayrollData(year, month) {
+  if (typeof SALARY_PARSER === 'undefined') return null;
+  const data = SALARY_PARSER.loadMonthlyData(year, month, '급여');
+  if (!data) return null;
+  const s = data.summary;
+  if (!s || (s.netPay <= 0 && s.grossPay <= 0)) return null;
+  return data;
+}
+
+// ── 예상 vs 실제 지급내역 비교 ──
+// estimatedItems: {항목명: 금액} (r.지급내역)
+// actualItems: [{name, amount}] (data.salaryItems)
+// 반환: [{name, estimated, actual, diff, isNew, isMissing, reason}]
+function buildPayComparison(estimatedItems, actualItems, year, month, flags) {
+  const estMap = {};
+  for (const [name, amount] of Object.entries(estimatedItems)) {
+    if (amount > 0) estMap[name] = amount;
+  }
+  const actMap = {};
+  (actualItems || []).forEach(item => {
+    if (item.amount > 0) actMap[item.name] = item.amount;
+  });
+
+  const allNames = new Set([...Object.keys(estMap), ...Object.keys(actMap)]);
+  const rows = [];
+
+  allNames.forEach(name => {
+    const estimated = estMap[name] ?? 0;
+    const actual = actMap[name] ?? 0;
+    const diff = actual - estimated;
+    const isNew = estimated === 0 && actual > 0;
+    const isMissing = actual === 0 && estimated > 0;
+    rows.push({
+      name,
+      estimated,
+      actual,
+      diff,
+      isNew,
+      isMissing,
+      reason: getComparisonReason(name, diff, year, month, flags, isNew, isMissing),
+    });
+  });
+
+  // 정렬: 실제 있는 항목 먼저, 그 다음 미지급 항목, 금액 큰 순
+  rows.sort((a, b) => {
+    if (a.isMissing !== b.isMissing) return a.isMissing ? 1 : -1;
+    return b.actual - a.actual;
+  });
+
+  return rows;
+}
+
+// ── 차이 발생 이유 추론 ──
+function getComparisonReason(name, diff, year, month, flags, isNew, isMissing) {
+  if (isNew) {
+    if (/정산/.test(name)) return '연간 정산 항목 (연 1회 지급)';
+    if (/성과급|인센티브/.test(name)) return '성과급 지급월 (8·11월)';
+    if (/명절|설|추석/.test(name)) return '명절 지원비 지급월';
+    if (/법정공휴일수당/.test(name)) return '해당 월 법정공휴일 근무 발생';
+    if (/대체근무|야간근무가산/.test(name)) return '대체·야간 근무 발생';
+    return '프로필 미반영 항목 — 내 정보에서 확인해주세요';
+  }
+  if (isMissing) {
+    if (/가계지원비/.test(name) && [1,2,9].includes(month)) return '가계지원비 미지급월 (단, 설·추석월 제외)';
+    if (/명절/.test(name)) return '명절 지원비 미지급월';
+    if (/성과급/.test(name)) return '성과급 미지급월';
+    if (/시간외|야간|휴일/.test(name)) return '해당 월 시간외 근무 없음';
+    return '해당 월 미지급 — 예상에만 포함된 항목';
+  }
+  if (Math.abs(diff) < 1000) return '';
+  if (/기본|기준기본|기준급/.test(name)) return '호봉·승급 또는 임금협상 반영';
+  if (/근속/.test(name)) return '근속 연수 기준 변동';
+  if (/정근/.test(name)) return '정근수당: 근속 6개월 단위 변동';
+  if (/시간외|시간외수당/.test(name)) return '실제 시간외 근무 시간 차이';
+  if (/소득세|주민세/.test(name)) return '간이세액표 기반 근사치 — 실제와 차이 있을 수 있음';
+  if (/건강보험|장기요양|국민연금|고용보험/.test(name)) return '보험료율 또는 정산 반영';
+  if (diff > 0) return '실제가 예상보다 높음';
+  return '실제가 예상보다 낮음';
+}
+
 // 히어로 카드 + 월 선택 슬라이더 렌더링
+// (모든 동적 값은 fmtW(숫자) 또는 escapeHtml()을 통해 처리됩니다)
 function renderPayEstHero() {
   const el = document.getElementById('payEstHero');
   if (!el) return;
@@ -1597,6 +1684,10 @@ function renderPayEstHero() {
   const flags = est.flags;
   const otStats = est.otStats;
 
+  // 실제 데이터 확인
+  const actualData = getActualPayrollData(payEstYear, payEstMonth);
+  const hasActual = !!actualData;
+
   // 특이사항 태그
   let tagsHtml = '';
   if (flags.tags.length > 0) {
@@ -1606,22 +1697,55 @@ function renderPayEstHero() {
     tagsHtml += `<span class="pe-tag ot">시간외·온콜 ${fmtW(otStats.totalPay)} 반영</span>`;
   }
 
-  el.innerHTML = `
-    <div class="pe-month-slider">
-      <button class="pe-nav-btn" onclick="changePayEstMonth(-1)">◀</button>
-      <span class="pe-month-label">${payEstYear}년 ${payEstMonth}월 예상</span>
-      <button class="pe-nav-btn" onclick="changePayEstMonth(1)">▶</button>
-    </div>
-    <div class="pe-hero-card">
-      <div class="pe-hero-net-label">예상 실수령액</div>
-      <div class="pe-hero-net">${fmtW(r.실지급액)}</div>
-      <div class="pe-hero-summary">
-        <span class="pe-hero-gross">지급 ${fmtW(r.급여총액)}</span>
-        <span class="pe-hero-sep">—</span>
-        <span class="pe-hero-ded">공제 ${fmtW(r.공제총액)}</span>
+  if (hasActual) {
+    // ── 실제 데이터 모드 ──
+    const actNet = actualData.summary.netPay;
+    const actGross = actualData.summary.grossPay;
+    const actDed = actualData.summary.totalDeduction;
+    const netDiff = actNet - r.실지급액;
+    const netDiffSign = netDiff >= 0 ? '+' : '';
+    const netDiffClass = netDiff > 0 ? 'pe-hero-cmp-up' : netDiff < 0 ? 'pe-hero-cmp-down' : 'pe-hero-cmp-zero';
+
+    el.innerHTML = `
+      <div class="pe-month-slider">
+        <button class="pe-nav-btn" onclick="changePayEstMonth(-1)">◀</button>
+        <span class="pe-month-label">${payEstYear}년 ${payEstMonth}월 실제</span>
+        <button class="pe-nav-btn" onclick="changePayEstMonth(1)">▶</button>
       </div>
-      ${tagsHtml ? `<div class="pe-tags">${tagsHtml}</div>` : ''}
-    </div>`;
+      <div class="pe-hero-card pe-hero-actual">
+        <div class="pe-hero-net-label">실지급액</div>
+        <div class="pe-hero-net">${fmtW(actNet)}</div>
+        <div class="pe-hero-summary">
+          <span class="pe-hero-gross">지급 ${fmtW(actGross)}</span>
+          <span class="pe-hero-sep">—</span>
+          <span class="pe-hero-ded">공제 ${fmtW(actDed)}</span>
+        </div>
+        <div class="pe-hero-cmp-row">
+          <span class="pe-hero-cmp-label">예상 대비</span>
+          <span class="${netDiffClass}">${netDiffSign}${fmtW(netDiff)}</span>
+          <span class="pe-hero-cmp-est">예상 ${fmtW(r.실지급액)}</span>
+        </div>
+        ${tagsHtml ? `<div class="pe-tags">${tagsHtml}</div>` : ''}
+      </div>`;
+  } else {
+    // ── 예상 모드 (기존) ──
+    el.innerHTML = `
+      <div class="pe-month-slider">
+        <button class="pe-nav-btn" onclick="changePayEstMonth(-1)">◀</button>
+        <span class="pe-month-label">${payEstYear}년 ${payEstMonth}월 예상</span>
+        <button class="pe-nav-btn" onclick="changePayEstMonth(1)">▶</button>
+      </div>
+      <div class="pe-hero-card">
+        <div class="pe-hero-net-label">예상 실수령액</div>
+        <div class="pe-hero-net">${fmtW(r.실지급액)}</div>
+        <div class="pe-hero-summary">
+          <span class="pe-hero-gross">지급 ${fmtW(r.급여총액)}</span>
+          <span class="pe-hero-sep">—</span>
+          <span class="pe-hero-ded">공제 ${fmtW(r.공제총액)}</span>
+        </div>
+        ${tagsHtml ? `<div class="pe-tags">${tagsHtml}</div>` : ''}
+      </div>`;
+  }
 }
 
 // 월 변경
@@ -1646,27 +1770,48 @@ function renderPayEstDetail() {
   const r = est.result;
   const otStats = est.otStats;
 
-  // ── 지급내역 테이블 (설명 없이 항목+금액만) ──
-  let payRows = '';
-  for (const [name, amount] of Object.entries(r.지급내역)) {
-    if (amount <= 0) continue;
-    payRows += `
-      <div class="pe-item-row">
-        <div class="pe-item-name">${escapeHtml(name)}</div>
-        <div class="pe-item-amount">${fmtW(amount)}</div>
-      </div>`;
-  }
+  // 실제 데이터 확인
+  const actualData = getActualPayrollData(payEstYear, payEstMonth);
+  const hasActual = !!actualData;
 
-  // ── 공제내역 테이블 ──
+  let payRows = '';
   let dedRows = '';
-  for (const [name, amount] of Object.entries(r.공제내역)) {
-    if (amount <= 0) continue;
-    dedRows += `
-      <div class="pe-item-row">
-        <div class="pe-item-name">${escapeHtml(name)}</div>
-        <div class="pe-item-amount ded">${fmtW(amount)}</div>
-      </div>`;
+
+  if (hasActual) {
+    // ── 비교 모드: 2층 행 (실제 + 예상 차이) ──
+    const payComparison = buildPayComparison(
+      r.지급내역, actualData.salaryItems, payEstYear, payEstMonth, est.flags
+    );
+    const dedComparison = buildPayComparison(
+      r.공제내역, actualData.deductionItems, payEstYear, payEstMonth, est.flags
+    );
+
+    payComparison.forEach(item => {
+      payRows += buildCompareRow(item, false);
+    });
+    dedComparison.forEach(item => {
+      dedRows += buildCompareRow(item, true);
+    });
+  } else {
+    // ── 예상 모드 (기존) ──
+    for (const [name, amount] of Object.entries(r.지급내역)) {
+      if (amount <= 0) continue;
+      payRows += `
+        <div class="pe-item-row">
+          <div class="pe-item-name">${escapeHtml(name)}</div>
+          <div class="pe-item-amount">${fmtW(amount)}</div>
+        </div>`;
+    }
+    for (const [name, amount] of Object.entries(r.공제내역)) {
+      if (amount <= 0) continue;
+      dedRows += `
+        <div class="pe-item-row">
+          <div class="pe-item-name">${escapeHtml(name)}</div>
+          <div class="pe-item-amount ded">${fmtW(amount)}</div>
+        </div>`;
+    }
   }
+}
 
   // ── 시간외·온콜 상세 내역 (기록이 있을 때) ──
   let otSummary = '';
@@ -5769,349 +5914,10 @@ function importLvData(event) {
 }
 
 // ============================================
-// 🎓 인터랙티브 튜토리얼 시스템
+// 🎓 튜토리얼 → tutorial.html 로 분리됨
 // ============================================
-
-let tutCurrentStep = 0;
-let tutSteps = [];
-
-const TUTORIAL_STEPS = [
-  // ── 0: 시작 인사 (화면 중앙, 스포트라이트 없음) ──
-  {
-    target: null,
-    title: '🎓 사용법을 알려드릴게요!',
-    body: '실제 화면을 보면서 사용법을 안내해 드릴게요.<br>언제든 <span class="tut-highlight">건너뛰기</span>를 누르면 종료됩니다.',
-    position: 'center',
-  },
-  // ── 1: 개인정보 탭 ──
-  {
-    target: '.nav-tab[data-tab="profile"]',
-    title: '👤 먼저, 개인정보 등록',
-    body: '여기서 <span class="tut-highlight">직종·호봉·입사일</span>을 등록하면<br>시급과 연차가 <span class="tut-highlight">자동 계산</span>됩니다.',
-    position: 'auto',
-  },
-  // ── 2: 휴가 탭으로 이동 ──
-  {
-    target: '.nav-tab[data-tab="leave"]',
-    title: '📅 휴가 탭으로 이동',
-    body: '휴가를 기록하고 관리하는 곳이에요.<br>탭을 눌러볼게요!',
-    position: 'auto',
-    autoAction: () => switchTab('leave'),
-  },
-  // ── 3: 캘린더에서 날짜 선택 ──
-  {
-    target: '#lvCalendar',
-    title: '📆 캘린더에서 날짜 선택',
-    body: '기록하고 싶은 <span class="tut-highlight">날짜를 탭</span>하면<br>아래에서 입력 창이 올라와요.',
-    position: 'below',
-  },
-  // ── 4: 실제 연차 저장 ──
-  {
-    target: null,
-    title: '🏖️ 연차 등록 — 직접 저장해보세요!',
-    body: '',
-    position: 'mock-save',
-    mockSheet: () => {
-      const now = new Date();
-      const y = now.getFullYear(), m = now.getMonth() + 1, d = now.getDate();
-      const dow = ['일','월','화','수','목','금','토'][now.getDay()];
-      const dateStr = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      return `
-        <div style="text-align:center; margin-bottom:12px;">
-          <span style="font-weight:700; font-size:var(--text-title-large); color:var(--text-primary);">${m}월 ${d}일 (${dow})</span>
-        </div>
-        <div class="tut-mock-field active-field">
-          <span class="label">유형</span>
-          <span style="font-weight:600;">🏖️ 연차</span>
-        </div>
-        <div class="tut-mock-field">
-          <span class="label">종료일</span>
-          <span>${dateStr}</span>
-        </div>
-        <div class="tut-mock-field">
-          <span class="label">메모</span>
-          <span style="color:var(--text-muted);">튜토리얼 연습</span>
-        </div>
-        <div style="margin-top:14px;">
-          <button class="tut-mock-btn save" style="border:none; cursor:pointer; width:100%;" onclick="tutSaveDemoLeave()">💾 저장하기</button>
-        </div>
-        <p id="tutSaveResult" style="text-align:center; margin-top:10px; font-size:var(--text-body-normal); color:var(--text-muted);">
-          ↑ 버튼을 눌러 실제로 저장해보세요!
-        </p>
-      `;
-    },
-  },
-  // ── 5: 수정·삭제 방법 (모의 화면) ──
-  {
-    target: null,
-    title: '✏️ 수정 & 삭제 방법',
-    body: '',
-    position: 'mock-edit',
-    mockSheet: () => {
-      const now = new Date();
-      const m = now.getMonth() + 1, d = now.getDate();
-      const dow = ['일','월','화','수','목','금','토'][now.getDay()];
-      return `
-        <div style="text-align:center; margin-bottom:12px;">
-          <span style="font-weight:700; font-size:var(--text-title-large); color:var(--text-primary);">${m}월 ${d}일 (${dow})</span>
-          <span style="font-size:var(--text-body-normal); color:var(--accent-indigo); font-weight:600; display:block; margin-top:2px;">✏️ 수정 모드</span>
-        </div>
-        <div class="tut-mock-field active-field">
-          <span class="label">유형</span>
-          <span style="font-weight:600;">🏖️ 연차 → 🩺 병가</span>
-          <span style="margin-left:auto; color:var(--accent-indigo); font-size:12px; font-weight:700;">변경!</span>
-        </div>
-        <div style="display:flex; gap:10px; margin-top:14px;">
-          <button class="tut-mock-btn delete" style="flex:1; border:none; cursor:pointer;" onclick="tutDeleteDemoLeave()">🗑 삭제</button>
-          <div class="tut-mock-btn save" style="flex:1; opacity:0.5;">💾 수정</div>
-        </div>
-        <p id="tutDeleteResult" style="text-align:center; margin-top:10px; font-size:var(--text-body-normal); color:var(--text-secondary); line-height:1.6;">
-          같은 날짜를 다시 탭하면 <span style="color:var(--accent-indigo); font-weight:600;">수정 모드</span>로 열려요.<br>
-          유형을 바꿔서 저장하거나, <span style="color:var(--accent-rose); font-weight:600;">삭제</span>를 눌러 방금 저장한 기록을 지워보세요!
-        </p>
-      `;
-    },
-  },
-  // ── 6: 시간외 탭 안내 ──
-  {
-    target: '.nav-tab[data-tab="overtime"]',
-    title: '⏰ 시간외·온콜도 동일!',
-    body: '시간외·온콜 기록도 <span class="tut-highlight">같은 방식</span>이에요.<br><br>📆 날짜 탭 → 유형·시간 입력 → 저장<br>✏️ 같은 날짜 다시 탭 → 수정 또는 삭제<br><br><span style="font-size:0.9em; color:var(--text-muted);">캘린더 사용법이 휴가와 동일합니다!</span>',
-    position: 'auto',
-    autoAction: () => switchTab('overtime'),
-  },
-  // ── 7: 완료 ──
-  {
-    target: null,
-    title: '🎉 튜토리얼 완료!',
-    body: '이제 직접 사용해보세요!<br><br>💡 <span class="tut-highlight">개인정보 먼저 등록</span>하면<br>시급·연차가 자동으로 계산됩니다.<br><br><span style="font-size:0.85em; color:var(--text-muted);">홈 탭 하단에서 튜토리얼을 다시 볼 수 있어요.</span>',
-    position: 'center',
-    isLast: true,
-  },
-];
-
 function startTutorial() {
-  // 온보딩 모달 닫기
-  const onb = document.getElementById('onboardingModal');
-  if (onb) onb.style.display = 'none';
-
-  tutCurrentStep = 0;
-  tutSteps = TUTORIAL_STEPS;
-
-  const overlay = document.getElementById('tutorialOverlay');
-  overlay.classList.add('active');
-  overlay.style.display = '';
-
-  // backdrop 클릭 시 아무 동작 안 하게
-  document.getElementById('tutorialBackdrop').onclick = (e) => e.stopPropagation();
-
-  showTutorialStep(0);
-  localStorage.setItem('tutorial_completed', 'true');
+  window.location.href = './tutorial.html';
 }
 
-function showTutorialStep(idx) {
-  tutCurrentStep = idx;
-  const step = tutSteps[idx];
-  if (!step) { endTutorial(); return; }
 
-  const spotlight = document.getElementById('tutorialSpotlight');
-  const tooltip = document.getElementById('tutorialTooltip');
-  const arrow = document.getElementById('tutorialArrow');
-  const mockSheet = document.getElementById('tutorialMockSheet');
-  const progress = document.getElementById('tutorialProgress');
-  const nextBtn = document.getElementById('tutorialNext');
-  const skipBtn = document.getElementById('tutorialSkip');
-
-  // 모의 시트 숨기기
-  mockSheet.style.display = 'none';
-
-  // autoAction 실행
-  if (step.autoAction) step.autoAction();
-  if (step.beforeShow) step.beforeShow();
-
-  // 진행률
-  progress.textContent = `${idx + 1} / ${tutSteps.length}`;
-
-  // 마지막 스텝
-  if (step.isLast) {
-    nextBtn.textContent = '완료! 🚀';
-    nextBtn.onclick = () => endTutorial();
-    skipBtn.style.display = 'none';
-  } else {
-    nextBtn.textContent = '다음 →';
-    nextBtn.onclick = () => nextTutorialStep();
-    skipBtn.style.display = '';
-  }
-
-  // 제목/본문
-  document.getElementById('tutorialTitle').innerHTML = step.title;
-  document.getElementById('tutorialBody').innerHTML = step.body;
-
-  // 모의 바텀시트 스텝 — 제목/버튼을 시트 안에 통합
-  if (step.position === 'mock-save' || step.position === 'mock-edit') {
-    spotlight.style.display = 'none';
-    arrow.style.display = 'none';
-    tooltip.style.display = 'none'; // 별도 툴팁 숨김
-
-    const stepTotal = tutSteps.length;
-    const isLast = !!step.isLast;
-    const nextLabel = isLast ? '완료! 🚀' : '다음 →';
-    const skipHtml = isLast ? '' : `<button class="tutorial-btn" onclick="endTutorial()" style="font-size:var(--text-body-normal);">건너뛰기</button>`;
-
-    mockSheet.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-        <div class="tutorial-tooltip-title" style="margin:0;">${step.title}</div>
-        <span class="tutorial-progress">${idx + 1} / ${stepTotal}</span>
-      </div>
-      ${step.mockSheet()}
-      <div style="display:flex; justify-content:flex-end; align-items:center; gap:8px; margin-top:16px; padding-top:12px; border-top:1px solid var(--border-glass);">
-        ${skipHtml}
-        <button class="tutorial-btn primary" onclick="nextTutorialStep()">${nextLabel}</button>
-      </div>
-    `;
-    mockSheet.style.display = 'block';
-    return;
-  }
-
-  // 센터 모드 (타겟 없음)
-  if (step.position === 'center' || !step.target) {
-    spotlight.style.display = 'none';
-    arrow.style.display = 'none';
-
-    tooltip.style.display = 'block';
-    tooltip.style.left = '50%';
-    tooltip.style.top = '50%';
-    tooltip.style.transform = 'translate(-50%, -50%)';
-    tooltip.style.bottom = '';
-    return;
-  }
-
-  // 타겟 요소 하이라이트
-  const el = document.querySelector(step.target);
-  if (!el) { nextTutorialStep(); return; }
-
-  // 스크롤하여 보이게
-  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-  setTimeout(() => {
-    const rect = el.getBoundingClientRect();
-    const pad = 6;
-
-    spotlight.style.display = 'block';
-    spotlight.style.left = (rect.left - pad) + 'px';
-    spotlight.style.top = (rect.top - pad) + 'px';
-    spotlight.style.width = (rect.width + pad * 2) + 'px';
-    spotlight.style.height = (rect.height + pad * 2) + 'px';
-    spotlight.classList.add('tutorial-spotlight-pulse');
-
-    // 툴팁 위치
-    tooltip.style.display = 'block';
-    tooltip.style.transform = '';
-
-    const tooltipW = Math.min(320, window.innerWidth - 48);
-    let tooltipLeft = rect.left + rect.width / 2 - tooltipW / 2;
-    tooltipLeft = Math.max(16, Math.min(tooltipLeft, window.innerWidth - tooltipW - 16));
-
-    tooltip.style.left = tooltipLeft + 'px';
-    tooltip.style.width = tooltipW + 'px';
-
-    // 위치 결정: 'auto'면 요소가 화면 하단 절반에 있으면 위에, 아니면 아래에 배치
-    let pos = step.position;
-    if (pos === 'auto') {
-      const midY = window.innerHeight / 2;
-      pos = (rect.top > midY) ? 'above' : 'below';
-    }
-
-    if (pos === 'below') {
-      tooltip.style.top = (rect.bottom + pad + 16) + 'px';
-      tooltip.style.bottom = '';
-      arrow.style.display = 'block';
-      arrow.className = 'tutorial-tooltip-arrow top';
-    } else if (pos === 'above') {
-      tooltip.style.top = '';
-      tooltip.style.bottom = (window.innerHeight - rect.top + pad + 16) + 'px';
-      arrow.style.display = 'block';
-      arrow.className = 'tutorial-tooltip-arrow bottom';
-    }
-  }, 350);
-}
-
-function nextTutorialStep() {
-  tutCurrentStep++;
-  if (tutCurrentStep >= tutSteps.length) {
-    endTutorial();
-    return;
-  }
-  // 리셋: 모든 요소 숨기고 애니메이션 초기화
-  document.getElementById('tutorialTooltip').style.display = 'none';
-  document.getElementById('tutorialMockSheet').style.display = 'none';
-  const sl = document.getElementById('tutorialSpotlight');
-  sl.classList.remove('tutorial-spotlight-pulse');
-  sl.style.display = 'none';
-
-  setTimeout(() => showTutorialStep(tutCurrentStep), 250);
-}
-
-// ── 튜토리얼 실제 저장/삭제 헬퍼 ──
-let tutDemoRecordId = null;
-
-function tutSaveDemoLeave() {
-  const now = new Date();
-  const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-  const record = LEAVE.addRecord({
-    type: 'annual',
-    startDate: dateStr,
-    endDate: dateStr,
-    memo: '튜토리얼 연습',
-  });
-  tutDemoRecordId = record.id;
-
-  const resultEl = document.getElementById('tutSaveResult');
-  if (resultEl) {
-    resultEl.innerHTML = '✅ <span style="color:var(--accent-emerald); font-weight:700;">저장 완료!</span> 다음 단계에서 삭제할 수 있어요.';
-  }
-  // 저장 버튼 비활성화
-  const btn = document.querySelector('#tutorialMockSheet .tut-mock-btn.save');
-  if (btn) {
-    btn.style.opacity = '0.5';
-    btn.style.pointerEvents = 'none';
-    btn.textContent = '✅ 저장됨';
-  }
-}
-
-function tutDeleteDemoLeave() {
-  if (tutDemoRecordId) {
-    LEAVE.deleteRecord(tutDemoRecordId);
-    tutDemoRecordId = null;
-  }
-  const resultEl = document.getElementById('tutDeleteResult');
-  if (resultEl) {
-    resultEl.innerHTML = '🗑 <span style="color:var(--accent-rose); font-weight:700;">삭제 완료!</span> 깔끔하게 지워졌어요.';
-  }
-  const btn = document.querySelector('#tutorialMockSheet .tut-mock-btn.delete');
-  if (btn) {
-    btn.style.opacity = '0.5';
-    btn.style.pointerEvents = 'none';
-    btn.textContent = '✅ 삭제됨';
-  }
-}
-
-function endTutorial() {
-  // 튜토리얼 중 저장한 데모 기록이 남아있으면 자동 삭제
-  if (tutDemoRecordId) {
-    LEAVE.deleteRecord(tutDemoRecordId);
-    tutDemoRecordId = null;
-  }
-
-  const overlay = document.getElementById('tutorialOverlay');
-  overlay.classList.remove('active');
-  overlay.style.display = 'none';
-
-  document.getElementById('tutorialTooltip').style.display = 'none';
-  document.getElementById('tutorialMockSheet').style.display = 'none';
-  document.getElementById('tutorialSpotlight').style.display = 'none';
-  document.getElementById('tutorialSpotlight').classList.remove('tutorial-spotlight-pulse');
-
-  // 홈 탭으로 이동
-  switchTab('home');
-}

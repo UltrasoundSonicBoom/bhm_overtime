@@ -137,6 +137,12 @@ const LEAVE = {
         if (window.SupabaseSync) {
             window.SupabaseSync.pushCloudData('leave_records', record);
         }
+        if (window.SyncManager) window.SyncManager.enqueuePush('leave');
+        if (window.GoogleCalendarSync) {
+            window.GoogleCalendarSync.createOrUpdateEvent(record).catch(function (e) {
+                console.warn('[Calendar] add failed:', e);
+            });
+        }
 
         return record;
     },
@@ -175,6 +181,12 @@ const LEAVE = {
                 if (window.SupabaseSync) {
                     window.SupabaseSync.pushCloudData('leave_records', all[year][idx]);
                 }
+                if (window.SyncManager) window.SyncManager.enqueuePush('leave');
+                if (window.GoogleCalendarSync) {
+                    window.GoogleCalendarSync.createOrUpdateEvent(all[year][idx]).catch(function (e) {
+                        console.warn('[Calendar] update failed:', e);
+                    });
+                }
 
                 return all[year][idx];
             }
@@ -187,12 +199,19 @@ const LEAVE = {
         for (const year of Object.keys(all)) {
             const idx = all[year].findIndex(r => r.id === id);
             if (idx !== -1) {
+                const deletedRecord = { ...all[year][idx] }; // splice 전에 복사 (Phase 3 Calendar.deleteEvent용)
                 all[year].splice(idx, 1);
                 this._saveAll(all);
 
                 // Sync delete to Supabase async
                 if (window.SupabaseSync) {
                     window.SupabaseSync.deleteCloudRecord('leave_records', id);
+                }
+                if (window.SyncManager) window.SyncManager.enqueuePush('leave');
+                if (window.GoogleCalendarSync) {
+                    window.GoogleCalendarSync.deleteEvent(deletedRecord).catch(function (e) {
+                        console.warn('[Calendar] delete failed:', e);
+                    });
                 }
 
                 return true;
