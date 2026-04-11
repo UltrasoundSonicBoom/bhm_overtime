@@ -1,0 +1,37 @@
+- generic [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5] [cursor=pointer]:
+        - img "SNUH Mate" [ref=e6]
+        - generic [ref=e7]:
+          - heading "슬기로운 병원 생활 메이트" [level=1] [ref=e8]
+          - paragraph [ref=e9]:
+            - text: 휴가, 시간외/온콜 등의 기록을 직접 관리해보세요.
+            - text: 기록은 이 브라우저에만 저장되서 개발자도 볼 수 없어요!
+      - generic [ref=e10]:
+        - button "🎨" [ref=e11] [cursor=pointer]
+        - button "💬" [ref=e12] [cursor=pointer]
+  - navigation [ref=e13]:
+    - button "📅 휴가" [ref=e14] [cursor=pointer]
+    - button "⏰ 시간외" [ref=e15] [cursor=pointer]
+    - button "💰 급여" [active] [ref=e16] [cursor=pointer]
+    - link "📖 규정" [ref=e17] [cursor=pointer]:
+      - /url: regulation.html
+    - button "👤 info" [ref=e18] [cursor=pointer]
+  - main [ref=e19]:
+    - generic [ref=e167]:
+      - navigation [ref=e168]:
+        - button "급여명세서 관리" [ref=e169] [cursor=pointer]
+        - button "급여 예상" [ref=e170] [cursor=pointer]
+        - button "급여 계산" [ref=e171] [cursor=pointer]
+        - button "퇴직금" [ref=e172] [cursor=pointer]
+      - generic [ref=e174]:
+        - generic [ref=e176]:
+          - button "◀" [disabled] [ref=e177] [cursor=pointer]
+          - generic [ref=e178]: 2026년 4월
+          - button "▶" [disabled] [ref=e179] [cursor=pointer]
+        - button "급여 PDF 업로드" [ref=e182] [cursor=pointer]
+        - generic [ref=e184]:
+          - generic [ref=e185]: 📭
+          - generic [ref=e186]: 아직 등록된 명세서가 없습니다.
+          - generic [ref=e187]: 우측 상단 버튼으로 급여명세서를 업로드해주세요.

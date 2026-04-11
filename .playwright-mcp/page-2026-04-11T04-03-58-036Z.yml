@@ -1,0 +1,114 @@
+- generic [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5] [cursor=pointer]:
+        - img "SNUH Mate" [ref=e6]
+        - generic [ref=e7]:
+          - heading "슬기로운 병원 생활 메이트" [level=1] [ref=e8]
+          - paragraph [ref=e9]:
+            - text: 휴가, 시간외/온콜 등의 기록을 직접 관리해보세요.
+            - text: 기록은 이 브라우저에만 저장되서 개발자도 볼 수 없어요!
+      - generic [ref=e10]:
+        - button "🎨" [ref=e11] [cursor=pointer]
+        - button "💬" [ref=e12] [cursor=pointer]
+  - navigation [ref=e13]:
+    - button "📅 휴가" [ref=e14] [cursor=pointer]
+    - button "⏰ 시간외" [ref=e15] [cursor=pointer]
+    - button "💰 급여" [active] [ref=e16] [cursor=pointer]
+    - link "📖 규정" [ref=e17] [cursor=pointer]:
+      - /url: regulation.html
+    - button "👤 info" [ref=e18] [cursor=pointer]
+  - main [ref=e19]:
+    - generic [ref=e73]:
+      - navigation [ref=e74]:
+        - button "급여명세서 관리" [ref=e75] [cursor=pointer]
+        - button "급여 예상" [ref=e76] [cursor=pointer]
+        - button "급여 계산" [ref=e77] [cursor=pointer]
+        - button "퇴직금" [ref=e78] [cursor=pointer]
+      - generic [ref=e80]:
+        - generic [ref=e94]:
+          - button "◀" [disabled] [ref=e95] [cursor=pointer]
+          - generic [ref=e96]: 2025년 12월
+          - button "▶" [disabled] [ref=e97] [cursor=pointer]
+        - button "급여 PDF 업로드" [ref=e99] [cursor=pointer]
+        - generic [ref=e89]:
+          - generic [ref=e100]:
+            - generic [ref=e101]: 실지급액
+            - generic [ref=e102]: 3,537,170원
+            - generic [ref=e106]:
+              - generic [ref=e109]:
+                - generic [ref=e110]: 지급 72%
+                - generic [ref=e111]: 5,756,720원
+              - generic [ref=e114]:
+                - generic [ref=e115]: 공제 28%
+                - generic [ref=e116]: 2,219,550원
+          - generic [ref=e117]:
+            - generic [ref=e118]: 지급 내역
+            - generic [ref=e119]:
+              - generic [ref=e120]: 기준기본급
+              - generic [ref=e123]: 2,907,500원
+            - generic [ref=e124]:
+              - generic [ref=e125]: 능력급
+              - generic [ref=e128]: 1,075,700원
+            - generic [ref=e129]:
+              - generic [ref=e130]: 가계지원비
+              - generic [ref=e133]: 934,970원
+            - generic [ref=e134]:
+              - generic [ref=e135]: 조정급
+              - generic [ref=e138]: 301,700원
+            - generic [ref=e139]:
+              - generic [ref=e140]: 근속가산기본급
+              - generic [ref=e143]: 214,080원
+            - generic [ref=e144]:
+              - generic [ref=e145]: 상여금
+              - generic [ref=e148]: 157,400원
+            - generic [ref=e149]:
+              - generic [ref=e150]: 급식보조비
+              - generic [ref=e153]: 150,000원
+            - generic [ref=e154]:
+              - generic [ref=e155]: 교통보조비
+              - generic [ref=e158]: 150,000원
+            - generic [ref=e159]:
+              - generic [ref=e160]: 장기근속수당
+              - generic [ref=e163]: 80,000원
+            - generic [ref=e164]:
+              - generic [ref=e165]: 무급가족돌봄휴가
+              - generic [ref=e168]: "-"
+            - generic [ref=e169]:
+              - generic [ref=e170]: 합계
+              - generic [ref=e171]: 5,756,720원
+          - generic [ref=e172]:
+            - generic [ref=e173]: 공제 내역
+            - generic [ref=e174]:
+              - generic [ref=e175]: 사학연금부담금
+              - generic [ref=e178]: 619,220원
+            - generic [ref=e179]:
+              - generic [ref=e180]: 교원대출상환
+              - generic [ref=e183]: 433,570원
+            - generic [ref=e184]:
+              - generic [ref=e185]: 사학연금대여상환금
+              - generic [ref=e188]: 342,940원
+            - generic [ref=e189]:
+              - generic [ref=e190]: 소득세
+              - generic [ref=e193]: 335,690원
+            - generic [ref=e194]:
+              - generic [ref=e195]: 국민건강
+              - generic [ref=e198]: 236,800원
+            - generic [ref=e199]:
+              - generic [ref=e200]: 노동조합비
+              - generic [ref=e203]: 67,110원
+            - generic [ref=e204]:
+              - generic [ref=e205]: 식대공제
+              - generic [ref=e208]: 60,000원
+            - generic [ref=e209]:
+              - generic [ref=e210]: 교원장기급여
+              - generic [ref=e213]: 60,000원
+            - generic [ref=e214]:
+              - generic [ref=e215]: 주민세
+              - generic [ref=e218]: 33,560원
+            - generic [ref=e219]:
+              - generic [ref=e220]: 장기요양
+              - generic [ref=e223]: 30,660원
+            - generic [ref=e224]:
+              - generic [ref=e225]: 합계
+              - generic [ref=e226]: 2,219,550원

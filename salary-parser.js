@@ -906,8 +906,46 @@ const SALARY_PARSER = (() => {
 
   function saveMonthlyData(year, month, data, type) {
     const key = storageKey(year, month, type);
-    localStorage.setItem(key, JSON.stringify({ ...data, savedAt: new Date().toISOString() }));
+
+    // 같은 월·같은 타입 데이터가 이미 있으면 항목 병합 (덮어쓰기 방지)
+    const existing = loadMonthlyData(year, month, type);
+    const merged = existing ? mergePayslipData(existing, data) : data;
+
+    localStorage.setItem(key, JSON.stringify({ ...merged, savedAt: new Date().toISOString() }));
     if (window.SyncManager) window.SyncManager.enqueuePush('payslip', year, month);
+    // 급여 유형 저장 완료 시 ImprovementAgent 자동 실행
+    if (!type || type === '급여') {
+      if (typeof PayrollImprovementAgent !== 'undefined') {
+        setTimeout(() => PayrollImprovementAgent.runOnActualUpload(year, month), 0);
+      }
+    }
+  }
+
+  // 같은 월 두 번째 PDF 업로드 시 항목 병합
+  // next 항목이 prev 동명 항목을 덮어쓰고, prev 전용 항목도 보존
+  // summary는 병합 결과로 재계산
+  function mergePayslipData(prev, next) {
+    const salaryMap = {};
+    (prev.salaryItems || []).forEach(i => { salaryMap[i.name] = { ...i }; });
+    (next.salaryItems || []).forEach(i => { salaryMap[i.name] = { ...i }; });
+
+    const dedMap = {};
+    (prev.deductionItems || []).forEach(i => { dedMap[i.name] = { ...i }; });
+    (next.deductionItems || []).forEach(i => { dedMap[i.name] = { ...i }; });
+
+    const salaryItems = Object.values(salaryMap);
+    const deductionItems = Object.values(dedMap);
+    const grossPay = salaryItems.reduce((s, i) => s + (i.amount || 0), 0);
+    const totalDeduction = deductionItems.reduce((s, i) => s + (i.amount || 0), 0);
+
+    return {
+      ...prev,
+      ...next,
+      salaryItems,
+      deductionItems,
+      summary: { grossPay, totalDeduction, netPay: grossPay - totalDeduction },
+      mergedAt: new Date().toISOString(),
+    };
   }
 
   function loadMonthlyData(year, month, type) {
@@ -924,7 +962,15 @@ const SALARY_PARSER = (() => {
         if (m) months.push({ year: parseInt(m[1]), month: parseInt(m[2]), type: m[3] || '급여', key: k });
       }
     }
-    return months.sort((a, b) => b.year - a.year || b.month - a.month);
+    return months.sort((a, b) =>
+      b.year - a.year || b.month - a.month ||
+      (a.type === '급여' ? -1 : b.type === '급여' ? 1 : 0)
+    );
+  }
+
+  function deleteMonthlyData(year, month, type) {
+    const key = storageKey(year, month, type);
+    localStorage.removeItem(key);
   }
 
   // ── 기간 문자열에서 연/월 파싱 ──
@@ -1107,6 +1153,7 @@ const SALARY_PARSER = (() => {
     parseFile,
     saveMonthlyData,
     loadMonthlyData,
+    deleteMonthlyData,
     listSavedMonths,
     parsePeriodYearMonth,
     applyStableItemsToProfile,

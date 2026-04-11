@@ -1,0 +1,78 @@
+- generic [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5] [cursor=pointer]:
+        - img "SNUH Mate" [ref=e6]
+        - generic [ref=e7]:
+          - heading "슬기로운 병원 생활 메이트" [level=1] [ref=e8]
+          - paragraph [ref=e9]:
+            - text: 휴가, 시간외/온콜 등의 기록을 직접 관리해보세요.
+            - text: 기록은 이 브라우저에만 저장되서 개발자도 볼 수 없어요!
+      - generic [ref=e10]:
+        - button "🎨" [ref=e11] [cursor=pointer]
+        - button "💬" [ref=e12] [cursor=pointer]
+  - navigation [ref=e13]:
+    - button "📅 휴가" [ref=e14] [cursor=pointer]
+    - button "⏰ 시간외" [ref=e15] [cursor=pointer]
+    - button "💰 급여" [active] [ref=e16] [cursor=pointer]
+    - link "📖 규정" [ref=e17] [cursor=pointer]:
+      - /url: regulation.html
+    - button "👤 info" [ref=e18] [cursor=pointer]
+  - main [ref=e19]:
+    - generic [ref=e167]:
+      - navigation [ref=e168]:
+        - button "급여명세서 관리" [ref=e169] [cursor=pointer]
+        - button "급여 예상" [ref=e170] [cursor=pointer]
+        - button "급여 계산" [ref=e171] [cursor=pointer]
+        - button "퇴직금" [ref=e172] [cursor=pointer]
+      - generic [ref=e174]:
+        - generic [ref=e469]:
+          - button "◀" [disabled] [ref=e470] [cursor=pointer]
+          - generic [ref=e471]: 2025년 12월
+          - button "▶" [disabled] [ref=e472] [cursor=pointer]
+        - button "급여 PDF 업로드" [ref=e474] [cursor=pointer]
+        - generic [ref=e183]:
+          - generic [ref=e475]:
+            - generic [ref=e476]: 실지급액
+            - generic [ref=e477]: 1,775,880원
+            - generic [ref=e481]:
+              - generic [ref=e484]:
+                - generic [ref=e485]: 지급 84%
+                - generic [ref=e486]: 2,182,780원
+              - generic [ref=e489]:
+                - generic [ref=e490]: 공제 16%
+                - generic [ref=e491]: 406,900원
+          - generic [ref=e492]:
+            - generic [ref=e493]: 지급 내역
+            - generic [ref=e494]:
+              - generic [ref=e495]: 기준기본급
+              - generic [ref=e498]: 1,774,000원
+            - generic [ref=e499]:
+              - generic [ref=e500]: 명절지원비
+              - generic [ref=e503]: 316,610원
+            - generic [ref=e504]:
+              - generic [ref=e505]: 근속가산기본급
+              - generic [ref=e508]: 124,280원
+            - generic [ref=e509]:
+              - generic [ref=e510]: 시간외수당
+              - generic [ref=e513]: 12,860원
+            - generic [ref=e514]:
+              - generic [ref=e515]: 군복무수당
+              - generic [ref=e518]: "-"
+            - generic [ref=e519]:
+              - generic [ref=e520]: 합계
+              - generic [ref=e521]: 2,182,780원
+          - generic [ref=e522]:
+            - generic [ref=e523]: 공제 내역
+            - generic [ref=e524]:
+              - generic [ref=e525]: 소득세
+              - generic [ref=e528]: 344,130원
+            - generic [ref=e529]:
+              - generic [ref=e530]: 주민세
+              - generic [ref=e533]: 34,410원
+            - generic [ref=e534]:
+              - generic [ref=e535]: 노동조합비
+              - generic [ref=e538]: 28,360원
+            - generic [ref=e539]:
+              - generic [ref=e540]: 합계
+              - generic [ref=e541]: 406,900원
