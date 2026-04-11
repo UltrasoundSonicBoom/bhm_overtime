@@ -86,10 +86,10 @@ const PAYROLL = {
       },
       renderInput() {
         var ms = this._getThisMonthStats();
-        var ext = ms ? ms.ext : 0, ngt = ms ? ms.ngt : 0, hol = ms ? ms.hol : 0, holNgt = ms ? ms.holNgt : 0;
+        var ext = ms ? ms.ext : 1, ngt = ms ? ms.ngt : 0, hol = ms ? ms.hol : 0, holNgt = ms ? ms.holNgt : 0;
         var autoTag = ms && ms.hasData
           ? '<span class="ot-auto-badge">이번 달 자동 반영</span>'
-          : '<span class="ot-auto-badge ot-auto-manual">직접 입력</span>';
+          : '<span class="ot-auto-badge ot-auto-manual">직접 입력 (기본 연장 1h)</span>';
         var makeStepInput = function(id, val, max) {
           return '<div class="ot-step-wrap">'
             + '<button type="button" class="ot-step-btn" onclick="PAYROLL._otStep(\'' + id + '\',-0.25,\'overtimeCalc\')" onmousedown="event.preventDefault()">−</button>'
@@ -224,6 +224,12 @@ const PAYROLL = {
       icon: '🛏️', title: '일직/숙직비',
       desc: '일당 5만원 \u00d7 횟수',
       hasInput: true,
+      shouldShow(profile) {
+        // 임상 직종에만 해당 (의사직·간호직·의료기사직·약무직·보건직)
+        if (!profile) return false;
+        var clinical = ['의사직', '간호직', '의료기사직', '약무직', '보건직'];
+        return clinical.indexOf(profile.jobType) !== -1;
+      },
       calc(profile, wage, inputs) {
         const count = inputs.count || 1;
         const perDay = DATA.allowances.dutyAllowance;
@@ -259,6 +265,10 @@ const PAYROLL = {
       id: 'familyAllowance', category: 'overtime',
       icon: '👨‍👩‍👧', title: '가족수당',
       desc: '배우자·자녀·6세이하 별도',
+      shouldShow(profile) {
+        if (!profile) return false;
+        return (parseInt(profile.numFamily) || 0) + (parseInt(profile.numChildren) || 0) > 0;
+      },
       calc(profile, wage) {
         const r = CALC.calcFamilyAllowance(
           parseInt(profile.numFamily) || 0,
@@ -589,29 +599,82 @@ const PAYROLL = {
     {
       id: 'promotionDate', category: 'career',
       icon: '📊', title: '몇 년도에 승진?',
-      desc: '직급 시작일 기준 자동승격 예상일',
-      calc(profile, wage) {
-        if (!profile.hireDate) return { value: '입사일 필요', label: '프로필에 입사일을 입력하세요', details: [] };
-        var parsed = PROFILE.parseDate(profile.hireDate);
-        if (!parsed) return { value: '입사일 오류', label: '', details: [] };
+      desc: '직급·호봉·시작일 직접 수정 가능',
+      hasInput: true,
+      calc(profile, wage, inputs) {
+        // inputs 또는 profile에서 직급·호봉·시작일 결정
+        var useGrade = (inputs && inputs.grade) || profile.grade;
+        var useYear  = (inputs && inputs.year  != null) ? inputs.year  : (profile.year || 1);
 
-        // 직급 시작일 = 명세서 이력에서 호봉1 최초 등장 월 → 없으면 호봉으로 역산 → 없으면 입사일
-        var gradeStart = PAYROLL._getGradeStartDate(profile);
-        var gradeStartSource = gradeStart.source;
-        var gradeStartDate = gradeStart.date;
+        // 직급 시작일 결정: inputs 우선 → _getGradeStartDate
+        var gradeStartDate, gradeStartSource;
+        if (inputs && inputs.gradeStart) {
+          var ps = PROFILE.parseDate(inputs.gradeStart);
+          if (ps) { gradeStartDate = new Date(ps); gradeStartSource = '직접 입력'; }
+        }
+        if (!gradeStartDate) {
+          var gs = PAYROLL._getGradeStartDate(Object.assign({}, profile, { grade: useGrade, year: useYear }));
+          gradeStartDate = gs.date;
+          gradeStartSource = gs.source;
+        }
 
-        var r = CALC.calcPromotionDate(profile.jobType, profile.grade, gradeStartDate);
+        if (!gradeStartDate) return { value: '입사일 필요', label: '프로필에 입사일을 입력하세요', details: [] };
+
+        var r = CALC.calcPromotionDate(profile.jobType, useGrade, gradeStartDate);
         if (r.message) return { value: '해당없음', label: r.message, details: [] };
         var isPast = r.남은일수 === 0;
+        var table = DATA.payTables[CALC.resolvePayTable(profile.jobType)];
+        var gradeLabel = (table && table.gradeLabels && table.gradeLabels[useGrade]) || useGrade;
         return {
           value: isPast ? '이미 도래' : 'D-' + r.남은일수,
           label: r.label,
           details: [
-            { key: '현재 직급 시작일', val: gradeStartDate.toISOString().split('T')[0] + ' (' + gradeStartSource + ')' },
+            { key: '적용 직급·호봉', val: gradeLabel + ' ' + useYear + '호봉' },
+            { key: '직급 시작일', val: gradeStartDate.toISOString().split('T')[0] + ' (' + gradeStartSource + ')' },
             { key: '소요 연수', val: r.소요연수 },
             { key: '예상 승격일', val: r.예상승격일 },
             { key: '남은 일수', val: isPast ? '이미 도래' : r.남은일수 + '일' }
           ]
+        };
+      },
+      renderInput() {
+        var profile = PROFILE.load();
+        if (!profile) return '';
+        var table = DATA.payTables[CALC.resolvePayTable(profile.jobType)];
+        var grades = table ? (table.grades || []) : [];
+        var gradeStart = PAYROLL._getGradeStartDate(profile);
+        var startDateStr = gradeStart.date ? gradeStart.date.toISOString().split('T')[0] : '';
+
+        var gradeOptions = '';
+        grades.forEach(function(g) {
+          var label = (table && table.gradeLabels && table.gradeLabels[g]) ? g + ' · ' + table.gradeLabels[g] : g;
+          gradeOptions += '<option value="' + g + '"' + (g === profile.grade ? ' selected' : '') + '>' + label + '</option>';
+        });
+
+        return '<div style="margin-top:12px;">'
+          + '<div style="font-size:11px;color:var(--accent-indigo);font-weight:700;margin-bottom:10px;padding:6px 10px;background:rgba(99,102,241,0.07);border-radius:8px;">아래 값을 수정하면 예상 승격일이 재계산됩니다 · 저장 시 내 정보에 반영</div>'
+          + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'
+          + '<div class="form-group"><label>현재 직급</label>'
+          + '<select id="qaPromoGrade" oninput="PAYROLL.recalc(\'promotionDate\')" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:var(--text-body-normal);background:var(--bg-card);">'
+          + gradeOptions + '</select></div>'
+          + '<div class="form-group"><label>현재 호봉</label>'
+          + '<div class="ot-step-wrap">'
+          + '<button type="button" class="ot-step-btn" onclick="PAYROLL._otStep(\'qaPromoYear\',-1,\'promotionDate\')" onmousedown="event.preventDefault()">−</button>'
+          + '<input type="number" id="qaPromoYear" value="' + (profile.year || 1) + '" min="1" max="40" step="1" oninput="PAYROLL.recalc(\'promotionDate\')">'
+          + '<button type="button" class="ot-step-btn" onclick="PAYROLL._otStep(\'qaPromoYear\',1,\'promotionDate\')" onmousedown="event.preventDefault()">+</button>'
+          + '</div></div>'
+          + '</div>'
+          + '<div class="form-group"><label>최근 승진일 <span style="font-weight:400;color:var(--text-muted);">(직급 시작일 · ' + gradeStart.source + ')</span></label>'
+          + '<input type="date" id="qaPromoStartDate" value="' + startDateStr + '" oninput="PAYROLL.recalc(\'promotionDate\')" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:var(--text-body-normal);background:var(--bg-card);">'
+          + '</div>'
+          + '<button type="button" onclick="PAYROLL._savePromoData()" style="width:100%;padding:10px;background:var(--accent-indigo);color:#fff;border:2px solid var(--accent-indigo);border-radius:10px;font-weight:700;cursor:pointer;font-size:var(--text-body-normal);">내 정보에 저장 →</button>'
+          + '</div>';
+      },
+      getInputs() {
+        return {
+          grade: document.getElementById('qaPromoGrade')?.value || null,
+          year: parseInt(document.getElementById('qaPromoYear')?.value) || null,
+          gradeStart: document.getElementById('qaPromoStartDate')?.value || null
         };
       }
     },
@@ -779,12 +842,18 @@ const PAYROLL = {
   },
 
   // ── 현재 직급 시작일 추정 ──
-  // 우선순위: 1) 명세서에서 현재 grade 호봉=1 최초 등장월  2) 호봉으로 역산  3) 입사일
+  // 우선순위: 0) 사용자 직접 입력(promotionDate)  1) 명세서에서 현재 grade 호봉=1 최초 등장월  2) 호봉으로 역산  3) 입사일
   _getGradeStartDate(profile) {
     var fallbackDate = null;
     if (profile.hireDate) {
       var p = PROFILE.parseDate(profile.hireDate);
       if (p) fallbackDate = new Date(p);
+    }
+
+    // Method 0: 사용자가 직접 저장한 직급 시작일 (info 탭 '최근 승진일' 필드)
+    if (profile.promotionDate) {
+      var pd = PROFILE.parseDate(profile.promotionDate);
+      if (pd) return { date: new Date(pd), source: '직접 입력' };
     }
 
     // Method 1: 명세서 이력에서 현재 grade + step=1 최초 등장 월
@@ -846,7 +915,12 @@ const PAYROLL = {
 
     // 카테고리별 렌더링
     this.categories.forEach(function(cat) {
-      var catCards = self.cards.filter(function(c) { return c.category === cat.id; });
+      var catCards = self.cards.filter(function(c) {
+        if (c.category !== cat.id) return false;
+        // shouldShow가 있으면 프로필 기준으로 표시 여부 결정
+        if (c.shouldShow) return c.shouldShow(profile);
+        return true;
+      });
       if (catCards.length === 0) return;
 
       html += '<div class="qa-category">';
@@ -953,6 +1027,35 @@ const PAYROLL = {
     html += '<div class="qa-compare-status ' + matchClass + '">' + matchLabel + ' (차이 ' + grossPct + '%)</div>';
     html += '</div>';
     return html;
+  },
+
+  // 승진일/직급/호봉을 내 정보(profile)에 저장
+  _savePromoData() {
+    var gradeEl = document.getElementById('qaPromoGrade');
+    var yearEl  = document.getElementById('qaPromoYear');
+    var startEl = document.getElementById('qaPromoStartDate');
+    var profile = PROFILE.load();
+    if (!profile) return;
+    var updates = {};
+    if (gradeEl && gradeEl.value) updates.grade = gradeEl.value;
+    if (yearEl  && yearEl.value)  updates.year  = parseInt(yearEl.value) || profile.year;
+    if (startEl && startEl.value) updates.promotionDate = startEl.value;
+    PROFILE.save(Object.assign({}, profile, updates));
+    // 내 정보 탭 폼 즉시 반영 (applyToForm이 가능하면)
+    if (typeof PROFILE_FIELDS !== 'undefined' && typeof PROFILE !== 'undefined') {
+      PROFILE.applyToForm(PROFILE.load(), PROFILE_FIELDS);
+    }
+    // 저장 완료 피드백
+    var btn = document.querySelector('[onclick="PAYROLL._savePromoData()"]');
+    if (btn) {
+      var orig = btn.textContent;
+      btn.textContent = '저장 완료 ✓';
+      btn.style.background = 'var(--accent-green, #22c55e)';
+      setTimeout(function() {
+        if (btn) { btn.textContent = orig; btn.style.background = ''; }
+      }, 1500);
+    }
+    PAYROLL.recalc('promotionDate');
   },
 
   // 결과 영역 HTML 생성 (init에서 호출)
