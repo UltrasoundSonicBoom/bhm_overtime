@@ -80,6 +80,29 @@
       align-items: center;
     }
 
+    /* ── Hero layout ── */
+    .hero-inner {
+      min-height: calc(100dvh - 120px);
+      justify-content: flex-start;
+    }
+
+    .hero-top {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 20px;
+    }
+
+    .hero-text {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding-bottom: 48px;
+    }
+
     /* ── Reveal animation ── */
     .reveal {
       opacity: 0;
@@ -159,19 +182,21 @@
     }
 
     .hero-title {
-      font-size: clamp(28px, 7.5vw, 48px);
+      font-size: 28px;
       font-weight: 900;
-      line-height: 1.3;
+      line-height: 1.35;
       letter-spacing: -0.02em;
       text-align: center;
+      word-break: keep-all;
       margin-bottom: 16px;
     }
 
     .hero-sub {
-      font-size: clamp(15px, 4vw, 18px);
+      font-size: 15px;
       color: var(--ink);
       opacity: 0.7;
       text-align: center;
+      word-break: keep-all;
       line-height: 1.7;
       max-width: 340px;
       font-weight: 500;
@@ -274,7 +299,7 @@
       line-height: 1.7;
       text-align: center;
       max-width: 340px;
-      margin-bottom: 36px;
+      margin-bottom: 50px;
       font-weight: 500;
     }
 
@@ -432,7 +457,7 @@
       gap: 8px;
       background: var(--violet);
       color: #fff;
-      font-size: 17px;
+      font-size: 15px;
       font-weight: 700;
       padding: 16px 32px;
       border-radius: 14px;
@@ -471,11 +496,13 @@
       text-decoration: none;
       transition: transform 0.1s, box-shadow 0.1s;
       font-family: inherit;
+      margin-bottom: 70px;
     }
 
     .cta-secondary:hover {
       transform: translate(-1px, -1px);
       box-shadow: var(--shadow-md);
+
     }
 
     .cta-group {
@@ -507,14 +534,14 @@
     }
 
     .legal-card-title {
-      font-size: 15px;
+      font-size: 13px;
       font-weight: 800;
       margin-bottom: 6px;
       color: var(--ink);
     }
 
     .legal-card-desc {
-      font-size: 13px;
+      font-size: 10px;
       line-height: 1.7;
       color: var(--muted);
       font-weight: 600;
@@ -665,19 +692,18 @@
 
   <!-- ════════ 1. Hero ════════ -->
   <section class="section hero">
-    <div class="section-inner">
-      <img src="./snuhmatecircle.png" alt="SNUH 메이트" class="hero-logo reveal">
-      <div class="hero-badge reveal d1">SNUH 메이트 | snuhmate</div>
-      <h1 class="hero-title reveal d1">
-        SNUH 메이트는<br>
-        의료기관 종사자의<br>
-        휴가, 시간외, 급여 분석을 돕는 앱입니다.
-      </h1>
-      <p class="hero-sub reveal d2">
-        서울대학교병원, 보라매병원 등 의료기관 종사자가<br>
-        내 휴가, 시간외 근무, 급여명세서 분석과 규정 확인을<br>
-        웹에서 직접 관리할 수 있도록 돕습니다.
-      </p>
+    <div class="section-inner hero-inner">
+      <div class="hero-top">
+        <img src="./snuhmatecircle.png" alt="SNUH 메이트" class="hero-logo reveal">
+        <div class="hero-badge reveal d1">SNUH 메이트 | SNUH mate</div>
+      </div>
+      <div class="hero-text">
+        <h1 class="hero-title reveal d1">
+          서울대학교병원 그룹의 직원들이<br>
+          내 급여·휴가·시간외를<br>
+          직접 관리할 수 있도록 도와줍니다.
+        </h1>
+      </div>
     </div>
     <div class="scroll-hint">
       <div class="scroll-hint-down">
@@ -686,7 +712,8 @@
           <path d="M12 5v14M19 12l-7 7-7-7" />
         </svg>
       </div>
-      <div class="scroll-hint-end" onclick="(function(){var sections=document.querySelectorAll('.section');var last=sections[sections.length-1];last.scrollIntoView({behavior:'smooth',block:'start'});})()">
+      <div class="scroll-hint-end"
+        onclick="(function(){var sections=document.querySelectorAll('.section');var last=sections[sections.length-1];last.scrollIntoView({behavior:'smooth',block:'start'});})()">
         끝으로
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" width="16" height="16">
           <path d="M5 12h14M12 5l7 7-7 7" />
@@ -926,13 +953,15 @@
       <h2 class="feat-title reveal" style="font-size:clamp(26px, 7vw, 42px);">
         이제 복잡한 건<br>SNUH Mate에서 관리하세요.
       </h2>
-      <p class="feat-desc reveal d1" style="color:var(--ink); opacity:0.6;">설치 없이, 웹에서 바로.</p>
+      <p class="feat-desc reveal d1" style="color:var(--ink); opacity:0.6;"></p>
       <div class="cta-group reveal d2">
         <a href="./index.html?app=1" class="cta-primary">시작하기 &rarr;</a>
         <a href="./tutorial.html" class="cta-secondary">&#x1f393; 사용법 익히기 [튜토리얼]</a>
       </div>
       <div class="legal-card reveal d3">
-        <div class="legal-card-title">SNUH 메이트는 의료기관 종사자의 휴가, 시간외, 급여 분석을 돕는 웹 서비스입니다.</div>
+        <div class="legal-card-title">SNUH 메이트는 서울대학교병원 그룹의 직원들이<br>
+          내 급여·휴가·시간외를<br>
+          직접 관리할 수 있도록 도와줍니다..</div>
         <div class="legal-card-desc">
           Google 연동 기능은 선택적으로 제공되며, 사용자의 데이터는 본인 기기 또는 본인 Google 계정에 저장되도록 설계되어 있습니다.
         </div>
@@ -948,18 +977,18 @@
   <script>
     // ── Reveal animation observer ──
     // Safari: snap이 빠르게 끝나도 잡히도록 threshold 낮추고 rootMargin 추가
-    var observer = new IntersectionObserver(function(entries) {
-      entries.forEach(function(entry) {
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
         if (entry.isIntersecting) entry.target.classList.add('visible');
       });
     }, { threshold: 0.05, rootMargin: '0px 0px -5% 0px' });
-    document.querySelectorAll('.reveal').forEach(function(el) { observer.observe(el); });
+    document.querySelectorAll('.reveal').forEach(function (el) { observer.observe(el); });
 
     // ── 다음 섹션으로 스크롤 ──
     function scrollToNextSection() {
       var sections = Array.prototype.slice.call(document.querySelectorAll('.section'));
       var scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
-      var current = sections.find(function(s) {
+      var current = sections.find(function (s) {
         return s.offsetTop >= scrollTop + 10;
       });
       if (current) {
@@ -968,7 +997,7 @@
         // Use scrollTo on documentElement as fallback
         try {
           document.documentElement.scrollTo({ top: target, behavior: 'smooth' });
-        } catch(e) {
+        } catch (e) {
           window.scrollTo(0, target);
         }
       }
