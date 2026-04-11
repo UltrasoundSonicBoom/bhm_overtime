@@ -26,40 +26,7 @@
   </script>
   <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
   <style>
-    /* ── Onboarding Modal ── */
-    .onboarding-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      z-index: 9999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-    }
-
-    .onboarding-card {
-      background: var(--bg-card);
-      border: 1.5px solid var(--border-active);
-      border-radius: 20px;
-      padding: 32px 24px 24px;
-      max-width: 380px;
-      width: 100%;
-      text-align: center;
-      animation: modalSlideIn 0.3s ease;
-    }
-
-    html[data-theme="neo"] .onboarding-card {
-      border: 3px solid #1a1a1a;
-      box-shadow: 6px 6px 0px #1a1a1a;
-      border-radius: 16px;
-    }
-
+    /* ── Shared Modal Styles (used by migrationOverlay) ── */
     .onboarding-icon {
       font-size: 52px;
       margin-bottom: -4px;
@@ -76,63 +43,6 @@
       font-size: var(--text-body-normal);
       color: var(--text-muted);
       margin-bottom: 20px;
-    }
-
-    .onboarding-steps {
-      text-align: left;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      margin-bottom: 24px;
-    }
-
-    .onboarding-step {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-    }
-
-    .step-num {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: var(--accent-indigo);
-      color: white;
-      font-weight: 700;
-      font-size: 13px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      margin-top: 2px;
-    }
-
-    html[data-theme="neo"] .step-num {
-      border: 2px solid #1a1a1a;
-      background: var(--accent-violet);
-    }
-
-    .step-text strong {
-      display: block;
-      font-size: var(--text-body-large);
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-
-    .step-text small {
-      font-size: var(--text-body-normal);
-      color: var(--text-muted);
-      line-height: 1.4;
-    }
-
-    .onboarding-link {
-      display: block;
-      text-align: center;
-      color: var(--accent-indigo);
-      font-size: var(--text-body-normal);
-      cursor: pointer;
-      text-decoration: underline;
-      margin-top: 12px;
     }
 
     /* ── Hourly Warning Banner ── */
@@ -470,17 +380,11 @@
         <span>모든 데이터는 내 브라우저에만 저장됩니다.<br> 개발자도, 서버도 절대 볼 수 없어요.</span>
       </div>
 
-      <!-- 시작 가이드 & 튜토리얼 -->
-      <div style="display:flex; gap:8px;">
-        <a href="./tutorial.html" class="btn btn-outline"
-          style="flex:1; font-size:var(--text-body-normal); padding:10px; color:var(--accent-indigo); border-color:var(--accent-indigo); text-decoration:none; text-align:center;">
-          🎓 사용법 튜토리얼
-        </a>
-        <button onclick="location.href='onboarding.html'" class="btn btn-outline"
-          style="flex:1; font-size:var(--text-body-normal); padding:10px; color:var(--text-muted); border-color:var(--border-glass);">
-          📖 시작 가이드
-        </button>
-      </div>
+      <!-- 튜토리얼 -->
+      <a href="./tutorial.html" class="btn btn-outline"
+        style="display:block; font-size:var(--text-body-normal); padding:10px; color:var(--accent-indigo); border-color:var(--accent-indigo); text-decoration:none; text-align:center;">
+        🎓 사용법 튜토리얼
+      </a>
 
 
     </div>
@@ -1615,68 +1519,6 @@
   <!-- Toast notification -->
   <div id="otToast" class="ot-toast" style="display:none;"></div>
 
-  <!-- ═══════════ 🎉 온보딩 모달 ═══════════ -->
-  <div id="onboardingModal" class="onboarding-overlay" style="display:none;">
-    <div class="onboarding-card">
-      <div class="onboarding-icon">
-        <img src="./snuhmatecircle.png"
-          style="width: 144px; height: 144px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-active);">
-      </div>
-      <div class="onboarding-title">처음 오셨나요?</div>
-      <div class="onboarding-sub">
-        '휴가'와 '시간외 근무' 등을 얼마나 했는지<br>기록하고 관리하기 위해 만들었어요.<br>기기 자체에 데이터가 저장되니 <br>PC보다 핸드폰에 기록해서 관리하세요!
-      </div>
-      <div class="onboarding-steps">
-        <div class="onboarding-step">
-          <div class="step-num" style="background:var(--accent-emerald);">1</div>
-          <div class="step-text">
-            <strong>🔐 내 데이터는 철저히 내 것</strong>
-            <small>개발자도,서버도 절대 내 데이터를 볼 수 없어요.</small>
-            <br><span style="color:var(--text-muted); font-size:0.85em;">※ 기기를 바꾸실 땐 꼭 ‘백업’ 하세요!</span></small>
-          </div>
-        </div>
-        <div class="onboarding-step">
-          <div class="step-num">2</div>
-          <div class="step-text">
-            <strong>👤 내 정보 등록</strong>
-            <small>직종·호봉·입사일을 저장하면<br>시급·연차가 자동 계산됩니다</small>
-          </div>
-        </div>
-        <div class="onboarding-step">
-          <div class="step-num">3</div>
-          <div class="step-text">
-            <strong>⏰ 시간외·온콜 기록</strong>
-            <small>캘린더 날짜를 탭 → 유형·시간 입력<br>수당이 즉시 계산됩니다.(참고용)
-              <br><span style="color:var(--text-muted); font-size:0.85em;">※ 개인차로 실제금액과 차이 발생 가능</span></small>
-          </div>
-        </div>
-        <div class="onboarding-step">
-          <div class="step-num">4</div>
-          <div class="step-text">
-            <strong>📅 휴가 관리</strong>
-            <small>연차·병가 등록 → 잔여 휴가를<br>자동으로 추적합니다</small>
-          </div>
-        </div>
-      </div>
-
-      <a href="./tutorial.html" class="btn btn-primary btn-full"
-        style="font-size:var(--text-body-large); padding:12px; text-decoration:none; text-align:center; display:block;">
-        🎓 사용법 보기 (튜토리얼)
-      </a>
-      <div style="display:flex; gap:10px; margin-top:10px;">
-        <a onclick="dismissOnboarding(false)" class="onboarding-link" style="flex:1;">
-          🚀 바로 시작하기
-        </a>
-        <a onclick="dismissOnboarding(true)" class="onboarding-link" style="flex:1;">
-          👤 개인정보 먼저 입력
-        </a>
-      </div>
-      <p
-        style="margin-top:14px; font-size:var(--text-body-normal); color:var(--text-muted); text-align:center; border-top:1px solid var(--border-glass); padding-top:12px;">
-        만든 사람: 김계환 (핵의학과)
-      </p>
-    </div>
-  </div>
 
   <script>
     function getCaptureParams() {
@@ -1693,10 +1535,6 @@
         feedback: 'SNUH 메이트 - 피드백'
       };
       const requestedTab = params.get('tab');
-      if (params.get('showOnboarding') === '1') {
-        document.title = 'SNUH 메이트 - 온보딩';
-        return;
-      }
       if (requestedTab && titleMap[requestedTab]) {
         document.title = titleMap[requestedTab];
       }
@@ -1704,39 +1542,8 @@
 
     applyCaptureTitle();
 
-    // ── 온보딩 로직 (최대 3회, 프로필 없을 때만) ──
-    (function checkOnboarding() {
-      const params = getCaptureParams();
-      if (params.get('hideOnboarding') === '1' || params.get('capture') === '1') return;
-      const profile = localStorage.getItem('profile');
-      if (profile) return; // 프로필 저장된 경우 표시 안 함
-      const count = parseInt(localStorage.getItem('onboarding_count') || '0');
-      if (count < 3) {
-        setTimeout(() => {
-          const modal = document.getElementById('onboardingModal');
-          if (modal) modal.style.display = 'flex';
-          localStorage.setItem('onboarding_count', String(count + 1));
-        }, 600);
-      }
-    })();
-
-    function showOnboarding() {
-      const modal = document.getElementById('onboardingModal');
-      if (modal) modal.style.display = 'flex';
-    }
-
-    function dismissOnboarding(goProfile) {
-      const modal = document.getElementById('onboardingModal');
-      if (modal) modal.style.display = 'none';
-      if (goProfile) switchTab('profile');
-    }
-
     document.addEventListener('DOMContentLoaded', () => {
       const params = getCaptureParams();
-      if (params.get('showOnboarding') === '1') {
-        const modal = document.getElementById('onboardingModal');
-        if (modal) modal.style.display = 'flex';
-      }
       // URL ?tutorial=1 로 진입 시 tutorial.html 로 리다이렉트
       if (params.get('tutorial') === '1') {
         window.location.href = './tutorial.html';
@@ -1805,14 +1612,6 @@
       if (host.includes('vercel.app')) {
         document.getElementById('migrationOverlay').style.display = 'flex';
         startMigrationCountdown();
-      }
-      // 새 도메인 접속 시 온보딩 자동 노출보장 (기존 로직이 있지만 명시적으로 추가)
-      if (host === 'snuhmate.com' || host === 'www.snuhmate.com') {
-        const hasSeen = localStorage.getItem('onboarding_seen_v2');
-        if (!hasSeen) {
-          showOnboarding();
-          localStorage.setItem('onboarding_seen_v2', 'true');
-        }
       }
     });
 
