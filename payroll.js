@@ -731,8 +731,8 @@ const PAYROLL = {
           + '</div>';
 
         return {
-          value: isPast ? '이미 도래!' : 'D-' + remaining,
-          label: gradeLabel + ' → ' + nextLabel + (promo.isEstimate ? ' (추정)' : '') + ' 승격 예상',
+          value: isPast ? '이미 도래!' : targetDate.getFullYear() + '년',
+          label: gradeLabel + ' → ' + nextLabel + ' · D-' + remaining + (promo.isEstimate ? ' (추정)' : ''),
           chartHTML: chartHTML,
           details: [
             { key: '직급 시작일', val: gradeStartDate.toISOString().split('T')[0] + ' (' + gradeStartSource + ')' },

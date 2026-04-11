@@ -3081,7 +3081,7 @@ html[data-theme="neo"] .qa-card:hover {
 }
 
 html[data-theme="neo"] .qa-card-result {
-  background: var(--accent-amber);
+  background: #FFFFFF;
   border: 2px solid #1a1a1a;
 }
 
