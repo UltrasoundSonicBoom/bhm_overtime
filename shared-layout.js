@@ -8,6 +8,7 @@
 
   var CURRENT_PAGE = location.pathname.split('/').pop() || 'index.html';
   var isRegulation = CURRENT_PAGE === 'regulation.html';
+  var isRetirement = CURRENT_PAGE === 'retirement.html';
 
   function el(tag, attrs) {
     var e = document.createElement(tag);
@@ -32,7 +33,7 @@
 
     // Logo — index: switchTab('home'), regulation: link to snuhmate.com
     var logo;
-    if (isRegulation) {
+    if (isRegulation || isRetirement) {
       logo = el('a', { className: 'logo', href: 'https://www.snuhmate.com' });
       logo.style.textDecoration = 'none';
       logo.style.color = 'inherit';
@@ -58,13 +59,9 @@
     // Header right
     var right = el('div', { className: 'header-right' });
 
-    // Auth container
+    // Auth container — updateAuthUI()로 내용이 채워짐
     var auth = el('div', { id: 'authContainer', className: 'auth-container' });
-    auth.style.cssText = 'display:none;align-items:center;gap:8px;';
-    var authBtn = el('button', { className: 'btn btn-outline', textContent: '접속 확인 중...' });
-    authBtn.style.cssText = 'padding:4px 10px;font-size:var(--text-body-normal);border-color:var(--text-muted);color:var(--text-muted);border-radius:20px;';
-    authBtn.onclick = function () { if (window.SupabaseSync) window.SupabaseSync.signInWithGoogle(); };
-    auth.appendChild(authBtn);
+    auth.style.cssText = 'display:flex;align-items:center;gap:8px;';
     right.appendChild(auth);
 
     // Theme toggle
@@ -92,13 +89,13 @@
     footer.id = 'navTabs';
     footer.textContent = '';
 
-    if (isRegulation) {
+    if (isRegulation || isRetirement) {
       var items = [
-        { label: '📅 휴가', href: 'index.html?tab=leave' },
-        { label: '⏰ 시간외', href: 'index.html?tab=overtime' },
-        { label: '💰 급여', href: 'index.html?tab=payroll' },
-        { label: '📖 규정', active: true },
-        { label: '👤 info', href: 'index.html?tab=profile' }
+        { label: '📅 휴가', href: 'index.html?app=1&tab=leave' },
+        { label: '⏰ 시간외', href: 'index.html?app=1&tab=overtime' },
+        { label: '💰 급여', href: 'index.html?app=1&tab=payroll', active: isRetirement },
+        { label: '📖 규정', href: 'regulation.html', active: isRegulation },
+        { label: '👤 info', href: 'index.html?app=1&tab=profile' }
       ];
       items.forEach(function (t) {
         var a = el('a', { className: 'nav-tab' + (t.active ? ' active' : ''), textContent: t.label });

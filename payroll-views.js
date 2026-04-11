@@ -44,8 +44,8 @@
   function getAllMonthData() {
     const months = SALARY_PARSER.listSavedMonths();
     return months.map(m => {
-      const d = SALARY_PARSER.loadMonthlyData(m.year, m.month);
-      return { year: m.year, month: m.month, data: d };
+      const d = SALARY_PARSER.loadMonthlyData(m.year, m.month, m.type);
+      return { year: m.year, month: m.month, type: m.type || '급여', data: d };
     }).filter(m => {
       if (!m.data) return false;
       // 실제 급여 데이터가 있는 월만 (시뮬레이터 빈 저장 제외)
@@ -67,15 +67,42 @@
   // ══════════════════════════════════════════════
   // ██ 히스토리 탭 (대시보드)
   // ══════════════════════════════════════════════
+  // 월별 합산 데이터 생성 (히스토리용: 같은 월의 모든 유형 합산)
+  function aggregateByMonth(allData) {
+    const map = new Map();
+    allData.forEach(m => {
+      const key = m.year * 100 + m.month;
+      if (!map.has(key)) {
+        map.set(key, {
+          year: m.year, month: m.month,
+          data: { summary: { grossPay: 0, totalDeduction: 0, netPay: 0 }, salaryItems: [], deductionItems: [] },
+          types: [],
+          baseData: null, // 급여 유형만 따로 보관 (변동 분석용)
+        });
+      }
+      const entry = map.get(key);
+      const s = m.data.summary || {};
+      entry.data.summary.grossPay += s.grossPay || 0;
+      entry.data.summary.totalDeduction += s.totalDeduction || 0;
+      entry.data.summary.netPay += s.netPay || 0;
+      entry.types.push(m.type || '급여');
+      if (m.type === '급여' || !m.type) {
+        entry.baseData = m.data;
+      }
+    });
+    return Array.from(map.values());
+  }
+
   window.renderPayHistory = function () {
     const container = document.getElementById('payHistoryView');
     if (!container) return;
     container.textContent = '';
 
     const allData = getAllMonthData();
+    const monthAgg = aggregateByMonth(allData);
 
     // ── 데이터 없을 때 ──
-    if (allData.length === 0) {
+    if (monthAgg.length === 0) {
       container.appendChild(buildEmptyState(
         '급여 히스토리',
         '저장된 급여명세서가 없습니다.',
@@ -89,30 +116,35 @@
       return;
     }
 
-    const latest = allData[0];
-    const prev = allData.length > 1 ? allData[1] : null;
+    const latest = monthAgg[0];
+    const prev = monthAgg.length > 1 ? monthAgg[1] : null;
     const net = latest.data.summary?.netPay || 0;
     const prevNet = prev ? (prev.data.summary?.netPay || 0) : 0;
     const diff = prev ? net - prevNet : 0;
 
-    // 1) 큰 숫자 카드 (실지급액)
-    container.appendChild(buildNetPayCard(latest, diff, prev));
+    // 1) 큰 숫자 카드 (실지급액 — 월 합산)
+    const latestDisplay = { year: latest.year, month: latest.month, data: latest.data, types: latest.types };
+    container.appendChild(buildNetPayCard(latestDisplay, diff, prev));
 
-    // 2) 6개월 바 차트
-    if (allData.length >= 2) {
-      container.appendChild(buildBarChart(allData.slice(0, 6).reverse()));
+    // 2) 6개월 바 차트 (합산 기준)
+    if (monthAgg.length >= 2) {
+      container.appendChild(buildBarChart(monthAgg.slice(0, 6).reverse()));
     }
 
-    // 3) 변동 요인 분석
+    // 3) 변동 요인 분석 (급여 유형끼리만 비교)
     if (prev) {
-      container.appendChild(buildChangeFactors(latest, prev));
+      const latestBase = latest.baseData || latest.data;
+      const prevBase = prev.baseData || prev.data;
+      const latestForCompare = { year: latest.year, month: latest.month, data: latestBase };
+      const prevForCompare = { year: prev.year, month: prev.month, data: prevBase };
+      container.appendChild(buildChangeFactors(latestForCompare, prevForCompare));
     }
 
-    // 4) 통계 카드
-    container.appendChild(buildStatsRow(allData));
+    // 4) 통계 카드 (합산 기준)
+    container.appendChild(buildStatsRow(monthAgg));
 
     // 5) 아카이브 배너
-    container.appendChild(buildArchiveBanner(allData.length));
+    container.appendChild(buildArchiveBanner(monthAgg.length));
   };
 
   // ── 실지급액 큰 숫자 카드 ──
@@ -126,6 +158,16 @@
       className: 'pay-net-amount',
       textContent: fmtNum(latest.data.summary?.netPay || 0) + '원'
     }));
+    // 복수 유형이 합산된 경우 표시
+    if (latest.types && latest.types.length > 1) {
+      const extraTypes = latest.types.filter(t => t !== '급여');
+      if (extraTypes.length > 0) {
+        card.appendChild(el('div', {
+          style: { fontSize: 'var(--text-body-small)', color: 'var(--text-muted)', marginBottom: '4px' },
+          textContent: '급여 + ' + extraTypes.join(', ') + ' 합산'
+        }));
+      }
+    }
     if (prev && diff !== 0) {
       const diffEl = el('div', {
         className: 'pay-net-diff ' + (diff > 0 ? 'up' : 'down'),
@@ -298,6 +340,28 @@
   // ██ 명세서 탭 (시각적 뷰어)
   // ══════════════════════════════════════════════
   let currentPayslipIdx = 0;
+  let currentMonthIdx = 0;
+  let currentTypeIdx = 0;
+
+  // allData를 year-month 기준으로 그룹핑 (최신순)
+  function groupByMonth(allData) {
+    const map = new Map();
+    allData.forEach(m => {
+      const key = m.year * 100 + m.month;
+      if (!map.has(key)) map.set(key, { year: m.year, month: m.month, payslips: [] });
+      map.get(key).payslips.push({ type: m.type, data: m.data });
+    });
+    // 급여 유형을 먼저, 나머지는 지급일순
+    const groups = Array.from(map.values());
+    groups.forEach(g => {
+      g.payslips.sort((a, b) => {
+        if (a.type === '급여') return -1;
+        if (b.type === '급여') return 1;
+        return 0;
+      });
+    });
+    return groups;
+  }
 
   window.renderPayPayslip = function () {
     const headerEl = document.getElementById('payPayslipHeader');
@@ -318,8 +382,9 @@
     }
 
     const allData = getAllMonthData();
+    const monthGroups = groupByMonth(allData);
 
-    if (allData.length === 0) {
+    if (monthGroups.length === 0) {
       // 월 슬라이더: 현재 월 표시 (업로드 버튼은 헤더에 이미 있으므로 중복 안 함)
       if (sliderEl) {
         sliderEl.textContent = '';
@@ -352,24 +417,42 @@
       return;
     }
 
-    currentPayslipIdx = Math.min(currentPayslipIdx, allData.length - 1);
-    if (currentPayslipIdx < 0) currentPayslipIdx = 0;
+    currentMonthIdx = Math.min(currentMonthIdx, monthGroups.length - 1);
+    if (currentMonthIdx < 0) currentMonthIdx = 0;
+    const curGroup = monthGroups[currentMonthIdx];
+    currentTypeIdx = Math.min(currentTypeIdx, curGroup.payslips.length - 1);
+    if (currentTypeIdx < 0) currentTypeIdx = 0;
 
-    // 월 슬라이더 + 업로드 버튼
-    if (sliderEl) buildMonthSlider(sliderEl, allData, currentPayslipIdx);
+    // 월 슬라이더 + 유형 칩
+    if (sliderEl) buildMonthSlider(sliderEl, monthGroups, currentMonthIdx, currentTypeIdx);
 
-    // 현재 월 시각적 렌더
-    const current = allData[currentPayslipIdx];
-    const prev = currentPayslipIdx < allData.length - 1 ? allData[currentPayslipIdx + 1] : null;
+    // 현재 명세서 시각적 렌더
+    const currentPayslip = curGroup.payslips[currentTypeIdx];
+    const current = { year: curGroup.year, month: curGroup.month, type: currentPayslip.type, data: currentPayslip.data };
+
+    // 전월 비교: 같은 유형의 이전 월 or 이전 월 급여
+    let prev = null;
+    if (currentMonthIdx < monthGroups.length - 1) {
+      const prevGroup = monthGroups[currentMonthIdx + 1];
+      const sameType = prevGroup.payslips.find(p => p.type === currentPayslip.type);
+      const basePay = prevGroup.payslips.find(p => p.type === '급여');
+      const prevPayslip = sameType || basePay || prevGroup.payslips[0];
+      prev = { year: prevGroup.year, month: prevGroup.month, type: prevPayslip.type, data: prevPayslip.data };
+    }
     buildPayslipVisual(visualEl, current, prev);
 
     // 아카이브 목록
-    if (archiveEl) buildArchiveList(archiveEl, allData);
+    if (archiveEl) buildArchiveList(archiveEl, monthGroups);
+
+    // currentPayslipIdx 동기화 (하위호환)
+    currentPayslipIdx = currentMonthIdx;
   };
 
-  // ── 월 슬라이더 + 업로드 버튼 ──
-  function buildMonthSlider(container, allData, idx) {
+  // ── 월 슬라이더 + 유형 칩 ──
+  function buildMonthSlider(container, monthGroups, mIdx, tIdx) {
     container.textContent = '';
+    const curGroup = monthGroups[mIdx];
+
     const slider = el('div', {
       style: { display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 0' }
     });
@@ -381,17 +464,18 @@
       textContent: '◀',
       style: { minWidth: '36px', padding: '6px' },
       onClick: function () {
-        if (currentPayslipIdx < allData.length - 1) {
-          currentPayslipIdx++;
+        if (currentMonthIdx < monthGroups.length - 1) {
+          currentMonthIdx++;
+          currentTypeIdx = 0;
           renderPayPayslip();
         }
       }
     });
-    if (idx >= allData.length - 1) prevBtn.disabled = true;
+    if (mIdx >= monthGroups.length - 1) prevBtn.disabled = true;
 
     const label = el('span', {
       style: { fontWeight: '700', fontSize: 'var(--text-title-medium)' },
-      textContent: allData[idx].year + '년 ' + allData[idx].month + '월'
+      textContent: curGroup.year + '년 ' + curGroup.month + '월'
     });
 
     const nextBtn = el('button', {
@@ -399,13 +483,14 @@
       textContent: '▶',
       style: { minWidth: '36px', padding: '6px' },
       onClick: function () {
-        if (currentPayslipIdx > 0) {
-          currentPayslipIdx--;
+        if (currentMonthIdx > 0) {
+          currentMonthIdx--;
+          currentTypeIdx = 0;
           renderPayPayslip();
         }
       }
     });
-    if (idx <= 0) nextBtn.disabled = true;
+    if (mIdx <= 0) nextBtn.disabled = true;
 
     slider.appendChild(prevBtn);
     slider.appendChild(label);
@@ -413,6 +498,32 @@
     slider.appendChild(el('div', { style: { flex: '1' } }));
 
     container.appendChild(slider);
+
+    // 같은 월에 복수 유형이 있으면 유형 칩 표시
+    if (curGroup.payslips.length > 1) {
+      const chipRow = el('div', {
+        style: { display: 'flex', gap: '8px', justifyContent: 'center', paddingBottom: '8px' }
+      });
+      curGroup.payslips.forEach(function (ps, i) {
+        const isActive = i === tIdx;
+        const chip = el('button', {
+          className: 'btn' + (isActive ? ' btn-primary' : ''),
+          textContent: ps.type,
+          style: {
+            padding: '4px 14px',
+            fontSize: 'var(--text-body-small)',
+            fontWeight: isActive ? '700' : '400',
+            borderRadius: '16px',
+          },
+          onClick: function () {
+            currentTypeIdx = i;
+            renderPayPayslip();
+          }
+        });
+        chipRow.appendChild(chip);
+      });
+      container.appendChild(chipRow);
+    }
   }
 
   // ── 텍스트 업로드 버튼 (명세서 탭 상단 우측) ──
@@ -454,8 +565,9 @@
       const result = await SALARY_PARSER.parseFile(file);
       const ym = SALARY_PARSER.parsePeriodYearMonth(result);
       if (ym) {
-        SALARY_PARSER.saveMonthlyData(ym.year, ym.month, result);
-        currentPayslipIdx = 0;
+        SALARY_PARSER.saveMonthlyData(ym.year, ym.month, result, ym.type);
+        currentMonthIdx = 0;
+        currentTypeIdx = 0;
         renderPayPayslip();
         if (typeof renderPayHistory === 'function') renderPayHistory();
       } else {
@@ -476,6 +588,24 @@
     const deduction = data.summary?.totalDeduction || 0;
     const net = data.summary?.netPay || 0;
     const total = gross + deduction;
+
+    // 유형 배지 (소급분, 연차수당 등 — 급여는 표시 안 함)
+    if (current.type && current.type !== '급여') {
+      const badge = el('div', {
+        style: {
+          display: 'inline-block',
+          padding: '4px 12px',
+          borderRadius: '12px',
+          fontSize: 'var(--text-body-small)',
+          fontWeight: '600',
+          background: 'var(--accent-amber, #f59e0b)',
+          color: '#fff',
+          marginBottom: '10px',
+        },
+        textContent: current.type
+      });
+      container.appendChild(badge);
+    }
 
     // 도넛 차트 (지급 vs 공제 비율)
     container.appendChild(buildDonutChart(gross, deduction, net, total));
@@ -647,36 +777,43 @@
   // (업로드 영역 삭제 — 인라인 업로드 버튼으로 대체됨)
 
   // ── 아카이브 목록 ──
-  function buildArchiveList(container, allData) {
+  function buildArchiveList(container, monthGroups) {
     container.textContent = '';
-    if (allData.length <= 1) return;
+    if (monthGroups.length <= 1) return;
 
+    const totalPayslips = monthGroups.reduce((s, g) => s + g.payslips.length, 0);
     const card = el('div', { className: 'card' });
-    card.appendChild(el('div', { className: 'card-title', textContent: '저장된 명세서 (' + allData.length + '개월)' }));
+    card.appendChild(el('div', { className: 'card-title', textContent: '저장된 명세서 (' + totalPayslips + '건)' }));
 
-    allData.forEach(function (m, idx) {
-      const row = el('div', {
-        className: 'pay-hbar-row',
-        style: { cursor: 'pointer', padding: '8px 4px', borderRadius: '6px' },
-        onClick: function () {
-          currentPayslipIdx = idx;
-          renderPayPayslip();
+    monthGroups.forEach(function (group, mIdx) {
+      group.payslips.forEach(function (ps, tIdx) {
+        const isActive = mIdx === currentMonthIdx && tIdx === currentTypeIdx;
+        const row = el('div', {
+          className: 'pay-hbar-row',
+          style: { cursor: 'pointer', padding: '8px 4px', borderRadius: '6px' },
+          onClick: function () {
+            currentMonthIdx = mIdx;
+            currentTypeIdx = tIdx;
+            renderPayPayslip();
+          }
+        });
+        if (isActive) {
+          row.style.background = 'var(--bg-hover)';
         }
-      });
-      if (idx === currentPayslipIdx) {
-        row.style.background = 'var(--bg-hover)';
-      }
 
-      row.appendChild(el('span', {
-        className: 'pay-hbar-name',
-        style: { fontWeight: idx === currentPayslipIdx ? '700' : '400' },
-        textContent: m.year + '년 ' + m.month + '월'
-      }));
-      row.appendChild(el('span', {
-        className: 'pay-hbar-amount',
-        textContent: fmt(m.data.summary?.netPay || 0)
-      }));
-      card.appendChild(row);
+        const labelText = group.year + '년 ' + group.month + '월'
+          + (ps.type !== '급여' ? ' (' + ps.type + ')' : '');
+        row.appendChild(el('span', {
+          className: 'pay-hbar-name',
+          style: { fontWeight: isActive ? '700' : '400' },
+          textContent: labelText
+        }));
+        row.appendChild(el('span', {
+          className: 'pay-hbar-amount',
+          textContent: fmt(ps.data.summary?.netPay || 0)
+        }));
+        card.appendChild(row);
+      });
     });
 
     container.appendChild(card);

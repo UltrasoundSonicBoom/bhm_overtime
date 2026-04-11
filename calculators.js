@@ -295,24 +295,20 @@ const CALC = {
 
         if (preciseYears < 1) return { 퇴직금: 0, note: '근속 1년 미만 해당없음' };
 
-        const cutoff2001 = new Date('2001-08-31');
         const cutoff2015 = new Date('2015-06-30');
 
-        // 기본 퇴직금: 월 평균임금 × (총 근속일수 / 365)
-        let baseSeverance = Math.round(avgMonthlyPay * preciseYears);
         const yearsDisplay = totalDays > 0
             ? `${Math.floor(preciseYears)}년 ${Math.floor((preciseYears % 1) * 12)}개월`
             : `${totalYearsInt}년`;
-        let method = `법정 퇴직금 (평균임금 × ${yearsDisplay})`;
 
-        // 2001.08.31 이전 입사자: 누진배수 적용 (정수 연수로 구간 판정)
-        if (hireDate && hireDate <= cutoff2001) {
-            const row = DATA.severanceMultipliersPre2001.find(r => totalYearsInt >= r.min);
-            if (row) {
-                baseSeverance = Math.round(avgMonthlyPay * row.multiplier);
-                method = `누진배수 적용 (×${row.multiplier}, 2001년 이전 입사자)`;
-            }
-        }
+        // 단체협약 제52조 별표: 근속연수별 지급률 (모든 직원 적용)
+        const row = DATA.severanceMultipliersPre2001.find(r => totalYearsInt >= r.min);
+        let baseSeverance = row
+            ? Math.round(avgMonthlyPay * row.multiplier)
+            : Math.round(avgMonthlyPay * preciseYears); // 1년 미만 fallback (이미 위에서 걸러짐)
+        let method = row
+            ? `단체협약 별표 적용 (×${row.multiplier}개월)`
+            : `법정 퇴직금 (평균임금 × ${yearsDisplay})`;
 
         // 2015.06.30 이전 입사자: 퇴직수당 가산 (정수 연수로 구간 판정, 정밀 연수로 금액 계산)
         let addon = 0;

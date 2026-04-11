@@ -29,7 +29,7 @@ const SALARY_PARSER = (() => {
     /가족수당/, /연차보전수당/, /법정공휴일수당/, /자격수당/,
     /학술수당/, /학비보조/, /포상금/, /성과연봉/, /격려금/,
     /육아기근로시간단축/, /무급난임휴가/, /무급생휴공제/,
-    /자기계발별정수당/, /별정수당5/
+    /무급가족돌봄휴가/, /자기계발별정수당/, /별정수당5/
   ];
 
   const DEDUCTION_PATTERNS = [
@@ -53,7 +53,7 @@ const SALARY_PARSER = (() => {
   };
 
   // ── PDF 글로벌 그리드용 필터 ──
-  const GRID_SUMMARY_RE = /급여총액|공제총액|실지급액|총지급액|총공제액|차인지급액/;
+  const GRID_SUMMARY_RE = /급여총액|공제총액|실지급액|총지급액|총공제액|차인지급액|지급계|공제계/;
   const GRID_STATS_NAMES = new Set([
     '총근로시간', '시간외근무시간', '야간근무시간', '통상근로시간',
     '휴일근무시간', '야간근로시간', '주휴시간', '통상야근시간',
@@ -87,7 +87,7 @@ const SALARY_PARSER = (() => {
   function isAmount(val) {
     if (val === null || val === undefined) return false;
     const s = String(val).trim();
-    return /^[\d,]+$/.test(s) && !s.includes('.') && s.length >= 1;
+    return /^-?[\d,]+$/.test(s) && !s.includes('.') && s.length >= 1;
   }
 
   function isItemName(text, patterns) {
@@ -203,6 +203,10 @@ const SALARY_PARSER = (() => {
       for (let c = 0; c < row.length; c++) {
         const cell = String(row[c] || '').trim();
         if (!meta.payPeriod && cell.includes('년') && cell.includes('월분')) meta.payPeriod = cell;
+        if (!meta.payslipType && cell.includes('급여명세서')) {
+          const tm = cell.match(/급여명세서\s*\(([^)]+)\)/);
+          meta.payslipType = tm ? tm[1] : '급여';
+        }
         if (!meta.payDate && (cell.includes('급여지급일') || cell.includes('지급일'))) {
           const adjacent = [cell, String(row[c+1] || ''), String(row[c+2] || '')];
           for (const s of adjacent) {
@@ -247,8 +251,8 @@ const SALARY_PARSER = (() => {
     return {
       employeeInfo,
       metadata,
-      salaryItems: salaryItems.filter(i => i.amount > 0),
-      deductionItems: deductionItems.filter(i => i.amount > 0),
+      salaryItems: salaryItems.filter(i => i.amount !== 0),
+      deductionItems: deductionItems.filter(i => i.amount !== 0),
       summary: {
         grossPay,
         totalDeduction,
@@ -389,6 +393,10 @@ const SALARY_PARSER = (() => {
       if (m) { metadata.payDate = m[1].replace(/\./g, '-'); break; }
     }
 
+    // 명세서 유형 감지 (소급분, 연차수당 등)
+    const typeMatch = fullText.match(/급여명세서\s*\(([^)]+)\)/);
+    metadata.payslipType = typeMatch ? typeMatch[1] : '급여';
+
     // ── 글로벌 그리드 빈(bin) 매핑: 항목 추출 ──
     // SNUH 급여명세서 = 11열 × 6행 고정 그리드
     // 첫 이름행(항상 11열)의 x좌표로 열 경계를 정의하고,
@@ -411,7 +419,7 @@ const SALARY_PARSER = (() => {
 
     function isAmountRow(row) {
       if (row.length === 0) return false;
-      const numItems = row.filter(it => /^[\d,.]+$/.test(it.str) && it.str.replace(/[,.]/g, '').length >= 1);
+      const numItems = row.filter(it => /^-?[\d,.]+$/.test(it.str) && it.str.replace(/[-,.]/g, '').length >= 1);
       return numItems.length >= 1 && numItems.length >= row.length * 0.4;
     }
 
@@ -460,7 +468,7 @@ const SALARY_PARSER = (() => {
         // 금액 → 글로벌 열 매핑
         const amtByCol = new Map();
         amts.forEach(it => {
-          if (!/^[\d,.]+$/.test(it.str)) return;
+          if (!/^-?[\d,.]+$/.test(it.str)) return;
           const col = findGlobalCol(grid, it.x + it.w / 2);
           amtByCol.set(col, parseAmount(it.str));
         });
@@ -538,6 +546,19 @@ const SALARY_PARSER = (() => {
         merged.push(cur);
         return merged;
       });
+      // 2.5-pass: 단독 "-" + 숫자 병합 (PDF가 마이너스 부호를 별도 텍스트로 렌더링하는 경우)
+      rows = rows.map(row => {
+        const merged = [];
+        for (let i = 0; i < row.length; i++) {
+          if (row[i].str === '-' && i + 1 < row.length && /^[\d,]+$/.test(row[i + 1].str)) {
+            merged.push({ str: '-' + row[i + 1].str, x: row[i].x, y: row[i].y, w: (row[i + 1].x + row[i + 1].w) - row[i].x });
+            i++; // skip next
+          } else {
+            merged.push(row[i]);
+          }
+        }
+        return merged;
+      });
       console.log('[PayslipParser] 2-pass 그리드 기반 재병합 완료: ' + rows.length + '행');
 
       // ── 3-pass: 패턴 기반 연결 항목명 분리 ──
@@ -548,9 +569,11 @@ const SALARY_PARSER = (() => {
       const knownNames = allKnownPatterns
         .map(p => p.source.replace(/\\\(/g, '(').replace(/\\\)/g, ')'))
         .join('|').split('|')
-        .filter(s => s.length >= 2 && !/[.*+?^${}()[\]\\]/.test(s)) // 순수 문자열만
+        .filter(s => s.length >= 2 && !/[.*+?^${}[\]\\|]/.test(s)) // 순수 문자열만 (괄호는 허용)
         .sort((a, b) => b.length - a.length);
-      const splitItemRe = new RegExp('(' + knownNames.join('|') + ')', 'g');
+      // 괄호를 regex 이스케이프하여 리터럴 매칭
+      const escaped = knownNames.map(s => s.replace(/[()]/g, c => '\\' + c));
+      const splitItemRe = new RegExp('(' + escaped.join('|') + ')', 'g');
 
       let splitCount = 0;
       rows = rows.map(row => {
@@ -594,6 +617,7 @@ const SALARY_PARSER = (() => {
       salAmtRows = separated.amtRows;
       console.log('[PayslipParser] 지급 분리: 이름행 ' + salNameRows.length + ', 금액행 ' + salAmtRows.length);
       salaryItems = extractByGlobalGrid(globalGrid, salNameRows, salAmtRows);
+      console.table(salaryItems.map(i => ({ 이름: i.name, 금액: i.amount, 열: i.col, 행: i.row })));
     }
 
     let deductionItems = [];
@@ -607,11 +631,12 @@ const SALARY_PARSER = (() => {
       const separated = separateAndMerge(deductionAnchorRow, deductionEnd);
       console.log('[PayslipParser] 공제 분리: 이름행 ' + separated.nameRows.length + ', 금액행 ' + separated.amtRows.length);
       deductionItems = extractByGlobalGrid(globalGrid, separated.nameRows, separated.amtRows);
+      console.table(deductionItems.map(i => ({ 이름: i.name, 금액: i.amount, 열: i.col, 행: i.row })));
     }
 
-    // 0원 항목 제거
-    salaryItems = salaryItems.filter(i => i.amount > 0);
-    deductionItems = deductionItems.filter(i => i.amount > 0);
+    // 0원 항목 제거 (음수는 유지: 무급가족돌봄휴가 등)
+    salaryItems = salaryItems.filter(i => i.amount !== 0);
+    deductionItems = deductionItems.filter(i => i.amount !== 0);
 
     // ── 총액 추출: 글로벌 그리드로 급여총액/공제총액/실지급액 정확 매핑 ──
     let grossPay = 0, totalDeduction = 0, netPay = 0;
@@ -628,7 +653,7 @@ const SALARY_PARSER = (() => {
           summaryTargets.forEach(target => {
             if (!target.re.test(nameItem.str)) return;
             salAmtRows[r].forEach(amtItem => {
-              if (!/^[\d,]+$/.test(amtItem.str)) return;
+              if (!/^-?[\d,]+$/.test(amtItem.str)) return;
               const amtCol = findGlobalCol(globalGrid, amtItem.x + amtItem.w / 2);
               if (amtCol === nameCol) target.set(parseAmount(amtItem.str));
             });
@@ -650,12 +675,49 @@ const SALARY_PARSER = (() => {
     console.log('[PayslipParser] 총액 검증: 공제 ' + calcDed + '=' + totalDeduction + (Math.abs(calcDed - totalDeduction) <= 1 ? ' ✅' : ' ❌ 차이=' + (calcDed - totalDeduction)));
     console.log('[PayslipParser] 총액: 급여=' + grossPay + ', 공제=' + totalDeduction + ', 실지급=' + netPay);
 
+    // ── 신뢰도 점수 계산 ──
+    function calcConfidence(opts) {
+      let score = 0;
+      if (opts.salaryAnchor) score += 20;
+      if (opts.deductionAnchor) score += 10;
+      if (opts.gridBuilt) score += 20;
+      if (opts.salaryCount > 0) score += 15;
+      if (opts.deductionCount > 0) score += 15;
+      if (opts.grossMatch) score += 10;
+      if (opts.deductionMatch) score += 10;
+      return Math.min(score, 100);
+    }
+
+    const grossMatch = grossPay > 0 && Math.abs(calcGross - grossPay) <= 1;
+    const dedMatch = totalDeduction > 0 && Math.abs(calcDed - totalDeduction) <= 1;
+    const confidence = calcConfidence({
+      salaryAnchor: salaryAnchorRow >= 0,
+      deductionAnchor: deductionAnchorRow >= 0,
+      gridBuilt: !!globalGrid,
+      salaryCount: salaryItems.length,
+      deductionCount: deductionItems.length,
+      grossMatch,
+      deductionMatch: dedMatch,
+    });
+
+    const buildParseInfo = (method, conf) => ({
+      method,
+      confidence: conf,
+      gridCols: globalGrid ? globalGrid.length : 0,
+      anchorFound: { salary: salaryAnchorRow >= 0, deduction: deductionAnchorRow >= 0 },
+      grossDiff: calcGross - grossPay,
+      deductionDiff: calcDed - totalDeduction,
+    });
+
+    console.log('[PayslipParser] 신뢰도: ' + confidence + '/100 (method=globalGrid)');
+
     // ── fallback: 글로벌 그리드 매칭 실패 시 parsePDFText 시도 ──
     if (salaryItems.length === 0 && deductionItems.length === 0) {
       console.warn('[PayslipParser] 글로벌 그리드 매칭 실패 → parsePDFText fallback');
       const fallback = parsePDFText(fullText);
       fallback.employeeInfo = Object.keys(employeeInfo).length > 0 ? employeeInfo : fallback.employeeInfo;
       fallback.metadata = Object.keys(metadata).length > 0 ? metadata : fallback.metadata;
+      fallback._parseInfo = buildParseInfo('textFallback', Math.min(confidence, 40));
       return fallback;
     }
 
@@ -667,6 +729,7 @@ const SALARY_PARSER = (() => {
       if (grossPay > 0 && Math.abs(fbGross - grossPay) < Math.abs(calcGross - grossPay)) {
         fallback.employeeInfo = Object.keys(employeeInfo).length > 0 ? employeeInfo : fallback.employeeInfo;
         fallback.metadata = Object.keys(metadata).length > 0 ? metadata : fallback.metadata;
+        fallback._parseInfo = buildParseInfo('textFallback', Math.min(confidence, 50));
         return fallback;
       }
     }
@@ -676,7 +739,8 @@ const SALARY_PARSER = (() => {
       metadata,
       salaryItems,
       deductionItems,
-      summary: { grossPay, totalDeduction, netPay }
+      summary: { grossPay, totalDeduction, netPay },
+      _parseInfo: buildParseInfo('globalGrid', confidence),
     };
   }
 
@@ -747,7 +811,7 @@ const SALARY_PARSER = (() => {
     // 토큰화: 괄호 포함 항목명을 하나로 유지
     const tokens = text.match(/\S+(?:\([^)]*\))?/g) || [];
 
-    function isAmt(t) { return /^[\d,]+$/.test(t) && t.replace(/,/g, '').length >= 4; }
+    function isAmt(t) { return /^-?[\d,]+$/.test(t) && t.replace(/[-,]/g, '').length >= 4; }
     function matchP(t, pats) { return pats.some(function(p) { return p.test(t); }); }
 
     const salaryItems = [];
@@ -780,7 +844,7 @@ const SALARY_PARSER = (() => {
           if (isAmt(tokens[j])) { amt = parseAmount(tokens[j]); idx = j; break; }
           if (matchP(tokens[j], allPatterns)) break;
         }
-        if (amt > 0) {
+        if (amt !== 0) {
           if (isSal) salaryItems.push({ name: mName, amount: amt });
           else if (isDed) deductionItems.push({ name: mName, amount: amt });
         }
@@ -835,17 +899,25 @@ const SALARY_PARSER = (() => {
   }
 
   // ── localStorage 월별 저장/불러오기 ──
-  function storageKey(year, month) {
-    return `payslip_${year}_${String(month).padStart(2, '0')}`;
+  function storageKey(year, month, type) {
+    const base = `payslip_${year}_${String(month).padStart(2, '0')}`;
+    return (type && type !== '급여') ? `${base}_${type}` : base;
   }
 
-  function saveMonthlyData(year, month, data) {
-    const key = storageKey(year, month);
+  function saveMonthlyData(year, month, data, type) {
+    const key = storageKey(year, month, type);
     localStorage.setItem(key, JSON.stringify({ ...data, savedAt: new Date().toISOString() }));
+    if (window.SyncManager) window.SyncManager.enqueuePush('payslip', year, month);
+    // 급여 유형 저장 완료 시 ImprovementAgent 자동 실행
+    if (!type || type === '급여') {
+      if (typeof PayrollImprovementAgent !== 'undefined') {
+        setTimeout(() => PayrollImprovementAgent.runOnActualUpload(year, month), 0);
+      }
+    }
   }
 
-  function loadMonthlyData(year, month) {
-    const key = storageKey(year, month);
+  function loadMonthlyData(year, month, type) {
+    const key = storageKey(year, month, type);
     try { return JSON.parse(localStorage.getItem(key)); } catch { return null; }
   }
 
@@ -854,8 +926,8 @@ const SALARY_PARSER = (() => {
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
       if (k && k.startsWith('payslip_')) {
-        const m = k.match(/payslip_(\d{4})_(\d{2})/);
-        if (m) months.push({ year: parseInt(m[1]), month: parseInt(m[2]), key: k });
+        const m = k.match(/payslip_(\d{4})_(\d{2})(?:_(.+))?$/);
+        if (m) months.push({ year: parseInt(m[1]), month: parseInt(m[2]), type: m[3] || '급여', key: k });
       }
     }
     return months.sort((a, b) => b.year - a.year || b.month - a.month);
@@ -865,11 +937,12 @@ const SALARY_PARSER = (() => {
   function parsePeriodYearMonth(data) {
     const period = data.metadata?.payPeriod || '';
     const m = period.match(/(\d{4})년\s*(\d{1,2})월/);
-    if (m) return { year: parseInt(m[1]), month: parseInt(m[2]) };
+    const type = data.metadata?.payslipType || '급여';
+    if (m) return { year: parseInt(m[1]), month: parseInt(m[2]), type };
     // fallback: payDate
     const d = data.metadata?.payDate || '';
     const dm = d.match(/(\d{4})-(\d{2})/);
-    if (dm) return { year: parseInt(dm[1]), month: parseInt(dm[2]) };
+    if (dm) return { year: parseInt(dm[1]), month: parseInt(dm[2]), type };
     return null;
   }
 
@@ -923,6 +996,11 @@ const SALARY_PARSER = (() => {
           profile.numChildren = estimated.numChildren;
           changed = true;
           applied.push({ name, amount: totalFamilyPay, note: `가족${estimated.numFamily}·자녀${estimated.numChildren} 추정` });
+        } else {
+          // 역산 실패해도 금액은 저장 → 급여 예상에서 활용
+          profile.familyAllowancePay = totalFamilyPay;
+          changed = true;
+          applied.push({ name, amount: totalFamilyPay, note: '⚠️ 가족수/자녀수 자동추정 실패 — 내 정보에서 직접 입력해주세요' });
         }
         break;
       }
