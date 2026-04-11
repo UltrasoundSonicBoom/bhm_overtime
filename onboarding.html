@@ -628,7 +628,7 @@
           <path d="M12 5v14M19 12l-7 7-7-7" />
         </svg>
       </div>
-      <div class="scroll-hint-end" onclick="window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})">
+      <div class="scroll-hint-end" onclick="(function(){var sections=document.querySelectorAll('.section');var last=sections[sections.length-1];last.scrollIntoView({behavior:'smooth',block:'start'});})()">
         끝으로
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" width="16" height="16">
           <path d="M5 12h14M12 5l7 7-7 7" />
@@ -709,9 +709,9 @@
             <span style="color:var(--accent-emerald); font-weight:800; font-size:13px;">24일</span>
           </div>
           <div class="lv-progress-bar">
-            <div class="lv-progress-fill" style="width:0%;"></div>
+            <div class="lv-progress-fill" style="width:20.8%;"></div>
           </div>
-          <div style="font-size:11px; color:var(--muted); font-weight:700;">0/24일 사용</div>
+          <div style="font-size:11px; color:var(--muted); font-weight:700;">5/24일 사용</div>
         </div>
         <div class="lv-stat-item">
           <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -729,19 +729,19 @@
             <span style="color:var(--accent-emerald); font-weight:800; font-size:13px;">3일</span>
           </div>
           <div class="lv-progress-bar">
-            <div class="lv-progress-fill" style="width:0%;"></div>
+            <div class="lv-progress-fill" style="width:66.7%;"></div>
           </div>
-          <div style="font-size:11px; color:var(--muted); font-weight:700;">0/3일 사용</div>
+          <div style="font-size:11px; color:var(--muted); font-weight:700;">2/3일 사용</div>
         </div>
         <div class="lv-stat-item">
           <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-weight:700; font-size:14px;">병원필수교육</span>
+            <span style="font-weight:700; font-size:14px;">병원 필수</span>
             <span style="color:var(--accent-emerald); font-weight:800; font-size:13px;">3일</span>
           </div>
           <div class="lv-progress-bar">
-            <div class="lv-progress-fill" style="width:0%;"></div>
+            <div class="lv-progress-fill" style="width:33.3%;"></div>
           </div>
-          <div style="font-size:11px; color:var(--muted); font-weight:700;">0/3일 사용</div>
+          <div style="font-size:11px; color:var(--muted); font-weight:700;">1/3일 사용</div>
         </div>
       </div>
     </div>
@@ -871,7 +871,7 @@
       <p class="feat-desc reveal d1" style="color:var(--ink); opacity:0.6;">설치 없이, 웹에서 바로.</p>
       <div class="cta-group reveal d2">
         <a href="./index.html?app=1" class="cta-primary">시작하기 &rarr;</a>
-        <a href="./index.html?app=1&tutorial=1" class="cta-secondary">&#x1f393; 사용법 익히기 [튜토리얼]</a>
+        <a href="./tutorial.html" class="cta-secondary">&#x1f393; 사용법 익히기 [튜토리얼]</a>
       </div>
     </div>
     <div class="footer-text">만든 사람: 김계환 (핵의학과)</div>
