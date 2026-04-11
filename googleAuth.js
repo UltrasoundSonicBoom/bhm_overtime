@@ -14,12 +14,11 @@
 //   window.GoogleAuth.hasScope(scope) — 특정 scope 보유 여부
 
 // GCP Console에서 발급받은 OAuth 2.0 Client ID
-// https://console.cloud.google.com/apis/credentials
-var GOOGLE_CLIENT_ID = '914163950802-vov9iusqqaj0139g06ccbo4q8pp6dcbl.apps.googleusercontent.com';
-
-// ── 베타 플래그 ──
-// false: 일반 사용자에게 Google 연결 버튼 숨김 (개발 완료 후 true로 변경)
-var GOOGLE_AUTH_ENABLED = false;
+// 운영 도메인 기준 client id를 사용하되, 리뷰 모드에서만 UI 노출
+// 실제 값은 config.js에서 주입
+var CONFIG = window.BHM_CONFIG || {};
+var GOOGLE_CLIENT_ID = CONFIG.googleClientId || 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
+var GOOGLE_AUTH_ENABLED = CONFIG.googleAuthEnabled !== false;
 
 // ── bhm_settings 유틸 ──
 // 기기 수준 설정 (Google sub, 동기화 설정 등)
@@ -55,7 +54,37 @@ window.GoogleAuth = (function () {
 
   var SCOPE_BASE = 'openid email profile';
   var SCOPE_DRIVE = 'https://www.googleapis.com/auth/drive.appdata';
-  var SCOPE_CALENDAR = 'https://www.googleapis.com/auth/calendar';
+  var SCOPE_CALENDAR = CONFIG.googleCalendarScope || 'https://www.googleapis.com/auth/calendar.app.created';
+
+  function _showToast(msg) {
+    var toast = document.getElementById('otToast');
+    if (!toast) return;
+    toast.textContent = msg;
+    toast.style.display = 'block';
+    clearTimeout(toast._hideTimer);
+    toast._hideTimer = setTimeout(function () { toast.style.display = 'none'; }, 4000);
+  }
+
+  function _isLocalhost() {
+    return location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  }
+
+  function isReviewModeActive() {
+    if (!CONFIG.reviewModeEnabled) return true;
+    if (CONFIG.allowLocalhostInReviewMode && _isLocalhost()) return true;
+    var params = new URLSearchParams(window.location.search);
+    return params.get(CONFIG.reviewQueryParam || 'google_beta') === String(CONFIG.reviewQueryValue || '1');
+  }
+
+  function shouldExposeGoogleAuth() {
+    return GOOGLE_AUTH_ENABLED && isReviewModeActive();
+  }
+
+  function isAllowlistedEmail(email) {
+    if (!CONFIG.allowlistEnabled) return true;
+    var list = CONFIG.allowlistEmails || [];
+    return !!email && list.indexOf(email) !== -1;
+  }
 
   // ── 내부 헬퍼 ──
   function _isTokenValid() {
@@ -111,6 +140,16 @@ window.GoogleAuth = (function () {
     }
 
     fetchUserInfo(_accessToken).then(function (userInfo) {
+      if (!isAllowlistedEmail(userInfo.email)) {
+        _clearUser();
+        updateAuthUI(null);
+        if (typeof updateDriveBackupUI === 'function') updateDriveBackupUI();
+        if (typeof updateCalendarUI === 'function') updateCalendarUI();
+        _showToast('현재 Google 연동은 리뷰/QA 계정만 사용할 수 있어요.');
+        if (onError) onError('not_allowlisted');
+        return;
+      }
+
       _saveUser(userInfo);
       updateAuthUI(userInfo);
       if (onSuccess) onSuccess(userInfo);
@@ -122,8 +161,8 @@ window.GoogleAuth = (function () {
 
   // ── init ──
   function init() {
-    // 베타 플래그: 일반 사용자에게 Google 연결 버튼 숨김
-    if (!GOOGLE_AUTH_ENABLED) {
+    // 리뷰 모드가 아니면 Google 연결 UI 자체를 숨김
+    if (!shouldExposeGoogleAuth()) {
       var authContainer = document.getElementById('authContainer');
       if (authContainer) authContainer.style.display = 'none';
       return;
@@ -152,7 +191,7 @@ window.GoogleAuth = (function () {
 
     // 저장된 사용자 정보로 UI 복원 (token은 없지만 이름/아바타 표시)
     var settings = loadSettings();
-    if (settings.googleSub) {
+    if (settings.googleSub && isAllowlistedEmail(settings.googleEmail)) {
       updateAuthUI({
         sub: settings.googleSub,
         email: settings.googleEmail,
@@ -160,12 +199,19 @@ window.GoogleAuth = (function () {
         picture: settings.googlePicture
       });
     } else {
+      if (settings.googleSub && !isAllowlistedEmail(settings.googleEmail)) {
+        _clearUser();
+      }
       updateAuthUI(null);
     }
   }
 
   // ── signIn ──
   function signIn() {
+    if (!shouldExposeGoogleAuth()) {
+      _showToast('현재 Google 연동은 리뷰 모드에서만 열려 있어요.');
+      return;
+    }
     if (!_tokenClient) {
       console.warn('[GoogleAuth] init()가 먼저 호출되어야 합니다.');
       return;
@@ -283,6 +329,9 @@ window.GoogleAuth = (function () {
     requestDriveScope: requestDriveScope,
     requestCalendarScope: requestCalendarScope,
     hasScope: hasScope,
+    isReviewModeActive: isReviewModeActive,
+    shouldExposeGoogleAuth: shouldExposeGoogleAuth,
+    isAllowlistedEmail: isAllowlistedEmail,
     // 테스트용 내부 접근
     _fetchUserInfo: fetchUserInfo
   };

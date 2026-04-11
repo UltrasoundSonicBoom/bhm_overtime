@@ -17,6 +17,7 @@ window.GoogleCalendarSync = (function () {
   var CALENDAR_NAME = 'SNUH Mate 휴가';
   var BHM_SOURCE = 'bhm_overtime';
   var BHM_VERSION = '1';
+  var CONFIG = window.BHM_CONFIG || {};
 
   // 전용 캘린더 ID 캐시 (bhm_settings.calendarId 에도 저장)
   var _calendarId = null;
@@ -42,8 +43,18 @@ window.GoogleCalendarSync = (function () {
     return !!settings.calendarEnabled;
   }
 
-  // ── 전용 캘린더 확보 (없으면 생성) ──
+  function _getCalendarMode() {
+    return CONFIG.googleCalendarMode || 'appCreatedCalendar';
+  }
+
+  // ── 캘린더 확보 ──
+  // primary 모드: 기본 캘린더 사용
+  // appCreatedCalendar 모드: 앱이 만든 secondary calendar 사용
   function ensureDedicatedCalendar() {
+    if (_getCalendarMode() === 'primary') {
+      return Promise.resolve('primary');
+    }
+
     // 설정에 저장된 캘린더 ID 먼저 확인
     var settings = window.loadSettings ? window.loadSettings() : {};
     if (_calendarId) return Promise.resolve(_calendarId);
@@ -52,35 +63,20 @@ window.GoogleCalendarSync = (function () {
       return Promise.resolve(_calendarId);
     }
 
-    // 캘린더 목록 조회 → "SNUH Mate 휴가" 찾기
+    // app.created 최소 권한 전략: 목록 조회 대신 앱 전용 캘린더를 생성하고 ID를 보관한다.
     return _withToken(function () {
-      return fetch(CALENDAR_API + '/users/me/calendarList', { headers: _headers() });
-    }).then(function (r) {
-      if (!r.ok) throw new Error('calendarList ' + r.status);
-      return r.json();
-    }).then(function (data) {
-      var existing = (data.items || []).find(function (c) { return c.summary === CALENDAR_NAME; });
-      if (existing) {
-        _calendarId = existing.id;
-        if (window.saveSettings) window.saveSettings({ calendarId: _calendarId });
-        return _calendarId;
-      }
-
-      // 없으면 새 캘린더 생성
-      return _withToken(function () {
-        return fetch(CALENDAR_API + '/calendars', {
-          method: 'POST',
-          headers: _headers(),
-          body: JSON.stringify({ summary: CALENDAR_NAME, timeZone: 'Asia/Seoul' })
-        });
-      }).then(function (r) {
-        if (!r.ok) throw new Error('createCalendar ' + r.status);
-        return r.json();
-      }).then(function (cal) {
-        _calendarId = cal.id;
-        if (window.saveSettings) window.saveSettings({ calendarId: _calendarId });
-        return _calendarId;
+      return fetch(CALENDAR_API + '/calendars', {
+        method: 'POST',
+        headers: _headers(),
+        body: JSON.stringify({ summary: CALENDAR_NAME, timeZone: 'Asia/Seoul' })
       });
+    }).then(function (r) {
+      if (!r.ok) throw new Error('createCalendar ' + r.status);
+      return r.json();
+    }).then(function (cal) {
+      _calendarId = cal.id;
+      if (window.saveSettings) window.saveSettings({ calendarId: _calendarId });
+      return _calendarId;
     });
   }
 

@@ -110,6 +110,7 @@ Allow: /index.html
 Allow: /regulation.html
 Allow: /onboarding.html
 Allow: /privacy.html
+Allow: /terms.html
 Allow: /style.css
 Allow: /logo.png
 Allow: /snuhmaterect.png

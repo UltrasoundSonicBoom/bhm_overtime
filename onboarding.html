@@ -480,6 +480,47 @@
       font-weight: 600;
     }
 
+    .legal-card {
+      width: 100%;
+      max-width: 420px;
+      margin-top: 18px;
+      padding: 16px 18px;
+      background: rgba(255, 255, 255, 0.92);
+      border: var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow-sm);
+      text-align: center;
+    }
+
+    .legal-card-title {
+      font-size: 15px;
+      font-weight: 800;
+      margin-bottom: 6px;
+      color: var(--ink);
+    }
+
+    .legal-card-desc {
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .legal-links {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .legal-links a {
+      color: var(--violet);
+      font-size: 13px;
+      font-weight: 800;
+      text-decoration: underline;
+    }
+
     /* ── Color bar (payroll) ── */
     .color-bar {
       display: flex;
@@ -872,6 +913,16 @@
       <div class="cta-group reveal d2">
         <a href="./index.html?app=1" class="cta-primary">시작하기 &rarr;</a>
         <a href="./tutorial.html" class="cta-secondary">&#x1f393; 사용법 익히기 [튜토리얼]</a>
+      </div>
+      <div class="legal-card reveal d3">
+        <div class="legal-card-title">SNUH 메이트는 의료기관 종사자의 휴가, 시간외, 급여 분석을 돕는 웹 서비스입니다.</div>
+        <div class="legal-card-desc">
+          Google 연동 기능은 선택적으로 제공되며, 사용자의 데이터는 본인 기기 또는 본인 Google 계정에 저장되도록 설계되어 있습니다.
+        </div>
+        <div class="legal-links">
+          <a href="./privacy.html">개인정보처리방침</a>
+          <a href="./terms.html">서비스 약관</a>
+        </div>
       </div>
     </div>
     <div class="footer-text">만든 사람: 김계환 (핵의학과)</div>
