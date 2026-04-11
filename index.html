@@ -377,7 +377,7 @@
   <!-- ═══════════ Header & Footer (shared-layout.js에서 렌더) ═══════════ -->
   <header id="sharedHeader"></header>
   <nav id="sharedFooter"></nav>
-  <script src="shared-layout.js?v=1.0"></script>
+  <script src="shared-layout.js?v=1.1"></script>
 
   <main class="main">
 
@@ -492,6 +492,7 @@
         <button class="pay-bookmark-tab active" data-subtab="pay-payslip">급여명세서 관리</button>
         <button class="pay-bookmark-tab" data-subtab="pay-calc">급여 예상</button>
         <button class="pay-bookmark-tab" data-subtab="pay-qa">급여 계산</button>
+        <button class="pay-bookmark-tab" data-subtab="pay-retirement">퇴직금</button>
       </nav>
       <div class="pay-tab-accent" id="payTabAccent"></div>
 
@@ -681,6 +682,28 @@
       <div class="sub-content" id="sub-pay-qa">
         <div id="qaCardsContainer"></div>
       </div><!-- /sub-pay-qa -->
+
+      <!-- ── 서브탭 5: 퇴직금 ── -->
+      <div class="sub-content" id="sub-pay-retirement">
+        <div class="card" style="margin-bottom:16px;">
+          <div style="font-size:var(--text-title-large); font-weight:700; margin-bottom:8px;">💼 퇴직금 계산기</div>
+          <div style="font-size:var(--text-body-normal); color:var(--text-muted); margin-bottom:16px;">
+            근속연수별 퇴직금·퇴직수당 계산, 임금피크제 비교, 사학연금 안내까지 한 번에 확인하세요.
+          </div>
+          <a href="retirement.html" class="btn btn-primary" style="display:block; text-align:center; text-decoration:none; padding:12px;">
+            퇴직금 계산기 열기 →
+          </a>
+        </div>
+        <div class="card" style="background:var(--bg-glass);">
+          <div style="font-size:var(--text-body-normal); font-weight:600; margin-bottom:8px;">📌 주요 기능</div>
+          <ul style="font-size:var(--text-body-small); color:var(--text-secondary); margin:0; padding-left:16px; line-height:2;">
+            <li>근속연수별 퇴직금 자동 계산</li>
+            <li>퇴직수당 (2015.6.30 이전 입사자)</li>
+            <li>임금피크제 옵션 A / B 비교</li>
+            <li>사학연금 수령액 안내 및 시뮬레이션 링크</li>
+          </ul>
+        </div>
+      </div><!-- /sub-pay-retirement -->
     </div><!-- /tab-payroll -->
 
     <!-- ═══════════ ⏰ 시간외·온콜 관리 ═══════════ -->
@@ -1369,15 +1392,15 @@
   <script src="data.js?v=1.3"></script>
   <script src="calculators.js?v=1.4"></script>
   <script src="holidays.js?v=1.2"></script>
-  <script src="profile.js?v=1.3"></script>
-  <script src="overtime.js?v=1.1"></script>
-  <script src="leave.js?v=1.1"></script>
+  <script src="profile.js?v=1.4"></script>
+  <script src="overtime.js?v=1.2"></script>
+  <script src="leave.js?v=1.2"></script>
   <script src="payroll.js?v=1.4"></script>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-  <script src="salary-parser.js?v=2.3"></script>
+  <script src="salary-parser.js?v=2.4"></script>
   <script src="salary-parser-test.js?v=1.0"></script>
   <script src="payroll-views.js?v=1.0"></script>
-  <script src="app.js?v=1.8"></script>
+  <script src="app.js?v=1.9"></script>
   <script>
     // ── 테마 전환 시스템 ──
     (function initTheme() {

@@ -1811,17 +1811,14 @@ function renderPayEstDetail() {
         </div>`;
     }
   }
-}
 
   // ── 시간외·온콜 상세 내역 (기록이 있을 때) ──
   let otSummary = '';
   if (otStats.recordCount > 0) {
     const records = OVERTIME.getMonthRecords(payEstYear, payEstMonth);
-    const profile = PROFILE.load();
     const hourlyRate = r.시급 || 0;
     const rates = DATA.allowances.overtimeRates;
 
-    // 시간외 기록별 breakdown 합산
     let totalExt = 0, totalNgt = 0, totalHol = 0, totalHolNgt = 0;
     records.forEach(rec => {
       if (rec.type === 'overtime' || rec.type === 'oncall_callout') {
@@ -1842,36 +1839,25 @@ function renderPayEstDetail() {
     const transportPay = otStats.byType.oncall_callout.count * DATA.allowances.onCallTransport;
 
     let otRows = '';
-
-    // 시간외 근무
     if (otStats.byType.overtime.count > 0) {
       otRows += `<div class="pe-ot-category-title">시간외근무 ${otStats.byType.overtime.count}건</div>`;
     }
-
-    // 연장
     if (totalExt > 0) {
       otRows += `<div class="pe-item-row"><div class="pe-item-name">연장 ${totalExt.toFixed(1)}h × ${fmtW(hourlyRate)} × 150%</div><div class="pe-item-amount">${fmtW(extPay)}</div></div>`;
     }
-    // 야간
     if (totalNgt > 0) {
       otRows += `<div class="pe-item-row"><div class="pe-item-name">야간 ${totalNgt.toFixed(1)}h × ${fmtW(hourlyRate)} × 200%</div><div class="pe-item-amount">${fmtW(ngtPay)}</div></div>`;
     }
-    // 휴일
     if (totalHol > 0) {
       otRows += `<div class="pe-item-row"><div class="pe-item-name">휴일 ${totalHol.toFixed(1)}h × ${fmtW(hourlyRate)} × 150~200%</div><div class="pe-item-amount">${fmtW(holPay)}</div></div>`;
     }
-    // 휴일야간
     if (totalHolNgt > 0) {
       otRows += `<div class="pe-item-row"><div class="pe-item-name">휴일야간 ${totalHolNgt.toFixed(1)}h × ${fmtW(hourlyRate)} × 200%</div><div class="pe-item-amount">${fmtW(holNgtPay)}</div></div>`;
     }
-
-    // 온콜대기
     if (otStats.byType.oncall_standby.count > 0) {
       otRows += `<div class="pe-ot-category-title">온콜대기 ${otStats.byType.oncall_standby.count}일</div>`;
       otRows += `<div class="pe-item-row"><div class="pe-item-name">대기수당 ${otStats.byType.oncall_standby.count}일 × ${fmtW(DATA.allowances.onCallStandby)}</div><div class="pe-item-amount">${fmtW(standbyPay)}</div></div>`;
     }
-
-    // 온콜출근
     if (otStats.byType.oncall_callout.count > 0) {
       otRows += `<div class="pe-ot-category-title">온콜출근 ${otStats.byType.oncall_callout.count}건</div>`;
       otRows += `<div class="pe-item-row"><div class="pe-item-name">교통비 ${otStats.byType.oncall_callout.count}건 × ${fmtW(DATA.allowances.onCallTransport)}</div><div class="pe-item-amount">${fmtW(transportPay)}</div></div>`;
@@ -1892,7 +1878,7 @@ function renderPayEstDetail() {
   const yearly = calcYearlyEstimate(payEstYear);
   let yearSummary = '';
   if (yearly && yearly.length > 0) {
-    const totalNet = yearly.reduce((a, r) => a + r.net, 0);
+    const totalNet = yearly.reduce((a, rr) => a + rr.net, 0);
     const avgNet = Math.round(totalNet / yearly.length);
     const maxR = yearly.reduce((a, b) => a.net > b.net ? a : b);
     const minR = yearly.reduce((a, b) => a.net < b.net ? a : b);
@@ -1935,26 +1921,32 @@ function renderPayEstDetail() {
   const curToggle = el.querySelector('.pe-detail-toggle .active');
   const activeView = curToggle ? curToggle.dataset.view : 'pay';
 
+  // 실제 데이터 있을 때 합계 소스: 실제, 없으면 예상
+  const grossTotal = hasActual ? actualData.summary.grossPay : r.급여총액;
+  const dedTotal = hasActual ? actualData.summary.totalDeduction : r.공제총액;
+  const payLabel = hasActual ? '지급 내역' : '예상 지급 내역';
+  const dedLabel = hasActual ? '공제 내역' : '예상 공제 내역';
+
   el.innerHTML = `
     <div class="pe-section-card">
       <nav class="pe-detail-toggle">
-        <button class="pe-toggle-btn ${activeView === 'pay' ? 'active' : ''}" data-view="pay">예상 지급 내역</button>
-        <button class="pe-toggle-btn ${activeView === 'ded' ? 'active' : ''}" data-view="ded">예상 공제 내역</button>
+        <button class="pe-toggle-btn ${activeView === 'pay' ? 'active' : ''}" data-view="pay">${payLabel}</button>
+        <button class="pe-toggle-btn ${activeView === 'ded' ? 'active' : ''}" data-view="ded">${dedLabel}</button>
       </nav>
       <div class="pe-detail-pane ${activeView === 'pay' ? 'active' : ''}" id="peDetailPay">
         ${payRows}
         <div class="pe-item-row pe-total-row">
           <div class="pe-item-name">지급 합계</div>
-          <div class="pe-item-amount">${fmtW(r.급여총액)}</div>
+          <div class="pe-item-amount">${fmtW(grossTotal)}</div>
         </div>
       </div>
       <div class="pe-detail-pane ${activeView === 'ded' ? 'active' : ''}" id="peDetailDed">
         ${dedRows}
         <div class="pe-item-row pe-total-row">
           <div class="pe-item-name">공제 합계</div>
-          <div class="pe-item-amount ded">${fmtW(r.공제총액)}</div>
+          <div class="pe-item-amount ded">${fmtW(dedTotal)}</div>
         </div>
-        <div class="pe-ded-note">소득세·주민세는 간이세액표 기반 근사치입니다.<br>사학연금부담금, 노동조합비 등 개인별 공제는 미반영.</div>
+        ${!hasActual ? `<div class="pe-ded-note">소득세·주민세는 간이세액표 기반 근사치입니다.<br>사학연금부담금, 노동조합비 등 개인별 공제는 미반영.</div>` : ''}
       </div>
     </div>
     ${otSummary}
@@ -1970,6 +1962,189 @@ function renderPayEstDetail() {
     });
   });
 }
+
+// ── 비교 행 렌더링 (2층: 실제금액 + 예상/차이) ──
+// item: {name, estimated, actual, diff, isNew, isMissing, reason}
+// isDeduction: 공제 항목이면 true (빨간 색상)
+function buildCompareRow(item, isDeduction) {
+  const { name, estimated, actual, diff, isNew, isMissing, reason } = item;
+
+  // 미지급 항목: 예상에만 있음
+  if (isMissing) {
+    return `
+      <div class="pe-item-row pe-cmp-row pe-cmp-missing">
+        <div class="pe-cmp-left">
+          <span class="pe-item-name pe-cmp-name-muted">${escapeHtml(name)}</span>
+          <span class="pe-cmp-badge pe-cmp-badge-missing">미지급</span>
+        </div>
+        <div class="pe-cmp-right">
+          <span class="pe-cmp-actual pe-cmp-muted">—</span>
+          <span class="pe-cmp-meta">예상 ${fmtW(estimated)}</span>
+          ${reason ? `<span class="pe-cmp-reason">${escapeHtml(reason)}</span>` : ''}
+        </div>
+      </div>`;
+  }
+
+  const diffSign = diff >= 0 ? '+' : '';
+  const diffClass = diff > 0 ? 'pe-cmp-up' : diff < 0 ? 'pe-cmp-down' : 'pe-cmp-zero';
+  const amountClass = isDeduction ? 'pe-item-amount ded' : 'pe-item-amount';
+  const hasDiff = Math.abs(diff) >= 1000;
+
+  // 신규 항목: 실제에만 있음
+  if (isNew) {
+    return `
+      <div class="pe-item-row pe-cmp-row pe-cmp-new">
+        <div class="pe-cmp-left">
+          <span class="pe-item-name">${escapeHtml(name)}</span>
+          <span class="pe-cmp-badge pe-cmp-badge-new">신규</span>
+        </div>
+        <div class="pe-cmp-right">
+          <span class="${amountClass}">${fmtW(actual)}</span>
+          ${reason ? `<span class="pe-cmp-reason">${escapeHtml(reason)}</span>` : ''}
+        </div>
+      </div>`;
+  }
+
+  // 공통 항목: 실제 + 차이
+  return `
+    <div class="pe-item-row pe-cmp-row">
+      <div class="pe-cmp-left">
+        <span class="pe-item-name">${escapeHtml(name)}</span>
+      </div>
+      <div class="pe-cmp-right">
+        <span class="${amountClass}">${fmtW(actual)}</span>
+        ${hasDiff
+          ? `<span class="pe-cmp-diff ${diffClass}">${diffSign}${fmtW(diff)}</span>
+             <span class="pe-cmp-meta">예상 ${fmtW(estimated)}</span>`
+          : `<span class="pe-cmp-zero-mark">예상일치</span>`
+        }
+        ${reason && hasDiff ? `<span class="pe-cmp-reason">${escapeHtml(reason)}</span>` : ''}
+      </div>
+    </div>`;
+}
+
+// ══════════════════════════════════════════════
+// ██ PayrollImprovementAgent
+// 실제 급여 데이터 업로드 시 자동 호출:
+//  1. 비교 데이터 누적 저장 (payroll_compare_history)
+//  2. 프로필 자동 보정 (안정적 항목 + 실제값으로 업데이트)
+// ══════════════════════════════════════════════
+const PayrollImprovementAgent = (() => {
+  'use strict';
+
+  const HISTORY_KEY = 'payroll_compare_history';
+
+  function load() {
+    try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; } catch { return []; }
+  }
+
+  function save(data) {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(data));
+  }
+
+  // 비교 데이터 누적 저장
+  function record(year, month, estimated, actual) {
+    const items = buildPayComparison(
+      estimated.지급내역 || {}, actual.salaryItems || [], year, month,
+      getMonthFlags(year, month)
+    );
+    const dedItems = buildPayComparison(
+      estimated.공제내역 || {}, actual.deductionItems || [], year, month,
+      getMonthFlags(year, month)
+    );
+
+    const history = load();
+    // 같은 월 데이터는 덮어쓰기
+    const idx = history.findIndex(h => h.year === year && h.month === month);
+    const entry = {
+      year, month,
+      savedAt: new Date().toISOString(),
+      netDiff: (actual.summary?.netPay || 0) - (estimated.실지급액 || 0),
+      grossDiff: (actual.summary?.grossPay || 0) - (estimated.급여총액 || 0),
+      items: items.map(i => ({ name: i.name, estimated: i.estimated, actual: i.actual, diff: i.diff })),
+      dedItems: dedItems.map(i => ({ name: i.name, estimated: i.estimated, actual: i.actual, diff: i.diff })),
+    };
+    if (idx >= 0) history[idx] = entry; else history.unshift(entry);
+    // 최근 24개월만 보관
+    save(history.slice(0, 24));
+    return entry;
+  }
+
+  // 프로필 자동 보정
+  // 실제 명세서에서 확인된 항목 → 프로필 필드에 반영
+  // 반환: {changed: bool, applied: [{name, from, to}]}
+  function applyToProfile(year, month) {
+    const actual = typeof SALARY_PARSER !== 'undefined'
+      ? SALARY_PARSER.loadMonthlyData(year, month, '급여')
+      : null;
+    if (!actual) return { changed: false, applied: [] };
+
+    const profile = PROFILE.load() || {};
+    const applied = [];
+
+    // SALARY_PARSER의 기존 안정 항목 반영 로직 위임
+    const base = SALARY_PARSER.applyStableItemsToProfile(actual);
+    if (base.changed) {
+      base.applied.forEach(a => applied.push({ name: a.name, note: a.note }));
+    }
+
+    // 추가: 실제 명세서에서 예상과 차이 나는 항목 중 프로필 보정 가능한 것
+    const payMap = {};
+    (actual.salaryItems || []).forEach(i => { payMap[i.name] = i.amount; });
+
+    // 조정급 계열 (adjustPay)
+    const adjNames = ['조정급', '승급조정급', '조정수당'];
+    for (const n of adjNames) {
+      if (payMap[n] && payMap[n] > 0 && payMap[n] !== (parseInt(profile.adjustPay) || 0)) {
+        applied.push({ name: n, from: profile.adjustPay, to: payMap[n] });
+        profile.adjustPay = payMap[n];
+      }
+    }
+
+    // 직책수당 (positionPay)
+    const poNames = ['직책수당', '직책급'];
+    for (const n of poNames) {
+      if (payMap[n] && payMap[n] > 0 && payMap[n] !== (parseInt(profile.positionPay) || 0)) {
+        applied.push({ name: n, from: profile.positionPay, to: payMap[n] });
+        profile.positionPay = payMap[n];
+        break;
+      }
+    }
+
+    // 업무보조비 (workSupportPay)
+    if (payMap['업무보조비'] && payMap['업무보조비'] > 0 && payMap['업무보조비'] !== (parseInt(profile.workSupportPay) || 0)) {
+      applied.push({ name: '업무보조비', from: profile.workSupportPay, to: payMap['업무보조비'] });
+      profile.workSupportPay = payMap['업무보조비'];
+    }
+
+    if (applied.length > 0) {
+      PROFILE.save(profile);
+      if (typeof PROFILE.applyToForm === 'function' && typeof PROFILE_FIELDS !== 'undefined') {
+        PROFILE.applyToForm(profile, PROFILE_FIELDS);
+      }
+    }
+
+    return { changed: applied.length > 0, applied };
+  }
+
+  // 실제 데이터 업로드 완료 시 호출 (salary-parser.js의 저장 후 hook)
+  // year, month 에 해당하는 실제+예상 데이터를 비교·저장·보정
+  function runOnActualUpload(year, month) {
+    const actual = typeof SALARY_PARSER !== 'undefined'
+      ? SALARY_PARSER.loadMonthlyData(year, month, '급여')
+      : null;
+    if (!actual) return;
+
+    const est = calcMonthEstimate(year, month);
+    if (!est) return;
+
+    record(year, month, est.result, actual);
+    const result = applyToProfile(year, month);
+    return result;
+  }
+
+  return { record, applyToProfile, runOnActualUpload, load };
+})();
 
 // 지급 항목별 계산 근거 설명
 function getItemDesc(name, year, month, est) {
