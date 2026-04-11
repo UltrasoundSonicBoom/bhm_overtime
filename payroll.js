@@ -92,11 +92,10 @@ const PAYROLL = {
           : '<span class="ot-auto-badge ot-auto-manual">직접 입력</span>';
         var makeStepInput = function(id, val, max) {
           return '<div class="ot-step-wrap">'
-            + '<button type="button" class="ot-step-btn" onclick="PAYROLL._otStep(\'' + id + '\',-0.25)">−</button>'
+            + '<button type="button" class="ot-step-btn" onclick="PAYROLL._otStep(\'' + id + '\',-0.25,\'overtimeCalc\')" onmousedown="event.preventDefault()">−</button>'
             + '<input type="number" id="' + id + '" value="' + val + '" min="0" max="' + max + '" step="0.25"'
-            + ' oninput="PAYROLL.recalc(\'overtimeCalc\')"'
-            + ' onchange="PAYROLL.recalc(\'overtimeCalc\')">'
-            + '<button type="button" class="ot-step-btn" onclick="PAYROLL._otStep(\'' + id + '\',0.25)">+</button>'
+            + ' oninput="PAYROLL.recalc(\'overtimeCalc\')">'
+            + '<button type="button" class="ot-step-btn" onclick="PAYROLL._otStep(\'' + id + '\',0.25,\'overtimeCalc\')" onmousedown="event.preventDefault()">+</button>'
             + '</div>';
         };
         return '<div class="ot-input-header">' + autoTag + '</div>'
@@ -146,7 +145,11 @@ const PAYROLL = {
       renderInput() {
         return '<div class="form-group" style="margin-top:12px;">'
           + '<label>이번 달 야간근무 횟수</label>'
-          + '<input type="number" id="qaNightCount" value="7" min="0" max="15" onchange="PAYROLL.recalc(\'nightShift\')">'
+          + '<div class="ot-step-wrap">'
+          + '<button type="button" class="ot-step-btn" onclick="PAYROLL._otStep(\'qaNightCount\',-1,\'nightShift\')" onmousedown="event.preventDefault()">−</button>'
+          + '<input type="number" id="qaNightCount" value="7" min="0" max="15" step="1" oninput="PAYROLL.recalc(\'nightShift\')">'
+          + '<button type="button" class="ot-step-btn" onclick="PAYROLL._otStep(\'qaNightCount\',1,\'nightShift\')" onmousedown="event.preventDefault()">+</button>'
+          + '</div>'
           + '</div>';
       },
       getInputs() {
@@ -182,18 +185,27 @@ const PAYROLL = {
         };
       },
       renderInput() {
-        return '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px;">'
-          + '<div class="form-group"><label>대기 일수</label>'
-          + '<input type="number" id="qaOncallStandby" value="1" min="0" max="7" onchange="PAYROLL.recalc(\'oncall\')"></div>'
-          + '<div class="form-group"><label>출근 횟수</label>'
-          + '<input type="number" id="qaOncallCallouts" value="1" min="0" max="7" onchange="PAYROLL.recalc(\'oncall\')"></div>'
-          + '<div class="form-group"><label>실 근무시간</label>'
-          + '<input type="number" id="qaOncallHours" value="2" min="0" max="12" onchange="PAYROLL.recalc(\'oncall\')"></div>'
-          + '<div class="form-group"><label style="font-size:12px;">야간 포함</label>'
-          + '<select id="qaOncallNight" onchange="PAYROLL.recalc(\'oncall\')" style="padding:8px; border:1.5px solid var(--border); border-radius:8px; font-size:var(--text-body-normal); background:var(--bg-card);">'
+        return '<div style="margin-top:12px;">'
+          + '<div class="ot-input-grid" style="margin-bottom:8px;">'
+          + '<div class="ot-input-item"><div class="ot-input-label">대기 일수</div>'
+          + '<div class="ot-step-wrap"><button type="button" class="ot-step-btn" onclick="PAYROLL._otStep(\'qaOncallStandby\',-1,\'oncall\')" onmousedown="event.preventDefault()">−</button>'
+          + '<input type="number" id="qaOncallStandby" value="1" min="0" max="7" step="1" oninput="PAYROLL.recalc(\'oncall\')">'
+          + '<button type="button" class="ot-step-btn" onclick="PAYROLL._otStep(\'qaOncallStandby\',1,\'oncall\')" onmousedown="event.preventDefault()">+</button></div></div>'
+          + '<div class="ot-input-item"><div class="ot-input-label">출근 횟수</div>'
+          + '<div class="ot-step-wrap"><button type="button" class="ot-step-btn" onclick="PAYROLL._otStep(\'qaOncallCallouts\',-1,\'oncall\')" onmousedown="event.preventDefault()">−</button>'
+          + '<input type="number" id="qaOncallCallouts" value="1" min="0" max="7" step="1" oninput="PAYROLL.recalc(\'oncall\')">'
+          + '<button type="button" class="ot-step-btn" onclick="PAYROLL._otStep(\'qaOncallCallouts\',1,\'oncall\')" onmousedown="event.preventDefault()">+</button></div></div>'
+          + '<div class="ot-input-item"><div class="ot-input-label">실 근무시간</div>'
+          + '<div class="ot-step-wrap"><button type="button" class="ot-step-btn" onclick="PAYROLL._otStep(\'qaOncallHours\',-0.25,\'oncall\')" onmousedown="event.preventDefault()">−</button>'
+          + '<input type="number" id="qaOncallHours" value="2" min="0" max="12" step="0.25" oninput="PAYROLL.recalc(\'oncall\')">'
+          + '<button type="button" class="ot-step-btn" onclick="PAYROLL._otStep(\'qaOncallHours\',0.25,\'oncall\')" onmousedown="event.preventDefault()">+</button></div>'
+          + '<div class="ot-input-hint">15분 단위</div></div>'
+          + '<div class="ot-input-item"><div class="ot-input-label">야간 포함</div>'
+          + '<select id="qaOncallNight" oninput="PAYROLL.recalc(\'oncall\')" style="padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:var(--text-body-normal);background:var(--bg-card);width:100%;">'
           + '<option value="0">아니오 (150%)</option>'
           + '<option value="1">예 (200%)</option>'
           + '</select></div>'
+          + '</div>'
           + '</div>';
       },
       getInputs() {
@@ -229,7 +241,11 @@ const PAYROLL = {
       renderInput() {
         return '<div class="form-group" style="margin-top:12px;">'
           + '<label>이번 달 일직/숙직 횟수</label>'
-          + '<input type="number" id="qaDutyCount" value="1" min="1" max="10" onchange="PAYROLL.recalc(\'dutyPay\')">'
+          + '<div class="ot-step-wrap">'
+          + '<button type="button" class="ot-step-btn" onclick="PAYROLL._otStep(\'qaDutyCount\',-1,\'dutyPay\')" onmousedown="event.preventDefault()">−</button>'
+          + '<input type="number" id="qaDutyCount" value="1" min="1" max="10" step="1" oninput="PAYROLL.recalc(\'dutyPay\')">'
+          + '<button type="button" class="ot-step-btn" onclick="PAYROLL._otStep(\'qaDutyCount\',1,\'dutyPay\')" onmousedown="event.preventDefault()">+</button>'
+          + '</div>'
           + '</div>';
       },
       getInputs() {
@@ -425,7 +441,7 @@ const PAYROLL = {
         } catch(e) {}
         return '<div class="form-group" style="margin-top:12px;">'
           + '<label>잔여 연차 일수 <span style="color:var(--text-muted);font-size:11px;">(자동계산 · 수정 가능)</span></label>'
-          + '<input type="number" id="qaUnusedDays" value="' + remaining + '" min="0" max="30" step="0.5" onchange="PAYROLL.recalc(\'unusedLeave\')">'
+          + '<input type="number" id="qaUnusedDays" value="' + remaining + '" min="0" max="30" step="0.5" oninput="PAYROLL.recalc(\'unusedLeave\')">'
           + '</div>';
       },
       getInputs() {
@@ -467,7 +483,7 @@ const PAYROLL = {
       renderInput() {
         return '<div class="form-group" style="margin-top:12px;">'
           + '<label>육아휴직 개월수</label>'
-          + '<input type="number" id="qaParentalMonths" value="12" min="1" max="18" onchange="PAYROLL.recalc(\'parentalLeave\')">'
+          + '<input type="number" id="qaParentalMonths" value="12" min="1" max="18" oninput="PAYROLL.recalc(\'parentalLeave\')">'
           + '</div>';
       },
       getInputs() {
@@ -876,20 +892,10 @@ const PAYROLL = {
             html += '<p style="color:var(--accent-amber);font-size:13px;font-weight:600;">내 정보를 먼저 저장해주세요. <a onclick="switchToProfileTab()" style="color:var(--accent-indigo);cursor:pointer;text-decoration:underline;">내 정보 설정 →</a></p>';
           } else if (result) {
             if (card.renderInput) html += card.renderInput();
-            html += '<div class="qa-card-result">';
-            html += '<div class="result-value">' + result.value + '</div>';
-            html += '<div class="result-label">' + result.label + '</div>';
+            // 결과 영역: id 부여해서 부분 업데이트 가능하게
+            html += '<div id="qa-result-' + card.id + '">';
+            html += PAYROLL._buildResultHTML(result);
             html += '</div>';
-            if (result.details && result.details.length > 0) {
-              result.details.forEach(function(d) {
-                // 구분선 행 처리 ('─'로 시작하면 섹션 헤더)
-                if (d.key && d.key.startsWith('─')) {
-                  html += '<div style="font-size:10px;font-weight:800;letter-spacing:0.06em;color:var(--text-muted);text-transform:uppercase;padding:10px 0 4px;">' + d.key.replace(/─/g,'').trim() + '</div>';
-                } else {
-                  html += '<div class="result-row"><span class="key">' + d.key + '</span><span class="val">' + d.val + '</span></div>';
-                }
-              });
-            }
           }
           html += '</div>';
         }
@@ -949,13 +955,34 @@ const PAYROLL = {
     return html;
   },
 
-  // +/− 버튼용 스텝 조절
-  _otStep(id, delta) {
+  // 결과 영역 HTML 생성 (init에서 호출)
+  _buildResultHTML(result) {
+    if (!result) return '';
+    var html = '<div class="qa-card-result">';
+    html += '<div class="result-value">' + result.value + '</div>';
+    html += '<div class="result-label">' + result.label + '</div>';
+    if (result.details && result.details.length) {
+      html += '<div style="margin-top:10px;">';
+      result.details.forEach(function(d) {
+        html += '<div class="result-row"><span class="key">' + d.key + '</span><span class="val">' + d.val + '</span></div>';
+      });
+      html += '</div>';
+    }
+    html += '</div>';
+    return html;
+  },
+
+  // +/− 버튼용 스텝 조절 (cardId 파라미터 추가, min/max 준수)
+  _otStep(id, delta, cardId) {
     var el = document.getElementById(id);
     if (!el) return;
     var val = Math.round(((parseFloat(el.value) || 0) + delta) * 4) / 4;
-    el.value = Math.max(0, val);
-    PAYROLL.recalc('overtimeCalc');
+    var minV = parseFloat(el.getAttribute('min'));
+    var maxV = parseFloat(el.getAttribute('max'));
+    if (!isNaN(minV)) val = Math.max(minV, val);
+    if (!isNaN(maxV)) val = Math.min(maxV, val);
+    el.value = val;
+    PAYROLL.recalc(cardId || 'overtimeCalc');
   },
 
   toggle(cardId) {
@@ -963,7 +990,15 @@ const PAYROLL = {
     this.init();
   },
 
+  // 입력값 보존 방식으로 재계산: init() 전후 입력값 스냅샷/복원
   recalc(cardId) {
+    var snapshot = {};
+    var els = document.querySelectorAll('#qaCardsContainer input, #qaCardsContainer select');
+    els.forEach(function(el) { if (el.id) snapshot[el.id] = el.value; });
     this.init();
+    Object.keys(snapshot).forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.value = snapshot[id];
+    });
   }
 };
