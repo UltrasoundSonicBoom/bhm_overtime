@@ -299,53 +299,104 @@ const PAYROLL = {
     {
       id: 'annualLeave', category: 'leave',
       icon: '🏖️', title: '내 연차 몇 일?',
-      desc: '입사일 기준 올해 연차 일수',
+      desc: '발생·사용·잔여 연차 현황',
       calc(profile, wage) {
         if (!profile.hireDate) return { value: '입사일 필요', label: '프로필에 입사일을 입력하세요', details: [] };
         var parsed = PROFILE.parseDate(profile.hireDate);
         if (!parsed) return { value: '입사일 오류', label: '', details: [] };
         var r = CALC.calcAnnualLeave(new Date(parsed));
+        var details = [
+          { key: '입사일', val: parsed },
+          { key: '근속', val: r.diffYears >= 1 ? r.diffYears + '년차' : r.diffMonths + '개월' },
+          { key: '발생 연차', val: r.totalLeave + '일' },
+        ];
+        // LEAVE 모듈에서 사용/잔여 연차 연동
+        if (typeof LEAVE !== 'undefined') {
+          var year = new Date().getFullYear();
+          var summary = LEAVE.calcAnnualSummary(year, r.totalLeave);
+          details.push({ key: '사용 연차', val: summary.usedAnnual + '일' });
+          details.push({ key: '잔여 연차', val: Math.max(0, summary.remainingAnnual) + '일' });
+          if (summary.timeLeaveHours > 0) {
+            details.push({ key: '시간차 포함', val: summary.timeLeaveHours + 'h (' + summary.timeLeaveDays + '일)' });
+          }
+        }
+        details.push({ key: '근거', val: '보수규정 제36조' });
+        var remaining = typeof LEAVE !== 'undefined'
+          ? Math.max(0, LEAVE.calcAnnualSummary(new Date().getFullYear(), r.totalLeave).remainingAnnual)
+          : r.totalLeave;
         return {
-          value: r.totalLeave + '일',
+          value: r.totalLeave + '일 (잔여 ' + remaining + '일)',
           label: r.explanation,
-          details: [
-            { key: '입사일', val: parsed },
-            { key: '근속', val: r.diffYears >= 1 ? r.diffYears + '년차' : r.diffMonths + '개월' },
-            { key: '연차일수', val: r.totalLeave + '일' },
-            { key: '근거', val: '보수규정 제36조' }
-          ]
+          details: details
         };
       }
     },
     {
       id: 'unusedLeave', category: 'leave',
       icon: '💰', title: '미사용 연차 보상금',
-      desc: '시급 \u00d7 8h \u00d7 잔여일수',
+      desc: '시급 × 8h × 잔여연차(자동계산)',
       hasInput: true,
+      _calcRemaining(profile) {
+        // 발생연차 - 사용연차 = 잔여연차 (LEAVE 모듈 연동)
+        try {
+          if (!profile || !profile.hireDate) return { total: 0, used: 0, remaining: 0 };
+          var parsed = PROFILE.parseDate(profile.hireDate);
+          if (!parsed) return { total: 0, used: 0, remaining: 0 };
+          var r = CALC.calcAnnualLeave(new Date(parsed));
+          var year = new Date().getFullYear();
+          if (typeof LEAVE !== 'undefined') {
+            var summary = LEAVE.calcAnnualSummary(year, r.totalLeave);
+            return {
+              total: r.totalLeave,
+              used: summary.usedAnnual,
+              remaining: Math.max(0, summary.remainingAnnual)
+            };
+          }
+          return { total: r.totalLeave, used: 0, remaining: r.totalLeave };
+        } catch(e) { return { total: 0, used: 0, remaining: 0 }; }
+      },
       calc(profile, wage, inputs) {
-        var days = inputs.days || 1;
+        var lr = this._calcRemaining(profile);
+        var days = inputs.days != null ? inputs.days : lr.remaining;
+        if (days === 0 && lr.remaining === 0) days = 1; // fallback
         var daily = Math.round(wage.hourlyRate * 8);
         var total = daily * days;
+        var details = [];
+        if (lr.total > 0) {
+          details.push({ key: '발생 연차', val: lr.total + '일' });
+          details.push({ key: '사용 연차', val: lr.used + '일' });
+          details.push({ key: '잔여 연차', val: lr.remaining + '일 (자동 계산)' });
+        }
+        details.push({ key: '시급', val: CALC.formatCurrency(wage.hourlyRate) });
+        details.push({ key: '1일 금액 (시급×8h)', val: CALC.formatCurrency(daily) });
+        details.push({ key: '보상 일수', val: days + '일' });
+        details.push({ key: '합계', val: CALC.formatNumber(daily) + ' × ' + days + '일 = ' + CALC.formatCurrency(total) });
         return {
           value: CALC.formatCurrency(total),
           label: '미사용 연차 ' + days + '일 보상금',
-          details: [
-            { key: '시급', val: CALC.formatCurrency(wage.hourlyRate) },
-            { key: '1일 금액 (시급\u00d78h)', val: CALC.formatCurrency(daily) },
-            { key: '잔여일수', val: days + '일' },
-            { key: '합계', val: CALC.formatNumber(daily) + ' \u00d7 ' + days + '일 = ' + CALC.formatCurrency(total) }
-          ]
+          details: details
         };
       },
       renderInput() {
+        var remaining = 0;
+        try {
+          var p = PROFILE.load();
+          if (p) remaining = this._calcRemaining(p).remaining;
+        } catch(e) {}
         return '<div class="form-group" style="margin-top:12px;">'
-          + '<label>잔여 연차 일수</label>'
-          + '<input type="number" id="qaUnusedDays" value="5" min="1" max="30" onchange="PAYROLL.recalc(\'unusedLeave\')">'
+          + '<label>잔여 연차 일수 <span style="color:var(--text-muted);font-size:11px;">(자동계산 · 수정 가능)</span></label>'
+          + '<input type="number" id="qaUnusedDays" value="' + remaining + '" min="0" max="30" step="0.5" onchange="PAYROLL.recalc(\'unusedLeave\')">'
           + '</div>';
       },
       getInputs() {
         var el = document.getElementById('qaUnusedDays');
-        return { days: el ? parseInt(el.value) || 1 : 1 };
+        if (el) return { days: parseFloat(el.value) || 0 };
+        // 입력 DOM 없으면 자동계산값 반환
+        try {
+          var p = PROFILE.load();
+          if (p) return { days: this._calcRemaining(p).remaining };
+        } catch(e) {}
+        return { days: null };
       }
     },
     {
@@ -421,18 +472,25 @@ const PAYROLL = {
     {
       id: 'promotionDate', category: 'career',
       icon: '📊', title: '몇 년도에 승진?',
-      desc: '자동승격 예상일 타임라인',
+      desc: '직급 시작일 기준 자동승격 예상일',
       calc(profile, wage) {
         if (!profile.hireDate) return { value: '입사일 필요', label: '프로필에 입사일을 입력하세요', details: [] };
         var parsed = PROFILE.parseDate(profile.hireDate);
         if (!parsed) return { value: '입사일 오류', label: '', details: [] };
-        var r = CALC.calcPromotionDate(profile.jobType, profile.grade, new Date(parsed));
+
+        // 직급 시작일 = 명세서 이력에서 호봉1 최초 등장 월 → 없으면 호봉으로 역산 → 없으면 입사일
+        var gradeStart = PAYROLL._getGradeStartDate(profile);
+        var gradeStartSource = gradeStart.source;
+        var gradeStartDate = gradeStart.date;
+
+        var r = CALC.calcPromotionDate(profile.jobType, profile.grade, gradeStartDate);
         if (r.message) return { value: '해당없음', label: r.message, details: [] };
         var isPast = r.남은일수 === 0;
         return {
           value: isPast ? '이미 도래' : 'D-' + r.남은일수,
           label: r.label,
           details: [
+            { key: '현재 직급 시작일', val: gradeStartDate.toISOString().split('T')[0] + ' (' + gradeStartSource + ')' },
             { key: '소요 연수', val: r.소요연수 },
             { key: '예상 승격일', val: r.예상승격일 },
             { key: '남은 일수', val: isPast ? '이미 도래' : r.남은일수 + '일' }
@@ -509,6 +567,35 @@ const PAYROLL = {
       }
     },
     {
+      id: 'gradeHistory', category: 'career',
+      icon: '🗂️', title: '직급·호봉 이력',
+      desc: '명세서 기반 승진·호봉 변경 자동 감지',
+      calc(profile, wage) {
+        var history = PAYROLL._buildGradeHistory();
+        if (history.length === 0) {
+          return {
+            value: '명세서 없음',
+            label: '급여명세서를 업로드하면 이력이 자동 생성됩니다',
+            details: [{ key: '안내', val: '명세서 탭에서 PDF를 업로드하세요' }]
+          };
+        }
+        var latest = history[history.length - 1];
+        var promotions = history.filter(function(h) { return h.isPromotion; });
+        var details = history.map(function(h) {
+          var tag = h.isPromotion ? ' 🎉 승진' : (h.isYearUp ? ' ↑호봉' : '');
+          return { key: h.year + '년 ' + h.month + '월', val: h.grade + '-' + h.step + tag };
+        });
+        details.push({ key: '총 승진', val: promotions.length + '회' });
+        details.push({ key: '현재', val: latest.grade + '-' + latest.step + ' (' + latest.year + '년 ' + latest.month + '월 명세서 기준)' });
+        return {
+          value: latest.grade + '-' + latest.step,
+          label: '최근 명세서 기준 직급 · 총 ' + promotions.length + '회 승진',
+          details: details
+        };
+      }
+    },
+
+    {
       id: 'welfarePoint', category: 'welfare',
       icon: '🎫', title: '내 복지포인트',
       desc: '근속연수 기반 (1P=1,000원)',
@@ -532,6 +619,79 @@ const PAYROLL = {
   ],
 
   expandedCard: null,
+
+  // ── 명세서 이력에서 직급(grade)-호봉(step) 변화 타임라인 생성 ──
+  _buildGradeHistory() {
+    var result = [];
+    if (typeof SALARY_PARSER === 'undefined') return result;
+    try {
+      var months = SALARY_PARSER.listSavedMonths();
+      // 날짜 오름차순 정렬
+      months.sort(function(a, b) { return (a.year * 12 + a.month) - (b.year * 12 + b.month); });
+      var prevGrade = null, prevStep = null;
+      months.forEach(function(m) {
+        var data = SALARY_PARSER.loadMonthlyData(m.year, m.month, m.type);
+        if (!data) return;
+        var pg = (data.employeeInfo && data.employeeInfo.payGrade) || (data.metadata && data.metadata.payGrade);
+        if (!pg) return;
+        var gm = pg.match(/([A-Za-z]+\d+)\s*-\s*(\d+)/);
+        if (!gm) return;
+        var grade = gm[1].toUpperCase();
+        var step = parseInt(gm[2]) || 1;
+        var isPromotion = prevGrade !== null && grade !== prevGrade;
+        var isYearUp = prevStep !== null && !isPromotion && step !== prevStep;
+        // 변화가 있거나 첫 항목이면 기록
+        if (prevGrade === null || isPromotion || isYearUp) {
+          result.push({ year: m.year, month: m.month, grade: grade, step: step, isPromotion: isPromotion, isYearUp: isYearUp });
+        }
+        prevGrade = grade;
+        prevStep = step;
+      });
+    } catch(e) {}
+    return result;
+  },
+
+  // ── 현재 직급 시작일 추정 ──
+  // 우선순위: 1) 명세서에서 현재 grade 호봉=1 최초 등장월  2) 호봉으로 역산  3) 입사일
+  _getGradeStartDate(profile) {
+    var fallbackDate = null;
+    if (profile.hireDate) {
+      var p = PROFILE.parseDate(profile.hireDate);
+      if (p) fallbackDate = new Date(p);
+    }
+
+    // Method 1: 명세서 이력에서 현재 grade + step=1 최초 등장 월
+    if (typeof SALARY_PARSER !== 'undefined') {
+      try {
+        var months = SALARY_PARSER.listSavedMonths();
+        months.sort(function(a, b) { return (a.year * 12 + a.month) - (b.year * 12 + b.month); });
+        for (var i = 0; i < months.length; i++) {
+          var m = months[i];
+          var data = SALARY_PARSER.loadMonthlyData(m.year, m.month, m.type);
+          if (!data) continue;
+          var pg = (data.employeeInfo && data.employeeInfo.payGrade) || (data.metadata && data.metadata.payGrade);
+          if (!pg) continue;
+          var gm = pg.match(/([A-Za-z]+\d+)\s*-\s*(\d+)/);
+          if (!gm) continue;
+          var grade = gm[1].toUpperCase();
+          var step = parseInt(gm[2]) || 1;
+          if (grade === profile.grade && step === 1) {
+            return { date: new Date(m.year, m.month - 1, 1), source: '명세서 자동감지' };
+          }
+        }
+      } catch(e) {}
+    }
+
+    // Method 2: 호봉(year)으로 역산 — 호봉=N이면 약 N-1년 전에 직급 시작
+    if (profile.year && profile.year > 1) {
+      var d = new Date();
+      d.setFullYear(d.getFullYear() - (profile.year - 1));
+      return { date: d, source: '호봉 역산 (추정)' };
+    }
+
+    // Method 3: 입사일 fallback
+    return { date: fallbackDate || new Date(), source: '입사일 기준' };
+  },
 
   init() {
     var container = document.getElementById('qaCardsContainer');
