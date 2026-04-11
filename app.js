@@ -283,6 +283,7 @@ document.querySelectorAll('#tab-payroll .pay-bookmark-tab').forEach(tab => {
     if (name === 'pay-payslip') renderPayPayslip();
     if (name === 'pay-calc') { initPayEstimate(); if (typeof PAYROLL !== 'undefined') PAYROLL.init(); }
     if (name === 'pay-qa') { if (typeof PAYROLL !== 'undefined') PAYROLL.init(); }
+    if (name === 'pay-retirement') initRetirementTab();
   });
 });
 
@@ -2185,6 +2186,214 @@ function getDeductionDesc(name, r) {
 function initPayEstimate() {
   renderPayEstHero();
   renderPayEstDetail();
+}
+
+// ═══════════ 💼 퇴직금 계산기 (임베드) ═══════════
+
+var RET_RATES = [
+  [1,1],[2,2],[3,3],[4,4.5],[5,7.5],[6,9],[7,10.5],[8,12],[9,13.5],
+  [10,15.5],[11,17],[12,18.5],[13,20],[14,22],[15,24],[16,25.5],[17,27],
+  [18,28.5],[19,30.5],[20,33],[21,35],[22,37],[23,39],[24,41],[25,42.5],
+  [26,44],[27,45.5],[28,47],[29,49.5],[30,52.5]
+];
+var RET_SEVERANCE_RATES = [
+  [1,5,0.10],[5,10,0.35],[10,15,0.45],[15,20,0.50],[20,999,0.60]
+];
+
+function retGetRateForYears(years) {
+  var floored = Math.floor(years);
+  if (floored < 1) return 0;
+  for (var i = 0; i < RET_RATES.length; i++) {
+    if (RET_RATES[i][0] === floored) return RET_RATES[i][1];
+  }
+  return RET_RATES[RET_RATES.length - 1][1] + (floored - 30) * 2.5;
+}
+
+function retGetSeveranceRate(years) {
+  var floored = Math.floor(years);
+  for (var i = 0; i < RET_SEVERANCE_RATES.length; i++) {
+    var r = RET_SEVERANCE_RATES[i];
+    if (floored >= r[0] && floored < r[1]) return r[2];
+  }
+  return 0;
+}
+
+function retFmt(n) { return Math.round(n).toLocaleString('ko-KR') + '원'; }
+
+function calcRetirementEmbedded() {
+  var wage = parseFloat(document.getElementById('retAvgWage').value) || 0;
+  var hireDateVal = document.getElementById('retHireDate').value;
+  var retireDateVal = document.getElementById('retRetireDate').value;
+  if (!wage || !hireDateVal || !retireDateVal) {
+    alert('월 평균임금, 입사일, 퇴직일을 모두 입력해 주세요.'); return;
+  }
+  var hire = new Date(hireDateVal);
+  var retire = new Date(retireDateVal);
+  if (retire <= hire) { alert('퇴직일이 입사일보다 늦어야 합니다.'); return; }
+
+  var diffMs = retire - hire;
+  var totalYears = diffMs / (1000 * 60 * 60 * 24 * 365.25);
+
+  var hasPre2001 = hire < new Date('2001-08-31');
+  document.getElementById('retPre2001Warning').style.display = hasPre2001 ? 'block' : 'none';
+
+  var rate = retGetRateForYears(totalYears);
+  var severancePay = wage * rate;
+
+  var isPre2015 = hire <= new Date('2015-06-30');
+  var checkRow = document.getElementById('retSeveranceCheckRow');
+  checkRow.style.display = isPre2015 ? 'flex' : 'none';
+  var includeSeverance = isPre2015 && document.getElementById('retSeveranceCheck').checked;
+  var severanceAllowance = 0;
+  if (includeSeverance) {
+    severanceAllowance = wage * Math.floor(totalYears) * retGetSeveranceRate(totalYears);
+  }
+  var total = severancePay + severanceAllowance;
+
+  var resultDiv = document.getElementById('retCalcResult');
+  resultDiv.style.display = 'block';
+  document.getElementById('retCalcResultTotal').textContent = retFmt(total);
+
+  var breakdown = document.getElementById('retCalcResultBreakdown');
+  breakdown.innerHTML = '';
+  function addRow(label, value, isTotal) {
+    var div = document.createElement('div');
+    div.className = 'ret-result-row' + (isTotal ? ' total' : '');
+    div.innerHTML = '<span>' + label + '</span><span style="font-weight:600">' + value + '</span>';
+    breakdown.appendChild(div);
+  }
+  addRow('근속연수', Math.floor(totalYears) + '년 ' + Math.floor((totalYears % 1) * 12) + '개월', false);
+  addRow('월 평균임금', retFmt(wage), false);
+  addRow('퇴직금 지급률', rate + '개월치', false);
+  addRow('퇴직금', retFmt(severancePay), false);
+  if (includeSeverance) {
+    addRow('퇴직수당 비율', Math.round(retGetSeveranceRate(totalYears) * 100) + '%', false);
+    addRow('퇴직수당', retFmt(severanceAllowance), false);
+  }
+  addRow('합계', retFmt(total), true);
+}
+
+function calcPeakEmbedded() {
+  var wage = parseFloat(document.getElementById('retPeakWage').value) || 0;
+  if (!wage) { alert('월 평균임금을 입력해 주세요.'); return; }
+
+  var yearA = wage * 0.6 * 12;
+  var yearB = wage * 1.0 * 12;
+  document.getElementById('retPeakAmountA').textContent = retFmt(wage * 0.6) + '/월';
+  document.getElementById('retPeakAmountB').textContent = retFmt(wage) + '/월';
+
+  var breakdown = document.getElementById('retPeakBreakdown');
+  breakdown.innerHTML = '';
+  function addHeader() {
+    var div = document.createElement('div');
+    div.style.cssText = 'display:flex; justify-content:space-between; padding:5px 0; border-bottom:2px solid #1a1a1a; font-weight:700; font-size:var(--text-body-normal);';
+    ['항목','옵션 A (60%)','옵션 B (100%)'].forEach(function(l, i) {
+      var s = document.createElement('span');
+      s.style.minWidth = '90px';
+      s.style.textAlign = i === 0 ? 'left' : 'right';
+      s.textContent = l;
+      div.appendChild(s);
+    });
+    breakdown.appendChild(div);
+  }
+  function addRow(label, a, b) {
+    var div = document.createElement('div');
+    div.style.cssText = 'display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid rgba(26,26,26,0.08); font-size:var(--text-body-normal);';
+    var s0 = document.createElement('span'); s0.style.color = 'var(--text-secondary)'; s0.textContent = label;
+    var s1 = document.createElement('span'); s1.style.cssText = 'color:#4338ca; font-weight:600; min-width:90px; text-align:right;'; s1.textContent = a;
+    var s2 = document.createElement('span'); s2.style.cssText = 'color:#047857; font-weight:600; min-width:90px; text-align:right;'; s2.textContent = b;
+    div.appendChild(s0); div.appendChild(s1); div.appendChild(s2);
+    breakdown.appendChild(div);
+  }
+  addHeader();
+  addRow('월 수령액', retFmt(wage * 0.6), retFmt(wage));
+  addRow('1년 총 수령', retFmt(yearA), retFmt(yearB));
+  addRow('차이 (B-A)', '', retFmt(yearB - yearA) + ' 더 수령');
+
+  document.getElementById('retPeakResult').style.display = 'block';
+}
+
+// 퇴직금 탭 초기화 (자동 프로필 로드 + 지급률표 빌드)
+var _retInitDone = false;
+function initRetirementTab() {
+  // 지급률 테이블은 한 번만 빌드
+  var tbody = document.getElementById('retRateTableBody');
+  if (tbody && !tbody.hasChildNodes()) {
+    for (var i = 0; i < RET_RATES.length; i += 2) {
+      var tr = document.createElement('tr');
+      tr.style.borderBottom = '1px solid rgba(26,26,26,0.08)';
+      var left = RET_RATES[i], right = RET_RATES[i + 1] || null;
+      function makeCell(text, bold) {
+        var td = document.createElement('td');
+        td.style.padding = '7px 8px'; td.style.textAlign = 'center';
+        if (bold) td.style.fontWeight = '700';
+        td.textContent = text; return td;
+      }
+      tr.appendChild(makeCell(left[0] + '년', false));
+      tr.appendChild(makeCell(left[1] + '월', true));
+      tr.appendChild(makeCell(right ? right[0] + '년' : '', false));
+      tr.appendChild(makeCell(right ? right[1] + '월' : '', right != null));
+      tbody.appendChild(tr);
+    }
+  }
+
+  // 내부 탭 스위칭
+  var retTabs = document.getElementById('retTabs');
+  if (retTabs && !retTabs.dataset.wired) {
+    retTabs.dataset.wired = '1';
+    var accent = document.getElementById('retTabAccent');
+    retTabs.addEventListener('click', function(e) {
+      var btn = e.target.closest('.ret-bookmark-tab');
+      if (!btn) return;
+      var tab = btn.dataset.tab;
+      document.querySelectorAll('#retTabs .ret-bookmark-tab').forEach(function(b) { b.classList.remove('active'); });
+      document.querySelectorAll('#sub-pay-retirement .ret-panel').forEach(function(p) { p.classList.remove('active'); });
+      btn.classList.add('active');
+      document.getElementById('ret-panel-' + tab).classList.add('active');
+      if (accent) accent.className = 'ret-tab-accent ' + tab;
+    });
+  }
+
+  // 프로필 자동 로드
+  if (_retInitDone) return;
+  _retInitDone = true;
+  if (typeof PROFILE === 'undefined') return;
+  var profile = PROFILE.load();
+  if (!profile) return;
+  if (profile.hireDate) {
+    var hireDateInput = document.getElementById('retHireDate');
+    if (hireDateInput && !hireDateInput.value) {
+      var parsed = profile.hireDate.replace(/\./g, '-').replace(/(\d{4})-(\d{1,2})-(\d{1,2})/, function(_, y, m, d) {
+        return y + '-' + m.padStart(2, '0') + '-' + d.padStart(2, '0');
+      });
+      hireDateInput.value = parsed;
+    }
+  }
+  if (typeof CALC === 'undefined') return;
+  var wageResult = PROFILE.calcWage ? PROFILE.calcWage(profile) : null;
+  if (!wageResult) return;
+  var monthlyWage = wageResult.monthlyWage;
+  var avg = null;
+  try { avg = CALC.calcAverageWage(monthlyWage, 3); } catch(e) {}
+  var avgWageToUse = avg ? avg.monthlyAvgWage : monthlyWage;
+  var wageInput = document.getElementById('retAvgWage');
+  if (wageInput && !wageInput.value) wageInput.value = avgWageToUse;
+  var banner = document.getElementById('retAutoLoadBanner');
+  var detail = document.getElementById('retAutoLoadDetail');
+  var srcLabel = document.getElementById('retWageSourceLabel');
+  if (banner && detail) {
+    banner.style.display = 'block';
+    var lines = ['통상임금: ' + monthlyWage.toLocaleString('ko-KR') + '원'];
+    if (avg && avg.totalOtPay > 0) {
+      lines.push('시간외 수당 (최근 3개월): +' + avg.totalOtPay.toLocaleString('ko-KR') + '원');
+      lines.push('월 평균임금 (↑OT 반영): ' + avgWageToUse.toLocaleString('ko-KR') + '원');
+    } else {
+      lines.push('월 평균임금: ' + avgWageToUse.toLocaleString('ko-KR') + '원');
+    }
+    if (profile.hireDate) lines.push('입사일: ' + profile.hireDate);
+    detail.textContent = lines.join(' | ');
+    if (srcLabel) srcLabel.textContent = avg && avg.totalOtPay > 0 ? '(자동·OT 포함)' : '(자동)';
+  }
 }
 
 // ═══════════ 📅 연차 계산 ═══════════
