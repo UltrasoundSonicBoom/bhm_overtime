@@ -1,0 +1,3 @@
+[     194ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:8090/api/data/bundle:0
+[     195ms] [LOG] [DATA] API 로드 실패, static fallback 사용: API 404 @ http://localhost:8090/data.js?v=2.5:638
+[     486ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ http://localhost:8090/regulation.html:0

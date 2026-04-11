@@ -1,0 +1,13 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e4]: 사용법 튜토리얼
+    - button "건너뛰기 ×" [ref=e5] [cursor=pointer]
+  - generic [ref=e9]: 1 / 8
+  - generic [ref=e13]:
+    - generic [ref=e14]: SNUH Mate 사용법
+    - paragraph [ref=e15]:
+      - text: 화면 예시를 보면서
+      - text: 주요 기능을 안내합니다.
+      - text: 실제 데이터는 전혀 건드리지 않아요!
+      - text: 총 8단계 · 약 1분 소요
+  - button "다음 →" [ref=e17] [cursor=pointer]

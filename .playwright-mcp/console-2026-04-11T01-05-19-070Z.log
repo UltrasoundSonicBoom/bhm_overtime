@@ -1,0 +1,2 @@
+[      49ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ http://localhost:8090/data.js?v=2.5:614
+[     300ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ http://localhost:8090/regulation.html:0

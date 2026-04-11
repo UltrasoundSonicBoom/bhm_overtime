@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>퇴직금 계산기 — Preview</title>
+  <style>
+    :root {
+      --blue: #3182F6;
+      --blue-pale: #EEF4FF;
+      --blue-dark: #1B64DA;
+      --bg: #F2F4F6;
+      --card: #FFFFFF;
+      --primary: #191F28;
+      --secondary: #4E5968;
+      --tertiary: #8B95A1;
+      --border: #E5E8EB;
+      --green: #05C072;
+      --green-pale: #E5F9F0;
+      --orange: #FF6B35;
+      --orange-pale: #FFF3EE;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR', BlinkMacSystemFont, sans-serif;
+      background: #E8EAF0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 24px 0 48px;
+    }
+    .phone {
+      width: 390px;
+      min-height: 844px;
+      background: var(--bg);
+      border-radius: 40px;
+      overflow: hidden;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+    }
+    .status-bar {
+      background: white;
+      padding: 14px 24px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .status-bar .time { font-size: 15px; font-weight: 700; color: var(--primary); }
+    .status-bar .icons { display: flex; gap: 5px; align-items: center; }
+    .header {
+      background: white;
+      padding: 12px 20px 0;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .header-title { font-size: 20px; font-weight: 800; color: var(--primary); margin-bottom: 14px; letter-spacing: -0.3px; }
+    .tabs { display: flex; overflow-x: auto; scrollbar-width: none; }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab { flex-shrink: 0; padding: 10px 14px; font-size: 14px; font-weight: 500; color: var(--tertiary); border-bottom: 2.5px solid transparent; cursor: pointer; white-space: nowrap; transition: all .15s; }
+    .tab.active { color: var(--blue); border-bottom-color: var(--blue); font-weight: 700; }
+    .scroll-area { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 16px 16px 32px; scrollbar-width: none; }
+    .scroll-area::-webkit-scrollbar { display: none; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .section-label { font-size: 12px; font-weight: 600; color: var(--tertiary); letter-spacing: .3px; margin: 16px 0 8px 4px; text-transform: uppercase; }
+    .section-label:first-child { margin-top: 0; }
+    .input-card { background: white; border-radius: 16px; overflow: hidden; margin-bottom: 12px; }
+    .input-row { display: flex; align-items: center; padding: 15px 18px; border-bottom: 1px solid var(--border); }
+    .input-row:last-child { border-bottom: none; }
+    .input-label { flex: 1; font-size: 15px; color: var(--secondary); }
+    select { border: none; outline: none; font-size: 15px; font-weight: 600; color: var(--primary); background: transparent; cursor: pointer; -webkit-appearance: none; padding-right: 18px; background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238B95A1' stroke-width='1.5' stroke-linecap='round' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right center; font-family: inherit; }
+    input[type="number"] { border: none; outline: none; font-size: 15px; font-weight: 600; color: var(--primary); background: transparent; text-align: right; width: 130px; font-family: inherit; }
+    input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+    .stepper { display: flex; align-items: center; gap: 14px; }
+    .step-btn { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid var(--border); background: white; font-size: 18px; color: var(--secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: inherit; }
+    .step-value { font-size: 17px; font-weight: 700; color: var(--primary); min-width: 36px; text-align: center; }
+    .toggle { width: 42px; height: 24px; background: var(--border); border-radius: 12px; position: relative; cursor: pointer; transition: background .2s; flex-shrink: 0; }
+    .toggle.on { background: var(--blue); }
+    .toggle-dot { width: 20px; height: 20px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: transform .2s; box-shadow: 0 1px 4px rgba(0,0,0,.2); }
+    .toggle.on .toggle-dot { transform: translateX(18px); }
+    .chip-group { display: flex; gap: 6px; flex-wrap: wrap; padding: 8px 18px 14px; }
+    .chip-hint { font-size: 11px; color: var(--tertiary); width: 100%; margin-bottom: 4px; }
+    .chip { padding: 6px 14px; border: 1.5px solid var(--border); border-radius: 20px; font-size: 13px; font-weight: 500; color: var(--secondary); cursor: pointer; background: white; font-family: inherit; }
+    .chip.on { border-color: var(--blue); background: var(--blue-pale); color: var(--blue); font-weight: 600; }
+    .result-card { background: var(--blue); border-radius: 20px; padding: 22px 20px; margin-bottom: 12px; color: white; }
+    .result-eyebrow { font-size: 13px; color: rgba(255,255,255,.75); margin-bottom: 5px; font-weight: 500; }
+    .result-hero { font-size: 36px; font-weight: 800; letter-spacing: -1.5px; line-height: 1.1; margin-bottom: 4px; }
+    .result-meta { font-size: 12px; color: rgba(255,255,255,.65); margin-bottom: 16px; }
+    .result-divider { height: 1px; background: rgba(255,255,255,.2); margin: 0 0 14px; }
+    .result-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .result-row:last-child { margin-bottom: 0; }
+    .result-row-label { font-size: 13px; color: rgba(255,255,255,.8); }
+    .result-row-value { font-size: 14px; font-weight: 700; color: white; }
+    .card { background: white; border-radius: 16px; padding: 18px; margin-bottom: 12px; }
+    .card-title { font-size: 15px; font-weight: 700; color: var(--primary); margin-bottom: 14px; }
+    .compare-block { margin: 10px 0; }
+    .compare-label-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--tertiary); margin-bottom: 5px; }
+    .bar-track { height: 7px; background: var(--bg); border-radius: 4px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 4px; transition: width .6s cubic-bezier(.4,0,.2,1); }
+    .bar-fill.blue { background: var(--blue); }
+    .bar-fill.green { background: var(--green); }
+    .badge { display: inline-flex; align-items: center; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; margin: 4px 0 10px; }
+    .badge.blue { background: var(--blue-pale); color: var(--blue); }
+    .badge.orange { background: var(--orange-pale); color: var(--orange); }
+    .info-box { border-radius: 12px; padding: 13px 15px; margin-bottom: 12px; }
+    .info-box.blue { background: var(--blue-pale); }
+    .info-box.orange { background: var(--orange-pale); }
+    .info-box.green { background: var(--green-pale); }
+    .info-box-title { font-size: 13px; font-weight: 700; margin-bottom: 5px; }
+    .info-box.blue .info-box-title { color: var(--blue); }
+    .info-box.orange .info-box-title { color: var(--orange); }
+    .info-box.green .info-box-title { color: var(--green); }
+    .info-box-body { font-size: 13px; line-height: 1.6; color: var(--secondary); }
+    .contact-card { background: white; border-radius: 14px; display: flex; align-items: center; gap: 14px; padding: 14px 16px; margin-bottom: 10px; }
+    .contact-icon { width: 40px; height: 40px; border-radius: 12px; background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .contact-title { font-size: 14px; font-weight: 600; color: var(--primary); }
+    .contact-sub { font-size: 12px; color: var(--tertiary); margin-top: 2px; }
+    .two-col { display: flex; gap: 10px; margin-bottom: 12px; }
+    .mini-card { flex: 1; background: white; border-radius: 14px; padding: 14px; }
+    .mini-card-label { font-size: 12px; color: var(--tertiary); margin-bottom: 4px; }
+    .mini-card-value { font-size: 18px; font-weight: 800; color: var(--primary); letter-spacing: -0.3px; }
+    .mini-card-value.blue { color: var(--blue); }
+    .mini-card-sub { font-size: 11px; color: var(--tertiary); margin-top: 2px; }
+    .compare-text { margin-top: 10px; font-size: 13px; color: var(--secondary); line-height: 1.5; }
+    .compare-text strong { color: var(--blue); }
+    /* Peak */
+    .option-cards { display: flex; gap: 10px; margin-bottom: 16px; }
+    .option-card { flex: 1; background: white; border: 2px solid var(--border); border-radius: 14px; padding: 14px 12px; cursor: pointer; transition: all .15s; }
+    .option-card.active { border-color: var(--blue); background: var(--blue-pale); }
+    .option-tag { font-size: 10px; font-weight: 800; color: var(--tertiary); letter-spacing: .5px; margin-bottom: 6px; }
+    .option-card.active .option-tag { color: var(--blue); }
+    .option-name { font-size: 14px; font-weight: 700; color: var(--primary); margin-bottom: 3px; }
+    .option-desc { font-size: 12px; color: var(--tertiary); line-height: 1.4; }
+    .rec-pill { display: inline-block; background: var(--blue); color: white; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 6px; margin-left: 4px; vertical-align: middle; }
+    .peak-header { display: flex; justify-content: flex-end; gap: 20px; padding-bottom: 8px; border-bottom: 1.5px solid var(--primary); }
+    .peak-col-head { font-size: 12px; font-weight: 700; color: var(--tertiary); min-width: 80px; text-align: center; }
+    .peak-col-head.active { color: var(--blue); }
+    .peak-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .peak-row:last-child { border-bottom: none; }
+    .peak-label { font-size: 14px; color: var(--secondary); }
+    .peak-values { display: flex; gap: 20px; }
+    .peak-val { font-size: 14px; font-weight: 700; color: var(--primary); text-align: right; min-width: 80px; }
+    .peak-val.dim { color: var(--tertiary); font-weight: 400; }
+    .peak-val.hi { color: var(--blue); }
+    /* Pension */
+    .pension-row { display: flex; gap: 14px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .pension-row:last-child { border-bottom: none; }
+    .pension-emoji { font-size: 22px; width: 28px; flex-shrink: 0; text-align: center; }
+    .pension-item-title { font-size: 14px; font-weight: 600; color: var(--primary); margin-bottom: 2px; }
+    .pension-item-desc { font-size: 12px; color: var(--secondary); line-height: 1.55; }
+    .btn-blue { display: block; width: 100%; padding: 15px; background: var(--blue); color: white; border: none; border-radius: 14px; font-size: 15px; font-weight: 700; cursor: pointer; text-align: center; text-decoration: none; font-family: inherit; margin-bottom: 10px; }
+    .btn-nps { background: #1565C0; }
+    /* Checklist */
+    .checklist-item { display: flex; gap: 14px; padding-bottom: 18px; }
+    .checklist-item:last-child { padding-bottom: 0; }
+    .checklist-dot-col { display: flex; flex-direction: column; align-items: center; width: 18px; flex-shrink: 0; }
+    .checklist-dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border); background: white; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .2s; }
+    .checklist-dot.done { border-color: var(--blue); background: var(--blue); }
+    .checklist-dot.done::after { content: ''; width: 6px; height: 4px; border-left: 2px solid white; border-bottom: 2px solid white; transform: rotate(-45deg) translate(1px,-1px); }
+    .checklist-line { flex: 1; width: 2px; background: var(--border); margin-top: 3px; }
+    .checklist-title { font-size: 14px; font-weight: 600; color: var(--primary); line-height: 1.2; cursor: pointer; padding-top: 1px; }
+    .checklist-title.done { color: var(--tertiary); text-decoration: line-through; }
+    .checklist-desc { font-size: 12px; color: var(--tertiary); margin-top: 3px; line-height: 1.5; }
+    .pension-tag-pill { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+<div class="phone">
+  <!-- Status bar -->
+  <div class="status-bar">
+    <span class="time">9:41</span>
+    <div class="icons">
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="none"><rect x="0" y="3" width="3" height="9" rx="1" fill="#191F28"/><rect x="4.5" y="2" width="3" height="10" rx="1" fill="#191F28"/><rect x="9" y="0" width="3" height="12" rx="1" fill="#191F28"/><rect x="13.5" y="0" width="2.5" height="12" rx="1" fill="#E5E8EB"/></svg>
+      <svg width="16" height="12" viewBox="0 0 25 18" fill="none"><path d="M12.5 3.5C15.8 3.5 18.8 4.8 21 7L23 5C20.2 2.2 16.5 0.5 12.5 0.5C8.5 0.5 4.8 2.2 2 5L4 7C6.2 4.8 9.2 3.5 12.5 3.5Z" fill="#191F28"/><path d="M12.5 8C14.5 8 16.3 8.8 17.6 10.1L19.6 8.1C17.7 6.2 15.2 5 12.5 5C9.8 5 7.3 6.2 5.4 8.1L7.4 10.1C8.7 8.8 10.5 8 12.5 8Z" fill="#191F28"/><circle cx="12.5" cy="14.5" r="3" fill="#191F28"/></svg>
+      <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="3.5" stroke="#191F28" stroke-opacity="0.35"/><rect x="2" y="2" width="17" height="8" rx="2" fill="#191F28"/></svg>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-title">퇴직금</div>
+    <div class="tabs">
+      <div class="tab active" id="t-calc" onclick="switchTab('calc')">내 퇴직금</div>
+      <div class="tab" id="t-peak" onclick="switchTab('peak')">임금피크 비교</div>
+      <div class="tab" id="t-pension" onclick="switchTab('pension')">사학연금</div>
+      <div class="tab" id="t-checklist" onclick="switchTab('checklist')">퇴직 준비</div>
+    </div>
+  </div>
+
+  <!-- TAB 1: 내 퇴직금 -->
+  <div class="scroll-area tab-panel active" id="tab-calc">
+    <p class="section-label">기본 정보</p>
+    <div class="input-card">
+      <div class="input-row">
+        <span class="input-label">직종</span>
+        <select id="jobType" onchange="onJobTypeChange()">
+          <option>일반직</option>
+          <option>운영기능직</option>
+          <option>환경유지지원직</option>
+        </select>
+      </div>
+      <div class="input-row">
+        <span class="input-label">직급</span>
+        <select id="grade" onchange="onGradeChange()">
+          <option>J1</option><option>J2</option><option selected>J3</option>
+          <option>S1</option><option>S2</option><option>S3</option>
+          <option>M1</option><option>M2</option><option>M3</option>
+        </select>
+      </div>
+      <div class="input-row">
+        <span class="input-label">근속연수</span>
+        <div class="stepper">
+          <button class="step-btn" onclick="changeYears(-1)">−</button>
+          <span class="step-value" id="yearsLabel">10</span>
+          <button class="step-btn" onclick="changeYears(+1)">+</button>
+        </div>
+      </div>
+      <div class="input-row">
+        <span class="input-label">2015.6.30 이전 입사</span>
+        <div class="toggle on" id="tog2015" onclick="togglePre2015()"><div class="toggle-dot"></div></div>
+      </div>
+    </div>
+
+    <p class="section-label">월평균임금</p>
+    <div class="input-card">
+      <div class="input-row">
+        <span class="input-label">월평균임금</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <input type="number" id="monthlyWage" value="4455000" onchange="calculate()" />
+          <span style="font-size:13px;color:var(--tertiary)">원</span>
+        </div>
+      </div>
+      <div class="chip-group">
+        <span class="chip-hint">산정 기준 →</span>
+        <button class="chip on" id="chip-auto" onclick="setChip('auto')">직급 자동계산</button>
+        <button class="chip" id="chip-manual" onclick="setChip('manual')">직접 입력</button>
+      </div>
+    </div>
+
+    <!-- Hero result -->
+    <div class="result-card">
+      <div class="result-eyebrow">예상 퇴직금 총액</div>
+      <div class="result-hero" id="heroTotal">—</div>
+      <div class="result-meta" id="heroMeta">계산 중...</div>
+      <div class="result-divider"></div>
+      <div class="result-row">
+        <span class="result-row-label">퇴직금 (제52조)</span>
+        <span class="result-row-value" id="r-sev">—</span>
+      </div>
+      <div class="result-row" id="r-bonus-row">
+        <span class="result-row-label">퇴직수당 (제53조)</span>
+        <span class="result-row-value" id="r-bonus">—</span>
+      </div>
+      <div class="result-row">
+        <span class="result-row-label">지급 기한</span>
+        <span class="result-row-value" style="color:rgba(255,255,255,.65);font-weight:400">퇴직일로부터 15일 이내</span>
+      </div>
+    </div>
+
+    <div id="badge-area" style="margin-bottom:4px"></div>
+
+    <!-- 법정 비교 -->
+    <div class="card">
+      <div class="card-title">법정 퇴직금과 비교</div>
+      <div class="compare-block">
+        <div class="compare-label-row">
+          <span>법정 (근로기준법)</span>
+          <span id="legal-amount">—</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill blue" id="legal-bar" style="width:32%"></div></div>
+      </div>
+      <div class="compare-block">
+        <div class="compare-label-row">
+          <span>서울대병원 (단체협약)</span>
+          <span id="hospital-amount">—</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill green" style="width:100%"></div></div>
+      </div>
+      <p class="compare-text" id="compare-text">—</p>
+    </div>
+
+    <!-- 1년 더 / 비율 -->
+    <div class="two-col">
+      <div class="mini-card">
+        <div class="mini-card-label">1년 더 근무하면</div>
+        <div class="mini-card-value blue" id="next-diff">—</div>
+        <div class="mini-card-sub">추가 수령 예상</div>
+      </div>
+      <div class="mini-card">
+        <div class="mini-card-label">현재 월급 대비</div>
+        <div class="mini-card-value" id="month-ratio">—</div>
+        <div class="mini-card-sub">퇴직금 총액</div>
+      </div>
+    </div>
+
+    <div class="contact-card">
+      <div class="contact-icon">📋</div>
+      <div>
+        <div class="contact-title">2001년 8월 31일 이전 근속분</div>
+        <div class="contact-sub">별도 별표 기준 적용 · 인사과 T.2716</div>
+      </div>
+    </div>
+    <div class="contact-card">
+      <div class="contact-icon">❓</div>
+      <div>
+        <div class="contact-title">퇴직금 중간정산 문의</div>
+        <div class="contact-sub">법정 사유 해당 시 가능 · 인사과 T.2716</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: 임금피크 비교 -->
+  <div class="scroll-area tab-panel" id="tab-peak">
+    <div class="info-box blue">
+      <div class="info-box-title">임금피크제 안내</div>
+      <div class="info-box-body">정년(만 60세) 이전 <strong>1년</strong> 적용됩니다.<br>2024년부터 두 옵션 중 본인이 선택합니다.</div>
+    </div>
+
+    <p class="section-label">내 기준 입력</p>
+    <div class="input-card">
+      <div class="input-row">
+        <span class="input-label">임금피크 직전 월 보수</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <input type="number" id="peakWage" value="8000000" onchange="calcPeak()" />
+          <span style="font-size:13px;color:var(--tertiary)">원</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="option-cards">
+      <div class="option-card" id="opt-a" onclick="selectOpt('a')">
+        <div class="option-tag">OPTION A</div>
+        <div class="option-name">공로연수</div>
+        <div class="option-desc">1년 유급휴직<br><strong style="color:var(--orange)">보수 60%</strong> 지급</div>
+      </div>
+      <div class="option-card active" id="opt-b" onclick="selectOpt('b')">
+        <div class="option-tag">OPTION B</div>
+        <div class="option-name">계속 근무 <span class="rec-pill">권장</span></div>
+        <div class="option-desc">1년 계속근무<br><strong style="color:var(--blue)">보수 100%</strong> 지급</div>
+      </div>
+    </div>
+
+    <div class="card" style="padding:18px 18px 12px">
+      <div class="card-title">1년 수령액 비교</div>
+      <div class="peak-header">
+        <span class="peak-col-head">Option A</span>
+        <span class="peak-col-head active">Option B</span>
+      </div>
+      <div class="peak-row">
+        <span class="peak-label">월 지급액</span>
+        <div class="peak-values">
+          <span class="peak-val dim" id="pa-monthly">—</span>
+          <span class="peak-val hi" id="pb-monthly">—</span>
+        </div>
+      </div>
+      <div class="peak-row">
+        <span class="peak-label">연간 총 급여</span>
+        <div class="peak-values">
+          <span class="peak-val dim" id="pa-annual">—</span>
+          <span class="peak-val hi" id="pb-annual">—</span>
+        </div>
+      </div>
+      <div class="peak-row">
+        <span class="peak-label">B가 A보다 많은 금액</span>
+        <div class="peak-values">
+          <span class="peak-val dim">기준</span>
+          <span class="peak-val hi" id="pb-diff">—</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box orange">
+      <div class="info-box-title">⚠️ 퇴직금 산정 주의</div>
+      <div class="info-box-body">
+        만 60세 이후 퇴직자는 <strong>만 60세 직전 평균임금</strong> 기준으로 퇴직금이 산정됩니다.<br><br>
+        Option A 선택 시 공로연수 기간(60% 급여)이 퇴직 직전 평균임금에 반영되어 <strong>퇴직금이 낮아질 수 있습니다.</strong>
+      </div>
+    </div>
+
+    <div class="info-box blue">
+      <div class="info-box-title">운영기능직 하한선 보장</div>
+      <div class="info-box-body">임금피크 적용 시 직무능력급이 <strong>최저임금의 120% 이하</strong>로 감액되지 않도록 보호됩니다.</div>
+    </div>
+
+    <div class="contact-card">
+      <div class="contact-icon">📞</div>
+      <div>
+        <div class="contact-title">임금피크 옵션 선택 문의</div>
+        <div class="contact-sub">인사과 T.2716 · 매년 선택 기간 확인 필요</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: 사학연금 -->
+  <div class="scroll-area tab-panel" id="tab-pension">
+    <div class="info-box blue">
+      <div class="info-box-title">서울대병원 연금 제도 변천</div>
+      <div class="info-box-body">
+        서울대병원은 과거 <strong>국민연금</strong> 적용 기관이었으나, 현재는 <strong>사학연금</strong>이 적용됩니다.<br><br>
+        입사 시기에 따라 국민연금 이력과 사학연금을 각각 수령할 수 있습니다. 두 연금 모두 확인하세요.
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="pension-tag-pill" style="background:#FFF3E0;color:#E65100">사학연금공단 공식</span>
+      <div style="font-size:16px;font-weight:700;color:var(--primary);margin-bottom:6px">사학연금 수령액 시뮬레이션</div>
+      <div style="font-size:13px;color:var(--secondary);line-height:1.6;margin-bottom:16px">
+        개인 납입 이력이 반영된 정확한 퇴직연금 예상액을 확인할 수 있습니다. 일시금 vs 연금 방식도 비교해보세요.
+      </div>
+      <a class="btn-blue" href="https://www.tp.or.kr" target="_blank">사학연금 수령액 시뮬레이션 →</a>
+    </div>
+
+    <div class="card">
+      <span class="pension-tag-pill" style="background:#E3F2FD;color:#1565C0">국민연금</span>
+      <div style="font-size:16px;font-weight:700;color:var(--primary);margin-bottom:6px">국민연금 이력 확인</div>
+      <div style="font-size:13px;color:var(--secondary);line-height:1.6;margin-bottom:16px">
+        서울대병원 입사 전 국민연금 납부 이력이 있다면 사학연금과 별도로 수령 가능합니다. 중복 불이익 없음.
+      </div>
+      <a class="btn-blue btn-nps" href="https://www.nps.or.kr" target="_blank">국민연금 예상액 조회 →</a>
+    </div>
+
+    <div class="card">
+      <div class="card-title">알아두면 좋은 것들</div>
+      <div class="pension-row">
+        <div class="pension-emoji">📅</div>
+        <div>
+          <div class="pension-item-title">수령 개시 연령</div>
+          <div class="pension-item-desc">출생 연도에 따라 수령 시작 나이가 다릅니다. 사학연금공단에서 개인별 정확한 시점을 확인하세요.</div>
+        </div>
+      </div>
+      <div class="pension-row">
+        <div class="pension-emoji">💰</div>
+        <div>
+          <div class="pension-item-title">일시금 vs 연금 선택</div>
+          <div class="pension-item-desc">퇴직 시 일시금 또는 매월 연금 방식을 선택할 수 있습니다. 장수 리스크를 고려하면 연금이 유리한 경우가 많습니다.</div>
+        </div>
+      </div>
+      <div class="pension-row">
+        <div class="pension-emoji">🔄</div>
+        <div>
+          <div class="pension-item-title">국민연금·사학연금 연계</div>
+          <div class="pension-item-desc">두 연금 모두 수령 가능합니다. 각 공단에 개별 신청이 필요합니다.</div>
+        </div>
+      </div>
+      <div class="pension-row">
+        <div class="pension-emoji">🏥</div>
+        <div>
+          <div class="pension-item-title">사망조위금</div>
+          <div class="pension-item-desc">사학연금 가입자 사망 시 유족에게 사망조위금이 지급됩니다. tp.or.kr에서 세부 내용 확인.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="contact-card">
+      <div class="contact-icon">📞</div>
+      <div>
+        <div class="contact-title">사학연금 담당</div>
+        <div class="contact-sub">급여계 본원 T.2716 / 보라매 T.2731</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: 퇴직 준비 체크리스트 -->
+  <div class="scroll-area tab-panel" id="tab-checklist">
+    <div class="info-box green">
+      <div class="info-box-title">퇴직 전 체크리스트</div>
+      <div class="info-box-body">항목을 탭해서 완료 처리할 수 있습니다.</div>
+    </div>
+
+    <p class="section-label">병원 혜택</p>
+    <div class="card">
+      <div class="checklist-item">
+        <div class="checklist-dot-col">
+          <div class="checklist-dot" id="dot-0" onclick="toggleCheck(0)"></div>
+          <div class="checklist-line"></div>
+        </div>
+        <div>
+          <div class="checklist-title" id="ttl-0" onclick="toggleCheck(0)">장기 재직자 휴가 사용</div>
+          <div class="checklist-desc">10년 이상 5일 / 20년 이상 7일 (2026.1.1 시행)</div>
+        </div>
+      </div>
+      <div class="checklist-item">
+        <div class="checklist-dot-col">
+          <div class="checklist-dot" id="dot-1" onclick="toggleCheck(1)"></div>
+          <div class="checklist-line"></div>
+        </div>
+        <div>
+          <div class="checklist-title" id="ttl-1" onclick="toggleCheck(1)">맞춤형 복지포인트 소진</div>
+          <div class="checklist-desc">기본 40만 + 근속 1만원/년 (최대 30만) — 퇴직 시 소멸</div>
+        </div>
+      </div>
+      <div class="checklist-item">
+        <div class="checklist-dot-col">
+          <div class="checklist-dot" id="dot-2" onclick="toggleCheck(2)"></div>
+        </div>
+        <div>
+          <div class="checklist-title" id="ttl-2" onclick="toggleCheck(2)">장기근속 포상금 확인</div>
+          <div class="checklist-desc">10 / 20 / 30년 근속 각 10만원 (2024.1.1부터)</div>
+        </div>
+      </div>
+    </div>
+
+    <p class="section-label">연금·공제·건강보험</p>
+    <div class="card">
+      <div class="checklist-item">
+        <div class="checklist-dot-col">
+          <div class="checklist-dot" id="dot-3" onclick="toggleCheck(3)"></div>
+          <div class="checklist-line"></div>
+        </div>
+        <div>
+          <div class="checklist-title" id="ttl-3" onclick="toggleCheck(3)">사학연금 수령 시점 확인</div>
+          <div class="checklist-desc">tp.or.kr · 급여계 T.2716</div>
+        </div>
+      </div>
+      <div class="checklist-item">
+        <div class="checklist-dot-col">
+          <div class="checklist-dot" id="dot-4" onclick="toggleCheck(4)"></div>
+          <div class="checklist-line"></div>
+        </div>
+        <div>
+          <div class="checklist-title" id="ttl-4" onclick="toggleCheck(4)">교직원공제회 처리</div>
+          <div class="checklist-desc">ktcu.or.kr · T.1577-3400</div>
+        </div>
+      </div>
+      <div class="checklist-item">
+        <div class="checklist-dot-col">
+          <div class="checklist-dot" id="dot-5" onclick="toggleCheck(5)"></div>
+          <div class="checklist-line"></div>
+        </div>
+        <div>
+          <div class="checklist-title" id="ttl-5" onclick="toggleCheck(5)">국민연금 이력 확인</div>
+          <div class="checklist-desc">입사 전 납부 이력 → 별도 수령 가능</div>
+        </div>
+      </div>
+      <div class="checklist-item">
+        <div class="checklist-dot-col">
+          <div class="checklist-dot" id="dot-6" onclick="toggleCheck(6)"></div>
+          <div class="checklist-line"></div>
+        </div>
+        <div>
+          <div class="checklist-title" id="ttl-6" onclick="toggleCheck(6)">건강보험 임의계속가입 신청</div>
+          <div class="checklist-desc">퇴직 후 최대 2년간 직장보험료 유지 가능</div>
+        </div>
+      </div>
+      <div class="checklist-item">
+        <div class="checklist-dot-col">
+          <div class="checklist-dot" id="dot-7" onclick="toggleCheck(7)"></div>
+        </div>
+        <div>
+          <div class="checklist-title" id="ttl-7" onclick="toggleCheck(7)">퇴직금 수령 확인</div>
+          <div class="checklist-desc">퇴직일로부터 15일 이내 지급</div>
+        </div>
+      </div>
+    </div>
+
+    <p class="section-label">인사과 문의 필요</p>
+    <div class="contact-card">
+      <div class="contact-icon">📋</div>
+      <div>
+        <div class="contact-title">2001년 8월 31일 이전 근속분</div>
+        <div class="contact-sub">별도 별표 기준 적용 · 반드시 인사과 확인 T.2716</div>
+      </div>
+    </div>
+    <div class="contact-card">
+      <div class="contact-icon">❓</div>
+      <div>
+        <div class="contact-title">퇴직금 중간정산</div>
+        <div class="contact-sub">법정 사유 해당 시 가능 · 인사과 T.2716</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ── Data ─────────────────────────────────────────────────── */
+const GRADES = {
+  '일반직':         ['J1','J2','J3','S1','S2','S3','M1','M2','M3'],
+  '운영기능직':     ['A1','A2','A3','C1','C2','C3','L1','L2','L3'],
+  '환경유지지원직': ['SA1','SA2','SA3','SC1','SC2','SC3','SL1','SL2','SL3']
+};
+const MONTHLY = {
+  '일반직':         {J1:3580000,J2:3970000,J3:4600000,S1:5260000,S2:5860000,S3:6460000,M1:7080000,M2:7680000,M3:8210000},
+  '운영기능직':     {A1:2280000,A2:2500000,A3:2780000,C1:3090000,C2:3380000,C3:3720000,L1:4150000,L2:4490000,L3:4870000},
+  '환경유지지원직': {SA1:2030000,SA2:2200000,SA3:2410000,SC1:2660000,SC2:2880000,SC3:3140000,SL1:3410000,SL2:3680000,SL3:3960000}
+};
+const SEV_RATE = {1:1,2:2,3:3.5,4:5.5,5:7.5,6:9.1,7:10.7,8:12.3,9:13.9,10:15.5,11:17.2,12:18.9,13:20.6,14:22.3,15:24.0,16:25.8,17:27.6,18:29.4,19:31.2,20:33.0,21:34.9,22:36.8,23:38.7,24:40.6,25:42.5,26:44.5,27:46.5,28:48.5,29:50.5,30:52.5};
+
+function sevRate(y) { return SEV_RATE[Math.max(1,Math.min(30,y))] || 1; }
+function bonusRate(y) {
+  if (y>=20) return 0.60; if (y>=15) return 0.50; if (y>=10) return 0.45;
+  if (y>=5) return 0.35; if (y>=1) return 0.10; return 0;
+}
+function fmt(n) {
+  if (n>=100000000) { const e=Math.floor(n/100000000),m=Math.floor((n%100000000)/10000); return m>0?`${e}억 ${m.toLocaleString()}만원`:`${e}억원`; }
+  return Math.round(n/10000).toLocaleString()+'만원';
+}
+function setText(id, v) { const el=document.getElementById(id); if(el) el.textContent=v; }
+
+/* ── State ────────────────────────────────────────────────── */
+let years=10, pre2015=true, autoWage=true;
+
+/* ── Tab 1 logic ──────────────────────────────────────────── */
+function onJobTypeChange() {
+  const jt=document.getElementById('jobType').value;
+  const g=document.getElementById('grade');
+  g.innerHTML='';
+  GRADES[jt].forEach(n=>{ const o=document.createElement('option'); o.textContent=n; g.appendChild(o); });
+  if(autoWage) refreshWage();
+  calculate();
+}
+function onGradeChange() { if(autoWage) refreshWage(); calculate(); }
+
+function refreshWage() {
+  const jt=document.getElementById('jobType').value;
+  const gr=document.getElementById('grade').value;
+  let base=(MONTHLY[jt]||{})[gr]||4455000;
+  const svc=years>=25?140000:years>=21?110000:years>=20?100000:years>=15?80000:years>=10?60000:years>=5?50000:0;
+  document.getElementById('monthlyWage').value=base+svc;
+}
+
+function changeYears(d) {
+  years=Math.max(1,Math.min(30,years+d));
+  setText('yearsLabel',years);
+  if(autoWage) refreshWage();
+  calculate();
+}
+
+function togglePre2015() {
+  pre2015=!pre2015;
+  document.getElementById('tog2015').classList.toggle('on',pre2015);
+  calculate();
+}
+
+function setChip(mode) {
+  autoWage=(mode==='auto');
+  document.getElementById('chip-auto').classList.toggle('on',autoWage);
+  document.getElementById('chip-manual').classList.toggle('on',!autoWage);
+  if(autoWage){refreshWage();calculate();}
+}
+
+function calculate() {
+  const mw=parseInt(document.getElementById('monthlyWage').value)||0;
+  if(!mw) return;
+  const sr=sevRate(years);
+  const sev=mw*sr;
+  const br=pre2015?bonusRate(years):0;
+  const bon=mw*years*br;
+  const total=sev+bon;
+  const legal=mw*years;
+
+  setText('heroTotal',fmt(total));
+  setText('heroMeta','월평균 '+fmt(mw)+' × '+years+'년 (지급률 '+sr+'개월)');
+  setText('r-sev',fmt(sev));
+
+  const bonRow=document.getElementById('r-bonus-row');
+  if(pre2015){ bonRow.style.display='flex'; setText('r-bonus',fmt(bon)); }
+  else { bonRow.style.display='none'; }
+
+  /* badge using DOM only */
+  const ba=document.getElementById('badge-area');
+  ba.textContent='';
+  const badge=document.createElement('span');
+  if(pre2015){
+    badge.className='badge blue';
+    badge.textContent='✓ 퇴직수당 별도 포함 (2015.6.30 이전 입사)';
+  } else {
+    badge.className='badge orange';
+    badge.textContent='퇴직수당 미해당 (2015.7.1 이후 입사)';
+  }
+  ba.appendChild(badge);
+
+  setText('legal-amount',fmt(legal));
+  setText('hospital-amount',fmt(total));
+  const ratio=total/legal;
+  document.getElementById('legal-bar').style.width=(100/ratio).toFixed(1)+'%';
+
+  /* compare-text via DOM */
+  const ct=document.getElementById('compare-text');
+  ct.textContent='법정 퇴직금 대비 ';
+  const strong=document.createElement('strong');
+  strong.textContent='약 '+ratio.toFixed(1)+'배';
+  ct.appendChild(strong);
+  ct.appendChild(document.createTextNode(' 더 유리한 조건입니다.'));
+
+  /* 1년 더 */
+  const nsr=sevRate(years+1);
+  const nbr=pre2015?bonusRate(years+1):0;
+  const next=mw*nsr+mw*(years+1)*nbr;
+  setText('next-diff','+'+fmt(next-total));
+  setText('month-ratio',(total/mw).toFixed(1)+'개월치');
+}
+
+/* ── Tab 2 logic ──────────────────────────────────────────── */
+function selectOpt(o) {
+  document.getElementById('opt-a').classList.toggle('active',o==='a');
+  document.getElementById('opt-b').classList.toggle('active',o==='b');
+}
+
+function calcPeak() {
+  const pw=parseInt(document.getElementById('peakWage').value)||8000000;
+  const aM=Math.round(pw*0.6);
+  setText('pa-monthly',fmt(aM));
+  setText('pb-monthly',fmt(pw));
+  setText('pa-annual',fmt(aM*12));
+  setText('pb-annual',fmt(pw*12));
+  setText('pb-diff','+'+fmt((pw-aM)*12));
+}
+
+/* ── Tab switch ───────────────────────────────────────────── */
+function switchTab(name) {
+  ['calc','peak','pension','checklist'].forEach(n=>{
+    document.getElementById('t-'+n).classList.toggle('active',n===name);
+    document.getElementById('tab-'+n).classList.toggle('active',n===name);
+  });
+  if(name==='peak') calcPeak();
+}
+
+/* ── Checklist ────────────────────────────────────────────── */
+const checkState={};
+function toggleCheck(id) {
+  checkState[id]=!checkState[id];
+  document.getElementById('dot-'+id).classList.toggle('done',checkState[id]);
+  document.getElementById('ttl-'+id).classList.toggle('done',checkState[id]);
+}
+
+/* ── Init ─────────────────────────────────────────────────── */
+refreshWage();
+calculate();
+calcPeak();
+</script>
+</body>
+</html>

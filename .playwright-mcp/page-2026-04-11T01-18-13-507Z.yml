@@ -1,0 +1,64 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5] [cursor=pointer]:
+        - img "SNUH Mate" [ref=e6]
+        - generic [ref=e7]:
+          - heading "슬기로운 병원 생활 메이트" [level=1] [ref=e8]
+          - paragraph [ref=e9]:
+            - text: 휴가, 시간외/온콜 등의 기록을 직접 관리해보세요.
+            - text: 기록은 이 브라우저에만 저장되서 개발자도 볼 수 없어요!
+      - generic [ref=e10]:
+        - button "🎨" [ref=e11] [cursor=pointer]
+        - button "💬" [ref=e12] [cursor=pointer]
+  - navigation [ref=e13]:
+    - button "📅 휴가" [ref=e14] [cursor=pointer]
+    - button "⏰ 시간외" [ref=e15] [cursor=pointer]
+    - button "💰 급여" [ref=e16] [cursor=pointer]
+    - link "📖 규정" [ref=e17] [cursor=pointer]:
+      - /url: regulation.html
+    - button "👤 info" [ref=e18] [cursor=pointer]
+  - main [ref=e19]
+  - generic [ref=e21]:
+    - img [ref=e23]
+    - generic [ref=e24]: 처음 오셨나요?
+    - generic [ref=e25]:
+      - text: "'휴가'와 '시간외 근무' 등을 얼마나 했는지"
+      - text: 기록하고 관리하기 위해 만들었어요.
+      - text: 기기 자체에 데이터가 저장되니
+      - text: PC보다 핸드폰에 기록해서 관리하세요!
+    - generic [ref=e26]:
+      - generic [ref=e27]:
+        - generic [ref=e28]: "1"
+        - generic [ref=e29]:
+          - strong [ref=e30]: 🔐 내 데이터는 철저히 내 것
+          - text: 개발자도,서버도 절대 내 데이터를 볼 수 없어요.
+          - text: ※ 기기를 바꾸실 땐 꼭 ‘백업’ 하세요!
+      - generic [ref=e31]:
+        - generic [ref=e32]: "2"
+        - generic [ref=e33]:
+          - strong [ref=e34]: 👤 내 정보 등록
+          - generic [ref=e35]:
+            - text: 직종·호봉·입사일을 저장하면
+            - text: 시급·연차가 자동 계산됩니다
+      - generic [ref=e36]:
+        - generic [ref=e37]: "3"
+        - generic [ref=e38]:
+          - strong [ref=e39]: ⏰ 시간외·온콜 기록
+          - generic [ref=e40]:
+            - text: 캘린더 날짜를 탭 → 유형·시간 입력
+            - text: 수당이 즉시 계산됩니다.(참고용)
+            - text: ※ 개인차로 실제금액과 차이 발생 가능
+      - generic [ref=e41]:
+        - generic [ref=e42]: "4"
+        - generic [ref=e43]:
+          - strong [ref=e44]: 📅 휴가 관리
+          - generic [ref=e45]:
+            - text: 연차·병가 등록 → 잔여 휴가를
+            - text: 자동으로 추적합니다
+    - link "🎓 사용법 보기 (튜토리얼)" [ref=e46] [cursor=pointer]:
+      - /url: ./tutorial.html
+    - generic [ref=e47]:
+      - generic [ref=e48] [cursor=pointer]: 🚀 바로 시작하기
+      - generic [ref=e49] [cursor=pointer]: 👤 개인정보 먼저 입력
+    - paragraph [ref=e50]: "만든 사람: 김계환 (핵의학과)"

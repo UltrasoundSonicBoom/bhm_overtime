@@ -1,0 +1,3 @@
+[    1313ms] Unexpected token '}'
+[    2082ms] [ERROR] Failed to load resource: the server responded with a status of 500 () @ https://www.snuhmate.com/api/data/bundle:0
+[    2082ms] [LOG] [DATA] API 로드 실패, static fallback 사용: API 500 @ https://www.snuhmate.com/data.js?v=1.3:638
