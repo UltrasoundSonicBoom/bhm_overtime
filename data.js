@@ -560,6 +560,18 @@ const DATA_STATIC = {
     { min:  1, multiplier:  1.0 }
   ],
 
+  // ── 노조협의 특별 호봉 이벤트 ──
+  // 자동승격과 무관한 일회성 호봉 상향 (역산 보정에 사용)
+  unionStepEvents: [
+    {
+      id: '2026-02-union',
+      date: '2026-02',           // YYYY-MM 형식
+      reason: '2026년 노조협의',
+      stepDelta: 1,
+      grades: ['J1', 'J2', 'J3', 'S1']   // 적용 대상 직급
+    }
+  ],
+
   // ── 가계지원비 고정 지급 월 (1·9월 미지급, 설·추석 해당 월은 isHolidayMonth로 별도 처리) ──
   familySupportMonths: [3, 4, 5, 6, 7, 8, 10, 11, 12],
 

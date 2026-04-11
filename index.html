@@ -612,12 +612,45 @@
               <input class="ret-input" type="number" id="retAvgWage" placeholder="예: 4000000" min="0" step="10000">
             </div>
             <div class="ret-form-row">
+              <label class="ret-label">생년월일 <span style="font-size:11px; color:var(--text-muted); font-weight:400;">(D-day · 빠른 날짜 계산용)</span></label>
+              <input class="ret-input" type="date" id="retBirthDate" oninput="retUpdateQuickDates()">
+            </div>
+            <!-- D-day 카드 -->
+            <div class="ret-dday-grid" id="retDdayGrid" style="display:none; margin-bottom:10px;">
+              <div class="ret-dday-card"><div class="ret-dday-label">임금피크까지</div><div class="ret-dday-val" id="retDdayPeak">—</div></div>
+              <div class="ret-dday-card"><div class="ret-dday-label">정년까지</div><div class="ret-dday-val" id="retDdayRetire">—</div></div>
+            </div>
+            <div class="ret-form-row">
               <label class="ret-label">입사일</label>
-              <input class="ret-input" type="date" id="retHireDate">
+              <input class="ret-input" type="date" id="retHireDate" oninput="retUpdateQuickDates()">
             </div>
             <div class="ret-form-row">
               <label class="ret-label">퇴직(예정)일</label>
+              <div class="ret-quick-dates" id="retQuickDates" style="display:none; flex-wrap:wrap; gap:5px; margin-bottom:6px;">
+                <button class="ret-quick-btn" onclick="retSetRetireDate('now')">지금 바로</button>
+                <button class="ret-quick-btn" id="retBtnPeakDate" onclick="retSetRetireDate('peak')">임금피크 시작</button>
+                <button class="ret-quick-btn" id="retBtnPeakEndDate" onclick="retSetRetireDate('peakEnd')">임금피크 후 퇴직</button>
+                <button class="ret-quick-btn" id="retBtnRetireDate" onclick="retSetRetireDate('legal')">법정 정년(만60)</button>
+              </div>
               <input class="ret-input" type="date" id="retRetireDate">
+            </div>
+            <!-- 임금피크 옵션 (만 60세 임박 시 자동 표시) -->
+            <div id="retPeakOptSection" style="display:none; margin-bottom:4px;">
+              <label class="ret-label" style="display:block; margin-bottom:7px;">임금피크 선택 (만 60세 해당자)</label>
+              <div class="ret-peak-opts">
+                <label class="ret-peak-opt selected" id="retPeakOpt_none" onclick="retSelectPeakOpt(this)">
+                  <input type="radio" name="retPeakOpt" value="none" checked>
+                  <div class="ret-peak-opt-body"><div class="ret-peak-opt-title">해당없음 — 임금피크 전 퇴직</div><div class="ret-peak-opt-desc">입력한 월 평균임금 그대로 퇴직금 산정</div></div>
+                </label>
+                <label class="ret-peak-opt" id="retPeakOpt_A" onclick="retSelectPeakOpt(this)">
+                  <input type="radio" name="retPeakOpt" value="A">
+                  <div class="ret-peak-opt-body"><div class="ret-peak-opt-title">옵션 A — 공로연수 (기준임금 × 60%)</div><div class="ret-peak-opt-desc">1년 미근무 + 60% 수령 → 퇴직 직전 평균임금도 60% 적용</div></div>
+                </label>
+                <label class="ret-peak-opt" id="retPeakOpt_B" onclick="retSelectPeakOpt(this)">
+                  <input type="radio" name="retPeakOpt" value="B">
+                  <div class="ret-peak-opt-body"><div class="ret-peak-opt-title">옵션 B — 계속근무 (기준임금 × 100%)</div><div class="ret-peak-opt-desc">1년 계속 근무 + 100% 수령 → 퇴직금 기준임금 유지</div></div>
+                </label>
+              </div>
             </div>
             <label class="ret-checkbox-row" id="retSeveranceCheckRow" style="display:none;">
               <input type="checkbox" id="retSeveranceCheck" checked>
@@ -629,7 +662,7 @@
             ⚠️ 2001.8.31 이전 근속분이 포함되어 있습니다. 해당 부분의 퇴직금은 인사과에 직접 문의해 주세요.
           </div>
           <div class="ret-result" id="retCalcResult" style="display:none;">
-            <div class="ret-result-label">예상 퇴직 총액</div>
+            <div class="ret-result-label" id="retCalcResultLabel">예상 퇴직금</div>
             <div class="ret-result-amount" id="retCalcResultTotal">0원</div>
             <div class="ret-result-breakdown" id="retCalcResultBreakdown"></div>
           </div>
@@ -653,43 +686,32 @@
           </div>
         </div>
 
-        <!-- 탭 2: 임금피크 -->
+        <!-- 탭 2: 시나리오 비교 (임금피크 포함) -->
         <div class="ret-panel" id="ret-panel-peak">
-          <div class="ret-info-box">📌 임금피크제는 <strong>만 60세 도달 직전 3개월 평균임금</strong>을 기준으로 적용됩니다. (2024년~)</div>
+          <div class="ret-info-box">📌 지금 퇴직 vs 임금피크 옵션 A vs B — 퇴직금까지 포함한 패키지 총액을 비교합니다.</div>
           <div class="ret-card">
-            <div class="ret-card-title">📋 임금피크 조건 입력</div>
+            <div class="ret-card-title">📋 시나리오 입력</div>
             <div class="ret-form-row">
-              <label class="ret-label">만 60세 직전 월 평균임금 (원)</label>
-              <input class="ret-input" type="number" id="retPeakWage" placeholder="예: 5000000" min="0" step="10000">
+              <label class="ret-label">임금피크 직전 월 평균임금 (원)</label>
+              <input class="ret-input" type="number" id="retScWage" placeholder="예: 5000000" min="0" step="10000">
             </div>
-            <button class="ret-calc-btn" style="background:var(--accent-amber);" onclick="calcPeakEmbedded()">옵션 비교하기</button>
+            <div class="ret-form-row">
+              <label class="ret-label">입사일</label>
+              <input class="ret-input" type="date" id="retScHireDate">
+            </div>
+            <div class="ret-form-row">
+              <label class="ret-label">생년월일</label>
+              <input class="ret-input" type="date" id="retScBirthDate">
+            </div>
+            <button class="ret-calc-btn" style="background:var(--accent-amber); color:#1a1a1a;" onclick="calcScenarioEmbedded()">시나리오 비교하기</button>
           </div>
-          <div id="retPeakResult" style="display:none;">
-            <div class="ret-compare-grid">
-              <div class="ret-compare-card option-a">
-                <span class="ret-compare-badge">옵션 A</span>
-                <div class="ret-compare-name">공로연수</div>
-                <div class="ret-compare-amount" id="retPeakAmountA">—</div>
-                <div class="ret-compare-desc">1년간 근무 없이<br>기준임금의 60% 수령</div>
-              </div>
-              <div class="ret-compare-card option-b">
-                <span class="ret-compare-badge">옵션 B</span>
-                <div class="ret-compare-name">계속근무</div>
-                <div class="ret-compare-amount" id="retPeakAmountB">—</div>
-                <div class="ret-compare-desc">1년간 계속 근무<br>기준임금의 100% 수령</div>
-              </div>
-            </div>
-            <div class="ret-card" style="margin-top:12px;">
-              <div class="ret-card-title">📋 1년간 수령 비교</div>
-              <div id="retPeakBreakdown"></div>
-            </div>
-          </div>
-          <div class="ret-card" style="background:var(--bg-glass);">
+          <div id="retScenarioResult" style="display:none;"></div>
+          <div class="ret-card" style="background:var(--bg-glass); margin-top:4px;">
             <div class="ret-card-title">ℹ️ 옵션 비교 요약</div>
             <div style="font-size:var(--text-body-normal); color:var(--text-secondary); line-height:1.8;">
-              <div>🅰️ <strong>옵션 A (공로연수)</strong> — 근무 없이 60% 수령. 체력적·심리적 부담 감소.</div>
-              <div style="margin-top:6px;">🅱️ <strong>옵션 B (계속근무)</strong> — 100% 수령. 퇴직금 산정 기준월 증가로 총액에 유리할 수 있음.</div>
-              <div style="margin-top:6px; font-size:11px; color:var(--text-muted);">※ 퇴직금은 퇴직 직전 3개월 평균임금 기준이므로 옵션 선택 시 인사과 상담 권장.</div>
+              <div>🅰️ <strong>옵션 A (공로연수)</strong> — 근무 없이 60% 수령. 퇴직 직전 평균임금도 60% 적용 → 퇴직금 감소.</div>
+              <div style="margin-top:6px;">🅱️ <strong>옵션 B (계속근무)</strong> — 100% 수령 + 근속 1년 추가 → 퇴직금 기준 유지.</div>
+              <div style="margin-top:6px; font-size:11px; color:var(--text-muted);">※ 최종 선택은 인사과 상담 권장. 개인 건강, 업무 상황도 고려하세요.</div>
             </div>
           </div>
         </div>
@@ -1186,9 +1208,18 @@
               <input type="text" id="pfPromotionDate" placeholder="예: 2024-03-01">
               <small id="pfPromotionHint" style="color:var(--text-muted)"></small>
             </div>
-            <div class="form-group"></div>
+            <div class="form-group">
+              <label>노조협의 호봉 보정 <small style="font-weight:400; color:var(--text-muted)">선택</small></label>
+              <select id="pfUnionStepAdjust">
+                <option value="">자동 (직급 기준 자동 적용)</option>
+                <option value="0">0 — 해당 없음</option>
+                <option value="1">+1호봉 (수동 지정)</option>
+                <option value="2">+2호봉 (수동 지정)</option>
+              </select>
+              <small style="color:var(--text-muted)">2026.02 노조협의: J1~S1 +1호봉 자동 적용</small>
+            </div>
           </div>
-          <div class="form-row">
+          <div class="form-row profile-row-solo">
             <div class="form-group">
               <label>월 소정근로시간 <small style="font-weight:400; color:var(--text-muted)">기본 209h</small></label>
               <input type="number" id="pfWeeklyHours" value="209" min="1" max="300" placeholder="209">
@@ -1241,7 +1272,7 @@
           <p style="font-size:var(--text-body-normal); color:#000000; margin:16px 0 4px; font-weight:600;">▸
             가족수당 <small style="font-weight:400; color:var(--text-muted)">통상임금 미포함 — 별도 지급 (제49조)</small></p>
 
-          <div class="form-row">
+          <div class="form-row profile-row-solo">
             <div class="form-group">
               <label>가족 수 <small style="color:var(--text-muted)">(자녀 제외·최대 5인)</small></label>
               <input type="number" id="pfFamily" value="0" min="0" max="5" onchange="updateFamilyUI()"
@@ -1286,7 +1317,7 @@
             </div>
           </div>
 
-          <div class="form-row" style="margin-top:16px;">
+          <div class="form-row profile-action-row" style="margin-top:16px;">
             <button class="btn btn-primary" onclick="saveProfile()" style="flex:2">💾 저장하기</button>
             <button class="btn btn-outline" onclick="clearProfile()" style="flex:1">🗑 초기화</button>
           </div>
@@ -1438,7 +1469,7 @@
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <script src="salary-parser.js?v=2.4"></script>
   <script src="salary-parser-test.js?v=1.0"></script>
-  <script src="payroll-views.js?v=1.0"></script>
+  <script src="payroll-views.js?v=1.1"></script>
   <script src="app.js?v=1.9"></script>
   <script>
     // ── 테마 전환 시스템 ──

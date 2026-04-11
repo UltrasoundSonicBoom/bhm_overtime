@@ -27,7 +27,8 @@ const PROFILE = {
         positionPay: 0,
         workSupportPay: 0,
         nightShiftsUnrewarded: 0,  // 누적 미지급 야간근무 횟수 (리커버리 데이 이월용)
-        weeklyHours: 209           // 월 소정근로시간 (기본 209시간, 비정규직 등 다를 경우 수정)
+        weeklyHours: 209,          // 월 소정근로시간 (기본 209시간, 비정규직 등 다를 경우 수정)
+        unionStepAdjust: ''        // 노조협의 호봉 보정 (''=자동, '0'=해당없음, '1'=+1호봉 수동지정)
     },
 
     /**

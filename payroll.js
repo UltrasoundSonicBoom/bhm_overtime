@@ -623,6 +623,15 @@ const PAYROLL = {
         var gl = function(g) { return (table && table.gradeLabels && table.gradeLabels[g]) || g; };
         var gradeLabel = gl(useGrade);
 
+        // 노조협의 보정 정보 (표시용)
+        var rawAdj = profile.unionStepAdjust;
+        var unionAdj = (rawAdj !== '' && rawAdj !== null && rawAdj !== undefined)
+          ? (parseInt(rawAdj) || 0)
+          : CALC.calcUnionStepAdjust(useGrade);
+        var unionAdjLabel = unionAdj > 0
+          ? '+' + unionAdj + '호봉 보정 적용 (노조협의)'
+          : (rawAdj === '0' ? '해당 없음 (수동 지정)' : '해당 없음');
+
         // ── 승진연한 결정 (autoPromotion 우선, 없으면 추정) ──
         var PROMO_FALLBACK = {
           S1: { years: 8,  next: 'S2', isEstimate: true },
@@ -727,9 +736,10 @@ const PAYROLL = {
           chartHTML: chartHTML,
           details: [
             { key: '직급 시작일', val: gradeStartDate.toISOString().split('T')[0] + ' (' + gradeStartSource + ')' },
-            { key: '소요 연수', val: promoYears + '년' + (promo.isEstimate ? ' (추정)' : '') },
+            { key: '소요 연수',   val: promoYears + '년' + (promo.isEstimate ? ' (추정)' : '') },
             { key: '예상 승격일', val: targetDate.toISOString().split('T')[0] },
-            { key: '남은 일수',   val: isPast ? '이미 도래' : remaining + '일' }
+            { key: '남은 일수',   val: isPast ? '이미 도래' : remaining + '일' },
+            { key: '노조협의 보정', val: unionAdjLabel }
           ]
         };
       },
@@ -833,7 +843,7 @@ const PAYROLL = {
         var latest = history[history.length - 1];
         var promotions = history.filter(function(h) { return h.isPromotion; });
         var details = history.map(function(h) {
-          var tag = h.isPromotion ? ' 🎉 승진' : (h.isYearUp ? ' ↑호봉' : '');
+          var tag = h.isPromotion ? ' 🎉 승진' : (h.isUnionEvent ? ' 🤝 ' + (h.unionReason || '노조협의') : (h.isYearUp ? ' ↑호봉' : ''));
           return { key: h.year + '년 ' + h.month + '월', val: h.grade + '-' + h.step + tag };
         });
         details.push({ key: '총 승진', val: promotions.length + '회' });
@@ -915,6 +925,7 @@ const PAYROLL = {
       // 날짜 오름차순 정렬
       months.sort(function(a, b) { return (a.year * 12 + a.month) - (b.year * 12 + b.month); });
       var prevGrade = null, prevStep = null;
+      var unionEvents = (typeof DATA !== 'undefined' && DATA.unionStepEvents) ? DATA.unionStepEvents : [];
       months.forEach(function(m) {
         var data = SALARY_PARSER.loadMonthlyData(m.year, m.month, m.type);
         if (!data) return;
@@ -926,9 +937,26 @@ const PAYROLL = {
         var step = parseInt(gm[2]) || 1;
         var isPromotion = prevGrade !== null && grade !== prevGrade;
         var isYearUp = prevStep !== null && !isPromotion && step !== prevStep;
+
+        // 노조협의 이벤트 여부 확인 (일치 월 + 해당 직급)
+        var isUnionEvent = false;
+        var unionReason = '';
+        if (isYearUp) {
+          unionEvents.forEach(function(e) {
+            if (!e.grades || e.grades.indexOf(grade) === -1) return;
+            var parts = (e.date || '').split('-');
+            if (parseInt(parts[0]) === m.year && parseInt(parts[1]) === m.month) {
+              isUnionEvent = true;
+              unionReason = e.reason || '노조협의';
+            }
+          });
+        }
+
         // 변화가 있거나 첫 항목이면 기록
         if (prevGrade === null || isPromotion || isYearUp) {
-          result.push({ year: m.year, month: m.month, grade: grade, step: step, isPromotion: isPromotion, isYearUp: isYearUp });
+          result.push({ year: m.year, month: m.month, grade: grade, step: step,
+            isPromotion: isPromotion, isYearUp: isYearUp,
+            isUnionEvent: isUnionEvent, unionReason: unionReason });
         }
         prevGrade = grade;
         prevStep = step;
@@ -974,11 +1002,20 @@ const PAYROLL = {
       } catch(e) {}
     }
 
-    // Method 2: 호봉(year)으로 역산 — 호봉=N이면 약 N-1년 전에 직급 시작
+    // Method 2: 호봉(year)으로 역산 — 노조협의 보정 후 역산
     if (profile.year && profile.year > 1) {
+      // unionStepAdjust: ''|null|undefined → 자동, '0' → 0, '1' → 1 ...
+      var rawAdj = profile.unionStepAdjust;
+      var unionAdj = (rawAdj !== '' && rawAdj !== null && rawAdj !== undefined)
+        ? (parseInt(rawAdj) || 0)
+        : CALC.calcUnionStepAdjust(profile.grade);
+      var naturalYear = Math.max(1, profile.year - unionAdj);
       var d = new Date();
-      d.setFullYear(d.getFullYear() - (profile.year - 1));
-      return { date: d, source: '호봉 역산 (추정)' };
+      d.setFullYear(d.getFullYear() - (naturalYear - 1));
+      var src = unionAdj > 0
+        ? '호봉 역산 (추정, 노조협의 +' + unionAdj + '호봉 보정)'
+        : '호봉 역산 (추정)';
+      return { date: d, source: src };
     }
 
     // Method 3: 입사일 fallback

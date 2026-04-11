@@ -341,6 +341,26 @@ const CALC = {
     },
 
     /**
+     * 노조협의 특별 호봉 보정값 계산
+     * profile.unionStepAdjust 가 '' / null / undefined 일 때 자동 계산 값으로 사용.
+     * @param {string} grade - 현재 직급 코드 ('J1', 'S1' 등)
+     * @param {Date} [refDate] - 기준일 (기본: 오늘). 이 날짜 이전 이벤트만 포함.
+     * @returns {number} 해당 직급에 적용된 누적 노조협의 호봉 합계
+     */
+    calcUnionStepAdjust(grade, refDate) {
+        var ref = refDate || new Date();
+        var total = 0;
+        var events = (typeof DATA !== 'undefined' && DATA.unionStepEvents) ? DATA.unionStepEvents : [];
+        events.forEach(function(e) {
+            if (!e.grades || e.grades.indexOf(grade) === -1) return;
+            var parts = (e.date || '').split('-');
+            var eventDate = new Date(parseInt(parts[0]), parseInt(parts[1] || 1) - 1, 1);
+            if (eventDate <= ref) total += (e.stepDelta || 0);
+        });
+        return total;
+    },
+
+    /**
      * 승진 시뮬레이터
      * @param {string} jobType
      * @param {string} currentGrade
