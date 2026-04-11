@@ -617,23 +617,119 @@ const PAYROLL = {
           gradeStartDate = gs.date;
           gradeStartSource = gs.source;
         }
-
         if (!gradeStartDate) return { value: '입사일 필요', label: '프로필에 입사일을 입력하세요', details: [] };
 
-        var r = CALC.calcPromotionDate(profile.jobType, useGrade, gradeStartDate);
-        if (r.message) return { value: '해당없음', label: r.message, details: [] };
-        var isPast = r.남은일수 === 0;
         var table = DATA.payTables[CALC.resolvePayTable(profile.jobType)];
-        var gradeLabel = (table && table.gradeLabels && table.gradeLabels[useGrade]) || useGrade;
+        var gl = function(g) { return (table && table.gradeLabels && table.gradeLabels[g]) || g; };
+        var gradeLabel = gl(useGrade);
+
+        // ── 승진연한 결정 (autoPromotion 우선, 없으면 추정) ──
+        var PROMO_FALLBACK = {
+          S1: { years: 8,  next: 'S2', isEstimate: true },
+          S2: { years: 8,  next: 'S3', isEstimate: true },
+          S3: { years: null, next: 'M1', isSelection: true },
+          M1: { years: null, next: 'M2', isSelection: true },
+          M2: { years: null, next: 'M3', isSelection: true },
+          M3: { years: null, next: null,  isSelection: true },
+          C1: { years: 7,  next: 'C2', isEstimate: true },
+          C2: { years: 7,  next: 'C3', isEstimate: true },
+          C3: { years: null, next: 'L1', isSelection: true },
+          L1: { years: null, next: 'L2', isSelection: true },
+          L2: { years: null, next: 'L3', isSelection: true },
+        };
+        var promo = (table && table.autoPromotion && table.autoPromotion[useGrade]) || PROMO_FALLBACK[useGrade];
+        var nextGrade = promo ? promo.next : null;
+        var nextLabel = nextGrade ? gl(nextGrade) : '상위 직급';
+
+        // 심사승진 또는 최상위 등급
+        if (!promo || promo.isSelection || !promo.years) {
+          return {
+            value: nextGrade ? '심사승진' : '최상위',
+            label: nextGrade ? gradeLabel + ' → ' + nextLabel + ' · 심사 대상' : gradeLabel + ' · 최상위 직급',
+            details: [
+              { key: '현재 직급·호봉', val: gradeLabel + ' ' + useYear + '호봉' },
+              { key: '직급 시작일', val: gradeStartDate.toISOString().split('T')[0] + ' (' + gradeStartSource + ')' },
+              { key: '승진 방식', val: '심사승진 (자동승격 미적용)' }
+            ]
+          };
+        }
+
+        // ── 날짜 계산 ──
+        var promoYears = promo.years;
+        var targetDate = new Date(gradeStartDate);
+        targetDate.setFullYear(targetDate.getFullYear() + promoYears);
+        var now = new Date();
+        var totalMs = targetDate - gradeStartDate;
+        var elapsedMs = Math.max(0, now - gradeStartDate);
+        var progressRatio = Math.min(1, elapsedMs / totalMs);
+        var elapsedYears = elapsedMs / (1000 * 60 * 60 * 24 * 365.25);
+        var remaining = Math.max(0, Math.ceil((targetDate - now) / (1000 * 60 * 60 * 24)));
+        var isPast = remaining === 0;
+
+        // ── 바 차트 HTML 생성 ──
+        var startYear = gradeStartDate.getFullYear();
+        var startMonth = gradeStartDate.getMonth();
+        var cells = '';
+        var labelRow = '';
+
+        for (var ci = 0; ci < promoYears; ci++) {
+          var cellStart = ci / promoYears;
+          var cellEnd   = (ci + 1) / promoYears;
+          // 그라디에이션 색상: indigo(239°) → violet(262°) → blue-cyan(200°)
+          var t = promoYears > 1 ? ci / (promoYears - 1) : 0;
+          var hue = t < 0.5 ? Math.round(239 + t * 2 * 23) : Math.round(262 - (t - 0.5) * 2 * 62);
+          var color = 'hsl(' + hue + ',74%,58%)';
+          var cellStyle, cellClass;
+
+          if (isPast || progressRatio >= cellEnd) {
+            cellStyle = 'background:' + color;
+            cellClass = 'promo-bar-cell pbc-filled';
+          } else if (progressRatio > cellStart) {
+            var partialPct = Math.round(((progressRatio - cellStart) * promoYears) * 100);
+            cellStyle = 'background:linear-gradient(to right,' + color + ' ' + partialPct + '%,var(--pbc-empty) ' + partialPct + '%)';
+            cellClass = 'promo-bar-cell pbc-partial';
+          } else {
+            cellStyle = '';
+            cellClass = 'promo-bar-cell pbc-empty';
+          }
+
+          var nowDot = (!isPast && progressRatio > cellStart && progressRatio < cellEnd)
+            ? '<div class="pbc-now-dot"></div>' : '';
+          cells += '<div class="' + cellClass + '" style="' + cellStyle + '">' + nowDot + '</div>';
+
+          // 년도 라벨: 각 셀 시작에 해당 연도
+          var cellYear = startYear + ci + (startMonth > 0 ? 1 : 0);
+          if (ci === 0) cellYear = startYear;
+          labelRow += '<span>' + (startYear + ci) + '</span>';
+        }
+        // 마지막 라벨 = 목표 연도
+        labelRow += '<span style="color:var(--accent-indigo);font-weight:700;">' + targetDate.getFullYear() + '</span>';
+
+        var elapsedYStr = Math.floor(elapsedYears) + '년 ' + Math.round((elapsedYears % 1) * 12) + '개월';
+        var noteText = isPast
+          ? '🎉 자동승격 도래! 인사팀에 문의하세요'
+          : elapsedYStr + ' 경과 · D-' + remaining + ' · ' + targetDate.getFullYear() + '년 ' + (targetDate.getMonth() + 1) + '월 승격 예상';
+
+        var chartHTML = '<div class="promo-bar-wrap">'
+          + (promo.isEstimate ? '<div class="promo-bar-est-tag">추정값 · 공식 연한 미확정</div>' : '')
+          + '<div class="promo-bar-header"><span class="promo-bar-from">' + gradeLabel + '</span>'
+          + '<span class="promo-bar-arrow">→</span>'
+          + '<span class="promo-bar-to">' + nextLabel + '</span>'
+          + '<span class="promo-bar-yr">' + promoYears + '년</span></div>'
+          + '<div class="promo-bar-row">' + cells + '</div>'
+          + '<div class="promo-bar-labels">' + labelRow + '</div>'
+          + '<div class="promo-bar-note' + (isPast ? ' pbn-done' : '') + '">' + noteText + '</div>'
+          + '</div>';
+
         return {
-          value: isPast ? '이미 도래' : 'D-' + r.남은일수,
-          label: r.label,
+          value: isPast ? '이미 도래!' : 'D-' + remaining,
+          label: gradeLabel + ' → ' + nextLabel + (promo.isEstimate ? ' (추정)' : '') + ' 승격 예상',
+          chartHTML: chartHTML,
           details: [
-            { key: '적용 직급·호봉', val: gradeLabel + ' ' + useYear + '호봉' },
             { key: '직급 시작일', val: gradeStartDate.toISOString().split('T')[0] + ' (' + gradeStartSource + ')' },
-            { key: '소요 연수', val: r.소요연수 },
-            { key: '예상 승격일', val: r.예상승격일 },
-            { key: '남은 일수', val: isPast ? '이미 도래' : r.남은일수 + '일' }
+            { key: '소요 연수', val: promoYears + '년' + (promo.isEstimate ? ' (추정)' : '') },
+            { key: '예상 승격일', val: targetDate.toISOString().split('T')[0] },
+            { key: '남은 일수',   val: isPast ? '이미 도래' : remaining + '일' }
           ]
         };
       },
@@ -1064,6 +1160,8 @@ const PAYROLL = {
     var html = '<div class="qa-card-result">';
     html += '<div class="result-value">' + result.value + '</div>';
     html += '<div class="result-label">' + result.label + '</div>';
+    // 차트 (promotionDate 등 커스텀 시각화)
+    if (result.chartHTML) html += result.chartHTML;
     if (result.details && result.details.length) {
       html += '<div style="margin-top:10px;">';
       result.details.forEach(function(d) {
