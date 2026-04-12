@@ -6,8 +6,11 @@ const RetirementEngine = (function () {
   'use strict';
 
   // ── 퇴직금 계산에 필요한 내장 데이터 ──────────────────────
+  // ARCH-01: 아래 SEV_PAY, SEV_MULTI는 data.js의 DATA.severancePay,
+  //          DATA.severanceMultipliersPre2001과 동일한 값으로 유지해야 함.
+  //          DB 연결 후: window.DATA 참조로 전환 예정.
   // 출처: data.js severancePay (2015.06.30 이전 입사자 퇴직수당)
-  const SEV_PAY = [
+  const SEV_PAY = window.DATA && window.DATA.severancePay ? window.DATA.severancePay : [
     { min: 20, rate: 0.60 },
     { min: 15, rate: 0.50 },
     { min: 10, rate: 0.45 },
@@ -304,6 +307,27 @@ const RetirementEngine = (function () {
     return Math.max(0, Math.ceil((new Date(targetDate) - new Date()) / 86400000));
   }
 
+  // ── 3개월 평균임금 계산 (R20) ─────────────────────────────
+  // 사용: getThreeMonthAverage([{grossPay: 3000000}, ...]) 최신순 정렬 배열
+  // 반환: { average, months, warning: null | 'insufficient_data' | 'wage_peak_protection' }
+  // 근거: 근로기준법 제2조 평균임금 3개월 원칙
+  // 임금피크 보호 기준: 최저임금(2026: 9,860원) × 209h × 1.2 = 2,472,120원 이상이면 정상
+  function getThreeMonthAverage(payslips) {
+    if (!payslips || payslips.length < 3) {
+      return {
+        average: null,
+        months: payslips ? payslips.length : 0,
+        warning: 'insufficient_data'
+      };
+    }
+    const recent3 = payslips.slice(0, 3);
+    const avg = Math.floor(recent3.reduce(function (s, p) { return s + p.grossPay; }, 0) / 3);
+    // 운영기능직 임금피크 보호: 최저임금 9,860원 × 209h × 1.2 (2026 기준)
+    const wagePeakThreshold = Math.floor(9860 * 209 * 1.2); // 2,472,120원
+    const warning = avg < wagePeakThreshold ? 'wage_peak_protection' : null;
+    return { average: avg, months: 3, warning };
+  }
+
   return {
     autoLoad,
     calcAllScenarios,
@@ -314,6 +338,7 @@ const RetirementEngine = (function () {
     fmtFull,
     fmtDate,
     daysUntil,
-    dStr
+    dStr,
+    getThreeMonthAverage
   };
 })();

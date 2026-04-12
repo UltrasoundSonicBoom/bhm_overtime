@@ -2155,7 +2155,7 @@ const PayrollImprovementAgent = (() => {
 // 지급 항목별 계산 근거 설명
 function getItemDesc(name, year, month, est) {
   const flags = est.flags;
-  if (name === '가계지원비') return '연간 11개월 균등 지급 (1·2·9월 미지급, 단 설/추석월은 지급)';
+  if (name === '가계지원비') return '연간 11개월 균등 지급 (1·9월 미지급, 단 설/추석 해당 월은 지급)';
   if (name === '명절지원비') {
     if (month === 1 || month === 2) return '설 명절지원비 — 기준기본급 기준';
     if (month === 9) return '추석 명절지원비 — 기준기본급 기준';
@@ -6434,6 +6434,61 @@ function importLvData(event) {
   };
   reader.readAsText(file);
   event.target.value = '';
+}
+
+// ============================================
+// 📋 역계산 검증 (verifyPayslip)
+// ============================================
+
+/**
+ * 명세서 파싱 결과와 CALC 계산값을 비교하여 불일치 항목을 화면에 표시
+ * @param {object} parsedData - 파싱된 명세서 { items:[{name,amount}], totalGross }
+ * @param {object} calcResult - CALC 계산 결과 { items:[{name,amount}], totalGross }
+ */
+function renderPayslipVerifyResult(parsedData, calcResult) {
+  const container = document.getElementById('payslip-verify-result');
+  if (!container) return;
+
+  const result = CALC.verifyPayslip(parsedData, calcResult, { tolerance: 0.01, absThreshold: 500 });
+
+  const summaryEl = document.createElement('div');
+  summaryEl.className = result.matched ? 'verify-summary-ok' : 'verify-summary-error';
+  summaryEl.textContent = result.matched
+    ? '✅ 명세서와 계산값 일치 (오차 1% 이내)'
+    : `🔴 불일치 ${result.discrepancies.length}건 발견`;
+  container.replaceChildren(summaryEl);
+
+  if (result.discrepancies.length === 0) return;
+
+  const table = document.createElement('table');
+  table.className = 'verify-table';
+
+  const thead = document.createElement('thead');
+  const hrow = document.createElement('tr');
+  ['항목', '명세서', '계산값', '오차율', '상태'].forEach(h => {
+    const th = document.createElement('th');
+    th.textContent = h;
+    hrow.appendChild(th);
+  });
+  thead.appendChild(hrow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  for (const d of result.discrepancies) {
+    const tr = document.createElement('tr');
+    tr.className = 'verify-row-mismatch';
+    const pctStr = d.diffPct < 1 ? (d.diffPct * 100).toFixed(1) + '%' : '항목없음';
+    const expStr = d.expected !== null ? d.expected.toLocaleString('ko-KR') + '원' : '(없음)';
+    const actStr = d.actual !== null ? d.actual.toLocaleString('ko-KR') + '원' : '(없음)';
+    [d.item, actStr, expStr, pctStr, '🔴 불일치'].forEach(text => {
+      const td = document.createElement('td');
+      td.textContent = text;
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  }
+  table.appendChild(tbody);
+  container.appendChild(table);
 }
 
 // ============================================

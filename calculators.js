@@ -37,7 +37,7 @@ const CALC = {
         // 조정급 (통상임금 계산 순서상 먼저 설정)
         const adjustPay = extras.adjustPay || 0;
 
-        // 근속가산기본급: (기준기본급 + 조정급/2) × 근속가산율
+        // 근속가산기본급: (기준기본급 + 조정급/2) × 근속가산율 (제46조: 2016.02.29 이전 입사자 한정)
         let seniorityBasePay = 0;
         if (extras.hasSeniority && extras.seniorityYears) {
             const rate = DATA.seniorityRates.find(r => extras.seniorityYears >= r.min && extras.seniorityYears < r.max);
@@ -63,7 +63,7 @@ const CALC = {
         const workSupportPay = extras.workSupportPay || 0;
         // 가족수당은 통상임금 산정 제외 (보수규정 제44조 2항 미포함)
 
-        // 명절지원비 (연 4회): (기준기본급 + 조정급/2) × 50% (보수규정 — 근속가산기본급 미포함)
+        // 명절지원비 (연 4회): (기준기본급 + 조정급/2) × 50% (제48조: 설·추석·5월·7월)
         const holidayBonusPerTime = Math.round((monthlyBase + adjustPay / 2) * 0.5);
         const monthlyHolidayBonus = Math.round((holidayBonusPerTime * 4) / 12);
 
@@ -84,9 +84,9 @@ const CALC = {
             '교통보조비': DATA.allowances.transportSubsidy,
             // ※ 가족수당은 통상임금에 포함되지 않음 (보수규정 제44조 2항)
             '명절지원비(월할)': monthlyHolidayBonus,
-            '자기계발별정수당': DATA.allowances.selfDevAllowance,
-            '별정수당5': DATA.allowances.specialPay5
-            // '리프레시지원비': DATA.allowances.refreshBenefit // 통상임금 제외 확인
+            '교육훈련비': DATA.allowances.selfDevAllowance,      // 제43조 (구: 자기계발별정수당)
+            '별정수당5': DATA.allowances.specialPay5,
+            '리프레시지원비': DATA.allowances.refreshBenefit      // 별도합의 2024.11: 2026.01~통상임금 산입
         };
 
         const monthlyWage = Object.values(breakdown).reduce((a, b) => a + b, 0);
@@ -179,7 +179,11 @@ const CALC = {
     calcAnnualLeave(hireDate, calcDate = new Date()) {
         const diffMs = calcDate - hireDate;
         const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-        const diffYears = Math.floor(diffDays / 365);
+        // BUG-04 수정: 윤년 보정 — 날짜 기반 정확한 연수 계산 (제36조)
+        // Math.floor(diffDays/365) 대신 실제 연도 차이 기반 계산
+        let diffYears = calcDate.getFullYear() - hireDate.getFullYear();
+        const m = calcDate.getMonth() - hireDate.getMonth();
+        if (m < 0 || (m === 0 && calcDate.getDate() < hireDate.getDate())) diffYears--;
         const diffMonths = Math.floor(diffDays / 30);
 
         let totalLeave = 0;
@@ -646,5 +650,114 @@ const CALC = {
             가족수당상세: familyResult.breakdown,
             통상임금상세: wage.breakdown
         };
+    },
+
+    /**
+     * 명세서 파싱값 vs CALC 계산값 역계산 검증
+     * @param {object} parsedData  - { items:[{name,amount}], totalGross }
+     * @param {object} calcResult  - { items:[{name,amount}], totalGross }
+     * @param {object} options     - { tolerance:0.01, absThreshold:500 }
+     * @returns {{ matched:boolean, discrepancies:[{item,expected,actual,diffPct}] }}
+     */
+    verifyPayslip(parsedData, calcResult, options) {
+        const tolerance = (options && options.tolerance) !== undefined ? options.tolerance : 0.01;
+        const absThreshold = (options && options.absThreshold) !== undefined ? options.absThreshold : 500;
+        const discrepancies = [];
+
+        // 항목별 비교
+        const parsedItems = (parsedData && parsedData.items) || [];
+        const calcItems = (calcResult && calcResult.items) || [];
+
+        for (const parsedItem of parsedItems) {
+            const calcItem = calcItems.find(c => c.name === parsedItem.name);
+            if (!calcItem) {
+                discrepancies.push({
+                    item: parsedItem.name,
+                    expected: null,
+                    actual: parsedItem.amount,
+                    diffPct: 1
+                });
+                continue;
+            }
+            const diff = Math.abs(parsedItem.amount - calcItem.amount);
+            const diffPct = calcItem.amount > 0 ? diff / calcItem.amount : (diff > 0 ? 1 : 0);
+            if (diffPct > tolerance && diff > absThreshold) {
+                discrepancies.push({
+                    item: parsedItem.name,
+                    expected: calcItem.amount,
+                    actual: parsedItem.amount,
+                    diffPct
+                });
+            }
+        }
+
+        // 총액 비교
+        const parsedGross = parsedData && parsedData.totalGross;
+        const calcGross = calcResult && calcResult.totalGross;
+        if (parsedGross !== undefined && calcGross !== undefined) {
+            const diff = Math.abs(parsedGross - calcGross);
+            const diffPct = calcGross > 0 ? diff / calcGross : (diff > 0 ? 1 : 0);
+            if (diffPct > tolerance && diff > absThreshold) {
+                discrepancies.push({
+                    item: '총액(totalGross)',
+                    expected: calcGross,
+                    actual: parsedGross,
+                    diffPct
+                });
+            }
+        }
+
+        return { matched: discrepancies.length === 0, discrepancies };
+    },
+
+    /**
+     * 간호사 전용 수당 계산
+     * @param {object} profile - { preceptorWeeks, primeTeamDays }
+     *   preceptorWeeks: 프리셉터 담당 주수 (2주 단위로 200,000원)
+     *   primeTeamDays:  프라임팀(예비인력) 대체근무 일수 (20,000원/일)
+     * @returns {{ preceptorPay, primeTeamPay, total }}
+     * 근거: 제63조의2 (프리셉터), 제32조 부속합의 (프라임팀)
+     */
+    calcNursePay({ preceptorWeeks = 0, primeTeamDays = 0 } = {}) {
+        const PRECEPTOR_PER_2WEEKS = 200000; // 제63조의2
+        const PRIME_TEAM_DAILY = 20000;      // 제32조 부속합의
+        const preceptorPay = Math.floor(preceptorWeeks / 2) * PRECEPTOR_PER_2WEEKS;
+        const primeTeamPay = primeTeamDays * PRIME_TEAM_DAILY;
+        return { preceptorPay, primeTeamPay, total: preceptorPay + primeTeamPay };
+    },
+
+    /**
+     * 간호사 스케줄 규정 준수 검사
+     * @param {object} schedule - { nightShifts, age, pattern:string[] }
+     *   nightShifts: 월간 야간근무 횟수
+     *   age:         간호사 나이
+     *   pattern:     근무 패턴 배열 (예: ['N','OFF','D'])
+     * @returns {{ recoveryDays, warnings:[{type, message}] }}
+     * 근거: 제32조 부속합의 (리커버리데이), 제32조 (40세 야간 제외)
+     */
+    checkNurseScheduleRules({ nightShifts = 0, age = 0, pattern = [] } = {}) {
+        const warnings = [];
+
+        // 리커버리데이: 야간 7회 초과 시 초과분만큼 발생 (제32조 부속합의)
+        const recoveryDays = nightShifts > 7 ? nightShifts - 7 : 0;
+
+        // 40세 이상 야간근무 제외 원칙 (제32조 부속합의 — 간호부 교대근무자)
+        if (age >= 40 && nightShifts > 0) {
+            warnings.push({
+                type: 'age_night_exclusion',
+                message: '40세 이상 야간근무 제외 원칙 적용 대상 (제32조 부속합의)'
+            });
+        }
+
+        // N-OFF-D 금지 패턴 탐지 (야간 직후 비번 없이 주간 출근 금지)
+        const patternStr = pattern.join('-');
+        if (/N-OFF-D/.test(patternStr)) {
+            warnings.push({
+                type: 'forbidden_pattern',
+                message: 'N-OFF-D 금지 패턴: 야간 후 비번 없이 주간 출근 불가'
+            });
+        }
+
+        return { recoveryDays, warnings };
     }
 };

@@ -194,7 +194,9 @@
       "hourly_wage_formula": "ordinary_wage * (1/209)",
       "multipliers": {
         "standard": 1.5,
-        "night_22_to_06_and_holiday": 1.5,
+        "night_22_to_06": 2.0,
+        "holiday_within_8h": 1.5,
+        "holiday_over_8h": 2.0,
         "standard_worker_continuous_night": 2.0
       },
       "on_call": {
