@@ -9,13 +9,17 @@
     "test": "node --import tsx --test tests/**/*.test.ts",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
+    "db:apply": "tsx scripts/apply-migration.ts",
     "db:studio": "drizzle-kit studio",
     "seed": "tsx scripts/seed-from-data-js.ts",
+    "seed:schedule:mvp": "tsx scripts/seed-pilot-schedules.ts",
+    "report:schedule:suite": "tsx scripts/build-schedule-suite-report.ts",
     "admin:smoke": "tsx scripts/smoke-admin-ops.ts",
     "rag:baseline": "tsx scripts/check-rag-baseline.ts",
     "rag:ingest": "tsx scripts/ingest-regulation-docs.ts",
     "rag:embed:regulations": "tsx scripts/embed-regulation-docs.ts",
-    "rag:verify": "tsx scripts/verify-rag-quality.ts"
+    "rag:verify": "tsx scripts/verify-rag-quality.ts",
+    "schedule:solver:check": "python3 -m py_compile workers/schedule_solver.py"
   },
   "dependencies": {
     "@hono/node-server": "^1.14.0",

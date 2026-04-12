@@ -590,17 +590,8 @@
       <!-- ── 서브탭 5: 퇴직금 ── -->
       <div class="sub-content" id="sub-pay-retirement">
 
-        <!-- 내부 북마크 탭 -->
-        <nav class="ret-bookmark-tabs" id="retTabs">
-          <button class="ret-bookmark-tab active" data-tab="calc">💰 퇴직금</button>
-          <button class="ret-bookmark-tab" data-tab="peak">📈 임금피크</button>
-          <button class="ret-bookmark-tab" data-tab="pension">🏦 사학연금</button>
-          <button class="ret-bookmark-tab" data-tab="checklist">✅ 퇴직준비</button>
-        </nav>
-        <div class="ret-tab-accent calc" id="retTabAccent"></div>
-
-        <!-- 탭 1: 퇴직금 계산기 -->
-        <div class="ret-panel active" id="ret-panel-calc">
+        <!-- retirement.html로 이동 (새 독립 페이지) -->
+        <div class="ret-panel active" id="ret-panel-calc" style="display:none">
           <div id="retAutoLoadBanner" style="display:none; margin-bottom:12px; padding:12px 14px; font-size:var(--text-body-normal); line-height:1.6; background:#e0e7ff; border:2.5px solid #4338ca; border-radius:8px; box-shadow:3px 3px 0px #1a1a1a;">
             <div style="font-weight:700; margin-bottom:4px; color:#1e1b4b;">⚡ 내 정보 자동 반영</div>
             <div id="retAutoLoadDetail" style="color:#312e81;"></div>
@@ -1391,6 +1382,33 @@
         </div>
       </div>
 
+      <div id="teamScheduleSyncSection" class="card" style="max-width:600px; margin:20px auto 0; display:none;">
+        <div class="card-title" style="font-size:var(--text-body-large);">
+          <span class="icon indigo">🗓️</span> 팀 근무표 캘린더
+        </div>
+        <p style="font-size:var(--text-body-normal); color:var(--text-muted); margin-bottom:12px;">
+          배포된 팀 근무표가 있으면 이번 달 <strong>D/E/N 근무와 승인 휴가만</strong> `.ics` 파일로 내려받아 일반 캘린더에 가져올 수 있어요.
+          Google Calendar 심사 중에는 이 방식으로 테스트합니다.
+        </p>
+        <div class="info-note-banner" style="margin-bottom:12px;">
+          <span>ℹ️</span>
+          <span>OFF는 기본 동기화하지 않고, 팀 검토/배포는 팀 워크스페이스에서 진행합니다.</span>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button id="teamScheduleIcsBtn" class="btn btn-outline" onclick="downloadTeamScheduleIcs(this)"
+            style="font-size:var(--text-body-normal); padding:6px 12px;">📥 이번 달 근무표 .ics 받기</button>
+          <a class="btn btn-outline" href="./nurse_admin/index.html"
+            style="font-size:var(--text-body-normal); padding:6px 12px; text-decoration:none;">배포 근무표 열기</a>
+          <a class="btn btn-outline" href="./nurse_admin/admin.html"
+            style="font-size:var(--text-body-normal); padding:6px 12px; text-decoration:none;">관리자판 열기</a>
+          <a class="btn btn-outline" href="./dashboard.html"
+            style="font-size:var(--text-body-normal); padding:6px 12px; text-decoration:none;">검증 대시보드</a>
+        </div>
+        <p id="teamScheduleSyncNote" style="font-size:0.75rem; color:var(--text-muted); margin-top:8px;">
+          팀 로그인 후 사용할 수 있어요.
+        </p>
+      </div>
+
       <!-- 파일 백업/복구 (일반 모드 전용) -->
       <div id="localBackupSection" class="card" style="max-width:600px; margin:20px auto 0;">
         <div class="card-title" style="font-size:var(--text-body-large);"><span class="icon indigo">💾</span> 데이터 백업 및
@@ -1506,15 +1524,18 @@
       if (!authContainer) return;
       while (authContainer.firstChild) authContainer.removeChild(authContainer.firstChild);
 
-      if (user && user.sub) {
+      var userId = user && (user.sub || user.id);
+      if (userId) {
         var settings = (window.loadSettings && window.loadSettings()) || {};
+        var displayName = user.name || user.email || (user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || '';
+        var picture = user.picture || (user.user_metadata && user.user_metadata.avatar_url) || '';
 
         var infoDiv = document.createElement('div');
         infoDiv.style.cssText = 'font-size:var(--text-body-normal);color:var(--text-muted);text-align:right;';
 
         var nameDiv = document.createElement('div');
         nameDiv.style.cssText = 'font-weight:600;color:var(--text-primary);';
-        nameDiv.textContent = user.name || user.email || '';
+        nameDiv.textContent = displayName;
 
         if (settings.driveEnabled) {
           var db = document.createElement('span');
@@ -1532,15 +1553,23 @@
         var signOutBtn = document.createElement('button');
         signOutBtn.textContent = '연결 해제';
         signOutBtn.style.cssText = 'background:transparent;border:none;color:var(--accent-rose);font-size:var(--text-body-normal);cursor:pointer;padding:0;margin-top:2px;text-decoration:underline;';
-        signOutBtn.onclick = function () { if (window.GoogleAuth) window.GoogleAuth.signOut(); };
+        signOutBtn.onclick = function () {
+          if (window.SupabaseUser && window.SupabaseClient) {
+            window.SupabaseClient.auth.signOut().finally(function () {
+              window.location.reload();
+            });
+            return;
+          }
+          if (window.GoogleAuth) window.GoogleAuth.signOut();
+        };
 
         infoDiv.appendChild(nameDiv);
         infoDiv.appendChild(signOutBtn);
         authContainer.appendChild(infoDiv);
 
-        if (user.picture) {
+        if (picture) {
           var img = document.createElement('img');
-          img.src = user.picture;
+          img.src = picture;
           img.style.cssText = 'width:32px;height:32px;border-radius:50%;border:1px solid var(--border-glass);';
           img.onerror = function () { img.style.display = 'none'; };
           authContainer.appendChild(img);
@@ -1557,6 +1586,8 @@
         loginBtn.onclick = function () { if (window.GoogleAuth) window.GoogleAuth.signIn(); };
         authContainer.appendChild(loginBtn);
       }
+
+      if (typeof updateTeamScheduleSyncUI === 'function') updateTeamScheduleSyncUI();
     }
     // GIS 로드 완료 후 GoogleAuth.init() 호출 (window 'load' 이벤트)
     window.addEventListener('load', function () {
@@ -1682,6 +1713,90 @@
         if (btn) btn.disabled = false;
       });
     }
+
+    function showOtToast(message) {
+      var toast = document.getElementById('otToast');
+      if (!toast) return;
+      toast.textContent = message;
+      toast.style.display = 'block';
+      clearTimeout(toast._hideTimer);
+      toast._hideTimer = setTimeout(function () { toast.style.display = 'none'; }, 3000);
+    }
+
+    async function getSupabaseAccessTokenForApi() {
+      if (!window.SupabaseClient) return null;
+      try {
+        var sessionResult = await window.SupabaseClient.auth.getSession();
+        return sessionResult && sessionResult.data && sessionResult.data.session
+          ? sessionResult.data.session.access_token
+          : null;
+      } catch (e) {
+        console.warn('[TeamSchedule] Failed to read session:', e);
+        return null;
+      }
+    }
+
+    function buildCurrentMonthRange() {
+      var now = new Date();
+      var start = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1));
+      var end = new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 0));
+      return {
+        start: start.toISOString().slice(0, 10),
+        end: end.toISOString().slice(0, 10)
+      };
+    }
+
+    function updateTeamScheduleSyncUI() {
+      var section = document.getElementById('teamScheduleSyncSection');
+      var note = document.getElementById('teamScheduleSyncNote');
+      if (!section) return;
+
+      var loggedIn = !!window.SupabaseUser;
+      section.style.display = loggedIn ? 'block' : 'none';
+      if (note) {
+        note.textContent = loggedIn
+          ? '배포된 팀 근무표가 있으면 이번 달 기준으로 파일을 내려받습니다.'
+          : '팀 로그인 후 사용할 수 있어요.';
+      }
+    }
+
+    async function downloadTeamScheduleIcs(btn) {
+      var token = await getSupabaseAccessTokenForApi();
+      if (!token) {
+        showOtToast('팀 로그인 후 다시 시도해 주세요.');
+        return;
+      }
+
+      var range = buildCurrentMonthRange();
+      if (btn) btn.disabled = true;
+      try {
+        var response = await fetch('/api/me/schedule.ics?start=' + encodeURIComponent(range.start) + '&end=' + encodeURIComponent(range.end), {
+          headers: {
+            'Authorization': 'Bearer ' + token
+          }
+        });
+        if (!response.ok) {
+          var data = await response.json().catch(function () { return {}; });
+          throw new Error(data.error || '근무표를 찾지 못했습니다.');
+        }
+
+        var blob = await response.blob();
+        var blobUrl = URL.createObjectURL(blob);
+        var anchor = document.createElement('a');
+        anchor.href = blobUrl;
+        anchor.download = 'snuhmate-team-schedule-' + range.start + '.ics';
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        setTimeout(function () { URL.revokeObjectURL(blobUrl); }, 1000);
+        showOtToast('이번 달 근무표 파일을 내려받았어요.');
+      } catch (e) {
+        console.warn('[TeamSchedule] download failed:', e);
+        showOtToast(e && e.message ? e.message : '근무표 파일을 만들지 못했어요.');
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
   </script>
   <!-- Toast notification -->
   <div id="otToast" class="ot-toast" style="display:none;"></div>
@@ -1797,7 +1912,45 @@
     #ch-plugin-script-iframe {
       max-width: 500px !important;
     }
+    /* 퇴직금 탭 리다이렉트 카드 */
+    .ret-redirect-card {
+      background: #FFFFFF;
+      border: 2.5px solid #1a1a1a;
+      border-radius: 16px;
+      box-shadow: 4px 4px 0 #1a1a1a;
+      padding: 28px 20px;
+      text-align: center;
+      margin-top: 8px;
+    }
+    .ret-redirect-icon  { font-size: 40px; margin-bottom: 12px; }
+    .ret-redirect-title { font-weight: 800; font-size: 18px; margin-bottom: 8px; color: #1a1a1a; }
+    .ret-redirect-desc  { font-size: 13px; color: #4a4a4a; line-height: 1.6; margin-bottom: 20px; }
+    .ret-redirect-btn {
+      display: inline-block;
+      background: #1a1a1a; color: #fff;
+      font-weight: 700; font-size: 15px;
+      padding: 13px 28px; border-radius: 12px;
+      text-decoration: none; border: 2.5px solid #1a1a1a;
+      box-shadow: 3px 3px 0 #6C5CE7;
+    }
   </style>
+  <script>
+    // 퇴직금 탭 → retirement.html 리다이렉트 카드 (DOM API, XSS-safe)
+    function initRetirementTab() {
+      var panel = document.getElementById('ret-panel-calc');
+      if (!panel || panel.querySelector('.ret-redirect-card')) return;
+      panel.style.display = '';
+      var card  = document.createElement('div');  card.className  = 'ret-redirect-card';
+      var icon  = document.createElement('div');  icon.className  = 'ret-redirect-icon';  icon.textContent = '💰';
+      var title = document.createElement('div');  title.className = 'ret-redirect-title'; title.textContent = '퇴직금 · 임금피크 분석';
+      var desc  = document.createElement('div');  desc.className  = 'ret-redirect-desc';
+      desc.textContent = '중간정산 시뮬레이터, 5개 시나리오 비교, 내 정보 자동 로드가 포함된 전용 페이지입니다.';
+      var btn   = document.createElement('a');    btn.className   = 'ret-redirect-btn';
+      btn.textContent = '퇴직금 계산기 열기 →'; btn.href = 'retirement_ori.html';
+      card.appendChild(icon); card.appendChild(title); card.appendChild(desc); card.appendChild(btn);
+      panel.appendChild(card);
+    }
+  </script>
 </body>
 
 </html>

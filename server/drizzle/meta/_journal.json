@@ -15,6 +15,20 @@
       "when": 1775786248364,
       "tag": "0001_tough_the_captain",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1775921665446,
+      "tag": "0002_square_nova",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1775966400000,
+      "tag": "0003_team_schedule_events",
+      "breakpoints": true
     }
   ]
 }

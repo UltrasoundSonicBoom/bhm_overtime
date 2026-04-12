@@ -15,8 +15,8 @@ type VersionRow = {
 const sql = postgres(process.env.DATABASE_URL!, { prepare: false })
 const repoRoot = resolve(import.meta.dirname, '..', '..')
 const defaultSources = [
-  'data/2026_handbook.pdf',
-  'data/hospital_guidelines_2026.md',
+  'content/policies/2026/2026_조합원_수첩_최종파일.pdf',
+  'content/policies/2026/nurse_regulation.md',
 ]
 
 function countFaqEntriesInDataJs(): number {

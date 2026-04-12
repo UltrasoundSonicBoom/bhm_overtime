@@ -10,8 +10,30 @@ import {
   ceremonies,
 } from '../db/schema'
 import { eq, and } from 'drizzle-orm'
+import {
+  evaluateNurseRegulationScenarios,
+  loadNurseRegulation,
+} from '../services/nurse-regulation'
 
 const dataRoutes = new Hono()
+
+dataRoutes.get('/nurse-regulation', async (c) => {
+  const year = Number(c.req.query('year') || 2026)
+
+  try {
+    const regulation = loadNurseRegulation(year)
+    const scenarioReport = evaluateNurseRegulationScenarios(regulation)
+    c.header('Cache-Control', 'public, max-age=3600')
+    return c.json({
+      ...regulation,
+      scenarioReport,
+    })
+  } catch (error) {
+    return c.json({
+      error: error instanceof Error ? error.message : 'Failed to load nurse regulation',
+    }, 404)
+  }
+})
 
 /**
  * GET /api/data/bundle?year=2026

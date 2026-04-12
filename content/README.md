@@ -34,5 +34,5 @@
 
 ## Current Track A Note
 
-- 현재 draft ingest에 사용한 실제 원문 PDF는 `/Users/momo/Downloads/2026 nojo.pdf` 이다.
-- 다음 단계에서는 이 파일을 `content/policies/2026/` 아래로 편입해 repo 기준 경로로 관리하는 것이 바람직하다.
+- 2026 원문 PDF는 이제 `content/policies/2026/2026_조합원_수첩_최종파일.pdf`로 repo 안에 편입했다.
+- 운영용 정리본은 `content/policies/2026/nurse_regulation.md`와 `content/policies/2026/nurse_regulation.json`을 기준으로 삼는다.

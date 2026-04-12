@@ -46,6 +46,13 @@ export const adminRoleEnum = pgEnum('admin_role', [
   'viewer',
 ])
 
+export const teamRoleEnum = pgEnum('team_role', [
+  'head_nurse',
+  'scheduler',
+  'staff',
+  'viewer',
+])
+
 export const contentStatusEnum = pgEnum('content_status', [
   'draft',
   'review',
@@ -62,6 +69,44 @@ export const contentTypeEnum = pgEnum('content_type', [
 ])
 
 export const approvalStatusEnum = pgEnum('approval_status', [
+  'pending',
+  'approved',
+  'rejected',
+  'cancelled',
+])
+
+export const schedulePeriodStatusEnum = pgEnum('schedule_period_status', [
+  'draft',
+  'review',
+  'published',
+])
+
+export const scheduleRunTypeEnum = pgEnum('schedule_run_type', [
+  'generate',
+  'repair',
+])
+
+export const scheduleRunStatusEnum = pgEnum('schedule_run_status', [
+  'queued',
+  'running',
+  'completed',
+  'infeasible',
+  'failed',
+])
+
+export const scheduleCandidateStatusEnum = pgEnum('schedule_candidate_status', [
+  'draft',
+  'selected',
+  'published',
+  'discarded',
+])
+
+export const publishVersionStatusEnum = pgEnum('publish_version_status', [
+  'published',
+  'superseded',
+])
+
+export const swapRequestStatusEnum = pgEnum('swap_request_status', [
   'pending',
   'approved',
   'rejected',
@@ -371,5 +416,493 @@ export const auditLogs = pgTable(
   (table) => [
     index('audit_logs_entity_idx').on(table.entityType, table.entityId),
     index('audit_logs_actor_idx').on(table.actorUserId),
+  ],
+)
+
+// ── 3.15 teams ──
+
+export const teams = pgTable(
+  'teams',
+  {
+    id: serial('id').primaryKey(),
+    slug: text('slug').notNull(),
+    name: text('name').notNull(),
+    description: text('description'),
+    isActive: boolean('is_active').default(true),
+    metadata: jsonb('metadata').$type<Record<string, unknown>>().default({}),
+    createdBy: uuid('created_by'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('teams_slug_uidx').on(table.slug),
+  ],
+)
+
+// ── 3.16 team_members ──
+
+export const teamMembers = pgTable(
+  'team_members',
+  {
+    id: serial('id').primaryKey(),
+    externalUserId: uuid('external_user_id'),
+    employeeCode: text('employee_code'),
+    displayName: text('display_name').notNull(),
+    age: integer('age'),
+    roleLabel: text('role_label'),
+    skillTags: jsonb('skill_tags').$type<string[]>().default([]),
+    ftePermille: integer('fte_permille').notNull().default(1000),
+    canNight: boolean('can_night').default(true),
+    metadata: jsonb('metadata').$type<Record<string, unknown>>().default({}),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index('team_members_external_uid_idx').on(table.externalUserId),
+  ],
+)
+
+// ── 3.17 team_memberships ──
+
+export const teamMemberships = pgTable(
+  'team_memberships',
+  {
+    id: serial('id').primaryKey(),
+    teamId: integer('team_id')
+      .notNull()
+      .references(() => teams.id, { onDelete: 'cascade' }),
+    memberId: integer('member_id')
+      .notNull()
+      .references(() => teamMembers.id, { onDelete: 'cascade' }),
+    teamRole: teamRoleEnum('team_role').notNull().default('staff'),
+    isPrimary: boolean('is_primary').default(true),
+    joinedAt: timestamp('joined_at', { withTimezone: true }).defaultNow(),
+    endedAt: timestamp('ended_at', { withTimezone: true }),
+    metadata: jsonb('metadata').$type<Record<string, unknown>>().default({}),
+  },
+  (table) => [
+    uniqueIndex('team_memberships_team_member_uidx').on(table.teamId, table.memberId),
+    index('team_memberships_role_idx').on(table.teamRole),
+  ],
+)
+
+// ── 3.18 team_rule_profiles ──
+
+export const teamRuleProfiles = pgTable(
+  'team_rule_profiles',
+  {
+    id: serial('id').primaryKey(),
+    teamId: integer('team_id')
+      .notNull()
+      .references(() => teams.id, { onDelete: 'cascade' }),
+    version: integer('version').notNull().default(1),
+    name: text('name').notNull(),
+    hospitalRuleVersion: text('hospital_rule_version'),
+    structuredRules: jsonb('structured_rules')
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+    scoringWeights: jsonb('scoring_weights')
+      .$type<Record<string, number>>()
+      .default({}),
+    isActive: boolean('is_active').default(true),
+    createdBy: uuid('created_by'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('team_rule_profiles_team_version_uidx').on(table.teamId, table.version),
+    index('team_rule_profiles_active_idx').on(table.teamId, table.isActive),
+  ],
+)
+
+// ── 3.19 team_subdomains ──
+
+export const teamSubdomains = pgTable(
+  'team_subdomains',
+  {
+    id: serial('id').primaryKey(),
+    teamId: integer('team_id')
+      .notNull()
+      .references(() => teams.id, { onDelete: 'cascade' }),
+    slug: text('slug').notNull(),
+    hostname: text('hostname'),
+    isActive: boolean('is_active').default(true),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('team_subdomains_slug_uidx').on(table.slug),
+    uniqueIndex('team_subdomains_hostname_uidx').on(table.hostname),
+  ],
+)
+
+// ── 3.20 shift_types ──
+
+export const shiftTypes = pgTable(
+  'shift_types',
+  {
+    id: serial('id').primaryKey(),
+    teamId: integer('team_id')
+      .notNull()
+      .references(() => teams.id, { onDelete: 'cascade' }),
+    code: text('code').notNull(),
+    label: text('label').notNull(),
+    startMinutes: integer('start_minutes').notNull(),
+    endMinutes: integer('end_minutes').notNull(),
+    isWork: boolean('is_work').default(true),
+    category: text('category').default('work'),
+    sortOrder: integer('sort_order').default(0),
+    metadata: jsonb('metadata').$type<Record<string, unknown>>().default({}),
+  },
+  (table) => [
+    uniqueIndex('shift_types_team_code_uidx').on(table.teamId, table.code),
+  ],
+)
+
+// ── 3.21 coverage_templates ──
+
+export const coverageTemplates = pgTable(
+  'coverage_templates',
+  {
+    id: serial('id').primaryKey(),
+    teamId: integer('team_id')
+      .notNull()
+      .references(() => teams.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    isActive: boolean('is_active').default(true),
+    rules: jsonb('rules').$type<Record<string, unknown>>().notNull().default({}),
+    createdBy: uuid('created_by'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index('coverage_templates_team_active_idx').on(table.teamId, table.isActive),
+  ],
+)
+
+// ── 3.22 schedule_periods ──
+
+export const schedulePeriods = pgTable(
+  'schedule_periods',
+  {
+    id: serial('id').primaryKey(),
+    teamId: integer('team_id')
+      .notNull()
+      .references(() => teams.id, { onDelete: 'cascade' }),
+    year: integer('year').notNull(),
+    month: integer('month').notNull(),
+    status: schedulePeriodStatusEnum('status').notNull().default('draft'),
+    activeRuleProfileId: integer('active_rule_profile_id'),
+    latestRunId: integer('latest_run_id'),
+    currentCandidateId: integer('current_candidate_id'),
+    currentPublishVersionId: integer('current_publish_version_id'),
+    requestSnapshot: jsonb('request_snapshot')
+      .$type<Record<string, unknown>>()
+      .default({}),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('schedule_periods_team_month_uidx').on(table.teamId, table.year, table.month),
+    index('schedule_periods_status_idx').on(table.status),
+  ],
+)
+
+// ── 3.23 schedule_runs ──
+
+export const scheduleRuns = pgTable(
+  'schedule_runs',
+  {
+    id: serial('id').primaryKey(),
+    periodId: integer('period_id')
+      .notNull()
+      .references(() => schedulePeriods.id, { onDelete: 'cascade' }),
+    runType: scheduleRunTypeEnum('run_type').notNull(),
+    status: scheduleRunStatusEnum('status').notNull().default('queued'),
+    initiatedBy: uuid('initiated_by'),
+    inputSnapshot: jsonb('input_snapshot')
+      .$type<Record<string, unknown>>()
+      .default({}),
+    selectedCandidateId: integer('selected_candidate_id'),
+    solverEngine: text('solver_engine'),
+    summary: jsonb('summary').$type<Record<string, unknown>>().default({}),
+    startedAt: timestamp('started_at', { withTimezone: true }),
+    finishedAt: timestamp('finished_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index('schedule_runs_period_idx').on(table.periodId),
+    index('schedule_runs_status_idx').on(table.status),
+  ],
+)
+
+// ── 3.24 schedule_candidates ──
+
+export const scheduleCandidates = pgTable(
+  'schedule_candidates',
+  {
+    id: serial('id').primaryKey(),
+    runId: integer('run_id')
+      .notNull()
+      .references(() => scheduleRuns.id, { onDelete: 'cascade' }),
+    candidateKey: text('candidate_key').notNull(),
+    ranking: integer('ranking').notNull().default(0),
+    status: scheduleCandidateStatusEnum('status').notNull().default('draft'),
+    score: jsonb('score').$type<Record<string, unknown>>().default({}),
+    explanation: jsonb('explanation')
+      .$type<Record<string, unknown>>()
+      .default({}),
+    assignmentsSnapshot: jsonb('assignments_snapshot')
+      .$type<Record<string, unknown>[]>()
+      .default([]),
+    violationsSnapshot: jsonb('violations_snapshot')
+      .$type<Record<string, unknown>[]>()
+      .default([]),
+    publishedDiff: jsonb('published_diff')
+      .$type<Record<string, unknown>>()
+      .default({}),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('schedule_candidates_run_key_uidx').on(table.runId, table.candidateKey),
+    index('schedule_candidates_status_idx').on(table.status),
+  ],
+)
+
+// ── 3.25 shift_assignments ──
+
+export const shiftAssignments = pgTable(
+  'shift_assignments',
+  {
+    id: serial('id').primaryKey(),
+    candidateId: integer('candidate_id')
+      .notNull()
+      .references(() => scheduleCandidates.id, { onDelete: 'cascade' }),
+    memberId: integer('member_id')
+      .notNull()
+      .references(() => teamMembers.id, { onDelete: 'cascade' }),
+    workDate: date('work_date').notNull(),
+    shiftCode: text('shift_code').notNull(),
+    source: text('source').default('solver'),
+    isLocked: boolean('is_locked').default(false),
+    metadata: jsonb('metadata').$type<Record<string, unknown>>().default({}),
+  },
+  (table) => [
+    uniqueIndex('shift_assignments_candidate_member_date_uidx').on(
+      table.candidateId,
+      table.memberId,
+      table.workDate,
+    ),
+    index('shift_assignments_member_idx').on(table.memberId, table.workDate),
+  ],
+)
+
+// ── 3.26 assignment_locks ──
+
+export const assignmentLocks = pgTable(
+  'assignment_locks',
+  {
+    id: serial('id').primaryKey(),
+    periodId: integer('period_id')
+      .notNull()
+      .references(() => schedulePeriods.id, { onDelete: 'cascade' }),
+    memberId: integer('member_id')
+      .notNull()
+      .references(() => teamMembers.id, { onDelete: 'cascade' }),
+    workDate: date('work_date').notNull(),
+    lockedShiftCode: text('locked_shift_code').notNull(),
+    reason: text('reason'),
+    lockedBy: uuid('locked_by'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('assignment_locks_period_member_date_uidx').on(
+      table.periodId,
+      table.memberId,
+      table.workDate,
+    ),
+  ],
+)
+
+// ── 3.27 team_schedule_events ──
+
+export const teamScheduleEvents = pgTable(
+  'team_schedule_events',
+  {
+    id: serial('id').primaryKey(),
+    teamId: integer('team_id')
+      .notNull()
+      .references(() => teams.id, { onDelete: 'cascade' }),
+    periodId: integer('period_id').references(() => schedulePeriods.id, {
+      onDelete: 'cascade',
+    }),
+    memberId: integer('member_id').references(() => teamMembers.id, {
+      onDelete: 'set null',
+    }),
+    scope: text('scope').notNull(),
+    eventType: text('event_type').notNull(),
+    title: text('title').notNull(),
+    startDate: date('start_date').notNull(),
+    endDate: date('end_date').notNull(),
+    startMinutes: integer('start_minutes'),
+    endMinutes: integer('end_minutes'),
+    allDay: boolean('all_day').notNull().default(true),
+    blocksWork: boolean('blocks_work').notNull().default(false),
+    preferredShiftCode: text('preferred_shift_code'),
+    coverageDelta: jsonb('coverage_delta')
+      .$type<Record<string, number>>()
+      .notNull()
+      .default({}),
+    notes: text('notes'),
+    source: text('source').notNull().default('manual'),
+    createdBy: uuid('created_by'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index('team_schedule_events_team_period_idx').on(table.teamId, table.periodId),
+    index('team_schedule_events_member_date_idx').on(table.memberId, table.startDate, table.endDate),
+    index('team_schedule_events_scope_idx').on(table.teamId, table.scope, table.eventType),
+  ],
+)
+
+// ── 3.28 constraint_violations ──
+
+export const constraintViolations = pgTable(
+  'constraint_violations',
+  {
+    id: serial('id').primaryKey(),
+    candidateId: integer('candidate_id')
+      .notNull()
+      .references(() => scheduleCandidates.id, { onDelete: 'cascade' }),
+    severity: text('severity').notNull(),
+    ruleCode: text('rule_code').notNull(),
+    message: text('message').notNull(),
+    workDate: date('work_date'),
+    memberId: integer('member_id').references(() => teamMembers.id, {
+      onDelete: 'set null',
+    }),
+    details: jsonb('details').$type<Record<string, unknown>>().default({}),
+  },
+  (table) => [
+    index('constraint_violations_candidate_idx').on(table.candidateId),
+    index('constraint_violations_rule_idx').on(table.ruleCode),
+  ],
+)
+
+// ── 3.29 publish_versions ──
+
+export const publishVersions = pgTable(
+  'publish_versions',
+  {
+    id: serial('id').primaryKey(),
+    periodId: integer('period_id')
+      .notNull()
+      .references(() => schedulePeriods.id, { onDelete: 'cascade' }),
+    candidateId: integer('candidate_id').references(() => scheduleCandidates.id, {
+      onDelete: 'set null',
+    }),
+    versionNumber: integer('version_number').notNull(),
+    status: publishVersionStatusEnum('status').notNull().default('published'),
+    publishedBy: uuid('published_by'),
+    assignmentsSnapshot: jsonb('assignments_snapshot')
+      .$type<Record<string, unknown>[]>()
+      .notNull()
+      .default([]),
+    diffSummary: jsonb('diff_summary').$type<Record<string, unknown>>().default({}),
+    calendarSyncState: jsonb('calendar_sync_state')
+      .$type<Record<string, unknown>>()
+      .default({}),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('publish_versions_period_version_uidx').on(table.periodId, table.versionNumber),
+    index('publish_versions_status_idx').on(table.status),
+  ],
+)
+
+// ── 3.30 schedule_requests ──
+
+export const scheduleRequests = pgTable(
+  'schedule_requests',
+  {
+    id: serial('id').primaryKey(),
+    teamId: integer('team_id')
+      .notNull()
+      .references(() => teams.id, { onDelete: 'cascade' }),
+    periodId: integer('period_id')
+      .notNull()
+      .references(() => schedulePeriods.id, { onDelete: 'cascade' }),
+    memberId: integer('member_id')
+      .notNull()
+      .references(() => teamMembers.id, { onDelete: 'cascade' }),
+    requestType: text('request_type').notNull(),
+    requestDate: date('request_date').notNull(),
+    note: text('note'),
+    metadata: jsonb('metadata').$type<Record<string, unknown>>().default({}),
+    createdBy: uuid('created_by'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('schedule_requests_team_period_member_date_type_uidx').on(
+      table.teamId,
+      table.periodId,
+      table.memberId,
+      table.requestDate,
+      table.requestType,
+    ),
+    index('schedule_requests_member_idx').on(table.memberId, table.requestDate),
+  ],
+)
+
+// ── 3.31 swap_requests ──
+
+export const swapRequests = pgTable(
+  'swap_requests',
+  {
+    id: serial('id').primaryKey(),
+    periodId: integer('period_id')
+      .notNull()
+      .references(() => schedulePeriods.id, { onDelete: 'cascade' }),
+    publishVersionId: integer('publish_version_id')
+      .notNull()
+      .references(() => publishVersions.id, { onDelete: 'cascade' }),
+    requesterMemberId: integer('requester_member_id')
+      .notNull()
+      .references(() => teamMembers.id, { onDelete: 'cascade' }),
+    counterpartyMemberId: integer('counterparty_member_id')
+      .notNull()
+      .references(() => teamMembers.id, { onDelete: 'cascade' }),
+    requesterDate: date('requester_date').notNull(),
+    requesterShiftCode: text('requester_shift_code').notNull(),
+    counterpartyDate: date('counterparty_date').notNull(),
+    counterpartyShiftCode: text('counterparty_shift_code').notNull(),
+    reason: text('reason'),
+    status: swapRequestStatusEnum('status').notNull().default('pending'),
+    requestedBy: uuid('requested_by'),
+    decidedBy: uuid('decided_by'),
+    requestedAt: timestamp('requested_at', { withTimezone: true }).defaultNow(),
+    decidedAt: timestamp('decided_at', { withTimezone: true }),
+  },
+  (table) => [
+    index('swap_requests_period_idx').on(table.periodId, table.status),
+    index('swap_requests_publish_idx').on(table.publishVersionId),
+  ],
+)
+
+// ── 3.31 swap_events ──
+
+export const swapEvents = pgTable(
+  'swap_events',
+  {
+    id: serial('id').primaryKey(),
+    swapRequestId: integer('swap_request_id')
+      .notNull()
+      .references(() => swapRequests.id, { onDelete: 'cascade' }),
+    eventType: text('event_type').notNull(),
+    actorUserId: uuid('actor_user_id'),
+    payload: jsonb('payload').$type<Record<string, unknown>>().default({}),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index('swap_events_request_idx').on(table.swapRequestId, table.createdAt),
   ],
 )

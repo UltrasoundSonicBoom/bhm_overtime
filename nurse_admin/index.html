@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SNUH Mate Published Nurse Schedule">
+  <title>SNUH Mate 배포 근무표</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./publish.css">
+</head>
+<body>
+  <header class="publish-top">
+    <div class="brand-block">
+      <img class="brand-mark" src="../snuhmatecircle.png" alt="SNUH Mate 로고">
+      <div>
+        <p class="eyebrow">Published Schedule</p>
+        <h1>배포 근무표</h1>
+        <p class="subtitle">확정 배포본만 보여주고, 휴가·교육·개인 캘린더 편의 기능만 남겼습니다.</p>
+      </div>
+    </div>
+    <nav class="top-links">
+      <a href="./admin.html">관리자판</a>
+      <a href="../dashboard.html">검증 대시보드</a>
+      <a href="../admin/index.html">규정 관리</a>
+    </nav>
+  </header>
+
+  <main class="publish-shell">
+    <section class="control-bar">
+      <label class="field">
+        <span>팀</span>
+        <select id="teamSelect"></select>
+      </label>
+      <label class="field">
+        <span>기간</span>
+        <input id="periodInput" type="month">
+      </label>
+      <label class="field grow">
+        <span>이름 검색</span>
+        <input id="memberSearchInput" type="search" placeholder="이름, 역할, 태그">
+      </label>
+      <label class="field">
+        <span>개인 보기</span>
+        <select id="memberSelect"></select>
+      </label>
+      <button id="downloadIcsBtn" class="action-btn" type="button">개인 .ics</button>
+    </section>
+
+    <section class="status-grid" id="statusGrid"></section>
+
+    <section class="filter-strip">
+      <button class="filter-chip active" type="button" data-filter="all">전체</button>
+      <button class="filter-chip" type="button" data-filter="leave">휴가</button>
+      <button class="filter-chip" type="button" data-filter="education">교육</button>
+      <button class="filter-chip" type="button" data-filter="new-grad">신규</button>
+    </section>
+
+    <section class="board-card">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Published Board</p>
+          <h2 id="boardHeadline">배포본을 불러오는 중입니다.</h2>
+        </div>
+        <div id="publishMeta" class="publish-meta">대기 중</div>
+      </div>
+      <div class="legend-row">
+        <span class="legend-chip shift-D">D</span>
+        <span class="legend-chip shift-E">E</span>
+        <span class="legend-chip shift-N">N</span>
+        <span class="legend-chip shift-OFF">OFF</span>
+        <span class="legend-chip shift-LEAVE">LEAVE</span>
+        <span class="legend-chip shift-EDU">EDU</span>
+        <span class="legend-note">휴가, 교육, 팀 이벤트가 셀 안에 함께 표시됩니다.</span>
+      </div>
+      <div id="publishedBoard" class="board-shell">배포본을 불러오는 중입니다.</div>
+    </section>
+
+    <section class="detail-grid">
+      <article class="detail-card">
+        <div class="section-heading compact">
+          <div>
+            <p class="eyebrow">Personal Focus</p>
+            <h3 id="personalHeadline">선택한 간호사 일정</h3>
+          </div>
+        </div>
+        <div id="personalPanel" class="detail-list">팀원을 선택하면 이번 달 개인 일정을 보여줍니다.</div>
+      </article>
+
+      <article class="detail-card">
+        <div class="section-heading compact">
+          <div>
+            <p class="eyebrow">Protection Rules</p>
+            <h3>배포본 참고 규칙</h3>
+          </div>
+        </div>
+        <div id="policyPanel" class="detail-list">규정 요약을 불러오는 중입니다.</div>
+      </article>
+    </section>
+  </main>
+
+  <script src="./publish.js"></script>
+</body>
+</html>

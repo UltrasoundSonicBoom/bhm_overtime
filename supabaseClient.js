@@ -31,6 +31,7 @@ if (SUPABASE_URL !== 'YOUR_SUPABASE_URL' && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE
     // Requires Supabase JS SDK loaded via CDN
     if (window.supabase) {
         supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        window.SupabaseClient = supabaseClient;
         
         // Listen to Auth state changes
         supabaseClient.auth.onAuthStateChange((event, session) => {
