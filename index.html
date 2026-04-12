@@ -286,7 +286,7 @@
   <!-- ═══════════ Header & Footer (shared-layout.js에서 렌더) ═══════════ -->
   <header id="sharedHeader"></header>
   <nav id="sharedFooter"></nav>
-  <script src="shared-layout.js?v=1.1"></script>
+  <script src="shared-layout.js?v=1.2"></script>
 
   <main class="main">
 
@@ -611,7 +611,7 @@
             </div>
             <div class="ret-form-row">
               <label class="ret-label">생년월일 <span style="font-size:11px; color:var(--text-muted); font-weight:400;">(D-day · 빠른 날짜 계산용)</span></label>
-              <input class="ret-input" type="date" id="retBirthDate" oninput="retUpdateQuickDates()">
+              <input class="ret-input" type="date" id="retBirthDate" oninput="retUpdateQuickDates(); syncBirthDateToProfile(this.value)">
             </div>
             <!-- D-day 카드 -->
             <div class="ret-dday-grid" id="retDdayGrid" style="display:none; margin-bottom:10px;">
@@ -699,7 +699,7 @@
             </div>
             <div class="ret-form-row">
               <label class="ret-label">생년월일</label>
-              <input class="ret-input" type="date" id="retScBirthDate">
+              <input class="ret-input" type="date" id="retScBirthDate" oninput="syncBirthDateToProfile(this.value)">
             </div>
             <button class="ret-calc-btn" style="background:var(--accent-amber); color:#1a1a1a;" onclick="calcScenarioEmbedded()">시나리오 비교하기</button>
           </div>
@@ -1194,6 +1194,10 @@
                 <option value="8">8년차</option>
               </select>
               <small id="pfYearHint" style="color:var(--text-muted)"></small>
+            </div>
+            <div class="form-group">
+              <label>생년월일 <small style="font-weight:400; color:var(--text-muted)">퇴직금 계산시 필요</small></label>
+              <input type="date" id="pfBirthDate" oninput="syncBirthDateToRetirement(this.value)">
             </div>
             <div class="form-group">
               <label>입사일</label>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>검토 큐 — SNUH Mate Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./admin.css">
+  <style>
+    .queue-container { max-width: 960px; margin: 0 auto; padding: 1.5rem; }
+    .queue-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+    .queue-header h1 { font-size: 1.4rem; margin: 0; }
+    .badge-count { background: var(--blue); color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.85rem; }
+    .queue-empty { text-align: center; padding: 3rem; color: var(--muted); font-size: 1rem; }
+    .approval-card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      box-shadow: var(--shadow);
+    }
+    .approval-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; }
+    .approval-card-title { font-weight: 600; font-size: 1rem; margin: 0; }
+    .approval-meta { font-size: 0.8rem; color: var(--muted); }
+    .approval-status { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 500; }
+    .status-pending { background: var(--yellow); color: #b07d10; }
+    .status-approved { background: var(--mint); color: #0a6e2e; }
+    .status-rejected { background: var(--rose); color: #c0392b; }
+    .decision-panel { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+    .decision-note-field {
+      width: 100%;
+      min-height: 60px;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 0.875rem;
+      resize: vertical;
+      margin-bottom: 0.75rem;
+    }
+    .decision-note-field::placeholder { color: var(--muted); }
+    .decision-actions { display: flex; gap: 0.75rem; }
+    .btn { padding: 8px 18px; border: none; border-radius: 6px; font-size: 0.875rem; font-weight: 500; cursor: pointer; }
+    .btn-approve { background: #2a8c4a; color: white; }
+    .btn-approve:hover { background: #1e7a3a; }
+    .btn-reject { background: #c0392b; color: white; }
+    .btn-reject:hover { background: #a93226; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .result-msg { margin-top: 0.5rem; font-size: 0.85rem; font-weight: 500; }
+    .result-success { color: #0a6e2e; }
+    .result-error { color: #c0392b; }
+    nav.top-links { margin-bottom: 1.5rem; }
+    nav.top-links a { margin-right: 1rem; color: var(--blue); text-decoration: none; font-size: 0.875rem; }
+    nav.top-links a:hover { text-decoration: underline; }
+    .content-preview { background: var(--paper-alt); padding: 12px; border-radius: 6px; margin-top: 0.75rem; font-size: 0.85rem; max-height: 200px; overflow-y: auto; }
+  </style>
+</head>
+<body>
+  <div class="queue-container">
+    <nav class="top-links">
+      <a href="index.html">Admin Home</a>
+      <a href="union_regulation_admin.html">규정 상수 관리</a>
+    </nav>
+
+    <div class="queue-header">
+      <h1>검토 큐 (Review Queue)</h1>
+      <span class="badge-count" id="pending-count">0건 대기</span>
+    </div>
+
+    <div id="approval-list">
+      <div class="queue-empty" id="empty-msg">검토 대기 항목을 불러오는 중...</div>
+    </div>
+  </div>
+
+  <script src="./review-queue.js"></script>
+</body>
+</html>

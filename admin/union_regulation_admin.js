@@ -261,6 +261,101 @@ function buildAIReport() {
   }, null, 2);
 }
 
+// ── DB 연동: regulation-rules 로드/저장 ─────────────────────────
+
+/**
+ * DB에서 regulation rules 로드 (Admin API)
+ * @param {number} versionId - regulation_versions.id
+ * @returns {Promise<Array|null>} rules 배열 또는 null (실패 시)
+ */
+async function loadRegulationRules(versionId) {
+  try {
+    const resp = await fetch(`/api/admin/regulation-rules?versionId=${versionId}`);
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    return data.results || null;
+  } catch (_) {
+    return null;
+  }
+}
+
+/**
+ * DB에 regulation rule 저장 (POST)
+ * @param {Object} rule - { versionId, ruleType, ruleKey, ruleData, description }
+ * @returns {Promise<Object|null>} 저장된 rule 또는 null
+ */
+async function saveRegulationRule(rule) {
+  try {
+    const resp = await fetch('/api/admin/regulation-rules', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(rule),
+    });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    return data.result || null;
+  } catch (_) {
+    return null;
+  }
+}
+
+/**
+ * DB regulation rule 업데이트 (PUT)
+ * @param {number} id - calculation_rules.id
+ * @param {Object} updates - 수정할 필드
+ * @returns {Promise<Object|null>}
+ */
+async function updateRegulationRule(id, updates) {
+  try {
+    const resp = await fetch(`/api/admin/regulation-rules/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates),
+    });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    return data.result || null;
+  } catch (_) {
+    return null;
+  }
+}
+
+/**
+ * nurse_regulation.json을 DB에 일괄 저장
+ * 현재 로드된 데이터를 규칙별로 분해하여 API에 전송
+ */
+async function saveAllToDb(nurseData, versionId) {
+  if (!nurseData || !versionId) {
+    alert('저장 실패: 데이터 또는 버전 ID가 없습니다.');
+    return { success: false, count: 0 };
+  }
+
+  const ruleMappings = [
+    { ruleType: 'shift_rules', ruleKey: 'standard_hours', data: nurseData.working_hours_and_shift_rules?.standard_hours, desc: '표준 근로시간' },
+    { ruleType: 'shift_rules', ruleKey: 'shift_worker_rules', data: nurseData.working_hours_and_shift_rules?.shift_worker_rules, desc: '교대근무자 규칙' },
+    { ruleType: 'shift_rules', ruleKey: 'overtime_and_on_call', data: nurseData.working_hours_and_shift_rules?.overtime_and_on_call, desc: '시간외/온콜' },
+    { ruleType: 'wage_structure', ruleKey: 'fixed_allowances', data: nurseData.wage_structure_and_allowances?.fixed_allowances, desc: '고정 수당' },
+    { ruleType: 'wage_structure', ruleKey: 'family_allowance', data: nurseData.wage_structure_and_allowances?.family_allowance, desc: '가족수당' },
+    { ruleType: 'leaves', ruleKey: 'annual_leave', data: nurseData.leaves_and_holidays?.annual_leave, desc: '연차 규정' },
+    { ruleType: 'welfare', ruleKey: 'new_hire_training', data: nurseData.welfare_and_training?.new_hire_training, desc: '신규채용 교육' },
+  ];
+
+  let savedCount = 0;
+  for (const mapping of ruleMappings) {
+    if (!mapping.data) continue;
+    const result = await saveRegulationRule({
+      versionId,
+      ruleType: mapping.ruleType,
+      ruleKey: mapping.ruleKey,
+      ruleData: mapping.data,
+      description: mapping.desc,
+    });
+    if (result) savedCount++;
+  }
+
+  return { success: savedCount > 0, count: savedCount };
+}
+
 // ── 초기화 ─────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   renderConstantsTable('constants-container');
@@ -268,12 +363,45 @@ document.addEventListener('DOMContentLoaded', async () => {
   const nurseData = await loadNurseRegulation();
   renderSyncPanel('sync-container', nurseData);
 
+  // DB에서 규정 rules도 로드 시도
+  const dbRules = await loadRegulationRules(1);
+  if (dbRules && dbRules.length > 0) {
+    console.log(`[DB] ${dbRules.length}개 regulation rules 로드됨`);
+  }
+
   const reportBtn = document.getElementById('copy-report-btn');
   if (reportBtn) {
     reportBtn.addEventListener('click', () => {
       copyToClipboard(buildAIReport());
       reportBtn.textContent = '✓ 복사됨';
       setTimeout(() => { reportBtn.textContent = 'AI 리포트 JSON 복사'; }, 2000);
+    });
+  }
+
+  // DB 저장 버튼
+  const saveBtn = document.getElementById('save-to-db-btn');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', async () => {
+      saveBtn.disabled = true;
+      saveBtn.textContent = '저장 중...';
+      try {
+        const result = await saveAllToDb(nurseData, 1);
+        if (result.success) {
+          saveBtn.textContent = `성공: ${result.count}건 저장`;
+          saveBtn.style.background = '#2a8c4a';
+        } else {
+          saveBtn.textContent = '실패 — 서버 확인 필요';
+          saveBtn.style.background = '#c44';
+        }
+      } catch (e) {
+        saveBtn.textContent = '실패: ' + (e.message || '알 수 없는 오류');
+        saveBtn.style.background = '#c44';
+      }
+      setTimeout(() => {
+        saveBtn.textContent = 'DB에 저장';
+        saveBtn.style.background = '#2a8c4a';
+        saveBtn.disabled = false;
+      }, 3000);
     });
   }
 });

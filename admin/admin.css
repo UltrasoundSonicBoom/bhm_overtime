@@ -479,10 +479,13 @@ h1 {
     min-width: 88px;
   }
 
-  body[data-reg-surface="overview"] [data-surface-panel]:not([data-surface-panel="overview"]),
+  body[data-reg-surface="dashboard"] [data-surface-panel]:not([data-surface-panel="dashboard"]),
+  body[data-reg-surface="content"] [data-surface-panel]:not([data-surface-panel="content"]),
   body[data-reg-surface="calendar"] [data-surface-panel]:not([data-surface-panel="calendar"]),
   body[data-reg-surface="versions"] [data-surface-panel]:not([data-surface-panel="versions"]),
   body[data-reg-surface="faq"] [data-surface-panel]:not([data-surface-panel="faq"]),
+  body[data-reg-surface="review"] [data-surface-panel]:not([data-surface-panel="review"]),
+  body[data-reg-surface="logs"] [data-surface-panel]:not([data-surface-panel="logs"]),
   body[data-reg-surface="scenarios"] [data-surface-panel]:not([data-surface-panel="scenarios"]) {
     display: none;
   }

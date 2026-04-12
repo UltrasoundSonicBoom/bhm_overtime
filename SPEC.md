@@ -621,8 +621,127 @@ Track B 추가 검증:
 
 ## 15. Open Questions
 
-1. Admin UI를 1차에 Vanilla로 만들지, 별도 소형 앱으로 분리할지
+1. Admin UI를 1차에 Vanilla로 만들지, 별도 소형 앱으로 분리할지 → **결정: Vanilla 유지**
 2. 운영 콘텐츠 저장 포맷을 `body_md` 중심으로 할지 `body_json` 블록 중심으로 할지
 3. Preview 확인을 Vercel Preview만으로 할지, Admin 내부 초안 렌더를 병행할지
 4. 규정 PDF 업로드 저장소를 Supabase Storage로 둘지, 다른 스토리지로 분리할지
-5. 로컬 개발용 DB를 계속 쓸지, 원격 Supabase 개발 DB를 기본으로 전환할지
+5. 로컬 개발용 DB를 계속 쓸지, 원격 Supabase 개발 DB를 기본으로 전환할지 → **결정: 원격 Supabase 기본 사용**
+
+---
+
+## 16. Remaining Work Spec (2026-04-12)
+
+### Current Completion Status
+
+- Track A: 완료 (Phase 15-19, 450 PASS)
+- Track B 완료: B6, B8, B9, B10, B11, B12, B13 (481 PASS 누적)
+- DB 실제 연결 확인: regulation_versions 2개, regulation_documents 145개, faq_entries 100개
+
+### Remaining Track B Tasks
+
+#### B1: Content/ops 디렉토리 규칙
+
+**Acceptance Criteria:**
+- `content/`, `ops/` 하위 디렉토리 목적 문서화
+- MD 원본 vs 운영 프롬프트 구분 명확화
+- 운영자가 원본 저장 위치를 찾을 수 있어야 함
+
+#### B3: Admin API 계약 문서화
+
+**Acceptance Criteria:**
+- regulation version CRUD/상태전환 API 계약 정의
+- FAQ CRUD API 계약 정의
+- role-based access와 audit 기록 지점 명시
+
+#### B4: Admin 인증/감사 미들웨어
+
+**Acceptance Criteria:**
+- Admin API 인증 없는 요청 차단
+- 쓰기 요청 audit_log 기록 구조
+- role 확장 포인트 유지
+
+#### B5: Admin 규정/FAQ 운영 흐름
+
+**Acceptance Criteria:**
+- FAQ 생성/수정/게시 상태 변경 가능
+- regulation version 생성/복제/active 전환 가능
+- review 전환 및 검토 대기 상태 존재
+
+#### B7: 공지/FAQ DB 기반 이관
+
+**Acceptance Criteria:**
+- 공지 콘텐츠 Admin에서 관리 가능
+- FAQ 기존 공개 경로 유지하며 운영자 수정 가능
+- published 상태만 공개 웹 노출
+
+#### B11: FAQ + 규정 버전 Admin UI
+
+**Acceptance Criteria:**
+- FAQ CRUD Admin UI 동작
+- regulation version 초안/복제 가능
+- active 전환 전 review 단계
+
+### Track C: Google Integration (Track B 완료 후)
+
+#### C1: Google Drive 연동
+
+**목표:** 사용자가 명시적으로 "Drive에 저장" 버튼을 눌렀을 때만 계산 결과를 Google Drive에 저장.
+
+**Acceptance Criteria:**
+- Google Drive API 연동 (드라이브 파일 생성/업데이트)
+- 자동 동기화 없음 — 명시적 사용자 액션 시에만
+- Google login 사용자에게만 Drive 저장 버튼 노출
+- localStorage 사용자는 영향 없음
+- 저장할 데이터: 급여 계산 결과, 시간외 기록, 연차 기록 (개인 식별 최소화)
+
+**Boundaries:**
+- 로그인=신원 확인만. Drive 접근은 별도 scope 요청 필요
+- `drive.file` scope 사용 (앱이 생성한 파일만 접근)
+- 개인 Drive 전체 접근 금지
+
+#### C2: Google Calendar 연동
+
+**목표:** 사용자가 "Calendar에 추가" 버튼을 눌렀을 때만 근무표/휴가 일정을 Google Calendar에 추가.
+
+**Acceptance Criteria:**
+- Google Calendar API 연동 (이벤트 생성)
+- 자동 동기화 없음 — 명시적 사용자 액션 시에만
+- Google login 사용자에게만 Calendar 추가 버튼 노출
+- 추가할 데이터: 시간외 근무 기록, 휴가 신청 일정, 온콜 일정
+- 추가된 이벤트 수정/삭제는 Google Calendar에서 직접
+
+**Boundaries:**
+- `calendar.events` scope 사용 (이벤트 생성/수정만)
+- 기존 Calendar 읽기 금지 (write-only 원칙)
+- 자동 주기 동기화 금지
+
+### Tech Stack Additions (Track C)
+
+| 추가 | 내용 |
+|------|------|
+| Google API Client | `googleapis` 또는 `google-auth-library` |
+| OAuth Scope | `drive.file`, `calendar.events` |
+| 저장 위치 | 사용자 Drive 앱 전용 폴더 |
+| 인증 흐름 | 기존 Supabase Google OAuth에 scope 추가 |
+
+### Testing Strategy (추가)
+
+- **C1/C2**: Google API mock 기반 단위 테스트
+- Drive/Calendar 실제 API는 staging 계정으로만 통합 테스트
+- 자동 동기화 트리거 없음을 regression 테스트로 보장
+
+### Boundaries (Track C)
+
+Always:
+- 사용자 명시적 액션 없이는 Google API 호출 금지
+- `drive.file` scope 이상 요청 금지
+- localStorage 사용자 흐름에 영향 없어야 함
+
+Ask first:
+- Google OAuth App 심사 재신청 시점
+- 새 scope 추가 시 사용자 동의 화면 변경
+
+Never:
+- 로그인 시 자동으로 Drive/Calendar 접근
+- 사용자 기존 Drive 파일 읽기
+- 기존 Calendar 이벤트 수정/삭제

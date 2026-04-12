@@ -73,6 +73,17 @@ model: opus
 - 복합 작업: 순차 실행 (선행 작업 완료 후 후속 작업)
 - 완료 보고: 운영자에게 자연어로 결과 요약
 
+## API 참조
+
+모든 운영 작업은 `/api/admin` 엔드포인트를 통해 처리한다.
+상세 API 계약은 `ops/prompts/content-edit-contract.md` 참조.
+
+주요 엔드포인트:
+- `GET /api/admin/approvals?status=pending` — 검토 대기 목록
+- `POST /api/admin/content` — 콘텐츠 초안 생성
+- `POST /api/admin/content/:id/request-review` — 검토 요청
+- `POST /api/admin/approvals/:id/decision` — 승인/반려
+
 ## 입력
 
 운영자의 한국어 자연어 지시

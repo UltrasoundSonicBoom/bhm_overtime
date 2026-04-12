@@ -36,13 +36,20 @@ const API_BASE = (() => {
 
 const state = {
   year: new Date().getFullYear(),
-  surface: 'overview',
+  surface: 'dashboard',
   session: null,
   regulation: null,
   adminDashboard: null,
   versions: [],
   snapshots: null,
   faqs: [],
+  contentEntries: [],
+  contentFilter: 'all',
+  editingContentId: '',
+  contentDetail: null,
+  approvals: [],
+  reviewFilter: 'pending',
+  auditLogs: [],
   selectedVersionId: '',
   editingFaqId: '',
 };
@@ -80,6 +87,24 @@ const els = {
   scenarioList: document.getElementById('scenarioList'),
   resultBox: document.getElementById('resultBox'),
   surfaceNav: document.getElementById('surfaceNav'),
+  contentList: document.getElementById('contentList'),
+  contentFilterBar: document.getElementById('contentFilterBar'),
+  newContentBtn: document.getElementById('newContentBtn'),
+  reviewList: document.getElementById('reviewList'),
+  reviewBadge: document.getElementById('reviewBadge'),
+  reviewFilterBar: document.getElementById('reviewFilterBar'),
+  auditLogList: document.getElementById('auditLogList'),
+  contentEditorForm: document.getElementById('contentEditorForm'),
+  contentIdInput: document.getElementById('contentIdInput'),
+  contentTypeSelect: document.getElementById('contentTypeSelect'),
+  contentTitleInput: document.getElementById('contentTitleInput'),
+  contentSlugInput: document.getElementById('contentSlugInput'),
+  contentSummaryInput: document.getElementById('contentSummaryInput'),
+  contentBodyInput: document.getElementById('contentBodyInput'),
+  contentSaveBtn: document.getElementById('contentSaveBtn'),
+  contentResetBtn: document.getElementById('contentResetBtn'),
+  contentStatusActions: document.getElementById('contentStatusActions'),
+  contentRevisions: document.getElementById('contentRevisions'),
 };
 
 els.yearInput.value = String(state.year);
@@ -141,6 +166,8 @@ async function updateAuthState() {
   els.refreshNextBtn.disabled = !loggedIn;
   els.versionSubmitBtn.disabled = !loggedIn;
   els.faqSubmitBtn.disabled = !loggedIn;
+  if (els.newContentBtn) els.newContentBtn.disabled = !loggedIn;
+  if (els.contentSaveBtn) els.contentSaveBtn.disabled = !loggedIn;
 }
 
 function renderSummary() {
@@ -280,6 +307,7 @@ function renderVersions() {
       </div>
       <div class="version-actions">
         <button class="mini-btn primary" type="button" data-version-id="${version.id}" data-version-action="activate">활성화</button>
+        <button class="mini-btn edit" type="button" data-version-id="${version.id}" data-version-action="duplicate">복제</button>
         <button class="mini-btn warn" type="button" data-version-id="${version.id}" data-version-action="archive">보관</button>
       </div>
     </div>
@@ -290,6 +318,19 @@ function renderVersions() {
       const versionId = button.getAttribute('data-version-id');
       const action = button.getAttribute('data-version-action');
       if (!versionId || !action) return;
+      if (action === 'duplicate') {
+        try {
+          const data = await apiJson(`/admin/versions/${versionId}/duplicate`, {
+            method: 'POST',
+            body: JSON.stringify({}),
+          }, true);
+          setResult(data);
+          await loadAdminData();
+        } catch (error) {
+          setResult(error instanceof Error ? error.message : String(error));
+        }
+        return;
+      }
       const status = action === 'activate' ? 'active' : 'archived';
       try {
         const data = await apiJson(`/admin/versions/${versionId}/status`, {
@@ -385,6 +426,291 @@ function renderScenarios() {
     : '<div class="empty-copy">시나리오 결과가 없습니다.</div>';
 }
 
+function formatDateTime(isoStr) {
+  if (!isoStr) return '';
+  const d = new Date(isoStr);
+  return d.toLocaleDateString('ko-KR') + ' ' + d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function renderContentEntries() {
+  if (!els.contentList) return;
+  if (!state.contentEntries.length) {
+    els.contentList.textContent = '';
+    const empty = document.createElement('div');
+    empty.className = 'empty-copy';
+    empty.textContent = '등록된 콘텐츠가 없습니다.';
+    els.contentList.appendChild(empty);
+    return;
+  }
+
+  const filtered = state.contentFilter === 'all'
+    ? state.contentEntries
+    : state.contentEntries.filter(function(e) { return e.status === state.contentFilter; });
+
+  els.contentList.textContent = '';
+  if (!filtered.length) {
+    var empty = document.createElement('div');
+    empty.className = 'empty-copy';
+    empty.textContent = '"' + state.contentFilter + '" 상태의 콘텐츠가 없습니다.';
+    els.contentList.appendChild(empty);
+    return;
+  }
+
+  filtered.forEach(function(entry) {
+    var row = document.createElement('div');
+    row.className = 'version-row';
+    row.dataset.contentId = String(entry.id);
+    var title = document.createElement('strong');
+    title.textContent = entry.title || '제목 없음';
+    row.appendChild(title);
+    var meta = document.createElement('span');
+    meta.textContent = (entry.content_type || '') + ' | ' + (entry.slug || '');
+    row.appendChild(meta);
+    var dateSpan = document.createElement('span');
+    dateSpan.textContent = formatDateTime(entry.updated_at || entry.created_at);
+    row.appendChild(dateSpan);
+    var tagRow = document.createElement('div');
+    tagRow.className = 'tag-row';
+    var statusTag = document.createElement('span');
+    statusTag.className = 'tag ' + (entry.status === 'published' ? 'active' : entry.status === 'draft' ? 'draft' : '');
+    statusTag.textContent = entry.status;
+    tagRow.appendChild(statusTag);
+    var typeTag = document.createElement('span');
+    typeTag.className = 'tag';
+    typeTag.textContent = entry.content_type || '';
+    tagRow.appendChild(typeTag);
+    row.appendChild(tagRow);
+    els.contentList.appendChild(row);
+  });
+}
+
+function renderReviewList() {
+  if (!els.reviewList) return;
+  var filtered = state.reviewFilter === 'all'
+    ? state.approvals
+    : state.approvals.filter(function(a) { return a.status === state.reviewFilter; });
+
+  var pendingCount = state.approvals.filter(function(a) { return a.status === 'pending'; }).length;
+  if (els.reviewBadge) {
+    els.reviewBadge.textContent = pendingCount + '건 대기';
+  }
+
+  els.reviewList.textContent = '';
+  if (!filtered.length) {
+    var empty = document.createElement('div');
+    empty.className = 'empty-copy';
+    empty.textContent = state.reviewFilter === 'pending' ? '대기중인 검토 항목이 없습니다.' : '해당 상태의 검토 항목이 없습니다.';
+    els.reviewList.appendChild(empty);
+    return;
+  }
+
+  filtered.forEach(function(task) {
+    var row = document.createElement('div');
+    row.className = 'version-row';
+    var title = document.createElement('strong');
+    title.textContent = '검토 #' + task.id + ' -- 콘텐츠 #' + task.entry_id;
+    row.appendChild(title);
+    var reqSpan = document.createElement('span');
+    reqSpan.textContent = '요청: ' + formatDateTime(task.created_at);
+    row.appendChild(reqSpan);
+    if (task.decided_at) {
+      var decSpan = document.createElement('span');
+      decSpan.textContent = '결정: ' + formatDateTime(task.decided_at);
+      row.appendChild(decSpan);
+    }
+    if (task.decision_note) {
+      var noteSpan = document.createElement('span');
+      noteSpan.textContent = '사유: ' + task.decision_note;
+      row.appendChild(noteSpan);
+    }
+    var tagRow = document.createElement('div');
+    tagRow.className = 'tag-row';
+    var tag = document.createElement('span');
+    var statusClass = task.status === 'pending' ? 'draft' : task.status === 'approved' ? 'active' : 'archived';
+    tag.className = 'tag ' + statusClass;
+    tag.textContent = task.status;
+    tagRow.appendChild(tag);
+    row.appendChild(tagRow);
+    els.reviewList.appendChild(row);
+  });
+}
+
+function renderAuditLogs() {
+  if (!els.auditLogList) return;
+  els.auditLogList.textContent = '';
+
+  if (!state.auditLogs.length) {
+    var empty = document.createElement('div');
+    empty.className = 'empty-copy';
+    empty.textContent = '감사 로그가 없습니다.';
+    els.auditLogList.appendChild(empty);
+    return;
+  }
+
+  state.auditLogs.slice(0, 100).forEach(function(log) {
+    var row = document.createElement('div');
+    row.className = 'row';
+    var action = document.createElement('strong');
+    action.textContent = log.action || '';
+    row.appendChild(action);
+    var entity = document.createElement('span');
+    entity.textContent = (log.entity_type || '') + ' #' + String(log.entity_id || '');
+    row.appendChild(entity);
+    var time = document.createElement('span');
+    time.textContent = formatDateTime(log.created_at) + ' | ' + (log.actor_role || 'unknown');
+    row.appendChild(time);
+    els.auditLogList.appendChild(row);
+  });
+}
+
+function resetContentForm() {
+  state.editingContentId = '';
+  state.contentDetail = null;
+  if (els.contentIdInput) els.contentIdInput.value = '';
+  if (els.contentTypeSelect) els.contentTypeSelect.value = 'notice';
+  if (els.contentTitleInput) els.contentTitleInput.value = '';
+  if (els.contentSlugInput) els.contentSlugInput.value = '';
+  if (els.contentSummaryInput) els.contentSummaryInput.value = '';
+  if (els.contentBodyInput) els.contentBodyInput.value = '';
+  if (els.contentStatusActions) els.contentStatusActions.style.display = 'none';
+  if (els.contentRevisions) els.contentRevisions.textContent = '';
+}
+
+async function loadContentDetail(contentId) {
+  try {
+    const data = await apiJson('/admin/content/' + contentId, {}, true);
+    state.contentDetail = data.result || null;
+    state.editingContentId = String(contentId);
+
+    var entry = state.contentDetail.entry;
+    var revisions = state.contentDetail.revisions || [];
+    var latestRevision = revisions[0] || null;
+
+    if (els.contentIdInput) els.contentIdInput.value = String(entry.id);
+    if (els.contentTypeSelect) els.contentTypeSelect.value = entry.content_type || 'notice';
+    if (els.contentTitleInput) els.contentTitleInput.value = entry.title || '';
+    if (els.contentSlugInput) els.contentSlugInput.value = entry.slug || '';
+    if (els.contentBodyInput) els.contentBodyInput.value = latestRevision ? (latestRevision.body || '') : '';
+    if (els.contentSummaryInput) els.contentSummaryInput.value = '';
+
+    if (els.contentStatusActions) {
+      els.contentStatusActions.style.display = 'flex';
+    }
+
+    renderContentRevisions(revisions);
+  } catch (error) {
+    setResult(error instanceof Error ? error.message : String(error));
+  }
+}
+
+function renderContentRevisions(revisions) {
+  if (!els.contentRevisions) return;
+  els.contentRevisions.textContent = '';
+
+  if (!revisions || !revisions.length) return;
+
+  var heading = document.createElement('div');
+  heading.className = 'section-heading';
+  var headingInner = document.createElement('div');
+  var eyebrow = document.createElement('p');
+  eyebrow.className = 'eyebrow';
+  eyebrow.textContent = 'Revision History';
+  headingInner.appendChild(eyebrow);
+  var h3 = document.createElement('h3');
+  h3.textContent = revisions.length + '개 리비전';
+  headingInner.appendChild(h3);
+  heading.appendChild(headingInner);
+  els.contentRevisions.appendChild(heading);
+
+  revisions.forEach(function(rev) {
+    var row = document.createElement('div');
+    row.className = 'row';
+    var strong = document.createElement('strong');
+    strong.textContent = 'Rev #' + rev.revision_number;
+    row.appendChild(strong);
+    var statusSpan = document.createElement('span');
+    statusSpan.textContent = (rev.status || 'draft') + ' | ' + formatDateTime(rev.created_at);
+    row.appendChild(statusSpan);
+    if (rev.summary) {
+      var sumSpan = document.createElement('span');
+      sumSpan.textContent = rev.summary;
+      row.appendChild(sumSpan);
+    }
+    els.contentRevisions.appendChild(row);
+  });
+}
+
+async function saveContent(event) {
+  event.preventDefault();
+  try {
+    var title = els.contentTitleInput.value.trim();
+    var body = els.contentBodyInput.value.trim();
+    if (!title || !body) {
+      setResult('제목과 본문을 입력해야 합니다.');
+      return;
+    }
+
+    if (state.editingContentId) {
+      var revData = await apiJson('/admin/content/' + state.editingContentId + '/revisions', {
+        method: 'POST',
+        body: JSON.stringify({
+          body: body,
+          summary: els.contentSummaryInput.value.trim() || null,
+        }),
+      }, true);
+      setResult(revData);
+      await loadContentDetail(state.editingContentId);
+    } else {
+      var createData = await apiJson('/admin/content', {
+        method: 'POST',
+        body: JSON.stringify({
+          contentType: els.contentTypeSelect.value,
+          title: title,
+          slug: els.contentSlugInput.value.trim() || undefined,
+          body: body,
+          summary: els.contentSummaryInput.value.trim() || undefined,
+        }),
+      }, true);
+      setResult(createData);
+      state.editingContentId = String(createData.result.entry.id);
+      await loadContentDetail(state.editingContentId);
+    }
+
+    await loadContentEntries();
+    renderContentEntries();
+  } catch (error) {
+    setResult(error instanceof Error ? error.message : String(error));
+  }
+}
+
+// Valid transitions: draft -> review, review -> published, published -> archived, any -> draft
+async function changeContentStatus(newStatus) {
+  if (!state.editingContentId) {
+    setResult('콘텐츠를 먼저 선택해주세요.');
+    return;
+  }
+  try {
+    if (newStatus === 'review') {
+      var reqData = await apiJson('/admin/content/' + state.editingContentId + '/request-review', {
+        method: 'POST',
+        body: JSON.stringify({}),
+      }, true);
+      setResult(reqData);
+    } else {
+      var statusData = await apiJson('/admin/content/' + state.editingContentId + '/status', {
+        method: 'PATCH',
+        body: JSON.stringify({ status: newStatus }),
+      }, true);
+      setResult(statusData);
+    }
+    await loadContentDetail(state.editingContentId);
+    await loadContentEntries();
+    renderContentEntries();
+  } catch (error) {
+    setResult(error instanceof Error ? error.message : String(error));
+  }
+}
+
 function renderAll() {
   renderSummary();
   renderQuickFacts();
@@ -394,6 +720,9 @@ function renderAll() {
   renderVersions();
   renderFaqs();
   renderScenarios();
+  renderContentEntries();
+  renderReviewList();
+  renderAuditLogs();
   syncSurfaceNav();
 }
 
@@ -412,12 +741,57 @@ async function loadFaqs() {
   state.faqs = data.results || [];
 }
 
+async function loadContentEntries() {
+  if (!state.session?.access_token) {
+    state.contentEntries = [];
+    renderContentEntries();
+    return;
+  }
+  try {
+    const data = await apiJson('/admin/content', {}, true);
+    state.contentEntries = data.results || [];
+  } catch (_) {
+    state.contentEntries = [];
+  }
+}
+
+async function loadApprovals() {
+  if (!state.session?.access_token) {
+    state.approvals = [];
+    renderReviewList();
+    return;
+  }
+  try {
+    const data = await apiJson('/admin/approvals', {}, true);
+    state.approvals = data.results || [];
+  } catch (_) {
+    state.approvals = [];
+  }
+}
+
+async function loadAuditLogs() {
+  if (!state.session?.access_token) {
+    state.auditLogs = [];
+    renderAuditLogs();
+    return;
+  }
+  try {
+    const data = await apiJson('/admin/audit-logs', {}, true);
+    state.auditLogs = data.results || [];
+  } catch (_) {
+    state.auditLogs = [];
+  }
+}
+
 async function loadAdminData() {
   if (!state.session?.access_token) {
     state.adminDashboard = null;
     state.versions = [];
     state.snapshots = null;
     state.faqs = [];
+    state.contentEntries = [];
+    state.approvals = [];
+    state.auditLogs = [];
     renderAll();
     return;
   }
@@ -437,7 +811,12 @@ async function loadAdminData() {
     state.selectedVersionId = preferred ? String(preferred.id) : '';
   }
 
-  await loadFaqs();
+  await Promise.all([
+    loadFaqs(),
+    loadContentEntries(),
+    loadApprovals(),
+    loadAuditLogs(),
+  ]);
   renderAll();
 }
 
@@ -564,10 +943,63 @@ els.faqVersionSelect.addEventListener('change', async (event) => {
 
 els.surfaceNav?.querySelectorAll('[data-surface]').forEach((button) => {
   button.addEventListener('click', () => {
-    state.surface = button.getAttribute('data-surface') || 'overview';
+    state.surface = button.getAttribute('data-surface') || 'dashboard';
     syncSurfaceNav();
   });
 });
+
+els.contentFilterBar?.querySelectorAll('[data-content-filter]').forEach((button) => {
+  button.addEventListener('click', () => {
+    state.contentFilter = button.getAttribute('data-content-filter') || 'all';
+    els.contentFilterBar.querySelectorAll('.mini-btn').forEach((b) => b.classList.remove('active'));
+    button.classList.add('active');
+    renderContentEntries();
+  });
+});
+
+els.reviewFilterBar?.querySelectorAll('[data-review-filter]').forEach((button) => {
+  button.addEventListener('click', () => {
+    state.reviewFilter = button.getAttribute('data-review-filter') || 'pending';
+    els.reviewFilterBar.querySelectorAll('.mini-btn').forEach((b) => b.classList.remove('active'));
+    button.classList.add('active');
+    renderReviewList();
+  });
+});
+
+if (els.contentEditorForm) {
+  els.contentEditorForm.addEventListener('submit', saveContent);
+}
+
+if (els.contentResetBtn) {
+  els.contentResetBtn.addEventListener('click', resetContentForm);
+}
+
+if (els.newContentBtn) {
+  els.newContentBtn.addEventListener('click', () => {
+    resetContentForm();
+    state.surface = 'content';
+    syncSurfaceNav();
+    els.contentTitleInput?.focus();
+  });
+}
+
+if (els.contentStatusActions) {
+  els.contentStatusActions.querySelectorAll('[data-content-status]').forEach((button) => {
+    button.addEventListener('click', () => {
+      var newStatus = button.getAttribute('data-content-status');
+      if (newStatus) changeContentStatus(newStatus);
+    });
+  });
+}
+
+if (els.contentList) {
+  els.contentList.addEventListener('click', (event) => {
+    var row = event.target.closest('[data-content-id]');
+    if (!row) return;
+    var contentId = row.dataset.contentId;
+    if (contentId) loadContentDetail(contentId);
+  });
+}
 
 supabaseClient.auth.onAuthStateChange(async () => {
   await updateAuthState();

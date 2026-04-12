@@ -21,6 +21,7 @@ const PROFILE_FIELDS = {
   jobType: 'pfJobType',
   grade: 'pfGrade',
   year: 'pfYear',
+  birthDate: 'pfBirthDate',
   hireDate: 'pfHireDate',
   adjustPay: 'pfAdjust',
   upgradeAdjustPay: 'pfUpgradeAdjust',
@@ -374,6 +375,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('pfMilitaryMonthsGroup').style.display = e.target.checked ? 'block' : 'none';
   });
 
+  // 생년월일 → 퇴직금 탭 동기화
+  const pfBirthDateEl = document.getElementById('pfBirthDate');
+  if (pfBirthDateEl) {
+    pfBirthDateEl.addEventListener('input', (e) => syncBirthDateToRetirement(e.target.value));
+  }
+
   // 입사일 → 근속연수 표시 + 근속가산기본급 자동 감지 (2016.2 이전 입사자) + 호봉 자동 제안
   document.getElementById('pfHireDate').addEventListener('input', (e) => {
     const parsed = PROFILE.parseDate(e.target.value);
@@ -405,6 +412,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const saved = PROFILE.load();
   if (saved) {
     PROFILE.applyToForm(saved, PROFILE_FIELDS);
+    // 생년월일 → 퇴직금 탭 초기 동기화
+    if (saved.birthDate) syncBirthDateToRetirement(saved.birthDate);
     updateFamilyUI(); // 가족/자녀 수 기반 UI 표시
     updateProfileSummary(saved);
     updateProfileTitle(saved.name);
@@ -760,6 +769,37 @@ function clearProfile() {
     `;
   // Q&A 카드 갱신
   if (typeof PAYROLL !== 'undefined') PAYROLL.init();
+}
+
+// ═══════════ 생년월일 양방향 동기화 ═══════════
+/**
+ * 개인정보 탭 pfBirthDate → 퇴직금 탭 retBirthDate, retScBirthDate 동기화
+ */
+function syncBirthDateToRetirement(val) {
+  ['retBirthDate', 'retScBirthDate'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.value !== val) el.value = val;
+  });
+  if (typeof retUpdateQuickDates === 'function') retUpdateQuickDates();
+}
+
+/**
+ * 퇴직금 탭 retBirthDate → 개인정보 탭 pfBirthDate 동기화 + localStorage 저장
+ */
+function syncBirthDateToProfile(val) {
+  const pfEl = document.getElementById('pfBirthDate');
+  if (pfEl && pfEl.value !== val) pfEl.value = val;
+
+  // 다른 퇴직금 필드도 동기화
+  ['retBirthDate', 'retScBirthDate'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.value !== val) el.value = val;
+  });
+
+  // profile localStorage에 즉시 반영
+  const saved = PROFILE.load() || {};
+  saved.birthDate = val;
+  PROFILE.save(saved);
 }
 
 // ═══════════ 호봉 자동 제안 ═══════════

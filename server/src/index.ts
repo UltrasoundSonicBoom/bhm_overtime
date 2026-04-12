@@ -9,6 +9,8 @@ import adminCalendarRoutes from './routes/adminCalendar'
 import adminOpsRoutes from './routes/adminOps'
 import teamRoutes from './routes/teams'
 import meRoutes from './routes/me'
+import cardNewsRoutes from './routes/cardNews'
+import regulationRoutes from './routes/regulations'
 
 const app = new Hono().basePath('/api')
 
@@ -28,9 +30,11 @@ app.get('/health', (c) => {
 app.route('/data', dataRoutes)
 app.route('/faq', faqRoutes)
 app.route('/chat', chatRoutes)
+app.route('/card-news', cardNewsRoutes)
 app.route('/calendar', calendarRoutes)
 app.route('/admin/calendar', adminCalendarRoutes)
 app.route('/admin', adminOpsRoutes)
+app.route('/regulations', regulationRoutes)
 app.route('/teams', teamRoutes)
 app.route('/me', meRoutes)
 

@@ -113,6 +113,153 @@ export const swapRequestStatusEnum = pgEnum('swap_request_status', [
   'cancelled',
 ])
 
+// ── 3.0 organization context ──
+
+export const orgDomains = pgTable(
+  'org_domains',
+  {
+    id: serial('id').primaryKey(),
+    hospitalKey: text('hospital_key').notNull(),
+    code: text('code').notNull(),
+    name: text('name').notNull(),
+    sortOrder: integer('sort_order').notNull().default(0),
+    isActive: boolean('is_active').notNull().default(true),
+  },
+  (table) => [
+    uniqueIndex('org_domains_hospital_code_uidx').on(table.hospitalKey, table.code),
+    index('org_domains_hospital_idx').on(table.hospitalKey, table.isActive),
+  ],
+)
+
+export const orgDepartments = pgTable(
+  'org_departments',
+  {
+    id: serial('id').primaryKey(),
+    domainId: integer('domain_id')
+      .notNull()
+      .references(() => orgDomains.id, { onDelete: 'cascade' }),
+    code: text('code').notNull(),
+    name: text('name').notNull(),
+    departmentType: text('department_type'),
+    sortOrder: integer('sort_order').notNull().default(0),
+    isActive: boolean('is_active').notNull().default(true),
+  },
+  (table) => [
+    uniqueIndex('org_departments_domain_code_uidx').on(table.domainId, table.code),
+    index('org_departments_domain_idx').on(table.domainId, table.isActive),
+  ],
+)
+
+export const orgUnits = pgTable(
+  'org_units',
+  {
+    id: serial('id').primaryKey(),
+    departmentId: integer('department_id')
+      .notNull()
+      .references(() => orgDepartments.id, { onDelete: 'cascade' }),
+    code: text('code').notNull(),
+    name: text('name').notNull(),
+    unitType: text('unit_type'),
+    sortOrder: integer('sort_order').notNull().default(0),
+    isActive: boolean('is_active').notNull().default(true),
+  },
+  (table) => [
+    uniqueIndex('org_units_department_code_uidx').on(table.departmentId, table.code),
+    index('org_units_department_idx').on(table.departmentId, table.isActive),
+  ],
+)
+
+export const orgTeams = pgTable(
+  'org_teams',
+  {
+    id: serial('id').primaryKey(),
+    unitId: integer('unit_id')
+      .notNull()
+      .references(() => orgUnits.id, { onDelete: 'cascade' }),
+    code: text('code').notNull(),
+    name: text('name').notNull(),
+    teamType: text('team_type'),
+    sortOrder: integer('sort_order').notNull().default(0),
+    isActive: boolean('is_active').notNull().default(true),
+  },
+  (table) => [
+    uniqueIndex('org_teams_unit_code_uidx').on(table.unitId, table.code),
+    index('org_teams_unit_idx').on(table.unitId, table.isActive),
+  ],
+)
+
+export const jobFamilies = pgTable(
+  'job_families',
+  {
+    id: serial('id').primaryKey(),
+    code: text('code').notNull(),
+    name: text('name').notNull(),
+    description: text('description'),
+    isActive: boolean('is_active').notNull().default(true),
+  },
+  (table) => [
+    uniqueIndex('job_families_code_uidx').on(table.code),
+  ],
+)
+
+export const jobTitles = pgTable(
+  'job_titles',
+  {
+    id: serial('id').primaryKey(),
+    jobFamilyId: integer('job_family_id')
+      .notNull()
+      .references(() => jobFamilies.id, { onDelete: 'cascade' }),
+    title: text('title').notNull(),
+    gradeBand: text('grade_band'),
+    isManagerial: boolean('is_managerial').notNull().default(false),
+  },
+  (table) => [
+    uniqueIndex('job_titles_family_title_uidx').on(table.jobFamilyId, table.title),
+  ],
+)
+
+export const personaProfiles = pgTable(
+  'persona_profiles',
+  {
+    id: serial('id').primaryKey(),
+    code: text('code').notNull(),
+    profileName: text('profile_name').notNull(),
+    hospitalKey: text('hospital_key').notNull().default('snuh'),
+    jobFamilyId: integer('job_family_id').references(() => jobFamilies.id, {
+      onDelete: 'set null',
+    }),
+    domainId: integer('domain_id').references(() => orgDomains.id, {
+      onDelete: 'set null',
+    }),
+    departmentId: integer('department_id').references(() => orgDepartments.id, {
+      onDelete: 'set null',
+    }),
+    unitId: integer('unit_id').references(() => orgUnits.id, {
+      onDelete: 'set null',
+    }),
+    teamId: integer('team_id').references(() => orgTeams.id, {
+      onDelete: 'set null',
+    }),
+    titleId: integer('title_id').references(() => jobTitles.id, {
+      onDelete: 'set null',
+    }),
+    workPattern: text('work_pattern'),
+    communicationStyle: text('communication_style'),
+    painPoints: jsonb('pain_points').$type<string[]>().default([]),
+    aiNeeds: jsonb('ai_needs').$type<string[]>().default([]),
+    metadata: jsonb('metadata').$type<Record<string, unknown>>().default({}),
+    isActive: boolean('is_active').notNull().default(true),
+  },
+  (table) => [
+    uniqueIndex('persona_profiles_code_uidx').on(table.code),
+    index('persona_profiles_scope_idx').on(
+      table.jobFamilyId,
+      table.domainId,
+      table.departmentId,
+    ),
+  ],
+)
+
 // ── 3.1 regulation_versions ──
 
 export const regulationVersions = pgTable('regulation_versions', {
@@ -122,6 +269,8 @@ export const regulationVersions = pgTable('regulation_versions', {
   status: regulationStatusEnum('status').notNull().default('draft'),
   effectiveDate: date('effective_date'),
   sourceFiles: jsonb('source_files').$type<string[]>().default([]),
+  applicableDomainIds: jsonb('applicable_domain_ids').$type<number[]>().default([]),
+  applicableJobFamilyIds: jsonb('applicable_job_family_ids').$type<number[]>().default([]),
   createdBy: uuid('created_by'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 })
@@ -135,12 +284,22 @@ export const regulationDocuments = pgTable(
     versionId: integer('version_id')
       .notNull()
       .references(() => regulationVersions.id, { onDelete: 'cascade' }),
+    domainId: integer('domain_id').references(() => orgDomains.id, {
+      onDelete: 'set null',
+    }),
+    departmentId: integer('department_id').references(() => orgDepartments.id, {
+      onDelete: 'set null',
+    }),
+    jobFamilyId: integer('job_family_id').references(() => jobFamilies.id, {
+      onDelete: 'set null',
+    }),
     chunkIndex: integer('chunk_index').notNull(),
     sourceFile: text('source_file'),
     sectionTitle: text('section_title'),
     content: text('content').notNull(),
     embedding: vector('embedding'),
     tokenCount: integer('token_count'),
+    articleScope: text('article_scope'),
     metadata: jsonb('metadata').$type<{
       page?: number
       category?: string
@@ -149,6 +308,7 @@ export const regulationDocuments = pgTable(
   },
   (table) => [
     index('reg_docs_version_idx').on(table.versionId),
+    index('reg_docs_scope_idx').on(table.domainId, table.departmentId, table.jobFamilyId),
   ],
 )
 
@@ -202,13 +362,21 @@ export const calculationRules = pgTable(
     versionId: integer('version_id')
       .notNull()
       .references(() => regulationVersions.id, { onDelete: 'cascade' }),
+    domainId: integer('domain_id').references(() => orgDomains.id, {
+      onDelete: 'set null',
+    }),
+    jobFamilyId: integer('job_family_id').references(() => jobFamilies.id, {
+      onDelete: 'set null',
+    }),
     ruleType: text('rule_type').notNull(),
     ruleKey: text('rule_key').notNull(),
     ruleData: jsonb('rule_data').notNull(),
+    ruleScope: text('rule_scope'),
     description: text('description'),
   },
   (table) => [
     index('calc_rules_version_idx').on(table.versionId),
+    index('calc_rules_scope_idx').on(table.domainId, table.jobFamilyId),
   ],
 )
 
@@ -221,10 +389,23 @@ export const faqEntries = pgTable(
     versionId: integer('version_id').references(() => regulationVersions.id, {
       onDelete: 'set null',
     }),
+    domainId: integer('domain_id').references(() => orgDomains.id, {
+      onDelete: 'set null',
+    }),
+    departmentId: integer('department_id').references(() => orgDepartments.id, {
+      onDelete: 'set null',
+    }),
+    jobFamilyId: integer('job_family_id').references(() => jobFamilies.id, {
+      onDelete: 'set null',
+    }),
+    personaProfileId: integer('persona_profile_id').references(() => personaProfiles.id, {
+      onDelete: 'set null',
+    }),
     category: text('category').notNull(),
     question: text('question').notNull(),
     answer: text('answer').notNull(),
     articleRef: text('article_ref'),
+    audienceScope: text('audience_scope'),
     embedding: vector('embedding'),
     sortOrder: integer('sort_order').default(0),
     isPublished: boolean('is_published').default(true),
@@ -232,6 +413,7 @@ export const faqEntries = pgTable(
   (table) => [
     index('faq_version_idx').on(table.versionId),
     index('faq_category_idx').on(table.category),
+    index('faq_scope_idx').on(table.domainId, table.departmentId, table.jobFamilyId),
   ],
 )
 
@@ -270,6 +452,8 @@ export const adminUsers = pgTable(
     userId: uuid('user_id').notNull().unique(),
     email: text('email').notNull(),
     role: adminRoleEnum('role').notNull().default('viewer'),
+    managedDomainIds: jsonb('managed_domain_ids').$type<number[]>().default([]),
+    managedDepartmentIds: jsonb('managed_department_ids').$type<number[]>().default([]),
     isActive: boolean('is_active').default(true),
   },
   (table) => [
@@ -425,6 +609,9 @@ export const teams = pgTable(
   'teams',
   {
     id: serial('id').primaryKey(),
+    orgTeamId: integer('org_team_id').references(() => orgTeams.id, {
+      onDelete: 'set null',
+    }),
     slug: text('slug').notNull(),
     name: text('name').notNull(),
     description: text('description'),
@@ -436,6 +623,7 @@ export const teams = pgTable(
   },
   (table) => [
     uniqueIndex('teams_slug_uidx').on(table.slug),
+    index('teams_org_team_idx').on(table.orgTeamId),
   ],
 )
 

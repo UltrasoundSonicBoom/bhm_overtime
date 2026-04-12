@@ -7,7 +7,14 @@
   'use strict';
 
   var CURRENT_PAGE = location.pathname.split('/').pop() || 'index.html';
+  var isIndex = CURRENT_PAGE === 'index.html';
   var isRegulation = CURRENT_PAGE === 'regulation.html';
+  var isCardNews = CURRENT_PAGE === 'cardnews.html';
+  var isStandalone = !isIndex && !isRegulation;
+
+  function homeHref(tab) {
+    return 'index.html?app=1&tab=' + tab;
+  }
 
   function el(tag, attrs) {
     var e = document.createElement(tag);
@@ -18,6 +25,26 @@
       else e.setAttribute(k, attrs[k]);
     });
     return e;
+  }
+
+  function syncThemeButtonIcon() {
+    var button = document.getElementById('themeToggle');
+    if (!button) return;
+    var isNeo = document.documentElement.getAttribute('data-theme') === 'neo';
+    button.textContent = isNeo ? '🎨' : '🌙';
+  }
+
+  function fallbackToggleTheme() {
+    var html = document.documentElement;
+    var isNeo = html.getAttribute('data-theme') === 'neo';
+    if (isNeo) {
+      html.removeAttribute('data-theme');
+      localStorage.setItem('theme', 'linear');
+    } else {
+      html.setAttribute('data-theme', 'neo');
+      localStorage.setItem('theme', 'neo');
+    }
+    syncThemeButtonIcon();
   }
 
   // ── Header 렌더 (DOM API) ──
@@ -32,8 +59,8 @@
 
     // Logo — index: switchTab('home'), regulation: link to snuhmate.com
     var logo;
-    if (isRegulation) {
-      logo = el('a', { className: 'logo', href: 'https://www.snuhmate.com' });
+    if (isRegulation || isStandalone) {
+      logo = el('a', { className: 'logo', href: homeHref('home') });
       logo.style.textDecoration = 'none';
       logo.style.color = 'inherit';
     } else {
@@ -65,7 +92,11 @@
 
     // Theme toggle
     var themeBtn = el('button', { className: 'theme-toggle-btn', id: 'themeToggle', title: '테마 전환', textContent: '🎨' });
-    themeBtn.onclick = function () { toggleTheme(); };
+    themeBtn.onclick = function () {
+      if (typeof window.toggleTheme === 'function') window.toggleTheme();
+      else fallbackToggleTheme();
+      syncThemeButtonIcon();
+    };
     right.appendChild(themeBtn);
 
     // ChannelIO button
@@ -77,6 +108,7 @@
     inner.appendChild(topRow);
 
     header.appendChild(inner);
+    syncThemeButtonIcon();
   }
 
   // ── Footer Nav 렌더 (양쪽 공용) ──
@@ -96,48 +128,30 @@
       elem.appendChild(el('span', { className: 'nav-tab-text', textContent: text }));
     }
 
-    if (isRegulation) {
-      var items = [
-        { icon: '🏠', text: '홈',    href: 'index.html?app=1&tab=home' },
-        { icon: '📅', text: '휴가',  href: 'index.html?app=1&tab=leave' },
-        { icon: '⏰', text: '시간외', href: 'index.html?app=1&tab=overtime' },
-        { icon: '💰', text: '급여',  href: 'index.html?app=1&tab=payroll' },
-        { icon: '📖', text: '규정',  active: true },
-        { icon: '👤', text: 'info',  href: 'index.html?app=1&tab=profile' }
-      ];
-      items.forEach(function (t) {
-        var a = el('a', { className: 'nav-tab' + (t.active ? ' active' : '') });
-        a.style.textDecoration = 'none';
-        if (t.href) a.href = t.href;
-        else a.style.cursor = 'default';
-        addTabContent(a, t.icon, t.text);
-        inner.appendChild(a);
-      });
-    } else {
-      var tabs = [
-        { icon: '🏠', text: '홈',    tab: 'home' },
-        { icon: '📅', text: '휴가',  tab: 'leave' },
-        { icon: '⏰', text: '시간외', tab: 'overtime' },
-        { icon: '💰', text: '급여',  tab: 'payroll' },
-        { icon: '📖', text: '규정',  href: 'regulation.html' },
-        { icon: '👤', text: 'info',  tab: 'profile' },
-        { icon: '📢', text: '피드백', tab: 'feedback', hidden: true }
-      ];
-      tabs.forEach(function (t) {
-        if (t.href) {
-          var a = el('a', { className: 'nav-tab', href: t.href });
-          a.style.textDecoration = 'none';
-          addTabContent(a, t.icon, t.text);
-          inner.appendChild(a);
-        } else {
-          var btn = el('button', { className: 'nav-tab' });
-          btn.dataset.tab = t.tab;
-          if (t.hidden) btn.style.display = 'none';
-          addTabContent(btn, t.icon, t.text);
-          inner.appendChild(btn);
-        }
-      });
-    }
+    var items = [
+      { icon: '🏠', text: '홈', tab: 'home', href: homeHref('home') },
+      { icon: '📅', text: '휴가', tab: 'leave', href: homeHref('leave') },
+      { icon: '⏰', text: '시간외', tab: 'overtime', href: homeHref('overtime') },
+      { icon: '💰', text: '급여', tab: 'payroll', href: homeHref('payroll') },
+      { icon: '📖', text: '규정', href: 'regulation.html', active: isRegulation },
+      { icon: '📰', text: '뉴스', href: 'cardnews.html', active: isCardNews },
+      { icon: '👤', text: 'info', tab: 'profile', href: homeHref('profile') }
+    ];
+
+    items.forEach(function (item) {
+      if (isIndex && item.tab) {
+        var btn = el('button', { className: 'nav-tab' });
+        btn.dataset.tab = item.tab;
+        addTabContent(btn, item.icon, item.text);
+        inner.appendChild(btn);
+        return;
+      }
+
+      var a = el('a', { className: 'nav-tab' + (item.active ? ' active' : ''), href: item.href });
+      a.style.textDecoration = 'none';
+      addTabContent(a, item.icon, item.text);
+      inner.appendChild(a);
+    });
 
     footer.appendChild(inner);
   }

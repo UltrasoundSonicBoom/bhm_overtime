@@ -256,7 +256,7 @@ html[data-theme="neo"] .logo .logo-main-title {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 5px;
 }
 
 .nav-tab:hover {
@@ -269,13 +269,13 @@ html[data-theme="neo"] .logo .logo-main-title {
 }
 
 .nav-tab-icon {
-  font-size: 18px;
+  font-size: 22px;
   line-height: 1;
   display: block;
 }
 
 .nav-tab-text {
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1;
   display: block;
   color: #1a1a1a;

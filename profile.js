@@ -14,6 +14,7 @@ const PROFILE = {
         jobType: '간호직',
         grade: 'J3',
         year: 1,
+        birthDate: '',
         hireDate: '',
         adjustPay: 0,
         upgradeAdjustPay: 0,

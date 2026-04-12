@@ -23,6 +23,8 @@
       <a href="../nurse_admin/index.html">배포판</a>
       <a href="../nurse_admin/admin.html">관리자판</a>
       <a href="../dashboard.html">검증 대시보드</a>
+      <a href="review-queue.html">검토 큐</a>
+      <a href="union_regulation_admin.html">규정 상수 관리</a>
     </nav>
   </header>
 
@@ -64,15 +66,16 @@
       </div>
     </section>
 
-    <section class="surface-nav" id="surfaceNav" aria-label="규정 관리 목차">
-      <button class="surface-tab active" type="button" data-surface="overview">요약</button>
-      <button class="surface-tab" type="button" data-surface="calendar">공휴일</button>
-      <button class="surface-tab" type="button" data-surface="versions">버전</button>
+    <section class="surface-nav" id="surfaceNav" aria-label="관리 메뉴">
+      <button class="surface-tab active" type="button" data-surface="dashboard">Dashboard</button>
+      <button class="surface-tab" type="button" data-surface="content">Content</button>
       <button class="surface-tab" type="button" data-surface="faq">FAQ</button>
-      <button class="surface-tab" type="button" data-surface="scenarios">시나리오</button>
+      <button class="surface-tab" type="button" data-surface="versions">Versions</button>
+      <button class="surface-tab" type="button" data-surface="review">Review</button>
+      <button class="surface-tab" type="button" data-surface="logs">Logs</button>
     </section>
 
-    <section class="surface-panel" data-surface-panel="overview">
+    <section class="surface-panel" data-surface-panel="dashboard">
       <section id="summaryGrid" class="summary-grid"></section>
       <section class="content-grid">
         <article class="card">
@@ -209,6 +212,116 @@
             </div>
           </div>
           <div id="faqList" class="stack"></div>
+        </article>
+      </section>
+    </section>
+
+    <section class="surface-panel" data-surface-panel="content">
+      <section class="content-grid">
+        <article class="card">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Editor</p>
+              <h2>콘텐츠 편집</h2>
+            </div>
+          </div>
+          <form id="contentEditorForm" class="form-stack">
+            <input id="contentIdInput" type="hidden">
+            <label class="field">
+              <span>유형</span>
+              <select id="contentTypeSelect">
+                <option value="notice">notice</option>
+                <option value="policy">policy</option>
+                <option value="faq">faq</option>
+                <option value="landing">landing</option>
+                <option value="dataset">dataset</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>제목</span>
+              <input id="contentTitleInput" type="text" placeholder="콘텐츠 제목">
+            </label>
+            <label class="field">
+              <span>슬러그</span>
+              <input id="contentSlugInput" type="text" placeholder="자동 생성 (선택사항)">
+            </label>
+            <label class="field">
+              <span>요약</span>
+              <input id="contentSummaryInput" type="text" placeholder="변경 요약 (선택사항)">
+            </label>
+            <label class="field">
+              <span>본문</span>
+              <textarea id="contentBodyInput" rows="8" placeholder="콘텐츠 본문을 입력하세요"></textarea>
+            </label>
+            <div class="control-actions">
+              <button id="contentSaveBtn" class="btn primary" type="submit" disabled>저장</button>
+              <button id="contentResetBtn" class="btn secondary" type="button">폼 초기화</button>
+            </div>
+          </form>
+          <div id="contentStatusActions" class="control-actions" style="margin-top: 12px; display: none;">
+            <button class="mini-btn primary" type="button" data-content-status="review">검토 요청</button>
+            <button class="mini-btn edit" type="button" data-content-status="published">게시</button>
+            <button class="mini-btn warn" type="button" data-content-status="draft">초안으로</button>
+            <button class="mini-btn" type="button" data-content-status="archived">보관</button>
+          </div>
+          <div id="contentRevisions" class="stack" style="margin-top: 14px;"></div>
+        </article>
+        <article class="card">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Content Entries</p>
+              <h2>콘텐츠 목록</h2>
+            </div>
+            <button id="newContentBtn" class="btn primary" type="button" disabled>새 콘텐츠</button>
+          </div>
+          <div id="contentFilterBar" class="control-actions" style="margin-bottom: 12px;">
+            <button class="mini-btn active" type="button" data-content-filter="all">전체</button>
+            <button class="mini-btn" type="button" data-content-filter="draft">Draft</button>
+            <button class="mini-btn" type="button" data-content-filter="review">Review</button>
+            <button class="mini-btn" type="button" data-content-filter="published">Published</button>
+          </div>
+          <div id="contentList" class="stack">
+            <div class="empty-copy">콘텐츠를 불러오는 중...</div>
+          </div>
+        </article>
+      </section>
+    </section>
+
+    <section class="surface-panel" data-surface-panel="review">
+      <section class="content-grid">
+        <article class="card" style="grid-column: 1 / -1;">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Approval Queue</p>
+              <h2>검토 큐</h2>
+            </div>
+            <span id="reviewBadge" class="tag">0건 대기</span>
+          </div>
+          <div id="reviewFilterBar" class="control-actions" style="margin-bottom: 12px;">
+            <button class="mini-btn active" type="button" data-review-filter="pending">대기중</button>
+            <button class="mini-btn" type="button" data-review-filter="approved">승인됨</button>
+            <button class="mini-btn" type="button" data-review-filter="rejected">반려됨</button>
+            <button class="mini-btn" type="button" data-review-filter="all">전체</button>
+          </div>
+          <div id="reviewList" class="stack">
+            <div class="empty-copy">검토 항목을 불러오는 중...</div>
+          </div>
+        </article>
+      </section>
+    </section>
+
+    <section class="surface-panel" data-surface-panel="logs">
+      <section class="content-grid">
+        <article class="card" style="grid-column: 1 / -1;">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Audit Trail</p>
+              <h2>감사 로그</h2>
+            </div>
+          </div>
+          <div id="auditLogList" class="stack">
+            <div class="empty-copy">감사 로그를 불러오는 중...</div>
+          </div>
         </article>
       </section>
     </section>

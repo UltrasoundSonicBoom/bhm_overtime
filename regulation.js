@@ -132,21 +132,70 @@ function initBrowse() {
   // Load profile for calculator blocks
   loadProfileForFaq();
 
-  renderBrowseCategories();
+  // Try loading from DB via /api/regulations/browse, fallback to DATA.handbook
+  tryLoadBrowseFromApi().then(function() {
+    renderBrowseCategories();
 
-  // Start with first category selected
-  if (DATA.handbook && DATA.handbook.length > 0) {
-    browseActiveCategory = DATA.handbook[0].category;
-  }
-  renderBrowseList();
-  updateBrowseCategoryActive();
+    // Start with first category selected
+    if (DATA.handbook && DATA.handbook.length > 0) {
+      browseActiveCategory = DATA.handbook[0].category;
+    }
+    renderBrowseList();
+    updateBrowseCategoryActive();
 
-  var searchInput = document.getElementById('browseSearch');
-  var debounceTimer;
-  searchInput.addEventListener('input', function() {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(function() { searchBrowse(searchInput.value.trim()); }, 200);
+    var searchInput = document.getElementById('browseSearch');
+    var debounceTimer;
+    searchInput.addEventListener('input', function() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(function() { searchBrowse(searchInput.value.trim()); }, 200);
+    });
   });
+}
+
+/**
+ * Fetch regulation browse data from DB-backed API endpoint.
+ * On success, merges into DATA.handbook so existing rendering works unchanged.
+ * On failure, silently falls back to the static DATA.handbook from data.js.
+ */
+function tryLoadBrowseFromApi() {
+  var apiBase = (typeof window !== 'undefined' && window.API_BASE) || '';
+  var url = apiBase + '/api/regulations/browse';
+
+  return fetch(url)
+    .then(function(res) {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    })
+    .then(function(data) {
+      if (data && data.sections && data.sections.length > 0) {
+        // Convert API sections to DATA.handbook format for seamless rendering
+        var dbHandbook = data.sections.map(function(section) {
+          return {
+            category: section.category,
+            icon: section.icon || '📄',
+            articles: section.articles.map(function(article) {
+              return {
+                title: article.title || '',
+                ref: article.ref || '',
+                body: article.body || '',
+                _sourceFile: article.sourceFile,
+                _chunkIds: article.chunkIds,
+                _fromDb: true
+              };
+            })
+          };
+        });
+        // Replace DATA.handbook with DB-sourced data
+        if (typeof DATA !== 'undefined' && dbHandbook.length > 0) {
+          DATA.handbook = dbHandbook;
+          console.log('[regulation.js] Loaded browse data from DB (' + dbHandbook.length + ' sections)');
+        }
+      }
+    })
+    .catch(function(err) {
+      // Fallback: use existing DATA.handbook from data.js
+      console.log('[regulation.js] DB browse unavailable, using DATA.handbook fallback:', err.message);
+    });
 }
 
 
@@ -406,7 +455,13 @@ function askAboutArticle(title) {
 
 // ═══════════ 💬 물어보기 (AI 상담) ═══════════
 
-var API_BASE = '/api';
+// 로컬 개발: Live Server(3000) → Hono API(3001) 자동 연결
+var API_BASE = (function() {
+  if (location.protocol === 'file:') return 'http://localhost:3001/api';
+  var localHosts = { 'localhost': true, '127.0.0.1': true, '::1': true };
+  if (localHosts[location.hostname] && location.port !== '3001') return 'http://localhost:3001/api';
+  return '/api';
+})();
 var chatSessionId = 'session-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
 
 function initAsk() {
@@ -418,43 +473,154 @@ function initAsk() {
       if (e.key === 'Enter') handleChat();
     });
   }
+  initChatWelcome();
 }
 
-// ── Chat messages ──
-// Bot messages use innerHTML for formatted responses from trusted internal sources.
-// User messages use textContent for safety.
-function addChatMessage(text, type, sources) {
-  var container = document.getElementById('chatMessages');
-  var msg = document.createElement('div');
-  msg.className = 'chat-msg ' + type;
+// ── Chat: 사용자 이름 가져오기 ──
+function getChatUserName() {
+  try {
+    var key = window.getUserStorageKey ? window.getUserStorageKey('bhm_hr_profile') : 'bhm_hr_profile';
+    var stored = localStorage.getItem(key);
+    if (stored) {
+      var p = JSON.parse(stored);
+      if (p && p.name && p.name.trim()) return p.name.trim() + '님';
+    }
+  } catch(e) {}
+  return '사용자';
+}
 
-  if (type === 'user') {
-    msg.textContent = text;
+// ── Chat: 초기 웰컴 메시지 ──
+function initChatWelcome() {
+  var userName = getChatUserName();
+  var bubble = addChatMessage(null, 'bot', null, true);
+  bubble.appendChild(document.createTextNode('안녕하세요, ' + userName + '! 저는 서울대학교병원 단체협약 규정을 안내해드리는 AI입니다.'));
+  var ex = document.createElement('div');
+  ex.style.cssText = 'opacity:0.82; font-size:13px; margin-top:4px;';
+  ex.textContent = '예: "온콜 수당 얼마?", "연차 며칠?", "경조 휴가"';
+  bubble.appendChild(ex);
+  var container = document.getElementById('chatMessages');
+  if (container) container.scrollTop = container.scrollHeight;
+}
+
+// ── Chat 메시지 렌더 ──
+// bot 메시지: 내부 신뢰 API 응답 또는 DATA 소스 (innerHTML 사용)
+// user 메시지: 항상 textContent로 처리 (XSS 방지)
+// rawBubble=true 이면 빈 bubble 엘리먼트를 반환해 caller가 DOM으로 직접 채움
+function addChatMessage(text, type, sources, rawBubble) {
+  var container = document.getElementById('chatMessages');
+
+  var row = document.createElement('div');
+  row.className = 'chat-row ' + type;
+
+  // 아바타
+  var avatarEl;
+  if (type === 'bot') {
+    avatarEl = document.createElement('img');
+    avatarEl.className = 'chat-avatar-img';
+    avatarEl.src = 'snuhmaterect.png';
+    avatarEl.alt = 'SNUH Mate';
   } else {
-    // Bot content is from trusted API or internal DATA sources
-    msg.innerHTML = text;
-    if (sources && sources.length > 0) {
-      sources.forEach(function(s) {
-        var refSpan = document.createElement('span');
-        refSpan.className = 'ref';
-        refSpan.textContent = s.ref ? '\uD83D\uDCCC ' + s.ref : s.title;
-        msg.appendChild(refSpan);
-      });
+    avatarEl = document.createElement('div');
+    avatarEl.className = 'chat-avatar-user';
+    avatarEl.textContent = getChatUserName().charAt(0);
+  }
+
+  // 버블 래퍼 (이름 + 버블)
+  var wrap = document.createElement('div');
+  wrap.className = 'chat-bubble-wrap';
+
+  var nameLabel = document.createElement('div');
+  nameLabel.className = 'chat-name-label';
+  nameLabel.textContent = type === 'bot' ? 'SNUH Mate' : getChatUserName();
+  wrap.appendChild(nameLabel);
+
+  var bubble = document.createElement('div');
+  bubble.className = 'chat-bubble';
+
+  if (!rawBubble) {
+    if (type === 'user') {
+      // 사용자 입력: textContent 사용 (XSS 방지)
+      bubble.textContent = text;
+    } else {
+      // bot: 내부 신뢰 API 응답 또는 DATA 소스만 사용
+      // escapeHtml()로 처리된 FAQ 텍스트와 신뢰된 API HTML만 허용
+      var div = document.createElement('div');
+      div.textContent = text;
+      // trusted API HTML 처리: newline → br 치환된 서버 응답
+      if (text && text.indexOf('<') !== -1) {
+        bubble.innerHTML = text; // trusted internal source only
+      } else {
+        bubble.textContent = text;
+      }
+      if (sources && sources.length > 0) {
+        var refsDiv = document.createElement('div');
+        refsDiv.className = 'chat-refs';
+        sources.forEach(function(s) {
+          var tag = document.createElement('span');
+          tag.className = 'chat-ref-tag';
+          tag.textContent = '📌 ' + (s.ref || s.title || '');
+          refsDiv.appendChild(tag);
+        });
+        bubble.appendChild(refsDiv);
+      }
     }
   }
 
-  container.appendChild(msg);
-  container.scrollTop = container.scrollHeight;
+  wrap.appendChild(bubble);
+  row.appendChild(avatarEl);
+  row.appendChild(wrap);
+  container.appendChild(row);
+
+  if (type === 'bot') {
+    // 답변 시작점이 보이도록 smooth scroll
+    // rAF 두 번: 첫 번째에서 layout, 두 번째에서 정확한 rect 측정
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        var containerRect = container.getBoundingClientRect();
+        var rowRect = row.getBoundingClientRect();
+        var target = rowRect.top - containerRect.top + container.scrollTop - 12;
+        container.scrollTo({ top: target, behavior: 'smooth' });
+      });
+    });
+  } else {
+    container.scrollTop = container.scrollHeight;
+  }
+  return bubble;
 }
 
 function addTypingIndicator() {
   var container = document.getElementById('chatMessages');
-  var indicator = document.createElement('div');
-  indicator.className = 'chat-msg bot';
-  indicator.id = 'typingIndicator';
-  indicator.style.opacity = '0.6';
-  indicator.textContent = '답변 생성 중...';
-  container.appendChild(indicator);
+  var row = document.createElement('div');
+  row.className = 'chat-row bot';
+  row.id = 'typingIndicator';
+
+  var img = document.createElement('img');
+  img.className = 'chat-avatar-img';
+  img.src = 'snuhmaterect.png';
+  img.alt = 'SNUH Mate';
+
+  var wrap = document.createElement('div');
+  wrap.className = 'chat-bubble-wrap';
+
+  var nameLabel = document.createElement('div');
+  nameLabel.className = 'chat-name-label';
+  nameLabel.textContent = 'SNUH Mate';
+  wrap.appendChild(nameLabel);
+
+  var bubble = document.createElement('div');
+  bubble.className = 'chat-bubble';
+  var dots = document.createElement('div');
+  dots.className = 'chat-typing-dots';
+  for (var i = 0; i < 3; i++) {
+    var s = document.createElement('span');
+    dots.appendChild(s);
+  }
+  bubble.appendChild(dots);
+  wrap.appendChild(bubble);
+
+  row.appendChild(img);
+  row.appendChild(wrap);
+  container.appendChild(row);
   container.scrollTop = container.scrollHeight;
 }
 
@@ -475,6 +641,7 @@ async function handleChat() {
 
 async function handleChatQuery(query) {
   addTypingIndicator();
+  var botBubble = null;
 
   try {
     var res = await fetch(API_BASE + '/chat', {
@@ -487,43 +654,69 @@ async function handleChatQuery(query) {
     if (!res.ok) throw new Error('API error: ' + res.status);
 
     var data = await res.json();
+    // 서버 응답: 신뢰된 내부 소스, newline을 br로 변환
     var answerHtml = data.answer.replace(/\n/g, '<br>');
-    addChatMessage(answerHtml, 'bot', data.sources);
+    botBubble = addChatMessage(answerHtml, 'bot', data.sources);
+    showRelatedFaq(query, botBubble);
 
-    showRelatedFaq(query);
   } catch (err) {
     removeTypingIndicator();
     var result = searchChatLocal(query);
     if (result) {
-      var html = '';
+      // 로컬 fallback: escapeHtml 처리된 텍스트 + 내부 DATA 렌더
+      var bubble = addChatMessage(null, 'bot', null, true);
       if (result.faq) {
-        html += '<div style="margin-bottom:6px;">' + escapeHtml(result.faq.a) + '</div>';
+        var faqDiv = document.createElement('div');
+        faqDiv.textContent = result.faq.a;
+        bubble.appendChild(faqDiv);
       }
       if (result.handbook.length > 0) {
-        html += renderHandbookSource(result.handbook);
+        var hDiv = document.createElement('div');
+        hDiv.style.marginTop = '6px';
+        hDiv.innerHTML = renderHandbookSource(result.handbook); // internal DATA only
+        bubble.appendChild(hDiv);
       }
+      var note = document.createElement('div');
+      note.style.cssText = 'margin-top:9px; font-size:12px; opacity:0.72; border-top:1px solid rgba(255,255,255,0.2); padding-top:7px;';
+      note.textContent = '* 서버 연결 불가 — 로컬 규정 검색 결과입니다.';
+      bubble.appendChild(note);
       var ref = result.faq ? result.faq.ref : (result.handbook[0] ? result.handbook[0].ref : null);
-      var sources = ref ? [{ ref: ref, title: '' }] : [];
-      addChatMessage(html, 'bot', sources);
-      addChatMessage(
-        '<small style="color:var(--text-muted);">* AI 서버에 연결할 수 없어 로컬 검색 결과입니다.</small>',
-        'bot'
-      );
-
-      showRelatedFaq(query);
+      if (ref) {
+        var refsDiv = document.createElement('div');
+        refsDiv.className = 'chat-refs';
+        var tag = document.createElement('span');
+        tag.className = 'chat-ref-tag';
+        tag.textContent = '📌 ' + ref;
+        refsDiv.appendChild(tag);
+        bubble.appendChild(refsDiv);
+      }
+      showRelatedFaq(query, bubble);
+      // fallback 내용 다 붙인 뒤 시작점으로 smooth scroll
+      requestAnimationFrame(function() {
+        requestAnimationFrame(function() {
+          var container = document.getElementById('chatMessages');
+          var row = bubble.closest('.chat-row');
+          if (!row) return;
+          var containerRect = container.getBoundingClientRect();
+          var rowRect = row.getBoundingClientRect();
+          var target = rowRect.top - containerRect.top + container.scrollTop - 12;
+          container.scrollTo({ top: target, behavior: 'smooth' });
+        });
+      });
     } else {
-      addChatMessage(
-        '해당 질문에 대한 답변을 찾지 못했습니다.<br>'
-        + '<small style="color:var(--text-muted)">더 구체적인 키워드로 검색해보세요. 예: "온콜", "연차", "야간"</small>',
-        'bot'
-      );
+      var bubble2 = addChatMessage(null, 'bot', null, true);
+      bubble2.textContent = '해당 질문에 대한 규정을 찾지 못했습니다.';
+      var hint = document.createElement('div');
+      hint.style.cssText = 'font-size:13px; opacity:0.82; margin-top:5px;';
+      hint.textContent = '더 구체적인 키워드로 질문해보세요. 예: "온콜", "연차", "야간수당"';
+      bubble2.appendChild(hint);
     }
   }
 }
 
-// Show related FAQ links after an AI answer
-function showRelatedFaq(query) {
-  if (!DATA.faq) return;
+// 관련 FAQ — 별도 메시지가 아닌 bot 버블 안에 추가
+function showRelatedFaq(query, targetBubble) {
+  if (!DATA.faq || !targetBubble) return;
   var q = query.toLowerCase();
   var related = DATA.faq.filter(function(f) {
     return f.q.toLowerCase().includes(q) || f.a.toLowerCase().includes(q) ||
@@ -532,29 +725,28 @@ function showRelatedFaq(query) {
 
   if (related.length === 0) return;
 
-  var container = document.getElementById('chatMessages');
-  var relMsg = document.createElement('div');
-  relMsg.className = 'chat-msg bot';
-  relMsg.style.cssText = 'max-width:100%; background:transparent; border:none; padding:4px 0;';
+  var relDiv = document.createElement('div');
+  relDiv.className = 'chat-related';
 
-  var titleDiv = document.createElement('div');
-  titleDiv.style.cssText = 'font-size:var(--text-body-normal); margin-bottom:4px;';
-  titleDiv.innerHTML = '<strong>관련 FAQ:</strong>';
-  relMsg.appendChild(titleDiv);
+  var titleEl = document.createElement('div');
+  titleEl.className = 'chat-related-title';
+  titleEl.textContent = '관련 질문';
+  relDiv.appendChild(titleEl);
 
   related.forEach(function(faq) {
     var link = document.createElement('div');
-    link.style.cssText = 'cursor:pointer; color:var(--accent-indigo); font-size:var(--text-body-normal); margin-top:4px;';
+    link.className = 'chat-related-link';
     link.textContent = '▸ ' + faq.q;
     link.addEventListener('click', function() {
       addChatMessage(faq.q, 'user');
       handleChatQuery(faq.q);
     });
-    relMsg.appendChild(link);
+    relDiv.appendChild(link);
   });
 
-  container.appendChild(relMsg);
-  container.scrollTop = container.scrollHeight;
+  targetBubble.appendChild(relDiv);
+  var container = document.getElementById('chatMessages');
+  if (container) container.scrollTop = container.scrollHeight;
 }
 
 // ── Local chat search (API fallback) ──

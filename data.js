@@ -170,15 +170,18 @@ const DATA_STATIC = {
     }
   },
 
-  // ── 장기근속수당 ──
+  // ── 장기근속수당 (제50조 — ADDITIVE 구조) ──
+  // 규정: 5~9년 5만 / 10~14년 6만 / 15~19년 8만 / 20년+ 10만
+  //       21년 이상 +1만 가산 / 25년 이상 +3만 가산 (누적 ADDITIVE)
+  // 수정: BUG-02 (25년+ 130,000→140,000원) + BUG-03 (TIER→ADDITIVE 금액 반영)
   longServicePay: [
-    { min: 0, max: 5, amount: 0 },
-    { min: 5, max: 10, amount: 50000 },
-    { min: 10, max: 15, amount: 60000 },
-    { min: 15, max: 20, amount: 80000 },
-    { min: 20, max: 21, amount: 100000 },
-    { min: 21, max: 25, amount: 110000 },
-    { min: 25, max: 99, amount: 130000 }
+    { min:  0, max:  5, amount:       0 }, // 5년 미만: 미지급
+    { min:  5, max: 10, amount:   50000 }, // 5~9년
+    { min: 10, max: 15, amount:   60000 }, // 10~14년
+    { min: 15, max: 20, amount:   80000 }, // 15~19년
+    { min: 20, max: 21, amount:  100000 }, // 20년 (기준액)
+    { min: 21, max: 25, amount:  110000 }, // 21~24년 (+10,000 가산)
+    { min: 25, max: 99, amount:  140000 }  // 25년+ (+30,000 추가 가산, BUG-02 수정)
   ],
 
   // ── 가족수당 ──
@@ -390,7 +393,7 @@ const DATA_STATIC = {
     { category: '근로시간', q: '통상 근무시간은?', a: '• 주 40시간, 1일 8시간\n• 09:00~18:00 (휴게 12:00~13:00)', ref: '제32조' },
     { category: '근로시간', q: '교대근무 시간표는?', a: '• 낮번(D) 07:00~15:30\n• 초번(E) 15:00~23:00\n• 밤번(N) 22:30~익일 07:30\n각 근무 30분 휴게시간 포함', ref: '제32조' },
     { category: '근로시간', q: '주 최대 근무시간은?', a: '주 최대 52시간\n• 소정근로 40시간 + 연장근로 12시간', ref: '제34조' },
-    { category: '근로시간', q: '시간외근무는 어떻게 계산하나요?', a: '15분 단위로 계산 (2020년~)\n\n• 연장근무: 통상임금 × 1/209 × 150%\n• 야간가산(22~06시): 통상임금 × 1/209 × 200%\n• 휴일근무(8시간 이내): 통상임금 × 1/209 × 150%\n• 휴일근무(8시간 초과): 통상임금 × 1/209 × 200%', ref: '제47조' },
+    { category: '근로시간', q: '시간외근무는 어떻게 계산하나요?', a: '15분 단위로 계산 (2020년~)\n\n• 연장근무: 통상임금 × 1/209 × 150%\n• 야간가산(22~06시): 통상임금 × 1/209 × 200%\n• 휴일근무(8시간 이내): 통상임금 × 1/209 × 150%\n• 휴일근무(8시간 초과): 통상임금 × 1/209 × 200%', ref: '제34조, 제47조' },
 
     // ── 온콜 ──
     { category: '온콜', q: '온콜 대기만 하면 수당이 나오나요?', a: '네, 대기만 해도 지급됩니다.\n• 온콜대기수당: 1일당 10,000원\n• 실 근무 여부와 무관', ref: '별도합의 (2021.11)' },
@@ -630,7 +633,13 @@ async function loadDataFromAPI() {
 
   dataLoadPromise = (async () => {
   try {
-    const res = await fetch('/api/data/bundle');
+    const _apiBase = (function() {
+      if (location.protocol === 'file:') return 'http://localhost:3001/api';
+      var _lh = { 'localhost': true, '127.0.0.1': true, '::1': true };
+      if (_lh[location.hostname] && location.port !== '3001') return 'http://localhost:3001/api';
+      return '/api';
+    })();
+    const res = await fetch(_apiBase + '/data/bundle');
     if (!res.ok) throw new Error(`API ${res.status}`);
     const contentType = res.headers.get('content-type') || '';
     if (!contentType.includes('application/json')) {

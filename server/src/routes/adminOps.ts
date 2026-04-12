@@ -147,6 +147,74 @@ adminOpsRoutes.post('/versions', async (c) => {
   return c.json({ result: version }, 201)
 })
 
+adminOpsRoutes.post('/versions/:id/duplicate', async (c) => {
+  const id = Number(c.req.param('id'))
+  const admin = getAdminContext(c)
+
+  const [source] = await sql`
+    select * from regulation_versions where id = ${id} limit 1
+  `
+  if (!source) {
+    return c.json({ error: 'Source version not found' }, 404)
+  }
+
+  const [newVersion] = await sql`
+    insert into regulation_versions (
+      year,
+      title,
+      status,
+      effective_date,
+      source_files,
+      created_by
+    )
+    values (
+      ${source.year + 1},
+      ${`${source.title} (복제)`},
+      'draft',
+      ${null},
+      ${sql.json(source.source_files || [])},
+      ${admin.userId}
+    )
+    returning *
+  `
+
+  // Copy FAQ entries from the source version
+  const sourceFaqs = await sql`
+    select category, question, answer, article_ref, sort_order, is_published
+    from faq_entries
+    where version_id = ${id}
+    order by sort_order asc, id asc
+  `
+
+  for (const faq of sourceFaqs) {
+    await sql`
+      insert into faq_entries (
+        version_id, category, question, answer, article_ref, sort_order, is_published
+      )
+      values (
+        ${newVersion.id},
+        ${faq.category},
+        ${faq.question},
+        ${faq.answer},
+        ${faq.article_ref},
+        ${faq.sort_order},
+        false
+      )
+    `
+  }
+
+  await writeAuditLog({
+    actorUserId: admin.userId,
+    actorRole: admin.adminRole,
+    action: 'regulation_version.duplicated',
+    entityType: 'regulation_version',
+    entityId: String(newVersion.id),
+    diff: { sourceVersionId: id, copiedFaqCount: sourceFaqs.length },
+  })
+
+  return c.json({ result: newVersion }, 201)
+})
+
 adminOpsRoutes.patch('/versions/:id/status', async (c) => {
   const id = Number(c.req.param('id'))
   const body = await c.req.json<{ status: 'draft' | 'active' | 'archived' }>()
@@ -819,6 +887,131 @@ adminOpsRoutes.get('/audit-logs', async (c) => {
         `
 
   return c.json({ results: rows })
+})
+
+adminOpsRoutes.get('/regulation-rules', async (c) => {
+  const versionId = Number(c.req.query('versionId'))
+  const ruleType = c.req.query('ruleType')
+
+  if (!Number.isInteger(versionId)) {
+    return c.json({ error: 'versionId is required' }, 400)
+  }
+
+  const rows = ruleType
+    ? await sql`
+        select
+          id,
+          version_id,
+          rule_type,
+          rule_key,
+          rule_data,
+          rule_scope,
+          description
+        from calculation_rules
+        where version_id = ${versionId}
+          and rule_type = ${ruleType}
+        order by id asc
+      `
+    : await sql`
+        select
+          id,
+          version_id,
+          rule_type,
+          rule_key,
+          rule_data,
+          rule_scope,
+          description
+        from calculation_rules
+        where version_id = ${versionId}
+        order by id asc
+      `
+
+  return c.json({ results: rows })
+})
+
+adminOpsRoutes.post('/regulation-rules', async (c) => {
+  const body = await c.req.json<{
+    versionId: number
+    ruleType: string
+    ruleKey: string
+    ruleData: unknown
+    ruleScope?: string
+    description?: string
+  }>()
+  const admin = getAdminContext(c)
+
+  const [row] = await sql`
+    insert into calculation_rules (
+      version_id,
+      rule_type,
+      rule_key,
+      rule_data,
+      rule_scope,
+      description
+    )
+    values (
+      ${body.versionId},
+      ${body.ruleType},
+      ${body.ruleKey},
+      ${sql.json(body.ruleData as any)},
+      ${body.ruleScope || null},
+      ${body.description || null}
+    )
+    returning *
+  `
+
+  await writeAuditLog({
+    actorUserId: admin.userId,
+    actorRole: admin.adminRole,
+    action: 'regulation_rule.created',
+    entityType: 'regulation_rule',
+    entityId: String(row.id),
+    diff: { after: row },
+  })
+
+  return c.json({ result: row }, 201)
+})
+
+adminOpsRoutes.put('/regulation-rules/:id', async (c) => {
+  const id = Number(c.req.param('id'))
+  const body = await c.req.json<{
+    ruleType?: string
+    ruleKey?: string
+    ruleData?: unknown
+    ruleScope?: string
+    description?: string
+  }>()
+  const admin = getAdminContext(c)
+
+  const [before] = await sql`
+    select * from calculation_rules where id = ${id} limit 1
+  `
+  if (!before) {
+    return c.json({ error: 'Regulation rule not found' }, 404)
+  }
+
+  const [updated] = await sql`
+    update calculation_rules
+    set
+      rule_type = ${body.ruleType || before.rule_type},
+      rule_key = ${body.ruleKey || before.rule_key},
+      rule_data = ${sql.json((body.ruleData ?? before.rule_data) as any)},
+      rule_scope = ${body.ruleScope !== undefined ? body.ruleScope : before.rule_scope},
+      description = ${body.description !== undefined ? body.description : before.description}
+    where id = ${id}
+    returning *
+  `
+
+  await writeAuditLog({
+    actorUserId: admin.userId,
+    actorRole: admin.adminRole,
+    action: 'regulation_rule.updated',
+    entityType: 'regulation_rule',
+    entityId: String(id),
+    diff: { before, after: updated },
+  })
+
+  return c.json({ result: updated })
 })
 
 export default adminOpsRoutes
