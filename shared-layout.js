@@ -88,43 +88,58 @@
     footer.id = 'navTabs';
     footer.textContent = '';
 
+    // header-inner와 동일한 구조: nav-tabs-inner가 max-width:640px 중앙 정렬
+    var inner = el('div', { className: 'nav-tabs-inner' });
+
+    function addTabContent(elem, icon, text) {
+      elem.appendChild(el('span', { className: 'nav-tab-icon', textContent: icon }));
+      elem.appendChild(el('span', { className: 'nav-tab-text', textContent: text }));
+    }
+
     if (isRegulation) {
       var items = [
-        { label: '📅 휴가', href: 'index.html?app=1&tab=leave' },
-        { label: '⏰ 시간외', href: 'index.html?app=1&tab=overtime' },
-        { label: '💰 급여', href: 'index.html?app=1&tab=payroll' },
-        { label: '📖 규정', active: true },
-        { label: '👤 info', href: 'index.html?app=1&tab=profile' }
+        { icon: '🏠', text: '홈',    href: 'index.html?app=1&tab=home' },
+        { icon: '📅', text: '휴가',  href: 'index.html?app=1&tab=leave' },
+        { icon: '⏰', text: '시간외', href: 'index.html?app=1&tab=overtime' },
+        { icon: '💰', text: '급여',  href: 'index.html?app=1&tab=payroll' },
+        { icon: '📖', text: '규정',  active: true },
+        { icon: '👤', text: 'info',  href: 'index.html?app=1&tab=profile' }
       ];
       items.forEach(function (t) {
-        var a = el('a', { className: 'nav-tab' + (t.active ? ' active' : ''), textContent: t.label });
+        var a = el('a', { className: 'nav-tab' + (t.active ? ' active' : '') });
         a.style.textDecoration = 'none';
         if (t.href) a.href = t.href;
         else a.style.cursor = 'default';
-        footer.appendChild(a);
+        addTabContent(a, t.icon, t.text);
+        inner.appendChild(a);
       });
     } else {
       var tabs = [
-        { label: '📅 휴가', tab: 'leave' },
-        { label: '⏰ 시간외', tab: 'overtime' },
-        { label: '💰 급여', tab: 'payroll' },
-        { label: '📖 규정', href: 'regulation.html' },
-        { label: '👤 info', tab: 'profile' },
-        { label: '📢 피드백', tab: 'feedback', hidden: true }
+        { icon: '🏠', text: '홈',    tab: 'home' },
+        { icon: '📅', text: '휴가',  tab: 'leave' },
+        { icon: '⏰', text: '시간외', tab: 'overtime' },
+        { icon: '💰', text: '급여',  tab: 'payroll' },
+        { icon: '📖', text: '규정',  href: 'regulation.html' },
+        { icon: '👤', text: 'info',  tab: 'profile' },
+        { icon: '📢', text: '피드백', tab: 'feedback', hidden: true }
       ];
       tabs.forEach(function (t) {
         if (t.href) {
-          var a = el('a', { className: 'nav-tab', textContent: t.label, href: t.href });
+          var a = el('a', { className: 'nav-tab', href: t.href });
           a.style.textDecoration = 'none';
-          footer.appendChild(a);
+          addTabContent(a, t.icon, t.text);
+          inner.appendChild(a);
         } else {
-          var btn = el('button', { className: 'nav-tab', textContent: t.label });
+          var btn = el('button', { className: 'nav-tab' });
           btn.dataset.tab = t.tab;
           if (t.hidden) btn.style.display = 'none';
-          footer.appendChild(btn);
+          addTabContent(btn, t.icon, t.text);
+          inner.appendChild(btn);
         }
       });
     }
+
+    footer.appendChild(inner);
   }
 
   // ── ChannelIO 부트 ──

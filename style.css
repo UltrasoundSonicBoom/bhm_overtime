@@ -95,30 +95,36 @@ body::before {
 }
 
 @media (min-width: 769px) {
+  /* 헤더(.header)와 동일 구조: 배경은 full-width, 내용은 header-inner처럼 640px */
   .nav-tabs {
     position: fixed;
     bottom: 0;
-    left: 50%;
-    right: auto;
-    transform: translateX(-50%);
-    width: min(calc(100vw - 32px), 600px);
+    left: 0;
+    right: 0;
+    width: 100%;
     z-index: 1000;
     background: var(--bg-primary);
-    border: 1px solid var(--border-glass);
+    border-top: 1px solid var(--border-glass);
     border-bottom: none;
-    border-top-left-radius: 18px;
-    border-top-right-radius: 18px;
-    padding: 12px 10px;
-    justify-content: stretch;
-    gap: 8px;
+    border-radius: 0;
+    padding: 0 16px; /* 헤더와 동일한 수평 패딩 */
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.12);
+  }
+
+  .nav-tabs-inner {
+    max-width: 640px; /* 헤더 inner와 동일 */
+    margin: 0 auto;
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 0;
   }
 
   .nav-tabs .nav-tab {
     flex: 1 1 0;
     min-width: 0;
     max-width: none;
-    padding: 10px 12px;
+    padding: 8px 12px;
   }
 
   .main {
@@ -205,21 +211,30 @@ html[data-theme="neo"] .logo .logo-main-title {
 }
 
 /* ── Navigation Tabs ── */
+/* .nav-tabs = 헤더처럼 full-width 배경 컨테이너 */
 .nav-tabs {
-  display: flex;
-  gap: 2px;
   background: transparent;
-  border-radius: var(--radius-sm);
+  border-radius: 0;
   padding: 0;
   border: none;
+}
+
+/* .nav-tabs-inner = header-inner처럼 max-width:640px 중앙 정렬 flex 컨테이너 */
+.nav-tabs-inner {
+  max-width: 640px;
+  margin: 0 auto;
+  display: flex;
+  gap: 4px;
   width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  padding: 6px 0;
+  padding-bottom: max(6px, calc(env(safe-area-inset-bottom) + 4px));
 }
 
-.nav-tabs::-webkit-scrollbar {
+.nav-tabs-inner::-webkit-scrollbar {
   display: none;
 }
 
@@ -237,6 +252,11 @@ html[data-theme="neo"] .logo .logo-main-title {
   white-space: nowrap;
   flex: auto;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
 }
 
 .nav-tab:hover {
@@ -246,6 +266,19 @@ html[data-theme="neo"] .logo .logo-main-title {
 .nav-tab.active {
   background: rgba(255, 255, 255, 0.08);
   color: var(--text-primary);
+}
+
+.nav-tab-icon {
+  font-size: 18px;
+  line-height: 1;
+  display: block;
+}
+
+.nav-tab-text {
+  font-size: 11px;
+  line-height: 1;
+  display: block;
+  color: #1a1a1a;
 }
 
 
@@ -2550,17 +2583,21 @@ html[data-theme="neo"] .logo .logo-main-title {
     background: var(--bg-primary);
     border-top: 1px solid var(--border-glass);
     border-bottom: none;
-    padding: 8px 12px;
-    padding-bottom: max(10px, calc(env(safe-area-inset-bottom) + 6px));
+    padding: 0 12px; /* 수직 패딩은 nav-tabs-inner에서 */
     z-index: 90;
-    gap: 4px;
-    justify-content: space-around;
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.12);
     border-radius: 0;
   }
 
+  .nav-tabs-inner {
+    gap: 4px;
+    justify-content: space-around;
+    padding: 5px 0;
+    padding-bottom: max(7px, calc(env(safe-area-inset-bottom) + 4px));
+  }
+
   .nav-tab {
-    padding: 8px 4px 6px;
+    padding: 5px 4px 4px;
     font-size: var(--text-body-normal);
     flex: auto;
     text-align: center;
@@ -2894,6 +2931,9 @@ html[data-theme="neo"] .nav-tabs {
   background: var(--accent-amber);
   border-top: 3px solid #1a1a1a;
   box-shadow: 0 -4px 0px #1a1a1a;
+}
+
+html[data-theme="neo"] .nav-tabs-inner {
   gap: 6px;
 }
 
@@ -2905,12 +2945,16 @@ html[data-theme="neo"] .nav-tab.active {
 
 @media (max-width: 768px) {
   html[data-theme="neo"] .nav-tabs {
-    padding: 8px 14px;
-    padding-bottom: max(12px, calc(env(safe-area-inset-bottom) + 8px));
+    padding: 0 14px; /* 수직 패딩은 nav-tabs-inner에서 */
+  }
+
+  html[data-theme="neo"] .nav-tabs-inner {
+    padding: 6px 0;
+    padding-bottom: max(8px, calc(env(safe-area-inset-bottom) + 5px));
   }
 
   html[data-theme="neo"] .nav-tab {
-    padding: 8px 6px 6px;
+    padding: 5px 6px 4px;
   }
 }
 

@@ -61,6 +61,7 @@ const state = {
   scenarioReport: null,
   rosterQuery: '',
   rosterFilter: 'all',
+  adminPanel: 'overview',
 };
 
 const els = {
@@ -86,6 +87,8 @@ const els = {
   publishedViewBtn: document.getElementById('publishedViewBtn'),
   candidateViewBtn: document.getElementById('candidateViewBtn'),
   stageHeadline: document.getElementById('stageHeadline'),
+  stageDecision: document.getElementById('stageDecision'),
+  reviewLane: document.getElementById('reviewLane'),
   opsPulse: document.getElementById('opsPulse'),
   eventTimeline: document.getElementById('eventTimeline'),
   candidateRail: document.getElementById('candidateRail'),
@@ -125,6 +128,7 @@ const els = {
   scenarioScore: document.getElementById('scenarioScore'),
   scenarioLab: document.getElementById('scenarioLab'),
   resultBox: document.getElementById('resultBox'),
+  mobileWorkflowNav: document.getElementById('mobileWorkflowNav'),
 };
 
 els.workspaceStatus.textContent = '로딩 준비';
@@ -147,6 +151,13 @@ function setResult(data) {
 
 function setWorkspaceStatus(message) {
   els.workspaceStatus.textContent = message;
+}
+
+function syncAdminPanelNav() {
+  document.body.dataset.adminPanel = state.adminPanel;
+  els.mobileWorkflowNav?.querySelectorAll('[data-admin-panel]').forEach((button) => {
+    button.classList.toggle('active', button.getAttribute('data-admin-panel') === state.adminPanel);
+  });
 }
 
 function getCurrentTeam() {
@@ -182,6 +193,75 @@ function formatMetric(label, value, note) {
       <span>${escapeHtml(note)}</span>
     </div>
   `;
+}
+
+function renderStageDecision() {
+  const validation = getDatasetValidation();
+  const hasPublished = Boolean(state.schedule?.published);
+  const hasCandidate = Boolean(state.schedule?.candidates?.length);
+  let headline = '먼저 데이터셋 상태를 확인하세요.';
+  let detail = '휴가, 교육, 공용 이벤트와 검증 경고를 정리한 뒤 초안을 생성하는 게 가장 빠릅니다.';
+
+  if (!hasCandidate) {
+    headline = '이제 AI 초안을 생성할 차례입니다.';
+    detail = '현재 후보안이 없어서 비교할 수 없습니다. 데이터셋 상태를 확인한 뒤 초안을 만드세요.';
+  } else if (validation.summary.blocking) {
+    headline = '배포 전에 검증 경고를 먼저 풀어야 합니다.';
+    detail = `현재 blocking 경고가 있어 배포보다 검토가 우선입니다. 에러 ${validation.summary.errors}건, 경고 ${validation.summary.warnings}건을 확인하세요.`;
+  } else if (!hasPublished) {
+    headline = '후보안 비교와 마지막 점검만 남았습니다.';
+    detail = '후보안, 고정 큐, 이벤트, 수당 렌즈를 확인한 뒤 배포하면 됩니다.';
+  } else {
+    headline = '배포본이 존재합니다. 변경 이유를 분명히 남기세요.';
+    detail = '추가 수정이 필요하면 published와 candidate를 비교하고, 변경 사유를 로그와 핀 큐에 남기세요.';
+  }
+
+  els.stageDecision.innerHTML = `
+    <strong>${escapeHtml(headline)}</strong>
+    <span>${escapeHtml(detail)}</span>
+  `;
+}
+
+function renderReviewLane() {
+  const validation = getDatasetValidation();
+  const hasCandidate = Boolean(state.schedule?.candidates?.length);
+  const published = Boolean(state.schedule?.published);
+  const candidate = resolveCurrentCandidate();
+  const violations = resolveCurrentViolations().length;
+  const steps = [
+    {
+      title: '1. 데이터셋',
+      value: validation.summary.blocking ? '정리 필요' : '준비 완료',
+      note: `에러 ${validation.summary.errors} · 경고 ${validation.summary.warnings}`,
+      tone: validation.summary.blocking ? 'blocked' : 'ready',
+    },
+    {
+      title: '2. 후보안',
+      value: hasCandidate ? `${state.schedule.candidates.length}개 생성` : '초안 없음',
+      note: candidate ? `${CANDIDATE_LABELS[candidate.candidate_key] || candidate.candidate_key} 검토 중` : 'AI 초안을 먼저 생성하세요.',
+      tone: hasCandidate ? 'ready' : 'watch',
+    },
+    {
+      title: '3. 검토',
+      value: `${violations}건 위반`,
+      note: `${state.pendingLocks.size}개 핀 대기 · ${getAllEvents().length}개 이벤트`,
+      tone: violations > 0 ? 'watch' : 'ready',
+    },
+    {
+      title: '4. 배포',
+      value: published ? '배포본 존재' : '배포 전',
+      note: validation.summary.blocking ? '검증 후 배포 버튼이 열립니다.' : '지금 배포 판단이 가능합니다.',
+      tone: validation.summary.blocking ? 'blocked' : 'ready',
+    },
+  ];
+
+  els.reviewLane.innerHTML = steps.map((step) => `
+    <article class="review-step ${escapeHtml(step.tone)}">
+      <strong>${escapeHtml(step.title)}</strong>
+      <span>${escapeHtml(step.value)}</span>
+      <span>${escapeHtml(step.note)}</span>
+    </article>
+  `).join('');
 }
 
 async function getAccessToken() {
@@ -1082,6 +1162,8 @@ function renderAll() {
   renderDatasetPulse();
   renderMetrics();
   renderRoster();
+  renderStageDecision();
+  renderReviewLane();
   renderOpsPulse();
   renderEventTimeline();
   renderCandidateRail();
@@ -1105,6 +1187,7 @@ function renderAll() {
   const validation = getDatasetValidation();
   els.publishBtn.classList.toggle('btn-warning', validation.summary.blocking);
   els.publishBtn.textContent = validation.summary.blocking ? '검증 후 배포' : '배포';
+  syncAdminPanelNav();
 }
 
 async function loadTeams() {
@@ -1439,13 +1522,22 @@ if (els.eventEditorForm) {
 els.publishedViewBtn.addEventListener('click', () => {
   if (!state.schedule?.published) return;
   state.activeView = 'published';
+  state.adminPanel = 'board';
   renderAll();
 });
 
 els.candidateViewBtn.addEventListener('click', () => {
   state.activeView = 'candidate';
   if (!state.activeCandidateId) state.activeCandidateId = state.schedule?.candidates?.[0]?.id || null;
+  state.adminPanel = 'board';
   renderAll();
+});
+
+els.mobileWorkflowNav?.querySelectorAll('[data-admin-panel]').forEach((button) => {
+  button.addEventListener('click', () => {
+    state.adminPanel = button.getAttribute('data-admin-panel') || 'overview';
+    syncAdminPanelNav();
+  });
 });
 
 supabaseClient.auth.onAuthStateChange(() => {
@@ -1469,4 +1561,5 @@ if (!supabaseSdkReady) {
 
 updateAuthState();
 resetEventForm();
+syncAdminPanelNav();
 refreshWorkspace();

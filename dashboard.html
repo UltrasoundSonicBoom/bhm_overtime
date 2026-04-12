@@ -24,44 +24,72 @@
     </nav>
   </header>
 
+  <section class="wayfinding-band">
+    <div class="guide-copy">
+      <p class="eyebrow">Jacob · Hick · Tesler</p>
+      <h2>검증은 한 질문씩 보게 바꿨습니다</h2>
+      <p>이 화면은 데이터 품질과 규칙 충돌을 찾는 곳입니다. 수정이 필요하면 관리자판으로, 최종표 확인은 배포판으로 이어집니다.</p>
+    </div>
+    <div class="mode-strip" aria-label="서비스 역할 구분">
+      <a class="mode-pill" href="./nurse_admin/index.html">배포 확인</a>
+      <a class="mode-pill" href="./nurse_admin/admin.html">생성 · 검토 · 배포</a>
+      <a class="mode-pill active" href="./dashboard.html">데이터 · 규정 검증</a>
+    </div>
+    <div class="task-list" aria-label="이 페이지에서 답하는 질문">
+      <div class="task-item">
+        <strong>지금 배포해도 되는가</strong>
+        <span>검증 경고와 시나리오 통과율을 먼저 봅니다.</span>
+      </div>
+      <div class="task-item">
+        <strong>어디가 위험한가</strong>
+        <span>이벤트 충돌, 편중, coverage delta를 따로 확인합니다.</span>
+      </div>
+      <div class="task-item">
+        <strong>누가 영향받는가</strong>
+        <span>멤버 매트릭스로 개인별 영향을 봅니다.</span>
+      </div>
+    </div>
+  </section>
+
   <main class="dashboard-shell">
     <section class="team-tabs" id="teamTabs"></section>
 
-    <section class="summary-grid" id="summaryGrid"></section>
+    <section id="decisionBanner" class="decision-banner">검증 상태를 계산하는 중입니다.</section>
 
-    <section class="dashboard-layout">
-      <article class="card">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">Dataset Health</p>
-            <h2>헤더 요약</h2>
-          </div>
-        </div>
-        <div id="healthGrid" class="mini-grid"></div>
-      </article>
-
-      <article class="card">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">Rule Coverage</p>
-            <h2>규칙 커버리지</h2>
-          </div>
-        </div>
-        <div id="ruleCoverage" class="stack"></div>
-      </article>
+    <section class="surface-nav" id="surfaceNav" aria-label="검증 대시보드 목차">
+      <button class="surface-tab active" type="button" data-surface="overview">요약</button>
+      <button class="surface-tab" type="button" data-surface="validation">검증</button>
+      <button class="surface-tab" type="button" data-surface="scenarios">시나리오</button>
+      <button class="surface-tab" type="button" data-surface="members">멤버</button>
     </section>
 
-    <section class="dashboard-layout">
-      <article class="card wide">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">Member Matrix</p>
-            <h2>사람별 휴가 · 교육 · 최근 야간</h2>
-          </div>
-        </div>
-        <div id="memberMatrix" class="table-shell"></div>
-      </article>
+    <section class="surface-panel" data-surface-panel="overview">
+      <section class="summary-grid" id="summaryGrid"></section>
 
+      <section class="dashboard-layout">
+        <article class="card">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Dataset Health</p>
+              <h2>헤더 요약</h2>
+            </div>
+          </div>
+          <div id="healthGrid" class="mini-grid"></div>
+        </article>
+
+        <article class="card">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Rule Coverage</p>
+              <h2>규칙 커버리지</h2>
+            </div>
+          </div>
+          <div id="ruleCoverage" class="stack"></div>
+        </article>
+      </section>
+    </section>
+
+    <section class="dashboard-layout surface-panel" data-surface-panel="validation">
       <article class="card">
         <div class="section-heading">
           <div>
@@ -73,7 +101,7 @@
       </article>
     </section>
 
-    <section class="dashboard-layout">
+    <section class="dashboard-layout surface-panel" data-surface-panel="scenarios">
       <article class="card">
         <div class="section-heading">
           <div>
@@ -94,7 +122,26 @@
         <div id="coverageDeltaList" class="stack"></div>
       </article>
     </section>
+
+    <section class="dashboard-layout surface-panel" data-surface-panel="members">
+      <article class="card wide">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Member Matrix</p>
+            <h2>사람별 휴가 · 교육 · 최근 야간</h2>
+          </div>
+        </div>
+        <div id="memberMatrix" class="table-shell"></div>
+      </article>
+    </section>
   </main>
+
+  <nav class="mobile-role-nav" aria-label="주요 화면 이동">
+    <a href="./nurse_admin/index.html">배포</a>
+    <a href="./nurse_admin/admin.html">관리</a>
+    <a class="active" href="./dashboard.html">검증</a>
+    <a href="./admin/index.html">규정</a>
+  </nav>
 
   <script src="./dashboard.js"></script>
 </body>

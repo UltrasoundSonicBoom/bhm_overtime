@@ -18,6 +18,7 @@ const state = {
   dataset: null,
   schedule: null,
   regulation: null,
+  surface: 'overview',
 };
 
 const els = {
@@ -29,6 +30,8 @@ const els = {
   validationList: document.getElementById('validationList'),
   scenarioList: document.getElementById('scenarioList'),
   coverageDeltaList: document.getElementById('coverageDeltaList'),
+  surfaceNav: document.getElementById('surfaceNav'),
+  decisionBanner: document.getElementById('decisionBanner'),
 };
 
 function escapeHtml(value) {
@@ -77,6 +80,13 @@ function renderTabs() {
   });
 }
 
+function syncSurfaceNav() {
+  document.body.dataset.dashboardSurface = state.surface;
+  els.surfaceNav?.querySelectorAll('[data-surface]').forEach((button) => {
+    button.classList.toggle('active', button.getAttribute('data-surface') === state.surface);
+  });
+}
+
 function renderSummary() {
   const validation = state.dataset?.datasetValidation || { summary: { total: 0, errors: 0, warnings: 0, info: 0 } };
   const scenario = mergeScenarioReport();
@@ -111,6 +121,20 @@ function renderSummary() {
       <span>${escapeHtml(note)}</span>
     </div>
   `).join('');
+}
+
+function renderDecisionBanner() {
+  const validation = state.dataset?.datasetValidation?.summary || { errors: 0, warnings: 0, blocking: false };
+  const scenario = mergeScenarioReport();
+  const isReady = !validation.blocking && validation.errors === 0 && scenario.failed === 0;
+  const headline = isReady ? '지금 배포 가능한 상태입니다.' : '지금은 배포 전에 확인이 더 필요합니다.';
+  const detail = isReady
+    ? '규정 시나리오와 데이터셋 검증이 모두 안정권입니다.'
+    : `에러 ${validation.errors}건, 경고 ${validation.warnings}건, 시나리오 실패 ${scenario.failed}건을 먼저 확인하세요.`;
+  els.decisionBanner.innerHTML = `
+    <strong>${escapeHtml(headline)}</strong>
+    <span>${escapeHtml(detail)}</span>
+  `;
 }
 
 function renderRuleCoverage() {
@@ -225,12 +249,14 @@ function renderCoverageDelta() {
 
 function renderAll() {
   renderTabs();
+  renderDecisionBanner();
   renderSummary();
   renderRuleCoverage();
   renderMemberMatrix();
   renderValidationList();
   renderScenarioList();
   renderCoverageDelta();
+  syncSurfaceNav();
 }
 
 async function loadTeams() {
@@ -260,3 +286,10 @@ loadTeams()
   .catch((error) => {
     els.summaryGrid.innerHTML = `<div class="empty-copy">${escapeHtml(error.message || String(error))}</div>`;
   });
+
+els.surfaceNav?.querySelectorAll('[data-surface]').forEach((button) => {
+  button.addEventListener('click', () => {
+    state.surface = button.getAttribute('data-surface') || 'overview';
+    syncSurfaceNav();
+  });
+});

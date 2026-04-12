@@ -97,6 +97,31 @@ function buildAnniversaryItems(year: number) {
   }))
 }
 
+adminCalendarRoutes.get('/snapshots', requireAdmin, async (c) => {
+  const year = Number(c.req.query('year'))
+
+  if (!Number.isInteger(year) || year < 2000 || year > 2100) {
+    return c.json({ error: 'Valid year is required' }, 400)
+  }
+
+  await ensureCalendarSnapshotTable()
+
+  const rows = await sql`
+    select year, kind, items, source, refreshed_at
+    from calendar_snapshots
+    where year = ${year}
+    order by kind asc
+  `
+
+  const result = {
+    year,
+    holidays: rows.find((row) => row.kind === 'holidays') || null,
+    anniversaries: rows.find((row) => row.kind === 'anniversaries') || null,
+  }
+
+  return c.json({ result })
+})
+
 adminCalendarRoutes.post('/refresh', requireAdmin, async (c) => {
   const body = await c.req.json<{ year?: number | string }>().catch(
     () => ({ year: undefined } as { year?: number | string }),

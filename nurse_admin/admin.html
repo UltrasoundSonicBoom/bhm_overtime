@@ -30,8 +30,53 @@
     </div>
   </header>
 
+  <section class="workflow-band">
+    <div class="workflow-copy">
+      <p class="eyebrow">Fitts · Postel · Peak-End</p>
+      <h2>준비 → 생성 → 검토 → 배포</h2>
+      <p>한 번에 모든 정보를 밀어 넣지 않고, 수간호사가 실제로 밟는 순서대로 화면을 나눴습니다. 데이터셋 상태를 보고, 후보안을 비교하고, 규정을 확인한 뒤 배포합니다.</p>
+    </div>
+    <ol class="workflow-steps" aria-label="관리자 작업 단계">
+      <li class="workflow-step">1. 데이터셋 상태 확인</li>
+      <li class="workflow-step">2. AI 후보안 생성</li>
+      <li class="workflow-step">3. 셀 · 이벤트 · 위반 검토</li>
+      <li class="workflow-step">4. 배포 직전 검증</li>
+    </ol>
+    <div class="workflow-links">
+      <a class="top-link" href="./index.html">배포 확인</a>
+      <a class="top-link" href="../dashboard.html">검증 대시보드</a>
+      <a class="top-link" href="../admin/index.html">규정 관리</a>
+    </div>
+  </section>
+
+  <section class="mobile-workflow-nav" id="mobileWorkflowNav" aria-label="모바일 관리자 목차">
+    <button class="workflow-tab active" type="button" data-admin-panel="overview">준비</button>
+    <button class="workflow-tab" type="button" data-admin-panel="board">보드</button>
+    <button class="workflow-tab" type="button" data-admin-panel="review">검토</button>
+    <button class="workflow-tab" type="button" data-admin-panel="events">이벤트</button>
+    <button class="workflow-tab" type="button" data-admin-panel="rules">규정</button>
+  </section>
+
   <main class="workspace-grid">
-    <aside class="panel left-rail">
+    <aside class="panel left-rail" data-mobile-panel="overview">
+      <section class="rail-section workflow-summary">
+        <p class="eyebrow">Start Here</p>
+        <div class="workflow-summary-list">
+          <div class="workflow-summary-item">
+            <strong>먼저 볼 것</strong>
+            <span>Dataset Health와 Pilot 지표에서 경고를 확인합니다.</span>
+          </div>
+          <div class="workflow-summary-item">
+            <strong>다음 행동</strong>
+            <span>AI 초안 생성 후 보드 탭에서 후보안을 비교합니다.</span>
+          </div>
+          <div class="workflow-summary-item">
+            <strong>배포 직전</strong>
+            <span>검토와 규정 탭에서 충돌, 수당, 위반을 확인합니다.</span>
+          </div>
+        </div>
+      </section>
+
       <section class="rail-section">
         <div class="section-title-row">
           <p class="eyebrow">Control</p>
@@ -100,7 +145,7 @@
       </section>
     </aside>
 
-    <section class="panel stage-panel">
+    <section class="panel stage-panel" data-mobile-panel="board">
       <div class="stage-header">
         <div class="stage-title">
           <p class="eyebrow">Scheduler Flow</p>
@@ -112,6 +157,8 @@
         </div>
       </div>
 
+      <div id="stageDecision" class="stage-decision">운영 가이드를 계산하는 중입니다.</div>
+      <div id="reviewLane" class="review-lane">검토 단계 요약을 준비하는 중입니다.</div>
       <div id="opsPulse" class="ops-pulse">운영 요약을 계산하는 중입니다.</div>
       <div id="eventTimeline" class="event-timeline">팀 이벤트를 불러오는 중입니다.</div>
       <div id="candidateRail" class="candidate-rail"></div>
@@ -130,149 +177,162 @@
     </section>
 
     <aside class="panel inspector-panel">
-      <section class="inspector-block">
-        <p class="eyebrow">Selection</p>
-        <div id="selectedCellCard" class="selection-box">셀을 선택하면 여기서 고정 shift를 지정합니다.</div>
-        <div id="selectedInspector" class="mini-list">선택한 간호사의 휴가, 교육, 최근 야간, 보호 규칙을 보여줍니다.</div>
-        <div id="shiftPicker" class="shift-picker"></div>
-        <label class="field">
-          <span>고정 사유</span>
-          <textarea id="lockReasonInput" rows="3" placeholder="예: 병동 교육, 회의, 업무 연속성"></textarea>
-        </label>
-        <div class="button-grid single">
-          <button id="queueLockBtn" class="btn btn-accent" type="button">고정 큐에 추가</button>
-          <button id="clearSelectionBtn" class="btn btn-secondary" type="button">선택 해제</button>
-        </div>
-      </section>
+      <div class="inspector-group" data-mobile-panel="review">
+        <section class="inspector-block">
+          <p class="eyebrow">Selection</p>
+          <div id="selectedCellCard" class="selection-box">셀을 선택하면 여기서 고정 shift를 지정합니다.</div>
+          <div id="selectedInspector" class="mini-list">선택한 간호사의 휴가, 교육, 최근 야간, 보호 규칙을 보여줍니다.</div>
+          <div id="shiftPicker" class="shift-picker"></div>
+          <label class="field">
+            <span>고정 사유</span>
+            <textarea id="lockReasonInput" rows="3" placeholder="예: 병동 교육, 회의, 업무 연속성"></textarea>
+          </label>
+          <div class="button-grid single">
+            <button id="queueLockBtn" class="btn btn-accent" type="button">고정 큐에 추가</button>
+            <button id="clearSelectionBtn" class="btn btn-secondary" type="button">선택 해제</button>
+          </div>
+        </section>
 
-      <section class="inspector-block">
-        <div class="section-title-row">
-          <p class="eyebrow">Pending Pins</p>
-          <strong id="pendingCount" class="section-count">0</strong>
-        </div>
-        <div id="pendingLocksList" class="mini-list">아직 대기 중인 고정이 없습니다.</div>
-      </section>
+        <section class="inspector-block">
+          <div class="section-title-row">
+            <p class="eyebrow">Pending Pins</p>
+            <strong id="pendingCount" class="section-count">0</strong>
+          </div>
+          <div id="pendingLocksList" class="mini-list">아직 대기 중인 고정이 없습니다.</div>
+        </section>
 
-      <section class="inspector-block">
-        <div class="section-title-row">
-          <p class="eyebrow">Validation Queue</p>
-          <strong id="validationCount" class="section-count">0</strong>
-        </div>
-        <div id="validationQueue" class="mini-list">검증 결과를 불러오는 중입니다.</div>
-      </section>
+        <section class="inspector-block">
+          <div class="section-title-row">
+            <p class="eyebrow">Validation Queue</p>
+            <strong id="validationCount" class="section-count">0</strong>
+          </div>
+          <div id="validationQueue" class="mini-list">검증 결과를 불러오는 중입니다.</div>
+        </section>
+      </div>
 
-      <section class="inspector-block">
-        <div class="section-title-row">
-          <p class="eyebrow">Event Editor</p>
-          <strong id="eventCount" class="section-count">0</strong>
-        </div>
-        <form id="eventEditorForm" class="event-form">
-          <input id="eventIdInput" type="hidden">
-          <label class="field compact">
-            <span>scope</span>
-            <select id="eventScopeInput">
-              <option value="member">member</option>
-              <option value="team">team</option>
-            </select>
-          </label>
-          <label class="field compact">
-            <span>대상 간호사</span>
-            <select id="eventMemberSelect"></select>
-          </label>
-          <label class="field compact">
-            <span>event_type</span>
-            <select id="eventTypeInput">
-              <option value="education">education</option>
-              <option value="meeting">meeting</option>
-              <option value="dinner">dinner</option>
-              <option value="conference">conference</option>
-              <option value="orientation">orientation</option>
-              <option value="ward_event">ward_event</option>
-              <option value="restriction">restriction</option>
-              <option value="fixed_shift">fixed_shift</option>
-            </select>
-          </label>
-          <label class="field compact">
-            <span>제목</span>
-            <input id="eventTitleInput" type="text" placeholder="예: 신규간호사 오리엔테이션">
-          </label>
-          <div class="event-form-grid">
+      <div class="inspector-group" data-mobile-panel="events">
+        <section class="inspector-block">
+          <div class="section-title-row">
+            <p class="eyebrow">Event Editor</p>
+            <strong id="eventCount" class="section-count">0</strong>
+          </div>
+          <form id="eventEditorForm" class="event-form">
+            <input id="eventIdInput" type="hidden">
             <label class="field compact">
-              <span>시작일</span>
-              <input id="eventStartInput" type="date">
+              <span>scope</span>
+              <select id="eventScopeInput">
+                <option value="member">member</option>
+                <option value="team">team</option>
+              </select>
             </label>
             <label class="field compact">
-              <span>종료일</span>
-              <input id="eventEndInput" type="date">
+              <span>대상 간호사</span>
+              <select id="eventMemberSelect"></select>
             </label>
-          </div>
-          <div class="event-form-grid">
-            <label class="field compact checkbox-field">
-              <span>all_day</span>
-              <input id="eventAllDayInput" type="checkbox" checked>
+            <label class="field compact">
+              <span>event_type</span>
+              <select id="eventTypeInput">
+                <option value="education">education</option>
+                <option value="meeting">meeting</option>
+                <option value="dinner">dinner</option>
+                <option value="conference">conference</option>
+                <option value="orientation">orientation</option>
+                <option value="ward_event">ward_event</option>
+                <option value="restriction">restriction</option>
+                <option value="fixed_shift">fixed_shift</option>
+              </select>
             </label>
-            <label class="field compact checkbox-field">
-              <span>blocks_work</span>
-              <input id="eventBlocksWorkInput" type="checkbox">
+            <label class="field compact">
+              <span>제목</span>
+              <input id="eventTitleInput" type="text" placeholder="예: 신규간호사 오리엔테이션">
             </label>
+            <div class="event-form-grid">
+              <label class="field compact">
+                <span>시작일</span>
+                <input id="eventStartInput" type="date">
+              </label>
+              <label class="field compact">
+                <span>종료일</span>
+                <input id="eventEndInput" type="date">
+              </label>
+            </div>
+            <div class="event-form-grid">
+              <label class="field compact checkbox-field">
+                <span>all_day</span>
+                <input id="eventAllDayInput" type="checkbox" checked>
+              </label>
+              <label class="field compact checkbox-field">
+                <span>blocks_work</span>
+                <input id="eventBlocksWorkInput" type="checkbox">
+              </label>
+            </div>
+            <label class="field compact">
+              <span>preferred_shift_code</span>
+              <input id="eventShiftInput" type="text" placeholder="예: EDU">
+            </label>
+            <label class="field compact">
+              <span>coverage_delta</span>
+              <input id="eventCoverageDeltaInput" type="text" placeholder='예: {"D":1}'>
+            </label>
+            <label class="field compact">
+              <span>notes</span>
+              <textarea id="eventNotesInput" rows="3" placeholder="검증 메모, 운영 주의사항"></textarea>
+            </label>
+            <div class="button-grid">
+              <button id="eventSaveBtn" class="btn btn-primary" type="submit">이벤트 저장</button>
+              <button id="eventResetBtn" class="btn btn-secondary" type="button">폼 초기화</button>
+            </div>
+          </form>
+          <div id="eventTable" class="mini-list">이벤트 목록을 불러오는 중입니다.</div>
+        </section>
+      </div>
+
+      <div class="inspector-group" data-mobile-panel="rules">
+        <section class="inspector-block">
+          <div class="section-title-row">
+            <p class="eyebrow">Regulation</p>
+            <strong id="regulationVersion" class="section-count">-</strong>
           </div>
-          <label class="field compact">
-            <span>preferred_shift_code</span>
-            <input id="eventShiftInput" type="text" placeholder="예: EDU">
-          </label>
-          <label class="field compact">
-            <span>coverage_delta</span>
-            <input id="eventCoverageDeltaInput" type="text" placeholder='예: {"D":1}'>
-          </label>
-          <label class="field compact">
-            <span>notes</span>
-            <textarea id="eventNotesInput" rows="3" placeholder="검증 메모, 운영 주의사항"></textarea>
-          </label>
-          <div class="button-grid">
-            <button id="eventSaveBtn" class="btn btn-primary" type="submit">이벤트 저장</button>
-            <button id="eventResetBtn" class="btn btn-secondary" type="button">폼 초기화</button>
+          <div id="policySnapshot" class="mini-list">규정 요약을 불러오는 중입니다.</div>
+        </section>
+
+        <section class="inspector-block">
+          <p class="eyebrow">Allowance Lens</p>
+          <div id="allowanceLens" class="mini-list">셀을 선택하면 수당, 보호장치, 복지 기준을 계산합니다.</div>
+        </section>
+
+        <section class="inspector-block">
+          <p class="eyebrow">Rules</p>
+          <div id="ruleSummary" class="mini-list">팀을 선택하면 규칙이 표시됩니다.</div>
+        </section>
+
+        <section class="inspector-block">
+          <p class="eyebrow">Violations</p>
+          <div id="violationSummary" class="mini-list">후보를 선택하면 위반이 표시됩니다.</div>
+        </section>
+
+        <section class="inspector-block">
+          <div class="section-title-row">
+            <p class="eyebrow">Scenario Lab</p>
+            <strong id="scenarioScore" class="section-count">-</strong>
           </div>
-        </form>
-        <div id="eventTable" class="mini-list">이벤트 목록을 불러오는 중입니다.</div>
-      </section>
+          <div id="scenarioLab" class="mini-list">시나리오 검증 결과를 불러오는 중입니다.</div>
+        </section>
 
-      <section class="inspector-block">
-        <div class="section-title-row">
-          <p class="eyebrow">Regulation</p>
-          <strong id="regulationVersion" class="section-count">-</strong>
-        </div>
-        <div id="policySnapshot" class="mini-list">규정 요약을 불러오는 중입니다.</div>
-      </section>
-
-      <section class="inspector-block">
-        <p class="eyebrow">Allowance Lens</p>
-        <div id="allowanceLens" class="mini-list">셀을 선택하면 수당, 보호장치, 복지 기준을 계산합니다.</div>
-      </section>
-
-      <section class="inspector-block">
-        <p class="eyebrow">Rules</p>
-        <div id="ruleSummary" class="mini-list">팀을 선택하면 규칙이 표시됩니다.</div>
-      </section>
-
-      <section class="inspector-block">
-        <p class="eyebrow">Violations</p>
-        <div id="violationSummary" class="mini-list">후보를 선택하면 위반이 표시됩니다.</div>
-      </section>
-
-      <section class="inspector-block">
-        <div class="section-title-row">
-          <p class="eyebrow">Scenario Lab</p>
-          <strong id="scenarioScore" class="section-count">-</strong>
-        </div>
-        <div id="scenarioLab" class="mini-list">시나리오 검증 결과를 불러오는 중입니다.</div>
-      </section>
-
-      <section class="inspector-block">
-        <p class="eyebrow">Log</p>
-        <pre id="resultBox" class="result-box">대기 중</pre>
-      </section>
+        <section class="inspector-block">
+          <p class="eyebrow">Log</p>
+          <pre id="resultBox" class="result-box">대기 중</pre>
+        </section>
+      </div>
     </aside>
   </main>
+
+  <nav class="mobile-role-nav" aria-label="주요 화면 이동">
+    <a href="./index.html">배포</a>
+    <a class="active" href="./admin.html">관리</a>
+    <a href="../dashboard.html">검증</a>
+    <a href="../admin/index.html">규정</a>
+  </nav>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>

@@ -2,7 +2,7 @@
 <html lang="ko" data-theme="neo">
 
 <head>
-  <script>(function(){var h=location.hostname,p=location.pathname,q=location.search;if((h==='snuhmate.com'||h==='www.snuhmate.com')&&(p==='/'||p==='/index.html')&&q.indexOf('app=1')===-1)location.replace('onboarding.html');})();</script>
+  <script>(function(){var h=location.hostname,p=location.pathname,q=location.search;if(h==='angio.snuhmate.com'&&(p==='/'||p==='/index.html')){location.replace('/angio/index.html'+q);return;}if((h==='snuhmate.com'||h==='www.snuhmate.com')&&(p==='/'||p==='/index.html')&&q.indexOf('app=1')===-1)location.replace('onboarding.html');})();</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="SNUH 메이트: 서울대학교병원, 보라매병원 등 급여 및 휴가 관리 어시스턴트">
@@ -24,7 +24,6 @@
     gtag('js', new Date());
     gtag('config', 'G-Q4QYNTQHQ8');
   </script>
-  <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
   <style>
     /* ── Shared Modal Styles (used by migrationOverlay) ── */
     .onboarding-icon {
@@ -394,8 +393,8 @@
       <!-- 책갈피 서브탭 -->
       <nav class="pay-bookmark-tabs" id="payrollSubTabs">
         <button class="pay-bookmark-tab active" data-subtab="pay-payslip">급여명세서 관리</button>
-        <button class="pay-bookmark-tab" data-subtab="pay-calc">급여 예상</button>
-        <button class="pay-bookmark-tab" data-subtab="pay-qa">급여 계산</button>
+        <button class="pay-bookmark-tab" data-subtab="pay-calc">이번 달 예상액</button>
+        <button class="pay-bookmark-tab" data-subtab="pay-qa">수당 계산기</button>
         <button class="pay-bookmark-tab" data-subtab="pay-retirement">퇴직금</button>
       </nav>
       <div class="pay-tab-accent" id="payTabAccent"></div>
@@ -590,8 +589,16 @@
       <!-- ── 서브탭 5: 퇴직금 ── -->
       <div class="sub-content" id="sub-pay-retirement">
 
-        <!-- retirement.html로 이동 (새 독립 페이지) -->
-        <div class="ret-panel active" id="ret-panel-calc" style="display:none">
+        <!-- 퇴직금 내부 탭 네비게이션 -->
+        <nav class="ret-bookmark-tabs" id="retTabs">
+          <button class="ret-bookmark-tab active" data-tab="calc">💰 퇴직금</button>
+          <button class="ret-bookmark-tab" data-tab="peak">📊 임금피크</button>
+          <button class="ret-bookmark-tab" data-tab="pension">🏦 사학연금</button>
+          <button class="ret-bookmark-tab" data-tab="checklist">✅ 퇴직준비</button>
+        </nav>
+        <div class="ret-tab-accent calc" id="retTabAccent"></div>
+
+        <div class="ret-panel active" id="ret-panel-calc">
           <div id="retAutoLoadBanner" style="display:none; margin-bottom:12px; padding:12px 14px; font-size:var(--text-body-normal); line-height:1.6; background:#e0e7ff; border:2.5px solid #4338ca; border-radius:8px; box-shadow:3px 3px 0px #1a1a1a;">
             <div style="font-weight:700; margin-bottom:4px; color:#1e1b4b;">⚡ 내 정보 자동 반영</div>
             <div id="retAutoLoadDetail" style="color:#312e81;"></div>
@@ -853,6 +860,7 @@
         <div id="otHourlyWarning" class="hourly-warning-banner">
           <span>⚠️</span>
           <span>시급이 0원이에요. <a onclick="switchTab('profile')">개인정보 탭</a>에서 내 정보를 저장하면 자동으로 계산됩니다. 또는 직접 입력하세요.</span>
+          <button onclick="dismissHwBanner()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:16px;padding:0 2px;line-height:1;" title="다시 보지 않기">✕</button>
         </div>
 
         <!-- 캘린더 -->
@@ -1836,7 +1844,14 @@
     function updateHourlyWarning() {
       const val = parseInt(document.getElementById('otHourly')?.value) || 0;
       const warning = document.getElementById('otHourlyWarning');
-      if (warning) warning.style.display = val === 0 ? 'flex' : 'none';
+      if (!warning) return;
+      if (localStorage.getItem('hwBannerDismissed')) { warning.style.display = 'none'; return; }
+      warning.style.display = val === 0 ? 'flex' : 'none';
+    }
+    function dismissHwBanner() {
+      localStorage.setItem('hwBannerDismissed', '1');
+      const w = document.getElementById('otHourlyWarning');
+      if (w) w.style.display = 'none';
     }
 
     const MIGRATION_TARGET_URL = 'https://snuhmate.com';
@@ -1912,45 +1927,7 @@
     #ch-plugin-script-iframe {
       max-width: 500px !important;
     }
-    /* 퇴직금 탭 리다이렉트 카드 */
-    .ret-redirect-card {
-      background: #FFFFFF;
-      border: 2.5px solid #1a1a1a;
-      border-radius: 16px;
-      box-shadow: 4px 4px 0 #1a1a1a;
-      padding: 28px 20px;
-      text-align: center;
-      margin-top: 8px;
-    }
-    .ret-redirect-icon  { font-size: 40px; margin-bottom: 12px; }
-    .ret-redirect-title { font-weight: 800; font-size: 18px; margin-bottom: 8px; color: #1a1a1a; }
-    .ret-redirect-desc  { font-size: 13px; color: #4a4a4a; line-height: 1.6; margin-bottom: 20px; }
-    .ret-redirect-btn {
-      display: inline-block;
-      background: #1a1a1a; color: #fff;
-      font-weight: 700; font-size: 15px;
-      padding: 13px 28px; border-radius: 12px;
-      text-decoration: none; border: 2.5px solid #1a1a1a;
-      box-shadow: 3px 3px 0 #6C5CE7;
-    }
   </style>
-  <script>
-    // 퇴직금 탭 → retirement.html 리다이렉트 카드 (DOM API, XSS-safe)
-    function initRetirementTab() {
-      var panel = document.getElementById('ret-panel-calc');
-      if (!panel || panel.querySelector('.ret-redirect-card')) return;
-      panel.style.display = '';
-      var card  = document.createElement('div');  card.className  = 'ret-redirect-card';
-      var icon  = document.createElement('div');  icon.className  = 'ret-redirect-icon';  icon.textContent = '💰';
-      var title = document.createElement('div');  title.className = 'ret-redirect-title'; title.textContent = '퇴직금 · 임금피크 분석';
-      var desc  = document.createElement('div');  desc.className  = 'ret-redirect-desc';
-      desc.textContent = '중간정산 시뮬레이터, 5개 시나리오 비교, 내 정보 자동 로드가 포함된 전용 페이지입니다.';
-      var btn   = document.createElement('a');    btn.className   = 'ret-redirect-btn';
-      btn.textContent = '퇴직금 계산기 열기 →'; btn.href = 'retirement_ori.html';
-      card.appendChild(icon); card.appendChild(title); card.appendChild(desc); card.appendChild(btn);
-      panel.appendChild(card);
-    }
-  </script>
 </body>
 
 </html>

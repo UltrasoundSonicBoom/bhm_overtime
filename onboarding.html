@@ -21,10 +21,10 @@
       --white: #FFFFFF;
       --ink: #1a1a1a;
       --muted: #7a7a7a;
-      --violet: #6C5CE7;
-      --violet-light: #A29BFE;
+      --violet: #6366F1;
+      --violet-light: #A5B4FC;
       --blue: #74B9FF;
-      --emerald: #00B894;
+      --emerald: #10B981;
       --amber: #FDCB6E;
       --rose: #FD79A8;
       --cyan: #00CEC9;
@@ -138,6 +138,16 @@
     .reveal.d4 {
       -webkit-transition-delay: 0.28s;
       transition-delay: 0.28s;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .reveal {
+        opacity: 1;
+        -webkit-transform: none;
+        transform: none;
+        -webkit-transition: none;
+        transition: none;
+      }
     }
 
     /* ── Neo card base ── */
@@ -496,7 +506,6 @@
       text-decoration: none;
       transition: transform 0.1s, box-shadow 0.1s;
       font-family: inherit;
-      margin-bottom: 70px;
     }
 
     .cta-secondary:hover {
@@ -511,6 +520,7 @@
       gap: 12px;
       width: 100%;
       max-width: 320px;
+      margin-bottom: 70px;
     }
 
     .footer-text {
@@ -976,12 +986,12 @@
       <p class="feat-desc reveal d1" style="color:var(--ink); opacity:0.6;"></p>
       <div class="cta-group reveal d2">
         <a href="./index.html?app=1" class="cta-primary">시작하기 &rarr;</a>
+        <a href="./angio/index.html" class="cta-secondary">&#128421; Angio 운영 스냅샷</a>
         <a href="./tutorial.html" class="cta-secondary">&#x1f393; 사용법 익히기 [튜토리얼]</a>
       </div>
       <div class="legal-card reveal d3">
-        <div class="legal-card-title">SNUH 메이트는 서울대학교병원 그룹의 직원들이<br>
-          내 급여·휴가·시간외를<br>
-          직접 관리할 수 있도록 도와줍니다..</div>
+        <div class="legal-card-title">SNUH 메이트는 서울대학교병원 그룹 직원들을 위한<br>
+          급여·휴가·시간외 자기관리 도구입니다.<br></div>
         <div class="legal-card-desc">
           Google 연동 기능은 선택적으로 제공되며, 사용자의 데이터는 본인 기기 또는 본인 Google 계정에 저장되도록 설계되어 있습니다.
         </div>

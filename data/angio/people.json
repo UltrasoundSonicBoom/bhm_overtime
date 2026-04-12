@@ -1,0 +1,4760 @@
+{
+  "generatedAt": "2026-04-12T10:00:10.766Z",
+  "people": [
+    {
+      "name": "김효철",
+      "aliases": [
+        "김"
+      ],
+      "roleTags": [
+        "교수",
+        "MD"
+      ],
+      "contact": "010-51365205",
+      "documents": [
+        "angio-duty-feb-2026",
+        "angio-clinic-status"
+      ],
+      "patterns": [
+        "vascular-duty-2026-04 문서에서 가장 자주 등장",
+        "휴가/교육 관련 셀 78회 연결",
+        "연락망에 직접 기재됨"
+      ],
+      "relationships": [
+        {
+          "with": "정은지",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "1번방 · 1번방:김재현/CPN 정은지",
+            "2번방 · 2번방:김효철/CPN정은지",
+            "3번방 · 3번방:김도훈/R1/CPN정은지"
+          ]
+        },
+        {
+          "with": "김재현",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "1번방 · 1번방:김재현/CPN 정은지",
+            "1번방 · 1번방:김재현/CPN 김효선",
+            "2번방 · 2번방:김재현/CPN김효선(소아x)"
+          ]
+        },
+        {
+          "with": "김효선",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "1번방 · 1번방:김재현/CPN 김효선",
+            "지혈 · 지혈: 김효선",
+            "2번방 · 2번방:김재현/CPN김효선(소아x)"
+          ]
+        },
+        {
+          "with": "김현주",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:이명수/CPN 김현주",
+            "3번방 · 3번방:김효철/CPN 김현주",
+            "1번방 · 1번방:CPN김현주"
+          ]
+        },
+        {
+          "with": "이명수",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:이명수/CPN 김현주",
+            "5번방 · 5번방:허세범/CPN김현주(HBR MD30(이),MD30TF1(허))",
+            "암병원 · 암병원(4H): 김효철/R1/고경은/이지연"
+          ]
+        },
+        {
+          "with": "김혜련",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "6번방, Neuro · 6번방: Neuro/CPN김혜련",
+            "6번방 · 6번방:/CPN김혜련",
+            "5번방 · 5번방:허세범/CPN김혜련*"
+          ]
+        },
+        {
+          "with": "김도훈",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방: 김도훈/CPN김효선",
+            "2번방 · 2번방:김도훈/CPN조주영",
+            "3번방 · 3번방:김도훈/R1/CPN정은지"
+          ]
+        },
+        {
+          "with": "이범영",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:허세범/CPN김혜련*",
+            "5번방 · 5번방:허세범/CPN김현주(HBR MD30(이),MD30TF1(허))",
+            "6번방 · 6번방:허세범(2시 이후)/CPN김아선"
+          ]
+        },
+        {
+          "with": "허세범",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:허세범/CPN김혜련*",
+            "5번방 · 5번방:허세범/CPN김현주(HBR MD30(이),MD30TF1(허))",
+            "6번방 · 6번방:허세범(2시 이후)/CPN김아선"
+          ]
+        },
+        {
+          "with": "김아선",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "6번방, Neuro · 6번방: Neuro/CPN김아선",
+            "6번방 · 6번방:/CPN김아선",
+            "6번방, Neuro · 6번방: Neuro/CPN김아선*/현주OT"
+          ]
+        },
+        {
+          "with": "고경은",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원(4H): 김효철/R1/고경은/이지연",
+            "지혈 · 지혈:김현주, 9A본원:고경은",
+            "암병원 · 암병원(4H): 김도훈/R1/ 고경은/ 정은지"
+          ]
+        },
+        {
+          "with": "이지연",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원(4H): 김효철/R1/고경은/이지연",
+            "암병원 · 암병원: 이지연/김혜련",
+            "암병원 · 암병원(4H): 김효철/R1/이지연"
+          ]
+        },
+        {
+          "with": "최민서",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원(4H): 김효철/R1/고경은/이지연",
+            "3번방 · 3번방:김효철/R1/CPN조주영",
+            "3번방 · 3번방:김도훈/R1/CPN정은지"
+          ]
+        },
+        {
+          "with": "조주영",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:김도훈/CPN조주영",
+            "3번방 · 3번방:김효철/R1/CPN조주영",
+            "2번방 · 2번방:김효철/CPN조주영"
+          ]
+        },
+        {
+          "with": "이서정",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:김효철/R1/CPN이서정",
+            "2번방 · 2번방:김도훈/CPN이서정",
+            "3번방 · 3번방:김도훈/CPN이서정"
+          ]
+        },
+        {
+          "with": "제환준",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:제환준/CPN김혜련",
+            "5번방 · 5번방:제환준/CPN김효선",
+            "5번방 · 5번방:제환준/ CPN김혜련"
+          ]
+        },
+        {
+          "with": "최진우",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:최진우/CPN김현주 HBR 1p Pf 최",
+            "2번방 · 2번방:최진우/CPN김혜련",
+            "3번방 · 3번방:최진우/CPN김혜련"
+          ]
+        },
+        {
+          "with": "방상흠",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "1번방 · 1번방:F2/CPN김혜련",
+            "1번방 · 1번방:F2/CPN 김혜련",
+            "3번방 · 3번방:김효철/F2/CPN조주영"
+          ]
+        }
+      ],
+      "mentionCount": 5972,
+      "categories": {
+        "person_name": 4778,
+        "contact": 380,
+        "weekday": 188,
+        "role_lane": 427,
+        "room": 108,
+        "leave_or_education": 78,
+        "shift_marker": 8,
+        "date": 4,
+        "replacement": 1
+      }
+    },
+    {
+      "name": "이명수",
+      "aliases": [
+        "이"
+      ],
+      "roleTags": [
+        "교수",
+        "MD"
+      ],
+      "contact": "010-97630745",
+      "documents": [
+        "angio-duty-feb-2026",
+        "angio-clinic-status"
+      ],
+      "patterns": [
+        "vascular-duty-2026-04 문서에서 가장 자주 등장",
+        "휴가/교육 관련 셀 105회 연결",
+        "연락망에 직접 기재됨"
+      ],
+      "relationships": [
+        {
+          "with": "김현주",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:이명수/CPN 김현주",
+            "5번방 · 5번방:허세범/CPN김현주(HBR MD30(이),MD30TF1(허))",
+            "6번방 · 6번방:/CPN김아선(4p까지) *pf.이(MD30 HBR):/CPN김현주"
+          ]
+        },
+        {
+          "with": "김효철",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:이명수/CPN 김현주",
+            "5번방 · 5번방:허세범/CPN김현주(HBR MD30(이),MD30TF1(허))",
+            "암병원 · 암병원(4H): 김효철/R1/고경은/이지연"
+          ]
+        },
+        {
+          "with": "고경은",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원: 고경은/이지연",
+            "암병원 · 암병원(4H): 김효철/R1/고경은/이지연",
+            "지혈 · 지혈:이서정, 9A본원:고경은"
+          ]
+        },
+        {
+          "with": "이지연",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원: 고경은/이지연",
+            "암병원 · 암병원(4H): 김효철/R1/고경은/이지연",
+            "암병원 · 암병원: 이지연/김혜련"
+          ]
+        },
+        {
+          "with": "이범영",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:허세범/CPN김현주(HBR MD30(이),MD30TF1(허))",
+            "3번방 · 3번방:허세범/R1/CPN이서정",
+            "6번방 · 6번방:허세범(2시 이후)/CPN김아선"
+          ]
+        },
+        {
+          "with": "허세범",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:허세범/CPN김현주(HBR MD30(이),MD30TF1(허))",
+            "3번방 · 3번방:허세범/R1/CPN이서정",
+            "6번방 · 6번방:허세범(2시 이후)/CPN김아선"
+          ]
+        },
+        {
+          "with": "최민서",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원(4H): 김효철/R1/고경은/이지연",
+            "3번방 · 3번방:김효철/R1/CPN이서정",
+            "5번방 · 5번방:이명수/R1"
+          ]
+        },
+        {
+          "with": "김효선",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:이명수/CPN김효선",
+            "5번방 · 5번방:이명수/CPN김효선",
+            "1번방 · 1번방:이명수/CPN 김효선"
+          ]
+        },
+        {
+          "with": "이서정",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:이명수/CPN이서정",
+            "5번방 · 5번방:제환준/CPN이서정",
+            "3번방 · 3번방:김효철/R1/CPN이서정"
+          ]
+        },
+        {
+          "with": "제환준",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:제환준/CPN이서정",
+            "3번방 · 3번방:제환준/CPN이서정",
+            "암병원 · 암병원(4H):제환준/R1/CPN고경은/이지연"
+          ]
+        },
+        {
+          "with": "김혜련",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "1번방 · 1번방:이명수/CPN김혜련(HBR MD30TF1)",
+            "2번방 · 2번방:이명수/CPN김혜련",
+            "암병원 · 암병원: 이지연/김혜련"
+          ]
+        },
+        {
+          "with": "김도훈",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:김도훈/CPN이서정",
+            "3번방 · 3번방:김도훈/CPN이서정",
+            "3번방 · 3번방:김도훈/R1/CPN이서정"
+          ]
+        },
+        {
+          "with": "김재현",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:김재현/CPN이서정",
+            "1번방 · 1번방:김재현/CPN이서정(복부)",
+            "1번방 · 1번방:김재현/CPN 이서정"
+          ]
+        },
+        {
+          "with": "조주영",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:이명수/CPN조주영",
+            "2번방 · 2번방:이명수/CPN조주영(소아)",
+            "지혈 · 지혈:이서정, P:조주영."
+          ]
+        },
+        {
+          "with": "김아선",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "6번방 · 6번방:허세범(2시 이후)/CPN김아선",
+            "6번방 · 6번방:/CPN김아선(4p까지) *pf.이(MD30 HBR):/CPN김현주"
+          ]
+        },
+        {
+          "with": "최진우",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:최진우/CPN 이서정",
+            "3번방 · 3번방:최진우/CPN이서정*",
+            "1번방 · 1번방:최진우/CPN이서정"
+          ]
+        },
+        {
+          "with": "정은지",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:이명수/CPN정은지",
+            "5번방 · 5번방:이명수/CPN정은지,OT김효선",
+            "암병원 · 암병원: 정은지/이지연"
+          ]
+        },
+        {
+          "with": "방상흠",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:F2/R1/CPN이서정",
+            "1번방 · 1번방:F2/CPN이서정",
+            "3번방 · 3번방:F2/CPN이서정"
+          ]
+        }
+      ],
+      "mentionCount": 2995,
+      "categories": {
+        "person_name": 1680,
+        "policy_note": 759,
+        "contact": 121,
+        "weekday": 5,
+        "role_lane": 186,
+        "room": 139,
+        "leave_or_education": 105
+      }
+    },
+    {
+      "name": "이범영",
+      "aliases": [
+        "범영",
+        "범"
+      ],
+      "roleTags": [
+        "RN",
+        "간호사"
+      ],
+      "contact": "010-7288-3447",
+      "documents": [
+        "vascular-duty-2026-04",
+        "nurse-schedule-2025-12"
+      ],
+      "patterns": [
+        "nurse-schedule-2025-12 문서에서 가장 자주 등장",
+        "휴가/교육 관련 셀 158회 연결",
+        "연락망에 직접 기재됨"
+      ],
+      "relationships": [
+        {
+          "with": "김혜련",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:허세범/CPN김혜련*",
+            "5번방 · 5번방:허세범/CPN 김혜련",
+            "5번방 · 5번방:허세범(10시까지)김효철(10시부터)/R4/김혜련(10시까지)"
+          ]
+        },
+        {
+          "with": "김효철",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:허세범/CPN김혜련*",
+            "5번방 · 5번방:허세범/CPN김현주(HBR MD30(이),MD30TF1(허))",
+            "6번방 · 6번방:허세범(2시 이후)/CPN김아선"
+          ]
+        },
+        {
+          "with": "허세범",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:허세범/CPN김혜련*",
+            "5번방 · 5번방:허세범/CPN김현주(HBR MD30(이),MD30TF1(허))",
+            "3번방 · 3번방:허세범/R1/CPN이서정"
+          ]
+        },
+        {
+          "with": "김현주",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:허세범/CPN김현주(HBR MD30(이),MD30TF1(허))",
+            "2번방 · 2번방:허세범/CPN김현주",
+            "2번방 · 2번방:허세범/CPN 김현주(소아scle 10A, 11A)"
+          ]
+        },
+        {
+          "with": "이명수",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:허세범/CPN김현주(HBR MD30(이),MD30TF1(허))",
+            "3번방 · 3번방:허세범/R1/CPN이서정",
+            "6번방 · 6번방:허세범(2시 이후)/CPN김아선"
+          ]
+        },
+        {
+          "with": "이서정",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:허세범/R1/CPN이서정",
+            "2번방 · 2번방:허세범/CPN이서정",
+            "2번방 · 2번방:허세범/CPN이서정 (소아scle 10A, 11A)"
+          ]
+        },
+        {
+          "with": "최민서",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:허세범/R1/CPN이서정",
+            "3번방 · 3번방:허세범/R1",
+            "5번방 · 5번방:허세범/R1"
+          ]
+        },
+        {
+          "with": "김아선",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "6번방 · 6번방:허세범(2시 이후)/CPN김아선"
+          ]
+        },
+        {
+          "with": "조주영",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:허세범/CPN조주영",
+            "5번방 · 5번방:허세범/CPN조주영 (소아scle 10A, 11A)",
+            "5번방 · 5번방:허세범/CPN조주영 (MD30 HBR예정)"
+          ]
+        },
+        {
+          "with": "김효선",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:허세범/CPN김효선",
+            "2번방 · 2번방:허세범/CPN김효선",
+            "2번방 · 2번방:허세범/CPN정은지,OT김효선"
+          ]
+        },
+        {
+          "with": "정은지",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:허세범/CPN정은지,OT김효선",
+            "5번방 · 5번방:허세범/CPN정은지,OT김효선 소아sclero: 10a, 11a 허",
+            "5번방 · 5번방:허세범/R4/CPN정은지,OT김효선"
+          ]
+        },
+        {
+          "with": "제환준",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:허세범/CPN 김혜련*(소아) 소아sclero: 10a 허, 11a 제"
+          ]
+        },
+        {
+          "with": "김영인",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "영인대신범영"
+          ]
+        },
+        {
+          "with": "오현진",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "암병원 · 범대신 현진 (MD암병원서성한홀) 유경CS팀(MD-1P)"
+          ]
+        },
+        {
+          "with": "서유경",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "암병원 · 범대신 현진 (MD암병원서성한홀) 유경CS팀(MD-1P)"
+          ]
+        },
+        {
+          "with": "영해",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "범영대신영해",
+            "영해대신범영"
+          ]
+        }
+      ],
+      "mentionCount": 2184,
+      "categories": {
+        "person_name": 1582,
+        "contact": 52,
+        "role_lane": 103,
+        "leave_or_education": 158,
+        "date": 8,
+        "room": 12,
+        "replacement": 269
+      }
+    },
+    {
+      "name": "김미진",
+      "aliases": [
+        "미진"
+      ],
+      "roleTags": [
+        "RN",
+        "간호사"
+      ],
+      "contact": "010-4848-8347",
+      "documents": [
+        "vascular-duty-2026-04",
+        "nurse-schedule-2025-12"
+      ],
+      "patterns": [
+        "nurse-schedule-2025-12 문서에서 가장 자주 등장",
+        "휴가/교육 관련 셀 174회 연결",
+        "연락망에 직접 기재됨"
+      ],
+      "relationships": [
+        {
+          "with": "김영인",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "영인대신미진"
+          ]
+        },
+        {
+          "with": "김난희",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "미진대신난희"
+          ]
+        },
+        {
+          "with": "서유경",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "미진대신유경",
+            "유경대신미진",
+            "미진대신유경→범"
+          ]
+        },
+        {
+          "with": "미숙",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "미숙대신미진",
+            "미진대신미숙",
+            "양 대신 유경, 미진대신미숙"
+          ]
+        },
+        {
+          "with": "오현진",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "현진대신미진,양대신영해",
+            "선임회의(2p~3p), 현진대신미진",
+            "범 대신 영해 , 현진대신미진"
+          ]
+        },
+        {
+          "with": "진희",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "미진대신진희",
+            "진희대신미진 .수정x유경x미진x범영 진희"
+          ]
+        },
+        {
+          "with": "강은정",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "간호사회의 **,미진대신은정",
+            "은정대신미진"
+          ]
+        }
+      ],
+      "mentionCount": 2052,
+      "categories": {
+        "person_name": 1426,
+        "contact": 45,
+        "leave_or_education": 174,
+        "replacement": 401,
+        "role_lane": 6
+      }
+    },
+    {
+      "name": "서유경",
+      "aliases": [
+        "유경"
+      ],
+      "roleTags": [
+        "RN",
+        "간호사"
+      ],
+      "contact": "010-6414-8476",
+      "documents": [
+        "vascular-duty-2026-04",
+        "nurse-schedule-2025-12"
+      ],
+      "patterns": [
+        "nurse-schedule-2025-12 문서에서 가장 자주 등장",
+        "휴가/교육 관련 셀 120회 연결",
+        "연락망에 직접 기재됨"
+      ],
+      "relationships": [
+        {
+          "with": "오현진",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "유경대신현진",
+            "현진대신유경"
+          ]
+        },
+        {
+          "with": "임윤경",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "윤경대신유경"
+          ]
+        },
+        {
+          "with": "김미진",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "미진대신유경",
+            "유경대신미진",
+            "미진대신유경→범"
+          ]
+        },
+        {
+          "with": "김영인",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "유경대신영인",
+            "영인대신유경",
+            "유경대신영인,"
+          ]
+        },
+        {
+          "with": "오현진",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "암병원 · 범대신 현진 (MD암병원서성한홀) 유경CS팀(MD-1P)"
+          ]
+        },
+        {
+          "with": "이범영",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "암병원 · 범대신 현진 (MD암병원서성한홀) 유경CS팀(MD-1P)"
+          ]
+        }
+      ],
+      "mentionCount": 1575,
+      "categories": {
+        "person_name": 1222,
+        "contact": 40,
+        "replacement": 189,
+        "leave_or_education": 120,
+        "room": 4
+      }
+    },
+    {
+      "name": "오현진",
+      "aliases": [
+        "현진"
+      ],
+      "roleTags": [
+        "RN",
+        "간호사"
+      ],
+      "contact": "010-2466-7215",
+      "documents": [
+        "vascular-duty-2026-04",
+        "nurse-schedule-2025-12"
+      ],
+      "patterns": [
+        "nurse-schedule-2025-12 문서에서 가장 자주 등장",
+        "휴가/교육 관련 셀 154회 연결",
+        "연락망에 직접 기재됨",
+        "RN 호출표, 간호 스케줄, 연락처 표에 모두 등장하는 간호 운영 허브"
+      ],
+      "relationships": [
+        {
+          "with": "서유경",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "유경대신현진",
+            "현진대신유경"
+          ]
+        },
+        {
+          "with": "김영인",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "현진대신영인",
+            "영인대신현진"
+          ]
+        },
+        {
+          "with": "박상미",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "현진대신상미"
+          ]
+        },
+        {
+          "with": "김난희",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "현진대신난희 MD 암병원서성환홀"
+          ]
+        },
+        {
+          "with": "김난희",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "암병원 · 현진대신난희 MD 암병원서성환홀"
+          ]
+        },
+        {
+          "with": "미숙",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "현진대신미숙",
+            "미숙대신현진"
+          ]
+        },
+        {
+          "with": "서유경",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "암병원 · 범대신 현진 (MD암병원서성한홀) 유경CS팀(MD-1P)"
+          ]
+        },
+        {
+          "with": "이범영",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "암병원 · 범대신 현진 (MD암병원서성한홀) 유경CS팀(MD-1P)"
+          ]
+        },
+        {
+          "with": "강은정",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "현진대신은정"
+          ]
+        },
+        {
+          "with": "수정",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "현진대신수정"
+          ]
+        },
+        {
+          "with": "영해",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "현진대신영해",
+            "영해대신현진",
+            "진희 대신 수정,현진대신영해"
+          ]
+        },
+        {
+          "with": "김미진",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "현진대신미진,양대신영해",
+            "선임회의(2p~3p), 현진대신미진",
+            "범 대신 영해 , 현진대신미진"
+          ]
+        },
+        {
+          "with": "사라",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "현진대신사라",
+            "사라대신현진"
+          ]
+        }
+      ],
+      "mentionCount": 1548,
+      "categories": {
+        "person_name": 1178,
+        "contact": 40,
+        "leave_or_education": 154,
+        "replacement": 169,
+        "room": 7
+      }
+    },
+    {
+      "name": "고경은",
+      "aliases": [
+        "경은"
+      ],
+      "roleTags": [
+        "CPN"
+      ],
+      "contact": "010-8766-9765",
+      "documents": [
+        "vascular-duty-2026-04",
+        "angio-clinic-status",
+        "angio-duty-feb-2026"
+      ],
+      "patterns": [
+        "vascular-duty-2026-04 문서에서 가장 자주 등장",
+        "휴가/교육 관련 셀 2회 연결"
+      ],
+      "relationships": [
+        {
+          "with": "이지연",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원: 고경은/이지연",
+            "암병원 · 암병원(4H): 김효철/R1/고경은/이지연",
+            "암병원 · 암병원(4H): 이명수/R1/고경은/이지연"
+          ]
+        },
+        {
+          "with": "이명수",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원: 고경은/이지연",
+            "암병원 · 암병원(4H): 김효철/R1/고경은/이지연",
+            "지혈 · 지혈:이서정, 9A본원:고경은"
+          ]
+        },
+        {
+          "with": "김효철",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원(4H): 김효철/R1/고경은/이지연",
+            "지혈 · 지혈:김현주, 9A본원:고경은",
+            "암병원 · 암병원(4H): 김도훈/R1/ 고경은/ 정은지"
+          ]
+        },
+        {
+          "with": "최민서",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원(4H): 김효철/R1/고경은/이지연",
+            "암병원 · 암병원(4H): 김도훈/R1/ 고경은/ 정은지",
+            "암병원 · 암병원(4H): 이명수/R1/고경은/이지연"
+          ]
+        },
+        {
+          "with": "이서정",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "지혈 · 지혈:이서정, 9A본원:고경은"
+          ]
+        },
+        {
+          "with": "김현주",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "지혈 · 지혈:김현주, 9A본원:고경은"
+          ]
+        },
+        {
+          "with": "정은지",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원(4H): 김도훈/R1/ 고경은/ 정은지",
+            "암병원 · 암병원: 고경은/정은지"
+          ]
+        },
+        {
+          "with": "김도훈",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원(4H): 김도훈/R1/ 고경은/ 정은지"
+          ]
+        },
+        {
+          "with": "김혜련",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원: 고경은/ 김혜련",
+            "암병원 · 암병원: CPN고경은/김혜련",
+            "암병원 · 암병원: 고경은/김혜련"
+          ]
+        },
+        {
+          "with": "제환준",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원(4H):제환준/R1/CPN고경은/이지연"
+          ]
+        },
+        {
+          "with": "방상흠",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원(4H): F2/CPN고경은/이지연",
+            "암병원 · 암병원(4H): F2/고경은, 이지연*",
+            "암병원 · 암병원(4H): F2/R1 고경은/이지연"
+          ]
+        }
+      ],
+      "mentionCount": 1533,
+      "categories": {
+        "person_name": 405,
+        "policy_note": 966,
+        "room": 134,
+        "leave_or_education": 2,
+        "role_lane": 26
+      }
+    },
+    {
+      "name": "장미숙",
+      "aliases": [
+        "미숙"
+      ],
+      "roleTags": [
+        "준비실"
+      ],
+      "contact": "010-7317-6596",
+      "documents": [
+        "vascular-duty-2026-04",
+        "overtime-stats-2026"
+      ],
+      "patterns": [
+        "vascular-duty-2026-04 문서에서 가장 자주 등장",
+        "휴가/교육 관련 셀 37회 연결",
+        "연락망에 직접 기재됨",
+        "준비실 운영과 시간외 통계가 함께 드러나는 스태프"
+      ],
+      "relationships": [],
+      "mentionCount": 1347,
+      "categories": {
+        "person_name": 1240,
+        "contact": 3,
+        "weekday": 12,
+        "replacement": 55,
+        "leave_or_education": 37
+      }
+    },
+    {
+      "name": "김재광",
+      "aliases": [
+        "재광"
+      ],
+      "roleTags": [
+        "RT",
+        "방사선사"
+      ],
+      "contact": "010-9193-5312",
+      "documents": [
+        "vascular-duty-2026-04",
+        "overtime-stats-2026"
+      ],
+      "patterns": [
+        "vascular-duty-2026-04 문서에서 가장 자주 등장",
+        "연락망에 직접 기재됨",
+        "RT 호출표와 시간외 통계 양쪽에서 핵심 기준 인력으로 보임"
+      ],
+      "relationships": [],
+      "mentionCount": 1277,
+      "categories": {
+        "person_name": 1134,
+        "contact": 82,
+        "weekday": 61
+      }
+    },
+    {
+      "name": "강은정",
+      "aliases": [
+        "은정"
+      ],
+      "roleTags": [
+        "RN",
+        "간호사"
+      ],
+      "contact": "010-6425-3239",
+      "documents": [
+        "nurse-schedule-2025-12"
+      ],
+      "patterns": [
+        "nurse-schedule-2025-12 문서에서 가장 자주 등장",
+        "휴가/교육 관련 셀 101회 연결"
+      ],
+      "relationships": [
+        {
+          "with": "김영인",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "은정대신영인"
+          ]
+        },
+        {
+          "with": "오현진",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "현진대신은정"
+          ]
+        },
+        {
+          "with": "진희",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "은정대신진희"
+          ]
+        },
+        {
+          "with": "김미진",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "간호사회의 **,미진대신은정",
+            "은정대신미진"
+          ]
+        }
+      ],
+      "mentionCount": 1256,
+      "categories": {
+        "person_name": 986,
+        "replacement": 163,
+        "leave_or_education": 101,
+        "role_lane": 6
+      }
+    },
+    {
+      "name": "오기윤",
+      "aliases": [
+        "기윤"
+      ],
+      "roleTags": [
+        "RT",
+        "방사선사"
+      ],
+      "contact": "010-3321-9406",
+      "documents": [
+        "vascular-duty-2026-04",
+        "overtime-stats-2026"
+      ],
+      "patterns": [
+        "vascular-duty-2026-04 문서에서 가장 자주 등장",
+        "연락망에 직접 기재됨"
+      ],
+      "relationships": [],
+      "mentionCount": 1220,
+      "categories": {
+        "person_name": 1111,
+        "contact": 64,
+        "weekday": 45
+      }
+    },
+    {
+      "name": "황장순",
+      "aliases": [
+        "장순"
+      ],
+      "roleTags": [
+        "RT",
+        "방사선사"
+      ],
+      "contact": "010-2785-3034",
+      "documents": [
+        "vascular-duty-2026-04"
+      ],
+      "patterns": [
+        "vascular-duty-2026-04 문서에서 가장 자주 등장",
+        "연락망에 직접 기재됨"
+      ],
+      "relationships": [],
+      "mentionCount": 1202,
+      "categories": {
+        "person_name": 1087,
+        "contact": 70,
+        "weekday": 45
+      }
+    },
+    {
+      "name": "송철순",
+      "aliases": [
+        "철순"
+      ],
+      "roleTags": [
+        "RT",
+        "방사선사"
+      ],
+      "contact": "010-2944-2844",
+      "documents": [
+        "vascular-duty-2026-04"
+      ],
+      "patterns": [
+        "vascular-duty-2026-04 문서에서 가장 자주 등장",
+        "연락망에 직접 기재됨"
+      ],
+      "relationships": [],
+      "mentionCount": 1176,
+      "categories": {
+        "person_name": 1053,
+        "contact": 74,
+        "weekday": 49
+      }
+    },
+    {
+      "name": "김영인",
+      "aliases": [
+        "영인"
+      ],
+      "roleTags": [
+        "RN",
+        "간호사"
+      ],
+      "contact": "010-9176-3875",
+      "documents": [
+        "vascular-duty-2026-04",
+        "nurse-schedule-2025-12"
+      ],
+      "patterns": [
+        "nurse-schedule-2025-12 문서에서 가장 자주 등장",
+        "휴가/교육 관련 셀 70회 연결",
+        "연락망에 직접 기재됨"
+      ],
+      "relationships": [
+        {
+          "with": "이범영",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "영인대신범영"
+          ]
+        },
+        {
+          "with": "강은정",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "은정대신영인"
+          ]
+        },
+        {
+          "with": "김미진",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "영인대신미진"
+          ]
+        },
+        {
+          "with": "오현진",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "현진대신영인",
+            "영인대신현진"
+          ]
+        },
+        {
+          "with": "박상미",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "영인대신상미"
+          ]
+        },
+        {
+          "with": "서유경",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "유경대신영인",
+            "영인대신유경",
+            "유경대신영인,"
+          ]
+        },
+        {
+          "with": "미숙",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "영인대신미숙",
+            "미숙대신영인"
+          ]
+        },
+        {
+          "with": "수정",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "수정대신 영인 영인대신수정/진희대신은정"
+          ]
+        }
+      ],
+      "mentionCount": 1144,
+      "categories": {
+        "person_name": 969,
+        "contact": 28,
+        "leave_or_education": 70,
+        "replacement": 77
+      }
+    },
+    {
+      "name": "김도훈",
+      "aliases": [
+        "도"
+      ],
+      "roleTags": [
+        "교수",
+        "MD"
+      ],
+      "contact": "010-4440-6525",
+      "documents": [
+        "angio-duty-feb-2026",
+        "angio-clinic-status"
+      ],
+      "patterns": [
+        "nurse-schedule-2025-12 문서에서 가장 자주 등장",
+        "휴가/교육 관련 셀 39회 연결"
+      ],
+      "relationships": [
+        {
+          "with": "김효선",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방: 김도훈/CPN김효선",
+            "3번방 · 3번방:김도훈/CPN김효선",
+            "3번방 · 3번방:김도훈/CPN 김효선"
+          ]
+        },
+        {
+          "with": "김효철",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방: 김도훈/CPN김효선",
+            "2번방 · 2번방:김도훈/CPN조주영",
+            "3번방 · 3번방:김도훈/R1/CPN정은지"
+          ]
+        },
+        {
+          "with": "조주영",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:김도훈/CPN조주영",
+            "3번방 · 3번방:김도훈/CPN조주영",
+            "1번방 · 1번방:김도훈/CPN조주영"
+          ]
+        },
+        {
+          "with": "정은지",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:김도훈/R1/CPN정은지",
+            "암병원 · 암병원(4H): 김도훈/R1/ 고경은/ 정은지",
+            "2번방 · 2번방:김도훈/CPN정은지,OT김효선"
+          ]
+        },
+        {
+          "with": "최민서",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:김도훈/R1/CPN정은지",
+            "암병원 · 암병원(4H): 김도훈/R1/ 고경은/ 정은지",
+            "3번방 · 3번방:김도훈/R1"
+          ]
+        },
+        {
+          "with": "이서정",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:김도훈/CPN이서정",
+            "3번방 · 3번방:김도훈/CPN이서정",
+            "3번방 · 3번방:김도훈/R1/CPN이서정"
+          ]
+        },
+        {
+          "with": "이명수",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:김도훈/CPN이서정",
+            "3번방 · 3번방:김도훈/CPN이서정",
+            "3번방 · 3번방:김도훈/R1/CPN이서정"
+          ]
+        },
+        {
+          "with": "김현주",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:김도훈/CPN김현주",
+            "1번방 · 1번방:김도훈/CPN김현주",
+            "5번방 · 5번방:김도훈/CPN김현주"
+          ]
+        },
+        {
+          "with": "고경은",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원(4H): 김도훈/R1/ 고경은/ 정은지"
+          ]
+        },
+        {
+          "with": "방상흠",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:김도훈/F2",
+            "5번방 · 5번방:김도훈/F2/R1"
+          ]
+        }
+      ],
+      "mentionCount": 1068,
+      "categories": {
+        "person_name": 929,
+        "role_lane": 26,
+        "leave_or_education": 39,
+        "room": 18,
+        "shift_marker": 6,
+        "weekday": 50
+      }
+    },
+    {
+      "name": "배용수",
+      "aliases": [
+        "용수"
+      ],
+      "roleTags": [
+        "RT",
+        "방사선사"
+      ],
+      "contact": "010-8668-3492",
+      "documents": [
+        "vascular-duty-2026-04"
+      ],
+      "patterns": [
+        "vascular-duty-2026-04 문서에서 가장 자주 등장",
+        "연락망에 직접 기재됨"
+      ],
+      "relationships": [],
+      "mentionCount": 951,
+      "categories": {
+        "person_name": 841,
+        "contact": 66,
+        "weekday": 44
+      }
+    },
+    {
+      "name": "임윤경",
+      "aliases": [
+        "윤경"
+      ],
+      "roleTags": [
+        "RN",
+        "간호사"
+      ],
+      "contact": "010-9634-6650",
+      "documents": [
+        "vascular-duty-2026-04",
+        "nurse-schedule-2025-12"
+      ],
+      "patterns": [
+        "nurse-schedule-2025-12 문서에서 가장 자주 등장",
+        "휴가/교육 관련 셀 50회 연결",
+        "연락망에 직접 기재됨"
+      ],
+      "relationships": [
+        {
+          "with": "서유경",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "윤경대신유경"
+          ]
+        },
+        {
+          "with": "김난희",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "윤경대신난희"
+          ]
+        },
+        {
+          "with": "미숙",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "윤경대신미숙",
+            "미숙대신윤경"
+          ]
+        }
+      ],
+      "mentionCount": 851,
+      "categories": {
+        "person_name": 716,
+        "contact": 16,
+        "leave_or_education": 50,
+        "replacement": 69
+      }
+    },
+    {
+      "name": "김성민",
+      "aliases": [
+        "성민"
+      ],
+      "roleTags": [
+        "RT",
+        "방사선사"
+      ],
+      "contact": "010-3696-3925",
+      "documents": [
+        "vascular-duty-2026-04",
+        "overtime-stats-2026"
+      ],
+      "patterns": [
+        "vascular-duty-2026-04 문서에서 가장 자주 등장",
+        "연락망에 직접 기재됨"
+      ],
+      "relationships": [],
+      "mentionCount": 835,
+      "categories": {
+        "person_name": 747,
+        "contact": 38,
+        "weekday": 50
+      }
+    },
+    {
+      "name": "김난희",
+      "aliases": [
+        "난희"
+      ],
+      "roleTags": [
+        "RN",
+        "간호사"
+      ],
+      "contact": "010-3745-7392",
+      "documents": [
+        "vascular-duty-2026-04",
+        "nurse-schedule-2025-12"
+      ],
+      "patterns": [
+        "nurse-schedule-2025-12 문서에서 가장 자주 등장",
+        "휴가/교육 관련 셀 51회 연결",
+        "연락망에 직접 기재됨"
+      ],
+      "relationships": [
+        {
+          "with": "방현미",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "현미대신난희",
+            "난희대신현미"
+          ]
+        },
+        {
+          "with": "박상미",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "난희대신상미"
+          ]
+        },
+        {
+          "with": "김미진",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "미진대신난희"
+          ]
+        },
+        {
+          "with": "조소현",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "난희대신소현"
+          ]
+        },
+        {
+          "with": "오현진",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "현진대신난희 MD 암병원서성환홀"
+          ]
+        },
+        {
+          "with": "오현진",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "암병원 · 현진대신난희 MD 암병원서성환홀"
+          ]
+        },
+        {
+          "with": "임윤경",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "윤경대신난희"
+          ]
+        }
+      ],
+      "mentionCount": 806,
+      "categories": {
+        "person_name": 688,
+        "contact": 18,
+        "leave_or_education": 51,
+        "replacement": 42,
+        "room": 3,
+        "date": 4
+      }
+    },
+    {
+      "name": "박상미",
+      "aliases": [
+        "상미"
+      ],
+      "roleTags": [
+        "RN",
+        "간호사"
+      ],
+      "contact": "010-8646-2315",
+      "documents": [
+        "vascular-duty-2026-04",
+        "nurse-schedule-2025-12"
+      ],
+      "patterns": [
+        "nurse-schedule-2025-12 문서에서 가장 자주 등장",
+        "휴가/교육 관련 셀 26회 연결",
+        "연락망에 직접 기재됨"
+      ],
+      "relationships": [
+        {
+          "with": "김난희",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "난희대신상미"
+          ]
+        },
+        {
+          "with": "김영인",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "영인대신상미"
+          ]
+        },
+        {
+          "with": "오현진",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "현진대신상미"
+          ]
+        }
+      ],
+      "mentionCount": 700,
+      "categories": {
+        "person_name": 604,
+        "contact": 12,
+        "leave_or_education": 26,
+        "replacement": 58
+      }
+    },
+    {
+      "name": "장병삼",
+      "aliases": [
+        "병삼"
+      ],
+      "roleTags": [
+        "RT",
+        "방사선사"
+      ],
+      "contact": "010-3043-9576",
+      "documents": [
+        "vascular-duty-2026-04",
+        "overtime-stats-2026"
+      ],
+      "patterns": [
+        "vascular-duty-2026-04 문서에서 가장 자주 등장",
+        "연락망에 직접 기재됨"
+      ],
+      "relationships": [],
+      "mentionCount": 678,
+      "categories": {
+        "person_name": 611,
+        "contact": 27,
+        "weekday": 40
+      }
+    },
+    {
+      "name": "김혜련",
+      "aliases": [
+        "혜련"
+      ],
+      "roleTags": [
+        "CPN"
+      ],
+      "contact": "010-9374-9458",
+      "documents": [
+        "vascular-duty-2026-04",
+        "angio-clinic-status",
+        "angio-duty-feb-2026"
+      ],
+      "patterns": [
+        "overtime-stats-2026 문서에서 가장 자주 등장",
+        "휴가/교육 관련 셀 3회 연결"
+      ],
+      "relationships": [
+        {
+          "with": "김효철",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "6번방, Neuro · 6번방: Neuro/CPN김혜련",
+            "6번방 · 6번방:/CPN김혜련",
+            "5번방 · 5번방:허세범/CPN김혜련*"
+          ]
+        },
+        {
+          "with": "이범영",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:허세범/CPN김혜련*",
+            "5번방 · 5번방:허세범/CPN 김혜련",
+            "5번방 · 5번방:허세범(10시까지)김효철(10시부터)/R4/김혜련(10시까지)"
+          ]
+        },
+        {
+          "with": "허세범",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:허세범/CPN김혜련*",
+            "5번방 · 5번방:허세범/CPN 김혜련",
+            "5번방 · 5번방:허세범(10시까지)김효철(10시부터)/R4/김혜련(10시까지)"
+          ]
+        },
+        {
+          "with": "이명수",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "1번방 · 1번방:이명수/CPN김혜련(HBR MD30TF1)",
+            "2번방 · 2번방:이명수/CPN김혜련",
+            "암병원 · 암병원: 이지연/김혜련"
+          ]
+        },
+        {
+          "with": "제환준",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:제환준/CPN김혜련",
+            "5번방 · 5번방:제환준/ CPN김혜련",
+            "3번방 · 3번방:제환준/CPN김혜련"
+          ]
+        },
+        {
+          "with": "최민서",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:김효철/CPN(소아)김혜련(TACE까지)2번방:김효철/R1",
+            "3번방 · 3번방:김효철/R1/CPN김혜련",
+            "5번방 · 5번방:이명수/R1/CPN김혜련"
+          ]
+        },
+        {
+          "with": "이지연",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원: 이지연/김혜련",
+            "암병원 · 암병원:김혜련 /이지연",
+            "암병원 · 암병원: CPN김혜련/이지연"
+          ]
+        },
+        {
+          "with": "최진우",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:최진우/CPN김혜련",
+            "3번방 · 3번방:최진우/CPN김혜련",
+            "2번방 · 2번방:최진우/CPN김혜련(소아)"
+          ]
+        },
+        {
+          "with": "고경은",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원: 고경은/ 김혜련",
+            "암병원 · 암병원: CPN고경은/김혜련",
+            "암병원 · 암병원: 고경은/김혜련"
+          ]
+        },
+        {
+          "with": "김재현",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "1번방 · 1번방:김재현/CPN 김혜련",
+            "1번방 · 1번방:김재현/CPN김혜련(복부)"
+          ]
+        },
+        {
+          "with": "방상흠",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "1번방 · 1번방:F2/CPN김혜련",
+            "1번방 · 1번방:F2/CPN 김혜련",
+            "5번방 · 5번방:F2/CPN김혜련"
+          ]
+        },
+        {
+          "with": "김현주",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "지혈 · 지혈:이서정. P:김현주\",김혜련(소아)"
+          ]
+        },
+        {
+          "with": "이서정",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "지혈 · 지혈:이서정. P:김현주\",김혜련(소아)"
+          ]
+        }
+      ],
+      "mentionCount": 668,
+      "categories": {
+        "person_name": 523,
+        "role_lane": 85,
+        "room": 38,
+        "shift_marker": 19,
+        "leave_or_education": 3
+      }
+    },
+    {
+      "name": "정은지",
+      "aliases": [
+        "은지"
+      ],
+      "roleTags": [
+        "CPN"
+      ],
+      "contact": "010-3171-7154",
+      "documents": [
+        "vascular-duty-2026-04",
+        "angio-clinic-status",
+        "angio-duty-feb-2026"
+      ],
+      "patterns": [
+        "overtime-stats-2026 문서에서 가장 자주 등장",
+        "휴가/교육 관련 셀 2회 연결"
+      ],
+      "relationships": [
+        {
+          "with": "김효철",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "1번방 · 1번방:김재현/CPN 정은지",
+            "2번방 · 2번방:김효철/CPN정은지",
+            "3번방 · 3번방:김도훈/R1/CPN정은지"
+          ]
+        },
+        {
+          "with": "김재현",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "1번방 · 1번방:김재현/CPN 정은지",
+            "2번방 · 2번방:김재현/CPN정은지",
+            "1번방 · 1번방:김재현/CPN정은지,OT김효선(복부)"
+          ]
+        },
+        {
+          "with": "제환준",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:제환준/R1/CPN정은지",
+            "3번방 · 3번방:제환준/CPN정은지",
+            "5번방 · 5번방:제환준/CPN정은지"
+          ]
+        },
+        {
+          "with": "최민서",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:제환준/R1/CPN정은지",
+            "3번방 · 3번방:김도훈/R1/CPN정은지",
+            "암병원 · 암병원(4H): 김도훈/R1/ 고경은/ 정은지"
+          ]
+        },
+        {
+          "with": "김도훈",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:김도훈/R1/CPN정은지",
+            "암병원 · 암병원(4H): 김도훈/R1/ 고경은/ 정은지",
+            "2번방 · 2번방:김도훈/CPN정은지,OT김효선"
+          ]
+        },
+        {
+          "with": "고경은",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원(4H): 김도훈/R1/ 고경은/ 정은지",
+            "암병원 · 암병원: 고경은/정은지"
+          ]
+        },
+        {
+          "with": "최진우",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:최진우/CPN정은지",
+            "2번방 · 2번방:최진우/CPN정은지(HBR 1p, 3P)",
+            "3번방 · 3번방:최진우/R4/CPN정은지,OT김효선"
+          ]
+        },
+        {
+          "with": "조주영",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "지혈 · 지혈: 정은지->4번방 / 소아시술지원:조주영",
+            "지혈 · 지혈:정은지. P:조주영(오전에 뉴로OT)",
+            "지혈 · 지혈:CPN정은지,OT김효선 /P.조주영(소아출장?)"
+          ]
+        },
+        {
+          "with": "이명수",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:이명수/CPN정은지",
+            "5번방 · 5번방:이명수/CPN정은지,OT김효선",
+            "암병원 · 암병원: 정은지/이지연"
+          ]
+        },
+        {
+          "with": "김효선",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:김도훈/CPN정은지,OT김효선",
+            "2번방 · 2번방:허세범/CPN정은지,OT김효선",
+            "3번방 · 3번방:최진우/R4/CPN정은지,OT김효선"
+          ]
+        },
+        {
+          "with": "이범영",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:허세범/CPN정은지,OT김효선",
+            "5번방 · 5번방:허세범/CPN정은지,OT김효선 소아sclero: 10a, 11a 허",
+            "5번방 · 5번방:허세범/R4/CPN정은지,OT김효선"
+          ]
+        },
+        {
+          "with": "허세범",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:허세범/CPN정은지,OT김효선",
+            "5번방 · 5번방:허세범/CPN정은지,OT김효선 소아sclero: 10a, 11a 허",
+            "5번방 · 5번방:허세범/R4/CPN정은지,OT김효선"
+          ]
+        },
+        {
+          "with": "이지연",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원: 정은지/이지연"
+          ]
+        },
+        {
+          "with": "김아선",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "6번방 · 6번방:/CPN김아선 4번방: 정은지"
+          ]
+        },
+        {
+          "with": "방상흠",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "1번방 · 1번방:F2/CPN 정은지",
+            "3번방 · 3번방:F2/CPN 정은지"
+          ]
+        },
+        {
+          "with": "김현주",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "지혈 · 지혈: 김현주, P:정은지"
+          ]
+        }
+      ],
+      "mentionCount": 633,
+      "categories": {
+        "person_name": 463,
+        "role_lane": 114,
+        "room": 32,
+        "shift_marker": 22,
+        "leave_or_education": 2
+      }
+    },
+    {
+      "name": "조소현",
+      "aliases": [
+        "소현"
+      ],
+      "roleTags": [
+        "RN",
+        "간호사"
+      ],
+      "contact": "010-3058-3790",
+      "documents": [
+        "vascular-duty-2026-04",
+        "nurse-schedule-2025-12"
+      ],
+      "patterns": [
+        "overtime-stats-2026 문서에서 가장 자주 등장",
+        "휴가/교육 관련 셀 44회 연결"
+      ],
+      "relationships": [
+        {
+          "with": "김난희",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "난희대신소현"
+          ]
+        }
+      ],
+      "mentionCount": 611,
+      "categories": {
+        "person_name": 561,
+        "leave_or_education": 44,
+        "replacement": 6
+      }
+    },
+    {
+      "name": "김현주",
+      "aliases": [
+        "현주"
+      ],
+      "roleTags": [
+        "CPN"
+      ],
+      "contact": "010-8730-8370",
+      "documents": [
+        "vascular-duty-2026-04",
+        "angio-clinic-status",
+        "angio-duty-feb-2026"
+      ],
+      "patterns": [
+        "overtime-stats-2026 문서에서 가장 자주 등장",
+        "휴가/교육 관련 셀 10회 연결",
+        "연락망에 직접 기재됨",
+        "CPN 호출표와 진료현황 방 배정에 동시에 연결됨"
+      ],
+      "relationships": [
+        {
+          "with": "김효철",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:이명수/CPN 김현주",
+            "3번방 · 3번방:김효철/CPN 김현주",
+            "1번방 · 1번방:CPN김현주"
+          ]
+        },
+        {
+          "with": "이명수",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:이명수/CPN 김현주",
+            "5번방 · 5번방:허세범/CPN김현주(HBR MD30(이),MD30TF1(허))",
+            "6번방 · 6번방:/CPN김아선(4p까지) *pf.이(MD30 HBR):/CPN김현주"
+          ]
+        },
+        {
+          "with": "이범영",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:허세범/CPN김현주(HBR MD30(이),MD30TF1(허))",
+            "2번방 · 2번방:허세범/CPN김현주",
+            "2번방 · 2번방:허세범/CPN 김현주(소아scle 10A, 11A)"
+          ]
+        },
+        {
+          "with": "허세범",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:허세범/CPN김현주(HBR MD30(이),MD30TF1(허))",
+            "2번방 · 2번방:허세범/CPN김현주",
+            "2번방 · 2번방:허세범/CPN 김현주(소아scle 10A, 11A)"
+          ]
+        },
+        {
+          "with": "김아선",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "6번방, Neuro · 6번방: Neuro/CPN김아선*/현주OT",
+            "6번방 · 6번방:/CPN김아선(4p까지) *pf.이(MD30 HBR):/CPN김현주",
+            "6번방, Neuro · 6번방:Neuro/CPN김아선, 김현주 OT"
+          ]
+        },
+        {
+          "with": "김도훈",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:김도훈/CPN김현주",
+            "1번방 · 1번방:김도훈/CPN김현주",
+            "5번방 · 5번방:김도훈/CPN김현주"
+          ]
+        },
+        {
+          "with": "고경은",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "지혈 · 지혈:김현주, 9A본원:고경은"
+          ]
+        },
+        {
+          "with": "김재현",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "1번방 · 1번방:김재현/CPN 김현주"
+          ]
+        },
+        {
+          "with": "제환준",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:제환준/CPN김현주",
+            "2번방 · 2번방:제환준/CPN김현주(소아) 소아sclero: 10a 제",
+            "5번방 · 5번방:제환준/CPN김현주,OT김효선"
+          ]
+        },
+        {
+          "with": "최진우",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:최진우/CPN김현주 HBR 1p Pf 최",
+            "3번방 · 3번방:최진우/CPN 김현주",
+            "3번방 · 3번방:최진우/CPN김현주"
+          ]
+        },
+        {
+          "with": "김혜련",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "지혈 · 지혈:이서정. P:김현주\",김혜련(소아)"
+          ]
+        },
+        {
+          "with": "이서정",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "지혈 · 지혈:이서정. P:김현주\",김혜련(소아)",
+            "지혈 · 지혈: CPN이서정 P:김현주*"
+          ]
+        },
+        {
+          "with": "김효선",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:허세범(2시 이후)/CPN김현주, OT김효선",
+            "5번방 · 5번방:이명수/R4/CPN김현주, OT김효선",
+            "5번방 · 5번방:제환준/CPN김현주,OT김효선"
+          ]
+        },
+        {
+          "with": "조주영",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "지혈 · 지혈: 조주영, P:김현주"
+          ]
+        },
+        {
+          "with": "정은지",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "지혈 · 지혈: 김현주, P:정은지"
+          ]
+        }
+      ],
+      "mentionCount": 590,
+      "categories": {
+        "person_name": 413,
+        "contact": 16,
+        "role_lane": 115,
+        "room": 21,
+        "leave_or_education": 10,
+        "shift_marker": 15
+      }
+    },
+    {
+      "name": "김아선",
+      "aliases": [
+        "아선"
+      ],
+      "roleTags": [
+        "CPN"
+      ],
+      "contact": "010-9568-2366",
+      "documents": [
+        "vascular-duty-2026-04",
+        "angio-clinic-status",
+        "angio-duty-feb-2026"
+      ],
+      "patterns": [
+        "overtime-stats-2026 문서에서 가장 자주 등장",
+        "휴가/교육 관련 셀 10회 연결"
+      ],
+      "relationships": [
+        {
+          "with": "김효철",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "6번방, Neuro · 6번방: Neuro/CPN김아선",
+            "6번방 · 6번방:/CPN김아선",
+            "6번방, Neuro · 6번방: Neuro/CPN김아선*/현주OT"
+          ]
+        },
+        {
+          "with": "김현주",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "6번방, Neuro · 6번방: Neuro/CPN김아선*/현주OT",
+            "6번방 · 6번방:/CPN김아선(4p까지) *pf.이(MD30 HBR):/CPN김현주",
+            "6번방, Neuro · 6번방:Neuro/CPN김아선, 김현주 OT"
+          ]
+        },
+        {
+          "with": "이범영",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "6번방 · 6번방:허세범(2시 이후)/CPN김아선"
+          ]
+        },
+        {
+          "with": "허세범",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "6번방 · 6번방:허세범(2시 이후)/CPN김아선"
+          ]
+        },
+        {
+          "with": "이명수",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "6번방 · 6번방:허세범(2시 이후)/CPN김아선",
+            "6번방 · 6번방:/CPN김아선(4p까지) *pf.이(MD30 HBR):/CPN김현주"
+          ]
+        },
+        {
+          "with": "방상흠",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "6번방 · 6번방:F2/CPN 김아선"
+          ]
+        },
+        {
+          "with": "정은지",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "6번방 · 6번방:/CPN김아선 4번방: 정은지"
+          ]
+        }
+      ],
+      "mentionCount": 587,
+      "categories": {
+        "person_name": 447,
+        "role_lane": 107,
+        "leave_or_education": 10,
+        "shift_marker": 19,
+        "room": 4
+      }
+    },
+    {
+      "name": "이선민",
+      "aliases": [
+        "선민"
+      ],
+      "roleTags": [
+        "준비실"
+      ],
+      "contact": "010-3627-7292",
+      "documents": [
+        "vascular-duty-2026-04",
+        "overtime-stats-2026"
+      ],
+      "patterns": [
+        "overtime-stats-2026 문서에서 가장 자주 등장",
+        "연락망에 직접 기재됨"
+      ],
+      "relationships": [],
+      "mentionCount": 574,
+      "categories": {
+        "person_name": 566,
+        "contact": 3,
+        "weekday": 5
+      }
+    },
+    {
+      "name": "김광현",
+      "aliases": [
+        "광현"
+      ],
+      "roleTags": [
+        "RT",
+        "방사선사"
+      ],
+      "contact": "010-4826-7725",
+      "documents": [
+        "vascular-duty-2026-04",
+        "overtime-stats-2026"
+      ],
+      "patterns": [
+        "overtime-stats-2026 문서에서 가장 자주 등장",
+        "연락망에 직접 기재됨"
+      ],
+      "relationships": [],
+      "mentionCount": 552,
+      "categories": {
+        "person_name": 503,
+        "contact": 14,
+        "weekday": 35
+      }
+    },
+    {
+      "name": "조주영",
+      "aliases": [
+        "주영"
+      ],
+      "roleTags": [
+        "CPN"
+      ],
+      "contact": "010-5674-0496",
+      "documents": [
+        "vascular-duty-2026-04",
+        "angio-clinic-status",
+        "angio-duty-feb-2026"
+      ],
+      "patterns": [
+        "overtime-stats-2026 문서에서 가장 자주 등장",
+        "휴가/교육 관련 셀 21회 연결",
+        "연락망에 직접 기재됨"
+      ],
+      "relationships": [
+        {
+          "with": "최진우",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:최진우/CPN 조주영",
+            "2번방 · 2번방:최진우/CPN조주영",
+            "3번방 · 3번방:최진우/CPN조주영"
+          ]
+        },
+        {
+          "with": "최민서",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:메뚜기/R1 /CPN조주영",
+            "3번방 · 3번방:김효철/R1/CPN조주영",
+            "3번방 · 3번방:메뚜기/R1/CPN조주영"
+          ]
+        },
+        {
+          "with": "김효철",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:김도훈/CPN조주영",
+            "3번방 · 3번방:김효철/R1/CPN조주영",
+            "2번방 · 2번방:김효철/CPN조주영"
+          ]
+        },
+        {
+          "with": "김도훈",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:김도훈/CPN조주영",
+            "3번방 · 3번방:김도훈/CPN조주영",
+            "1번방 · 1번방:김도훈/CPN조주영"
+          ]
+        },
+        {
+          "with": "제환준",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:제환준/CPN조주영",
+            "2번방 · 2번방: 제환준 /CPN조주영 (소아 sclero 10a, 11a pf허)"
+          ]
+        },
+        {
+          "with": "이명수",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:이명수/CPN조주영",
+            "2번방 · 2번방:이명수/CPN조주영(소아)",
+            "지혈 · 지혈:이서정, P:조주영."
+          ]
+        },
+        {
+          "with": "이범영",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:허세범/CPN조주영",
+            "5번방 · 5번방:허세범/CPN조주영 (소아scle 10A, 11A)",
+            "5번방 · 5번방:허세범/CPN조주영 (MD30 HBR예정)"
+          ]
+        },
+        {
+          "with": "허세범",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:허세범/CPN조주영",
+            "지혈 · HBR 8A Pf.허 CPN조주영 지혈: 없음",
+            "5번방 · 5번방:허세범/CPN조주영 (소아scle 10A, 11A)"
+          ]
+        },
+        {
+          "with": "정은지",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "지혈 · 지혈: 정은지->4번방 / 소아시술지원:조주영",
+            "지혈 · 지혈:정은지. P:조주영(오전에 뉴로OT)",
+            "지혈 · 지혈:CPN정은지,OT김효선 /P.조주영(소아출장?)"
+          ]
+        },
+        {
+          "with": "방상흠",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:F2/CPN조주영*",
+            "3번방 · 3번방:김효철/F2/CPN조주영",
+            "3번방 · 3번방:F2/CPN조주영"
+          ]
+        },
+        {
+          "with": "김효선",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "지혈 · 지혈:CPN정은지,OT김효선 /P.조주영(소아출장?)",
+            "지혈 · 지혈: 김효선, P:조주영,정은지*"
+          ]
+        },
+        {
+          "with": "김현주",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "지혈 · 지혈: 조주영, P:김현주"
+          ]
+        },
+        {
+          "with": "이서정",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "지혈 · 지혈:이서정, P:조주영."
+          ]
+        }
+      ],
+      "mentionCount": 519,
+      "categories": {
+        "person_name": 369,
+        "contact": 15,
+        "role_lane": 73,
+        "room": 23,
+        "shift_marker": 18,
+        "leave_or_education": 21
+      }
+    },
+    {
+      "name": "김창수",
+      "aliases": [
+        "창수"
+      ],
+      "roleTags": [
+        "RT",
+        "방사선사"
+      ],
+      "contact": "010-7114-1810",
+      "documents": [
+        "vascular-duty-2026-04"
+      ],
+      "patterns": [
+        "vascular-duty-2026-04 문서에서 가장 자주 등장",
+        "연락망에 직접 기재됨"
+      ],
+      "relationships": [],
+      "mentionCount": 428,
+      "categories": {
+        "person_name": 386,
+        "contact": 14,
+        "weekday": 28
+      }
+    },
+    {
+      "name": "김진호",
+      "aliases": [
+        "진호"
+      ],
+      "roleTags": [
+        "RT",
+        "방사선사"
+      ],
+      "contact": "010-2335-9616",
+      "documents": [
+        "vascular-duty-2026-04",
+        "overtime-stats-2026"
+      ],
+      "patterns": [
+        "overtime-stats-2026 문서에서 가장 자주 등장",
+        "연락망에 직접 기재됨"
+      ],
+      "relationships": [],
+      "mentionCount": 408,
+      "categories": {
+        "person_name": 391,
+        "contact": 10,
+        "weekday": 7
+      }
+    },
+    {
+      "name": "박현선",
+      "aliases": [
+        "현선"
+      ],
+      "roleTags": [
+        "RN",
+        "간호사"
+      ],
+      "contact": "010-9159-0855",
+      "documents": [
+        "vascular-duty-2026-04"
+      ],
+      "patterns": [
+        "vascular-duty-2026-04 문서에서 가장 자주 등장",
+        "연락망에 직접 기재됨"
+      ],
+      "relationships": [],
+      "mentionCount": 388,
+      "categories": {
+        "person_name": 342,
+        "contact": 46
+      }
+    },
+    {
+      "name": "허세범",
+      "aliases": [
+        "허"
+      ],
+      "roleTags": [
+        "교수",
+        "MD"
+      ],
+      "contact": "010-34477660",
+      "documents": [
+        "angio-duty-feb-2026",
+        "angio-clinic-status"
+      ],
+      "patterns": [
+        "vascular-duty-2026-04 문서에서 가장 자주 등장",
+        "휴가/교육 관련 셀 22회 연결",
+        "연락망에 직접 기재됨"
+      ],
+      "relationships": [
+        {
+          "with": "이범영",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:허세범/CPN김혜련*",
+            "5번방 · 5번방:허세범/CPN김현주(HBR MD30(이),MD30TF1(허))",
+            "3번방 · 3번방:허세범/R1/CPN이서정"
+          ]
+        },
+        {
+          "with": "김혜련",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:허세범/CPN김혜련*",
+            "5번방 · 5번방:허세범/CPN 김혜련",
+            "5번방 · 5번방:허세범(10시까지)김효철(10시부터)/R4/김혜련(10시까지)"
+          ]
+        },
+        {
+          "with": "김효철",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:허세범/CPN김혜련*",
+            "5번방 · 5번방:허세범/CPN김현주(HBR MD30(이),MD30TF1(허))",
+            "6번방 · 6번방:허세범(2시 이후)/CPN김아선"
+          ]
+        },
+        {
+          "with": "김현주",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:허세범/CPN김현주(HBR MD30(이),MD30TF1(허))",
+            "2번방 · 2번방:허세범/CPN김현주",
+            "2번방 · 2번방:허세범/CPN 김현주(소아scle 10A, 11A)"
+          ]
+        },
+        {
+          "with": "이명수",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:허세범/CPN김현주(HBR MD30(이),MD30TF1(허))",
+            "3번방 · 3번방:허세범/R1/CPN이서정",
+            "6번방 · 6번방:허세범(2시 이후)/CPN김아선"
+          ]
+        },
+        {
+          "with": "이서정",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:허세범/R1/CPN이서정",
+            "2번방 · 2번방:허세범/CPN이서정",
+            "2번방 · 2번방:허세범/CPN이서정 (소아scle 10A, 11A)"
+          ]
+        },
+        {
+          "with": "최민서",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:허세범/R1/CPN이서정",
+            "3번방 · 3번방:허세범/R1",
+            "5번방 · 5번방:허세범/R1"
+          ]
+        },
+        {
+          "with": "김아선",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "6번방 · 6번방:허세범(2시 이후)/CPN김아선"
+          ]
+        },
+        {
+          "with": "조주영",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:허세범/CPN조주영",
+            "지혈 · HBR 8A Pf.허 CPN조주영 지혈: 없음",
+            "5번방 · 5번방:허세범/CPN조주영 (소아scle 10A, 11A)"
+          ]
+        },
+        {
+          "with": "김효선",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:허세범/CPN김효선",
+            "2번방 · 2번방:허세범/CPN김효선",
+            "2번방 · 2번방:허세범/CPN정은지,OT김효선"
+          ]
+        },
+        {
+          "with": "정은지",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:허세범/CPN정은지,OT김효선",
+            "5번방 · 5번방:허세범/CPN정은지,OT김효선 소아sclero: 10a, 11a 허",
+            "5번방 · 5번방:허세범/R4/CPN정은지,OT김효선"
+          ]
+        },
+        {
+          "with": "제환준",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:허세범/CPN 김혜련*(소아) 소아sclero: 10a 허, 11a 제",
+            "2번방 · 2번방: 제환준 /CPN조주영 (소아 sclero 10a, 11a pf허)"
+          ]
+        }
+      ],
+      "mentionCount": 382,
+      "categories": {
+        "person_name": 214,
+        "contact": 18,
+        "role_lane": 111,
+        "leave_or_education": 22,
+        "date": 8,
+        "room": 9
+      }
+    },
+    {
+      "name": "제환준",
+      "aliases": [
+        "제"
+      ],
+      "roleTags": [
+        "교수",
+        "MD"
+      ],
+      "contact": "010-37546515",
+      "documents": [
+        "angio-duty-feb-2026",
+        "angio-clinic-status"
+      ],
+      "patterns": [
+        "nurse-schedule-2025-12 문서에서 가장 자주 등장",
+        "휴가/교육 관련 셀 25회 연결",
+        "Angio 당직표와 진료현황에서 모두 주축 교수 라인으로 등장"
+      ],
+      "relationships": [
+        {
+          "with": "최민서",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:제환준/R1/CPN",
+            "5번방 · 5번방:제환준/R1/CPN정은지",
+            "5번방 · 5번방:제환준/R1/CPN김효선"
+          ]
+        },
+        {
+          "with": "정은지",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:제환준/R1/CPN정은지",
+            "3번방 · 3번방:제환준/CPN정은지",
+            "5번방 · 5번방:제환준/CPN정은지"
+          ]
+        },
+        {
+          "with": "이서정",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:제환준/CPN이서정",
+            "3번방 · 3번방:제환준/CPN이서정",
+            "3번방 · 3번방:제환준/R1/CPN이서정"
+          ]
+        },
+        {
+          "with": "이명수",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:제환준/CPN이서정",
+            "3번방 · 3번방:제환준/CPN이서정",
+            "암병원 · 암병원(4H):제환준/R1/CPN고경은/이지연"
+          ]
+        },
+        {
+          "with": "김혜련",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:제환준/CPN김혜련",
+            "5번방 · 5번방:제환준/ CPN김혜련",
+            "3번방 · 3번방:제환준/CPN김혜련"
+          ]
+        },
+        {
+          "with": "김효철",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:제환준/CPN김혜련",
+            "5번방 · 5번방:제환준/CPN김효선",
+            "5번방 · 5번방:제환준/ CPN김혜련"
+          ]
+        },
+        {
+          "with": "조주영",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:제환준/CPN조주영",
+            "2번방 · 2번방: 제환준 /CPN조주영 (소아 sclero 10a, 11a pf허)"
+          ]
+        },
+        {
+          "with": "김효선",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:제환준/CPN김효선",
+            "3번방 · 3번방:제환준/CPN김효선",
+            "5번방 · 5번방:제환준/R1/CPN김효선"
+          ]
+        },
+        {
+          "with": "김현주",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:제환준/CPN김현주",
+            "2번방 · 2번방:제환준/CPN김현주(소아) 소아sclero: 10a 제",
+            "5번방 · 5번방:제환준/CPN김현주,OT김효선"
+          ]
+        },
+        {
+          "with": "고경은",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원(4H):제환준/R1/CPN고경은/이지연"
+          ]
+        },
+        {
+          "with": "이지연",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원(4H):제환준/R1/CPN고경은/이지연"
+          ]
+        },
+        {
+          "with": "이범영",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:허세범/CPN 김혜련*(소아) 소아sclero: 10a 허, 11a 제"
+          ]
+        },
+        {
+          "with": "허세범",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:허세범/CPN 김혜련*(소아) 소아sclero: 10a 허, 11a 제",
+            "2번방 · 2번방: 제환준 /CPN조주영 (소아 sclero 10a, 11a pf허)"
+          ]
+        }
+      ],
+      "mentionCount": 370,
+      "categories": {
+        "role_lane": 73,
+        "person_name": 270,
+        "leave_or_education": 25,
+        "room": 2
+      }
+    },
+    {
+      "name": "이서정",
+      "aliases": [
+        "서정"
+      ],
+      "roleTags": [
+        "CPN"
+      ],
+      "contact": "010-2046-5867",
+      "documents": [
+        "vascular-duty-2026-04",
+        "angio-clinic-status"
+      ],
+      "patterns": [
+        "angio-clinic-status 문서에서 가장 자주 등장",
+        "휴가/교육 관련 셀 6회 연결",
+        "연락망에 직접 기재됨"
+      ],
+      "relationships": [
+        {
+          "with": "이명수",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:이명수/CPN이서정",
+            "5번방 · 5번방:제환준/CPN이서정",
+            "3번방 · 3번방:김효철/R1/CPN이서정"
+          ]
+        },
+        {
+          "with": "제환준",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:제환준/CPN이서정",
+            "3번방 · 3번방:제환준/CPN이서정",
+            "3번방 · 3번방:제환준/R1/CPN이서정"
+          ]
+        },
+        {
+          "with": "김효철",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:김효철/R1/CPN이서정",
+            "2번방 · 2번방:김도훈/CPN이서정",
+            "3번방 · 3번방:김도훈/CPN이서정"
+          ]
+        },
+        {
+          "with": "최민서",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:김효철/R1/CPN이서정",
+            "3번방 · 3번방:허세범/R1/CPN이서정",
+            "3번방 · 3번방:F2/R1/CPN이서정"
+          ]
+        },
+        {
+          "with": "고경은",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "지혈 · 지혈:이서정, 9A본원:고경은"
+          ]
+        },
+        {
+          "with": "김도훈",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:김도훈/CPN이서정",
+            "3번방 · 3번방:김도훈/CPN이서정",
+            "3번방 · 3번방:김도훈/R1/CPN이서정"
+          ]
+        },
+        {
+          "with": "김재현",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:김재현/CPN이서정",
+            "1번방 · 1번방:김재현/CPN이서정(복부)",
+            "1번방 · 1번방:김재현/CPN 이서정"
+          ]
+        },
+        {
+          "with": "이범영",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:허세범/R1/CPN이서정",
+            "2번방 · 2번방:허세범/CPN이서정",
+            "2번방 · 2번방:허세범/CPN이서정 (소아scle 10A, 11A)"
+          ]
+        },
+        {
+          "with": "허세범",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:허세범/R1/CPN이서정",
+            "2번방 · 2번방:허세범/CPN이서정",
+            "2번방 · 2번방:허세범/CPN이서정 (소아scle 10A, 11A)"
+          ]
+        },
+        {
+          "with": "최진우",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:최진우/CPN 이서정",
+            "3번방 · 3번방:최진우/CPN이서정*",
+            "1번방 · 1번방:최진우/CPN이서정"
+          ]
+        },
+        {
+          "with": "방상흠",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:F2/R1/CPN이서정",
+            "1번방 · 1번방:F2/CPN이서정",
+            "3번방 · 3번방:F2/CPN이서정"
+          ]
+        },
+        {
+          "with": "김현주",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "지혈 · 지혈:이서정. P:김현주\",김혜련(소아)",
+            "지혈 · 지혈: CPN이서정 P:김현주*"
+          ]
+        },
+        {
+          "with": "김혜련",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "지혈 · 지혈:이서정. P:김현주\",김혜련(소아)"
+          ]
+        },
+        {
+          "with": "조주영",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "지혈 · 지혈:이서정, P:조주영."
+          ]
+        }
+      ],
+      "mentionCount": 302,
+      "categories": {
+        "person_name": 169,
+        "contact": 4,
+        "role_lane": 86,
+        "room": 16,
+        "leave_or_education": 6,
+        "shift_marker": 21
+      }
+    },
+    {
+      "name": "이지연",
+      "aliases": [
+        "지연"
+      ],
+      "roleTags": [
+        "CPN"
+      ],
+      "contact": null,
+      "documents": [
+        "angio-clinic-status",
+        "vascular-duty-2026-04"
+      ],
+      "patterns": [
+        "angio-clinic-status 문서에서 가장 자주 등장",
+        "휴가/교육 관련 셀 3회 연결"
+      ],
+      "relationships": [
+        {
+          "with": "고경은",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원: 고경은/이지연",
+            "암병원 · 암병원(4H): 김효철/R1/고경은/이지연",
+            "암병원 · 암병원(4H): 이명수/R1/고경은/이지연"
+          ]
+        },
+        {
+          "with": "이명수",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원: 고경은/이지연",
+            "암병원 · 암병원(4H): 김효철/R1/고경은/이지연",
+            "암병원 · 암병원: 이지연/김혜련"
+          ]
+        },
+        {
+          "with": "김효철",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원(4H): 김효철/R1/고경은/이지연",
+            "암병원 · 암병원: 이지연/김혜련",
+            "암병원 · 암병원(4H): 김효철/R1/이지연"
+          ]
+        },
+        {
+          "with": "최민서",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원(4H): 김효철/R1/고경은/이지연",
+            "암병원 · 암병원(4H): 이명수/R1/고경은/이지연",
+            "암병원 · 암병원(4H): 김효철/R1/이지연"
+          ]
+        },
+        {
+          "with": "김혜련",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원: 이지연/김혜련",
+            "암병원 · 암병원:김혜련 /이지연",
+            "암병원 · 암병원: CPN김혜련/이지연"
+          ]
+        },
+        {
+          "with": "제환준",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원(4H):제환준/R1/CPN고경은/이지연"
+          ]
+        },
+        {
+          "with": "방상흠",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원(4H): F2/CPN고경은/이지연",
+            "암병원 · 암병원(4H): F2/고경은, 이지연*",
+            "암병원 · 암병원(4H): F2/R1 고경은/이지연"
+          ]
+        },
+        {
+          "with": "정은지",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원: 정은지/이지연"
+          ]
+        }
+      ],
+      "mentionCount": 290,
+      "categories": {
+        "person_name": 144,
+        "room": 118,
+        "leave_or_education": 3,
+        "role_lane": 25
+      }
+    },
+    {
+      "name": "김효선",
+      "aliases": [
+        "효선"
+      ],
+      "roleTags": [
+        "CPN"
+      ],
+      "contact": "010-3616-9045",
+      "documents": [
+        "vascular-duty-2026-04",
+        "angio-clinic-status"
+      ],
+      "patterns": [
+        "overtime-stats-2026 문서에서 가장 자주 등장",
+        "휴가/교육 관련 셀 1회 연결",
+        "연락망에 직접 기재됨"
+      ],
+      "relationships": [
+        {
+          "with": "김효철",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "1번방 · 1번방:김재현/CPN 김효선",
+            "지혈 · 지혈: 김효선",
+            "2번방 · 2번방:김재현/CPN김효선(소아x)"
+          ]
+        },
+        {
+          "with": "김재현",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "1번방 · 1번방:김재현/CPN 김효선",
+            "2번방 · 2번방:김재현/CPN김효선(소아x)",
+            "1번방 · 1번방:김재현/CPN김효선"
+          ]
+        },
+        {
+          "with": "김도훈",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방: 김도훈/CPN김효선",
+            "3번방 · 3번방:김도훈/CPN김효선",
+            "3번방 · 3번방:김도훈/CPN 김효선"
+          ]
+        },
+        {
+          "with": "이명수",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:이명수/CPN김효선",
+            "5번방 · 5번방:이명수/CPN김효선",
+            "1번방 · 1번방:이명수/CPN 김효선"
+          ]
+        },
+        {
+          "with": "최민서",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:메뚜기/R1/CPN김효선",
+            "3번방 · 3번방:김효철/R1/CPN김효선",
+            "5번방 · 5번방:제환준/R1/CPN김효선"
+          ]
+        },
+        {
+          "with": "제환준",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:제환준/CPN김효선",
+            "3번방 · 3번방:제환준/CPN김효선",
+            "5번방 · 5번방:제환준/R1/CPN김효선"
+          ]
+        },
+        {
+          "with": "이범영",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:허세범/CPN김효선",
+            "2번방 · 2번방:허세범/CPN김효선",
+            "2번방 · 2번방:허세범/CPN정은지,OT김효선"
+          ]
+        },
+        {
+          "with": "허세범",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:허세범/CPN김효선",
+            "2번방 · 2번방:허세범/CPN김효선",
+            "2번방 · 2번방:허세범/CPN정은지,OT김효선"
+          ]
+        },
+        {
+          "with": "정은지",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:김도훈/CPN정은지,OT김효선",
+            "2번방 · 2번방:허세범/CPN정은지,OT김효선",
+            "3번방 · 3번방:최진우/R4/CPN정은지,OT김효선"
+          ]
+        },
+        {
+          "with": "최진우",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:최진우/R4/CPN정은지,OT김효선",
+            "1번방 · 1번방:최진우/CPN정은지,OT김효선(복부)",
+            "3번방 · 3번방:최진우/R1/CPN정은지, 김효선"
+          ]
+        },
+        {
+          "with": "조주영",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "지혈 · 지혈:CPN정은지,OT김효선 /P.조주영(소아출장?)",
+            "지혈 · 지혈: 김효선, P:조주영,정은지*"
+          ]
+        },
+        {
+          "with": "김현주",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:허세범(2시 이후)/CPN김현주, OT김효선",
+            "5번방 · 5번방:이명수/R4/CPN김현주, OT김효선",
+            "5번방 · 5번방:제환준/CPN김현주,OT김효선"
+          ]
+        }
+      ],
+      "mentionCount": 284,
+      "categories": {
+        "person_name": 157,
+        "contact": 3,
+        "role_lane": 108,
+        "room": 15,
+        "leave_or_education": 1
+      }
+    },
+    {
+      "name": "방현미",
+      "aliases": [
+        "현미"
+      ],
+      "roleTags": [
+        "RN",
+        "간호사"
+      ],
+      "contact": "010-3279-0120",
+      "documents": [
+        "vascular-duty-2026-04",
+        "nurse-schedule-2025-12"
+      ],
+      "patterns": [
+        "overtime-stats-2026 문서에서 가장 자주 등장",
+        "휴가/교육 관련 셀 13회 연결",
+        "연락망에 직접 기재됨"
+      ],
+      "relationships": [
+        {
+          "with": "김난희",
+          "type": "replacement",
+          "sourceFiles": [
+            "nurse-schedule-2025-12"
+          ],
+          "evidence": [
+            "현미대신난희",
+            "난희대신현미"
+          ]
+        }
+      ],
+      "mentionCount": 277,
+      "categories": {
+        "person_name": 233,
+        "contact": 3,
+        "room": 12,
+        "leave_or_education": 13,
+        "replacement": 16
+      }
+    },
+    {
+      "name": "최민서",
+      "aliases": [
+        "R1"
+      ],
+      "roleTags": [
+        "R1",
+        "전공의"
+      ],
+      "contact": "010-3909-8044",
+      "documents": [
+        "angio-duty-feb-2026"
+      ],
+      "patterns": [
+        "angio-clinic-status 문서에서 가장 자주 등장",
+        "휴가/교육 관련 셀 3회 연결"
+      ],
+      "relationships": [
+        {
+          "with": "제환준",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:제환준/R1/CPN",
+            "5번방 · 5번방:제환준/R1/CPN정은지",
+            "5번방 · 5번방:제환준/R1/CPN김효선"
+          ]
+        },
+        {
+          "with": "조주영",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:메뚜기/R1 /CPN조주영",
+            "3번방 · 3번방:김효철/R1/CPN조주영",
+            "3번방 · 3번방:메뚜기/R1/CPN조주영"
+          ]
+        },
+        {
+          "with": "정은지",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:제환준/R1/CPN정은지",
+            "3번방 · 3번방:김도훈/R1/CPN정은지",
+            "암병원 · 암병원(4H): 김도훈/R1/ 고경은/ 정은지"
+          ]
+        },
+        {
+          "with": "고경은",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원(4H): 김효철/R1/고경은/이지연",
+            "암병원 · 암병원(4H): 김도훈/R1/ 고경은/ 정은지",
+            "암병원 · 암병원(4H): 이명수/R1/고경은/이지연"
+          ]
+        },
+        {
+          "with": "이지연",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원(4H): 김효철/R1/고경은/이지연",
+            "암병원 · 암병원(4H): 이명수/R1/고경은/이지연",
+            "암병원 · 암병원(4H): 김효철/R1/이지연"
+          ]
+        },
+        {
+          "with": "김효철",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원(4H): 김효철/R1/고경은/이지연",
+            "3번방 · 3번방:김효철/R1/CPN조주영",
+            "3번방 · 3번방:김도훈/R1/CPN정은지"
+          ]
+        },
+        {
+          "with": "이명수",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원(4H): 김효철/R1/고경은/이지연",
+            "3번방 · 3번방:김효철/R1/CPN이서정",
+            "5번방 · 5번방:이명수/R1"
+          ]
+        },
+        {
+          "with": "김도훈",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:김도훈/R1/CPN정은지",
+            "암병원 · 암병원(4H): 김도훈/R1/ 고경은/ 정은지",
+            "3번방 · 3번방:김도훈/R1"
+          ]
+        },
+        {
+          "with": "이서정",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:김효철/R1/CPN이서정",
+            "3번방 · 3번방:허세범/R1/CPN이서정",
+            "3번방 · 3번방:F2/R1/CPN이서정"
+          ]
+        },
+        {
+          "with": "김효선",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:메뚜기/R1/CPN김효선",
+            "3번방 · 3번방:김효철/R1/CPN김효선",
+            "5번방 · 5번방:제환준/R1/CPN김효선"
+          ]
+        },
+        {
+          "with": "김혜련",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:김효철/CPN(소아)김혜련(TACE까지)2번방:김효철/R1",
+            "3번방 · 3번방:김효철/R1/CPN김혜련",
+            "5번방 · 5번방:이명수/R1/CPN김혜련"
+          ]
+        },
+        {
+          "with": "이범영",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:허세범/R1/CPN이서정",
+            "3번방 · 3번방:허세범/R1",
+            "5번방 · 5번방:허세범/R1"
+          ]
+        },
+        {
+          "with": "허세범",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:허세범/R1/CPN이서정",
+            "3번방 · 3번방:허세범/R1",
+            "5번방 · 5번방:허세범/R1"
+          ]
+        },
+        {
+          "with": "최진우",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:최진우/R1",
+            "3번방 · 3번방:최진우/R1/CPN정은지, 김효선",
+            "3번방 · 3번방:최진우/R1/CPN김혜련"
+          ]
+        },
+        {
+          "with": "방상흠",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:F2/R1/CPN이서정",
+            "3번방 · 3번방:F2/R1",
+            "5번방 · 5번방:이명수/F2/R1"
+          ]
+        }
+      ],
+      "mentionCount": 221,
+      "categories": {
+        "role_lane": 51,
+        "person_name": 94,
+        "shift_marker": 17,
+        "room": 55,
+        "leave_or_education": 3,
+        "date": 1
+      }
+    },
+    {
+      "name": "최진우",
+      "aliases": [
+        "최"
+      ],
+      "roleTags": [
+        "교수",
+        "MD"
+      ],
+      "contact": "010-8587-7459",
+      "documents": [
+        "angio-duty-feb-2026",
+        "angio-clinic-status"
+      ],
+      "patterns": [
+        "angio-clinic-status 문서에서 가장 자주 등장",
+        "휴가/교육 관련 셀 23회 연결"
+      ],
+      "relationships": [
+        {
+          "with": "조주영",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:최진우/CPN 조주영",
+            "2번방 · 2번방:최진우/CPN조주영",
+            "3번방 · 3번방:최진우/CPN조주영"
+          ]
+        },
+        {
+          "with": "김현주",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:최진우/CPN김현주 HBR 1p Pf 최",
+            "3번방 · 3번방:최진우/CPN 김현주",
+            "3번방 · 3번방:최진우/CPN김현주"
+          ]
+        },
+        {
+          "with": "김효철",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:최진우/CPN김현주 HBR 1p Pf 최",
+            "2번방 · 2번방:최진우/CPN김혜련",
+            "3번방 · 3번방:최진우/CPN김혜련"
+          ]
+        },
+        {
+          "with": "정은지",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:최진우/CPN정은지",
+            "2번방 · 2번방:최진우/CPN정은지(HBR 1p, 3P)",
+            "3번방 · 3번방:최진우/R4/CPN정은지,OT김효선"
+          ]
+        },
+        {
+          "with": "이서정",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:최진우/CPN 이서정",
+            "3번방 · 3번방:최진우/CPN이서정*",
+            "1번방 · 1번방:최진우/CPN이서정"
+          ]
+        },
+        {
+          "with": "이명수",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:최진우/CPN 이서정",
+            "3번방 · 3번방:최진우/CPN이서정*",
+            "1번방 · 1번방:최진우/CPN이서정"
+          ]
+        },
+        {
+          "with": "김혜련",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:최진우/CPN김혜련",
+            "3번방 · 3번방:최진우/CPN김혜련",
+            "2번방 · 2번방:최진우/CPN김혜련(소아)"
+          ]
+        },
+        {
+          "with": "최민서",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:최진우/R1",
+            "3번방 · 3번방:최진우/R1/CPN정은지, 김효선",
+            "3번방 · 3번방:최진우/R1/CPN김혜련"
+          ]
+        },
+        {
+          "with": "김효선",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:최진우/R4/CPN정은지,OT김효선",
+            "1번방 · 1번방:최진우/CPN정은지,OT김효선(복부)",
+            "3번방 · 3번방:최진우/R1/CPN정은지, 김효선"
+          ]
+        },
+        {
+          "with": "방상흠",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:최진우/F2/CPN 이서정",
+            "2번방 · 2번방:최진우/F2/CPN이서정"
+          ]
+        }
+      ],
+      "mentionCount": 195,
+      "categories": {
+        "person_name": 102,
+        "role_lane": 53,
+        "leave_or_education": 23,
+        "room": 3,
+        "replacement": 5,
+        "shift_marker": 9
+      }
+    },
+    {
+      "name": "석호경",
+      "aliases": [
+        "호경"
+      ],
+      "roleTags": [
+        "RT",
+        "방사선사"
+      ],
+      "contact": "010-4125-3713",
+      "documents": [
+        "vascular-duty-2026-04"
+      ],
+      "patterns": [
+        "overtime-stats-2026 문서에서 가장 자주 등장",
+        "연락망에 직접 기재됨"
+      ],
+      "relationships": [],
+      "mentionCount": 185,
+      "categories": {
+        "person_name": 180,
+        "contact": 5
+      }
+    },
+    {
+      "name": "박시현",
+      "aliases": [
+        "시현"
+      ],
+      "roleTags": [
+        "준비실"
+      ],
+      "contact": "010-2189-1025",
+      "documents": [
+        "vascular-duty-2026-04",
+        "overtime-stats-2026"
+      ],
+      "patterns": [
+        "overtime-stats-2026 문서에서 가장 자주 등장",
+        "연락망에 직접 기재됨"
+      ],
+      "relationships": [],
+      "mentionCount": 153,
+      "categories": {
+        "person_name": 150,
+        "contact": 3
+      }
+    },
+    {
+      "name": "장미래",
+      "aliases": [
+        "미래"
+      ],
+      "roleTags": [
+        "RN",
+        "간호사"
+      ],
+      "contact": "010-5232-6491",
+      "documents": [
+        "vascular-duty-2026-04"
+      ],
+      "patterns": [
+        "vascular-duty-2026-04 문서에서 가장 자주 등장",
+        "연락망에 직접 기재됨"
+      ],
+      "relationships": [],
+      "mentionCount": 143,
+      "categories": {
+        "person_name": 107,
+        "contact": 36
+      }
+    },
+    {
+      "name": "방상흠",
+      "aliases": [
+        "F2",
+        "F2방"
+      ],
+      "roleTags": [
+        "Fellow"
+      ],
+      "contact": "010-2075-3022",
+      "documents": [
+        "angio-duty-feb-2026"
+      ],
+      "patterns": [
+        "angio-clinic-status 문서에서 가장 자주 등장",
+        "휴가/교육 관련 셀 5회 연결"
+      ],
+      "relationships": [
+        {
+          "with": "조주영",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:F2/CPN조주영*",
+            "3번방 · 3번방:김효철/F2/CPN조주영",
+            "3번방 · 3번방:F2/CPN조주영"
+          ]
+        },
+        {
+          "with": "이서정",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:F2/R1/CPN이서정",
+            "1번방 · 1번방:F2/CPN이서정",
+            "3번방 · 3번방:F2/CPN이서정"
+          ]
+        },
+        {
+          "with": "이명수",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:F2/R1/CPN이서정",
+            "1번방 · 1번방:F2/CPN이서정",
+            "3번방 · 3번방:F2/CPN이서정"
+          ]
+        },
+        {
+          "with": "최민서",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:F2/R1/CPN이서정",
+            "3번방 · 3번방:F2/R1",
+            "5번방 · 5번방:이명수/F2/R1"
+          ]
+        },
+        {
+          "with": "김혜련",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "1번방 · 1번방:F2/CPN김혜련",
+            "1번방 · 1번방:F2/CPN 김혜련",
+            "5번방 · 5번방:F2/CPN김혜련"
+          ]
+        },
+        {
+          "with": "김효철",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "1번방 · 1번방:F2/CPN김혜련",
+            "1번방 · 1번방:F2/CPN 김혜련",
+            "3번방 · 3번방:김효철/F2/CPN조주영"
+          ]
+        },
+        {
+          "with": "고경은",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원(4H): F2/CPN고경은/이지연",
+            "암병원 · 암병원(4H): F2/고경은, 이지연*",
+            "암병원 · 암병원(4H): F2/R1 고경은/이지연"
+          ]
+        },
+        {
+          "with": "이지연",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "암병원 · 암병원(4H): F2/CPN고경은/이지연",
+            "암병원 · 암병원(4H): F2/고경은, 이지연*",
+            "암병원 · 암병원(4H): F2/R1 고경은/이지연"
+          ]
+        },
+        {
+          "with": "김아선",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "6번방 · 6번방:F2/CPN 김아선"
+          ]
+        },
+        {
+          "with": "김도훈",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "3번방 · 3번방:김도훈/F2",
+            "5번방 · 5번방:김도훈/F2/R1"
+          ]
+        },
+        {
+          "with": "정은지",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "1번방 · 1번방:F2/CPN 정은지",
+            "3번방 · 3번방:F2/CPN 정은지"
+          ]
+        },
+        {
+          "with": "최진우",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "2번방 · 2번방:최진우/F2/CPN 이서정",
+            "2번방 · 2번방:최진우/F2/CPN이서정"
+          ]
+        }
+      ],
+      "mentionCount": 89,
+      "categories": {
+        "person_name": 34,
+        "leave_or_education": 5,
+        "shift_marker": 1,
+        "role_lane": 31,
+        "room": 18
+      }
+    },
+    {
+      "name": "김재현",
+      "aliases": [],
+      "roleTags": [
+        "교수",
+        "MD"
+      ],
+      "contact": null,
+      "documents": [
+        "angio-clinic-status"
+      ],
+      "patterns": [
+        "angio-clinic-status 문서에서 가장 자주 등장",
+        "휴가/교육 관련 셀 2회 연결"
+      ],
+      "relationships": [
+        {
+          "with": "정은지",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "1번방 · 1번방:김재현/CPN 정은지",
+            "2번방 · 2번방:김재현/CPN정은지",
+            "1번방 · 1번방:김재현/CPN정은지,OT김효선(복부)"
+          ]
+        },
+        {
+          "with": "김효철",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "1번방 · 1번방:김재현/CPN 정은지",
+            "1번방 · 1번방:김재현/CPN 김효선",
+            "2번방 · 2번방:김재현/CPN김효선(소아x)"
+          ]
+        },
+        {
+          "with": "김효선",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "1번방 · 1번방:김재현/CPN 김효선",
+            "2번방 · 2번방:김재현/CPN김효선(소아x)",
+            "1번방 · 1번방:김재현/CPN김효선"
+          ]
+        },
+        {
+          "with": "김현주",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "1번방 · 1번방:김재현/CPN 김현주"
+          ]
+        },
+        {
+          "with": "이서정",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:김재현/CPN이서정",
+            "1번방 · 1번방:김재현/CPN이서정(복부)",
+            "1번방 · 1번방:김재현/CPN 이서정"
+          ]
+        },
+        {
+          "with": "이명수",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "5번방 · 5번방:김재현/CPN이서정",
+            "1번방 · 1번방:김재현/CPN이서정(복부)",
+            "1번방 · 1번방:김재현/CPN 이서정"
+          ]
+        },
+        {
+          "with": "김혜련",
+          "type": "shared_assignment",
+          "sourceFiles": [
+            "angio-clinic-status"
+          ],
+          "evidence": [
+            "1번방 · 1번방:김재현/CPN 김혜련",
+            "1번방 · 1번방:김재현/CPN김혜련(복부)"
+          ]
+        }
+      ],
+      "mentionCount": 32,
+      "categories": {
+        "role_lane": 28,
+        "person_name": 2,
+        "leave_or_education": 2
+      }
+    },
+    {
+      "name": "고윤정",
+      "aliases": [],
+      "roleTags": [
+        "RN",
+        "간호사"
+      ],
+      "contact": null,
+      "documents": [
+        "angio-clinic-status"
+      ],
+      "patterns": [
+        "angio-clinic-status 문서에서 가장 자주 등장"
+      ],
+      "relationships": [],
+      "mentionCount": 22,
+      "categories": {
+        "person_name": 22
+      }
+    },
+    {
+      "name": "김수진",
+      "aliases": [],
+      "roleTags": [
+        "RN",
+        "간호사"
+      ],
+      "contact": null,
+      "documents": [
+        "angio-clinic-status"
+      ],
+      "patterns": [
+        "angio-clinic-status 문서에서 가장 자주 등장"
+      ],
+      "relationships": [],
+      "mentionCount": 22,
+      "categories": {
+        "person_name": 22
+      }
+    },
+    {
+      "name": "안원익",
+      "aliases": [
+        "F1안"
+      ],
+      "roleTags": [
+        "Fellow"
+      ],
+      "contact": "010-5161-1750",
+      "documents": [
+        "angio-duty-feb-2026"
+      ],
+      "patterns": [
+        "angio-duty-feb-2026 문서에서 가장 자주 등장"
+      ],
+      "relationships": [],
+      "mentionCount": 4,
+      "categories": {
+        "person_name": 4
+      }
+    }
+  ],
+  "roleGroups": [
+    {
+      "role": "교수",
+      "members": [
+        "김효철",
+        "이명수",
+        "김도훈",
+        "허세범",
+        "제환준",
+        "최진우",
+        "김재현"
+      ]
+    },
+    {
+      "role": "RN",
+      "members": [
+        "이범영",
+        "김미진",
+        "서유경",
+        "오현진",
+        "강은정",
+        "김영인",
+        "임윤경",
+        "김난희",
+        "박상미",
+        "조소현",
+        "박현선",
+        "방현미",
+        "장미래",
+        "고윤정",
+        "김수진"
+      ]
+    },
+    {
+      "role": "CPN",
+      "members": [
+        "고경은",
+        "김혜련",
+        "정은지",
+        "김현주",
+        "김아선",
+        "조주영",
+        "이서정",
+        "이지연",
+        "김효선"
+      ]
+    },
+    {
+      "role": "준비실",
+      "members": [
+        "장미숙",
+        "이선민",
+        "박시현"
+      ]
+    },
+    {
+      "role": "RT",
+      "members": [
+        "김재광",
+        "오기윤",
+        "황장순",
+        "송철순",
+        "배용수",
+        "김성민",
+        "장병삼",
+        "김광현",
+        "김창수",
+        "김진호",
+        "석호경"
+      ]
+    },
+    {
+      "role": "R1",
+      "members": [
+        "최민서"
+      ]
+    },
+    {
+      "role": "Fellow",
+      "members": [
+        "방상흠",
+        "안원익"
+      ]
+    }
+  ]
+}

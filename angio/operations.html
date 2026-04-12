@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Angio 운영 아카이브 - 날짜별 당직, 방 배정, 휴가, 교육, 시간외 통계를 원본 문서와 함께 읽는 화면">
+  <title>Angio Operations | SNUH Mate</title>
+  <link rel="icon" type="image/png" href="/snuhmaterect.png?v=1.3">
+  <link rel="stylesheet" href="./angio.css?v=1">
+</head>
+
+<body class="angio-page" data-page="operations">
+  <header class="angio-topbar">
+    <div class="angio-topbar-inner">
+      <a class="brand-lockup" href="/angio/index.html">
+        <img class="brand-mark" src="/snuhmaterect.png?v=1.3" alt="SNUH Mate">
+        <div>
+          <div class="brand-title">Angio Snapshot</div>
+          <div class="brand-subtitle">SNUH Mate operational archive</div>
+        </div>
+      </a>
+      <nav class="page-nav" aria-label="Angio navigation">
+        <a data-nav="hub" href="/angio/index.html">허브</a>
+        <a data-nav="files" href="/angio/files.html">파일 분석</a>
+        <a data-nav="people" href="/angio/people.html">인물 레지스트리</a>
+        <a data-nav="operations" href="/angio/operations.html">운영 아카이브</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="angio-main">
+    <section class="hero-band">
+      <div class="hero-copy">
+        <p class="eyebrow">운영형 아카이브</p>
+        <h1 id="hero-title">실제 당직, 방 배정, 시간외 스냅샷</h1>
+        <p id="hero-description" class="hero-description"></p>
+      </div>
+      <div id="hero-metrics" class="hero-metrics" aria-live="polite"></div>
+    </section>
+
+    <div id="error-banner" class="error-banner" hidden></div>
+    <div id="page-root"></div>
+  </main>
+
+  <script type="module" src="./angio.js?v=1"></script>
+</body>
+
+</html>

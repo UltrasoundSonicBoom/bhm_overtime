@@ -4,11 +4,12 @@
 
 :root {
   color-scheme: light;
-  --bg: #f6f2e8;
+  --bg: #f6f8fb;
   --ink: #101218;
-  --paper: #fcfbf7;
-  --paper-2: #f1eee5;
-  --line: #101218;
+  --paper: #ffffff;
+  --paper-2: #edf3fb;
+  --line: #d8e2ef;
+  --line-strong: #c8d6e7;
   --muted: #55606f;
   --blue: #2c6cff;
   --blue-deep: #1846b8;
@@ -18,18 +19,14 @@
   --sky: #dce9ff;
   --lavender: #d9ddff;
   --gray: #ece8dd;
-  --shadow: 4px 4px 0 #101218;
+  --shadow: 0 18px 48px rgba(17, 28, 48, 0.08);
   --radius: 6px;
 }
 
 body {
   margin: 0;
   font-family: "IBM Plex Sans KR", sans-serif;
-  background:
-    linear-gradient(90deg, rgba(16, 18, 24, 0.05) 1px, transparent 1px),
-    linear-gradient(rgba(16, 18, 24, 0.05) 1px, transparent 1px),
-    var(--bg);
-  background-size: 32px 32px, 32px 32px, auto;
+  background: linear-gradient(180deg, #fbfdff 0%, var(--bg) 100%);
   color: var(--ink);
 }
 
@@ -47,6 +44,96 @@ textarea {
   gap: 18px;
   align-items: flex-start;
   padding: 20px 22px 12px;
+}
+
+.workflow-band {
+  margin: 0 22px 14px;
+  padding: 14px;
+  border: 3px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  box-shadow: var(--shadow);
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 1fr) minmax(240px, 0.8fr);
+  gap: 12px;
+}
+
+.workflow-copy h2 {
+  margin: 0;
+  font-family: "Space Grotesk", "IBM Plex Sans KR", sans-serif;
+  font-size: 28px;
+}
+
+.workflow-copy p:last-child {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.workflow-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.workflow-step,
+.workflow-summary-item {
+  padding: 10px 12px;
+  border: 2px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper-2);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.workflow-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.workflow-summary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.workflow-summary-item strong,
+.workflow-summary-item span {
+  display: block;
+}
+
+.workflow-summary-item span {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.mobile-workflow-nav {
+  display: none;
+}
+
+.mobile-role-nav {
+  display: none;
+}
+
+.workflow-tab {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 3px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  box-shadow: 3px 3px 0 var(--line);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.workflow-tab.active {
+  background: var(--yellow);
 }
 
 .brand-cluster {
@@ -296,7 +383,8 @@ textarea {
 .violation-row,
 .candidate-card,
 .scenario-row,
-.timeline-card {
+.timeline-card,
+.workflow-summary-item {
   border: 2px solid var(--line);
   border-radius: var(--radius);
   background: var(--paper);
@@ -415,6 +503,65 @@ textarea {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
+}
+
+.stage-decision {
+  padding: 14px 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: #ffffff;
+  box-shadow: none;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.stage-decision strong {
+  display: block;
+  margin-bottom: 4px;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 22px;
+}
+
+.review-lane {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.review-step {
+  padding: 12px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: #ffffff;
+}
+
+.review-step strong,
+.review-step span {
+  display: block;
+}
+
+.review-step strong {
+  font-size: 16px;
+  font-family: "Space Grotesk", sans-serif;
+}
+
+.review-step span {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.review-step.ready {
+  background: #eef8f1;
+}
+
+.review-step.watch {
+  background: #fff6e0;
+}
+
+.review-step.blocked {
+  background: #ffe8e2;
 }
 
 .pulse-card {
@@ -856,6 +1003,10 @@ textarea {
 }
 
 @media (max-width: 1260px) {
+  .workflow-band {
+    grid-template-columns: 1fr;
+  }
+
   .workspace-grid {
     grid-template-columns: 280px minmax(0, 1fr);
   }
@@ -869,6 +1020,10 @@ textarea {
 
   .ops-pulse {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .review-lane {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .event-timeline {
@@ -899,4 +1054,179 @@ textarea {
   .ops-pulse {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .review-lane {
+    grid-template-columns: 1fr;
+  }
+
+  .workflow-band,
+  .shell-top {
+    margin-left: 10px;
+    margin-right: 10px;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .workflow-band {
+    margin-top: 0;
+    padding: 14px;
+  }
+
+  .mobile-workflow-nav {
+    position: sticky;
+    top: 0;
+    z-index: 8;
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 0 10px 10px;
+    background: linear-gradient(180deg, rgba(246, 248, 251, 0.98), rgba(246, 248, 251, 0.92));
+    backdrop-filter: blur(6px);
+  }
+
+  .mobile-role-nav {
+    position: fixed;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    z-index: 12;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    padding: 8px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(10px);
+  }
+
+  .mobile-role-nav a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    border-radius: var(--radius);
+    text-decoration: none;
+    font-weight: 700;
+    color: var(--muted);
+  }
+
+  .mobile-role-nav a.active {
+    background: #e9f2ff;
+    color: var(--blue);
+  }
+
+  .workspace-grid {
+    padding-bottom: 92px;
+  }
+
+  .mobile-workflow-nav .workflow-tab {
+    flex: 0 0 auto;
+    min-width: 88px;
+  }
+
+  .inspector-group {
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  body[data-admin-panel="overview"] .workspace-grid > [data-mobile-panel="overview"] {
+    display: flex;
+  }
+
+  body[data-admin-panel="board"] .workspace-grid > [data-mobile-panel="board"] {
+    display: flex;
+  }
+
+  body[data-admin-panel="review"] .workspace-grid > .inspector-panel,
+  body[data-admin-panel="events"] .workspace-grid > .inspector-panel,
+  body[data-admin-panel="rules"] .workspace-grid > .inspector-panel {
+    display: flex;
+  }
+
+  body[data-admin-panel="review"] .inspector-group[data-mobile-panel="review"],
+  body[data-admin-panel="events"] .inspector-group[data-mobile-panel="events"],
+  body[data-admin-panel="rules"] .inspector-group[data-mobile-panel="rules"] {
+    display: flex;
+  }
+
+  body[data-admin-panel="overview"] .workspace-grid > :not([data-mobile-panel="overview"]),
+  body[data-admin-panel="board"] .workspace-grid > :not([data-mobile-panel="board"]),
+  body[data-admin-panel="review"] .workspace-grid > :not(.inspector-panel),
+  body[data-admin-panel="events"] .workspace-grid > :not(.inspector-panel),
+  body[data-admin-panel="rules"] .workspace-grid > :not(.inspector-panel) {
+    display: none;
+  }
+}
+
+@media (min-width: 921px) {
+  .inspector-group {
+    display: contents;
+  }
+}
+
+.panel,
+.rail-section,
+.inspector-block,
+.workflow-band,
+.top-link,
+.auth-badge,
+.mini-status,
+.section-count,
+.btn,
+.workflow-tab,
+.view-tab,
+.field input,
+.field select,
+.field textarea,
+.metric-chip,
+.roster-row,
+.pin-row,
+.rule-row,
+.violation-row,
+.candidate-card,
+.scenario-row,
+.timeline-card,
+.selection-box,
+.shift-option,
+.pin-remove,
+.legend-chip,
+.schedule-viewport,
+.checkbox-field {
+  border-color: var(--line-strong);
+  box-shadow: none;
+}
+
+.panel,
+.workflow-band,
+.schedule-viewport {
+  box-shadow: var(--shadow);
+}
+
+.btn-primary {
+  background: var(--blue);
+  color: #fff;
+}
+
+.btn-secondary,
+.view-tab,
+.workflow-tab,
+.top-link {
+  background: #f7fbff;
+}
+
+.btn-accent {
+  background: #e8f7ec;
+}
+
+.view-tab.active,
+.workflow-tab.active,
+.candidate-card.active {
+  background: #e9f2ff;
+}
+
+.candidate-card.published {
+  background: #e8f7ec;
 }

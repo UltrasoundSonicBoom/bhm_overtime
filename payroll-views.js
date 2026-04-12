@@ -381,8 +381,20 @@
       const empty = buildEmptyState(
         '급여명세서',
         '아직 등록된 명세서가 없습니다.',
-        '우측 상단 버튼으로 급여명세서를 업로드해주세요.',
-        null, null
+        '급여명세서 PDF를 업로드하면 자동으로 정리됩니다.',
+        function () {
+          const input = document.createElement('input');
+          input.type = 'file';
+          input.accept = '.pdf,.xlsx,.xls,.csv,.png,.jpg,.jpeg,.gif,.bmp,.webp';
+          input.style.display = 'none';
+          input.addEventListener('change', function () {
+            if (input.files.length > 0) handleInlineUpload(input.files[0]);
+            document.body.removeChild(input);
+          });
+          document.body.appendChild(input);
+          input.click();
+        },
+        '📄 급여명세서 업로드'
       );
       visualEl.appendChild(empty);
       return;
