@@ -1,0 +1,65 @@
+{
+  "date": "2026-04-12",
+  "window": "7d",
+  "metrics": {
+    "commits": 133,
+    "contributors": 1,
+    "prs_merged": 0,
+    "insertions_real": 62000,
+    "deletions_real": 26000,
+    "net_loc_real": 36000,
+    "insertions_with_dump": 1040000,
+    "test_loc": 0,
+    "test_ratio": 0.0,
+    "active_days": 8,
+    "sessions": 30,
+    "deep_sessions": 8,
+    "avg_session_minutes": 35,
+    "loc_per_session_hour": 1200,
+    "feat_pct": 0.38,
+    "fix_pct": 0.26,
+    "refactor_pct": 0.02,
+    "ui_ux_pct": 0.15,
+    "misc_pct": 0.09,
+    "peak_hour": 15,
+    "ai_assisted_commits": 0
+  },
+  "authors": {
+    "kgh1379": {
+      "commits": 133,
+      "insertions": 62000,
+      "deletions": 26000,
+      "test_ratio": 0.0,
+      "top_area": "index.html / app.js / server/"
+    }
+  },
+  "version_range": ["pre-v1.0", "pre-v1.0"],
+  "streak_days": 12,
+  "hotspots": [
+    "index.html (75)",
+    "app.js (52)",
+    "style.css (34)",
+    "payroll.js (12)",
+    "regulation.html (11)",
+    "onboarding.html (11)"
+  ],
+  "tweetable": "Week of Apr 5: 133 commits, ~62k LOC, 8 active days | Ship: RAG backend + Google Auth | Streak: 12d",
+  "test_health": {
+    "total_test_files": 11,
+    "tests_added_this_period": 0,
+    "regression_test_commits": 0,
+    "test_files_changed": 0
+  },
+  "track_progress": {
+    "A1": "pending",
+    "A2": "done",
+    "A3": "done",
+    "A4": "done (spec)",
+    "A5": "done (spec)",
+    "B1": "done",
+    "B2": "done (schema)",
+    "B3": "done (spec)",
+    "B4": "pending",
+    "B5": "pending"
+  }
+}
