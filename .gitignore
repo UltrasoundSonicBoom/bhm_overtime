@@ -17,8 +17,12 @@ Thumbs.db
 *.swp
 *.swo
 
-# Claude/AI
-.claude/
+# Claude/AI (settings 제외, agents/skills는 공유)
+.claude/*
+!.claude/agents
+!.claude/agents/**
+!.claude/skills
+!.claude/skills/**
 
 credentials.md
 
