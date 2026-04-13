@@ -176,12 +176,22 @@ window.GoogleAuth = (function () {
       return;
     }
 
+    // 첫 로그인부터 Drive + Calendar scope 까지 한 번에 요청한다.
+    // 사용자 기대: "Google 로그인 = Drive/Calendar 자동 연동" — 별도 토글로 추가 동의를 받지 않는다.
+    // 트레이드오프: 동의 화면이 길어진다 (사용자가 거부할 가능성 ↑) — 그래도 명시적 통합 UX를 우선한다.
     _tokenClient = window.google.accounts.oauth2.initTokenClient({
       client_id: GOOGLE_CLIENT_ID,
-      scope: SCOPE_BASE,
+      scope: SCOPE_BASE + ' ' + SCOPE_DRIVE + ' ' + SCOPE_CALENDAR,
       callback: function (response) {
         handleTokenResponse(response, function (user) {
-          // 로그인 성공 시: Drive 백업 + Calendar UI 업데이트 후 fullSync
+          // 로그인 성공 = Drive/Calendar 동의 완료. 즉시 활성화.
+          if (response.scope) {
+            var scopes = response.scope.split(' ');
+            saveSettings({
+              driveEnabled: scopes.indexOf(SCOPE_DRIVE) !== -1,
+              calendarEnabled: scopes.indexOf(SCOPE_CALENDAR) !== -1
+            });
+          }
           if (typeof updateDriveBackupUI === 'function') updateDriveBackupUI();
           if (typeof updateCalendarUI === 'function') updateCalendarUI();
           if (window.SyncManager) window.SyncManager.fullSync();
@@ -204,6 +214,31 @@ window.GoogleAuth = (function () {
       }
       updateAuthUI(null);
     }
+
+    // I1: 탭 간 로그인 상태 동기화
+    // 다른 탭이 로그인/로그아웃/계정전환을 수행하면 googleSub 값이 바뀐다.
+    // 이 탭이 메모리에 갖고 있는 _accessToken 은 이전 계정 것이므로 그대로 쓰면 데이터가 섞인다.
+    // → 현재 탭의 pending push 를 중단하고 새로고침해 상태를 재정합.
+    _attachCrossTabSync();
+  }
+
+  var _knownSub = null;
+  function _attachCrossTabSync() {
+    try { _knownSub = loadSettings().googleSub || null; } catch (e) { _knownSub = null; }
+    window.addEventListener('storage', function (e) {
+      if (e.key !== 'bhm_settings') return;
+      var nextSub = null;
+      try { nextSub = (JSON.parse(e.newValue || '{}') || {}).googleSub || null; } catch (err) { nextSub = null; }
+      if (nextSub === _knownSub) return; // googleSub 외 필드(driveEnabled 등) 변경은 무시
+      _knownSub = nextSub;
+      if (window.SyncManager && typeof window.SyncManager.clearPendingPushes === 'function') {
+        window.SyncManager.clearPendingPushes();
+      }
+      _accessToken = null;
+      _tokenExpiry = 0;
+      _grantedScopes = [];
+      window.location.reload();
+    });
   }
 
   // ── signIn ──
@@ -220,23 +255,74 @@ window.GoogleAuth = (function () {
   }
 
   // ── signOut ──
+  // 1) 진행 중인 Drive push 큐를 즉시 취소 (C4: 계정 전환 경합 차단)
+  // 2) revoke 가 실제로 전송된 뒤 reload (C3: 토큰 원격 무효화 보장)
+  //    - Promise 콜백 경로가 우선, 페이지 종료 시 sendBeacon 으로 백업
+  // 3) Supabase 세션도 함께 종료 (I4: 이중 auth 상태 불일치 제거)
   function signOut() {
-    var settings = loadSettings();
-    if (_accessToken && window.google && window.google.accounts) {
-      window.google.accounts.oauth2.revoke(_accessToken, function () {
-        console.log('[GoogleAuth] token revoked');
-      });
+    if (window.SyncManager && typeof window.SyncManager.clearPendingPushes === 'function') {
+      window.SyncManager.clearPendingPushes();
     }
-    _clearUser();
-    updateAuthUI(null);
-    // getUserStorageKey는 이제 'guest'를 반환 → 기존 데이터 접근 불가 (의도된 동작)
-    window.location.reload();
+
+    // Supabase 병행 세션 정리 (실패해도 흐름 진행)
+    if (window.SupabaseClient && window.SupabaseClient.auth && typeof window.SupabaseClient.auth.signOut === 'function') {
+      try { window.SupabaseClient.auth.signOut(); } catch (e) {
+        console.warn('[GoogleAuth] supabase signOut failed:', e);
+      }
+    }
+
+    var tokenToRevoke = _accessToken;
+
+    function finalize() {
+      _clearUser();
+      updateAuthUI(null);
+      // getUserStorageKey는 이제 'guest'를 반환 → 기존 데이터 접근 불가 (의도된 동작)
+      window.location.reload();
+    }
+
+    if (tokenToRevoke && navigator.sendBeacon) {
+      try {
+        var url = 'https://oauth2.googleapis.com/revoke?token=' + encodeURIComponent(tokenToRevoke);
+        navigator.sendBeacon(url, new Blob([], { type: 'application/x-www-form-urlencoded' }));
+      } catch (e) {
+        console.warn('[GoogleAuth] sendBeacon revoke failed:', e);
+      }
+    }
+
+    if (tokenToRevoke && window.google && window.google.accounts && window.google.accounts.oauth2) {
+      var called = false;
+      var done = function () {
+        if (called) return;
+        called = true;
+        finalize();
+      };
+      try {
+        window.google.accounts.oauth2.revoke(tokenToRevoke, done);
+      } catch (e) {
+        console.warn('[GoogleAuth] revoke threw:', e);
+      }
+      // GIS revoke 콜백이 유실될 가능성 대비 2초 후 강제 finalize
+      setTimeout(done, 2000);
+    } else {
+      finalize();
+    }
   }
 
-  // ── isSignedIn ──
-  // access token이 유효하거나, settings에 sub가 있으면 "연결됨" 상태
+  // ── isSignedIn (legacy) ──
+  // 과거 호출부 호환용. 의미상 "이 기기가 어떤 Google 계정과 연결된 적 있음" 과 동일.
+  // 새 코드는 목적에 따라 hasValidToken() 또는 hasAccountLink() 를 명시적으로 사용한다.
   function isSignedIn() {
-    if (_isTokenValid()) return true;
+    return hasAccountLink();
+  }
+
+  // 현재 메모리에 유효한 access token 이 있는지. Drive/Calendar 네트워크 호출의 전제.
+  function hasValidToken() {
+    return _isTokenValid();
+  }
+
+  // 이 기기가 Google 계정과 연결되어 있는지 (토큰 유효성과 무관).
+  // UI 표시, 키 사일로 결정 용도.
+  function hasAccountLink() {
     var settings = loadSettings();
     return !!settings.googleSub;
   }
@@ -323,6 +409,8 @@ window.GoogleAuth = (function () {
     signIn: signIn,
     signOut: signOut,
     isSignedIn: isSignedIn,
+    hasValidToken: hasValidToken,
+    hasAccountLink: hasAccountLink,
     getUser: getUser,
     getAccessToken: getAccessToken,
     refreshToken: refreshToken,

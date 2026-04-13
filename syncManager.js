@@ -37,13 +37,29 @@ window.SyncManager = (function () {
     return id;
   })();
 
-  function _wrap(data) {
+  function _wrap(data, editedAt) {
     return {
       schemaVersion: SCHEMA_VERSION,
-      updatedAt: new Date().toISOString(),
+      updatedAt: editedAt || new Date().toISOString(),
       deviceId: _deviceId,
       data: data
     };
+  }
+
+  // ── 로컬 편집 시각 기록/조회 ──
+  // C2: Drive 충돌 해결을 위해 baseKey 단위로 마지막 편집 시각을 저장한다.
+  // 각 데이터 모듈(overtime/leave/profile)의 setter 에서 window.recordLocalEdit(baseKey) 호출.
+  function recordLocalEdit(baseKey, whenIso) {
+    try {
+      var localKey = window.getUserStorageKey ? window.getUserStorageKey(baseKey) : baseKey + '_guest';
+      localStorage.setItem('bhm_lastEdit_' + localKey, whenIso || new Date().toISOString());
+    } catch (e) {
+      // 저장소 초과 등 실패 시 조용히 무시 (데이터 손상보다 낫다)
+    }
+  }
+  function getLocalEditTime(localKey) {
+    var v = localStorage.getItem('bhm_lastEdit_' + localKey);
+    return v ? new Date(v).getTime() : 0;
   }
 
   // ── 드라이브 사용 가능 여부 확인 ──
@@ -74,6 +90,9 @@ window.SyncManager = (function () {
     _timers[key] = setTimeout(function () {
       pushToDrive(dataType, year, month).catch(function (e) {
         console.warn('[SyncManager] push failed:', e);
+        // I2: 조용히 실패하지 않고 사용자에게 알린다.
+        // 로컬에는 저장됐지만 Drive 반영 실패 — 다음 편집 시 재시도.
+        _showToast('☁️ Drive 동기화 실패. 로컬에 저장됐어요.', 4000);
       });
     }, DEBOUNCE_MS);
   }
@@ -96,7 +115,9 @@ window.SyncManager = (function () {
     var data;
     try { data = JSON.parse(raw); } catch (e) { return Promise.reject(e); }
 
-    return window.GoogleDriveStore.writeJsonFile(map.driveFile, _wrap(data)).then(function () {
+    var editedAt = localStorage.getItem('bhm_lastEdit_' + localKey) || undefined;
+
+    return window.GoogleDriveStore.writeJsonFile(map.driveFile, _wrap(data, editedAt)).then(function () {
       _lastSync = new Date();
       _updateSyncLabel();
     });
@@ -135,13 +156,24 @@ window.SyncManager = (function () {
         if (!localRaw) {
           // 로컬 없음 → Drive 데이터 바로 복원
           localStorage.setItem(localKey, JSON.stringify(wrapped.data));
+          if (wrapped.updatedAt) {
+            localStorage.setItem('bhm_lastEdit_' + localKey, wrapped.updatedAt);
+          }
           return { type: dataType, result: 'restored' };
         }
 
-        // 충돌 해결: updatedAt 비교
-        var conflict = resolveConflict(localRaw, wrapped);
+        // 충돌 해결 (C2): bhm_lastEdit_<localKey> 와 wrapped.updatedAt 비교
+        var conflict = resolveConflict(localKey, wrapped);
         if (conflict === 'remote') {
+          // 덮어쓰기 전에 로컬 편집이 있었다면 orphan 으로 백업
+          if (getLocalEditTime(localKey) > 0) {
+            var orphanStamp = new Date().toISOString().replace(/[:.]/g, '-');
+            localStorage.setItem(localKey + '_orphan_' + orphanStamp, localRaw);
+          }
           localStorage.setItem(localKey, JSON.stringify(wrapped.data));
+          if (wrapped.updatedAt) {
+            localStorage.setItem('bhm_lastEdit_' + localKey, wrapped.updatedAt);
+          }
           return { type: dataType, result: 'remote_wins' };
         }
         return { type: dataType, result: 'local_wins' };
@@ -152,17 +184,15 @@ window.SyncManager = (function () {
   }
 
   // ── resolveConflict ──
-  // local: raw JSON string, remote: Drive 래퍼 { updatedAt, data }
+  // localKey: 전체 localStorage 키 (예: overtimeRecords_112233...)
+  // remoteWrapped: Drive 래퍼 { updatedAt, data }
   // 반환: 'local' | 'remote'
-  function resolveConflict(localRaw, remoteWrapped) {
-    var localObj;
-    try { localObj = JSON.parse(localRaw); } catch (e) { return 'remote'; }
-
-    // 로컬에 updatedAt이 있으면 비교, 없으면 remote 우선
-    var localTime = localObj && localObj.updatedAt ? new Date(localObj.updatedAt).getTime() : 0;
-    var remoteTime = remoteWrapped.updatedAt ? new Date(remoteWrapped.updatedAt).getTime() : 0;
-
-    // 동점이면 remote 우선 (다른 기기 데이터 보존)
+  // bhm_lastEdit_<localKey> 에 기록된 마지막 편집 시각을 기준으로 비교한다.
+  // 로컬 편집 시각이 없고 원격 데이터만 존재하면 remote 승 (다른 기기 데이터 보존).
+  function resolveConflict(localKey, remoteWrapped) {
+    var localTime = getLocalEditTime(localKey);
+    var remoteTime = remoteWrapped && remoteWrapped.updatedAt
+      ? new Date(remoteWrapped.updatedAt).getTime() : 0;
     return localTime > remoteTime ? 'local' : 'remote';
   }
 
@@ -204,6 +234,12 @@ window.SyncManager = (function () {
   // ── migrateGuestData ──
   // 비로그인(_guest) → 로그인(_{googleSub}) 키 이전
   // 로그인 직후, pullFromDrive 전에 호출
+  //
+  // 충돌 정책 (C1):
+  //   (a) newKey 가 비어 있음 → guest 데이터를 그대로 이전
+  //   (b) newKey 가 있지만 guest 데이터가 더 새로움 → guest 를 이전, 기존 newKey 는 _orphan 로 백업
+  //   (c) newKey 가 있고 더 새로움 → guest 를 _orphan 로 백업 (삭제하지 않음)
+  // 어떤 경우에도 guest 편집분이 조용히 사라지지 않도록 보장한다.
   function migrateGuestData(googleSub) {
     var MIGRATE_KEYS = [
       { base: 'bhm_hr_profile',  dataType: 'profile' },
@@ -214,7 +250,14 @@ window.SyncManager = (function () {
 
     var guestSuffix = '_guest';
     var newSuffix = '_' + googleSub;
+    var orphanStamp = new Date().toISOString().replace(/[:.]/g, '-');
     var migrated = [];
+    var orphaned = [];
+
+    function editTime(suffix, base) {
+      var v = localStorage.getItem('bhm_lastEdit_' + base + suffix);
+      return v ? new Date(v).getTime() : 0;
+    }
 
     MIGRATE_KEYS.forEach(function (item) {
       var guestKey = item.base + guestSuffix;
@@ -222,16 +265,43 @@ window.SyncManager = (function () {
       var guestData = localStorage.getItem(guestKey);
       if (!guestData) return;
 
-      // 이미 로그인 키에 데이터가 있으면 덮어쓰지 않음 (Drive 데이터 보존)
-      if (!localStorage.getItem(newKey)) {
+      var existing = localStorage.getItem(newKey);
+      var guestTime = editTime(guestSuffix, item.base);
+      var existingTime = editTime(newSuffix, item.base);
+
+      if (!existing) {
+        // (a) 바로 이전
         localStorage.setItem(newKey, guestData);
+        var guestEdit = localStorage.getItem('bhm_lastEdit_' + guestKey);
+        if (guestEdit) localStorage.setItem('bhm_lastEdit_' + newKey, guestEdit);
         migrated.push(item.base);
+      } else if (guestTime > existingTime) {
+        // (b) guest 가 더 새로움 → 기존을 orphan 로 백업 후 덮어쓰기
+        var orphanKey = item.base + '_orphan_' + orphanStamp + newSuffix;
+        localStorage.setItem(orphanKey, existing);
+        localStorage.setItem(newKey, guestData);
+        var guestEdit2 = localStorage.getItem('bhm_lastEdit_' + guestKey);
+        if (guestEdit2) localStorage.setItem('bhm_lastEdit_' + newKey, guestEdit2);
+        orphaned.push(item.base + ' (existing backed up)');
+        migrated.push(item.base);
+      } else {
+        // (c) 기존이 더 새로움 → guest 를 orphan 로 백업
+        var orphanKey2 = item.base + '_orphan_' + orphanStamp + guestSuffix;
+        localStorage.setItem(orphanKey2, guestData);
+        orphaned.push(item.base + ' (guest backed up)');
       }
+
+      // 원본 guest 키는 정리 (orphan 에 이미 보존됨)
       localStorage.removeItem(guestKey);
+      localStorage.removeItem('bhm_lastEdit_' + guestKey);
     });
 
     if (migrated.length > 0) {
       console.log('[SyncManager] migrated guest keys:', migrated);
+    }
+    if (orphaned.length > 0) {
+      console.warn('[SyncManager] guest/login conflicts archived as _orphan:', orphaned);
+      _showToast('⚠️ 비로그인 편집분 중 일부를 _orphan 백업으로 보관했어요. 관리자에게 문의해 주세요.', 6000);
     }
   }
 
@@ -251,12 +321,25 @@ window.SyncManager = (function () {
     el.textContent = '마지막 동기화: ' + h + ':' + m;
   }
 
+  // ── clearPendingPushes ──
+  // signOut 등 계정 전환 경합을 막기 위해 대기 중인 debounce 타이머를 모두 취소한다
+  function clearPendingPushes() {
+    Object.keys(_timers).forEach(function (k) { clearTimeout(_timers[k]); });
+    _timers = {};
+  }
+
+  // 전역 편의 바인딩 — 데이터 모듈이 저장 직후 호출
+  window.recordLocalEdit = recordLocalEdit;
+
   return {
     enqueuePush: enqueuePush,
     pushToDrive: pushToDrive,
     pullFromDrive: pullFromDrive,
     fullSync: fullSync,
     migrateGuestData: migrateGuestData,
-    resolveConflict: resolveConflict
+    resolveConflict: resolveConflict,
+    clearPendingPushes: clearPendingPushes,
+    recordLocalEdit: recordLocalEdit,
+    getLocalEditTime: getLocalEditTime
   };
 })();

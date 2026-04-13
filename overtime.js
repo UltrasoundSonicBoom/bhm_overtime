@@ -17,6 +17,7 @@ const OVERTIME = {
 
     _saveAll(data) {
         localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
+        if (window.recordLocalEdit) window.recordLocalEdit('overtimeRecords');
     },
 
     _monthKey(year, month) {
@@ -44,10 +45,6 @@ const OVERTIME = {
         all[key].push(record);
         this._saveAll(all);
 
-        // Sync to Supabase async
-        if (window.SupabaseSync) {
-            window.SupabaseSync.pushCloudData('overtime_records', record);
-        }
         if (window.SyncManager) window.SyncManager.enqueuePush('overtime');
 
         return record;
@@ -61,10 +58,6 @@ const OVERTIME = {
                 all[key][idx] = { ...all[key][idx], ...updates, id };
                 this._saveAll(all);
 
-                // Sync to Supabase async
-                if (window.SupabaseSync) {
-                    window.SupabaseSync.pushCloudData('overtime_records', all[key][idx]);
-                }
                 if (window.SyncManager) window.SyncManager.enqueuePush('overtime');
 
                 return all[key][idx];
@@ -81,10 +74,6 @@ const OVERTIME = {
                 all[key].splice(idx, 1);
                 this._saveAll(all);
 
-                // Sync delete to Supabase async
-                if (window.SupabaseSync) {
-                    window.SupabaseSync.deleteCloudRecord('overtime_records', id);
-                }
                 if (window.SyncManager) window.SyncManager.enqueuePush('overtime');
 
                 return true;

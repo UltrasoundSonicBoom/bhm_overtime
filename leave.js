@@ -63,6 +63,7 @@ const LEAVE = {
 
     _saveAll(data) {
         localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
+        if (window.recordLocalEdit) window.recordLocalEdit('leaveRecords');
     },
 
     // ── CRUD ──
@@ -133,10 +134,6 @@ const LEAVE = {
         all[year].push(record);
         this._saveAll(all);
 
-        // Sync to Supabase async
-        if (window.SupabaseSync) {
-            window.SupabaseSync.pushCloudData('leave_records', record);
-        }
         if (window.SyncManager) window.SyncManager.enqueuePush('leave');
         if (window.GoogleCalendarSync) {
             window.GoogleCalendarSync.createOrUpdateEvent(record).catch(function (e) {
@@ -177,10 +174,6 @@ const LEAVE = {
 
                 this._saveAll(all);
 
-                // Sync to Supabase async
-                if (window.SupabaseSync) {
-                    window.SupabaseSync.pushCloudData('leave_records', all[year][idx]);
-                }
                 if (window.SyncManager) window.SyncManager.enqueuePush('leave');
                 if (window.GoogleCalendarSync) {
                     window.GoogleCalendarSync.createOrUpdateEvent(all[year][idx]).catch(function (e) {
@@ -203,10 +196,6 @@ const LEAVE = {
                 all[year].splice(idx, 1);
                 this._saveAll(all);
 
-                // Sync delete to Supabase async
-                if (window.SupabaseSync) {
-                    window.SupabaseSync.deleteCloudRecord('leave_records', id);
-                }
                 if (window.SyncManager) window.SyncManager.enqueuePush('leave');
                 if (window.GoogleCalendarSync) {
                     window.GoogleCalendarSync.deleteEvent(deletedRecord).catch(function (e) {

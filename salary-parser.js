@@ -914,6 +914,16 @@ const SALARY_PARSER = (() => {
 
     localStorage.setItem(key, JSON.stringify({ ...merged, savedAt: new Date().toISOString() }));
     if (window.SyncManager) window.SyncManager.enqueuePush('payslip', year, month);
+
+    // 사번 자동 채움: 프로필에 사번이 비어 있고 payslip에서 추출된 사번이 있으면 저장
+    var empNum = merged && merged.employeeInfo && merged.employeeInfo.employeeNumber;
+    if (empNum && typeof PROFILE !== 'undefined') {
+      var current = PROFILE.load() || {};
+      if (!current.employeeNumber) {
+        PROFILE.save({ ...current, employeeNumber: String(empNum).trim() });
+      }
+    }
+
     // 급여 유형 저장 완료 시 ImprovementAgent 자동 실행
     if (!type || type === '급여') {
       if (typeof PayrollImprovementAgent !== 'undefined') {

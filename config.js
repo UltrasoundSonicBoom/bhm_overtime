@@ -29,6 +29,7 @@ window.BHM_CONFIG = {
   // 심사 전 허용 사용자 제한
   allowlistEnabled: true,
   allowlistEmails: [
-    'stevegogothing@gmail.com'
+    'stevegogothing@gmail.com',
+    'steve.gogothing@gmail.com'
   ]
 };

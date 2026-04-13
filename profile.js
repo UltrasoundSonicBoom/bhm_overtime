@@ -10,6 +10,7 @@ const PROFILE = {
     // ── 기본 프로필 템플릿 ──
     defaults: {
         name: '',
+        employeeNumber: '', // 사번 (payslip 업로드 시 자동 채움)
         gender: '',        // 'M' / 'F' / '' (미설정)
         jobType: '간호직',
         grade: 'J3',
@@ -39,12 +40,8 @@ const PROFILE = {
     save(data) {
         const profile = { ...this.defaults, ...data, savedAt: new Date().toISOString() };
         localStorage.setItem(this.STORAGE_KEY, JSON.stringify(profile));
-        
-        // Sync to Supabase async (로그인 상태일 때만) — TODO Phase 5: 제거
-        if (window.isFamilyMode && window.SupabaseSync && window.SupabaseUser) {
-            profile.id = window.SupabaseUser.id;
-            window.SupabaseSync.pushCloudData('profiles', profile);
-        }
+        if (window.recordLocalEdit) window.recordLocalEdit('bhm_hr_profile');
+
         if (window.SyncManager) window.SyncManager.enqueuePush('profile');
 
         return profile;
