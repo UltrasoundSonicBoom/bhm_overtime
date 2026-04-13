@@ -43,42 +43,26 @@ function getCaptureParams() {
   return new URLSearchParams(window.location.search);
 }
 
+// ── 홈 탭 기간 상태 ──
+var _homePeriod = 'month'; // 'month' | 'year'
+
+function switchHomePeriod(period) {
+  _homePeriod = period;
+  document.querySelectorAll('.home-period-btn').forEach(function(btn) {
+    btn.classList.toggle('active', btn.dataset.period === period);
+  });
+  initHomeTab();
+}
+window.switchHomePeriod = switchHomePeriod;
+
 // ── 홈 탭 ──
 function initHomeTab() {
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth() + 1;
 
-  // ── 시간외/온콜 요약 ──
-  const otStats = OVERTIME.calcMonthlyStats(year, month);
-  const otBody = document.getElementById('homeOtBody');
-  const otStatsEl = document.getElementById('homeOtStats');
-
-  if (otStats.recordCount > 0) {
-    const lines = [];
-    if (otStats.byType.overtime.count > 0) {
-      lines.push(`<div class="home-stat-row"><span class="home-stat-label">시간외</span><span class="home-stat-value">${otStats.byType.overtime.hours}시간</span></div>`);
-    }
-    if (otStats.byType.oncall_standby.count > 0) {
-      lines.push(`<div class="home-stat-row"><span class="home-stat-label">온콜 대기</span><span class="home-stat-value">${otStats.byType.oncall_standby.count}일</span></div>`);
-    }
-    if (otStats.byType.oncall_callout.count > 0) {
-      lines.push(`<div class="home-stat-row"><span class="home-stat-label">온콜 출동</span><span class="home-stat-value">${otStats.byType.oncall_callout.count}회</span></div>`);
-    }
-    if (otStats.totalPay > 0) {
-      lines.push(`<div class="home-stat-row"><span class="home-stat-label">예상 수당</span><span class="home-stat-value amber">₩${otStats.totalPay.toLocaleString()}</span></div>`);
-    }
-    otStatsEl.innerHTML = lines.join('');
-    otBody.style.display = '';
-  } else {
-    otBody.style.display = 'none';
-  }
-
-  // ── 휴가 요약 ──
+  // 프로필에서 totalAnnual 계산 (leave 뷰 공통)
   const profile = PROFILE.load();
-  const leaveBody = document.getElementById('homeLeaveBody');
-  const leaveStatsEl = document.getElementById('homeLeaveStats');
-
   let totalAnnual = 0;
   if (profile && profile.hireDate) {
     const parsed = PROFILE.parseDate(profile.hireDate);
@@ -88,26 +72,109 @@ function initHomeTab() {
     }
   }
 
+  if (_homePeriod === 'month') {
+    _renderHomeOtMonth(year, month);
+    _renderHomeLeaveMonth(year, month, totalAnnual);
+  } else {
+    _renderHomeOtYear(year);
+    _renderHomeLeaveYear(year, totalAnnual);
+  }
+
+  loadNotice();
+  loadChangelog();
+}
+window.initHomeTab = initHomeTab;
+
+// 월 시간외 렌더
+function _renderHomeOtMonth(year, month) {
+  const otStats = OVERTIME.calcMonthlyStats(year, month);
+  const otBody = document.getElementById('homeOtBody');
+  const otStatsEl = document.getElementById('homeOtStats');
+
+  if (otStats.recordCount > 0) {
+    // month/year는 new Date()에서 온 정수. XSS 위험 없음
+    const lines = ['<div class="home-stat-period">' + month + '월 현황</div>'];
+    if (otStats.byType.overtime.count > 0) {
+      lines.push('<div class="home-stat-row"><span class="home-stat-label">시간외</span><span class="home-stat-value">' + otStats.byType.overtime.hours + '시간</span></div>');
+    }
+    if (otStats.byType.oncall_standby.count > 0) {
+      lines.push('<div class="home-stat-row"><span class="home-stat-label">온콜 대기</span><span class="home-stat-value">' + otStats.byType.oncall_standby.count + '일</span></div>');
+    }
+    if (otStats.byType.oncall_callout.count > 0) {
+      lines.push('<div class="home-stat-row"><span class="home-stat-label">온콜 출동</span><span class="home-stat-value">' + otStats.byType.oncall_callout.count + '회</span></div>');
+    }
+    if (otStats.totalPay > 0) {
+      lines.push('<div class="home-stat-row"><span class="home-stat-label">예상 수당</span><span class="home-stat-value amber">₩' + otStats.totalPay.toLocaleString() + '</span></div>');
+    }
+    otStatsEl.innerHTML = lines.join('');
+    otBody.style.display = '';
+  } else {
+    otBody.style.display = 'none';
+  }
+}
+
+// 연간 시간외 렌더
+function _renderHomeOtYear(year) {
+  const s = OVERTIME.calcYearlyStats(year);
+  const otBody = document.getElementById('homeOtBody');
+  const otStatsEl = document.getElementById('homeOtStats');
+
+  if (s.recordCount > 0) {
+    const oncallCount = s.totalOncallStandbyCount + s.totalOncallCalloutCount;
+    const lines = ['<div class="home-stat-period">' + year + '년 합계</div>'];
+    if (s.totalOvertimeHours > 0) {
+      lines.push('<div class="home-stat-row"><span class="home-stat-label">시간외</span><span class="home-stat-value">' + s.totalOvertimeHours + '시간</span></div>');
+    }
+    if (oncallCount > 0) {
+      lines.push('<div class="home-stat-row"><span class="home-stat-label">온콜</span><span class="home-stat-value">' + oncallCount + '회 / ' + s.totalOncallHours + '시간</span></div>');
+    }
+    if (s.totalPay > 0) {
+      lines.push('<div class="home-stat-row"><span class="home-stat-label">예상 수당</span><span class="home-stat-value amber">₩' + s.totalPay.toLocaleString() + '</span></div>');
+    }
+    otStatsEl.innerHTML = lines.join('');
+    otBody.style.display = '';
+  } else {
+    otBody.style.display = 'none';
+  }
+}
+
+// 월 연차 렌더
+function _renderHomeLeaveMonth(year, month, totalAnnual) {
+  const leaveBody = document.getElementById('homeLeaveBody');
+  const leaveStatsEl = document.getElementById('homeLeaveStats');
+
   if (totalAnnual > 0) {
-    const summary = LEAVE.calcAnnualSummary(year, totalAnnual);
-    const pct = summary.usagePercent;
-    leaveStatsEl.innerHTML = `
-      <div class="home-stat-row"><span class="home-stat-label">연차</span><span class="home-stat-value emerald">${summary.usedAnnual} / ${summary.totalAnnual}일</span></div>
-      <div class="home-progress-wrap"><div class="home-progress-bar" style="width:${pct}%"></div></div>
-    `;
+    const summary = LEAVE.calcMonthlySummary(year, month);
+    const pct = totalAnnual > 0 ? Math.round((summary.annualUsed / totalAnnual) * 100) : 0;
+    leaveStatsEl.innerHTML =
+      '<div class="home-stat-period">' + month + '월 현황</div>' +
+      '<div class="home-stat-row"><span class="home-stat-label">연차</span><span class="home-stat-value emerald">' + summary.annualUsed + ' / ' + totalAnnual + '일</span></div>' +
+      '<div class="home-progress-wrap"><div class="home-progress-bar" style="width:' + pct + '%"></div></div>';
     leaveBody.style.display = '';
   } else {
     leaveBody.style.display = 'none';
   }
-
-
-  // ── 공지사항 (notice.md에서 로드) ──
-  loadNotice();
-
-  // ── 업데이트 내역 (CHANGELOG.md에서 로드) ──
-  loadChangelog();
 }
-window.initHomeTab = initHomeTab;
+
+// 연간 연차 렌더
+function _renderHomeLeaveYear(year, totalAnnual) {
+  const leaveBody = document.getElementById('homeLeaveBody');
+  const leaveStatsEl = document.getElementById('homeLeaveStats');
+
+  if (totalAnnual > 0) {
+    const summary = LEAVE.calcAnnualSummary(year, totalAnnual);
+    const pct = summary.usagePercent;
+    const remaining = totalAnnual - summary.usedAnnual;
+    leaveStatsEl.innerHTML =
+      '<div class="home-stat-period">' + year + '년 합계</div>' +
+      '<div class="home-stat-row"><span class="home-stat-label">연차</span><span class="home-stat-value emerald">' + summary.usedAnnual + ' / ' + summary.totalAnnual + '일</span></div>' +
+      '<div class="home-stat-row"><span class="home-stat-label">잔여</span><span class="home-stat-value">' + remaining + '일</span></div>' +
+      '<div class="home-progress-wrap"><div class="home-progress-bar" style="width:' + pct + '%"></div></div>';
+    leaveBody.style.display = '';
+  } else {
+    leaveBody.style.display = 'none';
+  }
+}
 
 // ── Newsboard 탭 전환 ──
 function switchNewsTab(tab) {
@@ -2235,11 +2302,13 @@ function initPayEstimate() {
 
 // ═══════════ 💼 퇴직금 계산기 (임베드) ═══════════
 
+// data.js severanceMultipliersPre2001 과 동기화 (2001.08.31 이전 입사자 누진배수)
+// 16~19, 21~24, 26~29년은 5년 마일스톤 사이를 선형 보간
 var RET_RATES = [
-  [1,1],[2,2],[3,3],[4,4.5],[5,7.5],[6,9],[7,10.5],[8,12],[9,13.5],
-  [10,15.5],[11,17],[12,18.5],[13,20],[14,22],[15,24],[16,25.5],[17,27],
-  [18,28.5],[19,30.5],[20,33],[21,35],[22,37],[23,39],[24,41],[25,42.5],
-  [26,44],[27,45.5],[28,47],[29,49.5],[30,52.5]
+  [1,1.0],[2,2.0],[3,3.5],[4,5.5],[5,7.5],[6,9.1],[7,10.7],[8,12.3],[9,13.9],
+  [10,15.5],[11,17.2],[12,18.9],[13,20.6],[14,22.3],[15,24.0],[16,25.8],[17,27.6],
+  [18,29.4],[19,31.2],[20,33.0],[21,34.9],[22,36.8],[23,38.7],[24,40.6],[25,42.5],
+  [26,44.5],[27,46.5],[28,48.5],[29,50.5],[30,52.5]
 ];
 var RET_SEVERANCE_RATES = [
   [1,5,0.10],[5,10,0.35],[10,15,0.45],[15,20,0.50],[20,999,0.60]
@@ -2487,16 +2556,17 @@ function initRetirementTab() {
   // 지급률 테이블은 한 번만 빌드
   var tbody = document.getElementById('retRateTableBody');
   if (tbody && !tbody.hasChildNodes()) {
-    for (var i = 0; i < RET_RATES.length; i += 2) {
+    var half = Math.ceil(RET_RATES.length / 2);
+    function makeCell(text, bold) {
+      var td = document.createElement('td');
+      td.style.padding = '7px 8px'; td.style.textAlign = 'center';
+      if (bold) td.style.fontWeight = '700';
+      td.textContent = text; return td;
+    }
+    for (var i = 0; i < half; i++) {
       var tr = document.createElement('tr');
       tr.style.borderBottom = '1px solid rgba(26,26,26,0.08)';
-      var left = RET_RATES[i], right = RET_RATES[i + 1] || null;
-      function makeCell(text, bold) {
-        var td = document.createElement('td');
-        td.style.padding = '7px 8px'; td.style.textAlign = 'center';
-        if (bold) td.style.fontWeight = '700';
-        td.textContent = text; return td;
-      }
+      var left = RET_RATES[i], right = RET_RATES[i + half] || null;
       tr.appendChild(makeCell(left[0] + '년', false));
       tr.appendChild(makeCell(left[1] + '월', true));
       tr.appendChild(makeCell(right ? right[0] + '년' : '', false));

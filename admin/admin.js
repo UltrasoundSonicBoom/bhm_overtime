@@ -1,6 +1,3 @@
-const SUPABASE_URL = 'https://ulamqyarenzjdxlisijl.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_Mg-Uzj8SwPBaXi3-d-E8PQ_ojRdKASi';
-
 function createFallbackSupabase() {
   return {
     auth: {
@@ -17,9 +14,9 @@ function createFallbackSupabase() {
   };
 }
 
-const supabaseClient = window.supabase?.createClient
-  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-  : createFallbackSupabase();
+// supabaseClient는 initApp()에서 서버로부터 config를 받아 초기화됩니다.
+// 소스코드에 키를 하드코딩하지 않습니다.
+let supabaseClient = createFallbackSupabase();
 
 const API_BASE = (() => {
   const hostname = window.location.hostname;
@@ -56,7 +53,8 @@ const state = {
 
 const els = {
   loginBtn: document.getElementById('loginBtn'),
-  authStatus: document.getElementById('authStatus'),
+  // 새 셸: authStatusBadge (이전: authStatus)
+  authStatus: document.getElementById('authStatusBadge') || document.getElementById('authStatus'),
   yearInput: document.getElementById('yearInput'),
   refreshBtn: document.getElementById('refreshBtn'),
   refreshNextBtn: document.getElementById('refreshNextBtn'),
@@ -83,9 +81,12 @@ const els = {
   faqSubmitBtn: document.getElementById('faqSubmitBtn'),
   faqResetBtn: document.getElementById('faqResetBtn'),
   faqList: document.getElementById('faqList'),
+  // 새 셸에서 scenarioSummary/List는 제거됨, null-safe로 처리
   scenarioSummary: document.getElementById('scenarioSummary'),
   scenarioList: document.getElementById('scenarioList'),
-  resultBox: document.getElementById('resultBox'),
+  // 새 셸: globalLog (이전: resultBox)
+  resultBox: document.getElementById('globalLog') || document.getElementById('resultBox'),
+  // 새 셸: 사이드바 아이템으로 교체됨, null-safe
   surfaceNav: document.getElementById('surfaceNav'),
   contentList: document.getElementById('contentList'),
   contentFilterBar: document.getElementById('contentFilterBar'),
@@ -107,8 +108,8 @@ const els = {
   contentRevisions: document.getElementById('contentRevisions'),
 };
 
-els.yearInput.value = String(state.year);
-els.versionYearInput.value = String(state.year + 1);
+if (els.yearInput) els.yearInput.value = String(state.year);
+if (els.versionYearInput) els.versionYearInput.value = String(state.year + 1);
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -117,10 +118,6 @@ function escapeHtml(value) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
-}
-
-function setResult(data) {
-  els.resultBox.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
 }
 
 async function getAccessToken() {
@@ -150,22 +147,51 @@ function getSelectedVersion() {
 
 function syncSurfaceNav() {
   document.body.dataset.regSurface = state.surface;
+
+  // 사이드바 아이템 활성 상태
+  document.querySelectorAll('.sidebar-item[data-view]').forEach((btn) => {
+    btn.classList.toggle('active', btn.getAttribute('data-view') === state.surface);
+  });
+
+  // 뷰 패널 표시/숨김
+  document.querySelectorAll('[data-view-panel]').forEach((panel) => {
+    panel.style.display = panel.getAttribute('data-view-panel') === state.surface ? '' : 'none';
+  });
+
+  // 이전 수평 탭 방식도 호환 유지
   els.surfaceNav?.querySelectorAll('[data-surface]').forEach((button) => {
     button.classList.toggle('active', button.getAttribute('data-surface') === state.surface);
   });
+}
+
+function setResult(data) {
+  const box = els.resultBox;
+  if (!box) return;
+  box.style.display = 'block';
+  box.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+  // 5초 후 자동 숨김
+  clearTimeout(box._hideTimer);
+  box._hideTimer = setTimeout(() => { box.style.display = 'none'; }, 5000);
 }
 
 async function updateAuthState() {
   const { data: { session } } = await supabaseClient.auth.getSession();
   state.session = session || null;
   const loggedIn = Boolean(session?.access_token);
-  els.authStatus.textContent = loggedIn ? `${session.user.email || '로그인됨'}` : '로그인 필요';
-  els.loginBtn.textContent = loggedIn ? '로그인 완료' : '구글 로그인';
-  els.loginBtn.disabled = loggedIn;
-  els.refreshBtn.disabled = !loggedIn;
-  els.refreshNextBtn.disabled = !loggedIn;
-  els.versionSubmitBtn.disabled = !loggedIn;
-  els.faqSubmitBtn.disabled = !loggedIn;
+
+  // 새 셸 authStatusBadge
+  if (els.authStatus) {
+    els.authStatus.textContent = loggedIn ? (session.user.email || '로그인됨') : '로그인 필요';
+    els.authStatus.className = `inline-status ${loggedIn ? 'success' : ''}`;
+  }
+  if (els.loginBtn) {
+    els.loginBtn.textContent = loggedIn ? '로그아웃' : '구글 로그인';
+    els.loginBtn.className = loggedIn ? 'btn btn-secondary btn-sm' : 'btn btn-primary btn-sm';
+  }
+  if (els.refreshBtn) els.refreshBtn.disabled = !loggedIn;
+  if (els.refreshNextBtn) els.refreshNextBtn.disabled = !loggedIn;
+  if (els.versionSubmitBtn) els.versionSubmitBtn.disabled = !loggedIn;
+  if (els.faqSubmitBtn) els.faqSubmitBtn.disabled = !loggedIn;
   if (els.newContentBtn) els.newContentBtn.disabled = !loggedIn;
   if (els.contentSaveBtn) els.contentSaveBtn.disabled = !loggedIn;
 }
@@ -181,29 +207,62 @@ function renderSummary() {
     ['승인 대기', `${state.adminDashboard?.pending_approvals ?? 0}건`, '관리자 검토 필요'],
   ];
 
-  els.summaryGrid.innerHTML = cards.map(([label, value, note]) => `
-    <article class="summary-card">
-      <span>${escapeHtml(label)}</span>
-      <strong>${escapeHtml(value)}</strong>
-      <span>${escapeHtml(note)}</span>
-    </article>
-  `).join('');
+  const pendingApprovals = state.adminDashboard?.pending_approvals ?? 0;
+  const badgeCount = document.getElementById('reviewBadgeCount');
+  if (badgeCount) {
+    badgeCount.textContent = String(pendingApprovals);
+    badgeCount.style.display = pendingApprovals > 0 ? '' : 'none';
+  }
+
+  if (!els.summaryGrid) return;
+  els.summaryGrid.textContent = '';
+  cards.forEach(([label, value, note], i) => {
+    const article = document.createElement('article');
+    article.className = 'metric-card' + (i === 3 && pendingApprovals > 0 ? ' accent-red' : '');
+    const labelEl = document.createElement('div');
+    labelEl.className = 'metric-label';
+    labelEl.textContent = label;
+    const valueEl = document.createElement('div');
+    valueEl.className = 'metric-value';
+    valueEl.textContent = value;
+    const noteEl = document.createElement('div');
+    noteEl.className = 'metric-note';
+    noteEl.textContent = note;
+    article.appendChild(labelEl);
+    article.appendChild(valueEl);
+    article.appendChild(noteEl);
+    els.summaryGrid.appendChild(article);
+  });
 }
 
 function renderQuickFacts() {
+  if (!els.quickFacts) return;
   const facts = state.regulation?.ui_quick_facts || [];
+  els.quickFacts.textContent = '';
   if (!facts.length) {
-    els.quickFacts.innerHTML = '<div class="empty-copy">규정 요약을 불러오지 못했습니다.</div>';
+    const empty = document.createElement('p');
+    empty.className = 'empty-state-title';
+    empty.textContent = '규정 요약을 불러오지 못했습니다.';
+    els.quickFacts.appendChild(empty);
     return;
   }
-
-  els.quickFacts.innerHTML = facts.slice(0, 6).map((fact) => `
-    <div class="row">
-      <strong>${escapeHtml(fact.label || '')}</strong>
-      <span>${escapeHtml(fact.value || '')}</span>
-      <span>${escapeHtml(fact.ref || '')}</span>
-    </div>
-  `).join('');
+  facts.slice(0, 6).forEach((fact) => {
+    const row = document.createElement('div');
+    row.className = 'list-item';
+    row.style.cursor = 'default';
+    const body = document.createElement('div');
+    body.className = 'list-item-body';
+    const title = document.createElement('div');
+    title.className = 'list-item-title';
+    title.textContent = fact.label || '';
+    const sub = document.createElement('div');
+    sub.className = 'list-item-sub';
+    sub.textContent = `${fact.value || ''} ${fact.ref ? `(${fact.ref})` : ''}`;
+    body.appendChild(title);
+    body.appendChild(sub);
+    row.appendChild(body);
+    els.quickFacts.appendChild(row);
+  });
 }
 
 function renderChecklist() {
@@ -233,49 +292,98 @@ function renderChecklist() {
     },
   ];
 
-  els.opsChecklist.innerHTML = checks.map((item) => `
-    <div class="check-row">
-      <strong>${escapeHtml(item.title)}</strong>
-      <span>${escapeHtml(item.status)}</span>
-      <span>${escapeHtml(item.note)}</span>
-    </div>
-  `).join('');
+  if (!els.opsChecklist) return;
+  els.opsChecklist.textContent = '';
+  checks.forEach((item) => {
+    const isOk = ['정상', '확인', '통과'].includes(item.status);
+    const row = document.createElement('div');
+    row.className = 'list-item';
+    row.style.cursor = 'default';
+    const body = document.createElement('div');
+    body.className = 'list-item-body';
+    const title = document.createElement('div');
+    title.className = 'list-item-title';
+    title.textContent = item.title;
+    const note = document.createElement('div');
+    note.className = 'list-item-sub';
+    note.textContent = item.note;
+    body.appendChild(title);
+    body.appendChild(note);
+    const badge = document.createElement('span');
+    badge.className = `badge ${isOk ? 'badge-green' : 'badge-yellow'}`;
+    badge.textContent = item.status;
+    row.appendChild(body);
+    row.appendChild(badge);
+    els.opsChecklist.appendChild(row);
+  });
+}
+
+function makeListItem(title, sub, badgeText, badgeClass) {
+  const row = document.createElement('div');
+  row.className = 'list-item';
+  row.style.cursor = 'default';
+  const body = document.createElement('div');
+  body.className = 'list-item-body';
+  const titleEl = document.createElement('div');
+  titleEl.className = 'list-item-title';
+  titleEl.textContent = title;
+  body.appendChild(titleEl);
+  if (sub) {
+    const subEl = document.createElement('div');
+    subEl.className = 'list-item-sub';
+    subEl.textContent = sub;
+    body.appendChild(subEl);
+  }
+  row.appendChild(body);
+  if (badgeText) {
+    const badge = document.createElement('span');
+    badge.className = `badge ${badgeClass || 'badge-gray'}`;
+    badge.textContent = badgeText;
+    row.appendChild(badge);
+  }
+  return row;
 }
 
 function renderSnapshots() {
+  const metaEl = els.snapshotMeta;
+  const listEl = els.snapshotList;
+  if (!metaEl && !listEl) return;
+
   if (!state.snapshots) {
-    els.snapshotMeta.innerHTML = '<div class="empty-copy">로그인하면 저장된 공휴일 스냅샷을 볼 수 있습니다.</div>';
-    els.snapshotList.innerHTML = '<div class="empty-copy">공휴일 미리보기를 준비 중입니다.</div>';
+    if (metaEl) { metaEl.textContent = ''; metaEl.appendChild(makeListItem('로그인하면 저장된 공휴일 스냅샷을 볼 수 있습니다.', null, null, null)); }
+    if (listEl) { listEl.textContent = ''; listEl.appendChild(makeListItem('공휴일 미리보기를 준비 중입니다.', null, null, null)); }
     return;
   }
 
-  const rows = [
-    ['법정 공휴일', `${state.snapshots.holidays?.items?.length || 0}건`, state.snapshots.holidays?.refreshed_at ? String(state.snapshots.holidays.refreshed_at).slice(0, 10) : '미저장'],
-    ['기념일', `${state.snapshots.anniversaries?.items?.length || 0}건`, state.snapshots.anniversaries?.refreshed_at ? String(state.snapshots.anniversaries.refreshed_at).slice(0, 10) : '미저장'],
-  ];
+  if (metaEl) {
+    metaEl.textContent = '';
+    [
+      ['법정 공휴일', state.snapshots.holidays?.items?.length || 0, state.snapshots.holidays?.refreshed_at],
+      ['기념일', state.snapshots.anniversaries?.items?.length || 0, state.snapshots.anniversaries?.refreshed_at],
+    ].forEach(([label, count, refreshed]) => {
+      const note = refreshed ? String(refreshed).slice(0, 10) + ' 기준' : '미저장';
+      metaEl.appendChild(makeListItem(label, note, `${count}건`, refreshed ? 'badge-green' : 'badge-gray'));
+    });
+  }
 
-  els.snapshotMeta.innerHTML = rows.map(([label, value, note]) => `
-    <div class="snapshot-row">
-      <strong>${escapeHtml(label)}</strong>
-      <span>${escapeHtml(value)}</span>
-      <span>${escapeHtml(note)}</span>
-    </div>
-  `).join('');
-
-  const previewItems = [
-    ...(state.snapshots.holidays?.items || []).slice(0, 6),
-    ...(state.snapshots.anniversaries?.items || []).slice(0, 4),
-  ];
-
-  els.snapshotList.innerHTML = previewItems.length
-    ? previewItems.map((item) => `
-      <div class="snapshot-row">
-        <strong>${escapeHtml(item.name || '')}</strong>
-        <span>${escapeHtml(String(item.date || ''))}</span>
-        <span>${escapeHtml(item.dateKind || (item.isHoliday ? 'holiday' : 'anniversary') || '')}</span>
-      </div>
-    `).join('')
-    : '<div class="empty-copy">저장된 공휴일 스냅샷이 없습니다.</div>';
+  if (listEl) {
+    listEl.textContent = '';
+    const previewItems = [
+      ...(state.snapshots.holidays?.items || []).slice(0, 6),
+      ...(state.snapshots.anniversaries?.items || []).slice(0, 4),
+    ];
+    if (!previewItems.length) {
+      const empty = document.createElement('p');
+      empty.className = 'empty-state-title';
+      empty.textContent = '저장된 공휴일 스냅샷이 없습니다.';
+      listEl.appendChild(empty);
+    } else {
+      previewItems.forEach((item) => {
+        const kind = item.dateKind || (item.isHoliday ? 'holiday' : 'anniversary') || '';
+        listEl.appendChild(makeListItem(item.name || '', String(item.date || ''), kind, 'badge-blue'));
+      });
+    }
+  }
 }
 
 function renderVersionOptions() {
@@ -291,27 +399,73 @@ function renderVersionOptions() {
 }
 
 function renderVersions() {
+  if (!els.versionsList) return;
+  els.versionsList.textContent = '';
+
   if (!state.versions.length) {
-    els.versionsList.innerHTML = '<div class="empty-copy">규정 버전이 없습니다.</div>';
+    const empty = document.createElement('p');
+    empty.className = 'empty-state-title';
+    empty.textContent = '규정 버전이 없습니다.';
+    els.versionsList.appendChild(empty);
     return;
   }
 
-  els.versionsList.innerHTML = state.versions.map((version) => `
-    <div class="version-row">
-      <strong>${escapeHtml(`${version.year} · ${version.title}`)}</strong>
-      <span>${escapeHtml(version.effective_date || '효력일 미정')}</span>
-      <span>${escapeHtml(`created ${String(version.created_at || '').slice(0, 10)}`)}</span>
-      <div class="tag-row">
-        <span class="tag ${escapeHtml(version.status)}">${escapeHtml(version.status)}</span>
-        ${(version.source_files || []).slice(0, 3).map((file) => `<span class="tag">${escapeHtml(file)}</span>`).join('')}
-      </div>
-      <div class="version-actions">
-        <button class="mini-btn primary" type="button" data-version-id="${version.id}" data-version-action="activate">활성화</button>
-        <button class="mini-btn edit" type="button" data-version-id="${version.id}" data-version-action="duplicate">복제</button>
-        <button class="mini-btn warn" type="button" data-version-id="${version.id}" data-version-action="archive">보관</button>
-      </div>
-    </div>
-  `).join('');
+  state.versions.forEach((version) => {
+    const row = document.createElement('div');
+    row.className = 'list-item';
+    row.style.cursor = 'default';
+
+    const body = document.createElement('div');
+    body.className = 'list-item-body';
+
+    const title = document.createElement('div');
+    title.className = 'list-item-title';
+    title.textContent = `${version.year} · ${version.title}`;
+    body.appendChild(title);
+
+    const sub = document.createElement('div');
+    sub.className = 'list-item-sub';
+    sub.textContent = `효력일: ${version.effective_date || '미정'} | 생성: ${String(version.created_at || '').slice(0, 10)}`;
+    body.appendChild(sub);
+
+    row.appendChild(body);
+
+    // 상태 배지
+    const statusClass = version.status === 'active' ? 'badge-green' : version.status === 'archived' ? 'badge-gray' : 'badge-yellow';
+    const statusBadge = document.createElement('span');
+    statusBadge.className = `badge ${statusClass}`;
+    statusBadge.textContent = version.status;
+    row.appendChild(statusBadge);
+
+    // 소스 파일 배지
+    (version.source_files || []).slice(0, 2).forEach((file) => {
+      const fileBadge = document.createElement('span');
+      fileBadge.className = 'badge badge-gray';
+      fileBadge.textContent = file;
+      row.appendChild(fileBadge);
+    });
+
+    // 액션 버튼
+    const actions = document.createElement('div');
+    actions.style.cssText = 'display:flex;gap:4px;flex-shrink:0';
+
+    [
+      { label: '활성화', action: 'activate', cls: 'btn btn-primary btn-sm' },
+      { label: '복제', action: 'duplicate', cls: 'btn btn-secondary btn-sm' },
+      { label: '보관', action: 'archive', cls: 'btn btn-danger btn-sm' },
+    ].forEach(({ label, action, cls }) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = cls;
+      btn.textContent = label;
+      btn.dataset.versionId = String(version.id);
+      btn.dataset.versionAction = action;
+      actions.appendChild(btn);
+    });
+
+    row.appendChild(actions);
+    els.versionsList.appendChild(row);
+  });
 
   els.versionsList.querySelectorAll('[data-version-action]').forEach((button) => {
     button.addEventListener('click', async () => {
@@ -357,29 +511,69 @@ function resetFaqForm() {
 }
 
 function renderFaqs() {
+  if (!els.faqList) return;
+  els.faqList.textContent = '';
+
   if (!state.selectedVersionId) {
-    els.faqList.innerHTML = '<div class="empty-copy">FAQ를 볼 버전을 선택해 주세요.</div>';
+    const p = document.createElement('p');
+    p.className = 'empty-state-title';
+    p.textContent = 'FAQ를 볼 버전을 선택해 주세요.';
+    els.faqList.appendChild(p);
     return;
   }
   if (!state.faqs.length) {
-    els.faqList.innerHTML = '<div class="empty-copy">등록된 FAQ가 없습니다.</div>';
+    const p = document.createElement('p');
+    p.className = 'empty-state-title';
+    p.textContent = '등록된 FAQ가 없습니다.';
+    els.faqList.appendChild(p);
     return;
   }
 
-  els.faqList.innerHTML = state.faqs.map((faq) => `
-    <div class="faq-row">
-      <strong>${escapeHtml(faq.question)}</strong>
-      <span>${escapeHtml(faq.answer)}</span>
-      <div class="tag-row">
-        <span class="tag">${escapeHtml(faq.category)}</span>
-        <span class="tag ${faq.is_published ? 'active' : 'draft'}">${escapeHtml(faq.is_published ? 'published' : 'draft')}</span>
-        ${faq.article_ref ? `<span class="tag">${escapeHtml(faq.article_ref)}</span>` : ''}
-      </div>
-      <div class="faq-actions">
-        <button class="mini-btn edit" type="button" data-faq-id="${faq.id}">수정</button>
-      </div>
-    </div>
-  `).join('');
+  state.faqs.forEach((faq) => {
+    const row = document.createElement('div');
+    row.className = 'list-item';
+
+    const body = document.createElement('div');
+    body.className = 'list-item-body';
+
+    const title = document.createElement('div');
+    title.className = 'list-item-title';
+    title.textContent = faq.question;
+    body.appendChild(title);
+
+    const sub = document.createElement('div');
+    sub.className = 'list-item-sub';
+    sub.textContent = faq.answer;
+    body.appendChild(sub);
+
+    row.appendChild(body);
+
+    const catBadge = document.createElement('span');
+    catBadge.className = 'badge badge-blue';
+    catBadge.textContent = faq.category;
+    row.appendChild(catBadge);
+
+    const pubBadge = document.createElement('span');
+    pubBadge.className = `badge ${faq.is_published ? 'badge-green' : 'badge-yellow'}`;
+    pubBadge.textContent = faq.is_published ? 'published' : 'draft';
+    row.appendChild(pubBadge);
+
+    if (faq.article_ref) {
+      const refBadge = document.createElement('span');
+      refBadge.className = 'badge badge-gray';
+      refBadge.textContent = faq.article_ref;
+      row.appendChild(refBadge);
+    }
+
+    const editBtn = document.createElement('button');
+    editBtn.type = 'button';
+    editBtn.className = 'btn btn-secondary btn-sm';
+    editBtn.dataset.faqId = String(faq.id);
+    editBtn.textContent = '수정';
+    row.appendChild(editBtn);
+
+    els.faqList.appendChild(row);
+  });
 
   els.faqList.querySelectorAll('[data-faq-id]').forEach((button) => {
     button.addEventListener('click', () => {
@@ -400,30 +594,58 @@ function renderFaqs() {
 }
 
 function renderScenarios() {
-  const scenario = state.regulation?.scenarioReport || { total: 0, passed: 0, failed: 0, items: [] };
-  const cards = [
-    ['전체', String(scenario.total), '규정 시나리오 수'],
-    ['통과', String(scenario.passed), '현재 기준 통과'],
-    ['실패', String(scenario.failed), '재검토 필요'],
-    ['기준 연도', String(state.year), '조회 기준'],
-  ];
-  els.scenarioSummary.innerHTML = cards.map(([label, value, note]) => `
-    <article class="summary-card">
-      <span>${escapeHtml(label)}</span>
-      <strong>${escapeHtml(value)}</strong>
-      <span>${escapeHtml(note)}</span>
-    </article>
-  `).join('');
+  // 새 셸에서는 scenarioSummary/scenarioList가 없으므로 null-safe 처리
+  if (!els.scenarioSummary && !els.scenarioList) return;
 
-  els.scenarioList.innerHTML = scenario.items?.length
-    ? scenario.items.map((item) => `
-      <div class="scenario-row ${item.passed ? 'pass' : 'fail'}">
-        <strong>${escapeHtml(item.title || item.id)}</strong>
-        <span>${escapeHtml(`${item.category || 'scenario'} · ${item.passed ? 'PASS' : 'FAIL'}`)}</span>
-        <span>${escapeHtml(JSON.stringify(item.actual || {}))}</span>
-      </div>
-    `).join('')
-    : '<div class="empty-copy">시나리오 결과가 없습니다.</div>';
+  const scenario = state.regulation?.scenarioReport || { total: 0, passed: 0, failed: 0, items: [] };
+
+  if (els.scenarioSummary) {
+    els.scenarioSummary.textContent = '';
+    [
+      ['전체', String(scenario.total), '규정 시나리오 수'],
+      ['통과', String(scenario.passed), '현재 기준 통과'],
+      ['실패', String(scenario.failed), '재검토 필요'],
+      ['기준 연도', String(state.year), '조회 기준'],
+    ].forEach(([label, value, note]) => {
+      const article = document.createElement('article');
+      article.className = 'metric-card';
+      const labelEl = document.createElement('div');
+      labelEl.className = 'metric-label';
+      labelEl.textContent = label;
+      const valueEl = document.createElement('div');
+      valueEl.className = 'metric-value';
+      valueEl.textContent = value;
+      const noteEl = document.createElement('div');
+      noteEl.className = 'metric-note';
+      noteEl.textContent = note;
+      article.appendChild(labelEl);
+      article.appendChild(valueEl);
+      article.appendChild(noteEl);
+      els.scenarioSummary.appendChild(article);
+    });
+  }
+
+  if (els.scenarioList) {
+    els.scenarioList.textContent = '';
+    if (!scenario.items?.length) {
+      const p = document.createElement('p');
+      p.className = 'empty-state-title';
+      p.textContent = '시나리오 결과가 없습니다.';
+      els.scenarioList.appendChild(p);
+    } else {
+      scenario.items.forEach((item) => {
+        const badgeClass = item.passed ? 'badge-green' : 'badge-red';
+        const row = makeListItem(
+          item.title || item.id,
+          `${item.category || 'scenario'} | ${JSON.stringify(item.actual || {})}`,
+          item.passed ? 'PASS' : 'FAIL',
+          badgeClass
+        );
+        row.style.cursor = 'default';
+        els.scenarioList.appendChild(row);
+      });
+    }
+  }
 }
 
 function formatDateTime(isoStr) {
@@ -436,10 +658,10 @@ function renderContentEntries() {
   if (!els.contentList) return;
   if (!state.contentEntries.length) {
     els.contentList.textContent = '';
-    const empty = document.createElement('div');
-    empty.className = 'empty-copy';
-    empty.textContent = '등록된 콘텐츠가 없습니다.';
-    els.contentList.appendChild(empty);
+    const emptyEl = document.createElement('p');
+    emptyEl.className = 'empty-state-title';
+    emptyEl.textContent = '등록된 콘텐츠가 없습니다.';
+    els.contentList.appendChild(emptyEl);
     return;
   }
 
@@ -449,37 +671,41 @@ function renderContentEntries() {
 
   els.contentList.textContent = '';
   if (!filtered.length) {
-    var empty = document.createElement('div');
-    empty.className = 'empty-copy';
-    empty.textContent = '"' + state.contentFilter + '" 상태의 콘텐츠가 없습니다.';
-    els.contentList.appendChild(empty);
+    var emptyEl = document.createElement('p');
+    emptyEl.className = 'empty-state-title';
+    emptyEl.textContent = '"' + state.contentFilter + '" 상태의 콘텐츠가 없습니다.';
+    els.contentList.appendChild(emptyEl);
     return;
   }
 
   filtered.forEach(function(entry) {
     var row = document.createElement('div');
-    row.className = 'version-row';
+    row.className = 'list-item';
     row.dataset.contentId = String(entry.id);
-    var title = document.createElement('strong');
-    title.textContent = entry.title || '제목 없음';
-    row.appendChild(title);
-    var meta = document.createElement('span');
-    meta.textContent = (entry.content_type || '') + ' | ' + (entry.slug || '');
-    row.appendChild(meta);
-    var dateSpan = document.createElement('span');
-    dateSpan.textContent = formatDateTime(entry.updated_at || entry.created_at);
-    row.appendChild(dateSpan);
-    var tagRow = document.createElement('div');
-    tagRow.className = 'tag-row';
-    var statusTag = document.createElement('span');
-    statusTag.className = 'tag ' + (entry.status === 'published' ? 'active' : entry.status === 'draft' ? 'draft' : '');
-    statusTag.textContent = entry.status;
-    tagRow.appendChild(statusTag);
-    var typeTag = document.createElement('span');
-    typeTag.className = 'tag';
-    typeTag.textContent = entry.content_type || '';
-    tagRow.appendChild(typeTag);
-    row.appendChild(tagRow);
+
+    var body = document.createElement('div');
+    body.className = 'list-item-body';
+    var titleEl = document.createElement('div');
+    titleEl.className = 'list-item-title';
+    titleEl.textContent = entry.title || '제목 없음';
+    var subEl = document.createElement('div');
+    subEl.className = 'list-item-sub';
+    subEl.textContent = (entry.content_type || '') + (entry.slug ? ' · ' + entry.slug : '') + ' · ' + formatDateTime(entry.updated_at || entry.created_at);
+    body.appendChild(titleEl);
+    body.appendChild(subEl);
+    row.appendChild(body);
+
+    var statusClass = entry.status === 'published' ? 'badge-green' : entry.status === 'draft' ? 'badge-yellow' : 'badge-gray';
+    var statusBadge = document.createElement('span');
+    statusBadge.className = 'badge ' + statusClass;
+    statusBadge.textContent = entry.status;
+    row.appendChild(statusBadge);
+
+    var typeBadge = document.createElement('span');
+    typeBadge.className = 'badge badge-blue';
+    typeBadge.textContent = entry.content_type || '';
+    row.appendChild(typeBadge);
+
     els.contentList.appendChild(row);
   });
 }
@@ -497,40 +723,25 @@ function renderReviewList() {
 
   els.reviewList.textContent = '';
   if (!filtered.length) {
-    var empty = document.createElement('div');
-    empty.className = 'empty-copy';
-    empty.textContent = state.reviewFilter === 'pending' ? '대기중인 검토 항목이 없습니다.' : '해당 상태의 검토 항목이 없습니다.';
-    els.reviewList.appendChild(empty);
+    var emptyEl = document.createElement('p');
+    emptyEl.className = 'empty-state-title';
+    emptyEl.textContent = state.reviewFilter === 'pending' ? '대기중인 검토 항목이 없습니다.' : '해당 상태의 검토 항목이 없습니다.';
+    els.reviewList.appendChild(emptyEl);
     return;
   }
 
   filtered.forEach(function(task) {
-    var row = document.createElement('div');
-    row.className = 'version-row';
-    var title = document.createElement('strong');
-    title.textContent = '검토 #' + task.id + ' -- 콘텐츠 #' + task.entry_id;
-    row.appendChild(title);
-    var reqSpan = document.createElement('span');
-    reqSpan.textContent = '요청: ' + formatDateTime(task.created_at);
-    row.appendChild(reqSpan);
-    if (task.decided_at) {
-      var decSpan = document.createElement('span');
-      decSpan.textContent = '결정: ' + formatDateTime(task.decided_at);
-      row.appendChild(decSpan);
-    }
-    if (task.decision_note) {
-      var noteSpan = document.createElement('span');
-      noteSpan.textContent = '사유: ' + task.decision_note;
-      row.appendChild(noteSpan);
-    }
-    var tagRow = document.createElement('div');
-    tagRow.className = 'tag-row';
-    var tag = document.createElement('span');
-    var statusClass = task.status === 'pending' ? 'draft' : task.status === 'approved' ? 'active' : 'archived';
-    tag.className = 'tag ' + statusClass;
-    tag.textContent = task.status;
-    tagRow.appendChild(tag);
-    row.appendChild(tagRow);
+    var statusBadgeClass = task.status === 'pending' ? 'badge-yellow' : task.status === 'approved' ? 'badge-green' : 'badge-red';
+    var subParts = ['요청: ' + formatDateTime(task.created_at)];
+    if (task.decided_at) subParts.push('결정: ' + formatDateTime(task.decided_at));
+    if (task.decision_note) subParts.push('사유: ' + task.decision_note);
+    var row = makeListItem(
+      '검토 #' + task.id + ' — 콘텐츠 #' + task.entry_id,
+      subParts.join(' | '),
+      task.status,
+      statusBadgeClass
+    );
+    row.style.cursor = 'default';
     els.reviewList.appendChild(row);
   });
 }
@@ -540,25 +751,21 @@ function renderAuditLogs() {
   els.auditLogList.textContent = '';
 
   if (!state.auditLogs.length) {
-    var empty = document.createElement('div');
-    empty.className = 'empty-copy';
-    empty.textContent = '감사 로그가 없습니다.';
-    els.auditLogList.appendChild(empty);
+    var emptyEl = document.createElement('p');
+    emptyEl.className = 'empty-state-title';
+    emptyEl.textContent = '감사 로그가 없습니다.';
+    els.auditLogList.appendChild(emptyEl);
     return;
   }
 
   state.auditLogs.slice(0, 100).forEach(function(log) {
-    var row = document.createElement('div');
-    row.className = 'row';
-    var action = document.createElement('strong');
-    action.textContent = log.action || '';
-    row.appendChild(action);
-    var entity = document.createElement('span');
-    entity.textContent = (log.entity_type || '') + ' #' + String(log.entity_id || '');
-    row.appendChild(entity);
-    var time = document.createElement('span');
-    time.textContent = formatDateTime(log.created_at) + ' | ' + (log.actor_role || 'unknown');
-    row.appendChild(time);
+    var row = makeListItem(
+      log.action || '',
+      (log.entity_type || '') + ' #' + String(log.entity_id || '') + ' | ' + formatDateTime(log.created_at),
+      log.actor_role || 'unknown',
+      'badge-gray'
+    );
+    row.style.cursor = 'default';
     els.auditLogList.appendChild(row);
   });
 }
@@ -610,32 +817,22 @@ function renderContentRevisions(revisions) {
   if (!revisions || !revisions.length) return;
 
   var heading = document.createElement('div');
-  heading.className = 'section-heading';
-  var headingInner = document.createElement('div');
-  var eyebrow = document.createElement('p');
-  eyebrow.className = 'eyebrow';
-  eyebrow.textContent = 'Revision History';
-  headingInner.appendChild(eyebrow);
+  heading.className = 'card-header';
   var h3 = document.createElement('h3');
-  h3.textContent = revisions.length + '개 리비전';
-  headingInner.appendChild(h3);
-  heading.appendChild(headingInner);
+  h3.className = 'card-title';
+  h3.textContent = 'Revision History (' + revisions.length + ')';
+  heading.appendChild(h3);
   els.contentRevisions.appendChild(heading);
 
   revisions.forEach(function(rev) {
-    var row = document.createElement('div');
-    row.className = 'row';
-    var strong = document.createElement('strong');
-    strong.textContent = 'Rev #' + rev.revision_number;
-    row.appendChild(strong);
-    var statusSpan = document.createElement('span');
-    statusSpan.textContent = (rev.status || 'draft') + ' | ' + formatDateTime(rev.created_at);
-    row.appendChild(statusSpan);
-    if (rev.summary) {
-      var sumSpan = document.createElement('span');
-      sumSpan.textContent = rev.summary;
-      row.appendChild(sumSpan);
-    }
+    var statusBadgeClass = rev.status === 'approved' ? 'badge-green' : rev.status === 'rejected' ? 'badge-red' : 'badge-yellow';
+    var row = makeListItem(
+      'Rev #' + rev.revision_number,
+      formatDateTime(rev.created_at) + (rev.summary ? ' | ' + rev.summary : ''),
+      rev.status || 'draft',
+      statusBadgeClass
+    );
+    row.style.cursor = 'default';
     els.contentRevisions.appendChild(row);
   });
 }
@@ -941,6 +1138,15 @@ els.faqVersionSelect.addEventListener('change', async (event) => {
   renderAll();
 });
 
+// 사이드바 뷰 전환 (새 셸)
+document.querySelectorAll('.sidebar-item[data-view]').forEach((button) => {
+  button.addEventListener('click', () => {
+    state.surface = button.getAttribute('data-view') || 'dashboard';
+    syncSurfaceNav();
+  });
+});
+
+// 이전 수평 탭 호환
 els.surfaceNav?.querySelectorAll('[data-surface]').forEach((button) => {
   button.addEventListener('click', () => {
     state.surface = button.getAttribute('data-surface') || 'dashboard';
@@ -951,8 +1157,9 @@ els.surfaceNav?.querySelectorAll('[data-surface]').forEach((button) => {
 els.contentFilterBar?.querySelectorAll('[data-content-filter]').forEach((button) => {
   button.addEventListener('click', () => {
     state.contentFilter = button.getAttribute('data-content-filter') || 'all';
-    els.contentFilterBar.querySelectorAll('.mini-btn').forEach((b) => b.classList.remove('active'));
-    button.classList.add('active');
+    els.contentFilterBar.querySelectorAll('[data-content-filter]').forEach((b) => {
+      b.className = b === button ? 'btn btn-secondary btn-sm active' : 'btn btn-ghost btn-sm';
+    });
     renderContentEntries();
   });
 });
@@ -960,8 +1167,9 @@ els.contentFilterBar?.querySelectorAll('[data-content-filter]').forEach((button)
 els.reviewFilterBar?.querySelectorAll('[data-review-filter]').forEach((button) => {
   button.addEventListener('click', () => {
     state.reviewFilter = button.getAttribute('data-review-filter') || 'pending';
-    els.reviewFilterBar.querySelectorAll('.mini-btn').forEach((b) => b.classList.remove('active'));
-    button.classList.add('active');
+    els.reviewFilterBar.querySelectorAll('[data-review-filter]').forEach((b) => {
+      b.className = b === button ? 'btn btn-secondary btn-sm' : 'btn btn-ghost btn-sm';
+    });
     renderReviewList();
   });
 });
@@ -1001,13 +1209,29 @@ if (els.contentList) {
   });
 }
 
-supabaseClient.auth.onAuthStateChange(async () => {
-  await updateAuthState();
-  await loadAdminData();
-});
+async function initApp() {
+  try {
+    // 서버에서 publishable 클라이언트 설정을 가져와 Supabase 초기화
+    const configRes = await fetch(`${API_BASE}/config`);
+    if (configRes.ok) {
+      const config = await configRes.json();
+      if (window.supabase?.createClient && config.supabaseUrl && config.supabaseAnonKey) {
+        supabaseClient = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
+      }
+    }
+  } catch (_) {
+    // config 로드 실패 시 fallback(비로그인) 모드로 동작
+  }
 
-updateAuthState()
-  .then(loadWorkspace)
-  .catch((error) => {
-    setResult(error instanceof Error ? error.message : String(error));
+  supabaseClient.auth.onAuthStateChange(async () => {
+    await updateAuthState();
+    await loadAdminData();
   });
+
+  await updateAuthState();
+  await loadWorkspace();
+}
+
+initApp().catch((error) => {
+  setResult(error instanceof Error ? error.message : String(error));
+});

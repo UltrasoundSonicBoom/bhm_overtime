@@ -2,9 +2,7 @@ import OpenAI from 'openai'
 import 'dotenv/config'
 
 const CARD_NEWS_MODEL = process.env.CARD_NEWS_MODEL || 'gpt-4o-mini'
-const openai = process.env.OPENAI_API_KEY
-  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-  : null
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
 const FETCH_HEADERS = {
   'User-Agent': 'Mozilla/5.0 (compatible; SNUHMateCardNews/1.0; +https://snuhmate.com)',
@@ -341,7 +339,7 @@ function extractJsonObject(text: string): Record<string, unknown> | null {
 }
 
 async function buildKeywordPlans(keywords: string[]): Promise<CardNewsQueryPlan[]> {
-  if (!openai || keywords.length === 0) {
+  if (keywords.length === 0) {
     return keywords.map(buildFallbackPlan)
   }
 
@@ -529,7 +527,7 @@ function buildFallbackDeck(bundle: KeywordBundle): CardNewsDeck {
 }
 
 async function buildDecksWithModel(bundles: KeywordBundle[]): Promise<CardNewsDeck[] | null> {
-  if (!openai || bundles.length === 0) return null
+  if (bundles.length === 0) return null
 
   const sourcePayload = bundles.map((bundle) => ({
     keyword: bundle.plan.keyword,
@@ -636,6 +634,112 @@ async function buildDecksWithModel(bundles: KeywordBundle[]): Promise<CardNewsDe
     return decks
   } catch {
     return null
+  }
+}
+
+// ── Article summarization ──
+
+export interface ArticleSummary {
+  url: string
+  subtitle: string
+  body: string
+  keyPoints: string[]
+  error?: string
+}
+
+function extractArticleText(html: string): string {
+  // Remove scripts, styles, nav, header, footer
+  let text = html
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<nav[\s\S]*?<\/nav>/gi, '')
+    .replace(/<header[\s\S]*?<\/header>/gi, '')
+    .replace(/<footer[\s\S]*?<\/footer>/gi, '')
+    .replace(/<aside[\s\S]*?<\/aside>/gi, '')
+
+  // Try to extract <article> content first
+  const articleMatch = text.match(/<article[\s\S]*?>([\s\S]*?)<\/article>/i)
+  if (articleMatch) text = articleMatch[1]
+
+  // Extract text from <p> tags
+  const paragraphs = Array.from(text.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi))
+    .map(m => decodeHtml(stripTags(m[1])).trim())
+    .filter(p => p.length > 30)
+
+  if (paragraphs.length >= 2) return paragraphs.join('\n\n').slice(0, 4000)
+
+  // Fallback: strip all tags
+  return decodeHtml(stripTags(text)).replace(/\s+/g, ' ').trim().slice(0, 4000)
+}
+
+export async function summarizeArticle(
+  url: string,
+  title?: string,
+  fallbackText?: string,
+): Promise<ArticleSummary> {
+  let articleText = ''
+  const isGoogleRedirect = /^https?:\/\/news\.google\.com\//i.test(url)
+  if (!isGoogleRedirect) {
+    try {
+      const html = await fetchText(url)
+      articleText = extractArticleText(html)
+    } catch {
+      articleText = ''
+    }
+  }
+
+  if (!articleText || articleText.length < 80) {
+    const fb = (fallbackText || '').trim()
+    if (fb.length >= 20) {
+      articleText = fb
+    } else if (articleText.length < 20) {
+      articleText = (title || '').trim()
+    }
+  }
+
+  if (!articleText || articleText.length < 20) {
+    return { url, subtitle: title || '', body: '본문을 가져올 수 없습니다.', keyPoints: [] }
+  }
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: CARD_NEWS_MODEL,
+      temperature: 0.15,
+      messages: [
+        {
+          role: 'system',
+          content: [
+            '뉴스 기사나 논문의 본문 텍스트를 받아서 한국어로 요약합니다.',
+            'JSON만 반환하세요.',
+            'Schema: {"subtitle":"한 줄 핵심 요약 (30자 이내)","body":"3~5문장 본문 요약","keyPoints":["핵심 포인트 1","핵심 포인트 2","핵심 포인트 3"]}',
+            'subtitle는 기사의 핵심을 한 문장으로.',
+            'body는 기사 내용을 3~5문장으로 요약.',
+            'keyPoints는 꼭 알아야 할 핵심 3가지.',
+            '사실만 포함하고, 만들어내지 마세요.',
+          ].join(' '),
+        },
+        {
+          role: 'user',
+          content: `제목: ${title || '(없음)'}\n\n본문:\n${articleText}`,
+        },
+      ],
+    })
+
+    const parsed = extractJsonObject(response.choices[0]?.message?.content || '')
+    if (!parsed) {
+      return { url, subtitle: title || '', body: '요약 생성에 실패했습니다.', keyPoints: [] }
+    }
+
+    return {
+      url,
+      subtitle: compactText(String(parsed.subtitle || title || ''), 60),
+      body: String(parsed.body || ''),
+      keyPoints: Array.isArray(parsed.keyPoints)
+        ? (parsed.keyPoints as unknown[]).map(p => String(p || '')).filter(Boolean).slice(0, 5)
+        : [],
+    }
+  } catch {
+    return { url, subtitle: title || '', body: '요약 생성 중 오류가 발생했습니다.', keyPoints: [] }
   }
 }
 

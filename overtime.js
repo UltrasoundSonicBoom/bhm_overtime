@@ -367,6 +367,31 @@ const OVERTIME = {
         return stats;
     },
 
+    // ── 연간 통계 ──
+    calcYearlyStats(year) {
+        let totalOvertimeHours = 0;
+        let totalOncallStandbyCount = 0;
+        let totalOncallCalloutCount = 0;
+        let totalOncallHours = 0;
+        let totalPay = 0;
+        let recordCount = 0;
+        for (let m = 1; m <= 12; m++) {
+            const s = this.calcMonthlyStats(year, m);
+            totalOvertimeHours += s.byType.overtime.hours || 0;
+            totalOncallStandbyCount += s.byType.oncall_standby.count || 0;
+            totalOncallCalloutCount += s.byType.oncall_callout.count || 0;
+            totalOncallHours += (s.byType.oncall_standby.hours || 0) +
+                                 (s.byType.oncall_callout.hours || 0);
+            totalPay += s.totalPay || 0;
+            recordCount += s.recordCount || 0;
+        }
+        return {
+            totalOvertimeHours, totalOncallStandbyCount,
+            totalOncallCalloutCount, totalOncallHours,
+            totalPay, recordCount
+        };
+    },
+
     // ── JSON 내보내기 ──
     exportData() {
         const all = this._loadAll();

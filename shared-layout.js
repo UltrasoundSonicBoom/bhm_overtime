@@ -74,9 +74,9 @@
     var logoText = el('div');
     var h1 = el('h1', { className: 'logo-main-title', textContent: '슬기로운 병원 생활 메이트' });
     var sub = el('p', { className: 'logo-sub-title' });
-    sub.textContent = '휴가, 시간외/온콜 등의 기록을 직접 관리해보세요.';
+    sub.textContent = '내 근무기록을 내 손으로 직접 관리해요';
     sub.appendChild(el('br'));
-    sub.appendChild(document.createTextNode('기록은 이 브라우저에만 저장되서 개발자도 볼 수 없어요!'));
+    sub.appendChild(document.createTextNode('본인 브라우저와 구글에만 저장해서 개발자도 못봐요!'));
     logoText.appendChild(h1);
     logoText.appendChild(sub);
     logo.appendChild(logoText);

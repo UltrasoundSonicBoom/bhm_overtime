@@ -1,6 +1,3 @@
-const SUPABASE_URL = 'https://ulamqyarenzjdxlisijl.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_Mg-Uzj8SwPBaXi3-d-E8PQ_ojRdKASi';
-
 function createFallbackSupabase() {
   return {
     auth: {
@@ -17,10 +14,9 @@ function createFallbackSupabase() {
   };
 }
 
-const supabaseClient = window.supabase?.createClient
-  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-  : createFallbackSupabase();
-const supabaseSdkReady = Boolean(window.supabase?.createClient);
+// supabaseClient는 initApp()에서 서버 config를 받아 초기화됩니다.
+let supabaseClient = createFallbackSupabase();
+let supabaseSdkReady = Boolean(window.supabase?.createClient);
 const API_BASE = (() => {
   const hostname = window.location.hostname;
   const localHostMap = {
@@ -1540,10 +1536,6 @@ els.mobileWorkflowNav?.querySelectorAll('[data-admin-panel]').forEach((button) =
   });
 });
 
-supabaseClient.auth.onAuthStateChange(() => {
-  updateAuthState();
-});
-
 window.addEventListener('error', (event) => {
   setWorkspaceStatus('화면 오류');
   setResult(event.error?.message || event.message || '알 수 없는 화면 오류');
@@ -1555,11 +1547,32 @@ window.addEventListener('unhandledrejection', (event) => {
   setResult(reason);
 });
 
-if (!supabaseSdkReady) {
-  console.warn('Supabase SDK did not load. Nurse admin will continue in read-only mode.');
+async function initApp() {
+  try {
+    const configRes = await fetch(`${API_BASE}/config`);
+    if (configRes.ok) {
+      const config = await configRes.json();
+      if (window.supabase?.createClient && config.supabaseUrl && config.supabaseAnonKey) {
+        supabaseClient = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
+        supabaseSdkReady = true;
+      }
+    }
+  } catch (_) {
+    // config 로드 실패 시 read-only 모드
+  }
+
+  if (!supabaseSdkReady) {
+    console.warn('Supabase SDK did not load. Nurse admin will continue in read-only mode.');
+  }
+
+  supabaseClient.auth.onAuthStateChange(() => {
+    updateAuthState();
+  });
+
+  updateAuthState();
+  resetEventForm();
+  syncAdminPanelNav();
+  refreshWorkspace();
 }
 
-updateAuthState();
-resetEventForm();
-syncAdminPanelNav();
-refreshWorkspace();
+initApp();

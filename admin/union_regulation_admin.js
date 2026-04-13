@@ -234,13 +234,8 @@ function copyToClipboard(text) {
 }
 
 function fallbackCopy(text) {
-  const el = document.createElement('textarea');
-  el.value = text;
-  el.style.cssText = 'position:fixed;opacity:0';
-  document.body.appendChild(el);
-  el.select();
-  document.execCommand('copy');
-  document.body.removeChild(el);
+  // navigator.clipboard를 사용할 수 없는 환경에서는 사용자가 직접 복사할 수 있도록 안내
+  window.prompt('아래 텍스트를 복사하세요 (Ctrl+C / Cmd+C)', text);
 }
 
 // ── AI 리포트 JSON ─────────────────────────────────────────────
@@ -356,6 +351,22 @@ async function saveAllToDb(nurseData, versionId) {
   return { success: savedCount > 0, count: savedCount };
 }
 
+/**
+ * 활성 규정 버전 ID를 API에서 조회
+ * @returns {Promise<number|null>}
+ */
+async function fetchActiveVersionId() {
+  try {
+    const resp = await fetch('/api/admin/versions');
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    const active = (data.results || []).find((v) => v.status === 'active');
+    return active ? active.id : null;
+  } catch (_) {
+    return null;
+  }
+}
+
 // ── 초기화 ─────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   renderConstantsTable('constants-container');
@@ -363,10 +374,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   const nurseData = await loadNurseRegulation();
   renderSyncPanel('sync-container', nurseData);
 
-  // DB에서 규정 rules도 로드 시도
-  const dbRules = await loadRegulationRules(1);
-  if (dbRules && dbRules.length > 0) {
-    console.log(`[DB] ${dbRules.length}개 regulation rules 로드됨`);
+  // 활성 버전 ID를 API에서 동적으로 조회 (하드코딩 1 제거)
+  const activeVersionId = await fetchActiveVersionId();
+
+  if (activeVersionId !== null) {
+    const dbRules = await loadRegulationRules(activeVersionId);
+    if (dbRules && dbRules.length > 0) {
+      console.log(`[DB] 버전 ${activeVersionId}: ${dbRules.length}개 regulation rules 로드됨`);
+    }
+  } else {
+    console.warn('[DB] 활성 규정 버전을 찾을 수 없습니다. DB에 저장하려면 먼저 버전을 활성화하세요.');
   }
 
   const reportBtn = document.getElementById('copy-report-btn');
@@ -383,11 +400,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (saveBtn) {
     saveBtn.addEventListener('click', async () => {
       saveBtn.disabled = true;
-      saveBtn.textContent = '저장 중...';
+      saveBtn.textContent = '버전 확인 중...';
       try {
-        const result = await saveAllToDb(nurseData, 1);
+        const versionId = await fetchActiveVersionId();
+        if (!versionId) {
+          saveBtn.textContent = '활성 버전 없음 — 버전 관리에서 활성화 필요';
+          saveBtn.style.background = '#c44';
+          setTimeout(() => {
+            saveBtn.textContent = 'DB에 저장';
+            saveBtn.style.background = '#2a8c4a';
+            saveBtn.disabled = false;
+          }, 3000);
+          return;
+        }
+        saveBtn.textContent = '저장 중...';
+        const result = await saveAllToDb(nurseData, versionId);
         if (result.success) {
-          saveBtn.textContent = `성공: ${result.count}건 저장`;
+          saveBtn.textContent = `성공: ${result.count}건 저장 (v${versionId})`;
           saveBtn.style.background = '#2a8c4a';
         } else {
           saveBtn.textContent = '실패 — 서버 확인 필요';

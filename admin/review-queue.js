@@ -33,9 +33,8 @@ async function loadApprovals(status) {
   }
 }
 
-/**
- * Load content entry details
- */
+// loadContentEntry는 개별 호출이 필요한 경우(상세보기 등)에만 사용
+// 목록 로드 시에는 loadApprovals가 반환하는 JOIN 데이터를 사용합니다.
 async function loadContentEntry(entryId) {
   try {
     const resp = await fetch(`/api/admin/content/${entryId}`);
@@ -204,35 +203,27 @@ async function handleDecision(event) {
 }
 
 /**
- * Render content preview for an approval card
+ * Render content preview using JOIN data already present in the task object.
+ * No additional fetch needed — eliminates the N+1 pattern.
  */
-async function loadPreview(task) {
+function renderPreviewFromTask(task) {
   const previewEl = document.getElementById(`preview-${task.id}`);
   if (!previewEl) return;
 
-  const entry = await loadContentEntry(task.entry_id);
-  if (!entry) {
-    previewEl.textContent = '콘텐츠를 불러올 수 없습니다.';
-    return;
-  }
-
-  const e = entry.entry;
-  const rev = entry.revisions?.[0];
-
   previewEl.textContent = '';
   const titleLine = document.createElement('strong');
-  titleLine.textContent = e.title || '제목 없음';
+  titleLine.textContent = task.entry_title || '제목 없음';
   previewEl.appendChild(titleLine);
 
   const typeLine = document.createTextNode(
-    ` (${e.content_type || ''}, 상태: ${e.status || ''})`
+    ` (${task.entry_content_type || ''}, 상태: ${task.entry_status || ''})`
   );
   previewEl.appendChild(typeLine);
 
-  if (rev && rev.body) {
+  if (task.revision_body_preview) {
     previewEl.appendChild(document.createElement('br'));
     previewEl.appendChild(document.createElement('br'));
-    const bodyText = document.createTextNode(rev.body.slice(0, 500));
+    const bodyText = document.createTextNode(String(task.revision_body_preview).slice(0, 500));
     previewEl.appendChild(bodyText);
   }
 }
@@ -261,7 +252,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   for (const task of pendingTasks) {
     const card = renderApprovalCard(task);
     listEl.appendChild(card);
-    loadPreview(task);
+    // JOIN 데이터를 직접 사용 — 추가 fetch 없음
+    renderPreviewFromTask(task);
   }
 
   listEl.addEventListener('click', handleDecision);

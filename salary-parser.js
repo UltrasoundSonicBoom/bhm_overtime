@@ -904,11 +904,12 @@ const SALARY_PARSER = (() => {
     return (type && type !== '급여') ? `${base}_${type}` : base;
   }
 
-  function saveMonthlyData(year, month, data, type) {
+  function saveMonthlyData(year, month, data, type, overwrite = false) {
     const key = storageKey(year, month, type);
 
     // 같은 월·같은 타입 데이터가 이미 있으면 항목 병합 (덮어쓰기 방지)
-    const existing = loadMonthlyData(year, month, type);
+    // overwrite=true (수동 편집 저장) 이면 병합 없이 전체 교체
+    const existing = overwrite ? null : loadMonthlyData(year, month, type);
     const merged = existing ? mergePayslipData(existing, data) : data;
 
     localStorage.setItem(key, JSON.stringify({ ...merged, savedAt: new Date().toISOString() }));
@@ -966,6 +967,13 @@ const SALARY_PARSER = (() => {
       b.year - a.year || b.month - a.month ||
       (a.type === '급여' ? -1 : b.type === '급여' ? 1 : 0)
     );
+  }
+
+  // 편집 저장 전용: merge 없이 전체 교체
+  function replaceMonthlyData(year, month, data, type) {
+    const key = storageKey(year, month, type);
+    localStorage.setItem(key, JSON.stringify({ ...data, savedAt: new Date().toISOString() }));
+    if (window.SyncManager) window.SyncManager.enqueuePush('payslip', year, month);
   }
 
   function deleteMonthlyData(year, month, type) {
@@ -1152,6 +1160,7 @@ const SALARY_PARSER = (() => {
   return {
     parseFile,
     saveMonthlyData,
+    replaceMonthlyData,
     loadMonthlyData,
     deleteMonthlyData,
     listSavedMonths,

@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>카드뉴스 — 프리뷰 v3</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700;800&family=Noto+Sans+KR:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#FFFDF5; --bg2:#FFF8E7; --card:#FFF; --ink:#1a1a1a; --ink2:#4a4a4a; --ink3:#8a8a8a;
+      --amber:#FDCB6E; --bluelt:#dce9ff; --blue:#1846b8; --green:#bff0cf;
+      --b:2px solid #1a1a1a; --sh:2px 2px 0 #1a1a1a; --sh2:4px 4px 0 #1a1a1a; --r:6px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html,body{font-family:'Space Grotesk','Noto Sans KR',-apple-system,sans-serif;background:var(--bg2);color:var(--ink);-webkit-font-smoothing:antialiased}
+
+    /* Layout */
+    .layout{display:flex;min-height:100vh}
+
+    /* Phone */
+    .phone-wrap{flex:0 0 340px;position:sticky;top:0;height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;border-right:var(--b);background:var(--bg2)}
+    .phone{width:308px;height:668px;border:3px solid var(--ink);box-shadow:var(--sh2);border-radius:28px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--bg)}
+    .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:80px;height:24px;background:var(--ink);border-radius:0 0 12px 12px;z-index:99}
+    .phone-inner{flex:1;overflow:hidden;display:flex;flex-direction:column;padding-top:24px}
+
+    /* Header */
+    .app-hd{flex-shrink:0;padding:9px 13px 7px;background:var(--amber);border-bottom:var(--b);display:flex;align-items:center;justify-content:space-between}
+    .app-hd-title{font-size:14px;font-weight:800}
+    .app-hd-sub{font-size:10px;color:var(--ink2);font-weight:600;margin-top:1px}
+    .icon-btn{width:28px;height:28px;border-radius:var(--r);background:var(--card);border:var(--b);box-shadow:var(--sh);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:var(--ink);transition:transform .1s,box-shadow .1s}
+    .icon-btn:active{transform:translate(2px,2px);box-shadow:none}
+
+    /* Cat tabs */
+    .cat-tabs{flex-shrink:0;padding:6px 12px;gap:5px;display:flex;overflow-x:auto;scrollbar-width:none;background:var(--card);border-bottom:var(--b)}
+    .cat-tabs::-webkit-scrollbar{display:none}
+    .ctab{flex-shrink:0;padding:4px 9px;border-radius:999px;font-size:10px;font-weight:700;border:var(--b);background:var(--card);color:var(--ink2);cursor:pointer;box-shadow:var(--sh);transition:transform .1s,box-shadow .1s}
+    .ctab:active{transform:translate(2px,2px);box-shadow:none}
+    .ctab.on{background:var(--ink);color:var(--amber)}
+
+    /* Content area */
+    .content{flex:1;overflow:hidden;position:relative}
+
+    /* Views */
+    .view{position:absolute;inset:0;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .2s ease}
+    .view.on{opacity:1;pointer-events:auto}
+
+    /* ── LIST VIEW ── */
+    .dl-scroll{flex:1;overflow-y:auto;scrollbar-width:none;padding:9px 11px 76px;display:flex;flex-direction:column;gap:8px}
+    .dl-scroll::-webkit-scrollbar{display:none}
+
+    .deck-item{background:var(--card);border:var(--b);border-radius:var(--r);box-shadow:var(--sh);display:flex;flex-direction:column;cursor:pointer;overflow:hidden;transition:transform .1s,box-shadow .1s}
+    .deck-item:active{transform:translate(2px,2px);box-shadow:none}
+    .deck-item-hd{display:flex;align-items:center;gap:9px;padding:10px 12px}
+    .deck-item-body{padding:7px 12px 10px;border-top:1px solid rgba(26,26,26,.1)}
+    .dthumb{width:38px;height:38px;border-radius:var(--r);border:var(--b);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:17px}
+    .ta{background:var(--amber)} .tb{background:var(--bluelt)} .tc{background:var(--bg2)} .td{background:var(--green)}
+    .dinfo-hd{flex:1;min-width:0}
+    .dcat{font-size:9px;font-weight:800;color:var(--ink3);text-transform:uppercase;letter-spacing:.3px}
+    .dtitle{font-size:13px;font-weight:800;color:var(--ink);line-height:1.3;letter-spacing:-.2px;word-break:keep-all;margin:2px 0 0}
+    .dsummary{display:flex;flex-direction:column;gap:3px;margin-bottom:5px}
+    .dsum-item{display:flex;gap:5px;align-items:baseline;font-size:10px;font-weight:600;color:var(--ink2);line-height:1.45;word-break:keep-all}
+    .dsum-item::before{content:'•';color:var(--ink3);font-weight:800;flex-shrink:0}
+    .dmeta{font-size:10px;font-weight:600;color:var(--ink3)}
+    .darrow{font-size:15px;font-weight:800;color:var(--ink3);flex-shrink:0}
+
+    /* ── FOCUS VIEW ── */
+    .view-focus{background:var(--bg)}
+
+    /* Ghost bars — list-item header style, semi-transparent */
+    .ghost{flex-shrink:0;height:52px;display:flex;align-items:center;gap:9px;padding:0 12px;cursor:pointer;background:var(--bg2);opacity:.45;transition:opacity .15s}
+    .ghost:hover{opacity:.75}
+    .ghost.hidden{display:none}
+    .ghost-top{border-bottom:1px dashed rgba(26,26,26,.2)}
+    .ghost-bot{border-top:1px dashed rgba(26,26,26,.2)}
+    .ghost-thumb{width:32px;height:32px;border-radius:var(--r);border:1.5px solid rgba(26,26,26,.25);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:15px}
+    .ghost-info{flex:1;min-width:0}
+    .ghost-cat{font-size:9px;font-weight:800;color:var(--ink3);text-transform:uppercase;letter-spacing:.3px}
+    .ghost-ttl{font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .ghost-dir{font-size:10px;font-weight:700;color:var(--ink3);flex-shrink:0}
+
+    /* Active deck header (replaces old focus-bar overlay) */
+    .deck-hd{flex-shrink:0;display:flex;align-items:center;gap:9px;padding:9px 12px;background:var(--card);border-bottom:var(--b)}
+    .deck-hd-thumb{width:36px;height:36px;border-radius:var(--r);border:var(--b);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px}
+    .deck-hd-info{flex:1;min-width:0;overflow:hidden}
+    .deck-hd-cat{font-size:9px;font-weight:800;color:var(--ink3);text-transform:uppercase;letter-spacing:.3px}
+    .deck-hd-ttl{font-size:12px;font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+    .focus-wrap{flex:1;position:relative;overflow:hidden}
+    .close-btn{width:26px;height:26px;border-radius:999px;border:var(--b);background:var(--card);box-shadow:var(--sh);font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform .1s,box-shadow .1s}
+    .close-btn:active{transform:translate(2px,2px);box-shadow:none}
+    .fdots{display:flex;gap:4px;align-items:center}
+    .fdots .dot{height:5px;width:5px;border-radius:3px;background:var(--ink3);border:1px solid var(--ink);transition:width .2s,background .2s}
+    .fdots .dot.on{width:14px;background:var(--ink)}
+
+    /* Focus cards: each deck — horizontal snap scroll */
+    .focus-cards{position:absolute;inset:0;overflow-x:scroll;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;display:none;flex-direction:row}
+    .focus-cards::-webkit-scrollbar{display:none}
+    .focus-cards.on{display:flex}
+
+    /* Each card fills container — horizontal */
+    .fc{scroll-snap-align:start;scroll-snap-stop:always;flex:0 0 100%;width:100%;height:100%;display:flex;flex-direction:column;padding:13px;overflow:hidden}
+
+    /* Card colors */
+    .cc{background:var(--amber)} .cp{background:var(--bluelt)} .cs{background:var(--card)} .cr{background:var(--ink)} .cw{background:var(--green)}
+
+    /* Card label */
+    .clabel{font-size:9px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px}
+    .cc .clabel{color:var(--ink2)} .cp .clabel{color:var(--blue)} .cs .clabel{color:var(--blue)} .cr .clabel{color:var(--amber)} .cw .clabel{color:#1a7a4a}
+
+    /* Headline */
+    .cheadline{font-size:15px;font-weight:800;line-height:1.3;letter-spacing:-.3px;word-break:keep-all;margin-bottom:10px}
+    .cc .cheadline,.cp .cheadline,.cs .cheadline,.cw .cheadline{color:var(--ink)}
+    .cr .cheadline{color:#fff}
+    .cc a{color:inherit;text-decoration:none}
+    .cc a:hover{text-decoration:underline}
+
+    /* Cover */
+    .ckicker{display:inline-flex;align-items:center;gap:4px;background:var(--ink);color:var(--amber);border-radius:999px;padding:3px 8px;font-size:9px;font-weight:800;letter-spacing:.3px;align-self:flex-start;margin-bottom:8px}
+    .cbullets{display:flex;flex-direction:column;gap:6px;flex:1}
+    .cbullet{display:flex;gap:7px;align-items:flex-start}
+    .cbullet-n{width:16px;height:16px;border-radius:999px;background:var(--ink);color:var(--amber);font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+    .cbullet-t{font-size:11px;color:var(--ink);line-height:1.5;font-weight:600;word-break:keep-all}
+    .cbullet-t strong{font-weight:800}
+    .cbadges{margin-top:10px;display:flex;gap:5px}
+    .sbadge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:999px;border:var(--b);background:var(--card);font-size:9px;font-weight:800;color:var(--ink)}
+
+    /* Pulse */
+    .plist{display:flex;flex-direction:column;gap:7px;flex:1}
+    .pitem{display:flex;gap:7px;align-items:flex-start;background:var(--card);border:var(--b);border-radius:var(--r);padding:8px 10px;box-shadow:var(--sh)}
+    .pdot{width:7px;height:7px;border-radius:50%;background:var(--blue);border:2px solid var(--ink);flex-shrink:0;margin-top:4px}
+    .ptxt{font-size:11px;color:var(--ink);line-height:1.5;font-weight:600;word-break:keep-all}
+    .ptxt strong{font-weight:800}
+
+    /* Source */
+    .slist{display:flex;flex-direction:column;gap:7px}
+    .sitem{border:var(--b);border-radius:var(--r);padding:9px 11px;background:var(--bg2);box-shadow:var(--sh);display:flex;flex-direction:column;gap:3px;text-decoration:none;cursor:pointer;transition:transform .1s,box-shadow .1s}
+    .sitem:active{transform:translate(2px,2px);box-shadow:none}
+    .sitem-ttl{font-size:11px;font-weight:700;color:var(--ink);line-height:1.4;word-break:keep-all}
+    .sitem:hover .sitem-ttl{text-decoration:underline}
+    .sitem-meta{display:flex;align-items:center;gap:5px}
+    .sdom{font-size:10px;color:var(--ink3);font-weight:700}
+    .styp{font-size:9px;font-weight:800;padding:1px 5px;border-radius:999px;border:var(--b);background:var(--card);color:var(--ink)}
+    .styp.paper{background:var(--bluelt)}
+
+    /* Research */
+    .sgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;flex:1}
+    .scard{border:2px solid rgba(255,255,255,.18);border-radius:var(--r);padding:10px;display:flex;flex-direction:column;gap:3px}
+    .snum{font-size:20px;font-weight:800;color:var(--amber);letter-spacing:-1px;line-height:1}
+    .slbl{font-size:10px;color:rgba(255,255,255,.55);font-weight:600;line-height:1.4;word-break:keep-all}
+    .ssrc{margin-top:8px;font-size:9px;color:rgba(255,255,255,.3);font-weight:700}
+
+    /* Watch */
+    .wlist{display:flex;flex-direction:column;gap:7px;flex:1}
+    .witem{display:flex;gap:8px;align-items:flex-start;background:var(--card);border:var(--b);border-radius:var(--r);padding:9px 11px;box-shadow:var(--sh)}
+    .wnum{font-size:16px;font-weight:800;color:#1a7a4a;flex-shrink:0}
+    .wtxt{font-size:11px;color:var(--ink);line-height:1.5;font-weight:600;word-break:keep-all}
+    .wcta{margin-top:10px;padding:9px 12px;background:var(--ink);border-radius:var(--r);box-shadow:var(--sh);font-size:11px;font-weight:800;color:var(--amber);text-align:center;cursor:pointer;transition:transform .1s,box-shadow .1s}
+    .wcta:active{transform:translate(2px,2px);box-shadow:none}
+
+    /* Tabbar */
+    .tabbar{position:absolute;bottom:0;left:0;right:0;background:var(--card);border-top:var(--b);display:flex;padding:7px 0 12px;z-index:10}
+    .titem{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer}
+    .ticon{font-size:16px;line-height:1}
+    .tlbl{font-size:9px;font-weight:700;color:var(--ink3)}
+    .titem.on .tlbl{color:var(--ink)}
+
+    /* Gen sheet */
+    .gen-sheet{display:none;position:absolute;inset:0;background:var(--bg);z-index:50;flex-direction:column;padding-top:24px}
+    .gen-sheet.on{display:flex}
+    .gs-hd{padding:10px 13px;display:flex;align-items:center;gap:10px;background:var(--amber);border-bottom:var(--b)}
+    .gs-back{font-size:18px;font-weight:800;background:none;border:none;cursor:pointer;font-family:inherit;color:var(--ink)}
+    .gs-ttl{font-size:14px;font-weight:800}
+    .gs-body{flex:1;overflow-y:auto;padding:13px 12px;display:flex;flex-direction:column;gap:13px}
+    .gs-sec label{display:block;font-size:9px;font-weight:800;color:var(--ink2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.3px}
+    .neo-input{width:100%;padding:9px 12px;border-radius:var(--r);border:var(--b);background:var(--card);color:var(--ink);font-size:13px;font-family:inherit;font-weight:600;outline:none;box-shadow:var(--sh)}
+    .neo-input::placeholder{color:var(--ink3)}
+    .qchips{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+    .qchip{padding:4px 9px;border-radius:999px;background:var(--card);border:var(--b);font-size:11px;font-weight:700;color:var(--ink2);cursor:pointer;box-shadow:var(--sh);transition:transform .1s,box-shadow .1s}
+    .qchip:active{transform:translate(2px,2px);box-shadow:none}
+    .qchip.on{background:var(--ink);color:var(--amber);border-color:var(--ink)}
+    .rrow{display:flex;gap:5px}
+    .rbtn{flex:1;padding:7px 4px;border-radius:var(--r);border:var(--b);background:var(--card);font-size:10px;font-weight:700;color:var(--ink2);cursor:pointer;text-align:center;font-family:inherit;box-shadow:var(--sh);transition:transform .1s,box-shadow .1s}
+    .rbtn:active{transform:translate(2px,2px);box-shadow:none}
+    .rbtn.on{background:var(--ink);color:var(--amber);border-color:var(--ink)}
+    .gs-foot{padding:10px 12px 18px;background:var(--card);border-top:var(--b)}
+    .gs-btn{width:100%;padding:12px;border-radius:var(--r);border:var(--b);background:var(--ink);color:var(--amber);font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:var(--sh2);transition:transform .1s,box-shadow .1s}
+    .gs-btn:active{transform:translate(2px,2px);box-shadow:var(--sh)}
+
+    /* Doc panel */
+    .doc{flex:1;padding:40px 40px 80px;max-width:640px;overflow-y:auto}
+    .doc-badge{display:inline-flex;align-items:center;background:var(--amber);border:var(--b);border-radius:var(--r);box-shadow:var(--sh);padding:3px 9px;font-size:10px;font-weight:800;margin-bottom:12px}
+    .doc h1{font-size:22px;font-weight:800;letter-spacing:-.5px;margin-bottom:8px}
+    .doc .sub{font-size:13px;color:var(--ink2);line-height:1.75;margin-bottom:28px;word-break:keep-all}
+    .dsec{margin-bottom:28px}
+    .dsec h2{font-size:14px;font-weight:800;border-bottom:3px solid var(--ink);padding-bottom:6px;margin-bottom:11px}
+    .dsec p{font-size:12px;color:var(--ink2);line-height:1.75;word-break:keep-all;margin-bottom:8px}
+    .dstep{background:var(--card);border:var(--b);border-radius:var(--r);box-shadow:var(--sh);padding:10px 12px;display:flex;gap:10px;align-items:flex-start;margin-bottom:7px}
+    .dstep-n{width:20px;height:20px;border-radius:999px;background:var(--ink);color:var(--amber);font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .dstep-ttl{font-size:12px;font-weight:800;color:var(--ink);margin-bottom:2px}
+    .dstep-desc{font-size:11px;color:var(--ink2);line-height:1.55;word-break:keep-all}
+    .dnext{background:var(--ink);border-radius:var(--r);border:var(--b);box-shadow:var(--sh2);padding:16px}
+    .dnext-ttl{font-size:13px;font-weight:800;color:var(--amber);margin-bottom:9px}
+    .dnext-item{font-size:11px;color:rgba(255,255,255,.8);line-height:1.5;display:flex;gap:7px;font-weight:600;margin-bottom:6px}
+    .dnext-item::before{content:'→';color:var(--amber);flex-shrink:0;font-weight:800}
+
+    @media(max-width:780px){.layout{flex-direction:column}.phone-wrap{flex:0 0 auto;height:auto;position:static;border-right:none;border-bottom:var(--b);padding:20px}.doc{padding:24px 16px 60px;max-width:100%}}
+  </style>
+</head>
+<body>
+<div class="layout">
+
+<!-- ═════════════ PHONE ═════════════ -->
+<div class="phone-wrap"><div class="phone">
+  <div class="notch"></div>
+  <div class="phone-inner">
+
+    <div class="app-hd">
+      <div><div class="app-hd-title">카드뉴스</div><div class="app-hd-sub">4월 12일 · 4개 덱 업데이트됨</div></div>
+      <button class="icon-btn" onclick="showGen()">＋</button>
+    </div>
+
+    <div class="cat-tabs">
+      <div class="ctab">전체</div><div class="ctab on">의료AI</div>
+      <div class="ctab">서울대병원</div><div class="ctab">AI 활용</div>
+      <div class="ctab">재테크</div><div class="ctab">연말정산</div>
+    </div>
+
+    <div class="content">
+
+      <!-- ══ LIST VIEW ══ -->
+      <div class="view view-list on" id="vList">
+        <div class="dl-scroll">
+
+          <!-- Deck 0 -->
+          <div class="deck-item" onclick="openFocus(0)">
+            <div class="deck-item-hd">
+              <div class="dthumb ta">🔬</div>
+              <div class="dinfo-hd">
+                <div class="dcat">의료AI</div>
+                <div class="dtitle">AI가 의사보다 먼저 암을 발견한다</div>
+              </div>
+              <div class="darrow">›</div>
+            </div>
+            <div class="deck-item-body">
+              <div class="dsummary">
+                <div class="dsum-item">Paige AI 흑색종 탐지 94.6% — 피부과 의사 평균(89.3%) 초과</div>
+                <div class="dsum-item">서울아산병원, AI 판독 시스템 흉부·복부 2개 과 전면 도입</div>
+                <div class="dsum-item">FDA 의료AI 실시간 성능 모니터링 의무화 가이드라인 최종 공개</div>
+              </div>
+              <div class="dmeta">2시간 전 · 기사 2 · 논문 1</div>
+            </div>
+          </div>
+
+          <!-- Deck 1 -->
+          <div class="deck-item" onclick="openFocus(1)">
+            <div class="deck-item-hd">
+              <div class="dthumb tb">🏥</div>
+              <div class="dinfo-hd">
+                <div class="dcat">서울대학교병원</div>
+                <div class="dtitle">서울대병원, 로봇수술 3천 건 돌파</div>
+              </div>
+              <div class="darrow">›</div>
+            </div>
+            <div class="deck-item-body">
+              <div class="dsummary">
+                <div class="dsum-item">국내 최단기간 3,000건 달성 — 도입 4년 만에 기록 경신</div>
+                <div class="dsum-item">복강경 대비 합병증 발생률 68% 감소 임상 데이터 공개</div>
+                <div class="dsum-item">2025년 로봇수술 센터 확장 및 AI 연동 계획 발표</div>
+              </div>
+              <div class="dmeta">2시간 전 · 기사 3 · 논문 0</div>
+            </div>
+          </div>
+
+          <!-- Deck 2 -->
+          <div class="deck-item" onclick="openFocus(2)">
+            <div class="deck-item-hd">
+              <div class="dthumb tc">💰</div>
+              <div class="dinfo-hd">
+                <div class="dcat">재테크</div>
+                <div class="dtitle">기준금리 동결, 지금 어디에 넣어야 하나</div>
+              </div>
+              <div class="darrow">›</div>
+            </div>
+            <div class="deck-item-body">
+              <div class="dsummary">
+                <div class="dsum-item">한은 기준금리 3.5% 동결 — 6회 연속, 인하 신호 없음</div>
+                <div class="dsum-item">예금 금리 하락세에도 파킹통장·CMA 수요 급증</div>
+                <div class="dsum-item">단기채·MMF 2024년 상반기 유망 대안으로 부상</div>
+              </div>
+              <div class="dmeta">4시간 전 · 기사 2 · 논문 1</div>
+            </div>
+          </div>
+
+          <!-- Deck 3 -->
+          <div class="deck-item" onclick="openFocus(3)">
+            <div class="deck-item-hd">
+              <div class="dthumb td">📋</div>
+              <div class="dinfo-hd">
+                <div class="dcat">연말정산</div>
+                <div class="dtitle">2024년 바뀐 공제 항목 5가지</div>
+              </div>
+              <div class="darrow">›</div>
+            </div>
+            <div class="deck-item-body">
+              <div class="dsummary">
+                <div class="dsum-item">월세 세액공제 한도 750만 원 → 1,000만 원으로 상향</div>
+                <div class="dsum-item">자녀세액공제 첫째 15만, 둘째 20만, 셋째 30만 원으로 인상</div>
+                <div class="dsum-item">신용카드 공제율 영화관·대중교통 추가 확대 적용</div>
+              </div>
+              <div class="dmeta">어제 · 기사 3 · 논문 0</div>
+            </div>
+          </div>
+
+        </div>
+      </div><!-- /vList -->
+
+      <!-- ══ FOCUS VIEW ══ -->
+      <div class="view view-focus" id="vFocus">
+
+        <!-- Ghost top -->
+        <div class="ghost ghost-top hidden" id="gTop" onclick="ghostNav(-1)">
+          <div class="ghost-thumb" id="gTopThumb"></div>
+          <div class="ghost-info">
+            <div class="ghost-cat" id="gTopCat"></div>
+            <div class="ghost-ttl" id="gTopTtl"></div>
+          </div>
+          <span class="ghost-dir">↑</span>
+        </div>
+
+        <!-- Active deck header -->
+        <div class="deck-hd">
+          <button class="close-btn" onclick="closeFocus()">✕</button>
+          <div class="deck-hd-thumb" id="dhThumb"></div>
+          <div class="deck-hd-info">
+            <div class="deck-hd-cat" id="dhCat"></div>
+            <div class="deck-hd-ttl" id="dhTtl"></div>
+          </div>
+          <div class="fdots" id="fDots">
+            <div class="dot on"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+          </div>
+        </div>
+
+        <!-- Card area -->
+        <div class="focus-wrap">
+
+          <!-- ── Deck 0 cards ── -->
+          <div class="focus-cards" id="fc-0">
+            <div class="fc cc">
+              <div class="ckicker">🔬 의료AI · 2024.04.12</div>
+              <a class="cheadline" href="https://www.medscape.com" target="_blank" rel="noopener">AI가 의사보다 먼저 암을 발견한다</a>
+              <div class="cbullets">
+                <div class="cbullet"><div class="cbullet-n">1</div><div class="cbullet-t"><strong>Paige AI</strong> 흑색종 탐지 <strong>94.6%</strong> — 피부과 의사 평균(89.3%) 초과</div></div>
+                <div class="cbullet"><div class="cbullet-n">2</div><div class="cbullet-t"><strong>서울아산병원</strong>, AI 판독 시스템 흉부·복부 2개 과 전면 도입</div></div>
+                <div class="cbullet"><div class="cbullet-n">3</div><div class="cbullet-t">FDA 의료AI 실시간 성능 <strong>모니터링 의무화</strong> 가이드라인 최종 공개</div></div>
+              </div>
+              <div class="cbadges"><span class="sbadge">📰 기사 2</span><span class="sbadge">📄 논문 1</span></div>
+            </div>
+            <div class="fc cp">
+              <div class="clabel">⚡ 지금 바뀐 것</div>
+              <div class="cheadline">이번 주 의료AI<br>놓치면 안 될 3가지</div>
+              <div class="plist">
+                <div class="pitem"><div class="pdot"></div><div class="ptxt"><strong>Paige AI</strong>, 흑색종 탐지 <strong>94.6%</strong> 발표. 피부과 의사 평균 대비 +5.3%p</div></div>
+                <div class="pitem"><div class="pdot"></div><div class="ptxt"><strong>서울아산병원</strong> AI 판독 시스템 흉부·복부 2과 전면 도입 결정</div></div>
+                <div class="pitem"><div class="pdot"></div><div class="ptxt">FDA 임상 가이드라인 최종본 — 실시간 성능 모니터링 의무화</div></div>
+              </div>
+            </div>
+            <div class="fc cs">
+              <div class="clabel">📎 이 덱의 출처</div>
+              <div class="cheadline">직접 확인할<br>원문 3건</div>
+              <div class="slist">
+                <a class="sitem" href="https://www.medscape.com" target="_blank" rel="noopener">
+                  <div class="sitem-ttl">AI Beats Dermatologists in Melanoma Detection — New FDA-Approved Tool</div>
+                  <div class="sitem-meta"><span class="sdom">medscape.com</span><span class="styp">기사</span></div>
+                </a>
+                <a class="sitem" href="https://www.asan.or.kr" target="_blank" rel="noopener">
+                  <div class="sitem-ttl">서울아산병원, AI 영상 판독 시스템 전면 도입 — 흉부·복부 시작</div>
+                  <div class="sitem-meta"><span class="sdom">asan.or.kr</span><span class="styp">기사</span></div>
+                </a>
+                <a class="sitem" href="https://www.nejm.org" target="_blank" rel="noopener">
+                  <div class="sitem-ttl">Performance of Deep Learning Models in Real-World Clinical Deployment</div>
+                  <div class="sitem-meta"><span class="sdom">nejm.org</span><span class="styp paper">논문</span></div>
+                </a>
+              </div>
+            </div>
+            <div class="fc cr">
+              <div class="clabel">📊 연구 근거</div>
+              <div class="cheadline">논문이 말하는 숫자</div>
+              <div class="sgrid">
+                <div class="scard"><div class="snum">94.6%</div><div class="slbl">Paige AI<br>흑색종 탐지</div></div>
+                <div class="scard"><div class="snum">89.3%</div><div class="slbl">피부과 전문의<br>평균 정확도</div></div>
+                <div class="scard"><div class="snum">+5.3p</div><div class="slbl">AI vs 의사<br>정확도 차이</div></div>
+                <div class="scard"><div class="snum">2과</div><div class="slbl">아산병원<br>AI 도입 수</div></div>
+              </div>
+              <div class="ssrc">NEJM 2024 · n=12,400 / Paige 보도자료</div>
+            </div>
+            <div class="fc cw">
+              <div class="clabel">🔭 다음 체크포인트</div>
+              <div class="cheadline">이걸 계속<br>지켜봐라</div>
+              <div class="wlist">
+                <div class="witem"><div class="wnum">1</div><div class="wtxt">아산병원 도입 6개월 후 의료진 만족도·오류율 데이터 공개 여부</div></div>
+                <div class="witem"><div class="wnum">2</div><div class="wtxt">FDA 가이드라인 → 국내 식약처 벤치마킹 및 의료AI 규제 업데이트 시점</div></div>
+              </div>
+              <div class="wcta">다음 업데이트 알림 설정 →</div>
+            </div>
+          </div><!-- /fc-0 -->
+
+          <!-- ── Deck 1 cards ── -->
+          <div class="focus-cards" id="fc-1">
+            <div class="fc cc">
+              <div class="ckicker">🏥 서울대병원 · 2024.04.12</div>
+              <a class="cheadline" href="https://www.snuh.org" target="_blank" rel="noopener">서울대병원, 로봇수술 3천 건 돌파</a>
+              <div class="cbullets">
+                <div class="cbullet"><div class="cbullet-n">1</div><div class="cbullet-t">국내 최단기간 <strong>3,000건</strong> 달성 — 도입 4년 만에 기록 경신</div></div>
+                <div class="cbullet"><div class="cbullet-n">2</div><div class="cbullet-t">복강경 대비 합병증 발생률 <strong>68% 감소</strong> 임상 데이터 공개</div></div>
+                <div class="cbullet"><div class="cbullet-n">3</div><div class="cbullet-t">2025년 로봇수술 센터 확장 및 <strong>AI 연동</strong> 계획 발표</div></div>
+              </div>
+              <div class="cbadges"><span class="sbadge">📰 기사 3</span></div>
+            </div>
+            <div class="fc cp">
+              <div class="clabel">⚡ 지금 바뀐 것</div>
+              <div class="cheadline">이번 주 서울대병원<br>핵심 업데이트</div>
+              <div class="plist">
+                <div class="pitem"><div class="pdot"></div><div class="ptxt">로봇수술 누적 <strong>3,000건</strong> 달성. 아시아 단일 병원 최단기간 기록</div></div>
+                <div class="pitem"><div class="pdot"></div><div class="ptxt">흉부외과·비뇨기과 합병증 발생률 복강경 대비 <strong>68% 감소</strong></div></div>
+                <div class="pitem"><div class="pdot"></div><div class="ptxt">2025년 <strong>로봇수술 2센터</strong> 신설 및 AI 실시간 가이드 시스템 연동 발표</div></div>
+              </div>
+            </div>
+            <div class="fc cs">
+              <div class="clabel">📎 이 덱의 출처</div>
+              <div class="cheadline">직접 확인할<br>원문 3건</div>
+              <div class="slist">
+                <a class="sitem" href="https://www.snuh.org" target="_blank" rel="noopener"><div class="sitem-ttl">서울대학교병원 로봇수술 3,000례 달성 공식 발표</div><div class="sitem-meta"><span class="sdom">snuh.org</span><span class="styp">기사</span></div></a>
+                <a class="sitem" href="https://www.hankookilbo.com" target="_blank" rel="noopener"><div class="sitem-ttl">서울대병원 로봇수술 3000건 돌파…"아시아 최단기간"</div><div class="sitem-meta"><span class="sdom">hankookilbo.com</span><span class="styp">기사</span></div></a>
+                <a class="sitem" href="https://www.medicaltimes.com" target="_blank" rel="noopener"><div class="sitem-ttl">로봇수술 확장과 AI 연동, 국내 대형병원의 방향은?</div><div class="sitem-meta"><span class="sdom">medicaltimes.com</span><span class="styp">기사</span></div></a>
+              </div>
+            </div>
+            <div class="fc cr">
+              <div class="clabel">📊 연구 근거</div>
+              <div class="cheadline">숫자로 보는<br>로봇수술 효과</div>
+              <div class="sgrid">
+                <div class="scard"><div class="snum">3,000</div><div class="slbl">누적 로봇수술 건수</div></div>
+                <div class="scard"><div class="snum">68%</div><div class="slbl">복강경 대비<br>합병증 감소율</div></div>
+                <div class="scard"><div class="snum">4년</div><div class="slbl">달성 기간<br>아시아 최단</div></div>
+                <div class="scard"><div class="snum">2025</div><div class="slbl">2센터 신설<br>예정 연도</div></div>
+              </div>
+              <div class="ssrc">서울대병원 보도자료 2024 / 내부 임상 데이터</div>
+            </div>
+            <div class="fc cw">
+              <div class="clabel">🔭 다음 체크포인트</div>
+              <div class="cheadline">이걸 계속<br>지켜봐라</div>
+              <div class="wlist">
+                <div class="witem"><div class="wnum">1</div><div class="wtxt">2025년 로봇수술 2센터 신설 착공 시점 및 AI 가이드 시스템 일정</div></div>
+                <div class="witem"><div class="wnum">2</div><div class="wtxt">타 상급병원(아산·세브란스) 로봇수술 확장 대응 전략 발표 여부</div></div>
+              </div>
+              <div class="wcta">다음 업데이트 알림 설정 →</div>
+            </div>
+          </div><!-- /fc-1 -->
+
+          <!-- ── Deck 2 cards ── -->
+          <div class="focus-cards" id="fc-2">
+            <div class="fc cc">
+              <div class="ckicker">💰 재테크 · 2024.04.12</div>
+              <a class="cheadline" href="https://www.bok.or.kr" target="_blank" rel="noopener">기준금리 동결, 지금 어디에 넣어야 하나</a>
+              <div class="cbullets">
+                <div class="cbullet"><div class="cbullet-n">1</div><div class="cbullet-t">한은 기준금리 <strong>3.5% 동결</strong> — 6회 연속, 인하 신호 없음</div></div>
+                <div class="cbullet"><div class="cbullet-n">2</div><div class="cbullet-t">예금 금리 하락세에도 <strong>파킹통장·CMA</strong> 수요 급증</div></div>
+                <div class="cbullet"><div class="cbullet-n">3</div><div class="cbullet-t"><strong>단기채·MMF</strong> 2024년 상반기 유망 대안으로 부상</div></div>
+              </div>
+              <div class="cbadges"><span class="sbadge">📰 기사 2</span><span class="sbadge">📄 논문 1</span></div>
+            </div>
+            <div class="fc cp">
+              <div class="clabel">⚡ 지금 바뀐 것</div>
+              <div class="cheadline">이번 주 금리·투자<br>핵심 3가지</div>
+              <div class="plist">
+                <div class="pitem"><div class="pdot"></div><div class="ptxt">한은 기준금리 <strong>3.5% 동결</strong>. 6회 연속. 상반기 내 인하 가능성 낮음</div></div>
+                <div class="pitem"><div class="pdot"></div><div class="ptxt">4대 시중은행 1년 정기예금 평균 <strong>3.2%</strong> — 2개월 연속 하락</div></div>
+                <div class="pitem"><div class="pdot"></div><div class="ptxt">단기 국채 ETF 거래량 전월 대비 <strong>34% 증가</strong> — 개인 투자자 유입</div></div>
+              </div>
+            </div>
+            <div class="fc cs">
+              <div class="clabel">📎 이 덱의 출처</div>
+              <div class="cheadline">직접 확인할<br>원문 3건</div>
+              <div class="slist">
+                <a class="sitem" href="https://www.bok.or.kr" target="_blank" rel="noopener"><div class="sitem-ttl">한국은행 기준금리 결정 보도자료 2024.04</div><div class="sitem-meta"><span class="sdom">bok.or.kr</span><span class="styp">기사</span></div></a>
+                <a class="sitem" href="https://www.mk.co.kr" target="_blank" rel="noopener"><div class="sitem-ttl">금리 동결에 파킹통장·단기채 ETF로 뭉칫돈</div><div class="sitem-meta"><span class="sdom">mk.co.kr</span><span class="styp">기사</span></div></a>
+                <a class="sitem" href="https://papers.ssrn.com" target="_blank" rel="noopener"><div class="sitem-ttl">Household Portfolio Reallocation During Monetary Policy Uncertainty</div><div class="sitem-meta"><span class="sdom">ssrn.com</span><span class="styp paper">논문</span></div></a>
+              </div>
+            </div>
+            <div class="fc cr">
+              <div class="clabel">📊 연구 근거</div>
+              <div class="cheadline">숫자로 보는<br>지금 금리 상황</div>
+              <div class="sgrid">
+                <div class="scard"><div class="snum">3.5%</div><div class="slbl">현재 기준금리<br>6회 연속 동결</div></div>
+                <div class="scard"><div class="snum">3.2%</div><div class="slbl">1년 정기예금<br>평균 금리</div></div>
+                <div class="scard"><div class="snum">+34%</div><div class="slbl">단기채 ETF<br>거래량 증가</div></div>
+                <div class="scard"><div class="snum">H2</div><div class="slbl">금리 인하<br>예상 시점</div></div>
+              </div>
+              <div class="ssrc">한국은행 2024.04 / KRX 통계</div>
+            </div>
+            <div class="fc cw">
+              <div class="clabel">🔭 다음 체크포인트</div>
+              <div class="cheadline">이걸 계속<br>지켜봐라</div>
+              <div class="wlist">
+                <div class="witem"><div class="wnum">1</div><div class="wtxt">5월 한은 금통위 회의 결과 — 인하 시그널 변화 여부</div></div>
+                <div class="witem"><div class="wnum">2</div><div class="wtxt">미국 연준(Fed) 금리 결정과 한국 금리 연동 시점 추정</div></div>
+              </div>
+              <div class="wcta">다음 업데이트 알림 설정 →</div>
+            </div>
+          </div><!-- /fc-2 -->
+
+          <!-- ── Deck 3 cards ── -->
+          <div class="focus-cards" id="fc-3">
+            <div class="fc cc">
+              <div class="ckicker">📋 연말정산 · 2024.04.11</div>
+              <a class="cheadline" href="https://www.nts.go.kr" target="_blank" rel="noopener">2024년 바뀐 공제 항목 5가지</a>
+              <div class="cbullets">
+                <div class="cbullet"><div class="cbullet-n">1</div><div class="cbullet-t">월세 세액공제 한도 <strong>750만 → 1,000만 원</strong> 상향</div></div>
+                <div class="cbullet"><div class="cbullet-n">2</div><div class="cbullet-t">자녀세액공제 <strong>첫째 15만, 둘째 20만, 셋째 30만 원</strong>으로 인상</div></div>
+                <div class="cbullet"><div class="cbullet-n">3</div><div class="cbullet-t">신용카드 공제율 <strong>영화관·대중교통</strong> 추가 확대 적용</div></div>
+              </div>
+              <div class="cbadges"><span class="sbadge">📰 기사 3</span></div>
+            </div>
+            <div class="fc cp">
+              <div class="clabel">⚡ 지금 바뀐 것</div>
+              <div class="cheadline">2024 연말정산<br>핵심 변경 3가지</div>
+              <div class="plist">
+                <div class="pitem"><div class="pdot"></div><div class="ptxt">월세 세액공제 한도 <strong>1,000만 원</strong>으로 상향 (종전 750만 원)</div></div>
+                <div class="pitem"><div class="pdot"></div><div class="ptxt">다자녀 세액공제 단계별 인상 — 셋째부터 <strong>30만 원</strong> 공제</div></div>
+                <div class="pitem"><div class="pdot"></div><div class="ptxt">신용카드 <strong>영화관·대중교통</strong> 소득공제율 추가 우대 적용</div></div>
+              </div>
+            </div>
+            <div class="fc cs">
+              <div class="clabel">📎 이 덱의 출처</div>
+              <div class="cheadline">직접 확인할<br>원문 3건</div>
+              <div class="slist">
+                <a class="sitem" href="https://www.nts.go.kr" target="_blank" rel="noopener"><div class="sitem-ttl">국세청 2024 연말정산 달라지는 사항 안내</div><div class="sitem-meta"><span class="sdom">nts.go.kr</span><span class="styp">기사</span></div></a>
+                <a class="sitem" href="https://www.chosun.com" target="_blank" rel="noopener"><div class="sitem-ttl">월세 공제 1000만원·자녀 공제 확대…2024 연말정산 뭐가 달라졌나</div><div class="sitem-meta"><span class="sdom">chosun.com</span><span class="styp">기사</span></div></a>
+                <a class="sitem" href="https://www.hankyung.com" target="_blank" rel="noopener"><div class="sitem-ttl">연말정산 공제 변경사항 완벽 정리 2024</div><div class="sitem-meta"><span class="sdom">hankyung.com</span><span class="styp">기사</span></div></a>
+              </div>
+            </div>
+            <div class="fc cr">
+              <div class="clabel">📊 연구 근거</div>
+              <div class="cheadline">바뀐 한도<br>한눈에 보기</div>
+              <div class="sgrid">
+                <div class="scard"><div class="snum">1,000</div><div class="slbl">월세 공제<br>한도(만원)</div></div>
+                <div class="scard"><div class="snum">30만</div><div class="slbl">셋째 이상<br>자녀 공제액</div></div>
+                <div class="scard"><div class="snum">+250</div><div class="slbl">월세 한도<br>증가(만원)</div></div>
+                <div class="scard"><div class="snum">2종</div><div class="slbl">신용카드<br>우대 추가</div></div>
+              </div>
+              <div class="ssrc">국세청 2024 / 기획재정부 세법개정안</div>
+            </div>
+            <div class="fc cw">
+              <div class="clabel">🔭 다음 체크포인트</div>
+              <div class="cheadline">이걸 계속<br>지켜봐라</div>
+              <div class="wlist">
+                <div class="witem"><div class="wnum">1</div><div class="wtxt">홈택스 간소화 서비스 개편 — 월세 공제 자동 조회 반영 시점</div></div>
+                <div class="witem"><div class="wnum">2</div><div class="wtxt">2025년 세법 개정안 — 추가 공제 항목 확대 가능성</div></div>
+              </div>
+              <div class="wcta">다음 업데이트 알림 설정 →</div>
+            </div>
+          </div><!-- /fc-3 -->
+
+        </div><!-- /focus-wrap -->
+
+        <!-- Ghost bottom -->
+        <div class="ghost ghost-bot hidden" id="gBot" onclick="ghostNav(1)">
+          <div class="ghost-thumb" id="gBotThumb"></div>
+          <div class="ghost-info">
+            <div class="ghost-cat" id="gBotCat"></div>
+            <div class="ghost-ttl" id="gBotTtl"></div>
+          </div>
+          <span class="ghost-dir">↓</span>
+        </div>
+
+      </div><!-- /vFocus -->
+
+    </div><!-- /content -->
+
+    <div class="tabbar">
+      <div class="titem"><div class="ticon">🏠</div><div class="tlbl">홈</div></div>
+      <div class="titem on"><div class="ticon">📰</div><div class="tlbl">카드뉴스</div></div>
+      <div class="titem"><div class="ticon">💬</div><div class="tlbl">챗봇</div></div>
+      <div class="titem"><div class="ticon">👤</div><div class="tlbl">내 정보</div></div>
+    </div>
+
+  </div><!-- /phone-inner -->
+
+  <!-- Gen sheet -->
+  <div class="gen-sheet" id="genSheet">
+    <div class="gs-hd"><button class="gs-back" onclick="hideGen()">‹</button><div class="gs-ttl">새 카드뉴스 만들기</div></div>
+    <div class="gs-body">
+      <div class="gs-sec"><label>키워드</label><input class="neo-input" placeholder="예: 의료AI, 연말정산..."><div class="qchips"><div class="qchip on">의료AI</div><div class="qchip">서울대병원</div><div class="qchip">AI 활용</div><div class="qchip">재테크</div><div class="qchip">연말정산</div></div></div>
+      <div class="gs-sec"><label>수집 기간</label><div class="rrow"><div class="rbtn on">최근 48시간</div><div class="rbtn">1주일</div><div class="rbtn">한 달</div></div></div>
+      <div class="gs-sec"><label>출처 유형</label><div class="rrow"><div class="rbtn on">기사 + 논문</div><div class="rbtn">기사만</div><div class="rbtn">논문만</div></div></div>
+    </div>
+    <div class="gs-foot"><button class="gs-btn">카드뉴스 생성하기</button></div>
+  </div>
+
+</div></div><!-- /phone -->
+
+
+<!-- ═════════════ DOC ═════════════ -->
+<div class="doc">
+  <div class="doc-badge">⚡ UX 재설계 v3 — 최종</div>
+  <h1>카드뉴스 스튜디오<br>UX 최종 구조</h1>
+  <p class="sub">덱 목록 → 선택 → 세로 스크롤 카드 탐색. 고스트 바로 인접 덱 전환. X로 목록 복귀.</p>
+
+  <div class="dsec">
+    <h2>01. 3가지 핵심 변경</h2>
+    <div class="dstep"><div class="dstep-n">1</div><div><div class="dstep-ttl">초기화면: 덱 목록 + AI 3줄 요약</div><div class="dstep-desc">카드슬라이더가 바로 나오지 않는다. 덱 목록이 먼저. 각 카드에 AI 생성 3줄 요약 불릿. "볼 가치 있나" 판단 후 선택.</div></div></div>
+    <div class="dstep"><div class="dstep-n">2</div><div><div class="dstep-ttl">선택 → 포커스뷰 (전체화면)</div><div class="dstep-desc">선택 덱이 전체 영역으로 전환. 나머지 덱은 위아래 고스트 바 (반투명, 제목만). 고스트 탭 → 해당 덱으로 이동.</div></div></div>
+    <div class="dstep"><div class="dstep-n">3</div><div><div class="dstep-ttl">세로 스크롤 = 카드 이동 (snap)</div><div class="dstep-desc">포커스뷰에서 위아래 스크롤로 카드 1→5 이동. scroll-snap-stop: always로 카드 단위 정확히 멈춤. 상단 X 버튼 → 목록 복귀.</div></div></div>
+  </div>
+
+  <div class="dsec">
+    <h2>02. 실제 적용 시 체크리스트</h2>
+    <div class="dnext">
+      <div class="dnext-ttl">cardnews.js 구현 포인트</div>
+      <div class="dnext-item">openFocus(id) — view 전환 + ghost 업데이트 + 카드 높이 설정</div>
+      <div class="dnext-item">closeFocus() — 포커스뷰 → 목록뷰 복귀</div>
+      <div class="dnext-item">ghostNav(dir) — 인접 덱 전환 (prev/next)</div>
+      <div class="dnext-item">scroll → Math.round(scrollTop/cardH)로 도트 업데이트</div>
+      <div class="dnext-item">카드 높이: focusCards.clientHeight를 .fc 각각에 style.height 설정</div>
+      <div class="dnext-item">cardnews-pipeline.js: prompt에 summary[] 3줄 반환 지시 추가</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /layout -->
+
+<script>
+  /* Ghost data per deck */
+  const GHOST = [
+    { em:'🔬', cat:'의료AI',       ttl:'AI가 의사보다 먼저 암을 발견한다',      clr:'ta' },
+    { em:'🏥', cat:'서울대학교병원', ttl:'서울대병원, 로봇수술 3천 건 돌파',      clr:'tb' },
+    { em:'💰', cat:'재테크',       ttl:'기준금리 동결, 지금 어디에 넣어야 하나', clr:'tc' },
+    { em:'📋', cat:'연말정산',     ttl:'2024년 바뀐 공제 항목 5가지',          clr:'td' }
+  ];
+  const CLR_CLASSES = ['ta','tb','tc','td'];
+
+  function applyThumb(el, g) {
+    el.textContent = g.em;
+    CLR_CLASSES.forEach(c => el.classList.remove(c));
+    el.classList.add(g.clr);
+  }
+
+  let activeId = null;
+
+  /* ── dot 업데이트 (수평 스크롤 기반) ── */
+  function updateDots(fc) {
+    const w = fc.clientWidth || 1;
+    const idx = Math.round(fc.scrollLeft / w);
+    document.getElementById('fDots').querySelectorAll('.dot')
+      .forEach((d, i) => d.classList.toggle('on', i === idx));
+  }
+
+  /* ── 고스트 바 업데이트 (썸네일 포함) ── */
+  function updateGhosts(id) {
+    const gTop = document.getElementById('gTop');
+    const gBot = document.getElementById('gBot');
+    const prev = GHOST[id - 1];
+    const next = GHOST[id + 1];
+
+    if (prev) {
+      applyThumb(document.getElementById('gTopThumb'), prev);
+      document.getElementById('gTopCat').textContent = prev.cat;
+      document.getElementById('gTopTtl').textContent = prev.ttl;
+      gTop.classList.remove('hidden');
+    } else {
+      gTop.classList.add('hidden');
+    }
+
+    if (next) {
+      applyThumb(document.getElementById('gBotThumb'), next);
+      document.getElementById('gBotCat').textContent = next.cat;
+      document.getElementById('gBotTtl').textContent = next.ttl;
+      gBot.classList.remove('hidden');
+    } else {
+      gBot.classList.add('hidden');
+    }
+  }
+
+  /* ── 덱 열기 ── */
+  function openFocus(id) {
+    activeId = id;
+
+    /* 뷰 전환 */
+    document.getElementById('vList').classList.remove('on');
+    document.getElementById('vFocus').classList.add('on');
+
+    /* 해당 덱 카드셋 표시 */
+    document.querySelectorAll('.focus-cards').forEach(el => el.classList.remove('on'));
+    const fc = document.getElementById('fc-' + id);
+    fc.classList.add('on');
+    fc.scrollLeft = 0;
+
+    /* 활성 덱 헤더 */
+    const g = GHOST[id];
+    applyThumb(document.getElementById('dhThumb'), g);
+    document.getElementById('dhCat').textContent = g.cat;
+    document.getElementById('dhTtl').textContent = g.ttl;
+
+    /* 도트 초기화 */
+    document.getElementById('fDots').querySelectorAll('.dot')
+      .forEach((d, i) => d.classList.toggle('on', i === 0));
+
+    /* 고스트 바 업데이트 */
+    updateGhosts(id);
+
+    /* 수평 스크롤 → 도트 동기화 */
+    fc.onscroll = null;
+    fc.addEventListener('scroll', () => updateDots(fc), { passive: true });
+  }
+
+  /* ── 덱 닫기 (목록으로) ── */
+  function closeFocus() {
+    document.getElementById('vFocus').classList.remove('on');
+    document.getElementById('vList').classList.add('on');
+    activeId = null;
+  }
+
+  /* ── 고스트 탭으로 덱 전환 ── */
+  function ghostNav(dir) {
+    if (activeId === null) return;
+    const nid = activeId + dir;
+    if (nid >= 0 && nid < GHOST.length) openFocus(nid);
+  }
+
+  /* ── 수직 스와이프로 덱 전환 ── */
+  (function attachVerticalSwipe() {
+    const wrap = document.getElementById('vFocus');
+    let startY = 0;
+    let startX = 0;
+    let locked = false;
+
+    wrap.addEventListener('touchstart', e => {
+      startY = e.touches[0].clientY;
+      startX = e.touches[0].clientX;
+      locked = false;
+    }, { passive: true });
+
+    wrap.addEventListener('touchend', e => {
+      if (locked) return;
+      const dy = startY - e.changedTouches[0].clientY;
+      const dx = Math.abs(startX - e.changedTouches[0].clientX);
+      /* 수직 이동이 60px 이상이고, 수평 이동보다 클 때만 덱 전환 */
+      if (Math.abs(dy) > 60 && Math.abs(dy) > dx * 1.5) {
+        locked = true;
+        ghostNav(dy > 0 ? 1 : -1);
+      }
+    }, { passive: true });
+  })();
+
+  /* ── Gen sheet ── */
+  function showGen() { document.getElementById('genSheet').classList.add('on'); }
+  function hideGen() { document.getElementById('genSheet').classList.remove('on'); }
+
+  document.querySelectorAll('.qchip').forEach(c => c.addEventListener('click', () => c.classList.toggle('on')));
+  document.querySelectorAll('.rrow').forEach(row =>
+    row.querySelectorAll('.rbtn').forEach(btn => btn.addEventListener('click', () => {
+      row.querySelectorAll('.rbtn').forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
+    }))
+  );
+  document.querySelectorAll('.ctab').forEach(c => c.addEventListener('click', () => {
+    document.querySelectorAll('.ctab').forEach(t => t.classList.remove('on'));
+    c.classList.add('on');
+  }));
+</script>
+</body>
+</html>

@@ -2724,6 +2724,11 @@ html[data-theme="neo"] .logo .logo-main-title {
     line-height: 1.35;
   }
 
+  #pfInputFields .form-group label[style*="white-space:nowrap"] small,
+  #pfInputFields .form-group label[style*="white-space: nowrap"] small {
+    display: inline;
+  }
+
   #pfInputFields .form-group select,
   #pfInputFields .form-group input {
     min-width: 0;
@@ -3622,6 +3627,46 @@ html[data-theme="neo"] .theme-toggle-btn:hover {
 .home-stat-value.amber { color: var(--accent-amber); }
 .home-stat-value.emerald { color: var(--accent-emerald); }
 
+/* 홈 카드 이미지 클릭 토글 */
+.home-card-img-toggle {
+  cursor: pointer;
+}
+
+/* 홈 기간 토글 (버튼 방식 — 현재 미사용) */
+.home-period-toggle {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+.home-period-btn {
+  padding: 4px 14px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-glass);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: var(--text-label-small);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: inherit;
+}
+.home-period-btn.active {
+  background: var(--accent-indigo);
+  border-color: var(--accent-indigo);
+  color: #fff;
+}
+
+/* 카드 내 기간 레이블 */
+.home-stat-period {
+  font-size: var(--text-label-small);
+  color: var(--text-muted);
+  font-weight: 600;
+  padding-bottom: 3px;
+  border-bottom: 1px solid var(--border-glass);
+  margin-bottom: 4px;
+}
+
 /* Progress bar */
 .home-progress-wrap {
   width: 100%;
@@ -3862,6 +3907,12 @@ html[data-theme="neo"] .changelog-nav-btn:hover {
 }
 
 /* ── Neo overrides ── */
+html[data-theme="neo"] .home-period-btn.active {
+  background: #1a1a1a;
+  border-color: #1a1a1a;
+  color: #fff;
+}
+
 html[data-theme="neo"] .home-summary-card {
   border: 3px solid #1a1a1a;
   box-shadow: 4px 4px 0px #1a1a1a;
@@ -4528,6 +4579,97 @@ html[data-theme="neo"] .pay-upload-zone {
 .pay-empty-icon { font-size: 48px; margin-bottom: 12px; }
 .pay-empty-title { font-size: var(--text-body-large); font-weight: 700; margin-bottom: 4px; }
 .pay-empty-desc { font-size: var(--text-body-normal); color: var(--text-muted); margin-bottom: 16px; }
+
+/* ── 명세서 수정 버튼 ── */
+.pay-edit-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 14px;
+  padding: 0 4px;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+.pay-edit-btn:hover { color: var(--accent-indigo); }
+
+/* ── 명세서 수정 모달 ── */
+.pay-edit-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1000;
+}
+.pay-edit-modal {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg-card);
+  border-radius: 16px 16px 0 0;
+  padding: 20px 16px 32px;
+  max-height: 80vh;
+  overflow-y: auto;
+  z-index: 1001;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.15);
+}
+.pay-edit-section-title {
+  font-weight: 700;
+  font-size: var(--text-body-normal);
+  color: var(--text-primary);
+  margin: 14px 0 6px;
+}
+.pay-edit-item-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.pay-edit-item-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  font-size: var(--text-body-normal);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-sm);
+  background: var(--bg-glass);
+  color: var(--text-primary);
+  font-family: inherit;
+}
+.pay-edit-total-row {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 700;
+  padding: 10px 0 6px;
+  border-top: 1px solid var(--border-glass);
+  margin-top: 10px;
+  font-size: var(--text-body-large);
+}
+.pay-edit-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+.pay-edit-save-btn {
+  flex: 1;
+  background: var(--accent-indigo);
+  border-color: var(--accent-indigo);
+  color: #fff;
+}
+.pay-edit-cancel-btn {
+  flex: 1;
+  background: var(--bg-glass);
+  color: var(--text-primary);
+}
+.pay-edit-add-btn {
+  width: 100%;
+  border: 1px dashed var(--border-glass) !important;
+  background: transparent !important;
+  color: var(--text-muted) !important;
+  margin-top: 4px;
+  font-size: var(--text-body-normal);
+}
+.pay-edit-add-btn:hover { color: var(--accent-indigo) !important; border-color: var(--accent-indigo) !important; }
 
 /* ═══════════ 급여 예상 — Neo-Brutalism ═══════════ */
 

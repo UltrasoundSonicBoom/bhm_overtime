@@ -26,6 +26,15 @@ app.get('/health', (c) => {
   return c.json({ status: 'ok', timestamp: new Date().toISOString() })
 })
 
+// Public client config — serves non-secret publishable keys to browser clients
+// Only SUPABASE_URL and SUPABASE_ANON_KEY are safe to expose (publishable by design)
+app.get('/config', (c) => {
+  return c.json({
+    supabaseUrl: process.env.SUPABASE_URL || '',
+    supabaseAnonKey: process.env.SUPABASE_ANON_KEY || '',
+  })
+})
+
 // Routes
 app.route('/data', dataRoutes)
 app.route('/faq', faqRoutes)

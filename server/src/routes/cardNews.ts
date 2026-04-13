@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { generateCardNewsDecks, normalizeKeywords } from '../services/cardNews'
+import { generateCardNewsDecks, normalizeKeywords, summarizeArticle } from '../services/cardNews'
 
 const cardNewsRoutes = new Hono()
 
@@ -47,6 +47,40 @@ cardNewsRoutes.post('/', async (c) => {
     decks,
     generatedAt: new Date().toISOString(),
   })
+})
+
+cardNewsRoutes.post('/resolve', async (c) => {
+  const body = await c.req.json<Record<string, unknown>>().catch(() => ({}))
+  const url = String(body.url || '').trim()
+  if (!url) {
+    return c.json({ error: 'url is required' }, 400)
+  }
+
+  try {
+    const res = await fetch(url, {
+      redirect: 'follow',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; SNUHMateCardNews/1.0; +https://snuhmate.com)',
+      },
+    })
+    return c.json({ url, finalUrl: res.url || url })
+  } catch {
+    return c.json({ url, finalUrl: url })
+  }
+})
+
+cardNewsRoutes.post('/summarize', async (c) => {
+  const body = await c.req.json<Record<string, unknown>>().catch(() => ({}))
+  const url = String(body.url || '').trim()
+  const title = String(body.title || '').trim()
+  const fallbackText = String(body.fallbackText || body.summary || '').trim()
+
+  if (!url) {
+    return c.json({ error: 'url is required' }, 400)
+  }
+
+  const result = await summarizeArticle(url, title || undefined, fallbackText || undefined)
+  return c.json(result)
 })
 
 export default cardNewsRoutes

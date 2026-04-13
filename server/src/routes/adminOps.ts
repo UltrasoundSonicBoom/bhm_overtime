@@ -756,17 +756,32 @@ adminOpsRoutes.post('/content/:id/request-review', async (c) => {
 
 adminOpsRoutes.get('/approvals', async (c) => {
   const status = c.req.query('status')
+  // content_type, title, status를 JOIN으로 함께 반환하여 클라이언트 N+1 호출을 방지
   const rows = status
     ? await sql`
-        select *
-        from approval_tasks
-        where status = ${status}
-        order by created_at desc
+        select
+          at.*,
+          ce.title        as entry_title,
+          ce.content_type as entry_content_type,
+          ce.status       as entry_status,
+          cr.body         as revision_body_preview
+        from approval_tasks at
+        left join content_entries ce on ce.id = at.entry_id
+        left join content_revisions cr on cr.id = at.revision_id
+        where at.status = ${status}
+        order by at.created_at desc
       `
     : await sql`
-        select *
-        from approval_tasks
-        order by created_at desc
+        select
+          at.*,
+          ce.title        as entry_title,
+          ce.content_type as entry_content_type,
+          ce.status       as entry_status,
+          cr.body         as revision_body_preview
+        from approval_tasks at
+        left join content_entries ce on ce.id = at.entry_id
+        left join content_revisions cr on cr.id = at.revision_id
+        order by at.created_at desc
       `
 
   return c.json({ results: rows })
