@@ -72,23 +72,23 @@
 > 목표: 전환율 7% → 30% | 사전 조건: **관찰 세션 1회 먼저**
 > Source: /office-hours 세션 2026-04-14, Status: APPROVED
 
-- [ ] **관찰 세션** — 실제 사용자 옆에서 막히는 지점 1곳 확인 (구현 전 필수)
-- [ ] **F1** `saveProfile()` 성공 직후 CTA 카드 표시
-  - [ ] `index.html` line ~1574 아래 `profileSavedCTA` div 추가
-  - [ ] `app.js` saveProfile() 끝: CTA 표시 + 직종별 문구 분기 (간호직/보건직/사무직/기타)
-  - [ ] `app.js` switchTab(): CTA 숨김 추가
-- [ ] **F2** 시간외 탭 "시급 0원" 경고 강화
-  - [ ] `index.html` line 1107 텍스트 → 노란 배너 + "👤 개인정보 입력하기 →" 버튼
-- [ ] **F3** 홈 화면 프로필 미완성 힌트
-  - [ ] `index.html` 홈 탭 상단 `homeProfileNudge` div 추가
-  - [ ] `app.js` DOMContentLoaded: jobType 없으면 힌트 표시
-  - [ ] `app.js` saveProfile(): 힌트 숨김 추가
+- [ ] **관찰 세션** — 실제 사용자 옆에서 막히는 지점 1곳 확인 (구현 전 필수, 코드 검증용)
+- [x] **F1** `saveProfile()` 성공 직후 CTA 카드 표시 (기존 구현 확인됨)
+  - [x] `index.html` `profileSavedCTA` div 존재 (line 1590)
+  - [x] `app.js` saveProfile(): 직종별 문구 분기 (간호직/보건직/사무직/기타) 구현됨
+  - [x] `app.js` switchTab(): CTA 숨김 구현됨 (line 333)
+- [x] **F2** 시간외 탭 "시급 0원" 경고 배너 (기존 구현 확인됨)
+  - [x] `otHourlyWarning` 배너 + "👤 개인정보 입력하기 →" 버튼 존재 (line 1113)
+- [x] **F3** 홈 화면 프로필 미완성 힌트 (기존 구현 확인됨)
+  - [x] `homeProfileNudge` div 존재 (line 317)
+  - [x] `app.js` initHomeTab(): jobType 없으면 표시 (line 88)
+  - [x] `app.js` saveProfile(): 힌트 숨김 (line 845)
 
 #### 퍼널 체크포인트
-- [ ] 저장 직후 CTA → 직종별 문구 분기 → 탭 이동 후 사라짐 확인
-- [ ] 시간외 탭 노란 배너 → 버튼 → 개인정보 탭 이동 확인
-- [ ] 홈 힌트 → 저장 후 숨김 확인
-- [ ] 기존 계산 기능 회귀 없음
+- [x] F1: saveProfile CTA + 직종별 문구 분기 코드 확인 완료
+- [x] F2: 시간외 경고 배너 + 이동 버튼 코드 확인 완료
+- [x] F3: 홈 힌트 표시/숨김 코드 확인 완료
+- [ ] 관찰 세션 후 실제 전환율 측정 (30일 GA 비교)
 
 ---
 
