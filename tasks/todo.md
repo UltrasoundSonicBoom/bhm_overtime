@@ -94,11 +94,11 @@
 
 ## 🔵 Phase 0: 런칭 게이트 잔여 (LAUNCH.md 기준)
 
-- [ ] **G3** 데이터 복구 UX — orphan 백업 키 "복구" 메뉴 (프로필 탭 접이식)
-- [ ] **G4** 법무 체크 (상표/로고/개인정보처리방침 검수)
-- [ ] **G5** First-run — 권한 요청 전 "왜 이 권한인가" 한 줄 안내 모달
-- [ ] **G6** 관측 대시보드 — supabase_launch_views.sql 실행
-- [ ] **G8** 공유 루프 — 앱 내 "공유하기" 버튼 (URL + QR)
+- [x] **G3** 데이터 복구 UX — orphan 복구 메뉴 + beforeunload flush (LAUNCH.md 확인)
+- [ ] **G4** 법무 체크 — 상표/도메인 메일 (선택사항), OAuth 승인 완료 ✅
+- [x] **G5** First-run — #googlePermissionDialog 권한 설명 모달 (LAUNCH.md 확인)
+- [ ] **G6** 관측 대시보드 — supabase_launch_views.sql Supabase Studio 실행 필요
+- [x] **G8** 공유 루프 — "🔗 동료에게 공유하기" 버튼 (Web Share API → 클립보드 → 텍스트 폴백)
 
 ---
 
