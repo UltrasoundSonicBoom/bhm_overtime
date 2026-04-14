@@ -23,7 +23,57 @@ window.SyncManager = (function () {
     overtime: { localKey: 'overtimeRecords',  driveFile: 'overtime.json' },
     profile:  { localKey: 'bhm_hr_profile',   driveFile: 'profile.json' }
     // payslip: 별도 처리 (enqueuePush('payslip', year, month) 형태)
+    // applock: 별도 처리 (_pushAppLock / _pullAppLock) — PIN 필드만 분리 동기화
   };
+
+  // ── PIN 설정 Drive 동기화 ──
+  // bhm_settings의 PIN 관련 필드만 applock.json으로 저장.
+  // biometricCredId는 기기 귀속이므로 동기화 제외.
+  var APPLOCK_DRIVE_FILE = 'applock.json';
+  var APPLOCK_FIELDS = ['pinEnabled', 'pinHash', 'pinSalt', 'pinLength'];
+
+  function _pushAppLock() {
+    if (!_driveReady()) return Promise.resolve();
+    if (!window.GoogleDriveStore) return Promise.resolve();
+    var settings = window.loadSettings ? window.loadSettings() : {};
+    // PIN 비활성화 상태면 빈 객체를 저장 (삭제가 아닌 비활성화 기록)
+    var pinData = {};
+    APPLOCK_FIELDS.forEach(function (f) {
+      pinData[f] = settings[f] !== undefined ? settings[f] : null;
+    });
+    return window.GoogleDriveStore.writeJsonFile(APPLOCK_DRIVE_FILE, _wrap(pinData)).then(function () {
+      _lastSync = new Date();
+    }).catch(function (e) {
+      console.warn('[SyncManager] applock push failed:', e);
+    });
+  }
+
+  function _pullAppLock() {
+    if (!window.GoogleAuth || !window.GoogleAuth.isSignedIn()) return Promise.resolve(null);
+    if (!window.GoogleDriveStore) return Promise.resolve(null);
+    return window.GoogleDriveStore.readJsonFile(APPLOCK_DRIVE_FILE).then(function (wrapped) {
+      if (!wrapped || !wrapped.data) return null;
+      var pinData = wrapped.data;
+      // 원격에 PIN이 활성화된 경우만 로컬에 머지
+      // 로컬에 이미 PIN이 설정돼 있으면 더 최신 쪽을 사용
+      var localSettings = window.loadSettings ? window.loadSettings() : {};
+      var localHasPin = !!localSettings.pinEnabled;
+      var remoteHasPin = !!pinData.pinEnabled;
+      if (remoteHasPin && !localHasPin) {
+        // 새 기기: Drive에서 PIN 복원
+        var patch = {};
+        APPLOCK_FIELDS.forEach(function (f) {
+          if (pinData[f] !== undefined) patch[f] = pinData[f];
+        });
+        if (window.saveSettings) window.saveSettings(patch);
+        return 'restored';
+      }
+      return 'no_change';
+    }).catch(function (e) {
+      console.warn('[SyncManager] applock pull failed:', e);
+      return null;
+    });
+  }
 
   // ── Drive 파일 래퍼 형식 ──
   // { schemaVersion, updatedAt, deviceId, data }
@@ -215,12 +265,21 @@ window.SyncManager = (function () {
       return Promise.resolve();
     }
 
-    return pullFromDrive().then(function (results) {
+    return Promise.all([
+      pullFromDrive(),
+      _pullAppLock()
+    ]).then(function (allResults) {
+      var results = allResults[0] || [];
+      var applockResult = allResults[1];
       var restored = results.filter(function (r) { return r.result === 'restored' || r.result === 'remote_wins'; });
-      if (restored.length > 0) {
+      if (restored.length > 0 || applockResult === 'restored') {
         _showToast('☁️ Drive에서 데이터를 복원했어요.', 4000);
         // UI 재렌더링 (각 탭 데이터 새로고침)
         _refreshUI();
+        // AppLock UI도 갱신 (PIN 복원된 경우)
+        if (applockResult === 'restored' && typeof updateAppLockUI === 'function') {
+          updateAppLockUI();
+        }
       }
       _lastSync = new Date();
       _updateSyncLabel();
@@ -396,6 +455,7 @@ window.SyncManager = (function () {
     resolveConflict: resolveConflict,
     clearPendingPushes: clearPendingPushes,
     recordLocalEdit: recordLocalEdit,
-    getLocalEditTime: getLocalEditTime
+    getLocalEditTime: getLocalEditTime,
+    pushAppLockSettings: _pushAppLock  // PIN 설정 변경 시 즉시 Drive 백업
   };
 })();

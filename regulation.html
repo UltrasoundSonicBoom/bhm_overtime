@@ -651,12 +651,15 @@
       .chat-bubble { font-size: 13px; padding: 10px 12px; }
     }
   </style>
+  <!-- FOUC 방지: PIN 활성화 시 body 숨김 (appLock.js가 오버레이 렌더 후 복원) -->
+  <script>(function(){try{var s=JSON.parse(localStorage.getItem('bhm_settings')||'{}');if(s.pinEnabled){document.documentElement.style.visibility='hidden';}}catch(e){}})();</script>
 </head>
 
 <body>
   <!-- ═══════════ Header & Footer (shared-layout.js에서 렌더) ═══════════ -->
   <header id="sharedHeader"></header>
   <nav id="sharedFooter"></nav>
+  <script src="appLock.js?v=1.0"></script>
   <script src="shared-layout.js?v=1.2"></script>
 
   <!-- ═══════════ Bookmark Tabs — below header ═══════════ -->

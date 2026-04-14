@@ -3,6 +3,8 @@
 
 <head>
   <script>(function(){var h=location.hostname,p=location.pathname,q=location.search;if(h==='angio.snuhmate.com'&&(p==='/'||p==='/index.html')){location.replace('/angio/index.html'+q);return;}if((h==='snuhmate.com'||h==='www.snuhmate.com')&&(p==='/'||p==='/index.html')&&q.indexOf('app=1')===-1)location.replace('onboarding.html');})();</script>
+  <!-- AppLock FOUC Guard: pinEnabled 확인 후 body를 즉시 숨겨서 잠금 전 콘텐츠 노출 방지 -->
+  <script>(function(){try{var s=JSON.parse(localStorage.getItem('bhm_settings')||'{}');if(s.pinEnabled){document.documentElement.style.visibility='hidden';}}catch(e){}})();</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="SNUH 메이트: 서울대학교병원, 보라매병원 등 급여 및 휴가 관리 어시스턴트">
@@ -310,6 +312,12 @@
 
     <!-- ═══════════ 🏠 홈 ═══════════ -->
     <div class="tab-content" id="tab-home">
+
+      <!-- 프로필 미저장 힌트 배너 -->
+      <div id="homeProfileNudge" style="display:none; border:1px solid var(--accent-amber); border-radius:8px; padding:10px 14px; margin-bottom:12px; font-size:var(--text-body-small); color:var(--text-muted);">
+        아직 개인정보가 없어요 — 직종·호봉을 입력하면 시간외 수당이 자동 계산됩니다.
+        <button onclick="switchTab('profile')" class="btn btn-sm" style="margin-left:8px;">지금 입력 →</button>
+      </div>
 
       <!-- 내 현황 요약 카드 -->
       <div class="home-summary-grid">
@@ -1103,9 +1111,13 @@
 
         <!-- 시급 0원 경고 배너 -->
         <div id="otHourlyWarning" class="hourly-warning-banner">
-          <span>⚠️</span>
-          <span>시급이 0원이에요. <a onclick="switchTab('profile')">개인정보 탭</a>에서 내 정보를 저장하면 자동으로 계산됩니다. 또는 직접 입력하세요.</span>
-          <button onclick="dismissHwBanner()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:16px;padding:0 2px;line-height:1;" title="다시 보지 않기">✕</button>
+          <span style="flex-shrink:0; margin-top:2px;">⚠️</span>
+          <div style="flex:1; display:flex; flex-direction:column; gap:6px;">
+            <strong>개인정보를 먼저 입력해주세요</strong>
+            <span style="font-size:var(--text-body-small);">직종·호봉을 입력해야 시간외 수당이 자동 계산됩니다.</span>
+            <button onclick="switchTab('profile')" class="btn btn-primary" style="align-self:flex-start; font-size:var(--text-body-small); margin-top:2px;">👤 개인정보 입력하기 →</button>
+          </div>
+          <button onclick="dismissHwBanner()" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:16px;padding:0 2px;line-height:1;flex-shrink:0;align-self:flex-start;" title="닫기">✕</button>
         </div>
 
         <!-- 캘린더 -->
@@ -1575,6 +1587,10 @@
             <button class="btn btn-primary" onclick="saveProfile()" style="flex:2">💾 저장하기</button>
             <button class="btn btn-outline" onclick="clearProfile()" style="flex:1">🗑 초기화</button>
           </div>
+          <div id="profileSavedCTA" style="display:none; margin-top:14px; padding:12px 16px; background:rgba(52,211,153,0.1); border:1px solid rgba(52,211,153,0.3); border-radius:8px; text-align:center;">
+            <p id="profileSavedCTADesc" style="font-size:var(--text-body-small); color:var(--text-muted); margin:0 0 8px;">정보가 저장됐어요. 이번 달 시간외 수당을 계산해볼까요?</p>
+            <button id="profileSavedCTABtn" onclick="switchTab('overtime')" class="btn btn-primary" style="width:100%;">⏰ 시간외 계산하러 가기 →</button>
+          </div>
         </div>
       </div><!-- End of Profile Form Card -->
 
@@ -1696,6 +1712,52 @@
         </p>
       </div>
 
+      <!-- 🔒 앱 잠금 설정 -->
+      <div class="card" id="appLockSettingsCard" style="max-width:600px; margin:20px auto 0;">
+        <div class="card-title" style="font-size:var(--text-body-large);">
+          <span class="icon indigo">🔒</span> 앱 잠금
+          <span id="appLockStatusBadge" class="badge" style="display:none; margin-left:8px; background:var(--accent-emerald,#10B981); color:#fff;">켜짐</span>
+        </div>
+        <p style="font-size:var(--text-body-normal); color:var(--text-muted); margin-bottom:12px;">
+          앱을 열 때 PIN 또는 생체인증(Face ID·지문)으로 잠금을 설정해 내 정보를 보호하세요.<br>
+          <span style="font-size:0.75rem;">잠금은 이 기기에서만 적용됩니다.</span>
+        </p>
+        <!-- PIN 미설정 상태 -->
+        <div id="appLockOff" style="display:block;">
+          <button class="btn btn-primary" onclick="onAppLockSetupPin()" style="width:100%;">
+            🔒 PIN 설정하기
+          </button>
+        </div>
+        <!-- PIN 설정 상태 -->
+        <div id="appLockOn" style="display:none;">
+          <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+            <button class="btn btn-outline" onclick="onAppLockChangePin()" style="font-size:var(--text-body-normal); padding:6px 14px;">
+              🔑 PIN 변경
+            </button>
+            <button class="btn btn-outline" onclick="onAppLockDisable()"
+              style="font-size:var(--text-body-normal); padding:6px 14px; color:var(--accent-rose,#EF4444); border-color:var(--accent-rose,#EF4444);">
+              🔓 잠금 해제
+            </button>
+          </div>
+          <!-- 생체인증 (지원 기기만) -->
+          <div id="biometricSettingRow" style="display:none; margin-top:8px; padding-top:10px; border-top:1px solid var(--border-glass);">
+            <p style="font-size:var(--text-body-normal); color:var(--text-primary); font-weight:600; margin-bottom:6px;">생체인증 (Face ID / 지문)</p>
+            <div id="biometricOff">
+              <button class="btn btn-outline" onclick="onBiometricRegister()" style="font-size:var(--text-body-normal); padding:6px 14px;">
+                🪪 생체인증 추가
+              </button>
+            </div>
+            <div id="biometricOn" style="display:none;">
+              <span class="badge" style="background:var(--accent-emerald,#10B981);color:#fff;margin-right:8px;">등록됨</span>
+              <button class="btn btn-outline" onclick="onBiometricDisable()"
+                style="font-size:var(--text-body-normal); padding:4px 10px; color:var(--accent-rose,#EF4444); border-color:var(--accent-rose,#EF4444);">
+                제거
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
 
     </div>
 
@@ -1735,6 +1797,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <!-- Google Identity Services (GIS) — config.js + googleAuth.js + supabaseClient.js보다 먼저 -->
   <script src="config.js?v=1.0"></script>
+  <script src="appLock.js?v=1.0"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="googleAuth.js?v=1.0"></script>
   <script src="googleDriveStore.js?v=1.0"></script>
@@ -1896,6 +1959,98 @@
       if (window.GoogleAuth) window.GoogleAuth.init();
     });
 
+    // ── AppLock: Google 재인증 완료 콜백 처리 ──
+    // googleAuth.js의 handleTokenResponse 성공 시 _appLockReauthPending 플래그를 확인한다.
+    // 이 훅은 기존 updateAuthUI가 호출된 뒤 실행된다.
+    var _origUpdateAuthUI = window.updateAuthUI;
+    window.updateAuthUI = function (user) {
+      if (typeof _origUpdateAuthUI === 'function') _origUpdateAuthUI(user);
+      // PIN 재인증 완료 처리
+      if (user && window._appLockReauthPending && window.AppLock) {
+        window._appLockReauthPending = false;
+        var cb = window._appLockReauthCallback;
+        window._appLockReauthCallback = null;
+        // 기존 PIN 삭제 후 재설정 모달 표시
+        window.AppLock.disablePin();
+        window.AppLock.BiometricLock.disable();
+        if (typeof cb === 'function') cb();
+        else window.AppLock._showPinSetupModal(function () {
+          window.AppLock.unlock();
+          updateAppLockUI();
+        });
+      }
+      // PIN 넛지 체크: 첫 Google 로그인 성공 + PIN 미설정 + 넛지 미거부
+      if (user && window.AppLock && !AppLock.isEnabled()) {
+        var s = window.loadSettings ? window.loadSettings() : {};
+        if (!s.pinNudgeDismissed) {
+          setTimeout(function () { _showPinNudge(); }, 500);
+        }
+      }
+    };
+
+    // ── PIN 설정 넛지 바텀시트 ──
+    function _showPinNudge() {
+      if (document.getElementById('pinNudgeSheet')) return;
+      var sheet = document.createElement('div');
+      sheet.id = 'pinNudgeSheet';
+      sheet.style.cssText = [
+        'position:fixed;bottom:0;left:0;right:0;z-index:99998;',
+        'background:var(--bg-card,#fff);border-radius:16px 16px 0 0;',
+        'padding:24px 20px 32px;box-shadow:0 -4px 24px rgba(0,0,0,0.15);',
+        'max-width:640px;margin:0 auto;transform:translateY(100%);',
+        'transition:transform 0.3s ease;'
+      ].join('');
+
+      var icon = document.createElement('div');
+      icon.textContent = '🔒';
+      icon.style.cssText = 'font-size:2rem;text-align:center;margin-bottom:8px;';
+      sheet.appendChild(icon);
+
+      var title = document.createElement('h3');
+      title.textContent = '앱을 잠가서 내 정보를 보호하세요';
+      title.style.cssText = 'text-align:center;font-size:1.05rem;font-weight:700;margin-bottom:6px;color:var(--text-primary,#1a1a1a);';
+      sheet.appendChild(title);
+
+      var desc = document.createElement('p');
+      desc.textContent = '급여·휴가 기록은 민감한 정보예요. PIN을 설정하면 다른 사람이 기기를 보더라도 내 기록을 볼 수 없어요.';
+      desc.style.cssText = 'text-align:center;font-size:0.85rem;color:var(--text-muted,#777);margin-bottom:20px;line-height:1.5;';
+      sheet.appendChild(desc);
+
+      var setupBtn = document.createElement('button');
+      setupBtn.textContent = '🔒 PIN 설정할게요';
+      setupBtn.className = 'btn btn-primary';
+      setupBtn.style.cssText = 'width:100%;margin-bottom:10px;';
+      setupBtn.onclick = function () {
+        sheet.style.transform = 'translateY(100%)';
+        setTimeout(function () { if (sheet.parentNode) sheet.parentNode.removeChild(sheet); }, 300);
+        if (window.AppLock) {
+          AppLock._showPinSetupModal(function () {
+            AppLock.unlock();
+            updateAppLockUI();
+          });
+        }
+      };
+      sheet.appendChild(setupBtn);
+
+      var laterBtn = document.createElement('button');
+      laterBtn.textContent = '나중에';
+      laterBtn.style.cssText = 'width:100%;background:none;border:none;color:var(--text-muted,#777);font-size:0.9rem;cursor:pointer;padding:4px;';
+      laterBtn.onclick = function () {
+        if (window.saveSettings) saveSettings({ pinNudgeDismissed: true });
+        sheet.style.transform = 'translateY(100%)';
+        setTimeout(function () { if (sheet.parentNode) sheet.parentNode.removeChild(sheet); }, 300);
+      };
+      sheet.appendChild(laterBtn);
+
+      document.body.appendChild(sheet);
+      // 애니메이션 트리거
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          sheet.style.transform = 'translateY(0)';
+        });
+      });
+    }
+
     // ── Google Drive 백업 섹션 표시 ──
     // 로그인되어 있고 Drive scope 동의가 완료된 경우 섹션을 노출한다.
     // 사용자는 토글로 끄지 않는다 (로그아웃이 곧 백업 중단).
@@ -1976,6 +2131,103 @@
         end: end.toISOString().slice(0, 10)
       };
     }
+
+    // ── 앱 잠금 설정 UI ──
+    function updateAppLockUI() {
+      if (!window.AppLock) return;
+      var enabled = AppLock.isEnabled();
+      var settings = window.loadSettings ? window.loadSettings() : {};
+      var hasBiometric = !!settings.biometricCredId;
+      var offDiv = document.getElementById('appLockOff');
+      var onDiv = document.getElementById('appLockOn');
+      var badge = document.getElementById('appLockStatusBadge');
+      var bioRow = document.getElementById('biometricSettingRow');
+      var bioOff = document.getElementById('biometricOff');
+      var bioOn = document.getElementById('biometricOn');
+
+      if (offDiv) offDiv.style.display = enabled ? 'none' : 'block';
+      if (onDiv) onDiv.style.display = enabled ? 'block' : 'none';
+      if (badge) badge.style.display = enabled ? 'inline-flex' : 'none';
+
+      if (bioRow) bioRow.style.display = (enabled && AppLock.BiometricLock.isSupported()) ? 'block' : 'none';
+      if (bioOff) bioOff.style.display = hasBiometric ? 'none' : 'block';
+      if (bioOn) bioOn.style.display = hasBiometric ? 'block' : 'none';
+    }
+
+    function onAppLockSetupPin() {
+      if (!window.AppLock) return;
+      AppLock._showPinSetupModal(function () {
+        updateAppLockUI();
+        var toast = document.getElementById('otToast');
+        if (toast) {
+          toast.textContent = '✅ PIN이 설정됐어요. 다음 방문부터 잠금이 적용됩니다.';
+          toast.style.display = 'block';
+          setTimeout(function () { toast.style.display = 'none'; }, 3000);
+        }
+      });
+    }
+
+    function onAppLockChangePin() {
+      if (!window.AppLock) return;
+      // 현재 PIN 먼저 확인 후 새 PIN 설정
+      AppLock._showPinSetupModal(function () {
+        updateAppLockUI();
+        var toast = document.getElementById('otToast');
+        if (toast) {
+          toast.textContent = '✅ PIN이 변경됐어요.';
+          toast.style.display = 'block';
+          setTimeout(function () { toast.style.display = 'none'; }, 3000);
+        }
+      });
+    }
+
+    function onAppLockDisable() {
+      if (!window.AppLock) return;
+      if (!confirm('PIN 잠금을 해제하시겠어요?\n앱이 잠금 없이 열립니다.')) return;
+      AppLock.disablePin();
+      AppLock.BiometricLock.disable();
+      updateAppLockUI();
+    }
+
+    function onBiometricRegister() {
+      if (!window.AppLock) return;
+      AppLock.BiometricLock.register().then(function () {
+        updateAppLockUI();
+        var toast = document.getElementById('otToast');
+        if (toast) {
+          toast.textContent = '✅ 생체인증이 등록됐어요.';
+          toast.style.display = 'block';
+          setTimeout(function () { toast.style.display = 'none'; }, 3000);
+        }
+      }).catch(function (e) {
+        var toast = document.getElementById('otToast');
+        if (toast) {
+          toast.textContent = '⚠️ 생체인증 등록에 실패했어요: ' + (e.message || '');
+          toast.style.display = 'block';
+          setTimeout(function () { toast.style.display = 'none'; }, 4000);
+        }
+      });
+    }
+
+    function onBiometricDisable() {
+      if (!window.AppLock) return;
+      if (!confirm('생체인증을 제거하시겠어요?')) return;
+      AppLock.BiometricLock.disable();
+      updateAppLockUI();
+    }
+
+    // profile 탭 진입 시 앱 잠금 UI 갱신
+    document.addEventListener('DOMContentLoaded', function () {
+      // switchTab('profile') 호출 시 updateAppLockUI도 실행되도록
+      var origSwitchTab = window.switchTab;
+      if (typeof origSwitchTab === 'function') {
+        window.switchTab = function (tab) {
+          origSwitchTab(tab);
+          if (tab === 'profile') updateAppLockUI();
+        };
+      }
+      updateAppLockUI();
+    });
 
     function updateTeamScheduleSyncUI() {
       var section = document.getElementById('teamScheduleSyncSection');

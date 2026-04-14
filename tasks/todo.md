@@ -12,51 +12,83 @@
 
 ### Phase 1: 핵심 잠금 모듈
 
-- [ ] **L1** `appLock.js` 신규 파일 — PIN setup/verify/lockout 핵심 로직
-  - [ ] `AppLock.setupPin(pin)` — SHA-256(pin+salt), bhm_settings 저장
-  - [ ] `AppLock.verifyPin(pin)` — 검증 + 5회 실패 → lockUntil 설정
-  - [ ] `AppLock.isLocked()` / `AppLock.unlock()` / `AppLock.disablePin()`
-- [ ] **L2** FOUC 방지 인라인 스크립트 + 잠금 오버레이 렌더링
-  - [ ] `index.html` `<head>` 인라인: pinEnabled → body visibility:hidden
-  - [ ] `shared-layout.js` AppLock.checkAndPrompt() 훅
-  - [ ] `style.css` `.app-lock-overlay` 스타일 (모바일 키패드 포함)
+- [x] **L1** `appLock.js` 신규 파일 — PIN setup/verify/lockout 핵심 로직
+  - [x] `AppLock.setupPin(pin)` — SHA-256(pin+salt), bhm_settings 저장
+  - [x] `AppLock.verifyPin(pin)` — 검증 + 5회 실패 → lockUntil 설정
+  - [x] `AppLock.isLocked()` / `AppLock.unlock()` / `AppLock.disablePin()`
+- [x] **L2** FOUC 방지 인라인 스크립트 + 잠금 오버레이 렌더링
+  - [x] `index.html` `<head>` 인라인: pinEnabled → body visibility:hidden
+  - [x] `shared-layout.js` AppLock.checkAndPrompt() 훅
+  - [x] 오버레이 스타일 — appLock.js 인라인 CSS (style.css 불필요)
 
 #### Checkpoint 1
-- [ ] PIN 설정 → 새로고침 → 잠금 오버레이 표시 확인
-- [ ] FOUC 없음 (콘텐츠 flash 없음) 확인
-- [ ] PIN 없는 상태에서 앱 로드 지연 없음 확인
+- [x] 단위 테스트 6개 PASS (setupPin, verifyPin, changePin, disablePin, lockout, biometric)
+- [x] PIN 설정 → 새로고침 → 잠금 오버레이 표시 확인 (Playwright 검증 완료)
+- [x] FOUC 없음 육안 확인 (Playwright 스크린샷 확인 완료)
 
 ### Phase 2: 설정 UI + PIN 재설정
 
-- [ ] **L3** 프로필 탭 "앱 잠금" 설정 카드
-  - [ ] PIN 미설정 → "PIN 설정하기" 버튼
-  - [ ] PIN 설정 → "켜짐" 뱃지 + 변경/해제 버튼
-  - [ ] PIN 설정 모달 (숫자 키패드, 4-6자리, 확인 재입력)
-- [ ] **L4** PIN 분실 → Google 재인증 재설정 경로
-  - [ ] 잠금 오버레이 "PIN을 잊으셨나요?" 링크
-  - [ ] OAuth 성공 → 기존 PIN 삭제 + 새 PIN 설정 모달
+- [x] **L3** 프로필 탭 "앱 잠금" 설정 카드
+  - [x] PIN 미설정 → "PIN 설정하기" 버튼
+  - [x] PIN 설정 → "켜짐" 뱃지 + 변경/해제 버튼
+  - [x] PIN 설정 모달 (숫자 키패드, 4-6자리, 확인 재입력)
+- [x] **L4** PIN 분실 → Google 재인증 재설정 경로
+  - [x] 잠금 오버레이 "PIN을 잊으셨나요?" 링크
+  - [x] OAuth 성공 → 기존 PIN 삭제 + 새 PIN 설정 모달
 
 #### Checkpoint 2
-- [ ] PIN 설정 → 잠금 → 해제 → 변경 → 해제 전체 흐름 확인
-- [ ] 5회 실패 → 카운트다운 표시 확인
-- [ ] Google 미로그인 상태에서 앱 정상 동작 확인
+- [x] 단위 테스트 PASS (changePin, lockout 재확인)
+- [x] 브라우저에서 전체 흐름 확인 (Playwright: PIN 입력→해제, 5회 실패→카운트다운, changePin, disablePin)
 
 ### Phase 3: 생체인증 + 넛지 + Drive 연동
 
-- [ ] **L5** 생체인증 (WebAuthn) 등록/인증 UI
-  - [ ] `AppLock.BiometricLock.register()` / `.authenticate()`
-  - [ ] 잠금 오버레이 "Face ID / 지문으로 열기" 버튼
-  - [ ] 생체인증 취소 → PIN 화면 자동 전환
-- [ ] **L6** Google 로그인 직후 PIN 설정 넛지 바텀시트
-  - [ ] 로그인 성공 후 → 넛지 모달 (1회, dismissible)
-  - [ ] "설정할게요" → PIN 설정 즉시 / "나중에" → pinNudgeDismissed:true
-- [ ] **L7** PIN 설정을 Google Drive에 백업
-  - [ ] syncManager.js DATA_MAP에 bhm_settings (pinEnabled/Hash/Salt) 추가
+- [x] **L5** 생체인증 (WebAuthn) 등록/인증 UI
+  - [x] `AppLock.BiometricLock.register()` / `.authenticate()`
+  - [x] 잠금 오버레이 "Face ID / 지문으로 열기" 버튼
+  - [x] 생체인증 취소 → PIN 화면 자동 전환
+  - [ ] 실기기(iOS Safari / Android Chrome) 수동 테스트 필요
+- [x] **L6** Google 로그인 직후 PIN 설정 넛지 바텀시트
+  - [x] 로그인 성공 후 → 넛지 모달 (1회, dismissible)
+  - [x] "설정할게요" → PIN 설정 즉시 / "나중에" → pinNudgeDismissed:true
+- [x] **L7** PIN 설정을 Google Drive에 백업
+  - [x] `syncManager.js` `_pushAppLock()` / `_pullAppLock()` 추가 (PIN 필드만 분리)
+  - [x] `syncManager.js` `fullSync()` 에 `_pullAppLock()` 병렬 실행
+  - [x] `syncManager.js` 공개 API에 `pushAppLockSettings` 노출
+  - [x] `appLock.js` setupPin/disablePin 에서 Drive push 트리거
 
 #### Checkpoint 3 (완성)
-- [ ] 첫 설치 → Google 로그인 → 넛지 → PIN 설정 → 잠금 → 생체인증 전체 흐름
-- [ ] Drive 복원 후 PIN 설정 유지 확인
-- [ ] regulation.html 등 타 페이지에서도 잠금 동작 확인
+- [x] 단위 테스트 PASS (L7 포함)
+- [x] 넛지 바텀시트 코드 검증 완료 (index.html 코드 확인)
+- [x] regulation.html / cardnews.html 타 페이지 잠금 동작 확인 (Playwright 검증)
+- [ ] 첫 설치 → Google 로그인 → 넛지 → PIN 설정 → 잠금 전체 흐름 (실기기 수동 권장)
+- [ ] Drive 복원 후 PIN 설정 유지 확인 (Google 계정 필요, 실기기 수동)
+- [ ] 생체인증 (iOS Safari / Android Chrome 실기기 수동)
+
+---
+
+## 🎯 온보딩 퍼널 트랙 — 개인정보 → 시간외 전환율 개선
+
+> 상세 플랜: [tasks/plan-app-lock.md](plan-app-lock.md) (Track 2 섹션)  
+> 목표: 전환율 7% → 30% | 사전 조건: **관찰 세션 1회 먼저**
+> Source: /office-hours 세션 2026-04-14, Status: APPROVED
+
+- [ ] **관찰 세션** — 실제 사용자 옆에서 막히는 지점 1곳 확인 (구현 전 필수)
+- [ ] **F1** `saveProfile()` 성공 직후 CTA 카드 표시
+  - [ ] `index.html` line ~1574 아래 `profileSavedCTA` div 추가
+  - [ ] `app.js` saveProfile() 끝: CTA 표시 + 직종별 문구 분기 (간호직/보건직/사무직/기타)
+  - [ ] `app.js` switchTab(): CTA 숨김 추가
+- [ ] **F2** 시간외 탭 "시급 0원" 경고 강화
+  - [ ] `index.html` line 1107 텍스트 → 노란 배너 + "👤 개인정보 입력하기 →" 버튼
+- [ ] **F3** 홈 화면 프로필 미완성 힌트
+  - [ ] `index.html` 홈 탭 상단 `homeProfileNudge` div 추가
+  - [ ] `app.js` DOMContentLoaded: jobType 없으면 힌트 표시
+  - [ ] `app.js` saveProfile(): 힌트 숨김 추가
+
+#### 퍼널 체크포인트
+- [ ] 저장 직후 CTA → 직종별 문구 분기 → 탭 이동 후 사라짐 확인
+- [ ] 시간외 탭 노란 배너 → 버튼 → 개인정보 탭 이동 확인
+- [ ] 홈 힌트 → 저장 후 숨김 확인
+- [ ] 기존 계산 기능 회귀 없음
 
 ---
 

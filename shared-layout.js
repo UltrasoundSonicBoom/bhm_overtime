@@ -194,6 +194,17 @@
   renderSharedHeader();
   renderSharedFooter();
 
+  // AppLock: DOM 준비 후 잠금 오버레이 체크
+  // appLock.js가 먼저 로드된 경우에만 실행 (shared-layout.js는 여러 페이지에서 사용)
+  function checkAppLock() {
+    if (window.AppLock) window.AppLock.checkAndPrompt();
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', checkAppLock);
+  } else {
+    checkAppLock();
+  }
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', bootChannelIO);
   } else {
