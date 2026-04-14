@@ -159,7 +159,7 @@ function initBrowse() {
  */
 function tryLoadBrowseFromApi() {
   var apiBase = (typeof window !== 'undefined' && window.API_BASE) || '';
-  var url = apiBase + '/api/regulations/browse';
+  var url = apiBase + '/regulations/browse';
 
   return fetch(url)
     .then(function(res) {
