@@ -1,6 +1,75 @@
 # BHM Overtime — 작업 체크리스트
 
 > 상세 플랜: [tasks/plan-regulation-unification.md](plan-regulation-unification.md)  
+> **v1.4 업데이트 (2026-04-14)**: App Lock 트랙 추가. 런칭 게이트(G3/G5) 병행 작업.
+
+---
+
+## 🔒 App Lock 트랙 — PIN / 생체인증 (런칭 전 선택적)
+
+> 상세 플랜: [tasks/plan-app-lock.md](plan-app-lock.md)  
+> 목적: G5 First-run 경험 + G3 민감 데이터 보호 신호 강화
+
+### Phase 1: 핵심 잠금 모듈
+
+- [ ] **L1** `appLock.js` 신규 파일 — PIN setup/verify/lockout 핵심 로직
+  - [ ] `AppLock.setupPin(pin)` — SHA-256(pin+salt), bhm_settings 저장
+  - [ ] `AppLock.verifyPin(pin)` — 검증 + 5회 실패 → lockUntil 설정
+  - [ ] `AppLock.isLocked()` / `AppLock.unlock()` / `AppLock.disablePin()`
+- [ ] **L2** FOUC 방지 인라인 스크립트 + 잠금 오버레이 렌더링
+  - [ ] `index.html` `<head>` 인라인: pinEnabled → body visibility:hidden
+  - [ ] `shared-layout.js` AppLock.checkAndPrompt() 훅
+  - [ ] `style.css` `.app-lock-overlay` 스타일 (모바일 키패드 포함)
+
+#### Checkpoint 1
+- [ ] PIN 설정 → 새로고침 → 잠금 오버레이 표시 확인
+- [ ] FOUC 없음 (콘텐츠 flash 없음) 확인
+- [ ] PIN 없는 상태에서 앱 로드 지연 없음 확인
+
+### Phase 2: 설정 UI + PIN 재설정
+
+- [ ] **L3** 프로필 탭 "앱 잠금" 설정 카드
+  - [ ] PIN 미설정 → "PIN 설정하기" 버튼
+  - [ ] PIN 설정 → "켜짐" 뱃지 + 변경/해제 버튼
+  - [ ] PIN 설정 모달 (숫자 키패드, 4-6자리, 확인 재입력)
+- [ ] **L4** PIN 분실 → Google 재인증 재설정 경로
+  - [ ] 잠금 오버레이 "PIN을 잊으셨나요?" 링크
+  - [ ] OAuth 성공 → 기존 PIN 삭제 + 새 PIN 설정 모달
+
+#### Checkpoint 2
+- [ ] PIN 설정 → 잠금 → 해제 → 변경 → 해제 전체 흐름 확인
+- [ ] 5회 실패 → 카운트다운 표시 확인
+- [ ] Google 미로그인 상태에서 앱 정상 동작 확인
+
+### Phase 3: 생체인증 + 넛지 + Drive 연동
+
+- [ ] **L5** 생체인증 (WebAuthn) 등록/인증 UI
+  - [ ] `AppLock.BiometricLock.register()` / `.authenticate()`
+  - [ ] 잠금 오버레이 "Face ID / 지문으로 열기" 버튼
+  - [ ] 생체인증 취소 → PIN 화면 자동 전환
+- [ ] **L6** Google 로그인 직후 PIN 설정 넛지 바텀시트
+  - [ ] 로그인 성공 후 → 넛지 모달 (1회, dismissible)
+  - [ ] "설정할게요" → PIN 설정 즉시 / "나중에" → pinNudgeDismissed:true
+- [ ] **L7** PIN 설정을 Google Drive에 백업
+  - [ ] syncManager.js DATA_MAP에 bhm_settings (pinEnabled/Hash/Salt) 추가
+
+#### Checkpoint 3 (완성)
+- [ ] 첫 설치 → Google 로그인 → 넛지 → PIN 설정 → 잠금 → 생체인증 전체 흐름
+- [ ] Drive 복원 후 PIN 설정 유지 확인
+- [ ] regulation.html 등 타 페이지에서도 잠금 동작 확인
+
+---
+
+## 🔵 Phase 0: 런칭 게이트 잔여 (LAUNCH.md 기준)
+
+- [ ] **G3** 데이터 복구 UX — orphan 백업 키 "복구" 메뉴 (프로필 탭 접이식)
+- [ ] **G4** 법무 체크 (상표/로고/개인정보처리방침 검수)
+- [ ] **G5** First-run — 권한 요청 전 "왜 이 권한인가" 한 줄 안내 모달
+- [ ] **G6** 관측 대시보드 — supabase_launch_views.sql 실행
+- [ ] **G8** 공유 루프 — 앱 내 "공유하기" 버튼 (URL + QR)
+
+---
+
 > **v1.3 업데이트 (2026-04-12)**: Phase 0-5 완료. Phase 6-10 실행 순서: 6 → 7 → 9 → 8 → 10
 
 ---

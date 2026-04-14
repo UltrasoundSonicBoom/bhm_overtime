@@ -1,0 +1,6 @@
+[     223ms] [LOG] %c%s color: red; background: yellow; font-size: 24px; 경고! @ /_/mss/boq-dots/_/js/k=boq-dots.DotsSplashUi_desktop_ms.ko.mGTAdOWd9NQ.2018.O/am=GAIFAAAAANgFDCg/d=1/excm=_b,_tp,syndicationarticleview/ed=1/dg=0/wt=2/ujg=1/rs=ALs0n2NE9RRpwXIl7EX2DlHKwIxgGa-EZg/dti=1/m=_b,_tp:280
+[     223ms] [LOG] %c%s font-size: 18px; 이 콘솔을 사용하면 공격자가 Self-XSS라는 공격을 통해 내 신원을 도용하여 개인 정보를 빼낼 수 있습니다.
+알지 못하는 코드를 입력하거나 붙여넣지 마세요. @ /_/mss/boq-dots/_/js/k=boq-dots.DotsSplashUi_desktop_ms.ko.mGTAdOWd9NQ.2018.O/am=GAIFAAAAANgFDCg/d=1/excm=_b,_tp,syndicationarticleview/ed=1/dg=0/wt=2/ujg=1/rs=ALs0n2NE9RRpwXIl7EX2DlHKwIxgGa-EZg/dti=1/m=_b,_tp:280
+[    1297ms] [INFO] Powered by AMP ⚡ HTML – Version 2603032146000 https://www.sisajournal.com/news/articleViewAmp.html?idxno=369165 @ https://cdn.ampproject.org/v0.js:1
+[    1647ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ https://www.sisajournal.com/favicon.ico:0
+[    1687ms] [WARNING] [AmpAnalytics googleanalytics-ga4-137069dc7edb5f66f] Warning from analytics vendor%s%s: %s  googleanalytics  with remote config url //www.sisajournal.com/rss/ga4.json [object Object] @ https://cdn.ampproject.org/v0.js:1

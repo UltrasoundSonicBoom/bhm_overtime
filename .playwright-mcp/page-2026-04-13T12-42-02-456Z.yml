@@ -1,0 +1,91 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5] [cursor=pointer]:
+        - img "SNUH Mate" [ref=e6]
+        - generic [ref=e7]:
+          - heading "슬기로운 병원 생활 메이트" [level=1] [ref=e8]
+          - paragraph [ref=e9]:
+            - text: 내 근무기록을 내 손으로 직접 관리해요
+            - text: 본인 브라우저와 구글에만 저장해서 개발자도 못봐요!
+      - generic [ref=e10]:
+        - generic [ref=e12]:
+          - button "G Google로 연결" [ref=e13] [cursor=pointer]:
+            - generic [ref=e14]: G
+            - text: Google로 연결
+          - generic [ref=e15]:
+            - generic [ref=e16]: 이 브라우저를 함께 쓰면 기록이 공유돼요. 구글로 연결하면 내 전용 공간이 생겨요.
+            - button "알림 닫기" [ref=e17] [cursor=pointer]: ✕
+        - button "🎨" [ref=e18] [cursor=pointer]
+        - button "💬" [ref=e19] [cursor=pointer]
+  - navigation [ref=e20]:
+    - generic [ref=e21]:
+      - button "🏠 홈" [ref=e22] [cursor=pointer]:
+        - generic [ref=e23]: 🏠
+        - generic [ref=e24]: 홈
+      - button "📅 휴가" [ref=e25] [cursor=pointer]:
+        - generic [ref=e26]: 📅
+        - generic [ref=e27]: 휴가
+      - button "⏰ 시간외" [ref=e28] [cursor=pointer]:
+        - generic [ref=e29]: ⏰
+        - generic [ref=e30]: 시간외
+      - button "💰 급여" [ref=e31] [cursor=pointer]:
+        - generic [ref=e32]: 💰
+        - generic [ref=e33]: 급여
+      - link "📖 규정" [ref=e34] [cursor=pointer]:
+        - /url: regulation.html
+        - generic [ref=e35]: 📖
+        - generic [ref=e36]: 규정
+      - link "📰 뉴스" [ref=e37] [cursor=pointer]:
+        - /url: cardnews.html
+        - generic [ref=e38]: 📰
+        - generic [ref=e39]: 뉴스
+      - button "👤 info" [ref=e40] [cursor=pointer]:
+        - generic [ref=e41]: 👤
+        - generic [ref=e42]: info
+  - main [ref=e43]:
+    - generic [ref=e44]:
+      - navigation [ref=e45]:
+        - button "급여명세서 관리" [ref=e46] [cursor=pointer]
+        - button "이번 달 예상액" [ref=e47] [cursor=pointer]
+        - button "수당 계산기" [ref=e48] [cursor=pointer]
+        - button "퇴직금" [ref=e49] [cursor=pointer]
+      - generic [ref=e51]:
+        - generic [ref=e53]:
+          - button "◀" [disabled] [ref=e54] [cursor=pointer]
+          - generic [ref=e55]: 2026년 3월
+          - button "▶" [disabled] [ref=e56] [cursor=pointer]
+        - button "급여 PDF 업로드" [ref=e59] [cursor=pointer]
+        - generic [ref=e60]:
+          - generic [ref=e61]:
+            - generic [ref=e62]: 실지급액
+            - generic [ref=e63]: 2,945,000원
+            - generic [ref=e67]:
+              - generic [ref=e70]:
+                - generic [ref=e71]: 지급 87%
+                - generic [ref=e72]: 3,450,000원
+              - generic [ref=e75]:
+                - generic [ref=e76]: 공제 13%
+                - generic [ref=e77]: 505,000원
+          - generic [ref=e78]:
+            - generic [ref=e79]: 지급 내역
+            - generic [ref=e80]:
+              - generic [ref=e81]: 기본급
+              - generic [ref=e84]: 3,000,000원
+            - generic [ref=e85]:
+              - generic [ref=e86]: 시간외수당
+              - generic [ref=e89]: 450,000원
+            - generic [ref=e90]:
+              - generic [ref=e91]: 합계
+              - generic [ref=e92]: 3,450,000원
+          - generic [ref=e93]:
+            - generic [ref=e94]: 공제 내역
+            - generic [ref=e95]:
+              - generic [ref=e96]: 소득세
+              - generic [ref=e99]: 320,000원
+            - generic [ref=e100]:
+              - generic [ref=e101]: 국민건강보험
+              - generic [ref=e104]: 185,000원
+            - generic [ref=e105]:
+              - generic [ref=e106]: 합계
+              - generic [ref=e107]: 505,000원

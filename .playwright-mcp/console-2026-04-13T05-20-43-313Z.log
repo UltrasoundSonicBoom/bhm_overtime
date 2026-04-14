@@ -1,0 +1,26 @@
+[   19924ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ https://www.snuhmate.com/data.js?v=1.3:629
+[   19934ms] [LOG] 💾 2026년 공휴일 localStorage 캐시 사용 (23건) @ https://www.snuhmate.com/holidays.js?v=1.2:316
+[  403806ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ https://www.snuhmate.com/data.js?v=1.3:629
+[  403814ms] [LOG] 💾 2026년 공휴일 localStorage 캐시 사용 (23건) @ https://www.snuhmate.com/holidays.js?v=1.2:316
+[  409078ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ https://www.snuhmate.com/data.js?v=2.5:629
+[  409422ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://www.snuhmate.com/api/api/regulations/browse:0
+[  409422ms] [LOG] [regulation.js] DB browse unavailable, using DATA.handbook fallback: HTTP 404 @ https://www.snuhmate.com/regulation.js?v=2.4:196
+[  409446ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ https://www.snuhmate.com/regulation.html:0
+[  410877ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ https://www.snuhmate.com/data.js?v=1.3:629
+[  410879ms] [LOG] 💾 2026년 공휴일 localStorage 캐시 사용 (23건) @ https://www.snuhmate.com/holidays.js?v=1.2:316
+[  415460ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ https://www.snuhmate.com/data.js?v=2.5:629
+[  415499ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://www.snuhmate.com/api/api/regulations/browse:0
+[  415499ms] [LOG] [regulation.js] DB browse unavailable, using DATA.handbook fallback: HTTP 404 @ https://www.snuhmate.com/regulation.js?v=2.4:196
+[  415511ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ https://www.snuhmate.com/regulation.html:0
+[  420244ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ https://www.snuhmate.com/cardnews.html:0
+[  421519ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://www.snuhmate.com/api/card-news/resolve:0
+[  421521ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://www.snuhmate.com/api/card-news/resolve:0
+[  421522ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://www.snuhmate.com/api/card-news/resolve:0
+[  421522ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://www.snuhmate.com/api/card-news/resolve:0
+[  421522ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://www.snuhmate.com/api/card-news/resolve:0
+[  421522ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://www.snuhmate.com/api/card-news/resolve:0
+[  421550ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://www.snuhmate.com/api/card-news/summarize:0
+[  421551ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://www.snuhmate.com/api/card-news/summarize:0
+[  421551ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://www.snuhmate.com/api/card-news/summarize:0
+[  445024ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ https://www.snuhmate.com/data.js?v=1.3:629
+[  445027ms] [LOG] 💾 2026년 공휴일 localStorage 캐시 사용 (23건) @ https://www.snuhmate.com/holidays.js?v=1.2:316

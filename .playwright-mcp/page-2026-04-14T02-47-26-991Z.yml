@@ -1,0 +1,206 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e4]:
+      - generic:
+        - img "SNUH Mate" [ref=e5] [cursor=pointer]
+        - generic [ref=e6] [cursor=pointer]:
+          - heading "슬기로운 병원 생활 메이트" [level=1] [ref=e7]
+          - paragraph [ref=e8]:
+            - text: 내 근무기록을 내 손으로 직접 관리해요
+            - text: 본인 브라우저와 구글에만 저장해서 개발자도 못봐요!
+      - generic [ref=e9]:
+        - generic [ref=e11]:
+          - button "G Google로 연결" [ref=e12] [cursor=pointer]:
+            - generic [ref=e13]: G
+            - text: Google로 연결
+          - generic [ref=e14]:
+            - generic [ref=e15]: 이 브라우저를 함께 쓰면 기록이 공유돼요. 구글로 연결하면 내 전용 공간이 생겨요.
+            - button "알림 닫기" [ref=e16] [cursor=pointer]: ✕
+        - button "🎨" [ref=e17] [cursor=pointer]
+        - button "💬" [ref=e18] [cursor=pointer]
+  - navigation [ref=e19]:
+    - generic [ref=e20]:
+      - button "🏠 홈" [ref=e21] [cursor=pointer]:
+        - generic [ref=e22]: 🏠
+        - generic [ref=e23]: 홈
+      - button "📅 휴가" [ref=e24] [cursor=pointer]:
+        - generic [ref=e25]: 📅
+        - generic [ref=e26]: 휴가
+      - button "⏰ 시간외" [ref=e27] [cursor=pointer]:
+        - generic [ref=e28]: ⏰
+        - generic [ref=e29]: 시간외
+      - button "💰 급여" [ref=e30] [cursor=pointer]:
+        - generic [ref=e31]: 💰
+        - generic [ref=e32]: 급여
+      - link "📖 규정" [ref=e33] [cursor=pointer]:
+        - /url: regulation.html
+        - generic [ref=e34]: 📖
+        - generic [ref=e35]: 규정
+      - link "📰 뉴스" [ref=e36] [cursor=pointer]:
+        - /url: cardnews.html
+        - generic [ref=e37]: 📰
+        - generic [ref=e38]: 뉴스
+      - button "👤 info" [ref=e39] [cursor=pointer]:
+        - generic [ref=e40]: 👤
+        - generic [ref=e41]: info
+  - main [ref=e42]:
+    - generic [ref=e113]:
+      - generic [ref=e114]:
+        - generic [ref=e115]:
+          - generic [ref=e116]: 👤
+          - generic [ref=e117]: 내 정보
+          - generic [ref=e118]: 미저장
+        - generic [ref=e120] [cursor=pointer]: ▼ 내 정보 입력/수정
+        - generic [ref=e121]:
+          - paragraph [ref=e122]:
+            - text: 개인정보를 입력해주세요. (통상임금 항목)
+            - text: 데이터는 이 브라우저에만 저장됩니다.
+          - button "🧪 급여명세서(PDF)로 자동 입력해주세요" [ref=e123] [cursor=pointer]
+          - paragraph [ref=e124]: ▸ 기본 정보
+          - generic [ref=e125]:
+            - generic [ref=e126]:
+              - generic [ref=e127]: 이름
+              - 'textbox "예: 홍길동" [ref=e128]'
+            - generic [ref=e129]:
+              - generic [ref=e130]: 성별 (생휴 여부 확인)
+              - combobox [ref=e131]:
+                - option "미설정" [selected]
+                - option "남성"
+                - option "여성"
+          - generic [ref=e133]:
+            - generic [ref=e134]:
+              - text: 사번
+              - generic [ref=e135]: (급여명세서 업로드 시 자동 채움)
+            - 'textbox "예: 20842" [ref=e136]'
+          - generic [ref=e137]:
+            - generic [ref=e138]:
+              - generic [ref=e139]: 직종
+              - combobox [ref=e140]:
+                - option "사무직"
+                - option "보건직"
+                - option "간호직" [selected]
+                - option "의사직"
+                - option "약무직"
+                - option "의료기사직"
+                - option "기능직"
+                - option "시설직"
+                - option "환경미화직"
+                - option "지원직"
+            - generic [ref=e141]:
+              - generic [ref=e142]: 직급·등급
+              - combobox [ref=e143]:
+                - option "매니저3 (M3)"
+                - option "매니저2 (M2)"
+                - option "매니저1 (M1)"
+                - option "시니어3 (S3)"
+                - option "시니어2 (S2)"
+                - option "시니어1 (S1)"
+                - option "주니어3 (J3)"
+                - option "주니어2 (J2)"
+                - option "주니어1 (J1)" [selected]
+          - generic [ref=e144]:
+            - generic [ref=e145]:
+              - generic [ref=e146]: 호봉 (연차)
+              - combobox [ref=e147]:
+                - option "1년차" [selected]
+                - option "2년차"
+                - option "3년차"
+                - option "4년차"
+                - option "5년차"
+                - option "6년차"
+                - option "7년차"
+                - option "8년차"
+            - generic [ref=e148]:
+              - generic [ref=e149]: 생년월일 (퇴직금 계산)
+              - textbox [ref=e150]
+            - generic [ref=e151]:
+              - generic [ref=e152]: 입사일
+              - 'textbox "예: 2021-01-01" [ref=e153]'
+          - generic [ref=e154]:
+            - generic [ref=e155]:
+              - generic [ref=e156]:
+                - text: 최근 승진일
+                - generic [ref=e157]: 선택
+              - 'textbox "예: 2024-03-01" [ref=e158]'
+            - generic [ref=e159]:
+              - generic [ref=e160]:
+                - text: 노조협의 호봉 보정
+                - generic [ref=e161]: 선택
+              - combobox [ref=e162]:
+                - option "자동 (직급 기준 자동 적용)" [selected]
+                - option "0 — 해당 없음"
+                - option "+1호봉 (수동 지정)"
+                - option "+2호봉 (수동 지정)"
+              - generic [ref=e163]: "2026.02 노조협의: J1~S1 +1호봉 자동 적용"
+          - generic [ref=e165]:
+            - generic [ref=e166]:
+              - text: 월 소정근로시간
+              - generic [ref=e167]: 기본 209h
+            - spinbutton [ref=e168]: "209"
+            - generic [ref=e169]: 시급 계산 기준 · 일반 전일제 근무자는 209h 그대로
+          - paragraph [ref=e170]: ▸ 개인 수당 급여명세서 확인 후 입력
+          - generic [ref=e171]:
+            - generic [ref=e172]:
+              - generic [ref=e173]:
+                - text: 조정급
+                - generic [ref=e174]: ★필수
+              - spinbutton [ref=e175]: "0"
+            - generic [ref=e176]:
+              - generic [ref=e177]: 승급조정급
+              - spinbutton [ref=e178]: "0"
+          - generic [ref=e179]:
+            - generic [ref=e180]:
+              - generic [ref=e181]: 별정수당
+              - spinbutton [ref=e182]: "0"
+            - generic [ref=e183]:
+              - generic [ref=e184]: 직책급
+              - spinbutton [ref=e185]: "0"
+          - generic [ref=e186]:
+            - generic [ref=e187]:
+              - generic [ref=e188]: 업무보조비
+              - spinbutton [ref=e189]: "0"
+            - generic [ref=e190]:
+              - generic [ref=e191]: 군복무수당
+              - generic [ref=e192]:
+                - checkbox "해당 있음" [ref=e193] [cursor=pointer]
+                - generic [ref=e194] [cursor=pointer]: 해당 있음
+          - paragraph [ref=e195]: ▸ 가족수당 통상임금 미포함 — 별도 지급 (제49조)
+          - generic [ref=e197]:
+            - generic [ref=e198]:
+              - text: 가족 수
+              - generic [ref=e199]: (자녀 제외·최대 5인)
+            - spinbutton [ref=e200]: "0"
+            - generic [ref=e201]: 배우자 4만원 / 추가 1인당 2만원
+          - generic [ref=e202]:
+            - generic [ref=e203]: ⚠️
+            - generic [ref=e204]:
+              - strong [ref=e205]: 공용 기기에서는 개인정보를 저장하지 마세요
+              - generic [ref=e206]:
+                - text: 학교·도서관·직장 공용 컴퓨터에서는 개인정보를 입력하지 마세요. 데이터는 이 브라우저에만 저장되어
+                - strong [ref=e207]: 다음 사용자가 동일 브라우저를 열면 볼 수 있습니다.
+          - generic [ref=e208]:
+            - button "💾 저장하기" [ref=e209] [cursor=pointer]
+            - button "🗑 초기화" [ref=e210] [cursor=pointer]
+      - generic [ref=e211]:
+        - generic [ref=e212]:
+          - generic [ref=e213]: 📝
+          - text: 통상임금 내역
+        - paragraph [ref=e214]: 정보를 입력하고 [저장하기]를 눌러주세요.
+      - generic [ref=e217] [cursor=pointer]:
+        - generic [ref=e218]: ▸
+        - generic [ref=e219]: ⚠️
+        - generic [ref=e220]: 충돌 백업 복구
+        - generic [ref=e221]: "3"
+      - generic [ref=e222]:
+        - generic [ref=e223]:
+          - generic [ref=e224]: 💾
+          - text: 데이터 백업 및 복구
+        - paragraph [ref=e225]: 클라우드 동기화 없이 브라우저 내부에 저장된 기록을 파일로 안전하게 평생 보관하고 복원할 수 있습니다.
+        - generic [ref=e226]:
+          - button "📥 다운로드 (백업)" [ref=e227] [cursor=pointer]
+          - generic [ref=e228] [cursor=pointer]: 📤 불러오기 (복원)
+        - paragraph [ref=e229]:
+          - text: 💡 복원 시
+          - strong [ref=e230]: snuh_backup_*.json
+          - text: 파일을 선택하세요.
+          - text: 안드로이드에서 파일이 안 보이면 파일 탐색기에서 "다운로드" 폴더를 확인하세요.

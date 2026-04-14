@@ -1,0 +1,6 @@
+[     535ms] [LOG] 📋 2026년 공휴일 정적 데이터 사용 (23건) @ http://localhost:8888/holidays.js?v=1.2:331
+[     549ms] [LOG] 📋 2026년 기념일 정적 데이터 사용 (5건) @ http://localhost:8888/holidays.js?v=1.2:416
+[    1026ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3001/api/data/bundle:0
+[    1026ms] [LOG] [DATA] API 로드 실패, static fallback 사용: API 500 @ http://localhost:8888/data.js?v=1.3:659
+[    4104ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://ulamqyarenzjdxlisijl.supabase.co/rest/v1/app_events?columns=%22anon_id%22%2C%22event_type%22%2C%22payload%22%2C%22app_version%22%2C%22user_agent%22%2C%22ts%22:0
+[    4105ms] [WARNING] [Telemetry] insert failed: Could not find the table 'public.app_events' in the schema cache @ http://localhost:8888/supabaseClient.js?v=1.5:100
