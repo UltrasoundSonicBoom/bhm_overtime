@@ -331,10 +331,66 @@ window.SyncManager = (function () {
   // 전역 편의 바인딩 — 데이터 모듈이 저장 직후 호출
   window.recordLocalEdit = recordLocalEdit;
 
+  // ── pullOnResume ──
+  // 다른 기기(A)에서 편집한 내용을 이 기기(B)에서 자동 반영하기 위한 재수신 루틴.
+  // visibilitychange(탭 복귀) / focus(창 복귀) 시 호출되며, 직전 pull 로부터
+  // RESUME_COOLDOWN_MS 이하 경과 시에는 호출을 생략해 과도한 Drive API 호출을 막는다.
+  // 로그아웃 상태이면 아무 동작도 하지 않는다.
+  var RESUME_COOLDOWN_MS = 20 * 1000; // 20초. Drive API 사용량 보호.
+  var _lastResumePull = 0;
+  function pullOnResume() {
+    if (!window.GoogleAuth || !window.GoogleAuth.isSignedIn()) return;
+    if (!window.GoogleDriveStore) return;
+    var now = Date.now();
+    if (now - _lastResumePull < RESUME_COOLDOWN_MS) return;
+    _lastResumePull = now;
+    pullFromDrive().then(function (results) {
+      if (!Array.isArray(results)) return;
+      var restored = results.filter(function (r) { return r && (r.result === 'restored' || r.result === 'remote_wins'); });
+      if (restored.length > 0) {
+        _refreshUI();
+        _showToast('☁️ 다른 기기의 변경사항을 불러왔어요.', 2500);
+      }
+    }).catch(function (err) {
+      // 재수신 실패는 조용히 기록 — 로컬에는 영향 없음, 다음 기회에 다시 시도된다
+      console.warn('[SyncManager] pullOnResume failed:', err);
+    });
+  }
+
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible') pullOnResume();
+    });
+    window.addEventListener('focus', pullOnResume);
+  }
+
+  // ── beforeunload: 대기 중인 push 즉시 flush ──
+  // 3초 debounce 도중 페이지를 닫으면 Drive가 로컬보다 뒤처진다.
+  // 로컬 데이터는 이미 안전하지만, 다음 기기에서 pullFromDrive 시 충돌 가능.
+  // → 타이머를 취소하고 즉시 push를 시도한다 (비동기, 최선-노력).
+  if (typeof window !== 'undefined') {
+    window.addEventListener('beforeunload', function () {
+      var pending = Object.keys(_timers);
+      if (pending.length === 0) return;
+      pending.forEach(function (key) {
+        clearTimeout(_timers[key]);
+        delete _timers[key];
+        // key 형태: 'leave'|'overtime'|'profile'|'payslip_YYYY_MM'
+        var parts = key.split('_');
+        if (parts[0] === 'payslip' && parts.length >= 3) {
+          pushToDrive('payslip', parseInt(parts[1]), parseInt(parts[2])).catch(function () {});
+        } else {
+          pushToDrive(parts[0]).catch(function () {});
+        }
+      });
+    });
+  }
+
   return {
     enqueuePush: enqueuePush,
     pushToDrive: pushToDrive,
     pullFromDrive: pullFromDrive,
+    pullOnResume: pullOnResume,
     fullSync: fullSync,
     migrateGuestData: migrateGuestData,
     resolveConflict: resolveConflict,

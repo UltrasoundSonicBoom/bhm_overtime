@@ -166,6 +166,8 @@ body::before {
   align-items: center;
   gap: 10px;
   min-width: 0;
+  flex: 1;
+  overflow: hidden;
 }
 
 .logo-icon {
@@ -188,6 +190,9 @@ body::before {
   color: #333333 !important; /* 진회색 텍스트만 유지 (!important 추가) */
   line-height: 1.1;
   letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .logo .logo-sub-title {
@@ -196,6 +201,9 @@ body::before {
   margin-top: 2px;
   line-height: 1.4;
   font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 html[data-theme="neo"] .logo .logo-main-title {
