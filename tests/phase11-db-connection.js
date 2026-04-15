@@ -64,8 +64,12 @@ assert(dataJsContent.includes('async function loadDataFromAPI'), 'loadDataFromAP
 // T11-A3: loadDataFromAPI 호출부 존재
 assert(dataJsContent.includes('loadDataFromAPI()'), 'loadDataFromAPI() 호출 존재');
 
-// T11-A4: fetch URL이 /api/data/bundle
-assert(dataJsContent.includes("fetch('/api/data/bundle')"), "fetch URL = '/api/data/bundle'");
+// T11-A4: fetch URL이 /api/data/bundle (동적 구성 또는 하드코딩 허용)
+assert(
+  dataJsContent.includes("fetch('/api/data/bundle')") ||
+  (dataJsContent.includes("'/data/bundle'") && dataJsContent.includes("_apiBase")),
+  "fetch URL = '/api/data/bundle'"
+);
 
 // T11-A5: DATA_STATIC fallback merge 패턴
 assert(

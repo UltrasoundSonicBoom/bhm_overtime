@@ -47,6 +47,145 @@
     syncThemeButtonIcon();
   }
 
+  // ── Google G SVG (공식 컬러) — createElementNS로 XSS 없이 생성 ──
+  function _makeGoogleGSvg() {
+    var NS = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('width', '18'); svg.setAttribute('height', '18');
+    svg.setAttribute('viewBox', '0 0 18 18'); svg.setAttribute('aria-hidden', 'true');
+    var g = document.createElementNS(NS, 'g');
+    g.setAttribute('fill', 'none');
+    [
+      ['M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.258h2.908C16.658 14.013 17.64 11.706 17.64 9.2z', '#4285F4'],
+      ['M9 18c2.43 0 4.467-.806 5.956-2.185l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z', '#34A853'],
+      ['M3.964 10.706c-.18-.54-.282-1.117-.282-1.706s.102-1.166.282-1.706V4.962H.957C.347 6.175 0 7.55 0 9s.348 2.826.957 4.038l3.007-2.332z', '#FBBC05'],
+      ['M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.962L3.964 7.294C4.672 5.167 6.656 3.58 9 3.58z', '#EA4335'],
+    ].forEach(function (pair) {
+      var p = document.createElementNS(NS, 'path');
+      p.setAttribute('d', pair[0]); p.setAttribute('fill', pair[1]);
+      g.appendChild(p);
+    });
+    svg.appendChild(g);
+    return svg;
+  }
+
+  // ── localStorage에서 Google 로그인 캐시 읽기 ──
+  function _readCachedUser() {
+    try {
+      var raw = localStorage.getItem('bhm_settings');
+      if (!raw) return null;
+      var s = JSON.parse(raw);
+      return (s && s.googleSub) ? s : null;
+    } catch (e) { return null; }
+  }
+
+  // ── 로그인 버튼 렌더 ──
+  function _renderSignInButton(auth) {
+    auth.textContent = '';
+    var btn = document.createElement('button');
+    btn.className = 'google-signin-btn';
+    btn.setAttribute('aria-label', 'Google로 연결');
+    btn.appendChild(_makeGoogleGSvg());
+    var span = document.createElement('span');
+    span.textContent = 'Google로 연결';
+    btn.appendChild(span);
+    btn.onclick = function () {
+      var dlg = document.getElementById('googlePermissionDialog');
+      if (dlg && typeof dlg.showModal === 'function') { dlg.showModal(); return; }
+      if (window.GoogleAuth) window.GoogleAuth.signIn();
+    };
+    auth.appendChild(btn);
+  }
+
+  // ── 로그인 상태 렌더 ──
+  function _renderUserState(auth, user) {
+    auth.textContent = '';
+    var wrap = document.createElement('div');
+    wrap.className = 'auth-user';
+
+    var info = document.createElement('div');
+    info.className = 'auth-user-info';
+
+    var name = document.createElement('div');
+    name.className = 'auth-user-name';
+    name.textContent = user.googleName || user.name || user.googleEmail || '연결됨';
+    info.appendChild(name);
+
+    var badges = document.createElement('div');
+    badges.className = 'auth-user-badges';
+    if (user.driveEnabled) {
+      var db = document.createElement('span');
+      db.className = 'auth-badge auth-badge-drive';
+      db.textContent = 'Drive';
+      badges.appendChild(db);
+    }
+    if (user.calendarEnabled) {
+      var cb = document.createElement('span');
+      cb.className = 'auth-badge auth-badge-cal';
+      cb.textContent = 'Cal';
+      badges.appendChild(cb);
+    }
+    if (badges.firstChild) info.appendChild(badges);
+
+    var signout = document.createElement('button');
+    signout.className = 'auth-signout-btn';
+    signout.textContent = '연결 해제';
+    signout.onclick = function () {
+      if (window.GoogleAuth && typeof window.GoogleAuth.signOut === 'function') {
+        window.GoogleAuth.signOut();
+      } else if (window.SupabaseClient && window.SupabaseClient.auth) {
+        window.SupabaseClient.auth.signOut().finally(function () { window.location.reload(); });
+      }
+    };
+    info.appendChild(signout);
+    wrap.appendChild(info);
+
+    var pic = user.googlePicture || user.picture;
+    if (pic) {
+      var img = document.createElement('img');
+      img.src = pic;
+      img.className = 'auth-avatar';
+      img.alt = name.textContent;
+      img.onerror = function () { img.style.display = 'none'; };
+      wrap.appendChild(img);
+    }
+    auth.appendChild(wrap);
+  }
+
+  // shared helper — index.html의 updateAuthUI가 이 함수를 호출할 수 있도록 expose
+  window._sharedAuthRenderSignIn = _renderSignInButton;
+  window._sharedAuthRenderUser   = _renderUserState;
+
+  // ── 게스트 안내 배너 (헤더 바로 아래, 1회만 표시) ──
+  function _renderGuestNoticeBanner() {
+    try {
+      if (localStorage.getItem('bhm_guestNoticeAck') === '1') return;
+      if (_readCachedUser()) return;
+    } catch (e) { return; }
+
+    var banner = document.createElement('div');
+    banner.id = 'guestNoticeBanner';
+
+    var text = document.createElement('span');
+    text.textContent = '이 브라우저를 함께 쓰면 기록이 공유돼요. Google로 연결하면 내 전용 공간이 생겨요.';
+    banner.appendChild(text);
+
+    var close = document.createElement('button');
+    close.className = 'gnb-close';
+    close.setAttribute('aria-label', '알림 닫기');
+    close.textContent = '✕';
+    close.onclick = function () {
+      try { localStorage.setItem('bhm_guestNoticeAck', '1'); } catch (e) {}
+      banner.remove();
+    };
+    banner.appendChild(close);
+
+    var header = document.getElementById('sharedHeader');
+    if (header && header.parentNode) {
+      header.parentNode.insertBefore(banner, header.nextSibling);
+    }
+  }
+
   // ── Header 렌더 (DOM API) ──
   function renderSharedHeader() {
     var header = document.getElementById('sharedHeader');
@@ -57,7 +196,7 @@
     var inner = el('div', { className: 'header-inner' });
     var topRow = el('div', { className: 'header-top-row' });
 
-    // Logo — index: switchTab('home'), regulation: link to snuhmate.com
+    // Logo — index: switchTab('home'), regulation/standalone: link
     var logo;
     if (isRegulation || isStandalone) {
       logo = el('a', { className: 'logo', href: homeHref('home') });
@@ -68,26 +207,26 @@
       logo.style.cursor = 'pointer';
       logo.onclick = function () { if (window.switchTab) switchTab('home'); };
     }
+    // 로고 이미지: 44px (컴팩트, 서브타이틀 제거로 헤더 높이 줄임)
     var img = el('img', { src: 'logo.png', alt: 'SNUH Mate' });
-    img.style.cssText = 'width:81px;height:81px;object-fit:contain;flex-shrink:0;border-radius:10px;';
+    img.style.cssText = 'width:44px;height:44px;object-fit:contain;flex-shrink:0;border-radius:8px;';
     logo.appendChild(img);
-    var logoText = el('div');
     var h1 = el('h1', { className: 'logo-main-title', textContent: '슬기로운 병원 생활 메이트' });
-    var sub = el('p', { className: 'logo-sub-title' });
-    sub.textContent = '내 근무기록을 내 손으로 직접 관리해요';
-    sub.appendChild(el('br'));
-    sub.appendChild(document.createTextNode('본인 브라우저와 구글에만 저장해서 개발자도 못봐요!'));
-    logoText.appendChild(h1);
-    logoText.appendChild(sub);
-    logo.appendChild(logoText);
+    logo.appendChild(h1);
     topRow.appendChild(logo);
 
     // Header right
     var right = el('div', { className: 'header-right' });
 
-    // Auth container — updateAuthUI()로 내용이 채워짐
+    // Auth container: 동기 pre-render로 초기 플리커 방지
     var auth = el('div', { id: 'authContainer', className: 'auth-container' });
-    auth.style.cssText = 'display:flex;align-items:center;gap:8px;';
+    auth.style.cssText = 'display:flex;align-items:center;';
+    var cached = _readCachedUser();
+    if (cached) {
+      _renderUserState(auth, cached);
+    } else {
+      _renderSignInButton(auth);
+    }
     right.appendChild(auth);
 
     // Theme toggle
@@ -106,7 +245,6 @@
 
     topRow.appendChild(right);
     inner.appendChild(topRow);
-
     header.appendChild(inner);
     syncThemeButtonIcon();
   }
@@ -193,6 +331,7 @@
   // ── Init: 헤더/푸터 즉시 렌더, ChannelIO는 DOM 준비 후 ──
   renderSharedHeader();
   renderSharedFooter();
+  _renderGuestNoticeBanner();  // 게스트 배너: 헤더 바로 아래 (비로그인 + 미확인 시만)
 
   // AppLock: DOM 준비 후 잠금 오버레이 체크
   // appLock.js가 먼저 로드된 경우에만 실행 (shared-layout.js는 여러 페이지에서 사용)

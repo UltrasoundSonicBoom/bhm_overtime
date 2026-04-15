@@ -38,8 +38,8 @@ const calcJs = fs.readFileSync(path.join(ROOT, 'calculators.js'), 'utf8');
 const refreshCommented = /\/\/\s*'리프레시지원비'/.test(calcJs);
 assert(!refreshCommented, "BUG-01: '리프레시지원비' 주석 해제 (통상임금 산입)");
 
-// breakdown에 실제로 포함되어 있어야 함
-const refreshIncluded = /'리프레시지원비'\s*:\s*DATA\.allowances\.refreshBenefit/.test(calcJs);
+// breakdown에 실제로 포함되어 있어야 함 (local variable fallback 패턴 허용)
+const refreshIncluded = /'리프레시지원비'\s*:\s*(DATA\.allowances\.refreshBenefit|refreshBenefit)/.test(calcJs);
 assert(refreshIncluded, "BUG-01: breakdown에 '리프레시지원비' 항목 존재");
 
 // ── BUG-02/03: 장기근속수당 ADDITIVE + 140,000원 ─────────────

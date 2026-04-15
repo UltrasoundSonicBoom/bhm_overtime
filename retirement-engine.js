@@ -18,7 +18,8 @@ const RetirementEngine = (function () {
     { min:  1, rate: 0.10 }
   ];
   // 출처: data.js severanceMultipliersPre2001 (2001.08.31 이전 입사자 누진배수)
-  const SEV_MULTI = [
+  // ARCH-01: DB 연결 후 window.DATA 참조로 전환 예정.
+  const SEV_MULTI = window.DATA && window.DATA.severanceMultipliersPre2001 ? window.DATA.severanceMultipliersPre2001 : [
     { min: 30, multiplier: 52.5 },
     { min: 25, multiplier: 42.5 },
     { min: 20, multiplier: 33.0 },

@@ -1022,6 +1022,22 @@
           <div class="ret-notice">※ 세부 절차 및 서식은 인사과(내선 확인)에 문의하세요.</div>
         </div>
 
+        <!-- E4: 퇴직 타임라인 시뮬레이터 -->
+        <div class="card" id="retirementTimelineCard" style="margin-top:16px;">
+          <div class="card-title" style="font-size:var(--text-body-large);font-family:'Space Grotesk',sans-serif;font-weight:700;">
+            퇴직 최적 시기 시뮬레이션
+          </div>
+          <p style="font-size:var(--text-body-small);color:var(--text-muted);margin-bottom:12px;">
+            앞으로 12개월, 각 달 퇴직 시 예상 퇴직금을 비교합니다. 연금·세금 제외.
+          </p>
+          <div id="retirementTimelineContent">
+            <div class="empty-state" style="padding:24px 0;">
+              <p style="color:var(--text-muted);font-size:var(--text-body-normal);">입사일과 급여 정보를 먼저 입력해주세요.</p>
+              <button class="btn btn-primary" style="margin-top:10px;" onclick="switchTab('info')">개인정보 탭으로 →</button>
+            </div>
+          </div>
+        </div>
+
       </div><!-- /sub-pay-retirement -->
     </div><!-- /tab-payroll -->
 
@@ -1618,6 +1634,12 @@
           Google Drive의 앱 전용 폴더에 자동 저장돼요. 개발자도 볼 수 없고, 다른 기기에서도 복원할 수 있어요.
         </p>
         <p id="driveLastSyncLabel" style="font-size:0.75rem; color:var(--text-muted); margin-top:8px;"></p>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
+          <button id="driveBackupToggle" class="btn btn-outline" onclick="onDriveBackupToggle(this)"
+            style="font-size:var(--text-body-normal); padding:6px 12px;">백업 켜기/끄기</button>
+          <button class="btn btn-outline" onclick="onDriveManualSync(this)"
+            style="font-size:var(--text-body-normal); padding:6px 12px;">🔄 지금 동기화</button>
+        </div>
       </div>
 
       <!-- Google Calendar 연동 섹션 (로그인 시 자동 활성화) -->
@@ -1625,6 +1647,8 @@
         <div class="card-title" style="font-size:var(--text-body-large);">
           <span class="icon" style="color:#34A853;">📅</span> Google Calendar 연동
           <span id="calendarToggleLabel" style="font-size:var(--text-body-normal); color:#34A853; font-weight:600; margin-left:8px;">● 켜짐</span>
+          <button id="calendarToggle" class="btn btn-outline btn-sm" onclick="onCalendarToggle(this)"
+            style="font-size:var(--text-body-small); padding:4px 10px; margin-left:auto;">켜기/끄기</button>
         </div>
         <p style="font-size:var(--text-body-normal); color:var(--text-muted); margin-bottom:12px;">
           휴가 기록이 Google Calendar의 <strong>'SNUH Mate 휴가'</strong> 전용 캘린더에 자동 추가돼요. 시간외는 포함되지 않아요.
@@ -1765,6 +1789,69 @@
         </div>
       </div>
 
+      <!-- E1: 근무이력 섹션 -->
+      <div class="card" id="workHistoryCard" style="max-width:600px; margin:20px auto 0;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+          <div class="card-title" style="font-size:var(--text-body-large); margin:0;">
+            <span class="icon indigo">💼</span> 근무이력
+          </div>
+          <button id="addWorkHistoryBtn" class="btn btn-primary" style="padding:6px 14px; font-size:var(--text-body-small);"
+            onclick="openWorkHistorySheet()">+ 추가</button>
+        </div>
+        <div id="workHistoryList"></div>
+        <button class="btn" id="workHistoryAICTA" onclick="generateAIResume()"
+          style="display:none; width:100%; margin-top:12px; padding:10px;
+                 background:none; border:2px solid var(--accent-amber,#f59e0b);
+                 box-shadow:3px 3px 0 var(--accent-amber,#f59e0b);
+                 border-radius:6px; font-size:var(--text-body-normal);
+                 font-weight:600; color:var(--accent-amber,#f59e0b); cursor:pointer;">
+          AI 이력서 생성 →
+        </button>
+      </div>
+
+      <!-- 근무이력 입력 바텀시트 -->
+      <div id="workHistorySheet" style="display:none; position:fixed; inset:0; z-index:9000;
+           background:rgba(0,0,0,0.5);" onclick="if(event.target===this)closeWorkHistorySheet()">
+        <div style="position:absolute; bottom:0; left:0; right:0; background:var(--bg-card,#fff);
+             border-radius:16px 16px 0 0; padding:20px 16px 32px; max-height:85vh; overflow-y:auto;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+            <span style="font-size:var(--text-body-large); font-weight:600;" id="workHistorySheetTitle">근무이력 추가</span>
+            <button onclick="closeWorkHistorySheet()" style="background:none; border:none; font-size:1.4rem; cursor:pointer; line-height:1; padding:4px 8px;">×</button>
+          </div>
+          <input type="hidden" id="whEditId" value="">
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <div>
+              <label style="font-size:var(--text-body-small); font-weight:600; display:block; margin-bottom:4px;">부서명 / 직장명 *</label>
+              <input id="whDept" type="text" placeholder="예: 핵의학과, 중환자실" class="form-input"
+                style="width:100%; padding:10px 12px; border:1px solid var(--border-glass); border-radius:8px; font-size:var(--text-body-normal);">
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+              <div>
+                <label style="font-size:var(--text-body-small); font-weight:600; display:block; margin-bottom:4px;">시작 (년-월)</label>
+                <input id="whFrom" type="month" class="form-input"
+                  style="width:100%; padding:10px 12px; border:1px solid var(--border-glass); border-radius:8px; font-size:var(--text-body-normal);">
+              </div>
+              <div>
+                <label style="font-size:var(--text-body-small); font-weight:600; display:block; margin-bottom:4px;">종료 (년-월)</label>
+                <input id="whTo" type="month" class="form-input" placeholder="재직 중이면 빈칸"
+                  style="width:100%; padding:10px 12px; border:1px solid var(--border-glass); border-radius:8px; font-size:var(--text-body-normal);">
+              </div>
+            </div>
+            <div>
+              <label style="font-size:var(--text-body-small); font-weight:600; display:block; margin-bottom:4px;">직무</label>
+              <input id="whRole" type="text" placeholder="예: 수간호사, 전담간호사" class="form-input"
+                style="width:100%; padding:10px 12px; border:1px solid var(--border-glass); border-radius:8px; font-size:var(--text-body-normal);">
+            </div>
+            <div>
+              <label style="font-size:var(--text-body-small); font-weight:600; display:block; margin-bottom:4px;">주요 역할 (선택)</label>
+              <textarea id="whDesc" rows="3" placeholder="간략한 업무 내용..."
+                style="width:100%; padding:10px 12px; border:1px solid var(--border-glass); border-radius:8px; font-size:var(--text-body-normal); resize:none;"></textarea>
+            </div>
+            <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="saveWorkHistoryEntry()">저장</button>
+          </div>
+        </div>
+      </div>
+
 
     </div>
 
@@ -1853,110 +1940,32 @@
   <script>
     // ── Google 로그인 UI 업데이트 함수 ──
     // GoogleAuth.init() / handleTokenResponse() / signOut()에서 호출됨
+    // shared-layout.js의 _sharedAuthRenderUser / _sharedAuthRenderSignIn을 재사용
     function updateAuthUI(user) {
       var authContainer = document.getElementById('authContainer');
       if (!authContainer) return;
-      while (authContainer.firstChild) authContainer.removeChild(authContainer.firstChild);
 
       var userId = user && (user.sub || user.id);
       if (userId) {
         var settings = (window.loadSettings && window.loadSettings()) || {};
-        var displayName = user.name || user.email || (user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || '';
-        var picture = user.picture || (user.user_metadata && user.user_metadata.avatar_url) || '';
-
-        var infoDiv = document.createElement('div');
-        infoDiv.style.cssText = 'font-size:var(--text-body-normal);color:var(--text-muted);text-align:right;';
-
-        var nameDiv = document.createElement('div');
-        nameDiv.style.cssText = 'font-weight:600;color:var(--text-primary);';
-        nameDiv.textContent = displayName;
-
-        if (settings.driveEnabled) {
-          var db = document.createElement('span');
-          db.textContent = 'Drive';
-          db.style.cssText = 'font-size:10px;background:var(--accent-emerald);color:#fff;border-radius:10px;padding:1px 6px;margin-left:4px;';
-          nameDiv.appendChild(db);
-        }
-        if (settings.calendarEnabled) {
-          var cb = document.createElement('span');
-          cb.textContent = 'Cal';
-          cb.style.cssText = 'font-size:10px;background:#4285F4;color:#fff;border-radius:10px;padding:1px 6px;margin-left:4px;';
-          nameDiv.appendChild(cb);
-        }
-
-        var signOutBtn = document.createElement('button');
-        signOutBtn.textContent = '연결 해제';
-        signOutBtn.style.cssText = 'background:transparent;border:none;color:var(--accent-rose);font-size:var(--text-body-normal);cursor:pointer;padding:0;margin-top:2px;text-decoration:underline;';
-        signOutBtn.onclick = function () {
-          // I4: GoogleAuth.signOut 이 Drive 큐/토큰 revoke/Supabase 세션까지 일괄 정리한다.
-          // 과거에는 Supabase 만 로그아웃하고 Google 은 그대로 두는 경로가 있어 상태가 갈라졌다.
-          if (window.GoogleAuth && typeof window.GoogleAuth.signOut === 'function') {
-            window.GoogleAuth.signOut();
-            return;
-          }
-          if (window.SupabaseClient && window.SupabaseClient.auth) {
-            window.SupabaseClient.auth.signOut().finally(function () {
-              window.location.reload();
-            });
-          }
+        // settings의 driveEnabled/calendarEnabled를 user 객체에 병합해서 전달
+        var merged = {
+          googleSub: user.sub || user.id,
+          googleName: user.name || user.email || (user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || '',
+          googlePicture: user.picture || (user.user_metadata && user.user_metadata.avatar_url) || '',
+          driveEnabled: settings.driveEnabled,
+          calendarEnabled: settings.calendarEnabled,
         };
-
-        infoDiv.appendChild(nameDiv);
-        infoDiv.appendChild(signOutBtn);
-        authContainer.appendChild(infoDiv);
-
-        if (picture) {
-          var img = document.createElement('img');
-          img.src = picture;
-          img.style.cssText = 'width:32px;height:32px;border-radius:50%;border:1px solid var(--border-glass);';
-          img.onerror = function () { img.style.display = 'none'; };
-          authContainer.appendChild(img);
+        if (window._sharedAuthRenderUser) {
+          window._sharedAuthRenderUser(authContainer, merged);
         }
+        // 게스트 배너 제거 (로그인 완료)
+        var banner = document.getElementById('guestNoticeBanner');
+        if (banner) banner.remove();
       } else {
-        var guestWrap = document.createElement('div');
-        guestWrap.style.cssText = 'display:flex;flex-direction:column;align-items:flex-end;gap:4px;';
-
-        var loginBtn = document.createElement('button');
-        loginBtn.className = 'btn btn-primary';
-        loginBtn.style.cssText = 'padding:6px 14px;font-size:var(--text-body-large);font-weight:600;display:flex;align-items:center;gap:6px;background:#4285F4;border-color:#4285F4;';
-        var gIcon = document.createElement('span');
-        gIcon.textContent = 'G';
-        gIcon.style.cssText = 'background:white;border-radius:50%;width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;color:#4285F4;font-weight:bold;font-size:var(--text-label-small);';
-        loginBtn.appendChild(gIcon);
-        loginBtn.appendChild(document.createTextNode('\u00a0Google로 연결'));
-        loginBtn.onclick = function () {
-          // G5: 권한 요청 전 한 줄 설명 모달
-          var dlg = document.getElementById('googlePermissionDialog');
-          if (dlg && typeof dlg.showModal === 'function') { dlg.showModal(); return; }
-          if (window.GoogleAuth) window.GoogleAuth.signIn();
-        };
-        guestWrap.appendChild(loginBtn);
-
-        // I3: 비로그인 상태에서는 "이 브라우저 = 공유 공간" 임을 짧게 고지한다.
-        // 같은 브라우저를 사용하는 다른 사람도 guest 데이터를 볼 수 있으므로,
-        // 개인정보 혼동을 방지하기 위한 1회 배너.
-        try {
-          var ack = localStorage.getItem('bhm_guestNoticeAck') === '1';
-          if (!ack) {
-            var note = document.createElement('div');
-            note.style.cssText = 'display:flex;align-items:center;gap:6px;font-size:var(--text-label-small);color:var(--text-muted);max-width:260px;text-align:right;line-height:1.3;';
-            var noteText = document.createElement('span');
-            noteText.textContent = '이 브라우저를 함께 쓰면 기록이 공유돼요. 구글로 연결하면 내 전용 공간이 생겨요.';
-            var close = document.createElement('button');
-            close.textContent = '✕';
-            close.setAttribute('aria-label', '알림 닫기');
-            close.style.cssText = 'background:transparent;border:none;color:var(--text-muted);cursor:pointer;padding:0;';
-            close.onclick = function () {
-              try { localStorage.setItem('bhm_guestNoticeAck', '1'); } catch (e) {}
-              note.remove();
-            };
-            note.appendChild(noteText);
-            note.appendChild(close);
-            guestWrap.appendChild(note);
-          }
-        } catch (e) { /* localStorage 접근 실패는 무시 */ }
-
-        authContainer.appendChild(guestWrap);
+        if (window._sharedAuthRenderSignIn) {
+          window._sharedAuthRenderSignIn(authContainer);
+        }
       }
 
       if (typeof updateTeamScheduleSyncUI === 'function') updateTeamScheduleSyncUI();
@@ -2105,6 +2114,33 @@
       }).finally(function () {
         if (btn) btn.disabled = false;
       });
+    }
+
+    function onDriveBackupToggle(btn) {
+      var settings = JSON.parse(localStorage.getItem('bhm_settings') || '{}');
+      settings.driveBackupEnabled = !settings.driveBackupEnabled;
+      localStorage.setItem('bhm_settings', JSON.stringify(settings));
+      var label = document.getElementById('driveBackupLabel');
+      if (label) label.textContent = settings.driveBackupEnabled ? '● 켜짐' : '● 꺼짐';
+      if (label) label.style.color = settings.driveBackupEnabled ? '#34A853' : '#9CA3AF';
+    }
+
+    function onDriveManualSync(btn) {
+      if (!window.SyncManager) return;
+      if (btn) btn.disabled = true;
+      Promise.resolve(window.SyncManager.pushAll ? window.SyncManager.pushAll() : null)
+        .then(function () { showOtToast('✅ Drive 동기화 완료'); })
+        .catch(function (e) { console.warn('[Drive] manualSync failed:', e); })
+        .finally(function () { if (btn) btn.disabled = false; });
+    }
+
+    function onCalendarToggle(btn) {
+      var settings = JSON.parse(localStorage.getItem('bhm_settings') || '{}');
+      settings.calendarEnabled = !settings.calendarEnabled;
+      localStorage.setItem('bhm_settings', JSON.stringify(settings));
+      var label = document.getElementById('calendarToggleLabel');
+      if (label) label.textContent = settings.calendarEnabled ? '● 켜짐' : '● 꺼짐';
+      if (label) label.style.color = settings.calendarEnabled ? '#34A853' : '#9CA3AF';
     }
 
     function showOtToast(message) {
@@ -2380,21 +2416,104 @@
     }
 
     // ── G8: 공유하기 ──
+    var _qrLibLoaded = false;
+    function _loadQrLib(cb) {
+      if (_qrLibLoaded && window.QRCode) { cb(false); return; }
+      var s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js';
+      s.onload = function () { _qrLibLoaded = true; cb(false); };
+      s.onerror = function () { cb(true); };
+      document.head.appendChild(s);
+    }
+
     function shareApp() {
       var url = 'https://www.snuhmate.com';
-      var text = '서울대병원 동료가 만든 급여·휴가 관리 도구예요. 시간외 수당 자동 계산, 내 브라우저에만 저장 (개발자도 못 봄). 써보실래요?';
+      var text = '서울대병원 동료가 만든 급여·휴가 관리 도구. ' + url;
       if (navigator.share) {
-        navigator.share({ title: 'SNUH 메이트', text: text, url: url }).catch(function () {});
+        navigator.share({ title: 'SNUH 메이트', text: text, url: url })
+          .catch(function () { _showShareModal(url, text); });
       } else {
-        var combined = text + '\n' + url;
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(combined).then(function () {
-            _showShareToast('링크가 복사됐어요 📋');
-          }).catch(function () { _showShareFallback(combined); });
-        } else {
-          _showShareFallback(combined);
-        }
+        _showShareModal(url, text);
       }
+    }
+
+    function _showShareModal(url, shareText) {
+      var modal = document.createElement('div');
+      modal.style.cssText = 'position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,0.5);' +
+        'display:flex;align-items:center;justify-content:center;padding:16px;';
+
+      var box = document.createElement('div');
+      box.style.cssText = 'background:var(--bg-card,#fff);border-radius:16px;padding:24px 20px;' +
+        'max-width:320px;width:100%;text-align:center;';
+
+      var heading = document.createElement('p');
+      heading.textContent = 'QR 코드로 공유하기';
+      heading.style.cssText = 'font-size:1rem;font-weight:600;margin:0 0 4px;color:var(--text-primary,#111);';
+
+      var sub = document.createElement('p');
+      sub.textContent = '카메라로 스캔하거나 링크를 복사하세요';
+      sub.style.cssText = 'font-size:0.8rem;color:var(--text-muted);margin:0 0 16px;';
+
+      var qrWrap = document.createElement('div');
+      qrWrap.style.cssText = 'display:flex;justify-content:center;margin-bottom:16px;min-height:160px;align-items:center;';
+      var canvas = document.createElement('canvas');
+      qrWrap.appendChild(canvas);
+
+      var urlRow = document.createElement('div');
+      urlRow.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:12px;';
+      var urlInput = document.createElement('input');
+      urlInput.type = 'text';
+      urlInput.value = url;
+      urlInput.readOnly = true;
+      urlInput.style.cssText = 'flex:1;font-size:0.8rem;padding:6px 10px;' +
+        'border:1px solid var(--border-glass,#ddd);border-radius:8px;background:#f9f9f9;';
+      var copyBtn = document.createElement('button');
+      copyBtn.textContent = '복사';
+      copyBtn.className = 'btn btn-primary';
+      copyBtn.style.cssText = 'padding:6px 14px;font-size:0.8rem;white-space:nowrap;';
+      copyBtn.onclick = function () {
+        var doCopy = function () {
+          copyBtn.textContent = '✅ 복사됨';
+          setTimeout(function () { copyBtn.textContent = '복사'; }, 1500);
+        };
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(shareText).then(doCopy).catch(function () {
+            urlInput.select(); document.execCommand('copy'); doCopy();
+          });
+        } else {
+          urlInput.select(); document.execCommand('copy'); doCopy();
+        }
+      };
+      urlRow.appendChild(urlInput);
+      urlRow.appendChild(copyBtn);
+
+      var closeBtn = document.createElement('button');
+      closeBtn.textContent = '닫기';
+      closeBtn.style.cssText = 'width:100%;padding:8px;border:none;background:none;' +
+        'color:var(--text-muted);font-size:0.85rem;cursor:pointer;margin-top:4px;';
+      var dismiss = function () { if (modal.parentNode) modal.parentNode.removeChild(modal); };
+      closeBtn.onclick = dismiss;
+
+      box.appendChild(heading);
+      box.appendChild(sub);
+      box.appendChild(qrWrap);
+      box.appendChild(urlRow);
+      box.appendChild(closeBtn);
+      modal.appendChild(box);
+      modal.onclick = function (e) { if (e.target === modal) dismiss(); };
+      document.body.appendChild(modal);
+
+      _loadQrLib(function (err) {
+        if (!err && window.QRCode) {
+          QRCode.toCanvas(canvas, url, { width: 160, margin: 1 }, function () {});
+        } else {
+          var errMsg = document.createElement('p');
+          errMsg.textContent = 'QR 로드 실패 — 위 링크를 복사해 사용하세요';
+          errMsg.style.cssText = 'font-size:0.8rem;color:var(--text-muted);padding:20px 0;';
+          qrWrap.removeChild(canvas);
+          qrWrap.appendChild(errMsg);
+        }
+      });
     }
 
     function _showShareToast(msg) {
@@ -2408,29 +2527,7 @@
     }
 
     function _showShareFallback(text) {
-      var modal = document.createElement('div');
-      modal.style.cssText = 'position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,0.5);' +
-        'display:flex;align-items:center;justify-content:center;padding:16px;';
-      var box = document.createElement('div');
-      box.style.cssText = 'background:var(--bg-card,#fff);border-radius:12px;padding:20px;' +
-        'max-width:320px;width:100%;';
-      var title = document.createElement('p');
-      title.textContent = '아래 텍스트를 복사해서 동료에게 보내주세요 :)';
-      title.style.cssText = 'font-size:0.85rem;color:var(--text-muted);margin:0 0 10px;';
-      var ta = document.createElement('textarea');
-      ta.value = text;
-      ta.readOnly = true;
-      ta.style.cssText = 'width:100%;height:80px;font-size:0.8rem;padding:8px;' +
-        'border:1px solid var(--border-glass);border-radius:8px;resize:none;';
-      var closeBtn = document.createElement('button');
-      closeBtn.textContent = '닫기';
-      closeBtn.className = 'btn btn-primary';
-      closeBtn.style.cssText = 'width:100%;margin-top:10px;';
-      closeBtn.onclick = function () { if (modal.parentNode) modal.parentNode.removeChild(modal); };
-      box.appendChild(title); box.appendChild(ta); box.appendChild(closeBtn);
-      modal.appendChild(box);
-      document.body.appendChild(modal);
-      ta.select();
+      _showShareModal('https://www.snuhmate.com', text);
     }
 
     const MIGRATION_TARGET_URL = 'https://snuhmate.com';

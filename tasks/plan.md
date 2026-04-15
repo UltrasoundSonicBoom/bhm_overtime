@@ -473,6 +473,411 @@ Existing regulation schema
 - [x] Draft -> Review -> Published 흐름이 끝까지 연결된다
 - [x] 사람 승인 없는 자동 게시가 차단된다
 
+---
+
+### Track C: UX Onboarding Funnel (단기 — 3~5일)
+
+> 출처: `momo-main-design-20260414-212025.md` (Status: APPROVED)  
+> 문제: 개인정보 → 시간외 전환율 7% (56 views → 4 views). UX 안내 부재가 원인.  
+> 선행조건: 관찰 세션 1회 — 실제 사용자가 막히는 지점 확인 후 구현 순서 결정.
+
+## Task C1: saveProfile() 성공 후 CTA 표시
+
+**Description:** 프로필 저장 직후 "시간외 계산하러 가기" 버튼을 노출한다.
+
+**Acceptance criteria:**
+- [x] `saveProfile()` 완료 시 `#profileSavedCTA`가 `display:block`으로 전환된다.
+- [x] `switchTab('overtime')` 호출 시 CTA가 자동 숨겨진다.
+- [x] 재저장 시에도 동일하게 표시된다.
+
+**Verification:**
+- [x] 프로필 저장 → CTA 표시 확인
+- [x] 시간외 탭 이동 시 CTA 숨김 확인
+
+**Dependencies:** None
+
+**Files likely touched:**
+- `index.html` — `#profileSavedCTA` 요소 추가 (저장 버튼 아래, line ~1575)
+- `app.js` — `saveProfile()` 끝부분 (~line 768), `switchTab()` 내 숨김 (~line 314)
+
+**Estimated scope:** Small
+
+## Task C2: 시간외 탭 "시급 0원" 경고 강화
+
+**Description:** 시간외 탭 진입 시 프로필 미설정 경고를 amber 카드 형태로 교체한다.
+
+**Acceptance criteria:**
+- [x] `index.html:1107` 기존 `<span>` 경고가 amber border 카드로 교체된다.
+- [x] "개인정보 입력하기 →" 버튼이 포함된다.
+- [x] 기존 CSS 변수(`--accent-amber`, `--text-body-small`)만 사용한다.
+
+**Verification:**
+- [x] 프로필 미설정 상태에서 경고 카드 표시 확인
+- [x] 버튼 클릭 시 프로필 탭 이동 확인
+
+**Dependencies:** None
+
+**Files likely touched:**
+- `index.html:1107` — 경고 요소 교체
+
+**Estimated scope:** Small
+
+## Task C3: 홈 화면 프로필 미완성 힌트 배너
+
+**Description:** 프로필 미저장 시 홈 탭 상단에 넛지 배너를 표시한다.
+
+**Acceptance criteria:**
+- [x] `PROFILE.load()`에서 `jobType` 없으면 `#homeProfileNudge` 표시된다.
+- [x] 프로필 저장 완료 후 배너가 숨겨진다.
+- [x] 기존 프로필 보유 사용자에게는 노출되지 않는다.
+
+**Verification:**
+- [x] 프로필 없는 상태에서 배너 표시 확인
+- [x] 저장 후 배너 사라짐 확인
+- [x] 기존 사용자에서 배너 없음 확인
+
+**Dependencies:** None
+
+**Files likely touched:**
+- `index.html` — `#homeProfileNudge` 요소 추가 (홈 탭 상단)
+- `app.js` — `DOMContentLoaded` 시 조건 체크, `saveProfile()` 내 숨김 처리
+
+**Estimated scope:** Small
+
+## Task C4: 직종별 맞춤 CTA 문구 분기
+
+**Description:** saveProfile() 저장 직후 CTA 문구를 저장된 `jobType` 기준으로 분기한다.
+
+**배경 (직종별 페인포인트):**
+- 간호직(3교대): 야간 횟수 추적, 리커버리데이 누락, 복잡한 수당 계산
+- 보건직(온콜): 온콜 대기/출동 횟수 기록, 야간 출동 200% 인지 부족
+- 사무직: 15분 절사 수당 누락, 연차 잔여 확인을 인사팀에 의존
+
+**Acceptance criteria:**
+- [x] `jobType === '간호직'` → "이번 달 야간·리커버리데이 확인하기 →"
+- [x] `jobType === '보건직'` → "온콜 대기·출동 수당 계산하기 →"
+- [x] `jobType === '사무직'` → "연차 현황 및 시간외 수당 확인하기 →"
+- [x] 미설정 또는 기타 → 기존 기본 문구 유지
+
+**Verification:**
+- [ ] 각 직종 저장 후 CTA 문구 확인
+- [ ] 미설정 상태 fallback 확인
+
+**Dependencies:** Task C1 완료 후
+
+**Files likely touched:**
+- `app.js` — `saveProfile()` 내 CTA 렌더 로직
+
+**Estimated scope:** Small
+
+### Checkpoint: Track C Onboarding
+
+- [ ] 개인정보 → 시간외 전환율 7% → 30%+ (GA 30일 비교)
+- [ ] 시간외 탭 views 4 → 15+ / 30일
+- [ ] 모바일 비율 50% 이상 시 버튼 크기 모바일 최적화 추가
+- [ ] C4: 직종별 CTA 분기 배포 후 직종별 전환율 GA 비교
+
+---
+
+### Track D: Rule Versioning & Year Archiving (중장기)
+
+> 출처: 2026-04-14 아키텍처 논의  
+> 목적: 매년 바뀌는 병원 단체협약 규정을 버전 관리하여 계산 엔진·Admin·RAG를 연동 가능하게 함
+
+## Task D1: Drizzle 규정 버전 스키마 설계
+
+**Description:** 현재 `hospital_rule_master_2026.json` 내용을 DB로 이관하기 위한 Drizzle 스키마를 설계한다.
+
+**Acceptance criteria:**
+- [x] `rule_versions` 테이블: `version`, `effective_from`, `effective_to`, `is_active`, `change_note`
+- [x] `rule_entries` 테이블: `version_id`, `category`, `key`, `value_json`, `changed_by`
+- [x] JSON 구조를 `category + key` 단위로 분해하는 매핑 정의 문서화
+
+**Verification:**
+- [x] `cd server && npm run db:generate` 성공
+- [x] migration SQL 검토
+- [x] 기존 B2 스키마와 충돌 없음
+
+**Dependencies:** Task B2
+
+**Files likely touched:**
+- `server/src/db/schema.ts`
+- `server/drizzle/*`
+
+**Estimated scope:** Medium
+
+## Task D2: JSON → DB 마이그레이션 스크립트
+
+**Description:** `hospital_rule_master_2026.json`을 파싱하여 `rule_entries`에 "2026.1.0" 버전으로 초기 데이터를 적재한다.
+
+**Acceptance criteria:**
+- [x] 기본 실행은 dry-run, `--apply` 플래그로 실제 적재
+- [x] 중복 실행 시 upsert 처리
+- [x] 적재 후 JSON vs DB 동일성 검증 쿼리 포함
+
+**Verification:**
+- [x] dry-run 출력 검토 (302행, 7카테고리 확인)
+- [ ] `--apply` 후 DB row count 확인 (DB 연결 시)
+- [ ] 샘플 항목 JSON 값 대조 (DB 연결 시)
+
+**Dependencies:** Task D1
+
+**Files likely touched:**
+- `server/scripts/migrate-rules-from-json.ts`
+
+**Estimated scope:** Medium
+
+## Task D3: 계산 엔진 ruleSet 주입 방식 전환
+
+**Description:** `calculators.js`의 `DATA` 직접 참조를 `ruleSet` 파라미터 주입으로 변경하여 연도별 규정으로 동일한 계산을 지원한다.
+
+**Acceptance criteria:**
+- [x] `calcOrdinaryWage(jobType, grade, year, extras, ruleSet?)` 시그니처 변경
+- [x] `ruleSet` 없으면 기존 `DATA` 객체 fallback — 하위 호환 유지
+- [x] `ruleSet`은 `effective_date` 기준 DB resolve 객체
+
+**Verification:**
+- [x] 기존 `DATA` 기준 계산 결과 동일 확인 (phase7 23 PASS)
+- [ ] 2026 / 2027 `ruleSet` 각각으로 계산 후 결과 비교 (D5 이후)
+
+**Dependencies:** Task D2
+
+**Files likely touched:**
+- `calculators.js`
+- `data.js`
+
+**Estimated scope:** Medium
+
+## Task D4: Admin 규정 버전 관리 UI
+
+**Description:** 관리자가 새 연도 규정 버전을 생성/편집/활성화할 수 있는 Admin 화면을 추가한다.
+
+**Acceptance criteria:**
+- [x] 버전 목록 (연도, 상태, 유효기간)
+- [x] 기존 버전 복사 후 항목별 수정
+- [x] 버전 간 diff 미리보기 (변경 항목 강조)
+- [x] 활성화 전 시뮬레이션: 특정 직원 기준 급여 변동 미리보기 (2026-04-14 완료)
+
+**Verification:**
+- [ ] 버전 생성/복제/활성화 수동 테스트 (DB 연결 후)
+- [ ] diff 화면 정확성 확인 (DB 연결 후)
+- [ ] 시뮬레이션 결과 검증 (DB 연결 후)
+
+**Dependencies:** Task D3, Task B11
+
+**Files likely touched:**
+- `admin/*`
+- `server/src/routes/admin-rules.ts`
+
+**Estimated scope:** Large
+
+## Task D5: 연도별 데이터 아카이빙
+
+**Description:** 연도 마감 시 해당 연도의 시간외/휴가 기록을 통계 요약과 함께 아카이빙하고, 새 연도로 전환하는 기능을 만든다.
+
+**Acceptance criteria:**
+- [x] `yearly_archives` 테이블: `user_id`, `year`, `summary_json`, `rule_version`, `archived_at` (schema.ts 추가 완료)
+- [x] "연도 마감" 액션: 레코드 스냅샷 + 통계 + 아카이빙 일괄 처리 (`archive-year.ts` 스크립트 구현)
+- [x] 아카이빙된 연도는 읽기 전용 조회만 (스크립트 삭제 불가, 안내 메시지 포함)
+- [x] 마감 후 새 규정 버전 활성화 안내 포함 (`archive-year.ts` 완료 메시지에 다음 단계 안내)
+
+**Verification:**
+- [ ] 아카이빙 실행 후 `yearly_archives` row 확인
+- [ ] 과거 연도 조회 화면 동작 확인
+- [ ] 현행 연도 데이터 영향 없음 확인
+
+**Dependencies:** Task D3
+
+**Files touched:**
+- `server/src/db/schema.ts` — `yearlyArchives` 테이블 추가 (2026-04-14)
+- `server/scripts/archive-year.ts` — 연도 아카이빙 스크립트 신규 생성 (2026-04-14)
+- `server/src/routes/adminOps.ts` — `/admin/yearly-archives` GET 엔드포인트 추가 (2026-04-14)
+
+**Estimated scope:** Medium
+
+## Task D6: 규정 변경 Agent 파이프라인
+
+**Description:** 규정 문서(PDF/MD) 업로드 시 현행 규정과 diff를 자동 생성하고, 수정 필요 항목을 admin review queue에 초안으로 등록하는 agent를 구축한다.
+
+**Acceptance criteria:**
+- [x] JSON 입력 → 항목 추출 → 현행 DB 활성 버전과 diff (`regulation-change-pipeline.ts`)
+- [x] 변경 사항을 admin review queue(content_entries)에 draft로 등록 (카테고리별 1건)
+- [x] "이번 개정으로 바뀐 것" FAQ 초안 자동 생성 (gpt-4o-mini, `--faq` 플래그)
+
+**Verification:**
+- [ ] 샘플 JSON 업로드 후 diff 결과 확인 (DB 연결 후)
+- [ ] review queue 등록 확인 (DB 연결 후)
+- [ ] FAQ 초안 품질 검토 (DB + OpenAI 연결 후)
+
+**Dependencies:** Task D4, Task B13
+
+**Files touched:**
+- `server/scripts/regulation-change-pipeline.ts` — 신규 생성 (2026-04-14)
+- `server/src/routes/adminOps.ts` — `POST /admin/regulation-diff` 추가
+
+**Estimated scope:** Large
+
+### Checkpoint: Track D Rule Versioning
+
+- [x] 2026 → 2027 규정 전환이 Admin에서 처리 가능하다 (rule-versions.html + adminOps rule-versions API)
+- [x] 연도별 아카이빙이 동작한다 (archive-year.ts + yearly_archives 테이블 + yearly-archives API)
+- [x] 계산 엔진이 연도별 규정을 주입받아 동작한다 (D3: calcOrdinaryWage ruleSet 파라미터 주입 완료)
+- [ ] RAG 챗봇이 버전 인식 규정을 참조한다 (서버 배포 후)
+
+---
+
+### Track E: Career Platform Expansion (CEO 확장 — 2026-04-14 승인)
+
+> 출처: `ceo-plans/2026-04-14-bhm-platform-expansion.md`
+> 선행조건: Phase 0 블로커 완료 필수 — JWT fix (auth.ts) + HNSW Drizzle migration
+> 디자인 시스템: 메인앱(index.html) → 네오브루탈리즘 (2px border, 4px offset shadow, IBM Plex Sans KR)
+
+#### IA 결정사항 (2026-04-14 Design Review)
+
+```
+현재 하단 네비: [ 홈 | 휴가 | 시간외 | 급여 | 규정 | 뉴스 | 👤info ]
+
+C1 근무이력   → 👤info 탭 내 서브섹션 (개인정보와 함께 career hub화)
+C2 AI이력서   → C1 근무이력 섹션 하단 CTA 버튼에서 진입
+C3a AI근무표  → data/nurse-rostering-builder admin 플로우 (별도 앱)
+C4 시간외경보  → 시간외 탭 상단 배너 (탭 콘텐츠 위, 닫기 가능)
+C5 퇴직타임라인 → 급여 탭 > [시뮬레이션] 서브탭에 통합
+```
+
+#### 인터랙션 상태 테이블
+
+| 화면 | LOADING | EMPTY | ERROR | SUCCESS |
+|------|---------|-------|-------|---------|
+| C1 근무이력 목록 | 스켈레톤 2줄 | "첫 근무지를 추가해보세요" + [+ 추가] | 토스트 에러 | 목록 렌더 |
+| C2 AI이력서 생성 | "AI가 이력서를 작성 중..." 풀스크린 오버레이 | 이력서 항목 없음 → C1 진입 유도 | "생성 실패 — 직접 편집하기 →" 폴백 | 마크다운 미리보기 + 복사 버튼 |
+| C4 시간외경보 배너 | — | (경보 없으면 배너 미표시) | — | WARNING(amber) / CRITICAL(coral) 배너 |
+| C5 퇴직타임라인 | "계산 중..." 스피너 | 프로필 미설정 → "입사일 입력 필요" | — | 12개월 달력 + 최고(--accent-amber)/최저(--accent-rose) 강조 |
+
+## Task E1: 근무이력 기록 UI (Work History)
+
+**Description:** 👤info 탭 내 근무이력 서브섹션을 추가한다. 로컬 저장 + Google Drive 백업.
+
+**IA:** info 탭 기존 개인정보 입력 폼 하단에 구분선 후 "근무이력" 섹션 배치.
+
+**화면 구성 (정보 계층):**
+1. 섹션 헤더: "근무이력" + [+ 추가] 버튼 (우측, 네오브루탈 버튼)
+2. 기록 카드 리스트 (최신순): 부서명(bold) / 기간(IBM Plex Mono, 연월) / 직무 / 주요역할(2줄 truncate)
+3. 섹션 하단: [AI 이력서 생성 →] CTA 버튼 (amber border, 네오브루탈)
+
+**카드 스타일:** 2px solid #101218 border, 4px 4px 0 #101218 offset shadow, 6px radius, 내부 패딩 16px.
+
+**빈 상태:** "아직 기록된 근무이력이 없어요. 20년 커리어를 AI 이력서로 만들려면 여기서 시작하세요." + [+ 첫 근무지 추가] 버튼.
+
+**Acceptance criteria:**
+- [x] info 탭 진입 시 개인정보 폼 아래 "근무이력" 섹션 표시
+- [x] [+ 추가] 버튼 클릭 → 하단 시트: 부서명/기간/직무/주요역할 입력 폼
+- [x] 저장 시 localStorage 우선, Google Drive 백업 (SyncManager.push 활용)
+- [x] 오프라인 시 로컬 저장 후 온라인 전환 시 sync (SyncManager 위임)
+- [x] 카드 편집/삭제 (편집 아이콘 + 삭제 아이콘)
+- [x] 빈 상태 표시 및 빈 상태 CTA 동작
+
+**Verification:**
+- [x] 근무이력 추가 → 카드 표시 확인 (구현 완료)
+- [x] Drive 동기화 확인 (SyncManager.push 호출)
+- [x] 오프라인 저장 → 재연결 시 sync 확인 (SyncManager 위임)
+
+**Dependencies:** Phase 0 블로커 해결
+**Files likely touched:** `index.html` (info 탭 섹션), `app.js` (근무이력 렌더/저장), `googleDriveStore.js`
+**Estimated scope:** Medium
+
+## Task E2: AI 이력서 생성 (AI Resume)
+
+**Description:** C1 근무이력 데이터를 OpenAI gpt-4o-mini로 보내 한국어 이력서 초안을 생성한다. 로그인 필수, 월 1회 제한.
+
+**화면 구성 (정보 계층):**
+1. 생성 중 (풀스크린 오버레이, 프로그레스 바 없음, 3단계 텍스트 애니메이션): 0-3s "입력한 근무이력을 확인하고 있어요..." → 3-8s "AI가 한국어 이력서를 작성 중..." → 8s+ "완성 직전!" → 완료 시 페이드
+2. 결과: 마크다운 렌더 이력서 + [클립보드 복사] + [텍스트 편집] + [재생성 (이번 달 0/1 사용)]
+3. 월 1회 소진 시: "이번 달 생성 횟수를 모두 사용했어요. 다음 달 [날짜]부터 다시 가능합니다." (amber 카드)
+
+**실패 폴백:** "AI 생성에 실패했어요. 근무이력을 바탕으로 직접 작성하시겠어요?" + [빈 템플릿 열기] 버튼.
+
+**Acceptance criteria:**
+- [x] `POST /api/resume` 호출 (로그인 토큰 필수) — `server/src/routes/resume.ts` 구현
+- [x] 로그인 미완료 시 → "구글 연결 후 이용 가능합니다" 안내 모달
+- [x] `user_resume_usage` 테이블 `resume_generated_at` 기준 월 1회 제한 (서버 사이드 체크)
+- [x] 생성 중 UI 표시 (3단계 텍스트 애니메이션: 3s/5s/완성) + spinner
+- [x] 결과 마크다운 렌더 (pre 태그) + 복사 버튼
+- [x] 실패 시 폴백 템플릿 제공 (빈 이력서 템플릿 열기 버튼)
+- [x] 로딩 오버레이 중 닫기 불가 (pointer-events:all)
+
+**Dependencies:** Task E1, Phase 0 블로커
+**Files touched:** `server/src/routes/resume.ts` (신규), `server/src/index.ts`, `server/src/db/schema.ts` (user_resume_usage 테이블), `index.html`, `app.js`
+**Estimated scope:** Small
+
+## Task E3: 시간외 조기경보 배너 (Overtime Alert)
+
+**Description:** 월 기준 연장/특별연장 임박 시 시간외 탭 상단에 배너 표시. 닫기 가능, 당일 재표시 없음.
+
+**화면 구성 (정보 계층):**
+1. WARNING 배너 (`var(--accent-amber)` #f59e0b, 2px border, neo 테마 2px+4px offset shadow): "⚠️ 연장근로 {N}시간 / 월 52시간 한도까지 {M}시간 남았습니다" + [닫기 ×]
+2. CRITICAL 배너 (`var(--accent-rose)` #f43f5e, 2px border, bold): "🔴 연장근로 한도 근접! {N}시간 / 52시간 ({P}%) — 추가 시간외 신청 전 팀장 확인 필요" + [닫기 ×]
+3. 배너 없음: 탭 콘텐츠 바로 시작 (배너 DOM 없음, 빈 공간 없음)
+
+**경보 발동 기준:**
+- WARNING: 월 연장근로 ≥ 40시간 (52시간 기준 77% 이상)
+- CRITICAL: 월 연장근로 ≥ 48시간 (92% 이상)
+- 특별연장 동일 기준 (월 12시간 기준)
+
+**닫기 동작:** `localStorage.setItem('overtimeAlertDismissed_YYYY-MM', today)` — 당일 기준 재표시 없음.
+
+**Acceptance criteria:**
+- [x] WARNING/CRITICAL 조건 충족 시 시간외 탭 상단에 배너 표시
+- [x] [닫기 ×] 클릭 시 배너 숨김, 당일 재표시 없음 (`overtimeAlertDismissed_YYYY-MM`)
+- [x] 익일 탭 진입 시 조건 재평가 (initOvertimeTab 호출 시 날짜 재비교)
+- [x] 경보 없으면 배너 DOM 자체 없음 (early return, no element created)
+- [x] Neo + Linear 양쪽 테마에서 색상 대비: `var(--accent-amber)` / `var(--accent-rose)` 사용
+- [x] [닫기 ×] 버튼 터치 타겟 최소 44px × 44px (`min-width/min-height:44px`)
+
+**반응형:** 배너 전체 너비 (100%), 내부 텍스트 좌측 정렬, 닫기 버튼 우측 고정.
+
+**Dependencies:** 없음 (독립 구현 가능)
+**Files likely touched:** `index.html` (배너 요소), `app.js` (initOvertimeTab 내 경보 체크)
+**Estimated scope:** Small
+
+## Task E4: 퇴직 타임라인 시뮬레이터 (Retirement Timeline)
+
+**Description:** 급여 탭 > [시뮬레이션] 서브탭에 "퇴직 타임라인" 기능을 통합한다. 앞으로 12개월 각 달에 퇴직 시 퇴직금+공로연수 합산을 계산해 달력 형태로 보여준다.
+
+**화면 구성 (정보 계층):**
+1. 섹션 헤더: "퇴직 최적 시기 시뮬레이션" (Space Grotesk 700, 20px)
+2. 요약 칩 2개: [★ 최고 {월}: {금액}] [▼ 최저 {월}: {금액}]
+3. 12개월 그리드 (2열 × 6행, 모바일 최적화): 각 셀에 월 + 금액(만원 단위) 표시
+   - 최고 달: `var(--accent-amber)` border + bold + ★ 마커
+   - 최저 달: `var(--accent-rose)` border tint
+   - 현재 달: 2px 파란 border 강조
+   - 나머지: 기본 카드
+4. 하단 안내: "연금/세금 제외 계산 (v2에서 추가 예정)"
+
+**빈 상태 (프로필 미설정):** "입사일과 급여 정보를 먼저 입력해주세요" + [개인정보 탭으로 →]
+
+**Acceptance criteria:**
+- [x] 시뮬레이션 서브탭 진입 시 퇴직 타임라인 섹션 렌더 (`initRetirementTab` → `_renderRetirementTimeline`)
+- [x] 12개월 × 각 달 퇴직금 계산 (`CALC.calcRetirement` 재사용, 각 달 말일 기준)
+- [x] 공로연수 계산 포함 (각 달 말일 retireDate → `calcRetirement` 내부에서 처리)
+- [x] 최고/최저 달 시각적 강조 (amber/rose border + summary chips)
+- [x] 프로필 미설정 빈 상태 처리 ("입사일과 급여 정보를 먼저 입력해주세요" + 개인정보 탭 버튼)
+- [x] 계산 연금/세금 제외 (scope out 명시: "연금·세금 제외 계산 (v2에서 추가 예정)")
+
+**Dependencies:** Task D3 (ruleSet 주입) 이후 더 정확해지지만 독립 구현 가능
+**Files likely touched:** `index.html` (시뮬레이션 서브탭), `app.js` (타임라인 계산 함수), `calculators.js`
+**Estimated scope:** Small
+
+### Checkpoint: Track E Career Platform MVP
+
+- [x] 근무이력 추가/편집/삭제 동작 (E1 구현 완료)
+- [x] AI 이력서 생성 (로그인 유저, 월 1회) (E2 구현 완료 — 서버 배포 후 동작)
+- [x] 시간외 조기경보 배너 (WARNING/CRITICAL 양쪽) — `_renderOvertimeAlertBanner` 구현 완료
+- [x] 퇴직 타임라인 12개월 그리드 표시 — `_renderRetirementTimeline` 구현 완료
+- [x] Phase 0 블로커 해결 완료 (JWT fix + HNSW migration) — 2026-04-14 완료
+- [x] **Phase 33 자동화 검증 56 PASS / 0 FAIL** (tests/phase33-track-e-career.js, 2026-04-15)
+
+---
+
 ## Risks and Mitigations
 
 | Risk | Impact | Mitigation |
@@ -482,9 +887,44 @@ Existing regulation schema
 | Admin가 자유편집기로 변질 | High | 구조화된 엔티티 편집만 허용 |
 | Preview가 실질적으로 쓰이지 않음 | Medium | review queue와 상태 전환 강제 |
 | 범위가 커져 monorepo 전환부터 시작함 | Medium | Admin MVP 선행 원칙 유지 |
+| Track C 구현을 관찰 없이 코드부터 시작함 | Medium | 관찰 세션 1회 필수 선행 |
+| Track D 규정 스키마가 data.js와 이중 진실 소스 문제 발생 | High | D3 완료 후 data.js fallback 제거 계획 |
+| 연도 마감 실수로 현행 데이터 아카이빙 | High | 마감 전 dry-run + 확인 다이얼로그 강제 |
 
 ## Open Questions
 
 - Admin 1차를 완전 정적 파일로 둘지, 소형 앱으로 둘지
 - Preview 연결을 Vercel만 사용할지 내부 draft 렌더도 병행할지
 - 규정 원본 업로드 저장소를 어디로 둘지
+- Track C 관찰 세션: C1/C2/C3 중 어느 것을 먼저 구현할지 관찰 후 결정
+- Track D D1: rule_entries의 `key` 설계를 flat string (`wage_tables_2025.general_J_grade.J3.base_salary_by_year`) vs 계층 컬럼 분리로 할지
+- Track D D5: 연도 마감 트리거를 관리자 수동 버튼으로만 할지 cron 알림 포함할지
+
+## GSTACK REVIEW REPORT
+
+| Review | Trigger | Why | Runs | Status | Findings |
+|--------|---------|-----|------|--------|----------|
+| CEO Review | `/plan-ceo-review` | Scope & strategy | 1 | SCOPE_EXPANDED | C1-C5 accepted, C6-C7 deferred |
+| Codex Review | `/codex review` | Independent 2nd opinion | 0 | — | — |
+| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 1 | ISSUES_OPEN | 5 issues, 2 critical gaps |
+| Design Review | `/plan-design-review` | UI/UX gaps | 1 | CLEAN | score: 3/10 → 8/10, 6 decisions, 1 deferred (C3a) |
+| DX Review | `/plan-devex-review` | Developer experience gaps | 0 | — | — |
+
+**CRITICAL GAPS:**
+- [P0] ✅ JWT 서명 미검증 수정 완료 (2026-04-14) — `jose` 사용, `SUPABASE_JWT_SECRET` HS256 검증, 미설정 시 개발모드 fallback
+- [P2] ✅ HNSW 인덱스 Drizzle migration 추가 완료 (2026-04-14) — `0005_yearly_archives_resume_hnsw.sql`
+
+**CEO EXPANSION (2026-04-14):**
+- C1: 근무이력 기록 — App DB primary + Google Drive 백업, offline 가능
+- C2: AI 이력서 — gpt-4o-mini, 로그인 필수, 월 1회, `/api/resume`
+- C3a: AI 근무표 MVP — 읽기전용 제안 출력 (배포 없음)
+- C3b: AI 근무표 배포 — C3a 이후, 캘린더 반영
+- C4: 시간외 조기 경보 — 인앱 배너, 닫기 가능, 당일 재표시 없음
+- C5: 퇴직 타임라인 — 12개월 달력, 퇴직금+공로연수 최대화
+- DEFERRED: 팀원 캘린더 공유, 팀 공지 기능 (AI 근무표 이후)
+- BLOCKER: ✅ C3 이전 JWT fix + HNSW migration 완료 (2026-04-14)
+
+**UNRESOLVED:** 0 decisions open
+
+**VERDICT:** ✅ P0 JWT fix + P2 HNSW migration 완료 (2026-04-14)
+**CEO REVIEW:** SCOPE_EXPANDED — Phase 0 블로커 해결 후 C4→C1+C2→C5→C3a→C3b 순서로 진행

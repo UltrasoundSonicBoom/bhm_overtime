@@ -29,6 +29,20 @@
       "when": 1775966400000,
       "tag": "0003_team_schedule_events",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1776177889616,
+      "tag": "0004_true_ezekiel_stane",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1776350400000,
+      "tag": "0005_yearly_archives_resume_hnsw",
+      "breakpoints": true
     }
   ]
 }

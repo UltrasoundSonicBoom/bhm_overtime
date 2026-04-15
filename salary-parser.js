@@ -84,6 +84,16 @@ const SALARY_PARSER = (() => {
     return 0;
   }
 
+  // 근무시간 통계용 소수점 파싱 (시간외=4.50, 발생연차=15 등)
+  function parseStatValue(val) {
+    if (typeof val === 'number') return val;
+    if (typeof val === 'string') {
+      const n = parseFloat(val.replace(/,/g, ''));
+      return isNaN(n) ? 0 : n;
+    }
+    return 0;
+  }
+
   function isAmount(val) {
     if (val === null || val === undefined) return false;
     const s = String(val).trim();
@@ -486,6 +496,42 @@ const SALARY_PARSER = (() => {
       return items;
     }
 
+    // 근무시간 통계 항목 추출 — 공제 섹션 col7-10에서 GRID_STATS_NAMES 이름만 수집
+    function extractWorkStats(grid, nameRows, amtRows) {
+      const items = [];
+      const seen = new Set();
+      const limit = Math.min(nameRows.length, amtRows.length);
+      for (let r = 0; r < limit; r++) {
+        const names = nameRows[r];
+        const amts = amtRows[r];
+
+        // 근무통계 항목명만 → 글로벌 열 매핑
+        const nameByCol = new Map();
+        names.forEach(it => {
+          const name = it.str.trim();
+          if (!GRID_STATS_NAMES.has(name)) return;
+          const col = findGlobalCol(grid, it.x + it.w / 2);
+          nameByCol.set(col, name);
+        });
+
+        // 수치 → 글로벌 열 매핑 (소수점 포함 허용: 0.00, 4.50 등)
+        const valByCol = new Map();
+        amts.forEach(it => {
+          if (!/^-?[\d,.]+$/.test(it.str)) return;
+          const col = findGlobalCol(grid, it.x + it.w / 2);
+          valByCol.set(col, parseStatValue(it.str));
+        });
+
+        for (const [col, name] of nameByCol) {
+          if (seen.has(name)) continue;
+          seen.add(name);
+          const value = valByCol.has(col) ? valByCol.get(col) : 0;
+          items.push({ name, value, col, row: r });
+        }
+      }
+      return items;
+    }
+
     // 이름행/금액행 분리 + 소규모 행 병합
     function separateAndMerge(startRow, endRow) {
       const nameRows = [];
@@ -509,6 +555,49 @@ const SALARY_PARSER = (() => {
         merged.forEach(r => nameRows.push(r));
       }
       return { nameRows, amtRows };
+    }
+
+    // ── SNUH 고정 그리드: PDF 폰트 인코딩 문제로 이름행 누락 시 보완 ──
+    // 실측 열 중심값 (pdfminer 3개 PDF 분석 기반, 단위: pt)
+    const SNUH_COL_CENTERS = [95, 157, 219, 281, 343, 412, 474, 536, 598, 660, 725];
+    function findNearestSNUHCol(x) {
+      let best = 0, bestD = Infinity;
+      SNUH_COL_CENTERS.forEach((c, i) => { const d = Math.abs(x - c); if (d < bestD) { bestD = d; best = i; } });
+      return best;
+    }
+    // 6행×11열 고정 맵 — null은 알 수 없는 위치 또는 총액(행3-5 col10)
+    const SNUH_GRID_MAP = [
+      ['기준기본급',null,null,null,null,'급식보조비',null,null,null,null,null],        // row0
+      ['근속가산기본급','명절지원비',null,null,null,'교통보조비',null,null,null,null,null], // row1
+      ['능력급',null,null,null,'경력인정수당',null,null,null,null,null,'가족수당'],      // row2 (이름행 누락多)
+      ['상여금',null,null,null,null,null,null,null,null,null,null],                    // row3
+      [null,null,null,null,null,'업무보조비',null,null,'무급가족돌봄휴가',null,null],   // row4 (이름행 누락多)
+      ['진료기여수당',null,null,null,null,null,null,'명절수당',null,null,null],          // row5
+    ];
+
+    // 고정 그리드로 급여 항목 추출 (이름행 없이 x좌표만으로)
+    function extractBySNUHFixedGrid(startRow, endRow) {
+      const allAmtRows = [];
+      for (let i = startRow; i < endRow && i < rows.length; i++) {
+        if (!isGarbageRow(rows[i]) && isAmountRow(rows[i])) allAmtRows.push(rows[i]);
+      }
+      allAmtRows.sort((a, b) => (a[0]?.y || 0) - (b[0]?.y || 0));
+      const items = [], seen = new Set();
+      allAmtRows.forEach((amtRow, gridRowIdx) => {
+        if (gridRowIdx >= SNUH_GRID_MAP.length) return;
+        const rowMap = SNUH_GRID_MAP[gridRowIdx];
+        amtRow.forEach(it => {
+          if (!/^-?[\d,.]+$/.test(it.str)) return;
+          const col = findNearestSNUHCol(it.x + it.w / 2);
+          const name = rowMap[col];
+          if (!name || GRID_STATS_NAMES.has(name) || seen.has(name)) return;
+          const amount = parseAmount(it.str);
+          if (amount === 0) return;
+          items.push({ name, amount, col, row: gridRowIdx });
+          seen.add(name);
+        });
+      });
+      return items;
     }
 
     const salaryAnchorRow = findAnchorRow(/기본기준급|기준기본급/);
@@ -621,6 +710,7 @@ const SALARY_PARSER = (() => {
     }
 
     let deductionItems = [];
+    let workStats = [];
     if (deductionAnchorRow >= 0 && globalGrid) {
       let deductionEnd = rows.length;
       let nonAmtCount = 0, foundFirstAmt = false;
@@ -632,11 +722,44 @@ const SALARY_PARSER = (() => {
       console.log('[PayslipParser] 공제 분리: 이름행 ' + separated.nameRows.length + ', 금액행 ' + separated.amtRows.length);
       deductionItems = extractByGlobalGrid(globalGrid, separated.nameRows, separated.amtRows);
       console.table(deductionItems.map(i => ({ 이름: i.name, 금액: i.amount, 열: i.col, 행: i.row })));
+      // 근무시간 통계: 공제 섹션 col7-10에서 GRID_STATS_NAMES 항목 추출
+      workStats = extractWorkStats(globalGrid, separated.nameRows, separated.amtRows);
+      if (workStats.length > 0) {
+        console.log('[PayslipParser] 근무통계 추출: ' + workStats.length + '건');
+        console.table(workStats.map(i => ({ 항목: i.name, 값: i.value, 열: i.col, 행: i.row })));
+      }
     }
 
     // 0원 항목 제거 (음수는 유지: 무급가족돌봄휴가 등)
     salaryItems = salaryItems.filter(i => i.amount !== 0);
     deductionItems = deductionItems.filter(i => i.amount !== 0);
+
+    // ── SNUH 고정 그리드 이름 보정 ──
+    // amtRow[4]: 업무보조비(col5), 무급가족돌봄휴가(col8)는 이름행과 열이 어긋남
+    // amtRow[5]: 진료기여수당(col0), 명절수당(col7)는 이름행과 열이 어긋남
+    // → globalGrid가 잘못된 이름(같은 열의 다른 행 항목명)을 배정한 경우 SNUH_GRID_MAP으로 보정
+    if (salAmtRows.length >= SNUH_GRID_MAP.length) {
+      for (const r of [4, 5]) {
+        if (r >= salAmtRows.length) continue;
+        const rowMap = SNUH_GRID_MAP[r];
+        const amtByCol = new Map();
+        salAmtRows[r].forEach(it => {
+          if (!/^-?[\d,.]+$/.test(it.str)) return;
+          amtByCol.set(findNearestSNUHCol(it.x + it.w / 2), parseAmount(it.str));
+        });
+        for (let c = 0; c < rowMap.length; c++) {
+          const canonicalName = rowMap[c];
+          if (!canonicalName || GRID_STATS_NAMES.has(canonicalName) || GRID_SUMMARY_RE.test(canonicalName)) continue;
+          const amount = amtByCol.get(c);
+          if (!amount) continue;
+          const idx = salaryItems.findIndex(i => i.row === r && i.col === c);
+          if (idx >= 0 && salaryItems[idx].name !== canonicalName) {
+            console.log('[PayslipParser] SNUH이름보정: "' + salaryItems[idx].name + '" → "' + canonicalName + '" (행' + r + ',열' + c + ')');
+            salaryItems[idx] = { name: canonicalName, amount, col: c, row: r };
+          }
+        }
+      }
+    }
 
     // ── 총액 추출: 글로벌 그리드로 급여총액/공제총액/실지급액 정확 매핑 ──
     let grossPay = 0, totalDeduction = 0, netPay = 0;
@@ -721,12 +844,12 @@ const SALARY_PARSER = (() => {
       return fallback;
     }
 
-    // 총액 불일치 시에도 parsePDFText fallback 시도
+    // 총액 불일치 시 parsePDFText fallback
     if (grossPay > 0 && Math.abs(calcGross - grossPay) > 50000) {
       console.warn('[PayslipParser] 총액 불일치(차이 ' + (calcGross - grossPay) + ') → parsePDFText fallback');
       const fallback = parsePDFText(fullText);
       const fbGross = fallback.salaryItems.reduce((s, i) => s + i.amount, 0);
-      if (grossPay > 0 && Math.abs(fbGross - grossPay) < Math.abs(calcGross - grossPay)) {
+      if (Math.abs(fbGross - grossPay) < Math.abs(calcGross - grossPay)) {
         fallback.employeeInfo = Object.keys(employeeInfo).length > 0 ? employeeInfo : fallback.employeeInfo;
         fallback.metadata = Object.keys(metadata).length > 0 ? metadata : fallback.metadata;
         fallback._parseInfo = buildParseInfo('textFallback', Math.min(confidence, 50));
@@ -739,6 +862,7 @@ const SALARY_PARSER = (() => {
       metadata,
       salaryItems,
       deductionItems,
+      workStats,
       summary: { grossPay, totalDeduction, netPay },
       _parseInfo: buildParseInfo('globalGrid', confidence),
     };
@@ -856,7 +980,7 @@ const SALARY_PARSER = (() => {
     if (totalDeduction === 0) totalDeduction = deductionItems.reduce(function(s, i) { return s + i.amount; }, 0);
     if (netPay === 0) netPay = grossPay - totalDeduction;
 
-    return { employeeInfo: info, metadata, salaryItems, deductionItems, summary: { grossPay, totalDeduction, netPay } };
+    return { employeeInfo: info, metadata, salaryItems, deductionItems, workStats: [], summary: { grossPay, totalDeduction, netPay } };
   }
 
   // ── 이미지 OCR 파싱 (Tesseract.js) ──
@@ -944,8 +1068,14 @@ const SALARY_PARSER = (() => {
     (prev.deductionItems || []).forEach(i => { dedMap[i.name] = { ...i }; });
     (next.deductionItems || []).forEach(i => { dedMap[i.name] = { ...i }; });
 
+    // 근무통계: next가 더 최신이므로 next 우선 (없으면 prev 유지)
+    const statsMap = {};
+    (prev.workStats || []).forEach(i => { statsMap[i.name] = { ...i }; });
+    (next.workStats || []).forEach(i => { statsMap[i.name] = { ...i }; });
+
     const salaryItems = Object.values(salaryMap);
     const deductionItems = Object.values(dedMap);
+    const workStats = Object.values(statsMap);
     const grossPay = salaryItems.reduce((s, i) => s + (i.amount || 0), 0);
     const totalDeduction = deductionItems.reduce((s, i) => s + (i.amount || 0), 0);
 
@@ -954,6 +1084,7 @@ const SALARY_PARSER = (() => {
       ...next,
       salaryItems,
       deductionItems,
+      workStats,
       summary: { grossPay, totalDeduction, netPay: grossPay - totalDeduction },
       mergedAt: new Date().toISOString(),
     };

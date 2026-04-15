@@ -1,8 +1,14 @@
 import 'dotenv/config'
 import postgres from 'postgres'
-import { readFileSync } from 'node:fs'
-import { basename, extname, relative, resolve } from 'node:path'
+import { spawnSync } from 'node:child_process'
+import { readFileSync, mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { basename, extname, join, relative, resolve } from 'node:path'
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
+
+// Office/한글 문서 포맷 — markitdown CLI로 Markdown 변환 후 처리
+// 사전 조건: pip install 'markitdown[all]'
+const MARKITDOWN_FORMATS = new Set(['.docx', '.doc', '.pptx', '.ppt', '.xlsx', '.xls', '.hwp', '.hwpx'])
 
 type CliOptions = {
   versionId?: number
@@ -34,6 +40,7 @@ type ChunkMetadata = {
   page_end?: number
   heading_path?: string[]
   source_title?: string
+  chapter_title?: string
 }
 
 type Section = {
@@ -369,12 +376,39 @@ function extractMarkdownSections(
   return sections
 }
 
-async function extractPdfLines(absolutePath: string): Promise<PdfLine[]> {
+// 비내용 페이지: 표지/발간사/주소록/목차/단체협약이란? (parsing-rules.md §1)
+const PDF_SKIP_PAGES = new Set([1, 2, 3, 4, 5])
+
+// pdfjs-dist 텍스트 추출 후 한국어 법령 헤딩 가르침 정제 (parsing-rules.md §4)
+function cleanKoreanLegalHeading(text: string): string {
+  // Step 1: "제 N 장/조" 형태 → 공백 제거
+  // "제 1 장 총칙" → "제1장 총칙", "제 17 조 조합소개" → "제17조 조합소개"
+  let result = text.replace(/^제\s+(\d+)\s+(장|조)/, '제$1$2')
+
+  // Step 2: "제 조 [title]N ..." 형태 → 번호를 조 앞으로 이동
+  // "제 조 목적1 ( )" → "제1조 목적( )"  (gap ≤ 2px: 공백 없이 붙음)
+  // "제 조 목적 1 ( )" → "제1조 목적( )"  (gap > 2px: 공백 있음)
+  // 이미 Step 1로 "제N조" 완성된 경우 불필요, 가르침 형태만 처리
+  result = result.replace(/^제\s+조\s+(.+?)(\d+)(.*)/,
+    (_match, title, num, rest) => `제${num}조 ${title.trimEnd()}${rest}`)
+
+  // Step 3: 괄호 내부 불필요한 공백 제거
+  result = result.replace(/\(\s+/g, '(').replace(/\s+\)/g, ')')
+
+  // Step 4: 연속 공백 단일 공백으로
+  result = result.replace(/\s{2,}/g, ' ').trim()
+
+  return result
+}
+
+async function extractPdfLines(absolutePath: string, skipPages: Set<number> = PDF_SKIP_PAGES): Promise<PdfLine[]> {
   const data = new Uint8Array(readFileSync(absolutePath))
   const pdf = await getDocument({ data, useSystemFonts: true }).promise
   const lines: PdfLine[] = []
 
   for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+    if (skipPages.has(pageNumber)) continue  // 비내용 페이지 제외
+
     const page = await pdf.getPage(pageNumber)
     const viewport = page.getViewport({ scale: 1 })
     const content = await page.getTextContent()
@@ -410,9 +444,10 @@ async function extractPdfLines(absolutePath: string): Promise<PdfLine[]> {
         previousEnd = item.x + item.width
       }
 
-      const normalized = normalizeWhitespace(text)
-      if (normalized) {
-        lines.push({ page: pageNumber, text: normalized })
+      // 가르침 정제 후 정규화
+      const cleaned = cleanKoreanLegalHeading(normalizeWhitespace(text))
+      if (cleaned) {
+        lines.push({ page: pageNumber, text: cleaned })
       }
     }
   }
@@ -420,8 +455,12 @@ async function extractPdfLines(absolutePath: string): Promise<PdfLine[]> {
   return lines
 }
 
-function isPdfHeading(line: string): boolean {
-  return /^(제\s*\d+\s*장|제\s*\d+\s*조(?:의\s*\d+)?(?:\([^)]*\))?|부칙|별표|\[[^\]]+\])/.test(line)
+function isPdfChapter(line: string): boolean {
+  return /^제\d+장/.test(line)
+}
+
+function isPdfArticle(line: string): boolean {
+  return /^(제\d+조(?:의\d+)?(?:\([^)]*\))?|부칙|별표|\[[^\]]+\])/.test(line)
 }
 
 async function extractPdfSections(
@@ -432,16 +471,16 @@ async function extractPdfSections(
 ): Promise<Section[]> {
   const lines = await extractPdfLines(absolutePath)
   const sections: Section[] = []
-  let currentTitle = basename(relativePath)
+  let currentTitle: string | null = null  // null = 조 시작 전, 파일명 사용 안 함
+  let currentChapter: string | null = null
   let currentBody: string[] = []
-  let pageStart = lines[0]?.page
-  let pageEnd = lines[0]?.page
+  let pageStart = lines[0]?.page ?? 1
+  let pageEnd = lines[0]?.page ?? 1
 
   const flush = () => {
+    if (currentTitle === null) return  // 아직 조 만나기 전
     const text = normalizeWhitespace(currentBody.join('\n'))
-    if (!text) {
-      return
-    }
+    if (!text) return
 
     const articleRefs = extractArticleRefs(`${currentTitle}\n${text}`)
     const versionMarkers = extractVersionMarkers(text)
@@ -460,23 +499,23 @@ async function extractPdfSections(
         page_start: pageStart,
         page_end: pageEnd,
         source_title: basename(relativePath),
+        chapter_title: currentChapter ?? undefined,
       },
     })
     currentBody = []
   }
 
   for (const line of lines) {
-    const articleWithBody = line.text.match(/^(제\s*\d+\s*조(?:의\s*\d+)?(?:\([^)]*\))?)\s*[:：]\s*(.+)$/)
-    if (articleWithBody) {
+    // 장(Chapter) 헤딩: 메타데이터만 업데이트, 섹션 시작 안 함
+    if (isPdfChapter(line.text)) {
       flush()
-      currentTitle = normalizeWhitespace(articleWithBody[1])
-      currentBody = [line.text]
-      pageStart = line.page
-      pageEnd = line.page
+      currentChapter = line.text
+      currentTitle = null  // 다음 조가 나올 때까지 섹션 없음
       continue
     }
 
-    if (isPdfHeading(line.text)) {
+    // 조(Article), 부칙, 별표: 새 섹션 시작
+    if (isPdfArticle(line.text)) {
       flush()
       currentTitle = line.text
       currentBody = []
@@ -484,6 +523,8 @@ async function extractPdfSections(
       pageEnd = line.page
       continue
     }
+
+    if (currentTitle === null) continue  // 첫 조 이전 잔여 텍스트 무시
 
     if (currentBody.length === 0) {
       pageStart = line.page
@@ -494,6 +535,18 @@ async function extractPdfSections(
 
   flush()
   return sections
+}
+
+function convertWithMarkitdown(absolutePath: string): string {
+  const tempDir = mkdtempSync(join(tmpdir(), 'markitdown-'))
+  const tempFile = join(tempDir, 'converted.md')
+  // 인수를 배열로 전달하여 셸 인젝션 방지
+  const result = spawnSync('markitdown', [absolutePath, '-o', tempFile], { encoding: 'utf8' })
+  if (result.status !== 0) {
+    rmSync(tempDir, { recursive: true, force: true })
+    throw new Error(`markitdown 변환 실패 (${basename(absolutePath)}): ${result.stderr ?? ''}`)
+  }
+  return tempFile
 }
 
 async function collectSections(
@@ -518,6 +571,15 @@ async function collectSections(
       sourceScope,
       originalSourcePath,
     )
+  }
+  if (MARKITDOWN_FORMATS.has(extension)) {
+    const tempFile = convertWithMarkitdown(absolutePath)
+    const tempDir = join(tempFile, '..')
+    try {
+      return extractMarkdownSections(relativePath, tempFile, sourceScope, originalSourcePath)
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true })
+    }
   }
   throw new Error(`Unsupported source type: ${relativePath}`)
 }

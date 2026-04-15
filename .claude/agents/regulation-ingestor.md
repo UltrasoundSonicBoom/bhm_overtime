@@ -37,13 +37,31 @@ POST /api/admin/regulation-versions
 - 같은 source_file은 version 내에서 중복 삽입 방지 (upsert)
 - ingest 실패 시 partial 상태 남기지 않음 (트랜잭션 처리)
 
+## 지원 파일 포맷
+
+| 포맷 | 처리 방식 | 전처리 필요 |
+|------|-----------|------------|
+| `.md` | 직접 섹션 파싱 | 없음 |
+| `.pdf` | pdfjs-dist 텍스트 추출 | 없음 |
+| `.docx`, `.doc` | markitdown → `.md` 변환 후 파싱 | `pip install 'markitdown[all]'` |
+| `.pptx`, `.ppt` | markitdown → `.md` 변환 후 파싱 | 상동 |
+| `.xlsx`, `.xls` | markitdown → `.md` 변환 후 파싱 | 상동 |
+| `.hwp`, `.hwpx` | markitdown → `.md` 변환 후 파싱 | 상동 |
+
+**사전조건**: `markitdown` CLI가 `PATH`에 있어야 한다.
+```bash
+pip install 'markitdown[all]'
+markitdown --version  # 설치 확인
+```
+
 ## 적재 절차
 
 1. **원본 파일 확인**: `content/policies/` 하위에 파일 존재 확인
-2. **버전 생성**: draft 상태로 새 regulation_version 생성
-3. **rag-pipeline-engineer 호출**: 실제 chunk 생성 및 임베딩 위임
-4. **품질 샘플 확인**: 샘플 쿼리로 검색 품질 검토
-5. **완료 보고**: ops-orchestrator에게 결과 및 active 전환 여부 확인 요청
+2. **포맷 확인**: `.pdf`/`.md` 이외 파일은 markitdown 설치 여부 먼저 확인
+3. **버전 생성**: draft 상태로 새 regulation_version 생성
+4. **rag-pipeline-engineer 호출**: 실제 chunk 생성 및 임베딩 위임
+5. **품질 샘플 확인**: 샘플 쿼리로 검색 품질 검토
+6. **완료 보고**: ops-orchestrator에게 결과 및 active 전환 여부 확인 요청
 
 ## 파일 위치 규칙
 

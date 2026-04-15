@@ -161,10 +161,8 @@ window.GoogleAuth = (function () {
 
   // ── init ──
   function init() {
-    // 리뷰 모드가 아니면 Google 연결 UI 자체를 숨김
+    // 리뷰 모드가 아니면 로그인 기능만 비활성화 (UI는 유지 — 헤더 레이아웃 안정성)
     if (!shouldExposeGoogleAuth()) {
-      var authContainer = document.getElementById('authContainer');
-      if (authContainer) authContainer.style.display = 'none';
       return;
     }
     if (!window.google || !window.google.accounts) {

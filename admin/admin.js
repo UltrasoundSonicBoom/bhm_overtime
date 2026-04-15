@@ -149,17 +149,17 @@ function syncSurfaceNav() {
   document.body.dataset.regSurface = state.surface;
 
   // 사이드바 아이템 활성 상태
-  document.querySelectorAll('.sidebar-item[data-view]').forEach((btn) => {
-    btn.classList.toggle('active', btn.getAttribute('data-view') === state.surface);
+  document.querySelectorAll('.sidebar-item[data-surface]').forEach((btn) => {
+    btn.classList.toggle('active', btn.getAttribute('data-surface') === state.surface);
   });
 
   // 뷰 패널 표시/숨김
-  document.querySelectorAll('[data-view-panel]').forEach((panel) => {
-    panel.style.display = panel.getAttribute('data-view-panel') === state.surface ? '' : 'none';
+  document.querySelectorAll('[data-surface-panel]').forEach((panel) => {
+    panel.style.display = panel.getAttribute('data-surface-panel') === state.surface ? '' : 'none';
   });
 
-  // 이전 수평 탭 방식도 호환 유지
-  els.surfaceNav?.querySelectorAll('[data-surface]').forEach((button) => {
+  // 모바일 네비게이션 활성 상태
+  document.querySelectorAll('.mobile-role-nav [data-surface]').forEach((button) => {
     button.classList.toggle('active', button.getAttribute('data-surface') === state.surface);
   });
 }
@@ -1138,10 +1138,10 @@ els.faqVersionSelect.addEventListener('change', async (event) => {
   renderAll();
 });
 
-// 사이드바 뷰 전환 (새 셸)
-document.querySelectorAll('.sidebar-item[data-view]').forEach((button) => {
+// 사이드바 및 모바일 뷰 전환
+document.querySelectorAll('[data-surface]').forEach((button) => {
   button.addEventListener('click', () => {
-    state.surface = button.getAttribute('data-view') || 'dashboard';
+    state.surface = button.getAttribute('data-surface') || 'dashboard';
     syncSurfaceNav();
   });
 });

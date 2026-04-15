@@ -11,6 +11,7 @@ import teamRoutes from './routes/teams'
 import meRoutes from './routes/me'
 import cardNewsRoutes from './routes/cardNews'
 import regulationRoutes from './routes/regulations'
+import resumeRoutes from './routes/resume'
 
 const app = new Hono().basePath('/api')
 
@@ -46,6 +47,7 @@ app.route('/admin', adminOpsRoutes)
 app.route('/regulations', regulationRoutes)
 app.route('/teams', teamRoutes)
 app.route('/me', meRoutes)
+app.route('/resume', resumeRoutes)
 
 // Vercel serverless export
 export default app

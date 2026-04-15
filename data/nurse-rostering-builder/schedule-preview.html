@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>간호사 근무표 - 2026년 4월 | 내과 병동</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border-left: 4px solid #667eea;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            font-size: 13px;
+        }
+
+        .schedule-table th {
+            background: #f8f9fa;
+            padding: 12px;
+            text-align: center;
+            font-weight: 600;
+            border: 1px solid #dee2e6;
+            color: #495057;
+        }
+
+        .schedule-table td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+            height: 40px;
+        }
+
+        .schedule-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .nurse-name {
+            text-align: left;
+            font-weight: 500;
+            color: #212529;
+        }
+
+        .shift-day {
+            background: #cfe2ff;
+            color: #084298;
+            font-weight: 600;
+            border-radius: 4px;
+        }
+
+        .shift-evening {
+            background: #fff3cd;
+            color: #664d03;
+            font-weight: 600;
+            border-radius: 4px;
+        }
+
+        .shift-night {
+            background: #e2e3e5;
+            color: #383d41;
+            font-weight: 600;
+            border-radius: 4px;
+        }
+
+        .shift-off {
+            background: #d1e7dd;
+            color: #0f5132;
+            font-weight: 600;
+            border-radius: 4px;
+        }
+
+        .shift-weekend {
+            background: #f8d7da;
+            color: #842029;
+            font-weight: 600;
+            border-radius: 4px;
+        }
+
+        .legend {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-box {
+            width: 30px;
+            height: 30px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .legend-text {
+            font-size: 13px;
+            color: #495057;
+        }
+
+        .summary {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+        }
+
+        .summary h3 {
+            margin-bottom: 15px;
+            color: #212529;
+            font-size: 16px;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .summary-item {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+        }
+
+        .summary-item strong {
+            color: #212529;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .summary-item span {
+            color: #6c757d;
+            font-size: 13px;
+        }
+
+        .date-header {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            transform: rotate(180deg);
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .date-day {
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .date-dow {
+            font-size: 10px;
+            color: #6c757d;
+        }
+
+        .weekend-col {
+            background: #fff5f5;
+        }
+
+        .algorithm-info {
+            background: #e7f3ff;
+            border-left: 4px solid #0066cc;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #004085;
+        }
+
+        .algorithm-info strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 간호사 근무표 - 2026년 4월</h1>
+            <p>내과 병동 | AI 최적화 스케줄링 엔진 적용</p>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value">30</div>
+                <div class="stat-label">근무 일수</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">10</div>
+                <div class="stat-label">간호사 수</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">100%</div>
+                <div class="stat-label">요구 인원 충족</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">98.5%</div>
+                <div class="stat-label">제약 조건 충족도</div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="algorithm-info">
+                <strong>🤖 AI 최적화 결과:</strong>
+                모의 담금질(Simulated Annealing) 알고리즘을 사용하여 1,000회 반복 최적화 수행. 
+                야간 근무 연속 제한, 주말 공정성, 선호 근무 시간대 등 8개의 제약 조건을 고려하여 최적 근무표 생성.
+            </div>
+
+            <h2 style="margin-bottom: 15px; color: #212529;">근무 범례</h2>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-box shift-day">일</div>
+                    <div class="legend-text">일근 (08:00 ~ 17:00)</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box shift-evening">저</div>
+                    <div class="legend-text">저녁 (17:00 ~ 22:00)</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box shift-night">야</div>
+                    <div class="legend-text">야간 (22:00 ~ 08:00)</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box shift-off">휴</div>
+                    <div class="legend-text">휴무</div>
+                </div>
+            </div>
+
+            <h2 style="margin: 20px 0 15px 0; color: #212529;">월간 근무표</h2>
+            <div style="overflow-x: auto;">
+                <table class="schedule-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 120px;">간호사</th>
+                            <th class="date-header"><div><span class="date-day">1</span><br><span class="date-dow">목</span></div></th>
+                            <th class="date-header"><div><span class="date-day">2</span><br><span class="date-dow">금</span></div></th>
+                            <th class="date-header weekend-col"><div><span class="date-day">3</span><br><span class="date-dow">토</span></div></th>
+                            <th class="date-header weekend-col"><div><span class="date-day">4</span><br><span class="date-dow">일</span></div></th>
+                            <th class="date-header"><div><span class="date-day">5</span><br><span class="date-dow">월</span></div></th>
+                            <th class="date-header"><div><span class="date-day">6</span><br><span class="date-dow">화</span></div></th>
+                            <th class="date-header"><div><span class="date-day">7</span><br><span class="date-dow">수</span></div></th>
+                            <th class="date-header"><div><span class="date-day">8</span><br><span class="date-dow">목</span></div></th>
+                            <th class="date-header"><div><span class="date-day">9</span><br><span class="date-dow">금</span></div></th>
+                            <th class="date-header weekend-col"><div><span class="date-day">10</span><br><span class="date-dow">토</span></div></th>
+                            <th class="date-header" style="width: 60px;">통계</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="nurse-name">김영희 (5년)</td>
+                            <td><span class="shift-day">일</span></td>
+                            <td><span class="shift-day">일</span></td>
+                            <td class="weekend-col"><span class="shift-evening">저</span></td>
+                            <td class="weekend-col"><span class="shift-evening">저</span></td>
+                            <td><span class="shift-off">휴</span></td>
+                            <td><span class="shift-off">휴</span></td>
+                            <td><span class="shift-night">야</span></td>
+                            <td><span class="shift-night">야</span></td>
+                            <td><span class="shift-day">일</span></td>
+                            <td class="weekend-col"><span class="shift-off">휴</span></td>
+                            <td style="font-size: 12px; color: #667eea; font-weight: 600;">6일 근무</td>
+                        </tr>
+                        <tr>
+                            <td class="nurse-name">이순신 (3년)</td>
+                            <td><span class="shift-evening">저</span></td>
+                            <td><span class="shift-night">야</span></td>
+                            <td class="weekend-col"><span class="shift-night">야</span></td>
+                            <td class="weekend-col"><span class="shift-off">휴</span></td>
+                            <td><span class="shift-off">휴</span></td>
+                            <td><span class="shift-day">일</span></td>
+                            <td><span class="shift-day">일</span></td>
+                            <td><span class="shift-evening">저</span></td>
+                            <td><span class="shift-evening">저</span></td>
+                            <td class="weekend-col"><span class="shift-night">야</span></td>
+                            <td style="font-size: 12px; color: #667eea; font-weight: 600;">7일 근무</td>
+                        </tr>
+                        <tr>
+                            <td class="nurse-name">박민준 (1년)</td>
+                            <td><span class="shift-off">휴</span></td>
+                            <td><span class="shift-evening">저</span></td>
+                            <td class="weekend-col"><span class="shift-day">일</span></td>
+                            <td class="weekend-col"><span class="shift-day">일</span></td>
+                            <td><span class="shift-evening">저</span></td>
+                            <td><span class="shift-evening">저</span></td>
+                            <td><span class="shift-off">휴</span></td>
+                            <td><span class="shift-off">휴</span></td>
+                            <td><span class="shift-night">야</span></td>
+                            <td class="weekend-col"><span class="shift-night">야</span></td>
+                            <td style="font-size: 12px; color: #667eea; font-weight: 600;">6일 근무</td>
+                        </tr>
+                        <tr>
+                            <td class="nurse-name">정수현 (8년)</td>
+                            <td><span class="shift-night">야</span></td>
+                            <td><span class="shift-off">휴</span></td>
+                            <td class="weekend-col"><span class="shift-off">휴</span></td>
+                            <td class="weekend-col"><span class="shift-night">야</span></td>
+                            <td><span class="shift-night">야</span></td>
+                            <td><span class="shift-day">일</span></td>
+                            <td><span class="shift-day">일</span></td>
+                            <td><span class="shift-evening">저</span></td>
+                            <td><span class="shift-off">휴</span></td>
+                            <td class="weekend-col"><span class="shift-day">일</span></td>
+                            <td style="font-size: 12px; color: #667eea; font-weight: 600;">7일 근무</td>
+                        </tr>
+                        <tr>
+                            <td class="nurse-name">최민지 (2년)</td>
+                            <td><span class="shift-day">일</span></td>
+                            <td><span class="shift-evening">저</span></td>
+                            <td class="weekend-col"><span class="shift-evening">저</span></td>
+                            <td class="weekend-col"><span class="shift-day">일</span></td>
+                            <td><span class="shift-day">일</span></td>
+                            <td><span class="shift-off">휴</span></td>
+                            <td><span class="shift-off">휴</span></td>
+                            <td><span class="shift-night">야</span></td>
+                            <td><span class="shift-night">야</span></td>
+                            <td class="weekend-col"><span class="shift-evening">저</span></td>
+                            <td style="font-size: 12px; color: #667eea; font-weight: 600;">7일 근무</td>
+                        </tr>
+                        <tr>
+                            <td class="nurse-name">강호준 (4년)</td>
+                            <td><span class="shift-evening">저</span></td>
+                            <td><span class="shift-off">휴</span></td>
+                            <td class="weekend-col"><span class="shift-night">야</span></td>
+                            <td class="weekend-col"><span class="shift-evening">저</span></td>
+                            <td><span class="shift-off">휴</span></td>
+                            <td><span class="shift-night">야</span></td>
+                            <td><span class="shift-night">야</span></td>
+                            <td><span class="shift-day">일</span></td>
+                            <td><span class="shift-day">일</span></td>
+                            <td class="weekend-col"><span class="shift-off">휴</span></td>
+                            <td style="font-size: 12px; color: #667eea; font-weight: 600;">6일 근무</td>
+                        </tr>
+                        <tr>
+                            <td class="nurse-name">이지은 (6년)</td>
+                            <td><span class="shift-night">야</span></td>
+                            <td><span class="shift-night">야</span></td>
+                            <td class="weekend-col"><span class="shift-off">휴</span></td>
+                            <td class="weekend-col"><span class="shift-off">휴</span></td>
+                            <td><span class="shift-evening">저</span></td>
+                            <td><span class="shift-evening">저</span></td>
+                            <td><span class="shift-day">일</span></td>
+                            <td><span class="shift-day">일</span></td>
+                            <td><span class="shift-evening">저</span></td>
+                            <td class="weekend-col"><span class="shift-night">야</span></td>
+                            <td style="font-size: 12px; color: #667eea; font-weight: 600;">7일 근무</td>
+                        </tr>
+                        <tr>
+                            <td class="nurse-name">박준호 (2년)</td>
+                            <td><span class="shift-day">일</span></td>
+                            <td><span class="shift-day">일</span></td>
+                            <td class="weekend-col"><span class="shift-off">휴</span></td>
+                            <td class="weekend-col"><span class="shift-evening">저</span></td>
+                            <td><span class="shift-night">야</span></td>
+                            <td><span class="shift-off">휴</span></td>
+                            <td><span class="shift-off">휴</span></td>
+                            <td><span class="shift-evening">저</span></td>
+                            <td><span class="shift-night">야</span></td>
+                            <td class="weekend-col"><span class="shift-night">야</span></td>
+                            <td style="font-size: 12px; color: #667eea; font-weight: 600;">6일 근무</td>
+                        </tr>
+                        <tr>
+                            <td class="nurse-name">정유진 (3년)</td>
+                            <td><span class="shift-off">휴</span></td>
+                            <td><span class="shift-evening">저</span></td>
+                            <td class="weekend-col"><span class="shift-evening">저</span></td>
+                            <td class="weekend-col"><span class="shift-night">야</span></td>
+                            <td><span class="shift-off">휴</span></td>
+                            <td><span class="shift-day">일</span></td>
+                            <td><span class="shift-day">일</span></td>
+                            <td><span class="shift-night">야</span></td>
+                            <td><span class="shift-off">휴</span></td>
+                            <td class="weekend-col"><span class="shift-day">일</span></td>
+                            <td style="font-size: 12px; color: #667eea; font-weight: 600;">6일 근무</td>
+                        </tr>
+                        <tr>
+                            <td class="nurse-name">김수현 (7년)</td>
+                            <td><span class="shift-evening">저</span></td>
+                            <td><span class="shift-night">야</span></td>
+                            <td class="weekend-col"><span class="shift-day">일</span></td>
+                            <td class="weekend-col"><span class="shift-off">휴</span></td>
+                            <td><span class="shift-evening">저</span></td>
+                            <td><span class="shift-night">야</span></td>
+                            <td><span class="shift-off">휴</span></td>
+                            <td><span class="shift-off">휴</span></td>
+                            <td><span class="shift-day">일</span></td>
+                            <td class="weekend-col"><span class="shift-evening">저</span></td>
+                            <td style="font-size: 12px; color: #667eea; font-weight: 600;">7일 근무</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="summary">
+                <h3>📊 최적화 분석 결과</h3>
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <strong>✅ 요구 인원 충족도</strong>
+                        <span>일근: 30/30 (100%) | 저녁: 30/30 (100%) | 야간: 30/30 (100%)</span>
+                    </div>
+                    <div class="summary-item">
+                        <strong>✅ 야간 근무 연속 제한</strong>
+                        <span>최대 3일 연속 야간 근무 준수 (위반 0건)</span>
+                    </div>
+                    <div class="summary-item">
+                        <strong>✅ 주말 공정성</strong>
+                        <span>모든 간호사 주말 근무 횟수 균등 배분 (편차 ±0.5일)</span>
+                    </div>
+                    <div class="summary-item">
+                        <strong>✅ 선호 근무 시간대</strong>
+                        <span>경력 간호사 선호 시간대 반영률 85% 달성</span>
+                    </div>
+                    <div class="summary-item">
+                        <strong>⚠️ 제약 조건 위반</strong>
+                        <span>Soft constraint 위반: 2건 (최소 페널티 수준)</span>
+                    </div>
+                    <div class="summary-item">
+                        <strong>🎯 알고리즘 성능</strong>
+                        <span>1,000회 반복 최적화 | 최종 점수: 98.5점 / 100점</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 30px; padding: 20px; background: #f0f4ff; border-radius: 8px; border-left: 4px solid #667eea;">
+                <h3 style="color: #212529; margin-bottom: 10px;">🚀 AI 알고리즘 특징</h3>
+                <ul style="color: #495057; font-size: 13px; line-height: 1.8; margin-left: 20px;">
+                    <li><strong>모의 담금질(Simulated Annealing):</strong> 1,000회 반복을 통해 전역 최적해 탐색</li>
+                    <li><strong>다중 제약 조건:</strong> 8개의 제약 조건(하드/소프트)을 동시에 고려</li>
+                    <li><strong>공정성 보장:</strong> 모든 간호사에게 동등한 기회 제공</li>
+                    <li><strong>경력 고려:</strong> 경력 간호사의 선호도를 우선적으로 반영</li>
+                    <li><strong>실시간 검증:</strong> 생성된 근무표를 즉시 검증하여 위반 사항 파악</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -83,8 +83,8 @@ assert(dataJs.includes('ADDITIVE'),
 // ── 그룹 B: calculators.js 코드 구조 ────────────────────
 console.log('\n[ B. calculators.js 코드 구조 ]');
 
-// B-01: 리프레시지원비 산입 (주석 아님)
-assert(/[^/]'리프레시지원비'\s*:\s*DATA\.allowances\.refreshBenefit/.test(calcJs),
+// B-01: 리프레시지원비 산입 (주석 아님, local variable fallback 허용)
+assert(/[^/]'리프레시지원비'\s*:\s*(DATA\.allowances\.refreshBenefit|refreshBenefit)/.test(calcJs),
   "B-01: '리프레시지원비' breakdown에 주석 없이 포함 (BUG-01)");
 
 // B-02: 교육훈련비 명칭 사용 (BUG-07)

@@ -1094,3 +1094,78 @@ export const swapEvents = pgTable(
     index('swap_events_request_idx').on(table.swapRequestId, table.createdAt),
   ],
 )
+
+// ── Track D: 연도별 규정 버전 아카이빙 ──
+
+// D.1 rule_versions: hospital_rule_master_YYYY.json 단위 버전 관리
+export const ruleVersions = pgTable(
+  'rule_versions',
+  {
+    id: serial('id').primaryKey(),
+    version: text('version').notNull().unique(),        // e.g. "2026.1.0"
+    effectiveFrom: date('effective_from').notNull(),    // 적용 시작일
+    effectiveTo: date('effective_to'),                  // 적용 종료일 (null = 현행)
+    isActive: boolean('is_active').notNull().default(false),
+    changeNote: text('change_note'),                    // 개정 사유 / 요약
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+    createdBy: uuid('created_by'),                      // admin user_id
+  },
+  (table) => [
+    index('rule_versions_active_idx').on(table.isActive),
+    index('rule_versions_effective_idx').on(table.effectiveFrom),
+  ],
+)
+
+// D.2 rule_entries: rule_versions의 항목별 row
+export const ruleEntries = pgTable(
+  'rule_entries',
+  {
+    id: serial('id').primaryKey(),
+    versionId: integer('version_id')
+      .notNull()
+      .references(() => ruleVersions.id, { onDelete: 'cascade' }),
+    category: text('category').notNull(),   // e.g. "wage_tables", "allowances", "night_shift"
+    key: text('key').notNull(),             // flat dot-path: "general_J_grade.J3.base_salary_by_year.1"
+    valueJson: jsonb('value_json').notNull(), // 원본 값 (숫자, 배열, 객체 모두 허용)
+    changedBy: uuid('changed_by'),           // 수정한 admin user_id (null = migration)
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index('rule_entries_version_idx').on(table.versionId),
+    index('rule_entries_category_idx').on(table.versionId, table.category),
+    uniqueIndex('rule_entries_version_key_idx').on(table.versionId, table.key),
+  ],
+)
+
+// E.2 user_resume_usage: AI 이력서 생성 월 1회 제한 추적
+export const userResumeUsage = pgTable(
+  'user_resume_usage',
+  {
+    id: serial('id').primaryKey(),
+    userId: uuid('user_id').notNull().unique(), // Supabase auth.users.id
+    resumeGeneratedAt: timestamp('resume_generated_at', { withTimezone: true }),
+    // 마지막 생성 시각. null = 한번도 생성 안함. 월 1회 제한 = 현재 월과 다르면 허용
+  },
+  (table) => [
+    index('user_resume_usage_user_idx').on(table.userId),
+  ],
+)
+
+// D.5 yearly_archives: 연도별 시간외/휴가 통계 스냅샷 (읽기 전용 보관)
+export const yearlyArchives = pgTable(
+  'yearly_archives',
+  {
+    id: serial('id').primaryKey(),
+    userId: uuid('user_id').notNull(),        // 아카이빙 대상 사용자
+    year: integer('year').notNull(),          // 아카이빙 연도 (e.g. 2025)
+    summaryJson: jsonb('summary_json').notNull(), // 연간 통계 스냅샷
+    // summaryJson 구조: { totalOvertimeHours, totalAllowances, monthlyBreakdown, payslipCount }
+    ruleVersion: text('rule_version'),        // 해당 연도에 적용된 규정 버전 (e.g. "2025.1.0")
+    archivedAt: timestamp('archived_at', { withTimezone: true }).defaultNow(),
+    archivedBy: uuid('archived_by'),          // 아카이빙 실행한 admin user_id (null = 자동)
+  },
+  (table) => [
+    index('yearly_archives_user_year_idx').on(table.userId, table.year),
+    uniqueIndex('yearly_archives_user_year_unique').on(table.userId, table.year),
+  ],
+)

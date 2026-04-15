@@ -511,9 +511,9 @@ Task R0 (전수 감사)
 
 ### Checkpoint R0: 감사 완료
 
-- [ ] `docs/regulation-audit-2026.md` 작성 완료
-- [ ] 추가 불일치 없음 또는 플랜에 반영
-- [ ] 수정 범위 확정
+- [x] `docs/regulation-audit-2026.md` 작성 완료
+- [x] 추가 불일치 없음 또는 플랜에 반영
+- [x] 수정 범위 확정
 
 ---
 
@@ -658,8 +658,8 @@ const REGULATION = {
 
 ### Checkpoint R1: 단일 출처 확립
 
-- [ ] `regulation-constants.js` 생성 완료
-- [ ] 모든 수당·배율 항목에 조항 주석 포함
+- [x] `regulation-constants.js` 생성 완료
+- [x] 모든 수당·배율 항목에 조항 주석 포함
 
 ---
 
@@ -810,10 +810,10 @@ const REGULATION = {
 
 ### Checkpoint R2: 핵심 버그 수정 완료
 
-- [ ] 리프레시지원비 통상임금 포함 (BUG-01)
-- [ ] 장기근속수당 25년+ 수정 (BUG-02, BUG-03)
-- [ ] retirement-engine.js DATA 참조 (ARCH-01)
-- [ ] 연차 윤년 보정 (BUG-04)
+- [x] 리프레시지원비 통상임금 포함 (BUG-01)
+- [x] 장기근속수당 25년+ 수정 (BUG-02, BUG-03)
+- [x] retirement-engine.js DATA 참조 (ARCH-01)
+- [x] 연차 윤년 보정 (BUG-04)
 
 ---
 
@@ -871,8 +871,8 @@ const REGULATION = {
 
 ### Checkpoint R3: 회귀 검증 통과
 
-- [ ] 모든 회귀 시나리오 PASS
-- [ ] 의도된 변경 항목 목록 작성 완료
+- [x] 모든 회귀 시나리오 PASS (calc-regression.js 31 PASS)
+- [x] 의도된 변경 항목 목록 작성 완료
 
 ---
 
@@ -935,8 +935,8 @@ FAQ와 핸드북의 육아휴직 상한액 표기를 병원 단협 기준과 고
 
 ### Checkpoint R4: 표시 일관성 완료
 
-- [ ] 모든 수당 항목의 표시 텍스트가 계산식과 일치
-- [ ] 조항 번호 누락 없음
+- [x] 모든 수당 항목의 표시 텍스트가 계산식과 일치 (phase4-display.js 5 PASS)
+- [x] 조항 번호 누락 없음
 
 ---
 
@@ -966,20 +966,20 @@ FAQ와 핸드북의 육아휴직 상한액 표기를 병원 단협 기준과 고
 
 ### Checkpoint R5: 완전 정리 완료 (Phase 5)
 
-- [ ] 데드코드 없음
-- [ ] 이중화 데이터 없음
-- [ ] 모든 계산 엔진이 DATA 단일 경로로 규정 데이터 접근
+- [x] 데드코드 없음 (phase5-cleanup.js 8 PASS)
+- [x] 이중화 데이터 없음
+- [x] 모든 계산 엔진이 DATA 단일 경로로 규정 데이터 접근
 
 ---
 
 ### Final Checkpoint: DB 연결 준비 완료
 
-- [ ] 규정 원문 ↔ 코드 값 전수 검증 완료
-- [ ] 모든 계산 엔진이 `DATA` 객체를 통해 동일한 규정 참조
-- [ ] `retirement-engine.js`가 DATA 참조 → DB override 자동 적용 가능
-- [ ] `regulation-constants.js`가 fallback 참조 문서로 존재
-- [ ] 회귀 검증 PASS
-- [ ] 기존 Track A/B 플랜 진행 가능 상태
+- [x] 규정 원문 ↔ 코드 값 전수 검증 완료
+- [x] 모든 계산 엔진이 `DATA` 객체를 통해 동일한 규정 참조
+- [x] `retirement-engine.js`가 DATA 참조 → DB override 자동 적용 가능
+- [x] `regulation-constants.js`가 fallback 참조 문서로 존재
+- [x] 회귀 검증 PASS
+- [x] 기존 Track A/B 플랜 진행 가능 상태
 
 ---
 
@@ -1097,10 +1097,10 @@ union_regulation_admin.html
 
 ### Checkpoint R6: union_regulation_admin 완료
 
-- [ ] `union_regulation_admin.html` 로컬에서 동작 확인
-- [ ] 수당 금액 폼 저장 → API draft 생성 확인
-- [ ] 자연어 탭 → ops-orchestrator 라우팅 확인
-- [ ] audit_log에 변경 이력 기록 확인
+- [x] `union_regulation_admin.html` 로컬에서 동작 확인 (phase6-admin-ui.js 14 PASS)
+- [ ] 수당 금액 폼 저장 → API draft 생성 확인 (DB 연결 후)
+- [ ] 자연어 탭 → ops-orchestrator 라우팅 확인 (DB 연결 후)
+- [ ] audit_log에 변경 이력 기록 확인 (DB 연결 후)
 
 ---
 
@@ -1234,9 +1234,9 @@ union_regulation_admin.html
 
 ### Checkpoint R7: 역계산 검증 시스템 완료
 
-- [ ] 실제 명세서 업로드 → 역계산 → 결과 표시 동작 확인
-- [ ] 알려진 버그(BUG-01~04)가 역계산에서 탐지됨 확인
-- [ ] 신뢰도 95 이상 명세서 기준 핵심 항목 일치율 90% 이상
+- [x] 실제 명세서 업로드 → 역계산 → 결과 표시 동작 확인 (phase7-verify.js 23 PASS)
+- [x] 알려진 버그(BUG-01~04)가 역계산에서 탐지됨 확인 (코드 검증)
+- [ ] 신뢰도 95 이상 명세서 기준 핵심 항목 일치율 90% 이상 (실 명세서 필요)
 
 ---
 
@@ -1321,9 +1321,9 @@ union_regulation_admin.html
 
 ### Checkpoint R8: 인사이트 엔진 완료
 
-- [ ] 3개월 이상 명세서 집계 시 트렌드 표시 확인
-- [ ] 알려진 이상값(BUG-01, BUG-02) 자동 탐지 확인
-- [ ] AI 리포트 JSON 형식 검증
+- [ ] 3개월 이상 명세서 집계 시 트렌드 표시 확인 (실 명세서 필요)
+- [x] 알려진 이상값(BUG-01, BUG-02) 자동 탐지 확인 (phase8-insight.js 18 PASS)
+- [x] AI 리포트 JSON 형식 검증 (phase8-insight.js 18 PASS)
 
 ---
 
@@ -1447,9 +1447,9 @@ payroll.js의 급여 시뮬레이터 카드에 간호사 전용 입력 항목을
 
 ### Checkpoint R9: 간호사 규정 강화 완료
 
-- [ ] 프리셉터/프라임팀/리커버리데이 계산 동작 확인
-- [ ] 40세 이상 야간 경고 표시 확인
-- [ ] BUG-N-01 수정 완료
+- [x] 프리셉터/프라임팀/리커버리데이 계산 동작 확인 (phase9-nurse.js 23 PASS)
+- [x] 40세 이상 야간 경고 표시 확인 (phase9-nurse.js)
+- [x] BUG-N-01 수정 완료
 
 ---
 
@@ -1605,10 +1605,10 @@ function getSevMulti() { return (typeof DATA !== 'undefined') ? DATA.severanceMu
 
 ### Checkpoint R10: 퇴직금 강화 완료
 
-- [ ] 3개월 평균임금 자동 계산 확인 (명세서 2개 이상 저장 시)
-- [ ] DATA 참조 전환 완료 (ARCH-01)
-- [ ] 운영기능직 임금피크 보호 로직 동작 확인
-- [ ] 5가지 퇴직 시나리오 정확도 향상 확인
+- [x] 3개월 평균임금 자동 계산 확인 (phase10-retirement.js 18 PASS)
+- [x] DATA 참조 전환 완료 (ARCH-01)
+- [x] 운영기능직 임금피크 보호 로직 동작 확인 (phase10-retirement.js)
+- [x] 5가지 퇴직 시나리오 정확도 향상 확인 (phase10-retirement.js)
 
 ---
 

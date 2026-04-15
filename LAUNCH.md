@@ -19,7 +19,7 @@
 | G5 | First-run 경험 | ⚠️ | 권한 설명 모달 ✅. 수동 테스트(권한 거부/재로그인) 잔여 |
 | G6 | Observability | ✅ | `supabase_launch_views.sql` 배포되면 통과 |
 | G7 | 지원 채널 | ✅ | 채널톡 가동 중 (2026.04.10) |
-| G8 | 획득 루프 | ⚠️ | 공유 링크/QR 추가 필요 |
+| G8 | 획득 루프 | ✅ | QR 코드 모달 + 링크 복사 구현 완료 |
 
 ---
 
@@ -65,9 +65,9 @@
 - [ ] 데일리 체크 루틴: `v_dau_daily`, `v_error_rate_daily`, `v_top_errors_14d`
 - [ ] 오류율 5% 초과 지속 시 알람 (수동 관찰이라도)
 
-### [ ] G8. 공유 루프
-- [ ] 앱 내 "공유하기" 버튼 (URL + QR)
-- [ ] 공유 문구 기본값: "서울대병원 동료가 만든 급여/휴가 관리 도구. https://www.snuhmate.com"
+### [x] G8. 공유 루프
+- [x] 앱 내 "공유하기" 버튼 (URL + QR) — QRCode.js (jsdelivr), canvas 렌더링, 링크 복사 버튼
+- [x] 공유 문구 기본값: "서울대병원 동료가 만든 급여·휴가 관리 도구. https://www.snuhmate.com"
 
 ### [x] G3 보강. 데이터 손실 방지 UX
 - [x] `*_orphan_*` 백업 키를 사용자가 볼 수 있는 "복구" 메뉴 — 프로필 탭 하단에 접이식 (index.html)

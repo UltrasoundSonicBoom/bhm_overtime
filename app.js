@@ -83,6 +83,9 @@ function initHomeTab() {
 
   loadNotice();
   loadChangelog();
+  // 프로필 미저장 힌트 배너
+  const homeNudge = document.getElementById('homeProfileNudge');
+  if (homeNudge) homeNudge.style.display = (!profile || !profile.jobType) ? 'block' : 'none';
 }
 window.initHomeTab = initHomeTab;
 
@@ -326,7 +329,11 @@ function switchTab(tabName) {
 
   if (tabName === 'home') initHomeTab();
   if (tabName === 'payroll') { applyProfileToPayroll(); initPayrollTab(); }
-  if (tabName === 'overtime') { applyProfileToOvertime(); initOvertimeTab(); }
+  if (tabName === 'overtime') {
+    const savedCTA = document.getElementById('profileSavedCTA');
+    if (savedCTA) savedCTA.style.display = 'none';
+    applyProfileToOvertime(); initOvertimeTab();
+  }
   if (tabName === 'leave') { applyProfileToLeave(); initLeaveTab(); }
   if (tabName === 'reference') renderWikiToc();
   if (tabName === 'profile') initProfileTab();
@@ -370,6 +377,359 @@ function initProfileTab() {
   } else {
     updateProfileTitle('');
   }
+  renderWorkHistory();
+}
+
+// ── E1: 근무이력 ──────────────────────────────────────────────────
+var _whEditId = null;
+var WH_KEY = 'bhm_work_history';
+
+function _loadWorkHistory() {
+  try { return JSON.parse(localStorage.getItem(WH_KEY) || '[]'); } catch(e) { return []; }
+}
+
+function _saveWorkHistory(list) {
+  localStorage.setItem(WH_KEY, JSON.stringify(list));
+  if (window.SyncManager && typeof window.SyncManager.push === 'function') {
+    try { window.SyncManager.push(); } catch(e) {}
+  }
+}
+
+function renderWorkHistory() {
+  var container = document.getElementById('workHistoryList');
+  var cta = document.getElementById('workHistoryAICTA');
+  if (!container) return;
+
+  var list = _loadWorkHistory();
+  while (container.firstChild) container.removeChild(container.firstChild);
+
+  if (list.length === 0) {
+    var empty = document.createElement('div');
+    empty.style.cssText = 'padding:16px 0;text-align:center;';
+    var emptyMsg = document.createElement('p');
+    emptyMsg.textContent = '아직 기록된 근무이력이 없어요. 20년 커리어를 AI 이력서로 만들려면 여기서 시작하세요.';
+    emptyMsg.style.cssText = 'color:var(--text-muted);font-size:var(--text-body-small);margin-bottom:10px;line-height:1.5;';
+    var emptyBtn = document.createElement('button');
+    emptyBtn.textContent = '+ 첫 근무지 추가';
+    emptyBtn.className = 'btn btn-primary';
+    emptyBtn.onclick = function() { openWorkHistorySheet(); };
+    empty.appendChild(emptyMsg);
+    empty.appendChild(emptyBtn);
+    container.appendChild(empty);
+    if (cta) cta.style.display = 'none';
+    return;
+  }
+
+  list.slice().sort(function(a, b) { return (b.from || '').localeCompare(a.from || ''); })
+    .forEach(function(item) {
+      var card = document.createElement('div');
+      card.style.cssText = 'border:2px solid #101218;box-shadow:4px 4px 0 #101218;' +
+        'border-radius:6px;padding:14px 16px;margin-bottom:10px;position:relative;';
+
+      var dept = document.createElement('div');
+      dept.style.cssText = 'font-weight:700;font-size:var(--text-body-normal);margin-bottom:4px;';
+      dept.textContent = item.dept || '(부서명 없음)';
+
+      var period = document.createElement('div');
+      period.style.cssText = 'font-family:"IBM Plex Mono",monospace;font-size:0.75rem;color:var(--text-muted);margin-bottom:4px;';
+      period.textContent = (item.from || '?') + ' ~ ' + (item.to || '재직 중');
+
+      var role = document.createElement('div');
+      role.style.cssText = 'font-size:var(--text-body-small);color:var(--text-secondary);';
+      role.textContent = item.role || '';
+
+      if (item.desc) {
+        var desc = document.createElement('div');
+        desc.style.cssText = 'font-size:0.75rem;color:var(--text-muted);margin-top:4px;' +
+          'overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;';
+        desc.textContent = item.desc;
+        card.appendChild(dept);
+        card.appendChild(period);
+        card.appendChild(role);
+        card.appendChild(desc);
+      } else {
+        card.appendChild(dept);
+        card.appendChild(period);
+        card.appendChild(role);
+      }
+
+      var actions = document.createElement('div');
+      actions.style.cssText = 'display:flex;gap:6px;margin-top:10px;';
+
+      var editBtn = document.createElement('button');
+      editBtn.textContent = '편집';
+      editBtn.style.cssText = 'font-size:0.75rem;padding:4px 10px;border:1px solid var(--border-glass);border-radius:6px;background:none;cursor:pointer;';
+      editBtn.onclick = (function(i) { return function() { openWorkHistorySheet(i); }; })(item);
+
+      var delBtn = document.createElement('button');
+      delBtn.textContent = '삭제';
+      delBtn.style.cssText = 'font-size:0.75rem;padding:4px 10px;border:1px solid var(--accent-rose,#f43f5e);border-radius:6px;background:none;cursor:pointer;color:var(--accent-rose,#f43f5e);';
+      delBtn.onclick = (function(id) { return function() { deleteWorkHistoryEntry(id); }; })(item.id);
+
+      actions.appendChild(editBtn);
+      actions.appendChild(delBtn);
+      card.appendChild(actions);
+      container.appendChild(card);
+    });
+
+  if (cta) cta.style.display = 'block';
+}
+
+function openWorkHistorySheet(item) {
+  var sheet = document.getElementById('workHistorySheet');
+  var title = document.getElementById('workHistorySheetTitle');
+  if (!sheet) return;
+
+  document.getElementById('whEditId').value = item ? item.id : '';
+  document.getElementById('whDept').value = item ? (item.dept || '') : '';
+  document.getElementById('whFrom').value = item ? (item.from || '') : '';
+  document.getElementById('whTo').value = item ? (item.to || '') : '';
+  document.getElementById('whRole').value = item ? (item.role || '') : '';
+  document.getElementById('whDesc').value = item ? (item.desc || '') : '';
+  if (title) title.textContent = item ? '근무이력 편집' : '근무이력 추가';
+
+  sheet.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  setTimeout(function() { document.getElementById('whDept').focus(); }, 100);
+}
+
+function closeWorkHistorySheet() {
+  var sheet = document.getElementById('workHistorySheet');
+  if (sheet) sheet.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function saveWorkHistoryEntry() {
+  var dept = (document.getElementById('whDept').value || '').trim();
+  if (!dept) {
+    document.getElementById('whDept').focus();
+    return;
+  }
+  var editId = document.getElementById('whEditId').value;
+  var list = _loadWorkHistory();
+
+  var entry = {
+    id: editId || Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    dept: dept,
+    from: document.getElementById('whFrom').value || '',
+    to: document.getElementById('whTo').value || '',
+    role: (document.getElementById('whRole').value || '').trim(),
+    desc: (document.getElementById('whDesc').value || '').trim(),
+    updatedAt: new Date().toISOString()
+  };
+
+  if (editId) {
+    var idx = list.findIndex(function(i) { return i.id === editId; });
+    if (idx >= 0) list[idx] = entry; else list.push(entry);
+  } else {
+    list.push(entry);
+  }
+
+  _saveWorkHistory(list);
+  closeWorkHistorySheet();
+  renderWorkHistory();
+}
+
+function deleteWorkHistoryEntry(id) {
+  var list = _loadWorkHistory().filter(function(i) { return i.id !== id; });
+  _saveWorkHistory(list);
+  renderWorkHistory();
+}
+
+// ── E2: AI 이력서 생성 ─────────────────────────────────────────────────────
+
+function generateAIResume() {
+  var settings = window.loadSettings ? window.loadSettings() : {};
+  var googleSub = settings.googleSub;
+
+  if (!googleSub) {
+    var msg = document.createElement('div');
+    msg.style.cssText = 'position:fixed;inset:0;z-index:12000;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;';
+    var box = document.createElement('div');
+    box.style.cssText = 'background:var(--bg-card,#fff);border:2px solid #101218;border-radius:10px;padding:24px 20px;max-width:320px;width:90%;text-align:center;';
+    var t = document.createElement('p');
+    t.style.cssText = 'margin:0 0 16px;font-size:var(--text-body-normal);font-weight:600;';
+    t.textContent = '구글 연결 후 이용 가능합니다';
+    var closeB = document.createElement('button');
+    closeB.className = 'btn btn-primary';
+    closeB.style.cssText = 'width:100%;';
+    closeB.textContent = '확인';
+    closeB.onclick = function() { document.body.removeChild(msg); };
+    box.appendChild(t);
+    box.appendChild(closeB);
+    msg.appendChild(box);
+    document.body.appendChild(msg);
+    return;
+  }
+
+  var wh = _loadWorkHistory();
+  if (!wh.length) {
+    alert('근무이력을 먼저 추가해주세요.');
+    return;
+  }
+
+  // 로딩 오버레이 (3단계 텍스트 애니메이션)
+  var overlay = document.createElement('div');
+  overlay.id = 'aiResumeOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:12000;background:var(--bg-app,#f8f9fa);display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:all;';
+
+  var spinner = document.createElement('div');
+  spinner.style.cssText = 'width:48px;height:48px;border:4px solid var(--accent-amber,#f59e0b);border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:24px;';
+
+  var statusText = document.createElement('p');
+  statusText.style.cssText = 'font-size:var(--text-body-large);font-weight:600;color:var(--text-primary,#101218);text-align:center;margin:0 16px;';
+  statusText.textContent = '입력한 근무이력을 확인하고 있어요...';
+
+  overlay.appendChild(spinner);
+  overlay.appendChild(statusText);
+  document.body.appendChild(overlay);
+
+  // 텍스트 3단계 전환
+  var phase2 = setTimeout(function() {
+    statusText.textContent = 'AI가 한국어 이력서를 작성 중...';
+  }, 3000);
+  var phase3 = setTimeout(function() {
+    statusText.textContent = '완성 직전!';
+  }, 8000);
+
+  var apiBase = (window.DATA && window.DATA._apiBase) || '';
+  var token = settings.supabaseAccessToken || '';
+
+  fetch(apiBase + '/api/resume', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify({ workHistory: wh }),
+  })
+  .then(function(res) { return res.json().then(function(d) { return { ok: res.ok, status: res.status, data: d }; }); })
+  .then(function(r) {
+    clearTimeout(phase2);
+    clearTimeout(phase3);
+    if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+
+    if (!r.ok) {
+      if (r.status === 429 && r.data.limitExceeded) {
+        _showResumeError('이번 달 생성 횟수를 모두 사용했어요.\n다음 달 ' + (r.data.nextAvailableAt || '') + '부터 다시 가능합니다.', false);
+      } else if (r.data.fallback) {
+        _showResumeError('AI 생성에 실패했어요. 근무이력을 바탕으로 직접 작성하시겠어요?', true);
+      } else {
+        _showResumeError(r.data.error || 'AI 생성에 실패했어요.', true);
+      }
+      return;
+    }
+
+    _showResumeResult(r.data.markdown, r.data.generatedAt);
+  })
+  .catch(function(err) {
+    clearTimeout(phase2);
+    clearTimeout(phase3);
+    if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    _showResumeError('네트워크 오류로 생성에 실패했어요. 잠시 후 다시 시도해주세요.', true);
+  });
+}
+
+function _showResumeResult(markdown, generatedAt) {
+  var modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;z-index:12000;background:rgba(0,0,0,.5);overflow-y:auto;-webkit-overflow-scrolling:touch;';
+
+  var box = document.createElement('div');
+  box.style.cssText = 'background:var(--bg-card,#fff);margin:16px auto;max-width:600px;width:calc(100% - 32px);border:2px solid #101218;border-radius:10px;padding:20px;';
+
+  // 헤더
+  var header = document.createElement('div');
+  header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;';
+  var title = document.createElement('h2');
+  title.style.cssText = 'margin:0;font-size:var(--text-body-large);font-weight:700;';
+  title.textContent = 'AI 이력서 초안';
+  var closeBtn = document.createElement('button');
+  closeBtn.textContent = '✕';
+  closeBtn.style.cssText = 'border:none;background:none;font-size:1.2rem;cursor:pointer;padding:4px 8px;';
+  closeBtn.onclick = function() { document.body.removeChild(modal); };
+  header.appendChild(title);
+  header.appendChild(closeBtn);
+
+  // 마크다운 내용 (pre 태그로 간단 렌더)
+  var content = document.createElement('pre');
+  content.style.cssText = 'white-space:pre-wrap;font-family:inherit;font-size:var(--text-body-small);line-height:1.7;background:var(--bg-app,#f8f9fa);border-radius:6px;padding:16px;margin:0 0 16px;overflow-x:auto;';
+  content.textContent = markdown;
+
+  // 복사 버튼
+  var copyBtn = document.createElement('button');
+  copyBtn.className = 'btn btn-primary';
+  copyBtn.style.cssText = 'width:100%;margin-bottom:8px;';
+  copyBtn.textContent = '클립보드에 복사';
+  copyBtn.onclick = function() {
+    navigator.clipboard.writeText(markdown).then(function() {
+      copyBtn.textContent = '복사 완료 ✓';
+      setTimeout(function() { copyBtn.textContent = '클립보드에 복사'; }, 2000);
+    }).catch(function() {
+      // Fallback
+      var ta = document.createElement('textarea');
+      ta.value = markdown;
+      ta.style.position = 'fixed';
+      ta.style.top = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      copyBtn.textContent = '복사 완료 ✓';
+      setTimeout(function() { copyBtn.textContent = '클립보드에 복사'; }, 2000);
+    });
+  };
+
+  // 생성 날짜
+  var note = document.createElement('p');
+  note.style.cssText = 'margin:8px 0 0;font-size:var(--text-body-small);color:var(--text-secondary,#666);text-align:center;';
+  note.textContent = '이번 달 1회 생성 사용 · ' + (generatedAt ? new Date(generatedAt).toLocaleDateString('ko-KR') : '');
+
+  box.appendChild(header);
+  box.appendChild(content);
+  box.appendChild(copyBtn);
+  box.appendChild(note);
+  modal.appendChild(box);
+  document.body.appendChild(modal);
+}
+
+function _showResumeError(message, showFallback) {
+  var modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;z-index:12000;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;';
+
+  var box = document.createElement('div');
+  box.style.cssText = 'background:var(--bg-card,#fff);border:2px solid var(--accent-amber,#f59e0b);border-radius:10px;padding:24px 20px;max-width:340px;width:90%;text-align:center;';
+
+  var icon = document.createElement('div');
+  icon.style.cssText = 'font-size:2rem;margin-bottom:12px;';
+  icon.textContent = '⚠️';
+
+  var msg = document.createElement('p');
+  msg.style.cssText = 'margin:0 0 16px;font-size:var(--text-body-normal);white-space:pre-line;';
+  msg.textContent = message;
+
+  var closeBtn = document.createElement('button');
+  closeBtn.className = 'btn btn-primary';
+  closeBtn.style.cssText = 'width:100%;margin-bottom:8px;';
+  closeBtn.textContent = '확인';
+  closeBtn.onclick = function() { document.body.removeChild(modal); };
+
+  box.appendChild(icon);
+  box.appendChild(msg);
+  box.appendChild(closeBtn);
+
+  if (showFallback) {
+    var fallbackBtn = document.createElement('button');
+    fallbackBtn.className = 'btn btn-secondary';
+    fallbackBtn.style.cssText = 'width:100%;';
+    fallbackBtn.textContent = '빈 템플릿 열기';
+    fallbackBtn.onclick = function() {
+      document.body.removeChild(modal);
+      // 빈 이력서 템플릿 열기
+      var tmpl = '## 경력 요약\n\n(직접 작성해주세요)\n\n## 주요 경력\n\n(직접 작성해주세요)\n\n## 핵심 역량\n\n- \n- \n- ';
+      _showResumeResult(tmpl, null);
+    };
+    box.appendChild(fallbackBtn);
+  }
+
+  modal.appendChild(box);
+  document.body.appendChild(modal);
 }
 
 function updateProfileTitle(name) {
@@ -807,6 +1167,36 @@ function saveProfile() {
     if (typeof populateLvTypeSelect === 'function') populateLvTypeSelect();
     if (typeof refreshLvCalendar === 'function' && typeof lvInitialized !== 'undefined' && lvInitialized) refreshLvCalendar();
   }
+  // 저장 성공 CTA 표시 (직종별 분기)
+  const savedCTA = document.getElementById('profileSavedCTA');
+  if (savedCTA) {
+    const ctaDesc = document.getElementById('profileSavedCTADesc');
+    const ctaBtn = document.getElementById('profileSavedCTABtn');
+    const ctaJobType = document.getElementById('pfJobType')?.value;
+    if (ctaDesc && ctaBtn) {
+      if (ctaJobType === '간호직') {
+        ctaDesc.textContent = '정보가 저장됐어요. 이번 달 야간 근무와 리커버리데이를 확인해볼까요?';
+        ctaBtn.textContent = '🌙 이번 달 야간·리커버리데이 확인하기 →';
+        ctaBtn.onclick = function() { switchTab('overtime'); };
+      } else if (ctaJobType === '보건직') {
+        ctaDesc.textContent = '정보가 저장됐어요. 온콜 대기 및 출동 수당을 계산해볼까요?';
+        ctaBtn.textContent = '📟 온콜 대기·출동 수당 계산하기 →';
+        ctaBtn.onclick = function() { switchTab('overtime'); };
+      } else if (ctaJobType === '사무직') {
+        ctaDesc.textContent = '정보가 저장됐어요. 연차 현황과 시간외 수당을 확인해볼까요?';
+        ctaBtn.textContent = '📅 연차 현황 및 시간외 수당 확인하기 →';
+        ctaBtn.onclick = function() { switchTab('leave'); };
+      } else {
+        ctaDesc.textContent = '정보가 저장됐어요. 이번 달 시간외 수당을 계산해볼까요?';
+        ctaBtn.textContent = '⏰ 시간외 계산하러 가기 →';
+        ctaBtn.onclick = function() { switchTab('overtime'); };
+      }
+    }
+    savedCTA.style.display = 'block';
+  }
+  // 홈 힌트 배너 숨기기
+  const homeNudge = document.getElementById('homeProfileNudge');
+  if (homeNudge) homeNudge.style.display = 'none';
 }
 
 function clearProfile() {
@@ -2873,6 +3263,126 @@ function initRetirementTab() {
   }
   // 입사일 채워졌으니 빠른 날짜 버튼 업데이트
   retUpdateQuickDates();
+
+  // E4: 퇴직 타임라인 렌더
+  _renderRetirementTimeline(profile, avgWageToUse);
+}
+
+function _renderRetirementTimeline(profile, avgWage) {
+  var container = document.getElementById('retirementTimelineContent');
+  if (!container) return;
+
+  var hasProfile = profile && profile.hireDate && avgWage > 0;
+  while (container.firstChild) container.removeChild(container.firstChild);
+
+  if (!hasProfile) {
+    var empty = document.createElement('div');
+    empty.className = 'empty-state';
+    empty.style.padding = '24px 0';
+    var emptyMsg = document.createElement('p');
+    emptyMsg.textContent = '입사일과 급여 정보를 먼저 입력해주세요.';
+    emptyMsg.style.cssText = 'color:var(--text-muted);font-size:var(--text-body-normal);';
+    var emptyBtn = document.createElement('button');
+    emptyBtn.textContent = '개인정보 탭으로 →';
+    emptyBtn.className = 'btn btn-primary';
+    emptyBtn.style.marginTop = '10px';
+    emptyBtn.onclick = function() { switchTab('info'); };
+    empty.appendChild(emptyMsg);
+    empty.appendChild(emptyBtn);
+    container.appendChild(empty);
+    return;
+  }
+
+  var hireDateStr = profile.hireDate.replace(/\./g, '-').replace(/(\d{4})-(\d{1,2})-(\d{1,2})/, function(_, y, m, d) {
+    return y + '-' + m.padStart(2,'0') + '-' + d.padStart(2,'0');
+  });
+  var now = new Date();
+  var results = [];
+
+  for (var i = 0; i < 12; i++) {
+    var retYear = now.getFullYear();
+    var retMonth = now.getMonth() + i;
+    if (retMonth >= 12) { retYear += Math.floor(retMonth / 12); retMonth = retMonth % 12; }
+    var retDate = new Date(retYear, retMonth + 1, 0); // last day of month
+
+    var retDateStr = retDate.getFullYear() + '-' +
+      String(retDate.getMonth() + 1).padStart(2,'0') + '-' +
+      String(retDate.getDate()).padStart(2,'0');
+
+    var ret = null;
+    try {
+      ret = typeof CALC !== 'undefined' ? CALC.calcRetirement({
+        avgWage: avgWage,
+        hireDate: hireDateStr,
+        retireDate: retDateStr
+      }) : null;
+    } catch(e) {}
+
+    results.push({
+      year: retYear,
+      month: retMonth + 1,
+      label: (retMonth + 1) + '월',
+      amount: ret ? (ret.total || ret.severancePay || 0) : 0,
+      isCurrentMonth: i === 0
+    });
+  }
+
+  var validAmounts = results.map(function(r) { return r.amount; }).filter(function(a) { return a > 0; });
+  if (validAmounts.length === 0) {
+    var errMsg = document.createElement('p');
+    errMsg.textContent = '퇴직금 계산 정보가 부족합니다.';
+    errMsg.style.cssText = 'color:var(--text-muted);padding:16px 0;text-align:center;';
+    container.appendChild(errMsg);
+    return;
+  }
+  var maxAmt = Math.max.apply(null, validAmounts);
+  var minAmt = Math.min.apply(null, validAmounts);
+  var maxIdx = results.findIndex(function(r) { return r.amount === maxAmt; });
+  var minIdx = results.findIndex(function(r) { return r.amount === minAmt; });
+
+  // Summary chips
+  var chipRow = document.createElement('div');
+  chipRow.style.cssText = 'display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;';
+  function makeChip(text, bg, color) {
+    var chip = document.createElement('span');
+    chip.textContent = text;
+    chip.style.cssText = 'padding:4px 12px;border-radius:20px;font-size:var(--text-body-small);font-weight:600;background:' + bg + ';color:' + color + ';';
+    return chip;
+  }
+  chipRow.appendChild(makeChip('★ 최고 ' + results[maxIdx].label + ': ' + Math.round(maxAmt / 10000) + '만원', 'rgba(245,158,11,0.12)', 'var(--accent-amber,#f59e0b)'));
+  chipRow.appendChild(makeChip('▼ 최저 ' + results[minIdx].label + ': ' + Math.round(minAmt / 10000) + '만원', 'rgba(244,63,94,0.08)', 'var(--accent-rose,#f43f5e)'));
+  container.appendChild(chipRow);
+
+  // 12-month grid
+  var grid = document.createElement('div');
+  grid.style.cssText = 'display:grid;grid-template-columns:repeat(2,1fr);gap:8px;';
+
+  results.forEach(function(r, idx) {
+    var cell = document.createElement('div');
+    var isMax = idx === maxIdx, isMin = idx === minIdx, isCur = r.isCurrentMonth;
+    var borderColor = isMax ? 'var(--accent-amber,#f59e0b)' : isMin ? 'var(--accent-rose,#f43f5e)' : isCur ? 'var(--accent-indigo,#6366f1)' : 'var(--border-glass,rgba(0,0,0,0.1))';
+    cell.style.cssText = 'padding:10px;border-radius:10px;border:2px solid ' + borderColor + ';text-align:center;' +
+      (isMax ? 'background:rgba(245,158,11,0.06);' : isMin ? 'background:rgba(244,63,94,0.04);' : '');
+
+    var monthLabel = document.createElement('div');
+    monthLabel.textContent = (isMax ? '★ ' : '') + r.year + '년 ' + r.label;
+    monthLabel.style.cssText = 'font-size:0.75rem;color:var(--text-muted);margin-bottom:4px;' + (isMax ? 'font-weight:600;' : '');
+
+    var amtLabel = document.createElement('div');
+    amtLabel.textContent = r.amount > 0 ? Math.round(r.amount / 10000) + '만원' : '—';
+    amtLabel.style.cssText = 'font-size:var(--text-body-normal);font-weight:' + (isMax ? '700' : '500') + ';' +
+      'color:' + (isMax ? 'var(--accent-amber,#f59e0b)' : isMin ? 'var(--accent-rose,#f43f5e)' : 'var(--text-primary)') + ';';
+
+    cell.appendChild(monthLabel);
+    cell.appendChild(amtLabel);
+    grid.appendChild(cell);
+  });
+  container.appendChild(grid);
+
+  var note = document.createElement('p');
+  note.textContent = '연금·세금 제외 계산 (v2에서 추가 예정)';
+  note.style.cssText = 'font-size:0.72rem;color:var(--text-muted);margin-top:10px;text-align:center;';
+  container.appendChild(note);
 }
 
 // ═══════════ 📅 연차 계산 ═══════════
@@ -3529,6 +4039,71 @@ function initOvertimeTab() {
   }
 
   refreshOtCalendar();
+  _renderOvertimeAlertBanner(otCurrentYear, otCurrentMonth);
+}
+
+function _renderOvertimeAlertBanner(year, month) {
+  var containerId = 'otAlertBannerWrap';
+  var existing = document.getElementById(containerId);
+  if (existing) existing.parentNode.removeChild(existing);
+
+  var stats = OVERTIME.calcMonthlyStats(year, month);
+  var extHours = stats.overtimeHours || 0;
+
+  var WARNING_H = 40, CRITICAL_H = 48, LIMIT_H = 52;
+  var level = extHours >= CRITICAL_H ? 'critical' : extHours >= WARNING_H ? 'warning' : null;
+  if (!level) return;
+
+  var today = new Date().toISOString().slice(0, 10);
+  var dismissKey = 'overtimeAlertDismissed_' + year + '-' + String(month).padStart(2, '0');
+  if (localStorage.getItem(dismissKey) === today) return;
+
+  var remaining = LIMIT_H - extHours;
+  var pct = Math.round((extHours / LIMIT_H) * 100);
+
+  var wrap = document.createElement('div');
+  wrap.id = containerId;
+  wrap.style.cssText = 'margin-bottom:12px;';
+
+  var banner = document.createElement('div');
+  var isWarning = level === 'warning';
+  banner.style.cssText = [
+    'display:flex;align-items:center;justify-content:space-between;gap:8px;',
+    'padding:12px 14px;border-radius:10px;',
+    isWarning
+      ? 'background:rgba(245,158,11,0.08);border:2px solid var(--accent-amber,#f59e0b);'
+      : 'background:rgba(244,63,94,0.08);border:2px solid var(--accent-rose,#f43f5e);font-weight:600;',
+  ].join('');
+
+  var msg = document.createElement('span');
+  msg.style.cssText = 'font-size:var(--text-body-small,0.8rem);flex:1;line-height:1.4;';
+  msg.textContent = isWarning
+    ? '⚠️ 연장근로 ' + extHours + '시간 / 월 ' + LIMIT_H + '시간 한도까지 ' + remaining + '시간 남았습니다'
+    : '🔴 연장근로 한도 근접! ' + extHours + '시간 / ' + LIMIT_H + '시간 (' + pct + '%) — 추가 시간외 신청 전 팀장 확인 필요';
+
+  var closeBtn = document.createElement('button');
+  closeBtn.textContent = '×';
+  closeBtn.setAttribute('aria-label', '알림 닫기');
+  closeBtn.style.cssText = [
+    'min-width:44px;min-height:44px;padding:0;border:none;background:none;cursor:pointer;',
+    'font-size:1.2rem;line-height:1;',
+    isWarning ? 'color:var(--accent-amber,#f59e0b);' : 'color:var(--accent-rose,#f43f5e);',
+  ].join('');
+  closeBtn.onclick = function () {
+    localStorage.setItem(dismissKey, today);
+    if (wrap.parentNode) wrap.parentNode.removeChild(wrap);
+  };
+
+  banner.appendChild(msg);
+  banner.appendChild(closeBtn);
+  wrap.appendChild(banner);
+
+  var tabEl = document.getElementById('tab-overtime');
+  if (tabEl && tabEl.firstChild) {
+    tabEl.insertBefore(wrap, tabEl.firstChild);
+  } else if (tabEl) {
+    tabEl.appendChild(wrap);
+  }
 }
 
 // 오늘 날짜 자동 선택 (사용자 요청: 초기 로드 시 입력창 자동 팝업 방지를 위해 기능 비활성화)
@@ -4974,6 +5549,24 @@ function renderPayslip(data, ym, profileUpdated, stableRes) {
     html += `<div style="display:flex; flex-direction:column; gap:4px;">`;
     data.deductionItems.forEach(item => {
       html += `<div class="result-row"><span class="key">${item.name}</span><span class="val" style="color:var(--accent-rose);">${fmt(item.amount)}</span></div>`;
+    });
+    html += `</div>`;
+  }
+
+  // 근무 현황 (workStats)
+  const ws = (data.workStats || []);
+  if (ws.length > 0) {
+    const fmtStat = (name, value) => {
+      if (/횟수/.test(name)) return value + '회';
+      if (/연차|휴일|근로일수/.test(name)) return value + '일';
+      return value + 'h';
+    };
+    const nonZero = ws.filter(i => i.value !== 0);
+    html += `<p style="font-size:var(--text-body-normal); color:var(--accent-amber); font-weight:600; margin:12px 0 6px;">▸ 근무 현황</p>`;
+    html += `<div style="display:flex; flex-direction:column; gap:4px;">`;
+    ws.forEach(item => {
+      const dim = item.value === 0 ? ' style="opacity:0.45;"' : '';
+      html += `<div class="result-row"${dim}><span class="key">${item.name}</span><span class="val">${fmtStat(item.name, item.value)}</span></div>`;
     });
     html += `</div>`;
   }

@@ -1029,4 +1029,394 @@ adminOpsRoutes.put('/regulation-rules/:id', async (c) => {
   return c.json({ result: updated })
 })
 
+// ── Track D: 연도별 규정 버전 관리 API ────────────────────────────────────────
+
+// GET /admin/rule-versions — 버전 목록
+adminOpsRoutes.get('/rule-versions', requireAdmin, async (c) => {
+  const rows = await sql`
+    select id, version, effective_from, effective_to, is_active, change_note, created_at
+    from rule_versions
+    order by effective_from desc
+  `
+  return c.json({ versions: rows })
+})
+
+// POST /admin/rule-versions — 신규 버전 생성
+adminOpsRoutes.post('/rule-versions', requireAdmin, async (c) => {
+  const admin = getAdminContext(c)
+  const body = await c.req.json<{
+    version: string
+    effectiveFrom: string
+    effectiveTo?: string
+    changeNote?: string
+    copyFromVersionId?: number
+  }>()
+
+  if (!body.version || !body.effectiveFrom) {
+    return c.json({ error: 'version과 effectiveFrom은 필수입니다' }, 400)
+  }
+
+  const [created] = await sql`
+    insert into rule_versions (version, effective_from, effective_to, is_active, change_note, created_by)
+    values (
+      ${body.version},
+      ${body.effectiveFrom},
+      ${body.effectiveTo ?? null},
+      false,
+      ${body.changeNote ?? null},
+      ${admin.userId}
+    )
+    returning *
+  `
+
+  // copyFromVersionId가 있으면 해당 버전의 entries를 복사
+  if (body.copyFromVersionId) {
+    await sql`
+      insert into rule_entries (version_id, category, key, value_json, changed_by)
+      select ${created.id}, category, key, value_json, ${admin.userId}
+      from rule_entries
+      where version_id = ${body.copyFromVersionId}
+    `
+  }
+
+  await writeAuditLog({
+    actorUserId: admin.userId,
+    actorRole: admin.adminRole,
+    action: 'rule_version.created',
+    entityType: 'rule_version',
+    entityId: String(created.id),
+    diff: { created },
+  })
+
+  return c.json({ result: created }, 201)
+})
+
+// POST /admin/rule-versions/simulate — 두 버전 간 급여 시뮬레이션용 ruleSet 반환
+adminOpsRoutes.post('/rule-versions/simulate', requireAdmin, async (c) => {
+  const body = await c.req.json<{ fromVersionId: number; toVersionId: number }>()
+  const fromId = Number(body.fromVersionId)
+  const toId = Number(body.toVersionId)
+  if (isNaN(fromId) || isNaN(toId)) {
+    return c.json({ error: 'fromVersionId, toVersionId 필수' }, 400)
+  }
+
+  const [fromEntries, toEntries, fromRows, toRows] = await Promise.all([
+    sql`SELECT category, key, value_json FROM rule_entries WHERE version_id = ${fromId}`,
+    sql`SELECT category, key, value_json FROM rule_entries WHERE version_id = ${toId}`,
+    sql`SELECT version FROM rule_versions WHERE id = ${fromId}`,
+    sql`SELECT version FROM rule_versions WHERE id = ${toId}`,
+  ])
+
+  function buildRuleSet(entries: { category: string; key: string; value_json: unknown }[]) {
+    const rs: Record<string, any> = {}
+    for (const entry of entries) {
+      if (!rs[entry.category]) rs[entry.category] = {}
+      const parts = String(entry.key).split('.')
+      let cur = rs[entry.category]
+      for (let i = 0; i < parts.length - 1; i++) {
+        if (typeof cur[parts[i]] !== 'object' || cur[parts[i]] === null) cur[parts[i]] = {}
+        cur = cur[parts[i]]
+      }
+      cur[parts[parts.length - 1]] = entry.value_json
+    }
+    return rs
+  }
+
+  return c.json({
+    fromRuleSet: buildRuleSet(fromEntries as any),
+    toRuleSet: buildRuleSet(toEntries as any),
+    fromVersion: (fromRows[0] as any)?.version ?? String(fromId),
+    toVersion: (toRows[0] as any)?.version ?? String(toId),
+  })
+})
+
+// PUT /admin/rule-versions/:id/activate — 버전 활성화 (기존 active는 해제)
+adminOpsRoutes.put('/rule-versions/:id/activate', requireAdmin, async (c) => {
+  const admin = getAdminContext(c)
+  const id = Number(c.req.param('id'))
+  if (isNaN(id)) return c.json({ error: 'Invalid id' }, 400)
+
+  const [target] = await sql`select * from rule_versions where id = ${id}`
+  if (!target) return c.json({ error: '버전을 찾을 수 없습니다' }, 404)
+
+  // 기존 active 해제 후 새 버전 활성화 (트랜잭션 없음 — 단일 문장 두 개)
+  await sql`update rule_versions set is_active = false where is_active = true`
+  const [activated] = await sql`
+    update rule_versions set is_active = true where id = ${id} returning *
+  `
+
+  await writeAuditLog({
+    actorUserId: admin.userId,
+    actorRole: admin.adminRole,
+    action: 'rule_version.activated',
+    entityType: 'rule_version',
+    entityId: String(id),
+    diff: { before: target, after: activated },
+  })
+
+  return c.json({ result: activated })
+})
+
+// GET /admin/rule-versions/:id/entries — 버전 내 항목 목록 (category 필터 가능)
+adminOpsRoutes.get('/rule-versions/:id/entries', requireAdmin, async (c) => {
+  const id = Number(c.req.param('id'))
+  const category = c.req.query('category')
+  if (isNaN(id)) return c.json({ error: 'Invalid id' }, 400)
+
+  const rows = category
+    ? await sql`select * from rule_entries where version_id = ${id} and category = ${category} order by key`
+    : await sql`select * from rule_entries where version_id = ${id} order by category, key`
+
+  return c.json({ entries: rows })
+})
+
+// PUT /admin/rule-versions/:id/entries/:entryId — 항목 값 수정
+adminOpsRoutes.put('/rule-versions/:id/entries/:entryId', requireAdmin, async (c) => {
+  const admin = getAdminContext(c)
+  const versionId = Number(c.req.param('id'))
+  const entryId = Number(c.req.param('entryId'))
+  if (isNaN(versionId) || isNaN(entryId)) return c.json({ error: 'Invalid id' }, 400)
+
+  const body = await c.req.json<{ valueJson: unknown }>()
+  if (body.valueJson === undefined) return c.json({ error: 'valueJson은 필수입니다' }, 400)
+
+  const [before] = await sql`
+    select * from rule_entries where id = ${entryId} and version_id = ${versionId}
+  `
+  if (!before) return c.json({ error: '항목을 찾을 수 없습니다' }, 404)
+
+  const [updated] = await sql`
+    update rule_entries
+    set value_json = ${sql.json(body.valueJson as any)},
+        changed_by = ${admin.userId},
+        updated_at = now()
+    where id = ${entryId}
+    returning *
+  `
+
+  await writeAuditLog({
+    actorUserId: admin.userId,
+    actorRole: admin.adminRole,
+    action: 'rule_entry.updated',
+    entityType: 'rule_entry',
+    entityId: String(entryId),
+    diff: { before, after: updated },
+  })
+
+  return c.json({ result: updated })
+})
+
+// GET /admin/rule-versions/diff?from=&to= — 두 버전 간 diff
+adminOpsRoutes.get('/rule-versions/diff', requireAdmin, async (c) => {
+  const fromId = Number(c.req.query('from'))
+  const toId = Number(c.req.query('to'))
+  if (isNaN(fromId) || isNaN(toId)) return c.json({ error: 'from, to 파라미터 필요' }, 400)
+
+  const fromEntries = await sql`
+    select key, value_json from rule_entries where version_id = ${fromId} order by key
+  `
+  const toEntries = await sql`
+    select key, value_json from rule_entries where version_id = ${toId} order by key
+  `
+
+  const fromMap = new Map(fromEntries.map((e: any) => [e.key, e.value_json]))
+  const toMap = new Map(toEntries.map((e: any) => [e.key, e.value_json]))
+  const allKeys = new Set([...fromMap.keys(), ...toMap.keys()])
+
+  const diff: { key: string; type: 'added' | 'removed' | 'changed'; from?: unknown; to?: unknown }[] = []
+  for (const key of allKeys) {
+    const f = fromMap.get(key)
+    const t = toMap.get(key)
+    if (f === undefined) diff.push({ key, type: 'added', to: t })
+    else if (t === undefined) diff.push({ key, type: 'removed', from: f })
+    else if (JSON.stringify(f) !== JSON.stringify(t)) diff.push({ key, type: 'changed', from: f, to: t })
+  }
+
+  return c.json({ fromId, toId, diff })
+})
+
+// ── Track D5: 연도별 아카이브 조회 API ────────────────────────────────────────
+
+// GET /admin/yearly-archives?year= — 연도별 아카이브 요약 목록
+adminOpsRoutes.get('/yearly-archives', requireAdmin, async (c) => {
+  const yearParam = c.req.query('year')
+  const yearFilter = yearParam ? Number(yearParam) : null
+
+  let rows
+  if (yearFilter && !isNaN(yearFilter)) {
+    rows = await sql`
+      select id, user_id, year, rule_version, archived_at,
+             summary_json->>'totalOvertimeHours' as total_overtime_hours,
+             summary_json->>'totalAllowances' as total_allowances,
+             summary_json->>'payslipCount' as payslip_count
+      from yearly_archives
+      where year = ${yearFilter}
+      order by archived_at desc
+    `
+  } else {
+    rows = await sql`
+      select id, user_id, year, rule_version, archived_at,
+             summary_json->>'totalOvertimeHours' as total_overtime_hours,
+             summary_json->>'totalAllowances' as total_allowances,
+             summary_json->>'payslipCount' as payslip_count
+      from yearly_archives
+      order by year desc, archived_at desc
+      limit 500
+    `
+  }
+
+  return c.json({ archives: rows })
+})
+
+// GET /admin/yearly-archives/:userId/:year — 특정 사용자 연도 아카이브 상세
+adminOpsRoutes.get('/yearly-archives/:userId/:year', requireAdmin, async (c) => {
+  const userId = c.req.param('userId') ?? ''
+  const year = Number(c.req.param('year'))
+  if (!userId) return c.json({ error: 'Invalid userId' }, 400)
+  if (isNaN(year)) return c.json({ error: 'Invalid year' }, 400)
+
+  const [row] = await sql`
+    select * from yearly_archives
+    where user_id = ${userId} and year = ${year}
+    limit 1
+  `
+  if (!row) return c.json({ error: '아카이브 없음' }, 404)
+
+  return c.json({ archive: row })
+})
+
+// ── Track D6: 규정 변경 diff → review queue draft 등록 ────────────────────
+
+// POST /admin/regulation-diff
+// Body: { newJson: Record<string, unknown>, newVersion: string, createDrafts?: boolean }
+// 현행 활성 버전과 diff 후 draft 등록 (createDrafts: true 시)
+adminOpsRoutes.post('/regulation-diff', requireAdmin, async (c) => {
+  const admin = getAdminContext(c)
+  const body = await c.req.json<{
+    newJson: Record<string, unknown>
+    newVersion: string
+    createDrafts?: boolean
+  }>()
+
+  if (!body.newJson || !body.newVersion) {
+    return c.json({ error: 'newJson, newVersion 필수' }, 400)
+  }
+
+  // 현행 활성 버전 조회
+  const [activeVersion] = await sql<{ id: number; version: string }[]>`
+    SELECT id, version FROM rule_versions WHERE is_active = true LIMIT 1
+  `
+  if (!activeVersion) {
+    return c.json({ error: '현행 활성 규정 버전이 없습니다. 먼저 규정을 적재하세요.' }, 404)
+  }
+
+  // 현행 rule_entries 조회 → Map 생성
+  const currentRows = await sql<{ key: string; value_json: unknown; category: string }[]>`
+    SELECT key, value_json, category FROM rule_entries WHERE version_id = ${activeVersion.id}
+  `
+  const currentMap = new Map(currentRows.map((r) => [`${r.category}.${r.key}`, r.value_json]))
+
+  // 신규 JSON 파싱 → flat entries
+  type Entry = { category: string; key: string; value: unknown }
+  function flattenForDiff(obj: unknown, prefix: string): { key: string; value: unknown }[] {
+    if (obj === null || typeof obj !== 'object') return [{ key: prefix, value: obj }]
+    if (Array.isArray(obj)) return [{ key: prefix, value: obj }]
+    const entries: { key: string; value: unknown }[] = []
+    for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
+      const childKey = prefix ? `${prefix}.${k}` : k
+      if (v === null || typeof v !== 'object' || Array.isArray(v)) {
+        entries.push({ key: childKey, value: v })
+      } else {
+        entries.push(...flattenForDiff(v, childKey))
+      }
+    }
+    return entries
+  }
+
+  const newEntries: Entry[] = []
+  for (const [category, subtree] of Object.entries(body.newJson)) {
+    if (category === '_meta') continue
+    for (const { key, value } of flattenForDiff(subtree, '')) {
+      newEntries.push({ category, key, value })
+    }
+  }
+
+  // diff 계산
+  const diff: { category: string; key: string; type: 'added' | 'removed' | 'changed'; oldValue?: unknown; newValue?: unknown }[] = []
+  const newMap = new Map(newEntries.map((e) => [`${e.category}.${e.key}`, e]))
+
+  for (const [fullKey, entry] of newMap) {
+    const cur = currentMap.get(fullKey)
+    if (cur === undefined) {
+      diff.push({ category: entry.category, key: entry.key, type: 'added', newValue: entry.value })
+    } else if (JSON.stringify(cur) !== JSON.stringify(entry.value)) {
+      diff.push({ category: entry.category, key: entry.key, type: 'changed', oldValue: cur, newValue: entry.value })
+    }
+  }
+  for (const [fullKey] of currentMap) {
+    if (!newMap.has(fullKey)) {
+      const [category, ...rest] = fullKey.split('.')
+      diff.push({ category, key: rest.join('.'), type: 'removed', oldValue: currentMap.get(fullKey) })
+    }
+  }
+
+  // draft 등록 옵션
+  let draftsCreated = 0
+  if (body.createDrafts && diff.length > 0) {
+    const byCategory = new Map<string, typeof diff>()
+    for (const d of diff) {
+      if (!byCategory.has(d.category)) byCategory.set(d.category, [])
+      byCategory.get(d.category)!.push(d)
+    }
+
+    for (const [category, items] of byCategory) {
+      const title = `[규정 변경] ${body.newVersion} — ${category} (${items.length}개 항목)`
+      const bodyLines = items.map((d) => {
+        if (d.type === 'added') return `- **추가** \`${d.key}\`: ${JSON.stringify(d.newValue)}`
+        if (d.type === 'removed') return `- **삭제** \`${d.key}\` (이전 값: ${JSON.stringify(d.oldValue)})`
+        return `- **변경** \`${d.key}\`: ${JSON.stringify(d.oldValue)} → ${JSON.stringify(d.newValue)}`
+      })
+      const bodyText = `## ${category} 변경 사항\n\n` + bodyLines.join('\n')
+
+      await sql`
+        INSERT INTO content_entries (
+          content_type, slug, title, status, body, metadata, created_by, updated_by
+        ) VALUES (
+          'notice',
+          ${`regulation-diff-${body.newVersion}-${category}-${Date.now()}`},
+          ${title},
+          'draft',
+          ${bodyText},
+          ${JSON.stringify({ sourceVersion: body.newVersion, category, diffCount: items.length, type: 'regulation_change_draft' })},
+          ${admin.userId},
+          ${admin.userId}
+        )
+        ON CONFLICT DO NOTHING
+      `
+      draftsCreated++
+    }
+
+    await writeAuditLog({
+      actorUserId: admin.userId,
+      actorRole: admin.adminRole,
+      action: 'regulation_diff.drafts_created',
+      entityType: 'rule_version',
+      entityId: activeVersion.id.toString(),
+      diff: { newVersion: body.newVersion, diffCount: diff.length, draftsCreated },
+    })
+  }
+
+  return c.json({
+    baseVersion: activeVersion.version,
+    newVersion: body.newVersion,
+    summary: {
+      added: diff.filter((d) => d.type === 'added').length,
+      changed: diff.filter((d) => d.type === 'changed').length,
+      removed: diff.filter((d) => d.type === 'removed').length,
+    },
+    diff,
+    draftsCreated,
+  })
+})
+
 export default adminOpsRoutes
