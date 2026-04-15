@@ -1,0 +1,6 @@
+[      73ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ http://localhost:8181/data.js?v=2.5:629
+[     112ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3001/api/api/regulations/browse:0
+[     112ms] [LOG] [regulation.js] DB browse unavailable, using DATA.handbook fallback: HTTP 404 @ http://localhost:8181/regulation.js?v=2.4:196
+[     173ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ http://localhost:8181/regulation.html:0
+[    3165ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://ulamqyarenzjdxlisijl.supabase.co/rest/v1/app_events?columns=%22anon_id%22%2C%22event_type%22%2C%22payload%22%2C%22app_version%22%2C%22user_agent%22%2C%22ts%22:0
+[    3166ms] [WARNING] [Telemetry] insert failed: Could not find the table 'public.app_events' in the schema cache @ http://localhost:8181/supabaseClient.js?v=1.4:100

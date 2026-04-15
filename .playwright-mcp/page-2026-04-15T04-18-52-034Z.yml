@@ -1,0 +1,187 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - region "Notifications alt+T"
+    - generic [ref=e3]:
+      - navigation [ref=e4]:
+        - generic [ref=e6]:
+          - link "SN" [ref=e7] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e9]: SN
+          - button [ref=e11] [cursor=pointer]:
+            - img [ref=e12]
+      - generic [ref=e15]:
+        - generic [ref=e16]:
+          - generic [ref=e18]:
+            - generic [ref=e19]: 창업 스토리
+            - generic [ref=e20]: 2024년 3월
+          - generic [ref=e21]:
+            - heading "야근 수당이 얼마인지 몰랐던 그 날" [level=1] [ref=e22]
+            - paragraph [ref=e23]: SNUHmate의 시작
+          - paragraph [ref=e24]: 서울대학교병원 핵의학과 의사가 직접 만든 앱. 복잡한 급여 계산을 단 한 번의 탭으로.
+          - generic [ref=e25]:
+            - generic [ref=e26]: 2024년 3월
+            - generic [ref=e27]: ·
+            - generic [ref=e28]: 읽는 시간 5분
+          - generic [ref=e29]:
+            - link "스토리 읽기" [ref=e30] [cursor=pointer]:
+              - /url: /story/origin-story
+              - button "스토리 읽기" [ref=e31]
+            - link "앱 다운로드" [ref=e32] [cursor=pointer]:
+              - /url: https://www.snuhmate.com
+        - img "야근 수당이 얼마인지 몰랐던 그 날" [ref=e35]
+      - generic [ref=e38]:
+        - generic [ref=e39]:
+          - heading "모든 스토리" [level=2] [ref=e40]
+          - paragraph [ref=e41]: SNUHmate의 다양한 이야기들을 만나보세요
+        - generic [ref=e43]:
+          - button "전체" [ref=e44] [cursor=pointer]
+          - button "창업 스토리" [ref=e45] [cursor=pointer]
+          - button "기능 스토리" [ref=e46] [cursor=pointer]
+          - button "기술 철학" [ref=e47] [cursor=pointer]
+        - generic [ref=e50]:
+          - link "시간외 기록, 이제 앱 하나로 기능 스토리 시간외 기록, 이제 앱 하나로 시간외 관리 기능 스토리 2024년 5월 4분" [ref=e52] [cursor=pointer]:
+            - /url: /story/overtime-tracker
+            - generic [ref=e54]:
+              - img "시간외 기록, 이제 앱 하나로" [ref=e56]
+              - generic [ref=e58]:
+                - generic [ref=e60]: 기능 스토리
+                - heading "시간외 기록, 이제 앱 하나로" [level=3] [ref=e61]
+                - paragraph [ref=e62]: 시간외 관리 기능 스토리
+                - generic [ref=e63]:
+                  - generic [ref=e64]: 2024년 5월
+                  - generic [ref=e65]: 4분
+          - link "연차 며칠 남았지? 이제 직접 확인하세요 기능 스토리 연차 며칠 남았지? 이제 직접 확인하세요 휴가 관리 기능 스토리 2024년 7월 3분" [ref=e67] [cursor=pointer]:
+            - /url: /story/vacation-management
+            - generic [ref=e69]:
+              - img "연차 며칠 남았지? 이제 직접 확인하세요" [ref=e71]
+              - generic [ref=e73]:
+                - generic [ref=e75]: 기능 스토리
+                - heading "연차 며칠 남았지? 이제 직접 확인하세요" [level=3] [ref=e76]
+                - paragraph [ref=e77]: 휴가 관리 기능 스토리
+                - generic [ref=e78]:
+                  - generic [ref=e79]: 2024년 7월
+                  - generic [ref=e80]: 3분
+          - link "급여명세서, 이제 이해할 수 있어요 기능 스토리 급여명세서, 이제 이해할 수 있어요 급여 분석 기능 스토리 2024년 9월 4분" [ref=e82] [cursor=pointer]:
+            - /url: /story/salary-understanding
+            - generic [ref=e84]:
+              - img "급여명세서, 이제 이해할 수 있어요" [ref=e86]
+              - generic [ref=e88]:
+                - generic [ref=e90]: 기능 스토리
+                - heading "급여명세서, 이제 이해할 수 있어요" [level=3] [ref=e91]
+                - paragraph [ref=e92]: 급여 분석 기능 스토리
+                - generic [ref=e93]:
+                  - generic [ref=e94]: 2024년 9월
+                  - generic [ref=e95]: 4분
+          - link "서버에 아무것도 보내지 않습니다 기술 철학 서버에 아무것도 보내지 않습니다 프라이버시 우선 설계 철학 2024년 11월 3분" [ref=e97] [cursor=pointer]:
+            - /url: /story/privacy-first
+            - generic [ref=e99]:
+              - img "서버에 아무것도 보내지 않습니다" [ref=e101]
+              - generic [ref=e103]:
+                - generic [ref=e105]: 기술 철학
+                - heading "서버에 아무것도 보내지 않습니다" [level=3] [ref=e106]
+                - paragraph [ref=e107]: 프라이버시 우선 설계 철학
+                - generic [ref=e108]:
+                  - generic [ref=e109]: 2024년 11월
+                  - generic [ref=e110]: 3분
+      - generic [ref=e112]:
+        - generic [ref=e113]:
+          - heading "비하인드 씬" [level=2] [ref=e114]
+          - paragraph [ref=e115]: SNUHmate가 만들어진 과정. 한 명의 의사가 동료들을 위해 밤을 새워 코딩한 이야기.
+        - generic [ref=e116]:
+          - generic [ref=e117]:
+            - generic [ref=e118]:
+              - img "SNUHmate 개발 비하인드" [ref=e119]
+              - generic [ref=e120]:
+                - blockquote [ref=e121]: "\"내가 필요한 앱이 없으면, 직접 만들면 되지.\""
+                - text: — 김계환, 핵의학과 / SNUHmate 개발자
+            - generic [ref=e122]:
+              - generic [ref=e123]:
+                - generic [ref=e124]: 1,000+
+                - generic [ref=e125]: 사용자
+              - generic [ref=e126]:
+                - generic [ref=e127]: 4.8★
+                - generic [ref=e128]: 앱스토어 평점
+              - generic [ref=e129]:
+                - generic [ref=e130]: 0원
+                - generic [ref=e131]: 서버 비용
+          - generic [ref=e132]:
+            - generic [ref=e133]:
+              - generic [ref=e135]: 💻
+              - generic [ref=e137]:
+                - generic [ref=e138]:
+                  - generic [ref=e139]: "2023"
+                  - generic [ref=e140]: 12월
+                - heading "첫 번째 줄의 코드" [level=3] [ref=e141]
+                - paragraph [ref=e142]: 핵의학과 레지던트 김계환이 퇴근 후 첫 번째 코드를 작성했습니다. 자신의 시간외 수당을 계산하기 위해.
+            - generic [ref=e143]:
+              - generic [ref=e145]: 🤝
+              - generic [ref=e147]:
+                - generic [ref=e148]:
+                  - generic [ref=e149]: "2024"
+                  - generic [ref=e150]: 2월
+                - heading "동료들의 반응" [level=3] [ref=e151]
+                - paragraph [ref=e152]: 동료 3명에게 베타 버전을 공유했습니다. "이거 저도 쓸 수 있어요?" 이 한 마디가 모든 것을 바꿨습니다.
+            - generic [ref=e153]:
+              - generic [ref=e155]: 🚀
+              - generic [ref=e157]:
+                - generic [ref=e158]:
+                  - generic [ref=e159]: "2024"
+                  - generic [ref=e160]: 4월
+                - heading "앱스토어 출시" [level=3] [ref=e161]
+                - paragraph [ref=e162]: SNUHmate가 App Store와 Google Play에 정식 출시됐습니다. 첫 주에 100명이 다운로드했습니다.
+            - generic [ref=e163]:
+              - generic [ref=e165]: 🎉
+              - generic [ref=e167]:
+                - generic [ref=e168]:
+                  - generic [ref=e169]: "2024"
+                  - generic [ref=e170]: 9월
+                - heading "1,000명 돌파" [level=3] [ref=e171]
+                - paragraph [ref=e172]: 서울대학교병원 그룹 전체로 퍼져나갔습니다. 의사, 간호사, 행정직원 모두가 사용하기 시작했습니다.
+            - generic [ref=e173]:
+              - generic [ref=e175]: ✨
+              - generic [ref=e176]:
+                - generic [ref=e177]:
+                  - generic [ref=e178]: "2025"
+                  - generic [ref=e179]: 현재
+                - heading "계속되는 여정" [level=3] [ref=e180]
+                - paragraph [ref=e181]: 매달 새로운 기능이 추가됩니다. 사용자들의 피드백이 곧 다음 업데이트입니다.
+      - contentinfo [ref=e182]:
+        - generic [ref=e183]:
+          - generic [ref=e184]:
+            - generic [ref=e185]:
+              - generic [ref=e186]:
+                - generic [ref=e187]: SN
+                - generic [ref=e188]: SNUHmate
+              - paragraph [ref=e189]: 서울대학교병원 그룹 직원들의 급여·휴가·시간외를 직접 관리할 수 있도록 도와주는 앱입니다.
+            - generic [ref=e190]:
+              - heading "링크" [level=3] [ref=e191]
+              - list [ref=e192]:
+                - listitem [ref=e193]:
+                  - link "공식 웹사이트" [ref=e194] [cursor=pointer]:
+                    - /url: https://www.snuhmate.com
+                    - text: 공식 웹사이트
+                    - img [ref=e195]
+                - listitem [ref=e199]:
+                  - link "스토리" [ref=e200] [cursor=pointer]:
+                    - /url: /
+                - listitem [ref=e201]:
+                  - link "앱 다운로드" [ref=e202] [cursor=pointer]:
+                    - /url: "#"
+            - generic [ref=e203]:
+              - heading "문의" [level=3] [ref=e204]
+              - generic [ref=e205]:
+                - generic [ref=e206]:
+                  - img [ref=e207]
+                  - link "contact@snuhmate.com" [ref=e210] [cursor=pointer]:
+                    - /url: mailto:contact@snuhmate.com
+                - paragraph [ref=e211]: 미디어 문의 및 제휴 제안을 환영합니다.
+          - generic [ref=e213]:
+            - paragraph [ref=e215]: © 2024 SNUHmate. All rights reserved.
+            - generic [ref=e216]:
+              - link "개인정보처리방침" [ref=e217] [cursor=pointer]:
+                - /url: "#"
+              - link "서비스 약관" [ref=e218] [cursor=pointer]:
+                - /url: "#"
+  - generic [ref=e219] [cursor=pointer]:
+    - img [ref=e220]
+    - generic [ref=e227]: Made with Manus

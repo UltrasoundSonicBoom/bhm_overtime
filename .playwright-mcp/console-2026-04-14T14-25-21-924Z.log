@@ -1,0 +1,35 @@
+[      72ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ http://localhost:8181/data.js?v=2.5:629
+[     124ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3001/api/api/regulations/browse:0
+[     125ms] [LOG] [regulation.js] DB browse unavailable, using DATA.handbook fallback: HTTP 404 @ http://localhost:8181/regulation.js?v=2.4:196
+[     162ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ http://localhost:8181/regulation.html:0
+[    3288ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://ulamqyarenzjdxlisijl.supabase.co/rest/v1/app_events?columns=%22anon_id%22%2C%22event_type%22%2C%22payload%22%2C%22app_version%22%2C%22user_agent%22%2C%22ts%22:0
+[    3288ms] [WARNING] [Telemetry] insert failed: Could not find the table 'public.app_events' in the schema cache @ http://localhost:8181/supabaseClient.js?v=1.4:100
+[    7733ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ http://localhost:8181/data.js?v=1.3:629
+[    7736ms] [LOG] 💾 2026년 공휴일 localStorage 캐시 사용 (23건) @ http://localhost:8181/holidays.js?v=1.2:316
+[   10514ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ http://localhost:8181/data.js?v=2.5:629
+[   10529ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3001/api/api/regulations/browse:0
+[   10529ms] [LOG] [regulation.js] DB browse unavailable, using DATA.handbook fallback: HTTP 404 @ http://localhost:8181/regulation.js?v=2.4:196
+[   10578ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ http://localhost:8181/regulation.html:0
+[   13548ms] [WARNING] [Telemetry] insert failed: TypeError: Failed to fetch @ http://localhost:8181/supabaseClient.js?v=1.4:100
+[   13672ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ http://localhost:8181/data.js?v=1.3:629
+[   13674ms] [LOG] 💾 2026년 공휴일 localStorage 캐시 사용 (23건) @ http://localhost:8181/holidays.js?v=1.2:316
+[   15401ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ http://localhost:8181/data.js?v=2.5:629
+[   15416ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3001/api/api/regulations/browse:0
+[   15416ms] [LOG] [regulation.js] DB browse unavailable, using DATA.handbook fallback: HTTP 404 @ http://localhost:8181/regulation.js?v=2.4:196
+[   15465ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ http://localhost:8181/regulation.html:0
+[   16823ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ http://localhost:8181/data.js?v=1.3:629
+[   16825ms] [LOG] 💾 2026년 공휴일 localStorage 캐시 사용 (23건) @ http://localhost:8181/holidays.js?v=1.2:316
+[   18338ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ http://localhost:8181/data.js?v=2.5:629
+[   18353ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3001/api/api/regulations/browse:0
+[   18353ms] [LOG] [regulation.js] DB browse unavailable, using DATA.handbook fallback: HTTP 404 @ http://localhost:8181/regulation.js?v=2.4:196
+[   18404ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ http://localhost:8181/regulation.html:0
+[   19456ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ http://localhost:8181/data.js?v=1.3:629
+[   19458ms] [LOG] 💾 2026년 공휴일 localStorage 캐시 사용 (23건) @ http://localhost:8181/holidays.js?v=1.2:316
+[   20535ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ http://localhost:8181/data.js?v=2.5:629
+[   20550ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3001/api/api/regulations/browse:0
+[   20550ms] [LOG] [regulation.js] DB browse unavailable, using DATA.handbook fallback: HTTP 404 @ http://localhost:8181/regulation.js?v=2.4:196
+[   20601ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ http://localhost:8181/regulation.html:0
+[   21654ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ http://localhost:8181/cardnews.html:0
+[   22949ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ http://localhost:8181/data.js?v=1.3:629
+[   22952ms] [LOG] 💾 2026년 공휴일 localStorage 캐시 사용 (23건) @ http://localhost:8181/holidays.js?v=1.2:316
+[   24333ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ http://localhost:8181/cardnews.html:0

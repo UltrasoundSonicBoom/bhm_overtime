@@ -1,0 +1,105 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e4]:
+      - link "SNUH Mate 슬기로운 병원 생활 메이트 내 근무기록을 내 손으로 직접 관리해요 본인 브라우저와 구글에만 저장해서 개발자도 못봐요!" [ref=e5] [cursor=pointer]:
+        - /url: index.html?app=1&tab=home
+        - img "SNUH Mate" [ref=e6]
+        - generic [ref=e7]:
+          - heading "슬기로운 병원 생활 메이트" [level=1] [ref=e8]
+          - paragraph [ref=e9]:
+            - text: 내 근무기록을 내 손으로 직접 관리해요
+            - text: 본인 브라우저와 구글에만 저장해서 개발자도 못봐요!
+      - generic [ref=e10]:
+        - button "🎨" [ref=e11] [cursor=pointer]
+        - button "💬" [ref=e12] [cursor=pointer]
+  - navigation [ref=e13]:
+    - generic [ref=e14]:
+      - link "🏠 홈" [ref=e15] [cursor=pointer]:
+        - /url: index.html?app=1&tab=home
+        - generic [ref=e16]: 🏠
+        - generic [ref=e17]: 홈
+      - link "📅 휴가" [ref=e18] [cursor=pointer]:
+        - /url: index.html?app=1&tab=leave
+        - generic [ref=e19]: 📅
+        - generic [ref=e20]: 휴가
+      - link "⏰ 시간외" [ref=e21] [cursor=pointer]:
+        - /url: index.html?app=1&tab=overtime
+        - generic [ref=e22]: ⏰
+        - generic [ref=e23]: 시간외
+      - link "💰 급여" [ref=e24] [cursor=pointer]:
+        - /url: index.html?app=1&tab=payroll
+        - generic [ref=e25]: 💰
+        - generic [ref=e26]: 급여
+      - link "📖 규정" [ref=e27] [cursor=pointer]:
+        - /url: regulation.html
+        - generic [ref=e28]: 📖
+        - generic [ref=e29]: 규정
+      - link "📰 뉴스" [ref=e30] [cursor=pointer]:
+        - /url: cardnews.html
+        - generic [ref=e31]: 📰
+        - generic [ref=e32]: 뉴스
+      - link "👤 info" [ref=e33] [cursor=pointer]:
+        - /url: index.html?app=1&tab=profile
+        - generic [ref=e34]: 👤
+        - generic [ref=e35]: info
+  - main [ref=e36]:
+    - generic [ref=e37]:
+      - generic [ref=e38] [cursor=pointer]: 전체
+      - generic [ref=e39] [cursor=pointer]: 의료AI
+      - generic [ref=e40]:
+        - button "↻" [ref=e41] [cursor=pointer]
+        - button "⚙" [ref=e42] [cursor=pointer]
+    - generic [ref=e43]:
+      - generic [ref=e44]:
+        - generic [ref=e45]:
+          - generic [ref=e46]: "1"
+          - generic [ref=e47]:
+            - link "AI 적용된 실제 병원 모습…눈앞에서 생생하게" [ref=e48] [cursor=pointer]:
+              - /url: https://news.google.com/rss/articles/CBMiakFVX3lxTFBod3gxSy16ZTBManc0LVhwRlRzdnVkQzZpNEZYSkRiX25jemo1MTNrSEEwQWJIejhZZU9feWJ4d25NcTROaF9acm1CcmFhYzJLZ1hmVW4wVjUwVU5jdWlLQi1xczYxd3hzYmc?oc=5&hl=en-US&gl=US&ceid=US:en
+            - generic [ref=e49]:
+              - generic [ref=e50]: 헬스경향
+              - generic [ref=e51]: 뉴스
+              - generic [ref=e52]: 12시간 전
+              - generic [ref=e53]: 의료AI
+        - generic [ref=e54] [cursor=pointer]: AI 적용된 실제 병원 모습…눈앞에서 생생하게 헬스경향
+      - generic [ref=e55]:
+        - generic [ref=e56]:
+          - generic [ref=e57]: "2"
+          - generic [ref=e58]:
+            - link "“AI 의료기업 ‘데스밸리’ 갇혔다···시제품부터 인허가까지 전주기 지원 필요”" [ref=e59] [cursor=pointer]:
+              - /url: https://news.google.com/rss/articles/CBMiakFVX3lxTE1yVW44bEFZVmVKaHJFcmFyR0Vaa3NFU0t4SWZuS2NhZHlURFBCTTlYVEhOWHUzaXdOZFFqVC15ZmxsNzN6VXZaZWZBVzJsSERoTG5XZUREdE52NHdNNm9jZWxtb3l1ZUlUcVHSAW5BVV95cUxNcTIwbFI3bHZGaGNFR281UnFGVXN6RFh0elkyamRkYWFRTkFSSmNqN2N0NEFqMEFUVDlFY0NIZThQZGc0dlAxNm83RmtzdXpVallodGR0NVN4d3ZEOVJrTlNGdVQzSWMxTVpYbkVxQQ?oc=5&hl=en-US&gl=US&ceid=US:en
+            - generic [ref=e60]:
+              - generic [ref=e61]: 더메디컬
+              - generic [ref=e62]: 뉴스
+              - generic [ref=e63]: 14시간 전
+              - generic [ref=e64]: 의료AI
+        - generic [ref=e65] [cursor=pointer]: “AI 의료기업 ‘데스밸리’ 갇혔다···시제품부터 인허가까지 전주기 지원 필요” 더메디컬
+      - generic [ref=e66]:
+        - generic [ref=e67]:
+          - generic [ref=e68]: "3"
+          - generic [ref=e69]:
+            - link "[의학바이오게시판] 서울대병원-하버드 의대, 의료 AI 실전 평가용 '가상 병원 시뮬레이터' 세계 최초 공개" [ref=e70] [cursor=pointer]:
+              - /url: https://news.google.com/rss/articles/CBMiVEFVX3lxTFBqa0FoQ0lTSVRUc2tsWmpTQlE1Y293Vk9zN09YSVh4dkItTEtnUHVyR2V0cjBubzQ1RWpaSGhSQmM0c0xTMkZhdHIxUHBydHk1VU11Tg?oc=5&hl=en-US&gl=US&ceid=US:en
+            - generic [ref=e71]:
+              - generic [ref=e72]: 동아사이언스
+              - generic [ref=e73]: 뉴스
+              - generic [ref=e74]: 14시간 전
+              - generic [ref=e75]: 의료AI
+        - generic [ref=e76] [cursor=pointer]: "[의학바이오게시판] 서울대병원-하버드 의대, 의료 AI 실전 평가용 '가상 병원 시뮬레이터' 세계 최초 공개 동아사이언스"
+  - generic [ref=e78]:
+    - generic [ref=e79]: 🔒
+    - heading "SNUH 메이트" [level=2] [ref=e80]
+    - paragraph [ref=e81]: PIN을 입력해서 잠금을 해제해주세요
+    - generic [ref=e89]:
+      - button "1" [ref=e90] [cursor=pointer]
+      - button "2" [ref=e91] [cursor=pointer]
+      - button "3" [ref=e92] [cursor=pointer]
+      - button "4" [ref=e93] [cursor=pointer]
+      - button "5" [ref=e94] [cursor=pointer]
+      - button "6" [ref=e95] [cursor=pointer]
+      - button "7" [ref=e96] [cursor=pointer]
+      - button "8" [ref=e97] [cursor=pointer]
+      - button "9" [ref=e98] [cursor=pointer]
+      - button "0" [ref=e100] [cursor=pointer]
+      - button "⌫" [ref=e101] [cursor=pointer]
+    - paragraph [ref=e102]: PIN을 잊으셨나요? 브라우저 데이터를 초기화해야 합니다.
