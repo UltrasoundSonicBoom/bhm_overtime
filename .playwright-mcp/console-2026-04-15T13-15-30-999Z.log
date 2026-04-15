@@ -1,0 +1,24 @@
+[     267ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ http://localhost:8765/data.js?v=1.3:629
+[     283ms] [LOG] 💾 2026년 공휴일 localStorage 캐시 사용 (23건) @ http://localhost:8765/holidays.js?v=1.2:316
+[    3480ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://ulamqyarenzjdxlisijl.supabase.co/rest/v1/app_events?columns=%22anon_id%22%2C%22event_type%22%2C%22payload%22%2C%22app_version%22%2C%22user_agent%22%2C%22ts%22:0
+[    3481ms] [WARNING] [Telemetry] insert failed: Could not find the table 'public.app_events' in the schema cache @ http://localhost:8765/supabaseClient.js?v=1.5:100
+[   14800ms] [ERROR] Loading the image 'https://cf.channel.io/avatar/emoji/popcorn.fac484.png' violates the following Content Security Policy directive: "img-src 'self' data: blob: https://*.googleusercontent.com https://www.google-analytics.com https://www.googletagmanager.com https://cdn.channel.io https://snuhmate.com https://tally.so". The action has been blocked. @ http://localhost:8765/index.html:0
+[   15003ms] [ERROR] Loading the image 'https://cf.channel.io/thumb/200x200/pub-file/235603/69d781cd271a24745fd4/tmp-3311744764' violates the following Content Security Policy directive: "img-src 'self' data: blob: https://*.googleusercontent.com https://www.google-analytics.com https://www.googletagmanager.com https://cdn.channel.io https://snuhmate.com https://tally.so". The action has been blocked. @ http://localhost:8765/index.html:0
+[   15004ms] [ERROR] Loading the image 'https://cf.channel.io/asset/plugin/images/default-channel.png' violates the following Content Security Policy directive: "img-src 'self' data: blob: https://*.googleusercontent.com https://www.google-analytics.com https://www.googletagmanager.com https://cdn.channel.io https://snuhmate.com https://tally.so". The action has been blocked. @ http://localhost:8765/index.html:0
+[   15105ms] [ERROR] Loading the image 'https://cf.channel.io/thumb/200x200/pub-file/235603/69d781829b878fa4d49e/tmp-1758812416' violates the following Content Security Policy directive: "img-src 'self' data: blob: https://*.googleusercontent.com https://www.google-analytics.com https://www.googletagmanager.com https://cdn.channel.io https://snuhmate.com https://tally.so". The action has been blocked. @ http://localhost:8765/index.html:0
+[   15105ms] [ERROR] Loading the image 'https://cf.channel.io/asset/plugin/images/default-manager.png' violates the following Content Security Policy directive: "img-src 'self' data: blob: https://*.googleusercontent.com https://www.google-analytics.com https://www.googletagmanager.com https://cdn.channel.io https://snuhmate.com https://tally.so". The action has been blocked. @ http://localhost:8765/index.html:0
+[   20241ms] [ERROR] Loading the image 'https://cf.channel.io/thumb/200x200/pub-file/235603/69d781829b878fa4d49e/tmp-1758812416' violates the following Content Security Policy directive: "img-src 'self' data: blob: https://*.googleusercontent.com https://www.google-analytics.com https://www.googletagmanager.com https://cdn.channel.io https://snuhmate.com https://tally.so". The action has been blocked. @ http://localhost:8765/index.html:0
+[   20242ms] [ERROR] Loading the image 'https://cf.channel.io/asset/plugin/images/default-manager.png' violates the following Content Security Policy directive: "img-src 'self' data: blob: https://*.googleusercontent.com https://www.google-analytics.com https://www.googletagmanager.com https://cdn.channel.io https://snuhmate.com https://tally.so". The action has been blocked. @ http://localhost:8765/index.html:0
+[   36435ms] RangeError: Maximum call stack size exceeded
+    at window._refreshRoleSuggestions (http://localhost:8765/app.js?v=1.9:1:1)
+    at window._refreshRoleSuggestions (http://localhost:8765/app.js?v=1.9:1:1)
+    at window._refreshRoleSuggestions (http://localhost:8765/app.js?v=1.9:1:1)
+    at window._refreshRoleSuggestions (http://localhost:8765/app.js?v=1.9:1:1)
+    at window._refreshRoleSuggestions (http://localhost:8765/app.js?v=1.9:1:1)
+    at window._refreshRoleSuggestions (http://localhost:8765/app.js?v=1.9:1:1)
+    at window._refreshRoleSuggestions (http://localhost:8765/app.js?v=1.9:1:1)
+    at window._refreshRoleSuggestions (http://localhost:8765/app.js?v=1.9:1:1)
+    at window._refreshRoleSuggestions (http://localhost:8765/app.js?v=1.9:1:1)
+    at window._refreshRoleSuggestions (http://localhost:8765/app.js?v=1.9:1:1)
+[   39537ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://ulamqyarenzjdxlisijl.supabase.co/rest/v1/app_events?columns=%22anon_id%22%2C%22event_type%22%2C%22payload%22%2C%22app_version%22%2C%22user_agent%22%2C%22ts%22:0
+[   39537ms] [WARNING] [Telemetry] insert failed: Could not find the table 'public.app_events' in the schema cache @ http://localhost:8765/supabaseClient.js?v=1.5:100

@@ -194,9 +194,18 @@ const SALARY_PARSER = (() => {
         const cell = String(row[c] || '').trim();
         LABEL_MAP.forEach(([regex, key]) => {
           if (regex.test(cell) && !info[key]) {
-            const v1 = row[c + 1], v2 = row[c + 2];
-            const v = (v1 != null && String(v1).trim()) ? v1 : v2;
-            if (v != null && String(v).trim()) info[key] = String(v).trim();
+            // 라벨 다음 셀부터 최대 5칸까지 훑어서 첫 비어있지 않은 값 사용
+            // (SNUH 급여명세서 CSV는 라벨~값 사이에 빈 셀 2~3개 있음: 예 "소 속" @ c → "핵의학과" @ c+3)
+            for (let k = 1; k <= 5 && (c + k) < row.length; k++) {
+              const v = row[c + k];
+              if (v != null && String(v).trim()) {
+                const s = String(v).trim();
+                // 다른 라벨을 값으로 집지 않도록 가드
+                if (LABEL_MAP.some(([re]) => re.test(s))) break;
+                info[key] = s;
+                break;
+              }
+            }
           }
         });
       }
@@ -366,8 +375,36 @@ const SALARY_PARSER = (() => {
     let fullText = '';
     rows.forEach(r => { fullText += r.map(it => it.str).join(' ') + '\n'; });
 
-    // ── 개인정보 추출 (텍스트 기반) ──
+    // ── 개인정보 추출 ──
+    // 1차: 행 단위 라벨-값 스캔 (CSV 로직과 일관, 여러 토큰 건너뛰기 대응)
     const employeeInfo = {};
+    const LABEL_MAP = [
+      [/개인번호|사원번호/, 'employeeNumber'],
+      [/^성\s*명$|^이름$/, 'name'],
+      [/^직\s*종$|^직책$/, 'jobType'],
+      [/^소\s*속$|^부서$/, 'department'],
+      [/급여연차|^호봉$/, 'payGrade'],
+      [/입사년월|입사일/, 'hireDate'],
+    ];
+    rows.forEach(row => {
+      row.forEach((cell, c) => {
+        const s = (cell.str || '').trim();
+        if (!s) return;
+        LABEL_MAP.forEach(([re, key]) => {
+          if (!employeeInfo[key] && re.test(s)) {
+            for (let k = 1; k <= 6 && (c + k) < row.length; k++) {
+              const v = (row[c + k].str || '').trim();
+              if (!v) continue;
+              // 다음 라벨을 값으로 오인하지 않도록
+              if (LABEL_MAP.some(([r2]) => r2.test(v))) break;
+              employeeInfo[key] = v;
+              break;
+            }
+          }
+        });
+      });
+    });
+    // 2차 fallback: fullText 정규식 (이미 채워진 키는 유지)
     const infoPatterns = [
       [/개인번호\s+(\d+)/, 'employeeNumber'],
       [/성\s*명\s+(\S+)/, 'name'],
@@ -376,6 +413,7 @@ const SALARY_PARSER = (() => {
       [/입사(?:년월|일)\s+([\d][\d./-]+[\d])/, 'hireDate'],
     ];
     infoPatterns.forEach(([re, key]) => {
+      if (employeeInfo[key]) return;
       const m = fullText.match(re);
       if (m) employeeInfo[key] = m[1];
     });
@@ -1079,9 +1117,18 @@ const SALARY_PARSER = (() => {
     const grossPay = salaryItems.reduce((s, i) => s + (i.amount || 0), 0);
     const totalDeduction = deductionItems.reduce((s, i) => s + (i.amount || 0), 0);
 
+    // employeeInfo: 2회차 PDF가 일부 필드를 놓쳐도 1회차 값이 살아남도록 필드별 fallback
+    const prevInfo = prev.employeeInfo || {};
+    const nextInfo = next.employeeInfo || {};
+    const employeeInfo = { ...prevInfo };
+    Object.keys(nextInfo).forEach(k => {
+      if (nextInfo[k]) employeeInfo[k] = nextInfo[k];
+    });
+
     return {
       ...prev,
       ...next,
+      employeeInfo,
       salaryItems,
       deductionItems,
       workStats,
@@ -1153,11 +1200,13 @@ const SALARY_PARSER = (() => {
       }
     });
 
-    // 입사일도 반영
-    if (data.employeeInfo?.hireDate && !profile.hireDate) {
-      profile.hireDate = data.employeeInfo.hireDate;
-      changed = true;
-    }
+    // 직원 정보 반영 (입사일/부서/직종/사번) — 프로필이 비어있을 때만
+    const ei = data.employeeInfo || {};
+    if (ei.hireDate && !profile.hireDate) { profile.hireDate = ei.hireDate; changed = true; applied.push({ name: '입사일', amount: 0, note: ei.hireDate }); }
+    if (ei.department && !profile.department) { profile.department = ei.department; changed = true; applied.push({ name: '부서', amount: 0, note: ei.department }); }
+    if (ei.jobType && !profile.jobType) { profile.jobType = ei.jobType; changed = true; applied.push({ name: '직종', amount: 0, note: ei.jobType }); }
+    if (ei.employeeNumber && !profile.employeeNumber) { profile.employeeNumber = String(ei.employeeNumber).trim(); changed = true; }
+    if (ei.name && !profile.name) { profile.name = ei.name; changed = true; }
 
     // 가족수당 관련 항목 자동 반영
     const payslipMap = {};

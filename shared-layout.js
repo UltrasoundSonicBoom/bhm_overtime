@@ -51,7 +51,7 @@
   function _makeGoogleGSvg() {
     var NS = 'http://www.w3.org/2000/svg';
     var svg = document.createElementNS(NS, 'svg');
-    svg.setAttribute('width', '18'); svg.setAttribute('height', '18');
+    svg.setAttribute('width', '12'); svg.setAttribute('height', '12');
     svg.setAttribute('viewBox', '0 0 18 18'); svg.setAttribute('aria-hidden', 'true');
     var g = document.createElementNS(NS, 'g');
     g.setAttribute('fill', 'none');
@@ -209,10 +209,15 @@
     }
     // 로고 이미지: 44px (컴팩트, 서브타이틀 제거로 헤더 높이 줄임)
     var img = el('img', { src: 'logo.png', alt: 'SNUH Mate' });
-    img.style.cssText = 'width:44px;height:44px;object-fit:contain;flex-shrink:0;border-radius:8px;';
+    img.style.cssText = 'width:56px;height:56px;object-fit:contain;flex-shrink:0;border-radius:10px;';
     logo.appendChild(img);
+    var titleWrap = el('div', { className: 'logo-title-wrap' });
+    titleWrap.style.cssText = 'display:flex;flex-direction:column;min-width:0;';
     var h1 = el('h1', { className: 'logo-main-title', textContent: '슬기로운 병원 생활 메이트' });
-    logo.appendChild(h1);
+    var sub = el('div', { className: 'logo-sub-title', textContent: '2026.5.1 정식 오픈' });
+    titleWrap.appendChild(h1);
+    titleWrap.appendChild(sub);
+    logo.appendChild(titleWrap);
     topRow.appendChild(logo);
 
     // Header right
@@ -331,7 +336,7 @@
   // ── Init: 헤더/푸터 즉시 렌더, ChannelIO는 DOM 준비 후 ──
   renderSharedHeader();
   renderSharedFooter();
-  _renderGuestNoticeBanner();  // 게스트 배너: 헤더 바로 아래 (비로그인 + 미확인 시만)
+  // _renderGuestNoticeBanner();  // 사용자 요청으로 비활성화 (2026-04-15)
 
   // AppLock: DOM 준비 후 잠금 오버레이 체크
   // appLock.js가 먼저 로드된 경우에만 실행 (shared-layout.js는 여러 페이지에서 사용)

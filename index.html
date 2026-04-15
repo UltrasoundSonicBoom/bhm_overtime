@@ -314,9 +314,9 @@
     <div class="tab-content" id="tab-home">
 
       <!-- 프로필 미저장 힌트 배너 -->
-      <div id="homeProfileNudge" style="display:none; border:1px solid var(--accent-amber); border-radius:8px; padding:10px 14px; margin-bottom:12px; font-size:var(--text-body-small); color:var(--text-muted);">
-        아직 개인정보가 없어요 — 직종·호봉을 입력하면 시간외 수당이 자동 계산됩니다.
-        <button onclick="switchTab('profile')" class="btn btn-sm" style="margin-left:8px;">지금 입력 →</button>
+      <div id="homeProfileNudge" class="info-note-banner" style="display:none;">
+        <span>📌</span>
+        <span>아직 개인정보가 없어요 — <a onclick="switchTab('profile')">직종·호봉</a>을 입력하면 시간외 수당이 자동 계산됩니다.</span>
       </div>
 
       <!-- 내 현황 요약 카드 -->
@@ -1396,6 +1396,16 @@
 
     <!-- ═══════════ 👤 개인정보 ═══════════ -->
     <div class="tab-content" id="tab-profile">
+      <!-- 책갈피 (개인 정보 / 근무 정보) -->
+      <nav class="pay-bookmark-tabs" id="profileBookmarkBar" role="tablist" aria-label="정보 구분">
+        <button id="bmPersonal" class="pay-bookmark-tab active" data-subtab="profile-personal"
+          role="tab" aria-selected="true" onclick="switchProfileSection('personal')">👤 개인 정보</button>
+        <button id="bmWork" class="pay-bookmark-tab" data-subtab="profile-work"
+          role="tab" aria-selected="false" onclick="switchProfileSection('work')">💼 근무 정보</button>
+      </nav>
+      <div class="pay-tab-accent" id="profileTabAccent" style="background:#4f46e5;"></div>
+
+      <div id="profileSectionPersonal">
       <div class="card" style="max-width:600px; margin:0 auto;">
         <div class="card-title"><span class="icon indigo">👤</span> <span id="pfTitleName">내 정보</span>
           <span class="badge emerald" id="profileStatus">미저장</span>
@@ -1457,6 +1467,10 @@
             </div>
           </div>
           <div class="form-row">
+            <div class="form-group">
+              <label>부서 <small style="color:var(--text-muted)">(예: 핵의학과)</small></label>
+              <input type="text" id="pfDepartment" placeholder="예: 핵의학과, 중환자실" autocomplete="off">
+            </div>
             <div class="form-group">
               <label>직종</label>
               <select id="pfJobType" onchange="updateProfileGrades()"></select>
@@ -1789,24 +1803,19 @@
         </div>
       </div>
 
+      </div><!-- /profileSectionPersonal -->
+
+      <div id="profileSectionWork" style="display:none;">
       <!-- E1: 근무이력 섹션 -->
-      <div class="card" id="workHistoryCard" style="max-width:600px; margin:20px auto 0;">
+      <div class="card" id="workHistoryCard" style="max-width:600px; margin:0 auto;">
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
           <div class="card-title" style="font-size:var(--text-body-large); margin:0;">
             <span class="icon indigo">💼</span> 근무이력
           </div>
           <button id="addWorkHistoryBtn" class="btn btn-primary" style="padding:6px 14px; font-size:var(--text-body-small);"
-            onclick="openWorkHistorySheet()">+ 추가</button>
+            onclick="openWorkHistorySheet({__newPost:true})">+ 근무지 추가</button>
         </div>
         <div id="workHistoryList"></div>
-        <button class="btn" id="workHistoryAICTA" onclick="generateAIResume()"
-          style="display:none; width:100%; margin-top:12px; padding:10px;
-                 background:none; border:2px solid var(--accent-amber,#f59e0b);
-                 box-shadow:3px 3px 0 var(--accent-amber,#f59e0b);
-                 border-radius:6px; font-size:var(--text-body-normal);
-                 font-weight:600; color:var(--accent-amber,#f59e0b); cursor:pointer;">
-          AI 이력서 생성 →
-        </button>
       </div>
 
       <!-- 근무이력 입력 바텀시트 -->
@@ -1815,14 +1824,22 @@
         <div style="position:absolute; bottom:0; left:0; right:0; background:var(--bg-card,#fff);
              border-radius:16px 16px 0 0; padding:20px 16px 32px; max-height:85vh; overflow-y:auto;">
           <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
-            <span style="font-size:var(--text-body-large); font-weight:600;" id="workHistorySheetTitle">근무이력 추가</span>
+            <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
+              <span style="font-size:var(--text-body-large); font-weight:600;" id="workHistorySheetTitle">근무이력 추가</span>
+              <span id="workHistorySheetBadge" style="display:none; font-size:0.68rem; font-weight:700; padding:3px 8px; border-radius:10px; background:rgba(245,158,11,.15); color:#d97706;"></span>
+            </div>
             <button onclick="closeWorkHistorySheet()" style="background:none; border:none; font-size:1.4rem; cursor:pointer; line-height:1; padding:4px 8px;">×</button>
           </div>
           <input type="hidden" id="whEditId" value="">
           <div style="display:flex; flex-direction:column; gap:12px;">
             <div>
-              <label style="font-size:var(--text-body-small); font-weight:600; display:block; margin-bottom:4px;">부서명 / 직장명 *</label>
-              <input id="whDept" type="text" placeholder="예: 핵의학과, 중환자실" class="form-input"
+              <label style="font-size:var(--text-body-small); font-weight:600; display:block; margin-bottom:4px;">직장명 *</label>
+              <input id="whWorkplace" type="text" placeholder="예: 서울대학교병원" class="form-input"
+                style="width:100%; padding:10px 12px; border:1px solid var(--border-glass); border-radius:8px; font-size:var(--text-body-normal);">
+            </div>
+            <div>
+              <label style="font-size:var(--text-body-small); font-weight:600; display:block; margin-bottom:4px;">부서명 *</label>
+              <input id="whDept" type="text" placeholder="예: 핵의학과, 중환자실, 101병동" class="form-input"
                 style="width:100%; padding:10px 12px; border:1px solid var(--border-glass); border-radius:8px; font-size:var(--text-body-normal);">
             </div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
@@ -1830,6 +1847,7 @@
                 <label style="font-size:var(--text-body-small); font-weight:600; display:block; margin-bottom:4px;">시작 (년-월)</label>
                 <input id="whFrom" type="month" class="form-input"
                   style="width:100%; padding:10px 12px; border:1px solid var(--border-glass); border-radius:8px; font-size:var(--text-body-normal);">
+                <small id="whFromHint" style="display:none; margin-top:4px; color:var(--accent-amber,#d97706); font-size:0.7rem;"></small>
               </div>
               <div>
                 <label style="font-size:var(--text-body-small); font-weight:600; display:block; margin-bottom:4px;">종료 (년-월)</label>
@@ -1839,12 +1857,20 @@
             </div>
             <div>
               <label style="font-size:var(--text-body-small); font-weight:600; display:block; margin-bottom:4px;">직무</label>
-              <input id="whRole" type="text" placeholder="예: 수간호사, 전담간호사" class="form-input"
+              <input id="whRole" type="text" list="whRoleSuggestions" placeholder="직종에 따라 자동 추천됩니다" class="form-input"
                 style="width:100%; padding:10px 12px; border:1px solid var(--border-glass); border-radius:8px; font-size:var(--text-body-normal);">
+              <datalist id="whRoleSuggestions"></datalist>
+              <small id="whRoleHint" style="display:block; margin-top:4px; color:var(--text-muted); font-size:0.72rem;"></small>
             </div>
             <div>
-              <label style="font-size:var(--text-body-small); font-weight:600; display:block; margin-bottom:4px;">주요 역할 (선택)</label>
-              <textarea id="whDesc" rows="3" placeholder="간략한 업무 내용..."
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+                <label style="font-size:var(--text-body-small); font-weight:600;">주요 역할 (선택)</label>
+                <button type="button" onclick="autofillJobDesc()" id="whAutofillBtn"
+                  style="font-size:0.7rem; padding:3px 8px; border:1px solid var(--accent-indigo,#6366f1);
+                         background:rgba(99,102,241,.08); color:var(--accent-indigo,#6366f1);
+                         border-radius:6px; cursor:pointer;">✨ 표준 업무 자동 채움</button>
+              </div>
+              <textarea id="whDesc" rows="4" placeholder="간략한 업무 내용..."
                 style="width:100%; padding:10px 12px; border:1px solid var(--border-glass); border-radius:8px; font-size:var(--text-body-normal); resize:none;"></textarea>
             </div>
             <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="saveWorkHistoryEntry()">저장</button>
@@ -1852,6 +1878,69 @@
         </div>
       </div>
 
+
+      <!-- 이력서 섹션 입력 바텀시트 (학력/자격/논문 공용) -->
+      <div id="resumeItemSheet" style="display:none; position:fixed; inset:0; z-index:9100;
+           background:rgba(0,0,0,0.5);" onclick="if(event.target===this)closeResumeItemSheet()">
+        <div style="position:absolute; bottom:0; left:0; right:0; background:var(--bg-card,#fff);
+             border-radius:16px 16px 0 0; padding:20px 16px 32px; max-height:85vh; overflow-y:auto;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+            <span style="font-size:var(--text-body-large); font-weight:600;" id="resumeItemSheetTitle">항목 추가</span>
+            <button onclick="closeResumeItemSheet()" style="background:none; border:none; font-size:1.4rem; cursor:pointer; line-height:1; padding:4px 8px;">×</button>
+          </div>
+          <div id="resumeItemFields" style="display:flex; flex-direction:column; gap:12px;"></div>
+          <button class="btn btn-primary" style="width:100%; padding:12px; margin-top:12px;" onclick="saveResumeItem()">저장</button>
+        </div>
+      </div>
+
+      <!-- 로테이션 입력 바텀시트 -->
+      <div id="rotationSheet" style="display:none; position:fixed; inset:0; z-index:9100;
+           background:rgba(0,0,0,0.5);" onclick="if(event.target===this)closeRotationSheet()">
+        <div style="position:absolute; bottom:0; left:0; right:0; background:var(--bg-card,#fff);
+             border-radius:16px 16px 0 0; padding:20px 16px 32px; max-height:85vh; overflow-y:auto;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+            <span style="font-size:var(--text-body-large); font-weight:600;" id="rotationSheetTitle">로테이션 추가</span>
+            <button onclick="closeRotationSheet()" style="background:none; border:none; font-size:1.4rem; cursor:pointer; line-height:1; padding:4px 8px;">×</button>
+          </div>
+          <p id="rotationParentHint" style="font-size:0.72rem; color:var(--text-muted); margin:0 0 14px;"></p>
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <div>
+              <label style="font-size:var(--text-body-small); font-weight:600; display:block; margin-bottom:4px;">근무방 / 파트 *</label>
+              <input id="rotRoom" type="text" placeholder="예: PET실, 감마실, 갑상선치료실" class="form-input"
+                style="width:100%; padding:10px 12px; border:1px solid var(--border-glass); border-radius:8px; font-size:var(--text-body-normal);">
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+              <div>
+                <label style="font-size:var(--text-body-small); font-weight:600; display:block; margin-bottom:4px;">시작 (년-월)</label>
+                <input id="rotFrom" type="month" class="form-input"
+                  style="width:100%; padding:10px 12px; border:1px solid var(--border-glass); border-radius:8px; font-size:var(--text-body-normal);">
+              </div>
+              <div>
+                <label style="font-size:var(--text-body-small); font-weight:600; display:block; margin-bottom:4px;">종료 (년-월)</label>
+                <input id="rotTo" type="month" class="form-input" placeholder="진행 중이면 빈칸"
+                  style="width:100%; padding:10px 12px; border:1px solid var(--border-glass); border-radius:8px; font-size:var(--text-body-normal);">
+              </div>
+            </div>
+            <div>
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+                <label style="font-size:var(--text-body-small); font-weight:600;">수행 업무 (선택)</label>
+                <button type="button" onclick="autofillRotationTasks()"
+                  style="font-size:0.7rem; padding:3px 8px; border:1px solid var(--accent-indigo,#6366f1);
+                         background:rgba(99,102,241,.08); color:var(--accent-indigo,#6366f1);
+                         border-radius:6px; cursor:pointer;">✨ 표준 업무 자동 채움</button>
+              </div>
+              <textarea id="rotTasks" rows="4" placeholder="줄바꿈으로 항목 구분&#10;예: PET-CT 검사 진행&#10;FDG 합성 보조&#10;환자 안내 및 교육"
+                style="width:100%; padding:10px 12px; border:1px solid var(--border-glass); border-radius:8px; font-size:var(--text-body-normal); resize:vertical;"></textarea>
+            </div>
+            <div id="rotActions" style="display:grid; grid-template-columns:1fr; gap:8px;">
+              <button id="rotDeleteBtn" type="button" style="display:none; width:100%; padding:12px; border:1px solid var(--accent-rose,#f43f5e); color:var(--accent-rose,#f43f5e); background:transparent; border-radius:8px; font-weight:600; cursor:pointer;" onclick="deleteRotationEntry()">삭제</button>
+              <button id="rotSaveBtn" class="btn btn-primary" style="width:100%; padding:12px;" onclick="saveRotationEntry()">저장</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      </div><!-- /profileSectionWork -->
 
     </div>
 
@@ -1910,6 +1999,8 @@
   <script src="salary-parser.js?v=2.4"></script>
   <script src="salary-parser-test.js?v=1.0"></script>
   <script src="payroll-views.js?v=1.1"></script>
+  <script src="resume.js?v=1.0"></script>
+  <script src="job-templates.js?v=1.0"></script>
   <script src="app.js?v=1.9"></script>
   <script>
     // ── 테마 전환 시스템 ──
