@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>급여명세서 HTML Preview</title>
+  <style>
+    :root {
+      --bg: #f6f4ef;
+      --panel: #fffdfa;
+      --panel-strong: #ffffff;
+      --line: #ddd7cb;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --accent: #b7791f;
+      --accent-soft: #fff4df;
+      --ok: #166534;
+      --ok-soft: #eefbf1;
+      --warn: #9a3412;
+      --warn-soft: #fff4ed;
+      --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      --radius: 8px;
+      --radius-lg: 16px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .page {
+      width: min(1440px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 24px 0 48px;
+    }
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: end;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 24px;
+    }
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 42px);
+      line-height: 1.06;
+      letter-spacing: 0;
+    }
+    .hero p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      max-width: 760px;
+      line-height: 1.6;
+    }
+    .meta {
+      color: var(--muted);
+      font-size: 13px;
+      text-align: right;
+      white-space: nowrap;
+    }
+    .doc-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .doc-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      cursor: pointer;
+      transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+    }
+    .doc-card:hover,
+    .doc-card.is-active {
+      transform: translateY(-2px);
+      border-color: rgba(183, 121, 31, 0.55);
+      box-shadow: 0 14px 34px rgba(183, 121, 31, 0.12);
+    }
+    .thumb {
+      width: 100%;
+      aspect-ratio: 0.72;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      background: linear-gradient(180deg, #f7f7f7, #ece8dd);
+      display: grid;
+      place-items: center;
+      margin-bottom: 12px;
+      position: relative;
+    }
+    .thumb canvas {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    .thumb .loading {
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .doc-card h2 {
+      margin: 0 0 6px;
+      font-size: 16px;
+      line-height: 1.3;
+    }
+    .doc-card .sub {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+    .mini-stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .mini-stat {
+      border-radius: 10px;
+      background: #f8f7f3;
+      padding: 8px 10px;
+    }
+    .mini-stat strong {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 3px;
+      font-weight: 600;
+    }
+    .mini-stat span {
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .detail-shell {
+      display: grid;
+      grid-template-columns: minmax(320px, 1.15fr) minmax(300px, 0.85fr);
+      gap: 18px;
+      align-items: start;
+      margin-bottom: 18px;
+    }
+    .panel {
+      border: 1px solid var(--line);
+      background: var(--panel-strong);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+      min-height: 320px;
+    }
+    .panel h3 {
+      margin: 0 0 14px;
+      font-size: 18px;
+    }
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: start;
+      margin-bottom: 12px;
+    }
+    .panel-head .muted {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .pdf-pages {
+      display: grid;
+      gap: 16px;
+    }
+    .pdf-page {
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #faf9f5;
+      padding: 10px;
+    }
+    .pdf-page canvas {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 6px;
+    }
+    .full-preview-panel {
+      border: 1px solid var(--line);
+      background: var(--panel-strong);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+    .payslip {
+      display: grid;
+      gap: 18px;
+    }
+    .a4-sheet {
+      width: min(100%, 794px);
+      margin: 0 auto;
+      background: white;
+      border: 1px solid #aeb7c3;
+      box-shadow: 0 14px 36px rgba(15, 23, 42, 0.12);
+      padding: 18px 18px 20px;
+      aspect-ratio: 210 / 297;
+      overflow: hidden;
+    }
+    .sheet-title-row {
+      display: grid;
+      grid-template-columns: 110px 1fr 230px;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .sheet-chip,
+    .sheet-date-box {
+      border: 1px solid #4b5563;
+      background: #f3f4f6;
+      color: #111827;
+      font-weight: 700;
+      font-size: 18px;
+      text-align: center;
+      padding: 6px 8px;
+    }
+    .sheet-date-box {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      padding: 0;
+    }
+    .sheet-date-box span {
+      padding: 8px 10px;
+      border-right: 1px solid #4b5563;
+    }
+    .sheet-date-box strong {
+      padding: 8px 10px;
+      background: #d1d5db;
+      border-right: 1px solid #4b5563;
+    }
+    .sheet-heading {
+      text-align: center;
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: 0;
+      color: #111827;
+    }
+    .sheet-info-table,
+    .sheet-grid-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      color: #111827;
+    }
+    .sheet-info-table {
+      margin-bottom: 16px;
+    }
+    .sheet-info-table th,
+    .sheet-info-table td,
+    .sheet-grid-table th,
+    .sheet-grid-table td {
+      border: 1px solid #4b5563;
+      padding: 0;
+      text-align: center;
+      vertical-align: middle;
+    }
+    .sheet-info-table th {
+      background: #e5e7eb;
+      font-size: 12px;
+      font-weight: 800;
+      height: 32px;
+    }
+    .sheet-info-table td {
+      font-size: 12px;
+      font-weight: 700;
+      height: 32px;
+      padding: 4px 6px;
+    }
+    .sheet-grid-table {
+      margin-bottom: 16px;
+    }
+    .section-side {
+      width: 54px;
+      background: #e5e7eb;
+      font-weight: 800;
+      font-size: 16px;
+      letter-spacing: 0;
+    }
+    .section-side .stack {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 100%;
+      padding: 14px 0;
+    }
+    .grid-name-cell {
+      background: #f3f4f6;
+      height: 30px;
+      font-size: 9.5px;
+      font-weight: 800;
+      padding: 3px 4px;
+      line-height: 1.08;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
+    .grid-value-cell {
+      background: #fff;
+      height: 26px;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 4px;
+      font-variant-numeric: tabular-nums;
+    }
+    .grid-value-cell.is-empty {
+      color: #c0c7d1;
+    }
+    .page2-box {
+      border: 1px solid #4b5563;
+      height: 100%;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+    .page2-head {
+      padding: 8px 10px;
+      background: #f3f4f6;
+      border-bottom: 1px solid #4b5563;
+      font-size: 14px;
+      font-weight: 800;
+      text-align: center;
+    }
+    .page2-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+    .page2-table th,
+    .page2-table td {
+      border: 1px solid #4b5563;
+      padding: 6px 8px;
+      font-size: 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+    .page2-table th {
+      background: #f3f4f6;
+      text-align: center;
+      font-weight: 800;
+    }
+    .page2-table td.num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      padding: 8px 8px;
+      border: 1px solid #dde3eb;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #f6f8fb;
+      font-weight: 700;
+    }
+    td.num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .table-stack {
+      display: grid;
+      gap: 14px;
+    }
+    .source-rows {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .source-row {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 12px;
+      color: #475569;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .stats-list,
+    .structured-list {
+      display: grid;
+      gap: 10px;
+    }
+    .stat-card {
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      background: #fafaf9;
+      padding: 10px 12px;
+    }
+    .stat-card strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .stat-card span {
+      font-size: 20px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #f3f4f6;
+      color: #374151;
+      margin: 0 8px 8px 0;
+    }
+    .tag.ok {
+      background: var(--ok-soft);
+      color: var(--ok);
+    }
+    .tag.warn {
+      background: var(--warn-soft);
+      color: var(--warn);
+    }
+    .empty {
+      color: var(--muted);
+      font-size: 13px;
+      padding: 8px 0;
+    }
+    @media (max-width: 1180px) {
+      .detail-shell {
+        grid-template-columns: 1fr;
+      }
+      .a4-sheet {
+        aspect-ratio: auto;
+      }
+    }
+    @media (max-width: 640px) {
+      .page {
+        width: min(100vw - 20px, 1440px);
+        padding-top: 18px;
+      }
+      .hero {
+        display: block;
+      }
+      .meta {
+        text-align: left;
+        margin-top: 8px;
+      }
+      .summary-strip {
+        grid-template-columns: 1fr;
+      }
+      .info-grid,
+      .mini-stats {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div>
+        <h1>급여명세서 HTML Preview</h1>
+        <p>5개 실파일을 V2 파서로 읽은 뒤, 원본 PDF와 HTML 복원본과 구조화 결과를 한 화면에서 비교합니다. 선택 카드에서 문서를 고르면 실제 파싱이 끝난 항목과 금액, 근무기록, 상세 계산 내역까지 함께 확인할 수 있습니다.</p>
+      </div>
+      <div class="meta" id="generatedAt">데이터 로드 중...</div>
+    </header>
+
+    <section class="doc-grid" id="docGrid"></section>
+
+    <section class="detail-shell">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h3>원본 PDF</h3>
+            <div class="muted" id="pdfMeta">문서를 선택하세요.</div>
+          </div>
+        </div>
+        <div class="pdf-pages" id="pdfPages"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h3>파싱 결과</h3>
+            <div class="muted">실제 추출 완료된 항목과 블록 통계를 요약합니다.</div>
+          </div>
+        </div>
+        <div id="structuredPreview" class="empty">문서를 선택하세요.</div>
+      </div>
+    </section>
+
+    <section class="full-preview-panel">
+      <div class="panel-head">
+        <div>
+          <h3>HTML 복원본</h3>
+          <div class="muted">원본 PDF 1페이지 레이아웃을 A4 형식으로 그대로 다시 그립니다.</div>
+        </div>
+      </div>
+      <div id="htmlPreview" class="empty">문서를 선택하세요.</div>
+    </section>
+  </div>
+
+  <script type="module" src="./preview.js"></script>
+</body>
+</html>

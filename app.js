@@ -5553,6 +5553,18 @@ function renderPayslip(data, ym, profileUpdated, stableRes) {
     html += `</div>`;
   }
 
+  const settlementItems = data.settlementAdjustmentItems || data.settlementItems || [];
+  if (settlementItems.length > 0) {
+    html += `<p style="font-size:var(--text-body-normal); color:var(--accent-amber); font-weight:600; margin:12px 0 6px;">▸ 정산 항목</p>`;
+    html += `<div style="display:flex; flex-direction:column; gap:4px;">`;
+    settlementItems.forEach(item => {
+      const name = item.name || item.originalName || item.canonicalName;
+      const amount = item.amount ?? item.value;
+      html += `<div class="result-row"><span class="key">${escapeHtml(name)}</span><span class="val" style="color:var(--accent-amber);">${fmt(amount)}</span></div>`;
+    });
+    html += `</div>`;
+  }
+
   // 근무 현황 (workStats)
   const ws = (data.workStats || []);
   if (ws.length > 0) {
@@ -5567,6 +5579,27 @@ function renderPayslip(data, ym, profileUpdated, stableRes) {
     ws.forEach(item => {
       const dim = item.value === 0 ? ' style="opacity:0.45;"' : '';
       html += `<div class="result-row"${dim}><span class="key">${item.name}</span><span class="val">${fmtStat(item.name, item.value)}</span></div>`;
+    });
+    html += `</div>`;
+  }
+
+  const detailLines = data.detailLines || [];
+  if (detailLines.length > 0) {
+    html += `<p style="font-size:var(--text-body-normal); color:var(--accent-emerald); font-weight:600; margin:12px 0 6px;">▸ 상세 계산 내역</p>`;
+    html += `<div style="display:flex; flex-direction:column; gap:4px;">`;
+    detailLines.forEach(line => {
+      const note = line.formulaText ? `<div style="font-size:var(--text-body-small); color:var(--text-muted); margin-top:2px;">${escapeHtml(line.formulaText)}</div>` : '';
+      html += `<div class="result-row"><span class="key">${line.section} · ${escapeHtml(line.itemName)}</span><span class="val">${fmt(line.amount)}</span></div>${note}`;
+    });
+    html += `</div>`;
+  }
+
+  const unknownItems = data.unknownItems || [];
+  if (unknownItems.length > 0) {
+    html += `<p style="font-size:var(--text-body-normal); color:var(--text-muted); font-weight:600; margin:12px 0 6px;">▸ 미분류 원문 항목</p>`;
+    html += `<div style="display:flex; flex-direction:column; gap:4px;">`;
+    unknownItems.forEach(item => {
+      html += `<div class="result-row" style="opacity:0.75;"><span class="key">${escapeHtml(item.originalName || item.canonicalName || item.name)}</span><span class="val">${item.unit === 'krw' ? fmt(item.value) : escapeHtml(String(item.value))}</span></div>`;
     });
     html += `</div>`;
   }
@@ -5834,6 +5867,28 @@ function renderPayslipMgmt() {
       dedTotal.appendChild(dk);
       dedTotal.appendChild(dv);
       body.appendChild(dedTotal);
+    }
+
+    const settlementItems = data.settlementAdjustmentItems || data.settlementItems || [];
+    if (settlementItems.length > 0) {
+      const settlementLabel = document.createElement('p');
+      settlementLabel.style.cssText = 'font-size:var(--text-body-normal); color:var(--accent-amber); font-weight:600; margin:12px 0 6px;';
+      settlementLabel.textContent = '▸ 정산 항목';
+      body.appendChild(settlementLabel);
+      settlementItems.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'result-row';
+        const k = document.createElement('span');
+        k.className = 'key';
+        k.textContent = item.name || item.originalName || item.canonicalName;
+        const v = document.createElement('span');
+        v.className = 'val';
+        v.style.color = 'var(--accent-amber)';
+        v.textContent = fmt(item.amount ?? item.value ?? 0);
+        row.appendChild(k);
+        row.appendChild(v);
+        body.appendChild(row);
+      });
     }
 
     // ── 실지급액 요약 ──
@@ -7431,5 +7486,3 @@ function renderPayslipVerifyResult(parsedData, calcResult) {
 function startTutorial() {
   window.location.href = './tutorial.html';
 }
-
-

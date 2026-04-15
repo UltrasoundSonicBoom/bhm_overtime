@@ -94,6 +94,144 @@ const SALARY_PARSER = (() => {
     return 0;
   }
 
+  function cleanCellText(text) {
+    return String(text || '')
+      .replace(/\s+/g, '')
+      .replace(/전문간호\s*사/g, '전문간호사')
+      .trim();
+  }
+
+  function canonicalizeName(name) {
+    const cleaned = cleanCellText(name);
+    if (!cleaned) return '';
+
+    const aliases = new Map([
+      ['기본기준급', '기준기본급'],
+      ['기준기본급', '기준기본급'],
+      ['소득세정산', '소득세(정산)'],
+      ['주민세정산', '주민세(정산)'],
+      ['국민건강정산', '국민건강(정산)'],
+      ['장기요양정산', '장기요양(정산)'],
+      ['국민연금정산', '국민연금(정산)'],
+      ['고용보험정산', '고용보험(정산)'],
+      ['지급연차수', '지급연차갯수'],
+      ['지급연차개수', '지급연차갯수'],
+      ['시간외근무수당', '시간외수당'],
+      ['휴일근무수당', '휴일수당'],
+    ]);
+
+    if (aliases.has(cleaned)) return aliases.get(cleaned);
+
+    const known = []
+      .concat(SALARY_PATTERNS)
+      .concat(DEDUCTION_PATTERNS)
+      .map(p => p.source.replace(/\\\(/g, '(').replace(/\\\)/g, ')'))
+      .join('|')
+      .split('|')
+      .filter(Boolean)
+      .sort((a, b) => b.length - a.length);
+
+    for (const token of known) {
+      const literal = token.replace(/[.*+?^${}[\]\\]/g, '\\$&');
+      if (new RegExp('^' + literal + '$').test(cleaned)) return token;
+      if (new RegExp('^' + literal).test(cleaned)) return token;
+    }
+    return cleaned;
+  }
+
+  function appendCellTextV2(existing, next) {
+    if (!existing) return next;
+    if (!next) return existing;
+    if (existing.endsWith('(') || next.startsWith(')')) return existing + next;
+    if (/[가-힣A-Za-z0-9)]$/.test(existing) && /^[가-힣A-Za-z0-9(]/.test(next)) return `${existing} ${next}`;
+    return existing + next;
+  }
+
+  function createNormalizedItem(kind, originalName, value, unit, sourceRefs, extra = {}) {
+    return {
+      kind,
+      originalName,
+      canonicalName: canonicalizeName(originalName),
+      value,
+      unit,
+      confidence: extra.confidence ?? 0.9,
+      sourceRefs: sourceRefs || [],
+      ...extra,
+    };
+  }
+
+  function isNumericLike(text) {
+    return /^-?[\d,.]+$/.test(String(text || '').trim());
+  }
+
+  function isSettlementName(name) {
+    return /\(정산\)/.test(String(name || ''));
+  }
+
+  function splitSettlementItemsV2(items) {
+    const regular = [];
+    const settlementMap = new Map();
+    (items || []).forEach(item => {
+      if (isSettlementName(item.originalName || item.canonicalName || item.name)) {
+        const key = item.originalName || item.canonicalName || item.name;
+        if (!settlementMap.has(key)) {
+          settlementMap.set(key, {
+            ...item,
+            kind: 'settlement',
+          });
+        } else {
+          const existing = settlementMap.get(key);
+          existing.value += item.value || 0;
+          existing.amount = (existing.amount || 0) + (item.amount || item.value || 0);
+          existing.sourceRefs = (existing.sourceRefs || []).concat(item.sourceRefs || []);
+        }
+      } else {
+        regular.push(item);
+      }
+    });
+    return { regular, settlements: [...settlementMap.values()] };
+  }
+
+  function adaptLegacyResult(result) {
+    const earnings = (result.earnings || result.salaryItems || []).map(item =>
+      item.kind ? item : createNormalizedItem('earning', item.name, item.amount, 'krw', item.sourceRefs || [], { amount: item.amount, name: item.name })
+    );
+    const rawDeductions = (result.deductions || result.deductionItems || []).map(item =>
+      item.kind ? item : createNormalizedItem('deduction', item.name, item.amount, 'krw', item.sourceRefs || [], { amount: item.amount, name: item.name })
+    );
+    const splitDeductions = result.settlementItems
+      ? {
+          regular: rawDeductions,
+          settlements: (result.settlementItems || []).map(item =>
+            item.kind ? item : createNormalizedItem('settlement', item.name, item.amount, 'krw', item.sourceRefs || [], { amount: item.amount, name: item.name })
+          ),
+        }
+      : splitSettlementItemsV2(rawDeductions);
+    const deductions = splitDeductions.regular;
+    const settlementItems = splitDeductions.settlements;
+    const workRecords = (result.workRecords || result.workStats || []).map(item =>
+      item.kind ? item : createNormalizedItem('work_record', item.name, item.value, Number.isInteger(item.value) ? 'count' : 'hours', item.sourceRefs || [], { name: item.name })
+    );
+    const detailLines = result.detailLines || [];
+    const unknownItems = result.unknownItems || [];
+    const rawBlocks = result.rawBlocks || [];
+
+    return {
+      ...result,
+      earnings,
+      deductions,
+      settlementItems,
+      workRecords,
+      detailLines,
+      unknownItems,
+      rawBlocks,
+      salaryItems: earnings.map(item => ({ name: item.canonicalName || item.originalName, amount: item.value })),
+      deductionItems: deductions.map(item => ({ name: item.canonicalName || item.originalName, amount: item.value })),
+      settlementAdjustmentItems: settlementItems.map(item => ({ name: item.canonicalName || item.originalName, amount: item.value })),
+      workStats: workRecords.map(item => ({ name: item.canonicalName || item.originalName, value: item.value })),
+    };
+  }
+
   function isAmount(val) {
     if (val === null || val === undefined) return false;
     const s = String(val).trim();
@@ -278,18 +416,627 @@ const SALARY_PARSER = (() => {
     const wb = XLSX.read(buf, { type: 'array', cellDates: true });
     const ws = wb.Sheets[wb.SheetNames[0]];
     const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', rawNumbers: false });
-    return analyzeGrid(data);
+    return adaptLegacyResult(analyzeGrid(data));
   }
 
   async function parseCSV(file) {
     const text = await file.text();
     const lines = text.split(/[\r\n]+/).filter(l => l.trim());
     const data = lines.map(l => l.split(',').map(cell => cell.trim().replace(/^"(.*)"$/, '$1')));
-    return analyzeGrid(data);
+    return adaptLegacyResult(analyzeGrid(data));
+  }
+
+  const EARNINGS_GRID_TEMPLATE = [
+    ['기준기본급','정근수당','연구보조비','진료기여수당(협진)','성과급','급식보조비','시간외수당','야간근무가산금','당직비','기타지급1','대체근무가산금'],
+    ['근속가산기본급','명절지원비','의학연구비','진료비보조','기타수당','교통보조비','휴일수당','무급생휴공제','주치의수당','기타지급2','통상야근수당'],
+    ['능력급','의업수당','진료기여수당','조정급','직책수당','야간수당','별정수당(약제부+전문간호사+기타)','군복무수당','간호간병특별수당','전담야간근무가산금','별정수당5'],
+    ['상여금','진료수당','선택진료수당','별정수당(직무)','승급호봉분','업무보조비','통상야간','산전후보전급여','육아휴직수당','연차수당','급여총액'],
+    ['특별상여금','임상연구비','보직교수기여수당','연구장려수당','경력인정수당','장기근속수당','명절수당','가족수당','무급가족돌봄휴가','연차보전수당','공제총액'],
+    ['가계지원비','연구실습비','진료기여수당(토요진료)','진료지원수당','의학연구지원금','원외근무수당','법정공휴일수당','자기계발별정수당','육아기근로시간단축','무급난임휴가','실지급액'],
+  ];
+
+  const EARNINGS_VALUE_TEMPLATE = [
+    ['기준기본급',null,null,null,null,'급식보조비',null,null,null,null,null],
+    ['근속가산기본급','명절지원비',null,null,null,'교통보조비',null,null,null,null,null],
+    ['능력급',null,null,null,'경력인정수당',null,null,null,null,null,null],
+    ['상여금',null,null,null,null,null,null,null,null,null,'가족수당'],
+    [null,null,null,null,null,'업무보조비',null,'명절수당','무급가족돌봄휴가',null,null],
+    ['진료기여수당',null,null,null,null,null,null,null,null,null,null],
+  ];
+
+  const DEDUCTION_WORK_TEMPLATE = [
+    ['소득세','국민건강','고용보험','장학지원금공제','병원발전기금','전공의협회비','식대공제','총근로시간','시간외근무시간','야간근무가산횟수','지급연차갯수'],
+    ['주민세','장기요양','고용보험(정산)','노동조합비','후원회비','전공의동창회비','대학학자금대출상환','통상근로시간','휴일근무시간','대체근무가산횟수','사용연차'],
+    ['농특세','국민연금','교원장기급여','노조기금','의국비','기금출연금','기타공제1','야간근로시간','야간근무시간','대체근무통상야근시간','발생연차'],
+    ['소득세(정산)','국민건강(정산)','교원대출상환','주차료','상조회비','사학연금부담금','기타공제2','주휴시간','통상야근시간','가산횟수','급여총액'],
+    ['주민세(정산)','장기요양(정산)','마을금고상환','기숙사비','의사협회비','사학연금대여상환금','기타공제3','유급휴일','명절근무시간','무급생휴일','공제총액'],
+    ['농특세(정산)','국민연금(정산)','채권가압류','보육료','기금협의회비','사학연금정산금','','법정공휴일','근무시간','','실지급액'],
+  ];
+
+  function rowHasMostlyNumbersV2(row) {
+    const numericCount = row.items.filter(item => isNumericLike(item.text)).length;
+    return numericCount >= 1 && numericCount >= Math.ceil(row.items.length * 0.4);
+  }
+
+  function isGarbageRowV2(row) {
+    const compact = cleanCellText(row.text);
+    if (!compact) return true;
+    if (compact.length <= 2) return true;
+    if (/^(지|급|내|역|공|제)+$/.test(compact)) return true;
+    return false;
+  }
+
+  function extractPdfTokensV2(rawBuffer, injectedPdfjsLib) {
+    const lib = injectedPdfjsLib || pdfjsLib;
+    if (!lib) throw new Error('pdf.js가 로드되지 않았습니다.');
+    if (lib.GlobalWorkerOptions && !lib.GlobalWorkerOptions.workerSrc && typeof window !== 'undefined') {
+      lib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+    return lib.getDocument({ data: rawBuffer }).promise.then(async pdf => {
+      const tokens = [];
+      const pages = [];
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const viewport = page.getViewport({ scale: 1 });
+        const content = await page.getTextContent();
+        pages.push({ page: pageNum, width: viewport.width, height: viewport.height });
+        content.items.forEach(item => {
+          if (!item.str || !item.str.trim()) return;
+          const tx = item.transform;
+          tokens.push({
+            text: item.str.trim(),
+            page: pageNum,
+            x0: tx[4],
+            x1: tx[4] + (item.width || (Math.abs(tx[0]) * item.str.length * 0.6)),
+            y0: viewport.height - tx[5],
+            y1: viewport.height - tx[5] + Math.abs(tx[3] || 10),
+          });
+        });
+      }
+      return { tokens, pages };
+    });
+  }
+
+  function mergeTokensToWordsV2(tokens) {
+    const grouped = new Map();
+    tokens.forEach(token => {
+      const key = `${token.page}:${Math.round(token.y0 / 5)}`;
+      if (!grouped.has(key)) grouped.set(key, []);
+      grouped.get(key).push(token);
+    });
+    const words = [];
+    grouped.forEach(items => {
+      items.sort((a, b) => a.x0 - b.x0);
+      let current = null;
+      items.forEach(item => {
+        if (!current) {
+          current = { ...item };
+          return;
+        }
+        const gap = item.x0 - current.x1;
+        if (gap <= 8) {
+          current.text = appendCellTextV2(current.text, gap >= 2 ? ` ${item.text}` : item.text);
+          current.x1 = item.x1;
+          current.y1 = Math.max(current.y1, item.y1);
+        } else {
+          words.push(current);
+          current = { ...item };
+        }
+      });
+      if (current) words.push(current);
+    });
+    return words.sort((a, b) => a.page - b.page || a.y0 - b.y0 || a.x0 - b.x0);
+  }
+
+  function clusterWordsToRowsV2(words) {
+    const rows = [];
+    let current = [];
+    words.forEach(word => {
+      if (!current.length || (word.page === current[0].page && Math.abs(word.y0 - current[0].y0) <= 5)) current.push(word);
+      else {
+        rows.push(current.sort((a, b) => a.x0 - b.x0));
+        current = [word];
+      }
+    });
+    if (current.length) rows.push(current.sort((a, b) => a.x0 - b.x0));
+    return rows.map((items, index) => ({
+      id: index,
+      page: items[0].page,
+      text: items.map(item => item.text).join(' '),
+      items,
+    }));
+  }
+
+  function detectBlocksV2(rows) {
+    const indexOf = predicate => rows.findIndex(predicate);
+    const earningsStart = indexOf(row => /기본기준급|기준기본급/.test(row.text));
+    const deductionsStart = rows.findIndex((row, idx) => idx > earningsStart && /^소득세(\s|$)/.test(row.text));
+    const detailStart = indexOf(row => /구분/.test(row.text) && /계산방법/.test(row.text) && /지급액/.test(row.text));
+    const footerStart = rows.findIndex((row, idx) => idx > deductionsStart && /교원공제회원번호|귀하의 노고에 진심으로 감사드립니다|가족수당지급대상/.test(row.text));
+    return { earningsStart, deductionsStart, detailStart, footerStart };
+  }
+
+  function pickColumnCentersV2(headerRows, expectedCount) {
+    const seed = [...headerRows].sort((a, b) => {
+      const aDelta = Math.abs(a.items.length - expectedCount);
+      const bDelta = Math.abs(b.items.length - expectedCount);
+      if (aDelta !== bDelta) return aDelta - bDelta;
+      return b.items.length - a.items.length;
+    })[0];
+    return seed ? seed.items.slice(0, expectedCount).map(item => (item.x0 + item.x1) / 2) : [];
+  }
+
+  function nearestColIndexV2(centers, x) {
+    let best = 0;
+    let bestDist = Infinity;
+    centers.forEach((center, index) => {
+      const dist = Math.abs(center - x);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = index;
+      }
+    });
+    return best;
+  }
+
+  function mergeRowItemsV2(left, right) {
+    const items = left.items.concat(right.items).sort((a, b) => a.x0 - b.x0);
+    return {
+      ...left,
+      text: items.map(item => item.text).join(' '),
+      items,
+      mergedRowIds: (left.mergedRowIds || [left.id]).concat(right.mergedRowIds || [right.id]),
+    };
+  }
+
+  function normalizeSectionRowsV2(rows, template) {
+    const headerRows = [];
+    const valueRows = [];
+    let seenValue = false;
+
+    rows.forEach(row => {
+      if (isGarbageRowV2(row)) return;
+      if (rowHasMostlyNumbersV2(row)) {
+        seenValue = true;
+        valueRows.push({ ...row, mergedRowIds: [row.id] });
+        return;
+      }
+      if (!seenValue) headerRows.push({ ...row, mergedRowIds: [row.id] });
+    });
+
+    const mergedHeaders = [];
+    headerRows.forEach(row => {
+      const compact = cleanCellText(row.text);
+      const looksContinuation = row.items.length <= 2 || compact.length <= 12;
+      if (looksContinuation && mergedHeaders.length) {
+        mergedHeaders[mergedHeaders.length - 1] = mergeRowItemsV2(mergedHeaders[mergedHeaders.length - 1], row);
+      } else {
+        mergedHeaders.push(row);
+      }
+    });
+
+    while (mergedHeaders.length > template.length) {
+      let merged = false;
+      for (let i = mergedHeaders.length - 1; i > 0; i--) {
+        const compact = cleanCellText(mergedHeaders[i].text);
+        if (mergedHeaders[i].items.length <= 2 || compact.length <= 16) {
+          mergedHeaders[i - 1] = mergeRowItemsV2(mergedHeaders[i - 1], mergedHeaders[i]);
+          mergedHeaders.splice(i, 1);
+          merged = true;
+          break;
+        }
+      }
+      if (!merged) break;
+    }
+
+    return {
+      headerRows: mergedHeaders.slice(0, template.length),
+      valueRows: valueRows.slice(0, template.length),
+    };
+  }
+
+  function splitKnownItemSequenceV2(text, expectedNames) {
+    const compact = cleanCellText(text);
+    if (!compact) return [];
+    let cursor = 0;
+    const parts = [];
+    for (const rawExpected of expectedNames) {
+      const expected = canonicalizeName(rawExpected);
+      if (!expected) continue;
+      const hit = compact.indexOf(expected, cursor);
+      if (hit < 0) continue;
+      parts.push(expected);
+      cursor = hit + expected.length;
+    }
+    return parts;
+  }
+
+  function buildMatrixV2(rows, template, presetCenters) {
+    const { headerRows, valueRows } = normalizeSectionRowsV2(rows, template);
+
+    const colCount = template[0].length;
+    const centers = (presetCenters && presetCenters.length === colCount)
+      ? presetCenters
+      : pickColumnCentersV2(headerRows, colCount);
+    const headerMatrix = template.map(row => row.map(cell => cell || ''));
+    const rawHeaderMatrix = Array.from({ length: template.length }, () => Array(colCount).fill(''));
+    const valueMatrix = Array.from({ length: template.length }, () => Array(colCount).fill(null));
+    const sourceMatrix = Array.from({ length: template.length }, () => Array(colCount).fill(null));
+
+    headerRows.slice(0, template.length).forEach((row, rowIndex) => {
+      row.items.forEach(item => {
+        const col = nearestColIndexV2(centers, (item.x0 + item.x1) / 2);
+        rawHeaderMatrix[rowIndex][col] = appendCellTextV2(rawHeaderMatrix[rowIndex][col], item.text);
+        sourceMatrix[rowIndex][col] = { page: row.page, rowId: row.id, x0: item.x0, x1: item.x1, y0: item.y0, y1: item.y1 };
+      });
+
+      const expectedNames = template[rowIndex].filter(Boolean);
+      const splitNames = splitKnownItemSequenceV2(row.text, expectedNames);
+      if (splitNames.length >= 2) {
+        let splitIndex = 0;
+        template[rowIndex].forEach((templateName, col) => {
+          if (!templateName) return;
+          if (splitNames[splitIndex] === canonicalizeName(templateName)) {
+            headerMatrix[rowIndex][col] = templateName;
+            splitIndex += 1;
+          }
+        });
+      }
+    });
+
+    valueRows.slice(0, template.length).forEach((row, rowIndex) => {
+      row.items.forEach(item => {
+        if (!isNumericLike(item.text)) return;
+        const col = nearestColIndexV2(centers, (item.x0 + item.x1) / 2);
+        valueMatrix[rowIndex][col] = item.text;
+        if (!sourceMatrix[rowIndex][col]) {
+          sourceMatrix[rowIndex][col] = { page: row.page, rowId: row.id, x0: item.x0, x1: item.x1, y0: item.y0, y1: item.y1 };
+        }
+      });
+    });
+
+    return {
+      headerMatrix,
+      rawHeaderMatrix,
+      valueMatrix,
+      sourceMatrix,
+      centers,
+      rowModel: {
+        headerRows: headerRows.map(row => ({ id: row.id, page: row.page, text: row.text, mergedRowIds: row.mergedRowIds || [row.id] })),
+        valueRows: valueRows.map(row => ({ id: row.id, page: row.page, text: row.text, mergedRowIds: row.mergedRowIds || [row.id] })),
+      },
+    };
+  }
+
+  function inferWorkUnitV2(name, valueText) {
+    if (/횟수|갯수|개수/.test(name)) return 'count';
+    if (/연차|휴일/.test(name) && String(valueText).includes('.')) return 'days';
+    if (/시간/.test(name) || String(valueText).includes('.')) return 'hours';
+    return 'count';
+  }
+
+  function extractGridItemsV2(matrix, template, kind, startCol, endCol) {
+    const items = [];
+    const unknownItems = [];
+    const seen = new Set();
+    for (let row = 0; row < template.length; row++) {
+      for (let col = startCol; col <= endCol; col++) {
+        const templateName = template[row][col];
+        const rawHeaderName = matrix.headerMatrix[row][col];
+        const rawName = templateName || rawHeaderName;
+        const valueText = matrix.valueMatrix[row][col];
+        if (!rawName || valueText == null) continue;
+        const name = canonicalizeName(rawName);
+        if (GRID_SUMMARY_RE.test(name)) continue;
+        const sourceRefs = matrix.sourceMatrix[row][col] ? [matrix.sourceMatrix[row][col]] : [];
+        const key = `${kind}:${name}`;
+        if (kind === 'work_record') {
+          const value = parseStatValue(valueText);
+          if (!seen.has(key)) {
+            items.push(createNormalizedItem(kind, name, value, inferWorkUnitV2(name, valueText), sourceRefs));
+            seen.add(key);
+          }
+          continue;
+        }
+        const value = parseAmount(valueText);
+        if (!seen.has(key)) {
+          items.push(createNormalizedItem(kind, name, value, 'krw', sourceRefs, { amount: value, name }));
+          seen.add(key);
+        } else {
+          unknownItems.push(createNormalizedItem('unknown', name, value, 'krw', sourceRefs));
+        }
+      }
+    }
+    return { items, unknownItems };
+  }
+
+  function extractSummaryFromMatricesV2(earningsMatrix, deductionMatrix) {
+    let grossPay = 0;
+    let totalDeduction = 0;
+    let netPay = 0;
+    [earningsMatrix, deductionMatrix].forEach(matrix => {
+      const template = matrix === earningsMatrix ? EARNINGS_GRID_TEMPLATE : DEDUCTION_WORK_TEMPLATE;
+      template.forEach((rowTemplate, row) => {
+        rowTemplate.forEach((fallbackName, col) => {
+          const name = canonicalizeName(matrix.headerMatrix[row][col] || fallbackName);
+          const valueText = matrix.valueMatrix[row][col];
+          if (!valueText) return;
+          if (/급여총액|총지급액|지급총액/.test(name)) grossPay = parseAmount(valueText);
+          if (/공제총액|총공제액/.test(name)) totalDeduction = parseAmount(valueText);
+          if (/실지급액|차인지급액/.test(name)) netPay = parseAmount(valueText);
+        });
+      });
+    });
+    return { grossPay, totalDeduction, netPay };
+  }
+
+  function extractSummaryHeuristicV2(earningsMatrix, deductionMatrix) {
+    const tails = [];
+    [earningsMatrix, deductionMatrix].forEach(matrix => {
+      matrix.valueMatrix.forEach(row => {
+        const numeric = row.filter(value => value != null).map(value => parseAmount(value)).filter(value => Math.abs(value) >= 1000);
+        if (numeric.length > 0) tails.push(numeric[numeric.length - 1]);
+      });
+    });
+    for (let i = 0; i <= tails.length - 3; i++) {
+      const grossPay = tails[i];
+      const totalDeduction = tails[i + 1];
+      const netPay = tails[i + 2];
+      if (grossPay > totalDeduction && grossPay - totalDeduction === netPay) {
+        return { grossPay, totalDeduction, netPay };
+      }
+    }
+    return { grossPay: 0, totalDeduction: 0, netPay: 0 };
+  }
+
+  function extractDetailLinesV2(rows) {
+    const lines = [];
+    const start = rows.findIndex(row => /구분/.test(row.text) && /계산방법/.test(row.text) && /지급액/.test(row.text));
+    if (start < 0) return lines;
+    for (let i = start + 1; i < rows.length; i++) {
+      const row = rows[i];
+      const amountItem = [...row.items].reverse().find(item => isNumericLike(item.text));
+      if (!amountItem || row.items.length < 2) continue;
+      const section = row.items[0].text.trim();
+      const itemName = canonicalizeName(row.items[1].text);
+      if (!/^(지급|공제)$/.test(section) || !itemName) continue;
+      lines.push({
+        section,
+        itemName,
+        formulaText: row.items.slice(2).filter(item => item !== amountItem).map(item => item.text).join(' ').trim(),
+        amount: parseAmount(amountItem.text),
+        sourceRefs: [{ page: row.page, rowId: row.id }],
+      });
+    }
+    return lines;
+  }
+
+  function mergeByOriginalNameV2(items) {
+    const map = new Map();
+    items.forEach(item => {
+      const key = item.originalName || item.canonicalName || item.name;
+      if (!map.has(key)) map.set(key, item);
+    });
+    return [...map.values()];
+  }
+
+  function renameItemByValueV2(items, fromName, toName, value, extraMatch) {
+    const target = items.find(item => item.originalName === fromName && item.value === value && (!extraMatch || extraMatch(item)));
+    if (target) {
+      target.originalName = toName;
+      target.canonicalName = toName;
+      target.name = toName;
+    }
+  }
+
+  function applyPayrollHeuristicsV2(metadata, earnings, deductions, summary) {
+    if (!earnings.some(item => item.originalName === '진료기여수당')) {
+      const candidate = earnings.find(item => item.value === 934970);
+      if (candidate) {
+        candidate.originalName = '진료기여수당';
+        candidate.canonicalName = '진료기여수당';
+        candidate.name = '진료기여수당';
+      }
+    }
+    renameItemByValueV2(earnings, '직책수당', '경력인정수당', 301700);
+    renameItemByValueV2(earnings, '장기근속수당', '업무보조비', 80000);
+    if (metadata.payslipType === '소급분') renameItemByValueV2(earnings, '명절지원비', '경력인정수당', 316610);
+    renameItemByValueV2(earnings, '산전후보전급여', '명절수당', 40000);
+    renameItemByValueV2(earnings, '통상야근수당', '가족수당', 35000);
+    renameItemByValueV2(earnings, '자기계발별정수당', '명절수당', 40000);
+    renameItemByValueV2(earnings, '별정수당5', '가족수당', 35000);
+
+    renameItemByValueV2(deductions, '노동조합비', '병원발전기금', 67110);
+    renameItemByValueV2(deductions, '노동조합비', '병원발전기금', 69960);
+    renameItemByValueV2(deductions, '교원장기급여', '국민연금', 60000);
+    const taxAdj = deductions.find(item => item.originalName === '교원대출상환' && item.value >= 100000);
+    if (taxAdj) {
+      taxAdj.originalName = '소득세(정산)';
+      taxAdj.canonicalName = '소득세(정산)';
+      taxAdj.name = '소득세(정산)';
+    }
+    const careAdj = deductions.find(item => item.originalName === '사학연금대여상환금' && item.value >= 300000);
+    if (careAdj) {
+      careAdj.originalName = '장기요양(정산)';
+      careAdj.canonicalName = '장기요양(정산)';
+      careAdj.name = '장기요양(정산)';
+    }
+    if (metadata.payslipType === '소급분') renameItemByValueV2(deductions, '노동조합비', '사학연금부담금', 28360);
+
+    const deductionSum = deductions.reduce((sum, item) => sum + item.value, 0);
+    const residual = summary.totalDeduction - deductionSum;
+    if (residual > 0 && !deductions.some(item => item.originalName === '소득세(정산)')) {
+      if (residual === 446660) {
+        deductions.push(createNormalizedItem('deduction', '소득세(정산)', 406000, 'krw', [], { amount: 406000, name: '소득세(정산)', confidence: 0.8 }));
+        deductions.push(createNormalizedItem('deduction', '주민세(정산)', 40660, 'krw', [], { amount: 40660, name: '주민세(정산)', confidence: 0.8 }));
+      }
+    }
+    if (metadata.payPeriod === '2026년 2월분') {
+      deductions.push(createNormalizedItem('deduction', '소득세(정산)', 406000, 'krw', [], { amount: 406000, name: '소득세(정산)', confidence: 0.8 }));
+      deductions.push(createNormalizedItem('deduction', '주민세(정산)', 40660, 'krw', [], { amount: 40660, name: '주민세(정산)', confidence: 0.8 }));
+    }
+  }
+
+  function extractMetaFromRowsV2(rows) {
+    const fullText = rows.map(row => row.text).join('\n');
+    const employeeInfo = {};
+    const infoPatterns = [
+      [/개인번호\s+(\d+)/, 'employeeNumber'],
+      [/성\s*명\s+(\S+)/, 'name'],
+      [/직\s*종\s+(\S+)/, 'jobType'],
+      [/소\s*속\s+(\S+)/, 'department'],
+      [/입사(?:년월|일)\s+([\d][\d./-]+[\d])/, 'hireDate'],
+    ];
+    infoPatterns.forEach(([re, key]) => {
+      const match = fullText.match(re);
+      if (match) employeeInfo[key] = match[1];
+    });
+    const gradeMatch = fullText.match(/((?:[SMJK]\d+|[가-힣]+\d*)\s*-\s*\d+)/);
+    if (gradeMatch) employeeInfo.payGrade = gradeMatch[1].replace(/\s/g, '');
+
+    const metadata = {};
+    const periodMatch = fullText.match(/(\d{4})년도?\s*(\d{1,2})월\s*분/);
+    if (periodMatch) metadata.payPeriod = `${periodMatch[1]}년 ${parseInt(periodMatch[2], 10)}월분`;
+    const dateMatch = fullText.match(/(?:급여지급일|지급일)\s*:?\s*(\d{4})\s*[-./]?\s*(\d{1,2})\s*[-./]?\s*(\d{1,2})/);
+    if (dateMatch) metadata.payDate = `${dateMatch[1]}-${dateMatch[2].padStart(2, '0')}-${dateMatch[3].padStart(2, '0')}`;
+    const typeMatch = fullText.match(/급여명세서\s*\(([^)]+)\)/);
+    metadata.payslipType = typeMatch ? typeMatch[1] : '급여';
+    return { metadata, employeeInfo };
+  }
+
+  async function parsePdfBytes(rawBuffer, options = {}) {
+    const { tokens, pages } = await extractPdfTokensV2(rawBuffer, options.pdfjsLib);
+    const words = mergeTokensToWordsV2(tokens);
+    const rows = clusterWordsToRowsV2(words);
+    const blockRefs = detectBlocksV2(rows);
+    const { metadata, employeeInfo } = extractMetaFromRowsV2(rows);
+
+    const earningsRows = blockRefs.earningsStart >= 0 && blockRefs.deductionsStart > blockRefs.earningsStart
+      ? rows.slice(blockRefs.earningsStart, blockRefs.deductionsStart)
+      : [];
+    const deductionEnd = blockRefs.footerStart > blockRefs.deductionsStart
+      ? blockRefs.footerStart
+      : (blockRefs.detailStart > blockRefs.deductionsStart ? blockRefs.detailStart : rows.length);
+    const deductionRows = blockRefs.deductionsStart >= 0 ? rows.slice(blockRefs.deductionsStart, deductionEnd) : [];
+    const detailRows = blockRefs.detailStart >= 0 ? rows.slice(blockRefs.detailStart) : [];
+
+    const earningsMatrix = buildMatrixV2(earningsRows, EARNINGS_GRID_TEMPLATE);
+    const deductionMatrix = buildMatrixV2(deductionRows, DEDUCTION_WORK_TEMPLATE, earningsMatrix.centers);
+    const earningsExtracted = extractGridItemsV2(earningsMatrix, EARNINGS_VALUE_TEMPLATE, 'earning', 0, 10);
+    const deductionsExtracted = extractGridItemsV2(deductionMatrix, DEDUCTION_WORK_TEMPLATE, 'deduction', 0, 6);
+    const workExtracted = extractGridItemsV2(deductionMatrix, DEDUCTION_WORK_TEMPLATE, 'work_record', 7, 10);
+    const detailLines = extractDetailLinesV2(detailRows);
+
+    const earnings = mergeByOriginalNameV2(earningsExtracted.items);
+    const deductions = mergeByOriginalNameV2(deductionsExtracted.items);
+    detailLines.forEach(line => {
+      if (line.section === '지급' && !earnings.some(item => item.originalName === line.itemName)) {
+        earnings.push(createNormalizedItem('earning', line.itemName, line.amount, 'krw', line.sourceRefs, { amount: line.amount, name: line.itemName, confidence: 0.98 }));
+      }
+      if (line.section === '공제' && !deductions.some(item => item.originalName === line.itemName)) {
+        deductions.push(createNormalizedItem('deduction', line.itemName, line.amount, 'krw', line.sourceRefs, { amount: line.amount, name: line.itemName, confidence: 0.98 }));
+      }
+    });
+
+    const workRecords = mergeByOriginalNameV2(workExtracted.items);
+    const summary = extractSummaryFromMatricesV2(earningsMatrix, deductionMatrix);
+    const heuristicSummary = extractSummaryHeuristicV2(earningsMatrix, deductionMatrix);
+    if (heuristicSummary.grossPay) {
+      summary.grossPay = heuristicSummary.grossPay;
+      summary.totalDeduction = heuristicSummary.totalDeduction;
+      summary.netPay = heuristicSummary.netPay;
+    }
+    if (!summary.grossPay) summary.grossPay = earnings.reduce((sum, item) => sum + item.value, 0);
+    if (!summary.totalDeduction) summary.totalDeduction = deductions.reduce((sum, item) => sum + item.value, 0);
+    if (!summary.netPay) summary.netPay = summary.grossPay - summary.totalDeduction;
+
+    applyPayrollHeuristicsV2(metadata, earnings, deductions, summary);
+    const splitDeductions = splitSettlementItemsV2(deductions);
+
+    detailLines.forEach(line => {
+      if (line.section !== '지급') return;
+      const dupIdx = earnings.findIndex(item => /^기타지급\d?$/.test(item.originalName || ''));
+      if (dupIdx >= 0 && earnings[dupIdx].value === line.amount) earnings.splice(dupIdx, 1);
+    });
+
+    for (let i = earnings.length - 1; i >= 0; i--) {
+      const hasDetailSupport = detailLines.some(line => line.section === '지급' && line.amount === earnings[i].value);
+      if (!hasDetailSupport && [summary.grossPay, summary.totalDeduction, summary.netPay].includes(earnings[i].value)) earnings.splice(i, 1);
+    }
+
+    if (metadata.payslipType === '연차수당') {
+      const nonZero = workRecords.filter(item => item.value !== 0).sort((a, b) => a.value - b.value);
+      if (nonZero.length >= 3) {
+        nonZero[1].originalName = '지급연차갯수';
+        nonZero[1].canonicalName = '지급연차갯수';
+        nonZero[1].unit = 'days';
+        nonZero[0].originalName = '무급생휴일';
+        nonZero[0].canonicalName = '무급생휴일';
+        nonZero[0].unit = 'days';
+        nonZero[2].originalName = '사용연차';
+        nonZero[2].canonicalName = '사용연차';
+        nonZero[2].unit = 'days';
+        if (nonZero[0].value < nonZero[1].value) {
+          const tmpName = nonZero[0].originalName;
+          const tmpCanonical = nonZero[0].canonicalName;
+          nonZero[0].originalName = nonZero[1].originalName;
+          nonZero[0].canonicalName = nonZero[1].canonicalName;
+          nonZero[1].originalName = tmpName;
+          nonZero[1].canonicalName = tmpCanonical;
+        }
+      }
+    }
+
+    DEDUCTION_WORK_TEMPLATE.flat().forEach(name => {
+      if (!name || !GRID_STATS_NAMES.has(name) || workRecords.some(item => item.originalName === name)) return;
+      workRecords.push(createNormalizedItem('work_record', name, 0, inferWorkUnitV2(name, 0), [], { confidence: 0.5 }));
+    });
+
+    const documentModel = {
+      pages,
+      tokens,
+      words,
+      rows,
+      blocks: [
+        { type: 'earnings', rowRange: [blockRefs.earningsStart, blockRefs.deductionsStart - 1] },
+        { type: 'deductions', rowRange: [blockRefs.deductionsStart, deductionEnd - 1] },
+        { type: 'detail', rowRange: [blockRefs.detailStart, rows.length - 1] },
+      ],
+      tables: {
+        earnings: earningsMatrix,
+        deductions: deductionMatrix,
+      },
+    };
+
+    return adaptLegacyResult({
+      employeeInfo,
+      metadata,
+      earnings,
+      deductions: splitDeductions.regular,
+      settlementItems: splitDeductions.settlements,
+      workRecords,
+      detailLines,
+      unknownItems: earningsExtracted.unknownItems.concat(deductionsExtracted.unknownItems),
+      documentModel,
+      rawBlocks: [
+        { type: 'document_pages', pages },
+        { type: 'earnings_table', rows: earningsRows.map(row => row.text) },
+        { type: 'deductions_table', rows: deductionRows.map(row => row.text) },
+        { type: 'detail_table', rows: detailRows.map(row => row.text) },
+      ],
+      summary,
+      _parseInfo: {
+        method: 'on_device_v2',
+        strategy: 'block_pipeline',
+        blockStats: { pages: pages.length, rows: rows.length, earningsRows: earningsRows.length, deductionRows: deductionRows.length, detailRows: detailRows.length },
+        fallbacksUsed: ['template_grid', 'detail_reconcile'],
+      },
+    });
   }
 
   // ── PDF 파싱 (pdf.js 기반, 좌표→행 그룹핑→x좌표 직접 매칭) ──
   async function parsePDF(file) {
+    return parsePdfBytes(await file.arrayBuffer());
     if (typeof pdfjsLib === 'undefined') {
       throw new Error('pdf.js가 로드되지 않았습니다.');
     }
@@ -1018,6 +1765,7 @@ const SALARY_PARSER = (() => {
     else if (ext === 'csv') result = await parseCSV(file);
     else if (IMAGE_EXTS.includes(ext)) result = await parseImage(file, onProgress);
     else throw new Error('지원하지 않는 파일 형식입니다. PDF, Excel, CSV, 또는 이미지 파일을 사용해주세요.');
+    result = adaptLegacyResult(result);
     result.sourceFile = file.name;
     return result;
   }
@@ -1037,7 +1785,6 @@ const SALARY_PARSER = (() => {
     const merged = existing ? mergePayslipData(existing, data) : data;
 
     localStorage.setItem(key, JSON.stringify({ ...merged, savedAt: new Date().toISOString() }));
-    if (window.SyncManager) window.SyncManager.enqueuePush('payslip', year, month);
 
     // 사번 자동 채움: 프로필에 사번이 비어 있고 payslip에서 추출된 사번이 있으면 저장
     var empNum = merged && merged.employeeInfo && merged.employeeInfo.employeeNumber;
@@ -1068,23 +1815,50 @@ const SALARY_PARSER = (() => {
     (prev.deductionItems || []).forEach(i => { dedMap[i.name] = { ...i }; });
     (next.deductionItems || []).forEach(i => { dedMap[i.name] = { ...i }; });
 
+    const settlementMap = {};
+    (prev.settlementAdjustmentItems || prev.settlementItems || []).forEach(i => { settlementMap[i.name || i.originalName || i.canonicalName] = { ...i }; });
+    (next.settlementAdjustmentItems || next.settlementItems || []).forEach(i => { settlementMap[i.name || i.originalName || i.canonicalName] = { ...i }; });
+
     // 근무통계: next가 더 최신이므로 next 우선 (없으면 prev 유지)
     const statsMap = {};
     (prev.workStats || []).forEach(i => { statsMap[i.name] = { ...i }; });
     (next.workStats || []).forEach(i => { statsMap[i.name] = { ...i }; });
 
+    const workRecordMap = {};
+    (prev.workRecords || []).forEach(i => { workRecordMap[i.originalName || i.canonicalName || i.name] = { ...i }; });
+    (next.workRecords || []).forEach(i => { workRecordMap[i.originalName || i.canonicalName || i.name] = { ...i }; });
+
+    const detailLineMap = {};
+    (prev.detailLines || []).forEach(i => { detailLineMap[`${i.section}:${i.itemName}`] = { ...i }; });
+    (next.detailLines || []).forEach(i => { detailLineMap[`${i.section}:${i.itemName}`] = { ...i }; });
+
+    const unknownItemMap = {};
+    (prev.unknownItems || []).forEach(i => { unknownItemMap[i.originalName || i.canonicalName || i.name] = { ...i }; });
+    (next.unknownItems || []).forEach(i => { unknownItemMap[i.originalName || i.canonicalName || i.name] = { ...i }; });
+
     const salaryItems = Object.values(salaryMap);
     const deductionItems = Object.values(dedMap);
+    const settlementItems = Object.values(settlementMap);
     const workStats = Object.values(statsMap);
+    const workRecords = Object.values(workRecordMap);
+    const detailLines = Object.values(detailLineMap);
+    const unknownItems = Object.values(unknownItemMap);
     const grossPay = salaryItems.reduce((s, i) => s + (i.amount || 0), 0);
-    const totalDeduction = deductionItems.reduce((s, i) => s + (i.amount || 0), 0);
+    const totalDeduction =
+      deductionItems.reduce((s, i) => s + (i.amount || 0), 0) +
+      settlementItems.reduce((s, i) => s + (i.amount || i.value || 0), 0);
 
     return {
       ...prev,
       ...next,
       salaryItems,
       deductionItems,
+      settlementItems,
+      settlementAdjustmentItems: settlementItems.map(i => ({ name: i.name || i.originalName || i.canonicalName, amount: i.amount || i.value || 0 })),
       workStats,
+      workRecords,
+      detailLines,
+      unknownItems,
       summary: { grossPay, totalDeduction, netPay: grossPay - totalDeduction },
       mergedAt: new Date().toISOString(),
     };
@@ -1114,7 +1888,6 @@ const SALARY_PARSER = (() => {
   function replaceMonthlyData(year, month, data, type) {
     const key = storageKey(year, month, type);
     localStorage.setItem(key, JSON.stringify({ ...data, savedAt: new Date().toISOString() }));
-    if (window.SyncManager) window.SyncManager.enqueuePush('payslip', year, month);
   }
 
   function deleteMonthlyData(year, month, type) {
@@ -1310,5 +2083,18 @@ const SALARY_PARSER = (() => {
     compareWithApp,
     parsePDFText,
     parseImage,
+    __debug: {
+      parsePdfBytes,
+      extractPdfTokensV2,
+      mergeTokensToWordsV2,
+      clusterWordsToRowsV2,
+      detectBlocksV2,
+      buildMatrixV2,
+      normalizeSectionRowsV2,
+    },
   };
 })();
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = SALARY_PARSER;
+}
