@@ -31,3 +31,4 @@ credentials.md
 
 node_modules/
 .gstack/
+.worktrees/
