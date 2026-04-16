@@ -11,6 +11,26 @@
 
 'use strict';
 
+const GENERATED_UNION_RULES = (() => {
+  try {
+    if (typeof window !== 'undefined' && window.UNION_REGULATION_CAL_2026) {
+      return window.UNION_REGULATION_CAL_2026;
+    }
+  } catch (e) { /* ignore */ }
+
+  try {
+    if (typeof require === 'function') {
+      return require('./data/union_regulation_cal_2026.json');
+    }
+  } catch (e) { /* ignore */ }
+
+  return null;
+})();
+
+function getFixedAllowanceAmount(variableKey, fallbackValue) {
+  return GENERATED_UNION_RULES?.fixed_allowances?.[variableKey]?.amount ?? fallbackValue;
+}
+
 // ── 근로시간 기준 ───────────────────────────────────────────
 
 /** 월 소정근로시간 (제32조: 1일 8h × 주 5일 × 52/12주 ≈ 209h) */
@@ -42,22 +62,22 @@ const DUTY_ALLOWANCE_DAILY = 50000;
 // ── 수당 금액 ───────────────────────────────────────────────
 
 /** 급식보조비 월 (제43조, 별표: 2026년 기준) */
-const MEAL_SUBSIDY = 150000;
+const MEAL_SUBSIDY = getFixedAllowanceAmount('meal_subsidy', 150000);
 
 /** 교통보조비 월 (제43조, 별표: 2026년 기준) */
-const TRANSPORT_SUBSIDY = 150000;
+const TRANSPORT_SUBSIDY = getFixedAllowanceAmount('transport_subsidy', 150000);
 
 /** 교육훈련비(자기계발별정수당) 월 (제43조, 별표) */
-const EDUCATION_ALLOWANCE_MONTHLY = 40000;
+const EDUCATION_ALLOWANCE_MONTHLY = getFixedAllowanceAmount('training_allowance', 40000);
 
 /** 별정수당5 월 (별표) */
 const SPECIAL_PAY5_MONTHLY = 35000;
 
 /** 리프레시지원비 월 30,000원 (별도합의 2024.11: 2026.01.01부터 통상임금 산입) */
-const REFRESH_BENEFIT_MONTHLY = 30000;
+const REFRESH_BENEFIT_MONTHLY = GENERATED_UNION_RULES?.fixed_allowances?.refresh_support_allowance?.monthly_amount ?? 30000;
 
 /** 군복무수당 월 (별표: 최대 2년/24개월 기준 월할) */
-const MILITARY_SERVICE_PAY_MONTHLY = 45000;
+const MILITARY_SERVICE_PAY_MONTHLY = getFixedAllowanceAmount('military_service_pay', 45000);
 
 /** 군복무수당 최대 인정 개월 (별표: 2년) */
 const MILITARY_SERVICE_MAX_MONTHS = 24;

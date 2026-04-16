@@ -74,12 +74,37 @@ const SALARY_PARSER = (() => {
     '별정수당(직무)': 'specialPay',
   };
 
+  let externalLabelUtils = null;
+  let generatedAliasGraph = null;
+
+  try {
+    if (typeof window !== 'undefined' && window.PAYROLL_LABEL_UTILS) {
+      externalLabelUtils = window.PAYROLL_LABEL_UTILS;
+    } else if (typeof require === 'function') {
+      externalLabelUtils = require('./payroll-label-utils.js');
+    }
+  } catch (_) {}
+
+  try {
+    if (typeof window !== 'undefined' && window.UNION_REGULATION_ALIASES_2026) {
+      generatedAliasGraph = window.UNION_REGULATION_ALIASES_2026;
+    } else if (typeof require === 'function') {
+      generatedAliasGraph = require('./data/union_regulation_aliases_2026.json');
+    }
+  } catch (_) {}
+
   // ── 숫자 파싱 ──
+  function normalizeNumericText(val) {
+    return String(val ?? '').replace(/\s+/g, '').trim();
+  }
+
   function parseAmount(val) {
     if (typeof val === 'number') return val;
     if (typeof val === 'string') {
-      const n = parseInt(val.replace(/,/g, ''), 10);
-      return isNaN(n) ? 0 : n;
+      const normalized = normalizeNumericText(val);
+      if (!/^-?[\d,.]+$/.test(normalized)) return 0;
+      const n = Number(normalized.replace(/,/g, ''));
+      return Number.isFinite(n) ? Math.trunc(n) : 0;
     }
     return 0;
   }
@@ -88,17 +113,29 @@ const SALARY_PARSER = (() => {
   function parseStatValue(val) {
     if (typeof val === 'number') return val;
     if (typeof val === 'string') {
-      const n = parseFloat(val.replace(/,/g, ''));
-      return isNaN(n) ? 0 : n;
+      const normalized = normalizeNumericText(val);
+      if (!/^-?[\d,.]+$/.test(normalized)) return 0;
+      const n = Number(normalized.replace(/,/g, ''));
+      return Number.isFinite(n) ? n : 0;
     }
     return 0;
   }
 
   function cleanCellText(text) {
-    return String(text || '')
-      .replace(/\s+/g, '')
+    const compact = externalLabelUtils?.compactLabelKo
+      ? externalLabelUtils.compactLabelKo(text)
+      : String(text || '').replace(/\s+/g, '').replace(/\n+/g, '')
+      ;
+
+    return compact
       .replace(/전문간호\s*사/g, '전문간호사')
       .trim();
+  }
+
+  function lookupVariableKeyByLabel(label) {
+    if (!generatedAliasGraph?.variable_key_by_compact_label) return null;
+    const compact = cleanCellText(label);
+    return generatedAliasGraph.variable_key_by_compact_label[compact] || null;
   }
 
   function canonicalizeName(name) {
@@ -121,6 +158,11 @@ const SALARY_PARSER = (() => {
     ]);
 
     if (aliases.has(cleaned)) return aliases.get(cleaned);
+
+    const generatedVariableKey = lookupVariableKeyByLabel(cleaned);
+    if (generatedVariableKey && generatedAliasGraph?.display_name_by_variable_key?.[generatedVariableKey]) {
+      return generatedAliasGraph.display_name_by_variable_key[generatedVariableKey];
+    }
 
     const known = []
       .concat(SALARY_PATTERNS)
@@ -161,7 +203,7 @@ const SALARY_PARSER = (() => {
   }
 
   function isNumericLike(text) {
-    return /^-?[\d,.]+$/.test(String(text || '').trim());
+    return /^-?[\d,.]+$/.test(normalizeNumericText(text));
   }
 
   function isSettlementName(name) {
@@ -234,7 +276,7 @@ const SALARY_PARSER = (() => {
 
   function isAmount(val) {
     if (val === null || val === undefined) return false;
-    const s = String(val).trim();
+    const s = normalizeNumericText(val);
     return /^-?[\d,]+$/.test(s) && !s.includes('.') && s.length >= 1;
   }
 
@@ -429,20 +471,15 @@ const SALARY_PARSER = (() => {
   const EARNINGS_GRID_TEMPLATE = [
     ['기준기본급','정근수당','연구보조비','진료기여수당(협진)','성과급','급식보조비','시간외수당','야간근무가산금','당직비','기타지급1','대체근무가산금'],
     ['근속가산기본급','명절지원비','의학연구비','진료비보조','기타수당','교통보조비','휴일수당','무급생휴공제','주치의수당','기타지급2','통상야근수당'],
-    ['능력급','의업수당','진료기여수당','조정급','직책수당','야간수당','별정수당(약제부+전문간호사+기타)','군복무수당','간호간병특별수당','전담야간근무가산금','별정수당5'],
-    ['상여금','진료수당','선택진료수당','별정수당(직무)','승급호봉분','업무보조비','통상야간','산전후보전급여','육아휴직수당','연차수당','급여총액'],
-    ['특별상여금','임상연구비','보직교수기여수당','연구장려수당','경력인정수당','장기근속수당','명절수당','가족수당','무급가족돌봄휴가','연차보전수당','공제총액'],
-    ['가계지원비','연구실습비','진료기여수당(토요진료)','진료지원수당','의학연구지원금','원외근무수당','법정공휴일수당','자기계발별정수당','육아기근로시간단축','무급난임휴가','실지급액'],
+    ['능력급','의업수당','진료기여수당',null,'조정급','직책수당','야간수당','별정수당(약제부+전문간호사+기타)','군복무수당','간호간병특별수당','전담야간근무가산금'],
+    ['상여금','진료수당','선택진료수당','별정수당(직무)','승급호봉분','업무보조비','통상야간','산전후보전급여','육아휴직수당','연차수당','별정수당5'],
+    ['특별상여금','임상연구비','보직교수기여수당','연구장려수당','경력인정수당','장기근속수당','명절수당','가족수당','무급가족돌봄휴가','연차보전수당',null],
+    ['가계지원비','연구실습비','진료기여수당(토요진료)','진료지원수당','의학연구지원금','원외근무수당','법정공휴일수당','자기계발별정수당','육아기근로시간단축','무급난임휴가',null],
   ];
 
-  const EARNINGS_VALUE_TEMPLATE = [
-    ['기준기본급',null,null,null,null,'급식보조비',null,null,null,null,null],
-    ['근속가산기본급','명절지원비',null,null,null,'교통보조비',null,null,null,null,null],
-    ['능력급',null,null,null,'경력인정수당',null,null,null,null,null,null],
-    ['상여금',null,null,null,null,null,null,null,null,null,'가족수당'],
-    [null,null,null,null,null,'업무보조비',null,'명절수당','무급가족돌봄휴가',null,null],
-    ['진료기여수당',null,null,null,null,null,null,null,null,null,null],
-  ];
+  const EARNINGS_VALUE_TEMPLATE = EARNINGS_GRID_TEMPLATE.map(row =>
+    row.map(cell => (cell && !GRID_SUMMARY_RE.test(cell) ? cell : null))
+  );
 
   const DEDUCTION_WORK_TEMPLATE = [
     ['소득세','국민건강','고용보험','장학지원금공제','병원발전기금','전공의협회비','식대공제','총근로시간','시간외근무시간','야간근무가산횟수','지급연차갯수'],
@@ -548,11 +585,15 @@ const SALARY_PARSER = (() => {
   }
 
   function detectBlocksV2(rows) {
+    const compact = row => cleanCellText(row?.text || '');
     const indexOf = predicate => rows.findIndex(predicate);
-    const earningsStart = indexOf(row => /기본기준급|기준기본급/.test(row.text));
-    const deductionsStart = rows.findIndex((row, idx) => idx > earningsStart && /^소득세(\s|$)/.test(row.text));
-    const detailStart = indexOf(row => /구분/.test(row.text) && /계산방법/.test(row.text) && /지급액/.test(row.text));
-    const footerStart = rows.findIndex((row, idx) => idx > deductionsStart && /교원공제회원번호|귀하의 노고에 진심으로 감사드립니다|가족수당지급대상/.test(row.text));
+    const earningsStart = indexOf(row => /기본기준급|기준기본급/.test(compact(row)));
+    const deductionsStart = rows.findIndex((row, idx) => idx > earningsStart && /^소득세/.test(compact(row)));
+    const detailStart = indexOf(row => {
+      const text = compact(row);
+      return /구분/.test(text) && /계산방법/.test(text) && /지급액/.test(text);
+    });
+    const footerStart = rows.findIndex((row, idx) => idx > deductionsStart && /교원공제회원번호|귀하의노고에진심으로감사드립니다|가족수당지급대상/.test(compact(row)));
     return { earningsStart, deductionsStart, detailStart, footerStart };
   }
 
@@ -715,6 +756,10 @@ const SALARY_PARSER = (() => {
     return 'count';
   }
 
+  function escapeRegExpV2(text) {
+    return String(text || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
   function extractGridItemsV2(matrix, template, kind, startCol, endCol) {
     const items = [];
     const unknownItems = [];
@@ -729,25 +774,45 @@ const SALARY_PARSER = (() => {
         const name = canonicalizeName(rawName);
         if (GRID_SUMMARY_RE.test(name)) continue;
         const sourceRefs = matrix.sourceMatrix[row][col] ? [matrix.sourceMatrix[row][col]] : [];
-        const key = `${kind}:${name}`;
+        const dedupeName = cleanCellText(rawName || name);
+        const key = `${kind}:${dedupeName}`;
         if (kind === 'work_record') {
           const value = parseStatValue(valueText);
           if (!seen.has(key)) {
-            items.push(createNormalizedItem(kind, name, value, inferWorkUnitV2(name, valueText), sourceRefs));
+            items.push(createNormalizedItem(kind, name, value, inferWorkUnitV2(name, valueText), sourceRefs, { row, col }));
             seen.add(key);
           }
           continue;
         }
         const value = parseAmount(valueText);
         if (!seen.has(key)) {
-          items.push(createNormalizedItem(kind, name, value, 'krw', sourceRefs, { amount: value, name }));
+          items.push(createNormalizedItem(kind, name, value, 'krw', sourceRefs, { amount: value, name, row, col }));
           seen.add(key);
         } else {
-          unknownItems.push(createNormalizedItem('unknown', name, value, 'krw', sourceRefs));
+          unknownItems.push(createNormalizedItem('unknown', name, value, 'krw', sourceRefs, { row, col }));
         }
       }
     }
     return { items, unknownItems };
+  }
+
+  function extractExplicitSettlementItemsV2(matrix) {
+    const items = [];
+    const seen = new Set();
+    for (let row = 0; row < DEDUCTION_WORK_TEMPLATE.length; row++) {
+      for (let col = 0; col <= 6; col++) {
+        const rawName = DEDUCTION_WORK_TEMPLATE[row][col];
+        const valueText = matrix.valueMatrix[row][col];
+        if (!rawName || !/\(정산\)/.test(rawName) || valueText == null) continue;
+        const key = `${rawName}:${valueText}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const sourceRefs = matrix.sourceMatrix[row][col] ? [matrix.sourceMatrix[row][col]] : [];
+        const value = parseAmount(valueText);
+        items.push(createNormalizedItem('settlement', rawName, value, 'krw', sourceRefs, { amount: value, name: rawName, row, col }));
+      }
+    }
+    return items;
   }
 
   function extractSummaryFromMatricesV2(earningsMatrix, deductionMatrix) {
@@ -789,21 +854,47 @@ const SALARY_PARSER = (() => {
     return { grossPay: 0, totalDeduction: 0, netPay: 0 };
   }
 
+  function splitInlineDetailTextV2(text) {
+    const raw = String(text || '').trim();
+    if (!raw) return { itemNameText: '', formulaText: '' };
+    const match = raw.match(/^(.+?)\s+(\(.*\))$/);
+    if (match) {
+      return {
+        itemNameText: match[1].trim(),
+        formulaText: match[2].trim(),
+      };
+    }
+    return { itemNameText: raw, formulaText: '' };
+  }
+
   function extractDetailLinesV2(rows) {
     const lines = [];
-    const start = rows.findIndex(row => /구분/.test(row.text) && /계산방법/.test(row.text) && /지급액/.test(row.text));
+    const start = rows.findIndex(row => {
+      const text = cleanCellText(row.text);
+      return /구분/.test(text) && /계산방법/.test(text) && /지급액/.test(text);
+    });
     if (start < 0) return lines;
     for (let i = start + 1; i < rows.length; i++) {
       const row = rows[i];
       const amountItem = [...row.items].reverse().find(item => isNumericLike(item.text));
       if (!amountItem || row.items.length < 2) continue;
-      const section = row.items[0].text.trim();
-      const itemName = canonicalizeName(row.items[1].text);
+      const section = cleanCellText(row.items[0].text);
+      const inline = splitInlineDetailTextV2(row.items[1].text);
+      const itemName = canonicalizeName(inline.itemNameText);
       if (!/^(지급|공제)$/.test(section) || !itemName) continue;
+      let formulaText = row.items.slice(2).filter(item => item !== amountItem).map(item => item.text).join(' ').trim();
+      if (!formulaText && inline.formulaText) formulaText = inline.formulaText;
+      if (!formulaText) {
+        const withoutPrefix = row.text.replace(new RegExp(`^${escapeRegExpV2(section)}\\s+`), '');
+        const withoutAmount = withoutPrefix.replace(new RegExp(`\\s+${escapeRegExpV2(amountItem.text)}$`), '');
+        if (withoutAmount.startsWith(inline.itemNameText)) {
+          formulaText = withoutAmount.slice(inline.itemNameText.length).trim();
+        }
+      }
       lines.push({
         section,
         itemName,
-        formulaText: row.items.slice(2).filter(item => item !== amountItem).map(item => item.text).join(' ').trim(),
+        formulaText,
         amount: parseAmount(amountItem.text),
         sourceRefs: [{ page: row.page, rowId: row.id }],
       });
@@ -820,86 +911,56 @@ const SALARY_PARSER = (() => {
     return [...map.values()];
   }
 
-  function renameItemByValueV2(items, fromName, toName, value, extraMatch) {
-    const target = items.find(item => item.originalName === fromName && item.value === value && (!extraMatch || extraMatch(item)));
-    if (target) {
-      target.originalName = toName;
-      target.canonicalName = toName;
-      target.name = toName;
-    }
-  }
+  function applyPayrollHeuristicsV2(metadata, earnings, deductions, detailLines, summary) {
+    const detailNameBySectionAmount = new Map();
+    (detailLines || []).forEach(line => {
+      detailNameBySectionAmount.set(`${line.section}:${line.amount}`, line.itemName);
+    });
 
-  function applyPayrollHeuristicsV2(metadata, earnings, deductions, summary) {
-    if (!earnings.some(item => item.originalName === '진료기여수당')) {
-      const candidate = earnings.find(item => item.value === 934970);
-      if (candidate) {
-        candidate.originalName = '진료기여수당';
-        candidate.canonicalName = '진료기여수당';
-        candidate.name = '진료기여수당';
-      }
+    for (let i = earnings.length - 1; i >= 0; i--) {
+      const item = earnings[i];
+      const detailName = detailNameBySectionAmount.get(`지급:${item.value}`);
+      if (detailName && detailName !== item.originalName && item.value < 0) earnings.splice(i, 1);
+      if (metadata.payslipType === '연차수당' && item.originalName !== '연차수당' && item.value === summary.grossPay) earnings.splice(i, 1);
     }
-    renameItemByValueV2(earnings, '직책수당', '경력인정수당', 301700);
-    renameItemByValueV2(earnings, '장기근속수당', '업무보조비', 80000);
-    if (metadata.payslipType === '소급분') renameItemByValueV2(earnings, '명절지원비', '경력인정수당', 316610);
-    renameItemByValueV2(earnings, '산전후보전급여', '명절수당', 40000);
-    renameItemByValueV2(earnings, '통상야근수당', '가족수당', 35000);
-    renameItemByValueV2(earnings, '자기계발별정수당', '명절수당', 40000);
-    renameItemByValueV2(earnings, '별정수당5', '가족수당', 35000);
 
-    renameItemByValueV2(deductions, '노동조합비', '병원발전기금', 67110);
-    renameItemByValueV2(deductions, '노동조합비', '병원발전기금', 69960);
-    renameItemByValueV2(deductions, '교원장기급여', '국민연금', 60000);
-    const taxAdj = deductions.find(item => item.originalName === '교원대출상환' && item.value >= 100000);
-    if (taxAdj) {
-      taxAdj.originalName = '소득세(정산)';
-      taxAdj.canonicalName = '소득세(정산)';
-      taxAdj.name = '소득세(정산)';
-    }
-    const careAdj = deductions.find(item => item.originalName === '사학연금대여상환금' && item.value >= 300000);
-    if (careAdj) {
-      careAdj.originalName = '장기요양(정산)';
-      careAdj.canonicalName = '장기요양(정산)';
-      careAdj.name = '장기요양(정산)';
-    }
-    if (metadata.payslipType === '소급분') renameItemByValueV2(deductions, '노동조합비', '사학연금부담금', 28360);
-
-    const deductionSum = deductions.reduce((sum, item) => sum + item.value, 0);
-    const residual = summary.totalDeduction - deductionSum;
-    if (residual > 0 && !deductions.some(item => item.originalName === '소득세(정산)')) {
-      if (residual === 446660) {
-        deductions.push(createNormalizedItem('deduction', '소득세(정산)', 406000, 'krw', [], { amount: 406000, name: '소득세(정산)', confidence: 0.8 }));
-        deductions.push(createNormalizedItem('deduction', '주민세(정산)', 40660, 'krw', [], { amount: 40660, name: '주민세(정산)', confidence: 0.8 }));
-      }
-    }
-    if (metadata.payPeriod === '2026년 2월분') {
-      deductions.push(createNormalizedItem('deduction', '소득세(정산)', 406000, 'krw', [], { amount: 406000, name: '소득세(정산)', confidence: 0.8 }));
-      deductions.push(createNormalizedItem('deduction', '주민세(정산)', 40660, 'krw', [], { amount: 40660, name: '주민세(정산)', confidence: 0.8 }));
+    for (let i = deductions.length - 1; i >= 0; i--) {
+      const item = deductions[i];
+      const detailName = detailNameBySectionAmount.get(`공제:${item.value}`);
+      if (detailName && detailName !== item.originalName && item.value < 0) deductions.splice(i, 1);
     }
   }
 
   function extractMetaFromRowsV2(rows) {
     const fullText = rows.map(row => row.text).join('\n');
+    const compactRows = rows.map(row => cleanCellText(row.text || ''));
+    const compactText = compactRows.filter(Boolean).join('\n');
     const employeeInfo = {};
-    const infoPatterns = [
-      [/개인번호\s+(\d+)/, 'employeeNumber'],
-      [/성\s*명\s+(\S+)/, 'name'],
-      [/직\s*종\s+(\S+)/, 'jobType'],
-      [/소\s*속\s+(\S+)/, 'department'],
-      [/입사(?:년월|일)\s+([\d][\d./-]+[\d])/, 'hireDate'],
-    ];
-    infoPatterns.forEach(([re, key]) => {
-      const match = fullText.match(re);
-      if (match) employeeInfo[key] = match[1];
-    });
-    const gradeMatch = fullText.match(/((?:[SMJK]\d+|[가-힣]+\d*)\s*-\s*\d+)/);
+    const compactInfoLine = compactRows.find(line => line.includes('개인번호') && line.includes('성명')) || compactText;
+    const employeeNumberMatch = compactInfoLine.match(/개인번호(\d+)/) || fullText.match(/개인번호\s+(\d+)/);
+    if (employeeNumberMatch) employeeInfo.employeeNumber = employeeNumberMatch[1];
+
+    const nameMatch = compactInfoLine.match(/성명(.+?)(?=직종|급여연차|소속|입사(?:년월|일)|$)/) || fullText.match(/성\s*명\s+(\S+)/);
+    if (nameMatch) employeeInfo.name = nameMatch[1];
+
+    const jobTypeMatch = compactInfoLine.match(/직종(.+?)(?=급여연차|소속|입사(?:년월|일)|$)/) || fullText.match(/직\s*종\s+(\S+)/);
+    if (jobTypeMatch) employeeInfo.jobType = jobTypeMatch[1];
+
+    const departmentMatch = compactInfoLine.match(/소속(.+?)(?=입사(?:년월|일)|$)/) || fullText.match(/소\s*속\s+(\S+)/);
+    if (departmentMatch) employeeInfo.department = departmentMatch[1];
+
+    const hireDateMatch = compactInfoLine.match(/입사(?:년월|일)([\d./-]+)/) || fullText.match(/입사(?:년월|일)\s+([\d][\d./-]+[\d])/);
+    if (hireDateMatch) employeeInfo.hireDate = hireDateMatch[1];
+
+    const gradeMatch = compactInfoLine.match(/급여연차((?:[SMJK]\d+|[가-힣]+\d*)-\d+)/) || compactText.match(/((?:[SMJK]\d+|[가-힣]+\d*)-\d+)/) || fullText.match(/((?:[SMJK]\d+|[가-힣]+\d*)\s*-\s*\d+)/);
     if (gradeMatch) employeeInfo.payGrade = gradeMatch[1].replace(/\s/g, '');
 
     const metadata = {};
-    const periodMatch = fullText.match(/(\d{4})년도?\s*(\d{1,2})월\s*분/);
+    const periodMatch = compactText.match(/(\d{4})년도?(\d{1,2})월분/) || fullText.match(/(\d{4})년도?\s*(\d{1,2})월\s*분/);
     if (periodMatch) metadata.payPeriod = `${periodMatch[1]}년 ${parseInt(periodMatch[2], 10)}월분`;
-    const dateMatch = fullText.match(/(?:급여지급일|지급일)\s*:?\s*(\d{4})\s*[-./]?\s*(\d{1,2})\s*[-./]?\s*(\d{1,2})/);
+    const dateMatch = compactText.match(/(?:급여지급일|지급일):?(\d{4})[-./]?(\d{1,2})[-./]?(\d{1,2})/) || fullText.match(/(?:급여지급일|지급일)\s*:?\s*(\d{4})\s*[-./]?\s*(\d{1,2})\s*[-./]?\s*(\d{1,2})/);
     if (dateMatch) metadata.payDate = `${dateMatch[1]}-${dateMatch[2].padStart(2, '0')}-${dateMatch[3].padStart(2, '0')}`;
-    const typeMatch = fullText.match(/급여명세서\s*\(([^)]+)\)/);
+    const typeMatch = compactText.match(/급여명세서\(([^)]+)\)/) || fullText.match(/급여명세서\s*\(([^)]+)\)/);
     metadata.payslipType = typeMatch ? typeMatch[1] : '급여';
     return { metadata, employeeInfo };
   }
@@ -925,6 +986,7 @@ const SALARY_PARSER = (() => {
     const earningsExtracted = extractGridItemsV2(earningsMatrix, EARNINGS_VALUE_TEMPLATE, 'earning', 0, 10);
     const deductionsExtracted = extractGridItemsV2(deductionMatrix, DEDUCTION_WORK_TEMPLATE, 'deduction', 0, 6);
     const workExtracted = extractGridItemsV2(deductionMatrix, DEDUCTION_WORK_TEMPLATE, 'work_record', 7, 10);
+    const explicitSettlementItems = extractExplicitSettlementItemsV2(deductionMatrix);
     const detailLines = extractDetailLinesV2(detailRows);
 
     const earnings = mergeByOriginalNameV2(earningsExtracted.items);
@@ -950,8 +1012,13 @@ const SALARY_PARSER = (() => {
     if (!summary.totalDeduction) summary.totalDeduction = deductions.reduce((sum, item) => sum + item.value, 0);
     if (!summary.netPay) summary.netPay = summary.grossPay - summary.totalDeduction;
 
-    applyPayrollHeuristicsV2(metadata, earnings, deductions, summary);
+    applyPayrollHeuristicsV2(metadata, earnings, deductions, detailLines, summary);
     const splitDeductions = splitSettlementItemsV2(deductions);
+    explicitSettlementItems.forEach(item => {
+      if (!splitDeductions.settlements.some(existing => existing.originalName === item.originalName && existing.value === item.value)) {
+        splitDeductions.settlements.push(item);
+      }
+    });
 
     detailLines.forEach(line => {
       if (line.section !== '지급') return;
@@ -2089,8 +2156,11 @@ const SALARY_PARSER = (() => {
       mergeTokensToWordsV2,
       clusterWordsToRowsV2,
       detectBlocksV2,
+      extractMetaFromRowsV2,
+      extractDetailLinesV2,
       buildMatrixV2,
       normalizeSectionRowsV2,
+      lookupVariableKeyByLabel,
     },
   };
 })();

@@ -3,6 +3,26 @@
 // 기준: 2026 조합원 수첩 (2025.10.23 단체협약 갱신)
 // ============================================
 
+const GENERATED_UNION_RULES = (() => {
+  try {
+    if (typeof window !== 'undefined' && window.UNION_REGULATION_CAL_2026) {
+      return window.UNION_REGULATION_CAL_2026;
+    }
+  } catch (e) { /* ignore */ }
+
+  try {
+    if (typeof require === 'function') {
+      return require('./data/union_regulation_cal_2026.json');
+    }
+  } catch (e) { /* ignore */ }
+
+  return null;
+})();
+
+function getGeneratedFixedAllowance(variableKey, fallbackValue) {
+  return GENERATED_UNION_RULES?.fixed_allowances?.[variableKey]?.amount ?? fallbackValue;
+}
+
 // Static fallback — API 실패 시에도 기존 기능 100% 동작
 const DATA_STATIC = {
   // ── 직종 → 보수표 매핑 ──
@@ -142,12 +162,12 @@ const DATA_STATIC = {
 
   // ── 수당 규정 ──
   allowances: {
-    mealSubsidy: 150000,        // 급식보조비 월
-    transportSubsidy: 150000,   // 교통보조비 월
-    refreshBenefit: 30000,      // 리프레시지원비 월 (2026.01~)
-    selfDevAllowance: 40000,    // 자기계발별정수당 월
+    mealSubsidy: getGeneratedFixedAllowance('meal_subsidy', 150000),              // 급식보조비 월
+    transportSubsidy: getGeneratedFixedAllowance('transport_subsidy', 150000),    // 교통보조비 월
+    refreshBenefit: GENERATED_UNION_RULES?.fixed_allowances?.refresh_support_allowance?.monthly_amount ?? 30000, // 리프레시지원비 월 (2026.01~)
+    selfDevAllowance: getGeneratedFixedAllowance('training_allowance', 40000),     // 자기계발별정수당 월
     specialPay5: 35000,         // 별정수당5 월
-    militaryService: 45000,     // 군복무수당 월 (2년 기준)
+    militaryService: getGeneratedFixedAllowance('military_service_pay', 45000),    // 군복무수당 월 (2년 기준)
     onCallStandby: 10000,       // 온콜대기수당 일당
     onCallTransport: 50000,     // 온콜교통비 회당
     onCallCommuteHours: 2,      // 온콜 출퇴근 인정시간
@@ -585,6 +605,261 @@ const DATA_STATIC = {
     otherCumulativeTrigger: 20    // 시설·이송·미화 등 누적 기준
   }
 };
+
+const ORDINARY_WAGE_LABELS_BY_KEY = {
+  base_salary: '기준기본급',
+  seniority_base_salary: '근속가산기본급',
+  military_service_pay: '군복무수당',
+  ability_pay: '능력급',
+  bonus_monthly: '상여금',
+  family_support_pay: '가계지원비',
+  adjust_pay: '조정급',
+  upgrade_adjust_pay: '승급조정급',
+  long_service_pay: '장기근속수당',
+  special_duty_pay: '별정수당(직무)',
+  position_pay: '직책수당',
+  work_support_pay: '업무보조비',
+  meal_subsidy: '급식보조비',
+  transport_subsidy: '교통보조비',
+  holiday_bonus_event: '명절지원비',
+  training_allowance: '자기계발별정수당',
+  refresh_support_allowance: '리프레시지원비'
+};
+
+const CEREMONY_RULE_FALLBACKS = {
+  marriage_self: { type: '본인 결혼', leave: 5, hospitalPay: 300000, pensionPay: '결혼축하금', coopPay: '축하선물', docs: '없음', extra: '축하화환 지급' },
+  marriage_child: { type: '자녀 결혼', leave: 1, hospitalPay: 100000, pensionPay: '-', coopPay: '-', docs: '청첩장, 주민등록등본(가족관계증명서)' },
+  childbirth_self: { type: '본인 출산', leave: 90, hospitalPay: 100000, pensionPay: '경조비', coopPay: '첫째·둘째 10만원 / 셋째 이상 30만원', docs: '주민등록등본(가족관계증명서), 출생증명서', extra: '출산 후 45일 확보 (쌍둥이 이상 120일)' },
+  childbirth_spouse: { type: '배우자 출산', leave: 20, hospitalPay: 100000, pensionPay: '-', coopPay: '-', docs: '주민등록등본(가족관계증명서)', extra: '출산일로부터 120일 이내 사용 완료' },
+  adoption: { type: '입양', leave: 20, hospitalPay: 0, pensionPay: '-', coopPay: '-', docs: '주민등록등본(가족관계증명서), 입양증명서', extra: '' },
+  death_self: { type: '본인 사망', leave: '-', hospitalPay: 1000000, pensionPay: '사망조위금 지급', coopPay: '-', docs: '', extra: '경조비 지급' },
+  death_spouse: { type: '배우자 사망', leave: 5, hospitalPay: 1000000, pensionPay: '사망조위금 지급', coopPay: '-', docs: '주민등록등본(가족관계증명서), 사망진단서(기본증명서)', extra: '경조비 지급' },
+  death_parents: { type: '부모(본인·배우자) 사망', leave: 5, hospitalPay: 300000, pensionPay: '사망조위금 지급', coopPay: '-', docs: '주민등록등본(가족관계증명서), 사망진단서(기본증명서)', extra: '경조비 지급' },
+  death_child_and_spouse: { type: '자녀 사망', leave: 3, hospitalPay: 300000, pensionPay: '-', coopPay: '-', docs: '주민등록등본(가족관계증명서), 사망진단서', extra: '자녀 배우자 사망 시 경조금 없음' },
+  death_grandparents: { type: '조부모·외조부모 사망', leave: 3, hospitalPay: 50000, pensionPay: '-', coopPay: '-', docs: '주민등록등본(가족관계증명서), 사망진단서(기본증명서), 제적등본', extra: '' },
+  death_siblings: { type: '형제·자매 사망', leave: 3, hospitalPay: 50000, pensionPay: '-', coopPay: '-', docs: '주민등록등본(가족관계증명서), 사망진단서(기본증명서), 제적등본', extra: '' }
+};
+
+const CEREMONY_RULE_ORDER = [
+  'marriage_self',
+  'marriage_child',
+  'childbirth_self',
+  'childbirth_spouse',
+  'adoption',
+  'death_self',
+  'death_spouse',
+  'death_parents',
+  'death_child_and_spouse',
+  'death_grandparents',
+  'death_siblings'
+];
+
+const CEREMONY_TYPE_RULE_MAP = {
+  ceremony_marriage_self: 'marriage_self',
+  ceremony_marriage_child: 'marriage_child',
+  ceremony_birth: 'childbirth_self',
+  ceremony_spouse_birth: 'childbirth_spouse',
+  ceremony_adoption: 'adoption',
+  ceremony_death_spouse: 'death_spouse',
+  ceremony_death_parent: 'death_parents',
+  ceremony_death_child: 'death_child_and_spouse',
+  ceremony_death_grandparent: 'death_grandparents',
+  ceremony_death_sibling: 'death_siblings'
+};
+
+function formatRuleAmount(amount) {
+  return `${Number(amount || 0).toLocaleString('ko-KR')}원`;
+}
+
+function normalizeCeremonyLeaveValue(value) {
+  if (value == null || value === '' || value === '없음') return '-';
+  return value;
+}
+
+function formatCeremonyLeaveText(value) {
+  const normalized = normalizeCeremonyLeaveValue(value);
+  return typeof normalized === 'number' ? `${normalized}일` : String(normalized);
+}
+
+function findFaqEntry(question) {
+  return (DATA_STATIC.faq || []).find((item) => item.q === question) || null;
+}
+
+function findHandbookArticle(category, title) {
+  const section = (DATA_STATIC.handbook || []).find((item) => item.category === category);
+  return section?.articles?.find((item) => item.title === title) || null;
+}
+
+function buildHolidayBonusMonthLines() {
+  const months = GENERATED_UNION_RULES?.formulas?.holiday_bonus_event?.payment_months || ['lunar_new_year_month', 'chuseok_month', 5, 7];
+  const labelMap = {
+    lunar_new_year_month: '설이 속하는 달',
+    chuseok_month: '추석이 속하는 달',
+  };
+
+  return months.map((item) => typeof item === 'number' ? `${item}월` : (labelMap[item] || String(item)));
+}
+
+function describeHolidayBonusFormula(expression) {
+  if (expression === '(base_salary + adjust_pay * 0.5) * 0.5') {
+    return '(기준기본급 + 조정급의 1/2) × 50%';
+  }
+  return expression || '(기준기본급 + 조정급의 1/2) × 50%';
+}
+
+function buildOrdinaryWageDisplayNames() {
+  const variableKeys = GENERATED_UNION_RULES?.ordinary_wage?.included_variable_keys || Object.keys(ORDINARY_WAGE_LABELS_BY_KEY);
+  return variableKeys.map((key) => ORDINARY_WAGE_LABELS_BY_KEY[key] || key);
+}
+
+function chooseCeremonyLeaveValue(ruleKey, fallbackValue, generatedValue) {
+  if (generatedValue == null || generatedValue === '') return fallbackValue;
+  const normalized = normalizeCeremonyLeaveValue(generatedValue);
+  if (normalized === '-') return fallbackValue === '-' ? fallbackValue : '-';
+  if (typeof normalized === 'string' && /^\d+$/.test(normalized)) return Number(normalized);
+  return normalized;
+}
+
+function buildCeremonyRules() {
+  const generated = GENERATED_UNION_RULES?.petition_leave_and_congrats || {};
+  const rules = {};
+
+  Object.entries(CEREMONY_RULE_FALLBACKS).forEach(([ruleKey, fallback]) => {
+    const generatedRule = generated[ruleKey];
+    const merged = { ...fallback };
+
+    if (generatedRule) {
+      merged.leave = chooseCeremonyLeaveValue(ruleKey, fallback.leave, generatedRule.leave_days);
+      if (generatedRule.hospital_amount != null) merged.hospitalPay = generatedRule.hospital_amount;
+      if (generatedRule.pension_support) merged.pensionPay = generatedRule.pension_support;
+      if (generatedRule.coop_support) merged.coopPay = generatedRule.coop_support;
+      if (generatedRule.refs) merged.refs = generatedRule.refs;
+    }
+
+    rules[ruleKey] = merged;
+  });
+
+  return rules;
+}
+
+function buildCeremonySummaryText(ceremonyRules) {
+  return [
+    '결혼:',
+    `• 본인: ${formatRuleAmount(ceremonyRules.marriage_self.hospitalPay)} + ${formatCeremonyLeaveText(ceremonyRules.marriage_self.leave)}${ceremonyRules.marriage_self.extra ? ' + ' + ceremonyRules.marriage_self.extra : ''}`,
+    `• 자녀: ${formatRuleAmount(ceremonyRules.marriage_child.hospitalPay)} + ${formatCeremonyLeaveText(ceremonyRules.marriage_child.leave)}`,
+    '',
+    '출산:',
+    `• 본인: ${formatRuleAmount(ceremonyRules.childbirth_self.hospitalPay)} + ${formatCeremonyLeaveText(ceremonyRules.childbirth_self.leave)}`,
+    `• 배우자 출산: ${formatCeremonyLeaveText(ceremonyRules.childbirth_spouse.leave)} + ${formatRuleAmount(ceremonyRules.childbirth_spouse.hospitalPay)}`,
+    '',
+    '사망:',
+    `• 배우자: ${formatRuleAmount(ceremonyRules.death_spouse.hospitalPay)} + ${formatCeremonyLeaveText(ceremonyRules.death_spouse.leave)}`,
+    `• 부모(본인·배우자): ${formatRuleAmount(ceremonyRules.death_parents.hospitalPay)} + ${formatCeremonyLeaveText(ceremonyRules.death_parents.leave)}`,
+    `• 자녀: ${formatRuleAmount(ceremonyRules.death_child_and_spouse.hospitalPay)} + ${formatCeremonyLeaveText(ceremonyRules.death_child_and_spouse.leave)}`,
+    `• 조부모·외조부모: ${formatRuleAmount(ceremonyRules.death_grandparents.hospitalPay)} + ${formatCeremonyLeaveText(ceremonyRules.death_grandparents.leave)}`,
+    `• 형제·자매: ${formatRuleAmount(ceremonyRules.death_siblings.hospitalPay)} + ${formatCeremonyLeaveText(ceremonyRules.death_siblings.leave)}`,
+  ].join('\n');
+}
+
+function buildCeremonyDocsText(ceremonyRules) {
+  return [
+    `• 결혼(본인): ${ceremonyRules.marriage_self.docs || '없음'}`,
+    `• 결혼(자녀): ${ceremonyRules.marriage_child.docs || '-'}`,
+    `• 출산: ${ceremonyRules.childbirth_self.docs || '-'}`,
+    `• 배우자 출산: ${ceremonyRules.childbirth_spouse.docs || '-'}`,
+    `• 사망: ${ceremonyRules.death_spouse.docs || ceremonyRules.death_parents.docs || '-'}`,
+    `• 입양: ${ceremonyRules.adoption.docs || '-'}`,
+  ].join('\n');
+}
+
+function applyGeneratedRulebookToStaticData(target) {
+  if (!target) return;
+
+  const ordinaryWageDisplayNames = buildOrdinaryWageDisplayNames();
+  const holidayBonusMonthLines = buildHolidayBonusMonthLines();
+  const holidayBonusFormula = describeHolidayBonusFormula(GENERATED_UNION_RULES?.formulas?.holiday_bonus_event?.expression);
+  const ceremonyRules = buildCeremonyRules();
+
+  target.ceremonies = CEREMONY_RULE_ORDER
+    .map((ruleKey) => ceremonyRules[ruleKey])
+    .filter(Boolean)
+    .map((rule) => ({
+      type: rule.type,
+      leave: rule.leave,
+      hospitalPay: rule.hospitalPay,
+      pensionPay: rule.pensionPay,
+      coopPay: rule.coopPay,
+      docs: rule.docs,
+      extra: rule.extra,
+    }));
+
+  const ceremonySummaryText = buildCeremonySummaryText(ceremonyRules);
+  const ceremonyDocsText = buildCeremonyDocsText(ceremonyRules);
+  const holidayBonusFaq = findFaqEntry('명절지원비는 언제?');
+  if (holidayBonusFaq) {
+    holidayBonusFaq.a = `연 ${holidayBonusMonthLines.length}회 지급:\n${holidayBonusMonthLines.map((line) => `• ${line}`).join('\n')}\n\n금액 = ${holidayBonusFormula}`;
+  }
+
+  const allowanceFaq = findFaqEntry('교통보조비·급식보조비는?');
+  if (allowanceFaq) {
+    allowanceFaq.a = `• 교통보조비: 월 ${formatRuleAmount(target.allowances.transportSubsidy)}\n• 급식보조비: 월 ${formatRuleAmount(target.allowances.mealSubsidy)}\n• 자기계발별정수당: 월 ${formatRuleAmount(target.allowances.selfDevAllowance)}\n• 리프레시지원비: 월 ${formatRuleAmount(target.allowances.refreshBenefit)}`;
+  }
+
+  const ordinaryWageFaq = findFaqEntry('통상임금이 뭐에요?');
+  if (ordinaryWageFaq) {
+    ordinaryWageFaq.a = `소정근로에 정기적·일률적·고정적으로 지급하는 임금\n\n• 시급 = 통상임금 ÷ 209시간\n\n구성 항목 (${ordinaryWageDisplayNames.length}개):\n${ordinaryWageDisplayNames.join(', ')}`;
+  }
+
+  const spouseBirthFaq = findFaqEntry('배우자 출산휴가는?');
+  if (spouseBirthFaq) {
+    spouseBirthFaq.a = `• ${formatCeremonyLeaveText(ceremonyRules.childbirth_spouse.leave)}\n• 출산일로부터 120일 이내 사용 완료\n• 경조비 ${formatRuleAmount(ceremonyRules.childbirth_spouse.hospitalPay)}`;
+  }
+
+  const marriageFaq = findFaqEntry('결혼하면 휴가와 지원금은?');
+  if (marriageFaq) {
+    marriageFaq.a = `본인 결혼:\n• 휴가 ${formatCeremonyLeaveText(ceremonyRules.marriage_self.leave)} + 경조비 ${formatRuleAmount(ceremonyRules.marriage_self.hospitalPay)}${ceremonyRules.marriage_self.extra ? ' + ' + ceremonyRules.marriage_self.extra : ''}\n\n자녀 결혼:\n• 휴가 ${formatCeremonyLeaveText(ceremonyRules.marriage_child.leave)} + 경조비 ${formatRuleAmount(ceremonyRules.marriage_child.hospitalPay)}\n• ${ceremonyRules.marriage_child.docs}`;
+  }
+
+  const ceremonyBaseFaq = findFaqEntry('경조비 지급 기준은?');
+  if (ceremonyBaseFaq) ceremonyBaseFaq.a = ceremonySummaryText;
+
+  const ceremonyDocsFaq = findFaqEntry('경조휴가 구비서류는?');
+  if (ceremonyDocsFaq) ceremonyDocsFaq.a = ceremonyDocsText;
+
+  const wageOrdinaryArticle = findHandbookArticle('임금·수당', '통상임금 구성');
+  if (wageOrdinaryArticle) {
+    wageOrdinaryArticle.body = `소정근로에 정기적·일률적·고정적으로 지급하는 임금.\n시급 = 통상임금 ÷ 209시간.\n\n구성 항목 (${ordinaryWageDisplayNames.length}개):\n${ordinaryWageDisplayNames.join(', ')}`;
+  }
+
+  const holidayBonusArticle = findHandbookArticle('임금·수당', '명절지원비');
+  if (holidayBonusArticle) {
+    holidayBonusArticle.body = `${holidayBonusMonthLines.join(', ')} (총 ${holidayBonusMonthLines.length}회).\n금액 = ${holidayBonusFormula}`;
+  }
+
+  const ceremonyListArticle = findHandbookArticle('청원·경조', '경조비 일람');
+  if (ceremonyListArticle) ceremonyListArticle.body = ceremonySummaryText;
+
+  const ceremonyDocsArticle = findHandbookArticle('청원·경조', '경조 구비서류');
+  if (ceremonyDocsArticle) ceremonyDocsArticle.body = ceremonyDocsText;
+
+  const spouseBirthArticle = findHandbookArticle('연차·휴가', '배우자 출산휴가');
+  if (spouseBirthArticle) {
+    spouseBirthArticle.body = `${formatCeremonyLeaveText(ceremonyRules.childbirth_spouse.leave)}.\n출산일로부터 120일 이내 사용 완료.\n경조비 ${formatRuleAmount(ceremonyRules.childbirth_spouse.hospitalPay)}.`;
+  }
+
+  (target.leaveQuotas?.types || []).forEach((typeInfo) => {
+    const ruleKey = CEREMONY_TYPE_RULE_MAP[typeInfo.id];
+    const rule = ruleKey ? ceremonyRules[ruleKey] : null;
+    if (!rule) return;
+
+    if (typeof rule.leave === 'number') typeInfo.ceremonyDays = rule.leave;
+    typeInfo.ceremonyPay = rule.hospitalPay;
+    if (rule.docs) typeInfo.docs = rule.docs;
+    if (rule.extra) typeInfo.extra = rule.extra;
+  });
+}
+
+applyGeneratedRulebookToStaticData(DATA_STATIC);
 
 // DATA 객체: 초기값은 static, API 로드 성공 시 덮어쓰기
 let DATA = DATA_STATIC;

@@ -1,0 +1,50 @@
+{
+  "_meta": {
+    "source": "union_regulation_2026.json",
+    "version": "2026.1.0-generated"
+  },
+  "display_name_by_variable_key": {
+    "meal_subsidy": "급식보조비",
+    "transport_subsidy": "교통보조비",
+    "military_service_pay": "군복무수당",
+    "position_pay": "직책수당",
+    "special_duty_pay": "별정수당(직무)",
+    "training_allowance": "자기계발별정수당",
+    "holiday_bonus_event": "명절지원비",
+    "holiday_bonus_monthly_accrual": "명절지원비(월할)",
+    "income_tax": "소득세",
+    "income_tax_settlement": "소득세(정산)",
+    "resident_tax": "주민세",
+    "resident_tax_settlement": "주민세(정산)",
+    "health_insurance_employee": "국민건강",
+    "health_insurance_settlement": "국민건강(정산)",
+    "long_term_care_employee": "장기요양",
+    "long_term_care_settlement": "장기요양(정산)"
+  },
+  "variable_key_by_compact_label": {
+    "급식보조비": "meal_subsidy",
+    "교통보조비": "transport_subsidy",
+    "군복무수당": "military_service_pay",
+    "직책수당": "position_pay",
+    "직책급": "position_pay",
+    "별정수당(직무)": "special_duty_pay",
+    "자기계발별정수당": "training_allowance",
+    "교육훈련비": "training_allowance",
+    "명절지원비": "holiday_bonus_event",
+    "명절지원비(월할)": "holiday_bonus_monthly_accrual",
+    "소득세": "income_tax",
+    "소득세(정산)": "income_tax_settlement",
+    "주민세": "resident_tax",
+    "주민세(정산)": "resident_tax_settlement",
+    "국민건강": "health_insurance_employee",
+    "건강보험": "health_insurance_employee",
+    "국민건강보험": "health_insurance_employee",
+    "국민건강(정산)": "health_insurance_settlement",
+    "건강보험(정산)": "health_insurance_settlement",
+    "국민건강보험(정산)": "health_insurance_settlement",
+    "장기요양": "long_term_care_employee",
+    "장기요양보험": "long_term_care_employee",
+    "장기요양(정산)": "long_term_care_settlement",
+    "장기요양보험(정산)": "long_term_care_settlement"
+  }
+}

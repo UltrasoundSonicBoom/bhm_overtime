@@ -36,7 +36,34 @@ const CALC = {
         return cur;
     },
 
+    _getObjectPathValue(root, dotPath) {
+        if (!root) return undefined;
+        const parts = dotPath.split('.');
+        let cur = root;
+        for (const p of parts) {
+            if (cur == null || typeof cur !== 'object') return undefined;
+            cur = cur[p];
+        }
+        return cur;
+    },
+
+    _resolveRuleSet(ruleSet) {
+        if (ruleSet) return ruleSet;
+        if (typeof window !== 'undefined' && window.UNION_REGULATION_CAL_2026) {
+            return window.UNION_REGULATION_CAL_2026;
+        }
+        return null;
+    },
+
+    _resolveGeneratedPayTableKey(payTableName) {
+        if (payTableName === '일반직') return 'general_j_grade';
+        if (payTableName === '운영기능직') return 'operation_a_grade';
+        if (payTableName === '환경유지지원직') return 'environment_sa_grade';
+        return payTableName;
+    },
+
     calcOrdinaryWage(jobType, grade, year, extras = {}, ruleSet = null) {
+        const effectiveRuleSet = this._resolveRuleSet(ruleSet);
         const payTableName = this.resolvePayTable(jobType);
         // ruleSet이 있으면 ruleSet에서 보수표 데이터를 우선 조회하고, 없으면 DATA fallback
         const table = DATA.payTables[payTableName];
@@ -46,7 +73,12 @@ const CALC = {
 
         // ruleSet 주입: wage_tables_2025 카테고리에서 grade별 기본급 배열 조회
         // ruleSet 구조: { wage_tables_2025: { [payTableKey]: { [grade]: { base_salary_by_year: [...] } } } }
-        const rsWageTable = this._getRuleValue(ruleSet, 'wage_tables_2025', payTableName);
+        const rsWageTable =
+            this._getRuleValue(effectiveRuleSet, 'wage_tables_2025', payTableName) ||
+            this._getObjectPathValue(
+                effectiveRuleSet,
+                `wage_tables.${this._resolveGeneratedPayTableKey(payTableName)}`
+            );
         const rsGrade = rsWageTable ? rsWageTable[grade] : null;
 
         const annualBase = (rsGrade?.base_salary_by_year?.[yearIdx]) ?? table.basePay[grade]?.[yearIdx] ?? 0;
@@ -70,13 +102,16 @@ const CALC = {
         }
 
         // ruleSet에서 고정수당 값 조회 (없으면 DATA fallback)
-        const rsAllowances = this._getRuleValue(ruleSet, 'wage_structure_and_allowances', 'fixed_allowances') || {};
+        const rsAllowances = this._getRuleValue(effectiveRuleSet, 'wage_structure_and_allowances', 'fixed_allowances') || {};
 
         // 군복무수당: 월할 계산 지원 (기본 24개월, 개인별 복무기간에 따라 조정)
         let militaryPay = 0;
         if (extras.hasMilitary) {
             const militaryMonths = extras.militaryMonths || 24;
-            const militaryBase = rsAllowances.military_service?.amount ?? DATA.allowances.militaryService;
+            const militaryBase =
+                rsAllowances.military_service?.amount ??
+                this._getObjectPathValue(effectiveRuleSet, 'fixed_allowances.military_service_pay.amount') ??
+                DATA.allowances.militaryService;
             militaryPay = Math.round(militaryBase * Math.floor(militaryMonths) / 24);
         }
 
@@ -92,12 +127,23 @@ const CALC = {
         const workSupportPay = extras.workSupportPay || 0;
         // 가족수당은 통상임금 산정 제외 (보수규정 제44조 2항 미포함)
 
-        const mealSubsidy = rsAllowances.meal_subsidy ?? DATA.allowances.mealSubsidy;
-        const transportSubsidy = rsAllowances.transportation_subsidy ?? DATA.allowances.transportSubsidy;
-        const trainingAllowance = rsAllowances.training_monthly ?? DATA.allowances.selfDevAllowance;
-        const refreshBenefit = rsAllowances.refresh_support_yearly != null
-            ? Math.round(rsAllowances.refresh_support_yearly / 12)
-            : DATA.allowances.refreshBenefit;
+        const mealSubsidy =
+            rsAllowances.meal_subsidy ??
+            this._getObjectPathValue(effectiveRuleSet, 'fixed_allowances.meal_subsidy.amount') ??
+            DATA.allowances.mealSubsidy;
+        const transportSubsidy =
+            rsAllowances.transportation_subsidy ??
+            this._getObjectPathValue(effectiveRuleSet, 'fixed_allowances.transport_subsidy.amount') ??
+            DATA.allowances.transportSubsidy;
+        const trainingAllowance =
+            rsAllowances.training_monthly ??
+            this._getObjectPathValue(effectiveRuleSet, 'fixed_allowances.training_allowance.amount') ??
+            DATA.allowances.selfDevAllowance;
+        const refreshBenefit =
+            (rsAllowances.refresh_support_yearly != null
+                ? Math.round(rsAllowances.refresh_support_yearly / 12)
+                : this._getObjectPathValue(effectiveRuleSet, 'fixed_allowances.refresh_support_allowance.monthly_amount')) ??
+            DATA.allowances.refreshBenefit;
 
         // 명절지원비 (연 4회): (기준기본급 + 조정급/2) × 50% (제48조: 설·추석·5월·7월)
         const holidayBonusPerTime = Math.round((monthlyBase + adjustPay / 2) * 0.5);
@@ -120,7 +166,7 @@ const CALC = {
             '교통보조비': transportSubsidy,
             // ※ 가족수당은 통상임금에 포함되지 않음 (보수규정 제44조 2항)
             '명절지원비(월할)': monthlyHolidayBonus,
-            '교육훈련비': trainingAllowance,      // 제43조 (구: 자기계발별정수당)
+            '자기계발별정수당': trainingAllowance,
             '별정수당5': DATA.allowances.specialPay5,
             '리프레시지원비': refreshBenefit      // 별도합의 2024.11: 2026.01~통상임금 산입
         };
