@@ -1,0 +1,65 @@
+- generic [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5] [cursor=pointer]:
+        - img "SNUH Mate" [ref=e6]
+        - generic [ref=e7]:
+          - heading "슬기로운 병원 생활 메이트" [level=1] [ref=e8]
+          - generic [ref=e9]: 2026.5.1 정식 오픈
+      - generic [ref=e10]:
+        - button "Google로 연결" [ref=e12] [cursor=pointer]:
+          - img [ref=e13]
+          - generic [ref=e19]: Google로 연결
+        - button "🎨" [ref=e20] [cursor=pointer]
+        - button "💬" [ref=e21] [cursor=pointer]
+  - navigation [ref=e22]:
+    - generic [ref=e23]:
+      - button "🏠 홈" [ref=e24] [cursor=pointer]:
+        - generic [ref=e25]: 🏠
+        - generic [ref=e26]: 홈
+      - button "📅 휴가" [ref=e27] [cursor=pointer]:
+        - generic [ref=e28]: 📅
+        - generic [ref=e29]: 휴가
+      - button "⏰ 시간외" [ref=e30] [cursor=pointer]:
+        - generic [ref=e31]: ⏰
+        - generic [ref=e32]: 시간외
+      - button "💰 급여" [ref=e33] [cursor=pointer]:
+        - generic [ref=e34]: 💰
+        - generic [ref=e35]: 급여
+      - link "📖 규정" [ref=e36] [cursor=pointer]:
+        - /url: regulation.html
+        - generic [ref=e37]: 📖
+        - generic [ref=e38]: 규정
+      - link "📰 뉴스" [ref=e39] [cursor=pointer]:
+        - /url: cardnews.html
+        - generic [ref=e40]: 📰
+        - generic [ref=e41]: 뉴스
+      - button "👤 info" [ref=e42] [cursor=pointer]:
+        - generic [ref=e43]: 👤
+        - generic [ref=e44]: info
+      - button "⚙️ 설정" [active] [ref=e45] [cursor=pointer]:
+        - generic [ref=e46]: ⚙️
+        - generic [ref=e47]: 설정
+  - main [ref=e48]:
+    - generic [ref=e170]:
+      - generic [ref=e171]:
+        - generic [ref=e172]:
+          - generic [ref=e173]: 🔒
+          - text: 앱 잠금
+        - paragraph [ref=e174]:
+          - text: 앱을 열 때 PIN 또는 생체인증(Face ID·지문)으로 잠금을 설정해 내 정보를 보호하세요.
+          - text: 잠금은 이 기기에서만 적용됩니다.
+        - button "🔒 PIN 설정하기" [ref=e176] [cursor=pointer]
+      - generic [ref=e177]:
+        - generic [ref=e178]:
+          - generic [ref=e179]: 💾
+          - text: 데이터 백업 및 복구
+        - paragraph [ref=e180]: 클라우드 동기화 없이 브라우저 내부에 저장된 기록을 파일로 안전하게 평생 보관하고 복원할 수 있습니다.
+        - generic [ref=e181]:
+          - button "📥 다운로드 (백업)" [ref=e182] [cursor=pointer]
+          - generic [ref=e183] [cursor=pointer]: 📤 불러오기 (복원)
+        - paragraph [ref=e184]:
+          - text: 💡 복원 시
+          - strong [ref=e185]: snuh_backup_*.json
+          - text: 파일을 선택하세요.
+          - text: 안드로이드에서 파일이 안 보이면 파일 탐색기에서 "다운로드" 폴더를 확인하세요.

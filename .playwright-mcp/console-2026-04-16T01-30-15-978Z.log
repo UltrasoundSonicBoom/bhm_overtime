@@ -1,0 +1,41 @@
+[     541ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ http://localhost:8765/data.js?v=1.3:629
+[     577ms] [LOG] 💾 2026년 공휴일 localStorage 캐시 사용 (23건) @ http://localhost:8765/holidays.js?v=1.2:316
+[    3718ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://ulamqyarenzjdxlisijl.supabase.co/rest/v1/app_events?columns=%22anon_id%22%2C%22event_type%22%2C%22payload%22%2C%22app_version%22%2C%22user_agent%22%2C%22ts%22:0
+[    3720ms] [WARNING] [Telemetry] insert failed: Could not find the table 'public.app_events' in the schema cache @ http://localhost:8765/supabaseClient.js?v=1.5:100
+[  664293ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ http://localhost:8765/cardnews.html:0
+[  666420ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ http://localhost:8765/cardnews.html:0
+[  666669ms] [ERROR] Failed to load resource: the server responded with a status of 500 () @ https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fnews.google.com%2Frss%2Fsearch%3Fq%3D%25ED%2597%25AC%25EC%258A%25A4%25EC%25BC%2580%25EC%2596%25B4%2520AI%2520when%253A2d%26hl%3Dko%26gl%3DKR%26ceid%3DKR%3Ako:0
+[  670073ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ http://localhost:8765/data.js?v=1.3:629
+[  670091ms] [LOG] 💾 2026년 공휴일 localStorage 캐시 사용 (23건) @ http://localhost:8765/holidays.js?v=1.2:316
+[  673589ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://ulamqyarenzjdxlisijl.supabase.co/rest/v1/app_events?columns=%22anon_id%22%2C%22event_type%22%2C%22payload%22%2C%22app_version%22%2C%22user_agent%22%2C%22ts%22:0
+[  673590ms] [WARNING] [Telemetry] insert failed: Could not find the table 'public.app_events' in the schema cache @ http://localhost:8765/supabaseClient.js?v=1.5:100
+[ 4546535ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ http://localhost:8765/data.js?v=1.3:629
+[ 4546546ms] [LOG] 💾 2026년 공휴일 localStorage 캐시 사용 (23건) @ http://localhost:8765/holidays.js?v=1.2:316
+[ 4550040ms] [WARNING] [Telemetry] insert failed: TypeError: Failed to fetch @ http://localhost:8765/supabaseClient.js?v=1.5:100
+[ 4550143ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ http://localhost:8765/cardnews.html:0
+[ 4550525ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ http://localhost:8765/data.js?v=2.5:629
+[ 4550567ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ http://localhost:8765/regulation.html:0
+[ 4550894ms] [LOG] [regulation.js] Loaded browse data from DB (7 sections) @ http://localhost:8765/regulation.js?v=2.4:190
+[ 4551761ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ http://localhost:8765/data.js?v=1.3:629
+[ 4551767ms] [LOG] 💾 2026년 공휴일 localStorage 캐시 사용 (23건) @ http://localhost:8765/holidays.js?v=1.2:316
+[ 4555073ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://ulamqyarenzjdxlisijl.supabase.co/rest/v1/app_events?columns=%22anon_id%22%2C%22event_type%22%2C%22payload%22%2C%22app_version%22%2C%22user_agent%22%2C%22ts%22:0
+[ 4555074ms] [WARNING] [Telemetry] insert failed: Could not find the table 'public.app_events' in the schema cache @ http://localhost:8765/supabaseClient.js?v=1.5:100
+[ 4555374ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ http://localhost:8765/cardnews.html:0
+[ 4567340ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ http://localhost:8765/data.js?v=1.3:629
+[ 4567345ms] [LOG] 💾 2026년 공휴일 localStorage 캐시 사용 (23건) @ http://localhost:8765/holidays.js?v=1.2:316
+[ 4570488ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://ulamqyarenzjdxlisijl.supabase.co/rest/v1/app_events?columns=%22anon_id%22%2C%22event_type%22%2C%22payload%22%2C%22app_version%22%2C%22user_agent%22%2C%22ts%22:0
+[ 4570489ms] [WARNING] [Telemetry] insert failed: Could not find the table 'public.app_events' in the schema cache @ http://localhost:8765/supabaseClient.js?v=1.5:100
+[ 4573365ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ http://localhost:8765/data.js?v=2.5:629
+[ 4573386ms] [LOG] [regulation.js] Loaded browse data from DB (7 sections) @ http://localhost:8765/regulation.js?v=2.4:190
+[ 4573433ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ http://localhost:8765/regulation.html:0
+[ 4574076ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ http://localhost:8765/data.js?v=1.3:629
+[ 4574085ms] [LOG] 💾 2026년 공휴일 localStorage 캐시 사용 (23건) @ http://localhost:8765/holidays.js?v=1.2:316
+[ 4574930ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ http://localhost:8765/cardnews.html:0
+[ 4576192ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ http://localhost:8765/data.js?v=1.3:629
+[ 4576198ms] [LOG] 💾 2026년 공휴일 localStorage 캐시 사용 (23건) @ http://localhost:8765/holidays.js?v=1.2:316
+[ 4579264ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://ulamqyarenzjdxlisijl.supabase.co/rest/v1/app_events?columns=%22anon_id%22%2C%22event_type%22%2C%22payload%22%2C%22app_version%22%2C%22user_agent%22%2C%22ts%22:0
+[ 4579265ms] [WARNING] [Telemetry] insert failed: Could not find the table 'public.app_events' in the schema cache @ http://localhost:8765/supabaseClient.js?v=1.5:100
+[ 4612543ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ http://localhost:8765/data.js?v=1.3:629
+[ 4612553ms] [LOG] 💾 2026년 공휴일 localStorage 캐시 사용 (23건) @ http://localhost:8765/holidays.js?v=1.2:316
+[ 4615628ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://ulamqyarenzjdxlisijl.supabase.co/rest/v1/app_events?columns=%22anon_id%22%2C%22event_type%22%2C%22payload%22%2C%22app_version%22%2C%22user_agent%22%2C%22ts%22:0
+[ 4615629ms] [WARNING] [Telemetry] insert failed: Could not find the table 'public.app_events' in the schema cache @ http://localhost:8765/supabaseClient.js?v=1.5:100

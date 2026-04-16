@@ -1,0 +1,4 @@
+[     291ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ http://localhost:8765/data.js?v=1.3:629
+[     300ms] [LOG] 💾 2026년 공휴일 localStorage 캐시 사용 (23건) @ http://localhost:8765/holidays.js?v=1.2:316
+[    3353ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://ulamqyarenzjdxlisijl.supabase.co/rest/v1/app_events?columns=%22anon_id%22%2C%22event_type%22%2C%22payload%22%2C%22app_version%22%2C%22user_agent%22%2C%22ts%22:0
+[    3354ms] [WARNING] [Telemetry] insert failed: Could not find the table 'public.app_events' in the schema cache @ http://localhost:8765/supabaseClient.js?v=1.5:100

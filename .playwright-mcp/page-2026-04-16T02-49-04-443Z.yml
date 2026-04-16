@@ -1,0 +1,150 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5] [cursor=pointer]:
+        - img "SNUH Mate" [ref=e6]
+        - generic [ref=e7]:
+          - heading "슬기로운 병원 생활 메이트" [level=1] [ref=e8]
+          - generic [ref=e9]: 2026.5.1 정식 오픈
+      - generic [ref=e10]:
+        - button "Google로 연결" [ref=e12] [cursor=pointer]:
+          - img [ref=e13]
+          - generic [ref=e19]: Google로 연결
+        - button "⚙️" [ref=e20] [cursor=pointer]
+  - navigation [ref=e21]:
+    - generic [ref=e22]:
+      - button "🏠 홈" [ref=e23] [cursor=pointer]:
+        - generic [ref=e24]: 🏠
+        - generic [ref=e25]: 홈
+      - button "📅 휴가" [ref=e26] [cursor=pointer]:
+        - generic [ref=e27]: 📅
+        - generic [ref=e28]: 휴가
+      - button "⏰ 시간외" [ref=e29] [cursor=pointer]:
+        - generic [ref=e30]: ⏰
+        - generic [ref=e31]: 시간외
+      - button "💰 급여" [ref=e32] [cursor=pointer]:
+        - generic [ref=e33]: 💰
+        - generic [ref=e34]: 급여
+      - link "📖 규정" [ref=e35] [cursor=pointer]:
+        - /url: regulation.html
+        - generic [ref=e36]: 📖
+        - generic [ref=e37]: 규정
+      - link "📰 뉴스" [ref=e38] [cursor=pointer]:
+        - /url: cardnews.html
+        - generic [ref=e39]: 📰
+        - generic [ref=e40]: 뉴스
+      - button "👤 info" [ref=e41] [cursor=pointer]:
+        - generic [ref=e42]: 👤
+        - generic [ref=e43]: info
+  - main [ref=e44]:
+    - generic [ref=e45]:
+      - tablist "정보 구분" [ref=e46]:
+        - tab "👤 개인 정보" [selected] [ref=e47] [cursor=pointer]
+        - tab "💼 근무 정보" [ref=e48] [cursor=pointer]
+      - generic [ref=e50]:
+        - generic [ref=e51]:
+          - generic [ref=e52]:
+            - generic [ref=e53]: 👤
+            - generic [ref=e54]: 내 정보
+            - generic [ref=e55]: 미저장
+          - generic [ref=e56] [cursor=pointer]:
+            - generic [ref=e57]: 💰
+            - generic [ref=e58]: 급여 탭에서 명세서를 등록하면 자동으로 채워집니다
+            - generic [ref=e59]: →
+          - generic [ref=e60]:
+            - generic [ref=e62] [cursor=pointer]:
+              - generic [ref=e63]: ▸
+              - text: 기본 정보
+            - generic [ref=e64]:
+              - generic [ref=e65]:
+                - generic [ref=e66]:
+                  - generic [ref=e67]: 이름 (별칭)
+                  - 'textbox "예: 홍길동" [ref=e68]'
+                - generic [ref=e69]:
+                  - generic [ref=e70]: 성별 (생휴 여부)
+                  - combobox [ref=e71]:
+                    - option "미설정" [selected]
+                    - option "남성"
+                    - option "여성"
+              - generic [ref=e72]:
+                - generic [ref=e73]:
+                  - generic [ref=e74]: 생년월일 (정년 산정)
+                  - textbox [ref=e75]
+                - generic [ref=e76]:
+                  - generic [ref=e77]: 부서
+                  - 'textbox "예: 핵의학과, 중환자실" [ref=e78]'
+              - generic [ref=e79]:
+                - generic [ref=e80]:
+                  - generic [ref=e81]: 직종
+                  - combobox [ref=e82]:
+                    - option "사무직"
+                    - option "보건직"
+                    - option "간호직" [selected]
+                    - option "의사직"
+                    - option "약무직"
+                    - option "의료기사직"
+                    - option "기능직"
+                    - option "시설직"
+                    - option "환경미화직"
+                    - option "지원직"
+                - generic [ref=e83]:
+                  - generic [ref=e84]: 직급·등급
+                  - combobox [ref=e85]:
+                    - option "매니저3 (M3)"
+                    - option "매니저2 (M2)"
+                    - option "매니저1 (M1)"
+                    - option "시니어3 (S3)"
+                    - option "시니어2 (S2)"
+                    - option "시니어1 (S1)"
+                    - option "주니어3 (J3)"
+                    - option "주니어2 (J2)"
+                    - option "주니어1 (J1)" [selected]
+              - generic [ref=e86]:
+                - generic [ref=e87]:
+                  - generic [ref=e88]: 입사일
+                  - 'textbox "예: 2021-01-01" [ref=e89]'
+                - generic [ref=e90]:
+                  - generic [ref=e91]: 호봉 (연차)
+                  - combobox [ref=e92]:
+                    - option "1년차" [selected]
+                    - option "2년차"
+                    - option "3년차"
+                    - option "4년차"
+                    - option "5년차"
+                    - option "6년차"
+                    - option "7년차"
+                    - option "8년차"
+              - generic [ref=e93]:
+                - generic [ref=e94]:
+                  - generic [ref=e95]: 사번
+                  - 'textbox "예: 20842" [ref=e96]'
+                - generic [ref=e97]:
+                  - generic [ref=e98]: 조정급 (필수!!)
+                  - spinbutton [ref=e99]: "0"
+            - generic [ref=e101] [cursor=pointer]:
+              - generic [ref=e102]: ▸
+              - text: 가족 수당
+              - generic [ref=e103]: 통상임금 미포함 · 별도 지급
+            - generic [ref=e105] [cursor=pointer]:
+              - generic [ref=e106]: ▸
+              - text: 개인 수당
+              - generic [ref=e107]: 5개
+            - generic [ref=e109] [cursor=pointer]:
+              - generic [ref=e110]: ▸
+              - text: 고급 설정
+              - generic [ref=e111]: 승진일·호봉보정·근로시간
+            - generic [ref=e112]:
+              - generic [ref=e113]: ⚠️
+              - generic [ref=e114]:
+                - strong [ref=e115]: 공용 기기에서는 개인정보를 저장하지 마세요
+                - generic [ref=e116]:
+                  - text: 학교·도서관·직장 공용 컴퓨터에서는 개인정보를 입력하지 마세요. 데이터는 이 브라우저에만 저장되어
+                  - strong [ref=e117]: 다음 사용자가 동일 브라우저를 열면 볼 수 있습니다.
+            - generic [ref=e118]:
+              - button "💾 저장하기" [ref=e119] [cursor=pointer]
+              - button "🗑 초기화" [ref=e120] [cursor=pointer]
+        - generic [ref=e121]:
+          - generic [ref=e122]:
+            - generic [ref=e123]: 📝
+            - text: 통상임금 내역
+          - paragraph [ref=e124]: 정보를 입력하고 [저장하기]를 눌러주세요.

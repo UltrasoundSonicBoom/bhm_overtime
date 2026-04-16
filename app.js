@@ -338,6 +338,7 @@ function switchTab(tabName) {
   if (tabName === 'leave') { applyProfileToLeave(); initLeaveTab(); }
   if (tabName === 'reference') renderWikiToc();
   if (tabName === 'profile') initProfileTab();
+  if (tabName === 'settings') { if (typeof updateAppLockUI === 'function') updateAppLockUI(); }
 
   return true;
 }
@@ -1212,7 +1213,12 @@ function toggleCollapsible(id) {
   const header = el.previousElementSibling;
   if (header && header.classList.contains('collapsible-header')) {
     const span = header.querySelector('span');
-    if (span) span.textContent = span.textContent.replace(/[▸▼]/, isOpen ? '▸' : '▼');
+    if (span) span.textContent = span.textContent.replace(/[▸▾▼]/, isOpen ? '▸' : '▾');
+  }
+  // 기본 정보 프리뷰: 열면 숨김, 닫으면 표시
+  if (id === 'pfBasicFields') {
+    const preview = document.getElementById('pfBasicPreview');
+    if (preview && preview.textContent) preview.style.display = isOpen ? 'block' : 'none';
   }
 }
 
@@ -1315,21 +1321,12 @@ document.addEventListener('DOMContentLoaded', () => {
       profileStatusEl.textContent = '저장됨 ✓';
       profileStatusEl.className = 'badge emerald';
     }
-    // 데이터가 있으면 입력 폼 접기
-    const pfInput = document.getElementById('pfInputFields');
-    if (pfInput) {
-      pfInput.style.display = 'none';
-      const label = document.getElementById('pfInputToggleLabel');
-      if (label) label.textContent = '▸ 내 정보 입력/수정';
-    }
+    // 저장된 데이터가 있으면 기본 정보 접힘 + 프리뷰 표시
+    _collapseBasicFieldsWithPreview(saved);
   } else {
-    // 데이터 없으면 열어두기
-    const pfInput = document.getElementById('pfInputFields');
-    if (pfInput) {
-      pfInput.style.display = 'block';
-      const label = document.getElementById('pfInputToggleLabel');
-      if (label) label.textContent = '▼ 내 정보 입력/수정';
-    }
+    // 신규 유저: 기본 정보 펼침
+    const basicFields = document.getElementById('pfBasicFields');
+    if (basicFields) basicFields.style.display = 'block';
   }
 
   // 급여 시뮬레이터: 연도/월 변경 시 자동 업데이트
@@ -1590,6 +1587,44 @@ function updateFamilyUI() {
   </div>`;
 }
 
+// 기본 정보 접힘 + 한줄 프리뷰 (저장된 데이터가 있을 때)
+function _collapseBasicFieldsWithPreview(data) {
+  const body = document.getElementById('pfBasicFields');
+  const preview = document.getElementById('pfBasicPreview');
+  const badge = document.getElementById('pfBasicBadge');
+  const header = document.getElementById('pfBasicHeader');
+  if (!body || !preview || !data) return;
+
+  // 접기
+  body.style.display = 'none';
+  if (header) {
+    const icon = header.querySelector('.toggle-icon');
+    if (icon) icon.textContent = '▸';
+  }
+
+  // 프리뷰 텍스트 생성
+  const parts = [];
+  if (data.name) parts.push(data.name);
+  if (data.gender === 'M') parts.push('남');
+  else if (data.gender === 'F') parts.push('여');
+  if (data.birthDate) parts.push(data.birthDate);
+  if (data.department) parts.push(data.department);
+  const jobEl = document.getElementById('pfJobType');
+  const gradeEl = document.getElementById('pfGrade');
+  if (jobEl && jobEl.selectedIndex > 0) parts.push(jobEl.options[jobEl.selectedIndex].text);
+  if (gradeEl && gradeEl.selectedIndex > 0) parts.push(gradeEl.options[gradeEl.selectedIndex].text);
+  const yearEl = document.getElementById('pfYear');
+  if (yearEl) parts.push(yearEl.options[yearEl.selectedIndex].text);
+
+  preview.textContent = parts.join(' · ') || '저장된 정보';
+  preview.style.display = 'block';
+  if (badge) badge.style.display = 'inline-block';
+
+  // 급여탭 안내 링크 숨김 (이미 데이터 있으면 불필요)
+  const link = document.getElementById('pfPayslipLink');
+  if (link) link.style.display = 'none';
+}
+
 function saveProfile() {
   // 승진일 입력 시 자동 직급/호봉 반영
   const promoDateStr = document.getElementById('pfPromotionDate')?.value;
@@ -1621,11 +1656,7 @@ function saveProfile() {
   try { if (typeof renderWorkHistory === 'function') renderWorkHistory(); } catch (e) {}
   document.getElementById('profileStatus').textContent = '저장됨 ✓';
   document.getElementById('profileStatus').className = 'badge emerald';
-  // 저장 후 입력 폼 접기
-  const pfInput = document.getElementById('pfInputFields');
-  if (pfInput) pfInput.style.display = 'none';
-  const label = document.getElementById('pfInputToggleLabel');
-  if (label) label.textContent = '▸ 내 정보 입력/수정';
+  // Variant C: fields stay visible after save
   // Q&A 카드 갱신
   if (typeof PAYROLL !== 'undefined') PAYROLL.init();
   // 휴가 연차 한도 갱신 및 UI 리렌더링
@@ -1664,6 +1695,8 @@ function saveProfile() {
   // 홈 힌트 배너 숨기기
   const homeNudge = document.getElementById('homeProfileNudge');
   if (homeNudge) homeNudge.style.display = 'none';
+  // 저장 후 기본 정보 접힘 + 프리뷰
+  _collapseBasicFieldsWithPreview(profile);
 }
 
 function clearProfile() {
@@ -1694,6 +1727,15 @@ function clearProfile() {
     `;
   // Q&A 카드 갱신
   if (typeof PAYROLL !== 'undefined') PAYROLL.init();
+  // 초기화 후 기본 정보 펼침 + 프리뷰 숨김
+  const basicFields = document.getElementById('pfBasicFields');
+  if (basicFields) basicFields.style.display = 'block';
+  const basicPreview = document.getElementById('pfBasicPreview');
+  if (basicPreview) { basicPreview.style.display = 'none'; basicPreview.textContent = ''; }
+  const basicBadge = document.getElementById('pfBasicBadge');
+  if (basicBadge) basicBadge.style.display = 'none';
+  const payslipLink = document.getElementById('pfPayslipLink');
+  if (payslipLink) payslipLink.style.display = 'flex';
 }
 
 // ═══════════ 생년월일 양방향 동기화 ═══════════

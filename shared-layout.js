@@ -234,14 +234,22 @@
     }
     right.appendChild(auth);
 
-    // Theme toggle
-    var themeBtn = el('button', { className: 'theme-toggle-btn', id: 'themeToggle', title: '테마 전환', textContent: '🎨' });
-    themeBtn.onclick = function () {
-      if (typeof window.toggleTheme === 'function') window.toggleTheme();
-      else fallbackToggleTheme();
-      syncThemeButtonIcon();
+    // // Theme toggle (주석처리)
+    // var themeBtn = el('button', { className: 'theme-toggle-btn', id: 'themeToggle', title: '테마 전환', textContent: '🎨' });
+    // themeBtn.onclick = function () {
+    //   if (typeof window.toggleTheme === 'function') window.toggleTheme();
+    //   else fallbackToggleTheme();
+    //   syncThemeButtonIcon();
+    // };
+    // right.appendChild(themeBtn);
+
+    // Settings button (헤더 ⚙️) — 채널톡 자리 대체
+    var settingsBtn = el('button', { className: 'theme-toggle-btn', title: '설정', textContent: '⚙️' });
+    settingsBtn.onclick = function () {
+      if (isIndex && window.switchTab) { switchTab('settings'); }
+      else { location.href = homeHref('settings'); }
     };
-    right.appendChild(themeBtn);
+    right.appendChild(settingsBtn);
 
     // ChannelIO 채팅 버튼 비활성 (차후 복구 시 주석 해제)
     // var chatBtn = el('button', { className: 'theme-toggle-btn', title: '피드백 보내기', textContent: '💬' });
