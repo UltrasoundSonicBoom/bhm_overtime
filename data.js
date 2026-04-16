@@ -464,8 +464,20 @@ const DATA_STATIC = {
     { category: '복지', q: '복지포인트는 얼마?', a: '• 기본: 700P\n• 근속 가산: 10P/년 (최대 300P)\n• 가족포인트: 별도\n• 자녀학자금: 1,200P\n\n1P = 1,000원', ref: '복리후생 안내서' }
   ],
 
-  // ── 규정 핸드북 (위키용) ──
-  handbook: [
+  // ── 부서 연락망 (규정 찾아보기 탭 연락처 버튼용) ──
+  contacts: {
+    '노동조합 (서울대병원분회)': { roles: '조합 가입/탈퇴, 단체협약 해석, 조합 행사 문의', phone: '02-2072-3440', email: 'snuh.branch@kptu.net' },
+    '노사협력과': { roles: '경조금, 화환, 장례용 물품 신청, 단체교섭 관련', phone: '02-2072-2831', email: 'hr_coop@snuh.org' },
+    '인사팀 (일반/휴가)': { roles: '휴직, 복직, 연차, 청원휴가 관련', phone: '02-2072-4862', email: 'hr@snuh.org' },
+    '인사팀 (급여계)': { roles: '기본급·수당, 퇴직금, 사학연금 지원금', phone: '02-2072-2716', email: 'payroll@snuh.org' },
+    '총무과': { roles: '맞춤형 복지포인트, 제복 지급, 휴양소(콘도)', phone: '02-2072-2714', email: 'general@snuh.org' },
+    '외래/입원 원무과': { roles: '직원 및 가족 진료비 감면, 업무상 재해(산재) 접수', phone: '02-2072-0231', email: 'admin@snuh.org' },
+    '건강증진센터': { roles: '정기/특수 건강검진, 장기근속자 종합검진', phone: '02-2072-3333', email: 'health@snuh.org' },
+  },
+
+  // ── 규정 핸드북 (주제별 — 물어보기 탭 로컬 검색 fallback용) ──
+  // 찾아보기 탭은 union_regulation_2026.json 기반 장(Chapter) 구조를 runtime에 로드하여 DATA.handbook에 넣음
+  handbookTopics: [
     {
       category: '근로시간', icon: '⏰', articles: [
         { title: '근무시간', ref: '제32조', body: '일반직: 주 40시간, 1일 8시간 (09:00~18:00, 휴게 12:00~13:00).\n교대근무: 낮번(D) 07:00~15:30, 초번(E) 15:00~23:00, 밤번(N) 22:30~익일 07:30.\n각 근무 30분 휴게시간 포함.' },
@@ -540,6 +552,11 @@ const DATA_STATIC = {
       ]
     }
   ],
+
+  // ── 규정 핸드북 (장(Chapter) 기반 — 찾아보기 탭용) ──
+  // 초기에는 빈 배열. regulation.js에서 union_regulation_2026.json 로드 후 동적으로 채워짐.
+  // API (/regulations/browse) 또는 JSON fallback으로 교체됨.
+  handbook: [],
 
   // ── 퇴직금 2001.08.31 이전 입사자 누진배수 (hospital_rule_master_2026.json 기준) ──
   severanceMultipliersPre2001: [

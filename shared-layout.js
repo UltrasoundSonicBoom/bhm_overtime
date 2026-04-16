@@ -243,10 +243,10 @@
     };
     right.appendChild(themeBtn);
 
-    // ChannelIO button
-    var chatBtn = el('button', { className: 'theme-toggle-btn', title: '피드백 보내기', textContent: '💬' });
-    chatBtn.onclick = function () { if (window.ChannelIO) ChannelIO('showMessenger'); };
-    right.appendChild(chatBtn);
+    // ChannelIO 채팅 버튼 비활성 (차후 복구 시 주석 해제)
+    // var chatBtn = el('button', { className: 'theme-toggle-btn', title: '피드백 보내기', textContent: '💬' });
+    // chatBtn.onclick = function () { if (window.ChannelIO) ChannelIO('showMessenger'); };
+    // right.appendChild(chatBtn);
 
     topRow.appendChild(right);
     inner.appendChild(topRow);
@@ -277,7 +277,8 @@
       { icon: '⏰', text: '시간외', tab: 'overtime', href: homeHref('overtime') },
       { icon: '💰', text: '급여', tab: 'payroll', href: homeHref('payroll') },
       { icon: '📖', text: '규정', href: 'regulation.html', active: isRegulation },
-      { icon: '📰', text: '뉴스', href: 'cardnews.html', active: isCardNews },
+      // 뉴스 탭 비활성 (차후 복구 시 주석 해제)
+      // { icon: '📰', text: '뉴스', href: 'cardnews.html', active: isCardNews },
       { icon: '👤', text: 'info', tab: 'profile', href: homeHref('profile') }
     ];
 
@@ -349,9 +350,10 @@
     checkAppLock();
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bootChannelIO);
-  } else {
-    bootChannelIO();
-  }
+  // ChannelIO 자동 부트 비활성 (차후 복구 시 주석 해제)
+  // if (document.readyState === 'loading') {
+  //   document.addEventListener('DOMContentLoaded', bootChannelIO);
+  // } else {
+  //   bootChannelIO();
+  // }
 })();
