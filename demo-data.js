@@ -161,18 +161,20 @@
     }
   }
 
-  // 데모 모드: 급여 탭 진입 시 '이번 달 예상액' 서브탭 기본 선택
+  // 데모 모드: 급여 탭 진입 시 '이번 달 예상액' 서브탭 기본 선택 + 콘텐츠 렌더
   document.addEventListener('DOMContentLoaded', function () {
     if (localStorage.getItem('bhm_demo_mode') !== '1') return;
-    var orig = window.initPayrollTab;
     window.initPayrollTab = function () {
+      // 서브탭 UI 전환
       document.querySelectorAll('#tab-payroll .pay-bookmark-tab').forEach(function (btn) {
         btn.classList.toggle('active', btn.dataset.subtab === 'pay-calc');
       });
       document.querySelectorAll('#tab-payroll .sub-content').forEach(function (el) {
         el.classList.toggle('active', el.id === 'sub-pay-calc');
       });
-      if (typeof orig === 'function') orig();
+      // pay-calc 콘텐츠 렌더 (히어로 + 타임라인 + 계산카드)
+      if (typeof initPayEstimate === 'function') initPayEstimate();
+      if (typeof PAYROLL !== 'undefined') PAYROLL.init();
     };
   });
 
