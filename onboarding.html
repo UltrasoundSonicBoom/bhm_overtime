@@ -334,6 +334,14 @@
       background: var(--cream);
     }
 
+    .sec-peach {
+      background: #FFE8C8;
+    }
+
+    .sec-tan {
+      background: #EDE8DF;
+    }
+
     /* ── Mock card rows ── */
     .mock-row {
       display: flex;
@@ -732,19 +740,18 @@
           background:var(--ink);color:#fff;
           border-radius:999px;font-size:12px;font-weight:800;
           letter-spacing:0.02em;box-shadow:var(--shadow-sm);">
-          <span style="width:6px;height:6px;border-radius:50%;background:#FFD84D;display:inline-block;"></span>
+          <span
+            style="width:6px;height:6px;border-radius:50%;background:#FFD84D;display:inline-block; margin-bottom:20px"></span>
           2026.5.1 정식 오픈
         </div>
       </div>
       <div class="hero-text">
         <h1 class="hero-title reveal d1">
-          이번 달,<br>
-          놓친 수당 있지 않으세요?
+          <br>다음 달 월급<br>
+          얼마 들어올까??
         </h1>
-        <p class="hero-sub reveal d2" style="margin-top: 16px;">
-          명세서 한 번 올리면 어디가 빠졌는지 3초면 보여드려요.<br>
-          시간외·당직·온콜·휴가, 이제 한 곳에서 관리하세요.
-        </p>
+
+
         <div class="creator-quote reveal d3" style="
           margin-top: 28px;
           max-width: 360px;
@@ -759,8 +766,7 @@
           text-align: left;
           word-break: keep-all;">
           <div style="font-style: italic; opacity: 0.85; margin-bottom: 6px;">
-            &ldquo;핵의학과에서 일하다 동료들 명세서를 대신 뜯어보던 게 시작이었어요.
-            같이 쓰면 좋겠어서 만들었습니다.&rdquo;
+            평소에 이런게 있으면 좋겠다했던 것들을 만들었습니다. <br>저만 그랬나요?
           </div>
           <div style="font-size: 12px; font-weight: 700; opacity: 0.7;">
             — 김계환, 서울대병원 핵의학과
@@ -788,14 +794,14 @@
   <!-- ════════ 2. 시간외 ════════ -->
   <section class="section sec-violet">
     <div class="section-inner">
-      <div class="pain-tag reveal">&#x1f62e; "그 날 당직했는데, 왜 수당 안 들어왔지?"</div>
+      <div class="pain-tag reveal">&#x1f62e; 야간 수당, 계산대로 들어온 건지 알 수가 없어요</div>
       <h2 class="feat-title reveal d1">
-        내 시간외 기록,<br>한눈에 모아볼 수 있어요.
+        기록하면,<br>수당이 바로 계산돼요
       </h2>
       <p class="feat-desc reveal d2" style="color:white">
-        언제, 얼마나 일했는지 기록하면<br>
-        예상 수당까지 자동으로 계산돼요.<br>
-        이제 엑셀 안 써도 돼요!
+        야간·연장·온콜 수식 그대로.<br>
+        기록하면 수당이 자동으로 나와요.<br>
+        엑셀은 이제 안 써도 돼요.
       </p>
       <div class="neo-card reveal d3">
         <div class="mock-row">
@@ -848,14 +854,14 @@
   <!-- ════════ 3. 휴가 ════════ -->
   <section class="section sec-emerald">
     <div class="section-inner">
-      <div class="pain-tag reveal">&#x1f914; 연차 며칠 남았지? 인사팀에 또 물어봐야 하나...</div>
+      <div class="pain-tag reveal">&#x1f914; 내가 휴가 얼마나 남았더라? </div>
       <h2 class="feat-title reveal d1">
-        남은 연차,<br>여기서 바로 확인하세요.
+        쓸 때마다<br>자동으로 차감돼요
       </h2>
       <p class="feat-desc reveal d2">
         연차, 병가, 공가, 청원휴가까지<br>
-        쓸 때마다 자동으로 차감돼요.<br>
-        휴가 계획 짜기 훨씬 편해져요.
+        직접 입력하면 바로 차감돼요.<br>
+        휴가 계획, 혼자 짤 수 있어요.
       </p>
       <!-- 2026년 휴가 현황 Header -->
       <div class="lv-header-mock reveal d3" style="max-width:320px;">
@@ -928,39 +934,66 @@
   <!-- ════════ 4. 급여 ════════ -->
   <section class="section sec-blue">
     <div class="section-inner">
-      <div class="pain-tag reveal">&#x1f4b8; 급여명세서, 볼 때마다 뭐가 뭔지 모르겠어...</div>
+      <div class="pain-tag reveal">&#x1f4b8; 다음 달 월급이 얼마지?</div>
       <h2 class="feat-title reveal d1">
-        내 급여,<br>이제 쉽게 이해돼요.
+        시간외, 온콜 반영됐나?
       </h2>
       <p class="feat-desc reveal d2">
-        급여명세서 PDF를 올리면<br>
-        항목별로 깔끔하게 정리해드려요.<br>
-        전월 대비 변동도 한눈에!
+        시간외·온콜 입력하면<br>
+        예상 지급총액과 통상임금도 알 수 있어요
       </p>
-      <div class="neo-card reveal d3">
-        <div style="font-size:13px; color:var(--muted); font-weight:600; margin-bottom:10px;">2026년 3월 급여</div>
-        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:16px;">
-          <div style="font-size:24px; font-weight:900;">3,842,160원</div>
-          <div style="font-size:13px; color:var(--emerald); font-weight:700;">+124,000 vs 2월</div>
+      <div class="neo-card reveal d3" style="padding:0; overflow:hidden;">
+        <!-- 탭 바 -->
+        <div style="display:flex; border-bottom:3px solid var(--ink);">
+          <div
+            style="flex:1; padding:9px 4px; font-size:10px; font-weight:700; color:var(--muted); text-align:center; border-right:2px solid var(--ink);">
+            급여명세서</div>
+          <div
+            style="flex:1; padding:9px 4px; font-size:10px; font-weight:800; color:var(--ink); text-align:center; border-right:2px solid var(--ink); background:rgba(253,203,110,0.35);">
+            이번달예상액</div>
+          <div
+            style="flex:1; padding:9px 4px; font-size:10px; font-weight:700; color:var(--muted); text-align:center; border-right:2px solid var(--ink);">
+            수당계산기</div>
+          <div style="flex:1; padding:9px 4px; font-size:10px; font-weight:700; color:var(--muted); text-align:center;">
+            퇴직금</div>
         </div>
-        <div class="color-bar" style="margin-bottom:2px;">
-          <div style="flex:5.5; background:var(--blue);"></div>
-          <div style="flex:2; background:var(--emerald);"></div>
-          <div style="flex:1.5; background:var(--amber);"></div>
-          <div style="flex:1; background:#e5e5e5;"></div>
+        <!-- 월 선택 -->
+        <div
+          style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-bottom:2px solid #e8e8e8;">
+          <span style="font-size:14px; color:var(--muted);">◄</span>
+          <span style="font-size:13px; font-weight:800;">2026년 4월 예상</span>
+          <span style="font-size:14px; color:var(--muted);">►</span>
         </div>
-        <div class="legend">
-          <div class="legend-item">
-            <div class="legend-dot" style="background:var(--blue);"></div>기본급
+        <!-- 금액 -->
+        <div style="padding:16px 14px 12px; border-bottom:2px solid #e8e8e8;">
+          <div style="font-size:11px; font-weight:700; color:var(--muted); margin-bottom:4px;">예상 실수령액</div>
+          <div style="font-size:28px; font-weight:900; letter-spacing:-0.03em;">₩6,602,253</div>
+          <div style="display:flex; gap:14px; margin-top:6px; font-size:11px; font-weight:700;">
+            <span style="color:var(--emerald);">지급 ₩8,052,229</span>
+            <span style="color:var(--rose);">공제 ₩1,449,976</span>
           </div>
-          <div class="legend-item">
-            <div class="legend-dot" style="background:var(--emerald);"></div>수당
+          <div
+            style="margin-top:8px; display:inline-block; padding:4px 10px; background:rgba(253,203,110,0.4); border:1.5px solid var(--amber); font-size:11px; font-weight:700; border-radius:4px;">
+            시간외·온콜 ₩1,287,618 반영
           </div>
-          <div class="legend-item">
-            <div class="legend-dot" style="background:var(--amber);"></div>시간외
-          </div>
-          <div class="legend-item">
-            <div class="legend-dot" style="background:#e5e5e5;"></div>공제
+        </div>
+        <!-- 항목 -->
+        <div style="padding:12px 14px;">
+          <div style="font-size:11px; font-weight:700; color:var(--muted); margin-bottom:8px;">지급 항목</div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <div style="display:flex; justify-content:space-between; font-size:12px;">
+              <span style="color:var(--muted);">기준기본급</span><span style="font-weight:700;">₩3,085,900</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:12px;">
+              <span style="color:var(--muted);">능력급</span><span style="font-weight:700;">₩1,075,700</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:12px;">
+              <span style="color:var(--amber); font-weight:700;">시간외·온콜</span><span
+                style="font-weight:800; color:var(--amber);">₩1,287,618</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:12px;">
+              <span style="color:var(--muted);">상여금 외</span><span style="font-weight:700;">₩603,011</span>
+            </div>
           </div>
         </div>
       </div>
@@ -982,53 +1015,206 @@
     </div>
   </section>
 
-  <!-- ════════ 5. 규정 ════════ -->
-  <section class="section sec-rose">
+  <!-- ════════ 5. 퇴직 플래닝 ════════ -->
+  <section class="section sec-peach">
     <div class="section-inner">
-      <div class="pain-tag reveal">&#x1f4d6; 이거 규정에 있는 건데... 어디서 찾지?</div>
+      <div class="pain-tag reveal">&#x1f4bc; 퇴직이 가까워지는데, 공로연수,임금피크제가 얼마나 차이나는지 잘 모르겠어요</div>
       <h2 class="feat-title reveal d1">
-        단체협약 규정,<br>직접 찾아볼 수 있어요.
+        공로연수 vs 임금피크제,<br>내 급여로 직접 계산해요
       </h2>
       <p class="feat-desc reveal d2">
-        FAQ, 원문 검색, PDF 뷰어까지<br>
-        한 곳에서 바로 확인하세요.
+        선택에 따라 수천만 원 차이가 날 수 있어요.<br>
+        시뮬레이션 먼저 해보세요.
       </p>
       <div class="neo-card reveal d3" style="padding:20px;">
-        <!-- 규정 헤더 -->
-        <div style="font-size:16px; font-weight:800; margin-bottom:4px;">시간외근무</div>
-        <div style="font-size:12px; color:var(--muted); font-weight:600; margin-bottom:12px;">&#x1f4cc; 제34조, 제47조</div>
-        <!-- 규정 요약 -->
-        <div style="font-size:13px; line-height:1.7; color:var(--ink); margin-bottom:14px;">
-          주 최대 52시간 (소정 40 + 연장 12).<br>
-          15분 단위 계산 (2020년~).<br>
-          <span style="color:var(--muted);">&bull;</span> 연장근무: 통상임금 &times; 1/209 &times; 150%<br>
-          <span style="color:var(--muted);">&bull;</span> 야간가산: 통상임금 &times; 1/209 &times; 200%<br>
-          <span style="color:var(--muted);">&bull;</span> 휴일근무: 150% (8h 이내), 200% (초과)
+        <div style="font-size:13px; color:var(--muted); font-weight:600; margin-bottom:12px;">&#x1f4bc; 퇴직 시뮬레이션 (내 급여
+          기준)</div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div
+            style="padding:12px 14px; background:#f0fff8; border:2px solid var(--ink); box-shadow:2px 2px 0 var(--ink);">
+            <div style="font-size:11px; font-weight:700; color:var(--muted); margin-bottom:4px;">공로연수 선택 시</div>
+            <div style="font-size:22px; font-weight:900; color:var(--emerald);">+2,400만원</div>
+            <div style="font-size:11px; color:var(--muted); margin-top:2px;">퇴직금 기준 예상</div>
+          </div>
+          <div style="padding:12px 14px; background:#f8f8f8; border:2px solid #e0e0e0;">
+            <div style="font-size:11px; font-weight:700; color:var(--muted); margin-bottom:4px;">임금피크제 선택 시</div>
+            <div style="font-size:22px; font-weight:900; color:var(--muted);">+1,860만원</div>
+            <div style="font-size:11px; color:var(--muted); margin-top:2px;">퇴직금 기준 예상</div>
+          </div>
         </div>
-        <!-- 내 수당 테이블 -->
-        <div style="border-top:3px solid var(--ink); padding-top:12px;">
-          <div style="font-size:13px; font-weight:700; margin-bottom:8px;">&#x1f4ca; 내 시간외수당 (1시간 기준)</div>
-          <div class="reg-mock-table">
-            <div class="reg-mock-row">
-              <span class="reg-mock-label">내 시급</span>
-              <span class="reg-mock-val" style="color:var(--ink);">32,424원</span>
+        <div
+          style="margin-top:12px; padding:10px 12px; background:rgba(253,203,110,0.25); border:1.5px solid var(--amber); border-radius:8px; font-size:12px; font-weight:700; color:var(--ink);">
+          &#x1f4cc; 내 급여 입력하면 정확한 수치로 계산돼요
+        </div>
+      </div>
+    </div>
+    <div class="scroll-hint">
+      <div class="scroll-hint-down">
+        아래로 스크롤하세요
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round">
+          <path d="M12 5v14M19 12l-7 7-7-7" />
+        </svg>
+      </div>
+      <div class="scroll-hint-end"
+        onclick="(function(){var sections=document.querySelectorAll('.section');var last=sections[sections.length-1];last.scrollIntoView({behavior:'smooth',block:'start'});})()">
+        끝으로
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" width="16" height="16">
+          <path d="M5 12h14M12 5l7 7-7 7" />
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ 6. 근무 이력 ════════ -->
+  <section class="section sec-tan">
+    <div class="section-inner">
+      <div class="pain-tag reveal">&#x1f4cb; 10년 근무했는데 로테이션 언제, 어디 갔었는지 기억이 없어;</div>
+      <h2 class="feat-title reveal d1">
+        부서·업무 이력을<br>내가 직접 쌓아가요
+      </h2>
+      <p class="feat-desc reveal d2">
+        연도별·부서별로 타임라인이 만들어져요.<br>
+        내 커리어, 내가 기록해두세요.
+      </p>
+      <div class="neo-card reveal d3" style="padding:20px;">
+        <div style="font-size:13px; font-weight:700; margin-bottom:16px;">&#x1f4cc; 근무 이력 타임라인</div>
+        <div style="display:flex; flex-direction:column; gap:0;">
+          <div
+            style="display:flex; gap:12px; align-items:flex-start; padding-bottom:14px; border-left:3px solid var(--ink); padding-left:16px; margin-left:8px; position:relative;">
+            <div
+              style="position:absolute; left:-7px; top:2px; width:11px; height:11px; background:var(--violet); border:2px solid var(--ink); border-radius:50%;">
             </div>
-            <div class="reg-mock-row">
-              <span class="reg-mock-label">연장 1시간</span>
-              <span class="reg-mock-val" style="color:var(--violet);">48,636원</span>
+            <div>
+              <div style="font-size:11px; font-weight:800; color:var(--muted);">2024 — 현재</div>
+              <div style="font-size:13px; font-weight:700;">101병동 <span
+                  style="color:var(--violet); font-size:11px;"></span></div>
             </div>
-            <div class="reg-mock-row">
-              <span class="reg-mock-label">야간 1시간</span>
-              <span class="reg-mock-val" style="color:var(--rose);">64,848원</span>
+          </div>
+          <div
+            style="display:flex; gap:12px; align-items:flex-start; padding-bottom:14px; border-left:3px solid var(--ink); padding-left:16px; margin-left:8px; position:relative;">
+            <div
+              style="position:absolute; left:-7px; top:2px; width:11px; height:11px; background:#fff; border:2px solid var(--ink); border-radius:50%;">
             </div>
-            <div class="reg-mock-row">
-              <span class="reg-mock-label">휴일 1시간 (8h 이내)</span>
-              <span class="reg-mock-val" style="color:var(--violet);">48,636원</span>
+            <div>
+              <div style="font-size:11px; font-weight:800; color:var(--muted);">2022 — 2024</div>
+              <div style="font-size:13px; font-weight:700;">응급실 <span
+                  style="color:var(--muted); font-size:11px;"></span></div>
             </div>
-            <div class="reg-mock-row">
-              <span class="reg-mock-label">휴일 1시간 (8h 초과)</span>
-              <span class="reg-mock-val" style="color:var(--rose);">64,848원</span>
+          </div>
+          <div
+            style="display:flex; gap:12px; align-items:flex-start; padding-bottom:14px; border-left:3px solid var(--ink); padding-left:16px; margin-left:8px; position:relative;">
+            <div
+              style="position:absolute; left:-7px; top:2px; width:11px; height:11px; background:#fff; border:2px solid var(--ink); border-radius:50%;">
             </div>
+            <div>
+              <div style="font-size:11px; font-weight:800; color:var(--muted);">2020 — 2022</div>
+              <div style="font-size:13px; font-weight:700;">중환자실 <span
+                  style="color:var(--muted); font-size:11px;"></span></div>
+            </div>
+          </div>
+          <div
+            style="display:flex; gap:12px; align-items:flex-start; border-left:3px solid #e0e0e0; padding-left:16px; margin-left:8px; position:relative;">
+            <div
+              style="position:absolute; left:-7px; top:2px; width:11px; height:11px; background:#e0e0e0; border:2px solid var(--ink); border-radius:50%;">
+            </div>
+            <div>
+              <div style="font-size:11px; font-weight:800; color:var(--muted);">2018 — 2020</div>
+              <div style="font-size:13px; font-weight:700; color:var(--muted);">신경외과 <span
+                  style="font-size:11px;"></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="scroll-hint">
+      <div class="scroll-hint-down">
+        아래로 스크롤하세요
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round">
+          <path d="M12 5v14M19 12l-7 7-7-7" />
+        </svg>
+      </div>
+      <div class="scroll-hint-end"
+        onclick="(function(){var sections=document.querySelectorAll('.section');var last=sections[sections.length-1];last.scrollIntoView({behavior:'smooth',block:'start'});})()">
+        끝으로
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" width="16" height="16">
+          <path d="M5 12h14M12 5l7 7-7 7" />
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ 7. 규정 ════════ -->
+  <section class="section sec-rose">
+    <div class="section-inner">
+      <div class="pain-tag reveal">&#x1f4d6; 올해 규정 뭐가 바뀌었더라?</div>
+      <h2 class="feat-title reveal d1">
+        규정 원문,<br>조항별로 바로 찾아요
+      </h2>
+      <p class="feat-desc reveal d2">
+        FAQ, 원문 검색, PDF 뷰어.
+      </p>
+      <div class="neo-card reveal d3" style="padding:0; overflow:hidden;">
+        <!-- 별표 헤더 -->
+        <div style="padding:12px 14px 10px; border-bottom:3px solid var(--ink);">
+          <div style="font-size:15px; font-weight:900; margin-bottom:2px;">퇴직수당 지급금표</div>
+          <div style="font-size:11px; color:var(--muted); font-weight:600;">[별표] 보수규정 제44조 관련</div>
+        </div>
+        <!-- 테이블 -->
+        <table style="width:100%; border-collapse:collapse; font-size:12px;">
+          <thead>
+            <tr style="background:#f5f0e8; border-bottom:2px solid var(--ink);">
+              <th style="padding:8px 10px; text-align:left; font-weight:800; border-right:1.5px solid #ccc;">재직기간</th>
+              <th
+                style="padding:8px 10px; text-align:center; font-weight:800; border-right:1.5px solid #ccc; font-size:11px;">
+                산정기준</th>
+              <th style="padding:8px 10px; text-align:center; font-weight:800; font-size:11px;">지급율</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1.5px solid #e8e0d0;">
+              <td style="padding:8px 10px; font-weight:700; border-right:1.5px solid #e0e0e0;">20년 이상</td>
+              <td style="padding:8px 10px; color:var(--muted); text-align:center; border-right:1.5px solid #e0e0e0;">퇴직
+                전<br>평균임금 ×</td>
+              <td style="padding:8px 10px; font-weight:800; color:var(--violet); text-align:center;">60/100</td>
+            </tr>
+            <tr style="border-bottom:1.5px solid #e8e0d0; background:#fafafa;">
+              <td style="padding:8px 10px; font-weight:700; border-right:1.5px solid #e0e0e0;">16년 이상<br><span
+                  style="font-size:10px; color:var(--muted);">20년 미만</span></td>
+              <td style="padding:8px 10px; color:var(--muted); text-align:center; border-right:1.5px solid #e0e0e0;">
+                평균임금 ×</td>
+              <td style="padding:8px 10px; font-weight:800; color:var(--violet); text-align:center;">50/100</td>
+            </tr>
+            <tr style="border-bottom:1.5px solid #e8e0d0;">
+              <td style="padding:8px 10px; font-weight:700; border-right:1.5px solid #e0e0e0;">10년 이상<br><span
+                  style="font-size:10px; color:var(--muted);">16년 미만</span></td>
+              <td style="padding:8px 10px; color:var(--muted); text-align:center; border-right:1.5px solid #e0e0e0;">
+                평균임금 ×</td>
+              <td style="padding:8px 10px; font-weight:800; color:var(--violet); text-align:center;">45/100</td>
+            </tr>
+            <tr style="border-bottom:1.5px solid #e8e0d0; background:#fafafa;">
+              <td style="padding:8px 10px; font-weight:700; border-right:1.5px solid #e0e0e0;">5년 이상<br><span
+                  style="font-size:10px; color:var(--muted);">10년 미만</span></td>
+              <td style="padding:8px 10px; color:var(--muted); text-align:center; border-right:1.5px solid #e0e0e0;">
+                평균임금 ×</td>
+              <td style="padding:8px 10px; font-weight:800; color:var(--muted); text-align:center;">35/100</td>
+            </tr>
+            <tr>
+              <td style="padding:8px 10px; font-weight:700; border-right:1.5px solid #e0e0e0;">1년 이상<br><span
+                  style="font-size:10px; color:var(--muted);">5년 미만</span></td>
+              <td style="padding:8px 10px; color:var(--muted); text-align:center; border-right:1.5px solid #e0e0e0;">
+                평균임금 ×</td>
+              <td style="padding:8px 10px; font-weight:800; color:var(--muted); text-align:center;">10/100</td>
+            </tr>
+          </tbody>
+        </table>
+        <!-- 부속합의 + 연락처 -->
+        <div
+          style="border-top:2px solid var(--ink); padding:10px 12px; background:#f5f0e8; font-size:11px; line-height:1.6;">
+          <div style="font-weight:700; margin-bottom:4px;">&#x1f4cc; 부속합의 — 리프레시지원비 36만원</div>
+          <div style="color:var(--muted);">인사팀(급여계)&nbsp;&nbsp;
+            <a href="#" style="color:var(--violet); font-weight:700; text-decoration:none;">PDF</a>
+            &nbsp;|&nbsp;&#x260e; 02-2072-2716
+            &nbsp;|&nbsp;&#x2709; payroll@snuh.org
           </div>
         </div>
       </div>
@@ -1055,12 +1241,14 @@
     <div class="section-inner">
       <div class="shield reveal">&#x1f512;</div>
       <h2 class="feat-title reveal d1">
-        내 데이터는 내 폰,<br>원하면 내 구글 드라이브에.
+        내 급여 데이터는 내 폰에만!<br>혹은 내 구글 계정에만 저장되요<br>
+
       </h2>
       <p class="feat-desc reveal d2">
         로그인 없이 써도 완전히 동작해요.<br>
-        구글 연동하면 <b>내</b> 드라이브에만 저장돼요. 회사 서버 아니에요.<br>
-        이름·사번·급여는 수집 대상이 아니에요.
+        구글 연동하면 <b>내</b> 드라이브에만 저장됩니다.
+        <br> 개인정보를 안전하게 관리하세요<br>
+        개발자도 볼 수 없어요.
       </p>
       <div class="badges reveal d3">
         <div class="badge">&#x2705; 로컬 우선 저장</div>
@@ -1089,35 +1277,42 @@
   <section class="section final-section" style="background: var(--amber);">
     <div class="section-inner">
       <h2 class="feat-title reveal" style="font-size:clamp(26px, 7vw, 42px);">
-        복잡한 건 이제<br>SNUH 메이트가 할게요.
+        슬기로운 병원생활 <br>SNUH 메이트가 도와드립니다.
       </h2>
       <p class="feat-desc reveal d1" style="color:var(--ink); opacity:0.72; margin-bottom: 28px;">
-        월급날 오기 전에 내 수당 먼저 검증해보세요.
+
       </p>
       <div class="cta-group reveal d2">
         <a href="./index.html?app=1" class="cta-primary">로그인 없이 바로 써보기 &rarr;</a>
         <a href="./index.html?app=1&amp;signin=google" class="cta-secondary" aria-label="Google로 연결해서 기기 넘나들기">
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" style="flex-shrink:0;">
-            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.75h3.57c2.08-1.92 3.28-4.74 3.28-8.07z"/>
-            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.75c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-            <path fill="#FBBC05" d="M5.84 14.12c-.22-.66-.35-1.37-.35-2.12s.13-1.46.35-2.12V7.04H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.96l3.66-2.84z"/>
-            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.04l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"/>
+            <path fill="#4285F4"
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.75h3.57c2.08-1.92 3.28-4.74 3.28-8.07z" />
+            <path fill="#34A853"
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.75c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+            <path fill="#FBBC05"
+              d="M5.84 14.12c-.22-.66-.35-1.37-.35-2.12s.13-1.46.35-2.12V7.04H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.96l3.66-2.84z" />
+            <path fill="#EA4335"
+              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.04l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z" />
           </svg>
           <span>Google로 연결해서 기기 넘나들기</span>
         </a>
-        <a href="./tutorial.html" class="cta-secondary" style="background: transparent; box-shadow: none; border: none; font-weight: 600; text-decoration: underline; padding: 6px 12px;">&#x1f393; 1분만 볼래요? 튜토리얼 &rarr;</a>
+        <a href="./tutorial.html" class="cta-secondary"
+          style="background: transparent; box-shadow: none; border: none; font-weight: 600; text-decoration: underline; padding: 6px 12px;">&#x1f393;
+          1분만 볼래요? 튜토리얼 &rarr;</a>
       </div>
       <button id="shareBtn" class="cta-secondary reveal d3" type="button" style="
         background: var(--white);
         margin-bottom: 20px;
         max-width: 320px;
         width: 100%;">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0;">
-          <circle cx="18" cy="5" r="3"/>
-          <circle cx="6" cy="12" r="3"/>
-          <circle cx="18" cy="19" r="3"/>
-          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
-          <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0;">
+          <circle cx="18" cy="5" r="3" />
+          <circle cx="6" cy="12" r="3" />
+          <circle cx="18" cy="19" r="3" />
+          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+          <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
         </svg>
         <span>동료에게 알려주기</span>
       </button>
@@ -1132,16 +1327,20 @@
         font-family: inherit;">
         <div style="text-align: center;">
           <div style="font-size: 16px; font-weight: 800; margin-bottom: 16px;">동료에게 공유하기</div>
-          <img id="shareQr" alt="QR 코드" width="220" height="220" style="border: 2px solid var(--ink); border-radius: 10px; margin-bottom: 16px; display: block; margin-left: auto; margin-right: auto;">
+          <img id="shareQr" alt="QR 코드" width="220" height="220"
+            style="border: 2px solid var(--ink); border-radius: 10px; margin-bottom: 16px; display: block; margin-left: auto; margin-right: auto;">
           <div style="font-size: 12px; color: var(--muted); font-weight: 600; margin-bottom: 4px;">링크</div>
-          <div id="shareUrl" style="font-size: 13px; font-weight: 700; word-break: break-all; margin-bottom: 14px;">https://www.snuhmate.com</div>
-          <button type="button" id="shareCopyBtn" class="cta-primary" style="width: 100%; padding: 12px; margin-bottom: 10px;">링크 복사하기</button>
-          <button type="button" id="shareCloseBtn" class="cta-secondary" style="width: 100%; padding: 10px; background: transparent; box-shadow: none; border: none; font-weight: 600; text-decoration: underline;">닫기</button>
+          <div id="shareUrl" style="font-size: 13px; font-weight: 700; word-break: break-all; margin-bottom: 14px;">
+            https://www.snuhmate.com</div>
+          <button type="button" id="shareCopyBtn" class="cta-primary"
+            style="width: 100%; padding: 12px; margin-bottom: 10px;">링크 복사하기</button>
+          <button type="button" id="shareCloseBtn" class="cta-secondary"
+            style="width: 100%; padding: 10px; background: transparent; box-shadow: none; border: none; font-weight: 600; text-decoration: underline;">닫기</button>
         </div>
       </dialog>
       <div class="legal-card reveal d3">
         <div class="legal-card-title">SNUH 메이트는 서울대학교병원 그룹 직원들을 위한<br>
-          급여·휴가·시간외 자기관리 도구입니다.<br></div>
+          급여·휴가·시간외 관리 도구입니다.<br></div>
         <div class="legal-card-desc">
           Google 연동 기능은 선택적으로 제공되며, 사용자의 데이터는 본인 기기 또는 본인 Google 계정에 저장되도록 설계되어 있습니다.
         </div>

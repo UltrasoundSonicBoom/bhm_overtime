@@ -1,0 +1,1795 @@
+{
+  "generatedAt": "2026-04-16T11:39:37.432Z",
+  "parserSource": "/Users/momo/.config/superpowers/worktrees/bhm_overtime/codex/salary-parser-v2/salary-parser.js",
+  "documents": [
+    {
+      "id": "2512_salary",
+      "sourceFile": "2512 일반직 급여.pdf",
+      "sourcePath": "/Users/momo/Documents/GitHub/bhm_overtime/data/2512 일반직 급여.pdf",
+      "metadata": {
+        "payPeriod": "2025년 12월분",
+        "payslipType": "급여"
+      },
+      "employeeInfo": {
+        "employeeNumber": "20842",
+        "name": "김계환",
+        "jobType": "보건직",
+        "department": "핵의학과",
+        "hireDate": "2006-07-05",
+        "payGrade": "S1-02"
+      },
+      "parsed": {
+        "earnings": [
+          {
+            "originalName": "기준기본급",
+            "canonicalName": "기준기본급",
+            "amount": 2907500,
+            "row": 0,
+            "col": 0
+          },
+          {
+            "originalName": "급식보조비",
+            "canonicalName": "급식보조비",
+            "amount": 150000,
+            "row": 0,
+            "col": 5
+          },
+          {
+            "originalName": "근속가산기본급",
+            "canonicalName": "근속가산기본급",
+            "amount": 214080,
+            "row": 1,
+            "col": 0
+          },
+          {
+            "originalName": "교통보조비",
+            "canonicalName": "교통보조비",
+            "amount": 150000,
+            "row": 1,
+            "col": 5
+          },
+          {
+            "originalName": "능력급",
+            "canonicalName": "능력급",
+            "amount": 1075700,
+            "row": 2,
+            "col": 0
+          },
+          {
+            "originalName": "조정급",
+            "canonicalName": "조정급",
+            "amount": 301700,
+            "row": 2,
+            "col": 4
+          },
+          {
+            "originalName": "상여금",
+            "canonicalName": "상여금",
+            "amount": 157400,
+            "row": 3,
+            "col": 0
+          },
+          {
+            "originalName": "장기근속수당",
+            "canonicalName": "장기근속수당",
+            "amount": 80000,
+            "row": 4,
+            "col": 5
+          },
+          {
+            "originalName": "무급가족돌봄휴가",
+            "canonicalName": "무급가족돌봄휴가",
+            "amount": -214630,
+            "row": 4,
+            "col": 8
+          },
+          {
+            "originalName": "가계지원비",
+            "canonicalName": "가계지원비",
+            "amount": 934970,
+            "row": 5,
+            "col": 0
+          }
+        ],
+        "deductions": [
+          {
+            "originalName": "소득세",
+            "canonicalName": "소득세",
+            "amount": 335690,
+            "row": 0,
+            "col": 0
+          },
+          {
+            "originalName": "국민건강",
+            "canonicalName": "국민건강",
+            "amount": 236800,
+            "row": 0,
+            "col": 1
+          },
+          {
+            "originalName": "식대공제",
+            "canonicalName": "식대공제",
+            "amount": 60000,
+            "row": 0,
+            "col": 6
+          },
+          {
+            "originalName": "주민세",
+            "canonicalName": "주민세",
+            "amount": 33560,
+            "row": 1,
+            "col": 0
+          },
+          {
+            "originalName": "장기요양",
+            "canonicalName": "장기요양",
+            "amount": 30660,
+            "row": 1,
+            "col": 1
+          },
+          {
+            "originalName": "노동조합비",
+            "canonicalName": "노동조합비",
+            "amount": 67110,
+            "row": 1,
+            "col": 3
+          },
+          {
+            "originalName": "교원장기급여",
+            "canonicalName": "교원장기급여",
+            "amount": 60000,
+            "row": 2,
+            "col": 2
+          },
+          {
+            "originalName": "교원대출상환",
+            "canonicalName": "교원대출상환",
+            "amount": 433570,
+            "row": 3,
+            "col": 2
+          },
+          {
+            "originalName": "사학연금부담금",
+            "canonicalName": "사학연금부담금",
+            "amount": 619220,
+            "row": 3,
+            "col": 5
+          },
+          {
+            "originalName": "사학연금대여상환금",
+            "canonicalName": "사학연금대여상환금",
+            "amount": 342940,
+            "row": 4,
+            "col": 5
+          }
+        ],
+        "settlementItems": [],
+        "workRecords": [
+          {
+            "originalName": "시간외근무시간",
+            "canonicalName": "시간외근무시간",
+            "value": 0,
+            "unit": "hours",
+            "row": 0,
+            "col": 8
+          },
+          {
+            "originalName": "야간근무가산",
+            "canonicalName": "야간근무가산",
+            "value": 0,
+            "unit": "count",
+            "row": 0,
+            "col": 9
+          },
+          {
+            "originalName": "통상근로시간",
+            "canonicalName": "통상근로시간",
+            "value": 0,
+            "unit": "hours",
+            "row": 1,
+            "col": 7
+          },
+          {
+            "originalName": "휴일근무시간",
+            "canonicalName": "휴일근무시간",
+            "value": 0,
+            "unit": "days",
+            "row": 1,
+            "col": 8
+          },
+          {
+            "originalName": "대체근무가산횟수",
+            "canonicalName": "대체근무가산횟수",
+            "value": 0,
+            "unit": "count",
+            "row": 1,
+            "col": 9
+          },
+          {
+            "originalName": "야간근로시간",
+            "canonicalName": "야간근로시간",
+            "value": 0,
+            "unit": "hours",
+            "row": 2,
+            "col": 7
+          },
+          {
+            "originalName": "야간근무시간",
+            "canonicalName": "야간근무시간",
+            "value": 0,
+            "unit": "hours",
+            "row": 2,
+            "col": 8
+          },
+          {
+            "originalName": "대체근무통상야근시간",
+            "canonicalName": "대체근무통상야근시간",
+            "value": 0,
+            "unit": "hours",
+            "row": 2,
+            "col": 9
+          },
+          {
+            "originalName": "통상야근시간",
+            "canonicalName": "통상야근시간",
+            "value": 0,
+            "unit": "hours",
+            "row": 3,
+            "col": 8
+          },
+          {
+            "originalName": "가산횟수",
+            "canonicalName": "가산횟수",
+            "value": 0,
+            "unit": "count",
+            "row": 3,
+            "col": 9
+          },
+          {
+            "originalName": "유급휴일",
+            "canonicalName": "유급휴일",
+            "value": 0,
+            "unit": "days",
+            "row": 4,
+            "col": 7
+          },
+          {
+            "originalName": "명절근무시간",
+            "canonicalName": "명절근무시간",
+            "value": 0,
+            "unit": "hours",
+            "row": 4,
+            "col": 8
+          },
+          {
+            "originalName": "무급생휴일",
+            "canonicalName": "무급생휴일",
+            "value": 0,
+            "unit": "days",
+            "row": 4,
+            "col": 9
+          },
+          {
+            "originalName": "근무시간",
+            "canonicalName": "근무시간",
+            "value": 0,
+            "unit": "hours",
+            "row": 5,
+            "col": 8
+          },
+          {
+            "originalName": "총근로시간",
+            "canonicalName": "총근로시간",
+            "value": 0,
+            "unit": "hours",
+            "row": null,
+            "col": null
+          },
+          {
+            "originalName": "야간근무가산횟수",
+            "canonicalName": "야간근무가산",
+            "value": 0,
+            "unit": "count",
+            "row": null,
+            "col": null
+          },
+          {
+            "originalName": "지급연차갯수",
+            "canonicalName": "지급연차갯수",
+            "value": 0,
+            "unit": "count",
+            "row": null,
+            "col": null
+          },
+          {
+            "originalName": "사용연차",
+            "canonicalName": "사용연차",
+            "value": 0,
+            "unit": "count",
+            "row": null,
+            "col": null
+          },
+          {
+            "originalName": "발생연차",
+            "canonicalName": "발생연차",
+            "value": 0,
+            "unit": "count",
+            "row": null,
+            "col": null
+          },
+          {
+            "originalName": "주휴시간",
+            "canonicalName": "주휴시간",
+            "value": 0,
+            "unit": "hours",
+            "row": null,
+            "col": null
+          },
+          {
+            "originalName": "법정공휴일",
+            "canonicalName": "법정공휴일",
+            "value": 0,
+            "unit": "count",
+            "row": null,
+            "col": null
+          }
+        ]
+      },
+      "calculated": {
+        "summary": {
+          "grossPay": 5756720,
+          "totalDeduction": 2219550,
+          "netPay": 3537170
+        },
+        "detailLines": [
+          {
+            "section": "공제",
+            "itemName": "식대공제",
+            "formulaText": "(20 X 3,000)",
+            "amount": 60000
+          },
+          {
+            "section": "지급",
+            "itemName": "무급가족돌봄휴가",
+            "formulaText": "(6,438,850 / 0 X -1)",
+            "amount": -214630
+          }
+        ]
+      },
+      "payslipTab": {
+        "salaryItems": [
+          {
+            "name": "기준기본급",
+            "amount": 2907500
+          },
+          {
+            "name": "급식보조비",
+            "amount": 150000
+          },
+          {
+            "name": "근속가산기본급",
+            "amount": 214080
+          },
+          {
+            "name": "교통보조비",
+            "amount": 150000
+          },
+          {
+            "name": "능력급",
+            "amount": 1075700
+          },
+          {
+            "name": "조정급",
+            "amount": 301700
+          },
+          {
+            "name": "상여금",
+            "amount": 157400
+          },
+          {
+            "name": "장기근속수당",
+            "amount": 80000
+          },
+          {
+            "name": "무급가족돌봄휴가",
+            "amount": -214630
+          },
+          {
+            "name": "가계지원비",
+            "amount": 934970
+          }
+        ],
+        "deductionItems": [
+          {
+            "name": "소득세",
+            "amount": 335690
+          },
+          {
+            "name": "국민건강",
+            "amount": 236800
+          },
+          {
+            "name": "식대공제",
+            "amount": 60000
+          },
+          {
+            "name": "주민세",
+            "amount": 33560
+          },
+          {
+            "name": "장기요양",
+            "amount": 30660
+          },
+          {
+            "name": "노동조합비",
+            "amount": 67110
+          },
+          {
+            "name": "교원장기급여",
+            "amount": 60000
+          },
+          {
+            "name": "교원대출상환",
+            "amount": 433570
+          },
+          {
+            "name": "사학연금부담금",
+            "amount": 619220
+          },
+          {
+            "name": "사학연금대여상환금",
+            "amount": 342940
+          }
+        ],
+        "workStats": [
+          {
+            "name": "시간외근무시간",
+            "value": 0
+          },
+          {
+            "name": "야간근무가산",
+            "value": 0
+          },
+          {
+            "name": "통상근로시간",
+            "value": 0
+          },
+          {
+            "name": "휴일근무시간",
+            "value": 0
+          },
+          {
+            "name": "대체근무가산횟수",
+            "value": 0
+          },
+          {
+            "name": "야간근로시간",
+            "value": 0
+          },
+          {
+            "name": "야간근무시간",
+            "value": 0
+          },
+          {
+            "name": "대체근무통상야근시간",
+            "value": 0
+          },
+          {
+            "name": "통상야근시간",
+            "value": 0
+          },
+          {
+            "name": "가산횟수",
+            "value": 0
+          },
+          {
+            "name": "유급휴일",
+            "value": 0
+          },
+          {
+            "name": "명절근무시간",
+            "value": 0
+          },
+          {
+            "name": "무급생휴일",
+            "value": 0
+          },
+          {
+            "name": "근무시간",
+            "value": 0
+          },
+          {
+            "name": "총근로시간",
+            "value": 0
+          },
+          {
+            "name": "야간근무가산",
+            "value": 0
+          },
+          {
+            "name": "지급연차갯수",
+            "value": 0
+          },
+          {
+            "name": "사용연차",
+            "value": 0
+          },
+          {
+            "name": "발생연차",
+            "value": 0
+          },
+          {
+            "name": "주휴시간",
+            "value": 0
+          },
+          {
+            "name": "법정공휴일",
+            "value": 0
+          }
+        ],
+        "summary": {
+          "grossPay": 5756720,
+          "totalDeduction": 2219550,
+          "netPay": 3537170
+        }
+      }
+    },
+    {
+      "id": "2512_salary_retro",
+      "sourceFile": "2512 일반직 소급.pdf",
+      "sourcePath": "/Users/momo/Documents/GitHub/bhm_overtime/data/2512 일반직 소급.pdf",
+      "metadata": {
+        "payPeriod": "2025년 12월분",
+        "payslipType": "소급분"
+      },
+      "employeeInfo": {
+        "employeeNumber": "20842",
+        "name": "김계환",
+        "jobType": "보건직",
+        "department": "핵의학과",
+        "hireDate": "2006-07-05",
+        "payGrade": "S1-02"
+      },
+      "parsed": {
+        "earnings": [
+          {
+            "originalName": "기준기본급",
+            "canonicalName": "기준기본급",
+            "amount": 1774000,
+            "row": 0,
+            "col": 0
+          },
+          {
+            "originalName": "시간외수당",
+            "canonicalName": "시간외수당",
+            "amount": 12860,
+            "row": 0,
+            "col": 6
+          },
+          {
+            "originalName": "근속가산기본급",
+            "canonicalName": "근속가산기본급",
+            "amount": 124280,
+            "row": 1,
+            "col": 0
+          },
+          {
+            "originalName": "명절지원비",
+            "canonicalName": "명절지원비",
+            "amount": 316610,
+            "row": 1,
+            "col": 1
+          },
+          {
+            "originalName": "무급가족돌봄휴가",
+            "canonicalName": "무급가족돌봄휴가",
+            "amount": -44970,
+            "row": null,
+            "col": null
+          }
+        ],
+        "deductions": [
+          {
+            "originalName": "소득세",
+            "canonicalName": "소득세",
+            "amount": 344130,
+            "row": 0,
+            "col": 0
+          },
+          {
+            "originalName": "주민세",
+            "canonicalName": "주민세",
+            "amount": 34410,
+            "row": 1,
+            "col": 0
+          },
+          {
+            "originalName": "노동조합비",
+            "canonicalName": "노동조합비",
+            "amount": 28360,
+            "row": 1,
+            "col": 3
+          }
+        ],
+        "settlementItems": [],
+        "workRecords": [
+          {
+            "originalName": "시간외근무시간",
+            "canonicalName": "시간외근무시간",
+            "value": 0,
+            "unit": "hours",
+            "row": 0,
+            "col": 8
+          },
+          {
+            "originalName": "야간근무가산",
+            "canonicalName": "야간근무가산",
+            "value": 0,
+            "unit": "count",
+            "row": 0,
+            "col": 9
+          },
+          {
+            "originalName": "통상근로시간",
+            "canonicalName": "통상근로시간",
+            "value": 0,
+            "unit": "hours",
+            "row": 1,
+            "col": 7
+          },
+          {
+            "originalName": "휴일근무시간",
+            "canonicalName": "휴일근무시간",
+            "value": 0,
+            "unit": "days",
+            "row": 1,
+            "col": 8
+          },
+          {
+            "originalName": "대체근무가산횟수",
+            "canonicalName": "대체근무가산횟수",
+            "value": 0,
+            "unit": "count",
+            "row": 1,
+            "col": 9
+          },
+          {
+            "originalName": "야간근무시간",
+            "canonicalName": "야간근무시간",
+            "value": 0,
+            "unit": "hours",
+            "row": 2,
+            "col": 8
+          },
+          {
+            "originalName": "대체근무통상야근시간",
+            "canonicalName": "대체근무통상야근시간",
+            "value": 0,
+            "unit": "hours",
+            "row": 2,
+            "col": 9
+          },
+          {
+            "originalName": "주휴시간",
+            "canonicalName": "주휴시간",
+            "value": 0,
+            "unit": "hours",
+            "row": 3,
+            "col": 7
+          },
+          {
+            "originalName": "통상야근시간",
+            "canonicalName": "통상야근시간",
+            "value": 0,
+            "unit": "hours",
+            "row": 3,
+            "col": 8
+          },
+          {
+            "originalName": "가산횟수",
+            "canonicalName": "가산횟수",
+            "value": 0,
+            "unit": "count",
+            "row": 3,
+            "col": 9
+          },
+          {
+            "originalName": "명절근무시간",
+            "canonicalName": "명절근무시간",
+            "value": 0,
+            "unit": "hours",
+            "row": 4,
+            "col": 8
+          },
+          {
+            "originalName": "무급생휴일",
+            "canonicalName": "무급생휴일",
+            "value": 0,
+            "unit": "days",
+            "row": 4,
+            "col": 9
+          },
+          {
+            "originalName": "총근로시간",
+            "canonicalName": "총근로시간",
+            "value": 0,
+            "unit": "hours",
+            "row": null,
+            "col": null
+          },
+          {
+            "originalName": "야간근무가산횟수",
+            "canonicalName": "야간근무가산",
+            "value": 0,
+            "unit": "count",
+            "row": null,
+            "col": null
+          },
+          {
+            "originalName": "지급연차갯수",
+            "canonicalName": "지급연차갯수",
+            "value": 0,
+            "unit": "count",
+            "row": null,
+            "col": null
+          },
+          {
+            "originalName": "사용연차",
+            "canonicalName": "사용연차",
+            "value": 0,
+            "unit": "count",
+            "row": null,
+            "col": null
+          },
+          {
+            "originalName": "야간근로시간",
+            "canonicalName": "야간근로시간",
+            "value": 0,
+            "unit": "hours",
+            "row": null,
+            "col": null
+          },
+          {
+            "originalName": "발생연차",
+            "canonicalName": "발생연차",
+            "value": 0,
+            "unit": "count",
+            "row": null,
+            "col": null
+          },
+          {
+            "originalName": "유급휴일",
+            "canonicalName": "유급휴일",
+            "value": 0,
+            "unit": "count",
+            "row": null,
+            "col": null
+          },
+          {
+            "originalName": "법정공휴일",
+            "canonicalName": "법정공휴일",
+            "value": 0,
+            "unit": "count",
+            "row": null,
+            "col": null
+          }
+        ]
+      },
+      "calculated": {
+        "summary": {
+          "grossPay": 2182780,
+          "totalDeduction": 406900,
+          "netPay": 1775880
+        },
+        "detailLines": [
+          {
+            "section": "지급",
+            "itemName": "무급가족돌봄휴가",
+            "formulaText": "(6,438,850 / 0 X 0)",
+            "amount": -44970
+          },
+          {
+            "section": "지급",
+            "itemName": "시간외수당",
+            "formulaText": "(6,438,850 / 209 X 1.5 X 0)",
+            "amount": 12860
+          }
+        ]
+      },
+      "payslipTab": {
+        "salaryItems": [
+          {
+            "name": "기준기본급",
+            "amount": 1774000
+          },
+          {
+            "name": "시간외수당",
+            "amount": 12860
+          },
+          {
+            "name": "근속가산기본급",
+            "amount": 124280
+          },
+          {
+            "name": "명절지원비",
+            "amount": 316610
+          },
+          {
+            "name": "무급가족돌봄휴가",
+            "amount": -44970
+          }
+        ],
+        "deductionItems": [
+          {
+            "name": "소득세",
+            "amount": 344130
+          },
+          {
+            "name": "주민세",
+            "amount": 34410
+          },
+          {
+            "name": "노동조합비",
+            "amount": 28360
+          }
+        ],
+        "workStats": [
+          {
+            "name": "시간외근무시간",
+            "value": 0
+          },
+          {
+            "name": "야간근무가산",
+            "value": 0
+          },
+          {
+            "name": "통상근로시간",
+            "value": 0
+          },
+          {
+            "name": "휴일근무시간",
+            "value": 0
+          },
+          {
+            "name": "대체근무가산횟수",
+            "value": 0
+          },
+          {
+            "name": "야간근무시간",
+            "value": 0
+          },
+          {
+            "name": "대체근무통상야근시간",
+            "value": 0
+          },
+          {
+            "name": "주휴시간",
+            "value": 0
+          },
+          {
+            "name": "통상야근시간",
+            "value": 0
+          },
+          {
+            "name": "가산횟수",
+            "value": 0
+          },
+          {
+            "name": "명절근무시간",
+            "value": 0
+          },
+          {
+            "name": "무급생휴일",
+            "value": 0
+          },
+          {
+            "name": "총근로시간",
+            "value": 0
+          },
+          {
+            "name": "야간근무가산",
+            "value": 0
+          },
+          {
+            "name": "지급연차갯수",
+            "value": 0
+          },
+          {
+            "name": "사용연차",
+            "value": 0
+          },
+          {
+            "name": "야간근로시간",
+            "value": 0
+          },
+          {
+            "name": "발생연차",
+            "value": 0
+          },
+          {
+            "name": "유급휴일",
+            "value": 0
+          },
+          {
+            "name": "법정공휴일",
+            "value": 0
+          }
+        ],
+        "summary": {
+          "grossPay": 2182780,
+          "totalDeduction": 406900,
+          "netPay": 1775880
+        }
+      }
+    },
+    {
+      "id": "2601_salary",
+      "sourceFile": "2601 일반직 급여.pdf",
+      "sourcePath": "/Users/momo/Documents/GitHub/bhm_overtime/data/2601 일반직 급여.pdf",
+      "metadata": {
+        "payPeriod": "2026년 1월분",
+        "payslipType": "급여"
+      },
+      "employeeInfo": {
+        "employeeNumber": "20842",
+        "name": "김계환",
+        "jobType": "보건직",
+        "department": "핵의학과",
+        "hireDate": "2006-07-05",
+        "payGrade": "S1-03"
+      },
+      "parsed": {
+        "earnings": [
+          {
+            "originalName": "기준기본급",
+            "canonicalName": "기준기본급",
+            "amount": 3085900,
+            "row": 0,
+            "col": 0
+          },
+          {
+            "originalName": "급식보조비",
+            "canonicalName": "급식보조비",
+            "amount": 150000,
+            "row": 0,
+            "col": 5
+          },
+          {
+            "originalName": "근속가산기본급",
+            "canonicalName": "근속가산기본급",
+            "amount": 226570,
+            "row": 1,
+            "col": 0
+          },
+          {
+            "originalName": "교통보조비",
+            "canonicalName": "교통보조비",
+            "amount": 150000,
+            "row": 1,
+            "col": 5
+          },
+          {
+            "originalName": "능력급",
+            "canonicalName": "능력급",
+            "amount": 1075700,
+            "row": 2,
+            "col": 0
+          },
+          {
+            "originalName": "조정급",
+            "canonicalName": "조정급",
+            "amount": 301700,
+            "row": 2,
+            "col": 4
+          },
+          {
+            "originalName": "상여금",
+            "canonicalName": "상여금",
+            "amount": 157400,
+            "row": 3,
+            "col": 0
+          },
+          {
+            "originalName": "별정수당5",
+            "canonicalName": "별정수당5",
+            "amount": 35000,
+            "row": 3,
+            "col": 10
+          },
+          {
+            "originalName": "장기근속수당",
+            "canonicalName": "장기근속수당",
+            "amount": 80000,
+            "row": 4,
+            "col": 5
+          },
+          {
+            "originalName": "무급가족돌봄휴가",
+            "canonicalName": "무급가족돌봄휴가",
+            "amount": -222130,
+            "row": 4,
+            "col": 8
+          },
+          {
+            "originalName": "자기계발별정수당",
+            "canonicalName": "자기계발별정수당",
+            "amount": 40000,
+            "row": 5,
+            "col": 7
+          }
+        ],
+        "deductions": [
+          {
+            "originalName": "소득세",
+            "canonicalName": "소득세",
+            "amount": 474260,
+            "row": 0,
+            "col": 0
+          },
+          {
+            "originalName": "국민건강",
+            "canonicalName": "국민건강",
+            "amount": 236800,
+            "row": 0,
+            "col": 1
+          },
+          {
+            "originalName": "식대공제",
+            "canonicalName": "식대공제",
+            "amount": 51000,
+            "row": 0,
+            "col": 6
+          },
+          {
+            "originalName": "주민세",
+            "canonicalName": "주민세",
+            "amount": 47420,
+            "row": 1,
+            "col": 0
+          },
+          {
+            "originalName": "장기요양",
+            "canonicalName": "장기요양",
+            "amount": 30660,
+            "row": 1,
+            "col": 1
+          },
+          {
+            "originalName": "노동조합비",
+            "canonicalName": "노동조합비",
+            "amount": 69960,
+            "row": 1,
+            "col": 3
+          },
+          {
+            "originalName": "교원장기급여",
+            "canonicalName": "교원장기급여",
+            "amount": 60000,
+            "row": 2,
+            "col": 2
+          },
+          {
+            "originalName": "교원대출상환",
+            "canonicalName": "교원대출상환",
+            "amount": 433570,
+            "row": 3,
+            "col": 2
+          },
+          {
+            "originalName": "주차료",
+            "canonicalName": "주차료",
+            "amount": 24000,
+            "row": 3,
+            "col": 3
+          },
+          {
+            "originalName": "사학연금부담금",
+            "canonicalName": "사학연금부담금",
+            "amount": 619220,
+            "row": 3,
+            "col": 5
+          },
+          {
+            "originalName": "사학연금대여상환금",
+            "canonicalName": "사학연금대여상환금",
+            "amount": 343160,
+            "row": 4,
+            "col": 5
+          }
+        ],
+        "settlementItems": [],
+        "workRecords": [
+          {
+            "originalName": "시간외근무시간",
+            "canonicalName": "시간외근무시간",
+            "value": 0,
+            "unit": "hours",
+            "row": 0,
+            "col": 8
+          },
+          {
+            "originalName": "야간근무가산",
+            "canonicalName": "야간근무가산",
+            "value": 0,
+            "unit": "count",
+            "row": 0,
+            "col": 9
+          },
+          {
+            "originalName": "통상근로시간",
+            "canonicalName": "통상근로시간",
+            "value": 0,
+            "unit": "hours",
+            "row": 1,
+            "col": 7
+          },
+          {
+            "originalName": "휴일근무시간",
+            "canonicalName": "휴일근무시간",
+            "value": 0,
+            "unit": "days",
+            "row": 1,
+            "col": 8
+          },
+          {
+            "originalName": "대체근무가산횟수",
+            "canonicalName": "대체근무가산횟수",
+            "value": 0,
+            "unit": "count",
+            "row": 1,
+            "col": 9
+          },
+          {
+            "originalName": "야간근로시간",
+            "canonicalName": "야간근로시간",
+            "value": 0,
+            "unit": "hours",
+            "row": 2,
+            "col": 7
+          },
+          {
+            "originalName": "야간근무시간",
+            "canonicalName": "야간근무시간",
+            "value": 0,
+            "unit": "hours",
+            "row": 2,
+            "col": 8
+          },
+          {
+            "originalName": "대체근무통상야근시간",
+            "canonicalName": "대체근무통상야근시간",
+            "value": 0,
+            "unit": "hours",
+            "row": 2,
+            "col": 9
+          },
+          {
+            "originalName": "통상야근시간",
+            "canonicalName": "통상야근시간",
+            "value": 0,
+            "unit": "hours",
+            "row": 3,
+            "col": 8
+          },
+          {
+            "originalName": "가산횟수",
+            "canonicalName": "가산횟수",
+            "value": 0,
+            "unit": "count",
+            "row": 3,
+            "col": 9
+          },
+          {
+            "originalName": "유급휴일",
+            "canonicalName": "유급휴일",
+            "value": 0,
+            "unit": "days",
+            "row": 4,
+            "col": 7
+          },
+          {
+            "originalName": "명절근무시간",
+            "canonicalName": "명절근무시간",
+            "value": 0,
+            "unit": "hours",
+            "row": 4,
+            "col": 8
+          },
+          {
+            "originalName": "무급생휴일",
+            "canonicalName": "무급생휴일",
+            "value": 0,
+            "unit": "days",
+            "row": 4,
+            "col": 9
+          },
+          {
+            "originalName": "근무시간",
+            "canonicalName": "근무시간",
+            "value": 0,
+            "unit": "hours",
+            "row": 5,
+            "col": 8
+          },
+          {
+            "originalName": "총근로시간",
+            "canonicalName": "총근로시간",
+            "value": 0,
+            "unit": "hours",
+            "row": null,
+            "col": null
+          },
+          {
+            "originalName": "야간근무가산횟수",
+            "canonicalName": "야간근무가산",
+            "value": 0,
+            "unit": "count",
+            "row": null,
+            "col": null
+          },
+          {
+            "originalName": "지급연차갯수",
+            "canonicalName": "지급연차갯수",
+            "value": 0,
+            "unit": "count",
+            "row": null,
+            "col": null
+          },
+          {
+            "originalName": "사용연차",
+            "canonicalName": "사용연차",
+            "value": 0,
+            "unit": "count",
+            "row": null,
+            "col": null
+          },
+          {
+            "originalName": "발생연차",
+            "canonicalName": "발생연차",
+            "value": 0,
+            "unit": "count",
+            "row": null,
+            "col": null
+          },
+          {
+            "originalName": "주휴시간",
+            "canonicalName": "주휴시간",
+            "value": 0,
+            "unit": "hours",
+            "row": null,
+            "col": null
+          },
+          {
+            "originalName": "법정공휴일",
+            "canonicalName": "법정공휴일",
+            "value": 0,
+            "unit": "count",
+            "row": null,
+            "col": null
+          }
+        ]
+      },
+      "calculated": {
+        "summary": {
+          "grossPay": 5080140,
+          "totalDeduction": 2390050,
+          "netPay": 2690090
+        },
+        "detailLines": [
+          {
+            "section": "공제",
+            "itemName": "식대공제",
+            "formulaText": "(17 X 3,000)",
+            "amount": 51000
+          },
+          {
+            "section": "지급",
+            "itemName": "무급가족돌봄휴가",
+            "formulaText": "(6,663,980 / 0 X -1)",
+            "amount": -222130
+          }
+        ]
+      },
+      "payslipTab": {
+        "salaryItems": [
+          {
+            "name": "기준기본급",
+            "amount": 3085900
+          },
+          {
+            "name": "급식보조비",
+            "amount": 150000
+          },
+          {
+            "name": "근속가산기본급",
+            "amount": 226570
+          },
+          {
+            "name": "교통보조비",
+            "amount": 150000
+          },
+          {
+            "name": "능력급",
+            "amount": 1075700
+          },
+          {
+            "name": "조정급",
+            "amount": 301700
+          },
+          {
+            "name": "상여금",
+            "amount": 157400
+          },
+          {
+            "name": "별정수당5",
+            "amount": 35000
+          },
+          {
+            "name": "장기근속수당",
+            "amount": 80000
+          },
+          {
+            "name": "무급가족돌봄휴가",
+            "amount": -222130
+          },
+          {
+            "name": "자기계발별정수당",
+            "amount": 40000
+          }
+        ],
+        "deductionItems": [
+          {
+            "name": "소득세",
+            "amount": 474260
+          },
+          {
+            "name": "국민건강",
+            "amount": 236800
+          },
+          {
+            "name": "식대공제",
+            "amount": 51000
+          },
+          {
+            "name": "주민세",
+            "amount": 47420
+          },
+          {
+            "name": "장기요양",
+            "amount": 30660
+          },
+          {
+            "name": "노동조합비",
+            "amount": 69960
+          },
+          {
+            "name": "교원장기급여",
+            "amount": 60000
+          },
+          {
+            "name": "교원대출상환",
+            "amount": 433570
+          },
+          {
+            "name": "주차료",
+            "amount": 24000
+          },
+          {
+            "name": "사학연금부담금",
+            "amount": 619220
+          },
+          {
+            "name": "사학연금대여상환금",
+            "amount": 343160
+          }
+        ],
+        "workStats": [
+          {
+            "name": "시간외근무시간",
+            "value": 0
+          },
+          {
+            "name": "야간근무가산",
+            "value": 0
+          },
+          {
+            "name": "통상근로시간",
+            "value": 0
+          },
+          {
+            "name": "휴일근무시간",
+            "value": 0
+          },
+          {
+            "name": "대체근무가산횟수",
+            "value": 0
+          },
+          {
+            "name": "야간근로시간",
+            "value": 0
+          },
+          {
+            "name": "야간근무시간",
+            "value": 0
+          },
+          {
+            "name": "대체근무통상야근시간",
+            "value": 0
+          },
+          {
+            "name": "통상야근시간",
+            "value": 0
+          },
+          {
+            "name": "가산횟수",
+            "value": 0
+          },
+          {
+            "name": "유급휴일",
+            "value": 0
+          },
+          {
+            "name": "명절근무시간",
+            "value": 0
+          },
+          {
+            "name": "무급생휴일",
+            "value": 0
+          },
+          {
+            "name": "근무시간",
+            "value": 0
+          },
+          {
+            "name": "총근로시간",
+            "value": 0
+          },
+          {
+            "name": "야간근무가산",
+            "value": 0
+          },
+          {
+            "name": "지급연차갯수",
+            "value": 0
+          },
+          {
+            "name": "사용연차",
+            "value": 0
+          },
+          {
+            "name": "발생연차",
+            "value": 0
+          },
+          {
+            "name": "주휴시간",
+            "value": 0
+          },
+          {
+            "name": "법정공휴일",
+            "value": 0
+          }
+        ],
+        "summary": {
+          "grossPay": 5080140,
+          "totalDeduction": 2390050,
+          "netPay": 2690090
+        }
+      }
+    },
+    {
+      "id": "2601_annual_leave",
+      "sourceFile": "2601 일반직연차수당.pdf",
+      "sourcePath": "/Users/momo/Documents/GitHub/bhm_overtime/data/2601 일반직연차수당.pdf",
+      "metadata": {
+        "payPeriod": "2026년 1월분",
+        "payslipType": "연차수당"
+      },
+      "employeeInfo": {
+        "employeeNumber": "20842",
+        "name": "김계환",
+        "jobType": "보건직",
+        "department": "핵의학과",
+        "hireDate": "2006-07-05",
+        "payGrade": "S1-02"
+      },
+      "parsed": {
+        "earnings": [
+          {
+            "originalName": "연차수당",
+            "canonicalName": "연차수당",
+            "amount": 3124740,
+            "row": null,
+            "col": null
+          }
+        ],
+        "deductions": [
+          {
+            "originalName": "소득세",
+            "canonicalName": "소득세",
+            "amount": 298850,
+            "row": 0,
+            "col": 0
+          },
+          {
+            "originalName": "주민세",
+            "canonicalName": "주민세",
+            "amount": 29880,
+            "row": 1,
+            "col": 0
+          }
+        ],
+        "settlementItems": [],
+        "workRecords": [
+          {
+            "originalName": "무급생휴일",
+            "canonicalName": "무급생휴일",
+            "value": 12.25,
+            "unit": "days",
+            "row": 0,
+            "col": 10
+          },
+          {
+            "originalName": "지급연차갯수",
+            "canonicalName": "지급연차갯수",
+            "value": 11.75,
+            "unit": "days",
+            "row": 1,
+            "col": 10
+          },
+          {
+            "originalName": "대체근무통상야근시간",
+            "canonicalName": "대체근무통상야근시간",
+            "value": 0,
+            "unit": "hours",
+            "row": 2,
+            "col": 9
+          },
+          {
+            "originalName": "사용연차",
+            "canonicalName": "사용연차",
+            "value": 24,
+            "unit": "days",
+            "row": 2,
+            "col": 10
+          },
+          {
+            "originalName": "가산횟수",
+            "canonicalName": "가산횟수",
+            "value": 0,
+            "unit": "count",
+            "row": 3,
+            "col": 9
+          },
+          {
+            "originalName": "총근로시간",
+            "canonicalName": "총근로시간",
+            "value": 0,
+            "unit": "hours",
+            "row": null,
+            "col": null
+          },
+          {
+            "originalName": "시간외근무시간",
+            "canonicalName": "시간외근무시간",
+            "value": 0,
+            "unit": "hours",
+            "row": null,
+            "col": null
+          },
+          {
+            "originalName": "야간근무가산횟수",
+            "canonicalName": "야간근무가산",
+            "value": 0,
+            "unit": "count",
+            "row": null,
+            "col": null
+          },
+          {
+            "originalName": "통상근로시간",
+            "canonicalName": "통상근로시간",
+            "value": 0,
+            "unit": "hours",
+            "row": null,
+            "col": null
+          },
+          {
+            "originalName": "휴일근무시간",
+            "canonicalName": "휴일근무시간",
+            "value": 0,
+            "unit": "hours",
+            "row": null,
+            "col": null
+          },
+          {
+            "originalName": "대체근무가산횟수",
+            "canonicalName": "대체근무가산횟수",
+            "value": 0,
+            "unit": "count",
+            "row": null,
+            "col": null
+          },
+          {
+            "originalName": "야간근로시간",
+            "canonicalName": "야간근로시간",
+            "value": 0,
+            "unit": "hours",
+            "row": null,
+            "col": null
+          },
+          {
+            "originalName": "야간근무시간",
+            "canonicalName": "야간근무시간",
+            "value": 0,
+            "unit": "hours",
+            "row": null,
+            "col": null
+          },
+          {
+            "originalName": "발생연차",
+            "canonicalName": "발생연차",
+            "value": 0,
+            "unit": "count",
+            "row": null,
+            "col": null
+          },
+          {
+            "originalName": "주휴시간",
+            "canonicalName": "주휴시간",
+            "value": 0,
+            "unit": "hours",
+            "row": null,
+            "col": null
+          },
+          {
+            "originalName": "통상야근시간",
+            "canonicalName": "통상야근시간",
+            "value": 0,
+            "unit": "hours",
+            "row": null,
+            "col": null
+          },
+          {
+            "originalName": "유급휴일",
+            "canonicalName": "유급휴일",
+            "value": 0,
+            "unit": "count",
+            "row": null,
+            "col": null
+          },
+          {
+            "originalName": "명절근무시간",
+            "canonicalName": "명절근무시간",
+            "value": 0,
+            "unit": "hours",
+            "row": null,
+            "col": null
+          },
+          {
+            "originalName": "법정공휴일",
+            "canonicalName": "법정공휴일",
+            "value": 0,
+            "unit": "count",
+            "row": null,
+            "col": null
+          }
+        ]
+      },
+      "calculated": {
+        "summary": {
+          "grossPay": 3124740,
+          "totalDeduction": 328730,
+          "netPay": 2796010
+        },
+        "detailLines": [
+          {
+            "section": "지급",
+            "itemName": "연차수당",
+            "formulaText": "(6,663,980 / 26.125 X 12.25) + 0)",
+            "amount": 3124740
+          }
+        ]
+      },
+      "payslipTab": {
+        "salaryItems": [
+          {
+            "name": "연차수당",
+            "amount": 3124740
+          }
+        ],
+        "deductionItems": [
+          {
+            "name": "소득세",
+            "amount": 298850
+          },
+          {
+            "name": "주민세",
+            "amount": 29880
+          }
+        ],
+        "workStats": [
+          {
+            "name": "무급생휴일",
+            "value": 12.25
+          },
+          {
+            "name": "지급연차갯수",
+            "value": 11.75
+          },
+          {
+            "name": "대체근무통상야근시간",
+            "value": 0
+          },
+          {
+            "name": "사용연차",
+            "value": 24
+          },
+          {
+            "name": "가산횟수",
+            "value": 0
+          },
+          {
+            "name": "총근로시간",
+            "value": 0
+          },
+          {
+            "name": "시간외근무시간",
+            "value": 0
+          },
+          {
+            "name": "야간근무가산",
+            "value": 0
+          },
+          {
+            "name": "통상근로시간",
+            "value": 0
+          },
+          {
+            "name": "휴일근무시간",
+            "value": 0
+          },
+          {
+            "name": "대체근무가산횟수",
+            "value": 0
+          },
+          {
+            "name": "야간근로시간",
+            "value": 0
+          },
+          {
+            "name": "야간근무시간",
+            "value": 0
+          },
+          {
+            "name": "발생연차",
+            "value": 0
+          },
+          {
+            "name": "주휴시간",
+            "value": 0
+          },
+          {
+            "name": "통상야근시간",
+            "value": 0
+          },
+          {
+            "name": "유급휴일",
+            "value": 0
+          },
+          {
+            "name": "명절근무시간",
+            "value": 0
+          },
+          {
+            "name": "법정공휴일",
+            "value": 0
+          }
+        ],
+        "summary": {
+          "grossPay": 3124740,
+          "totalDeduction": 328730,
+          "netPay": 2796010
+        }
+      }
+    }
+  ]
+}

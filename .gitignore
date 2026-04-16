@@ -32,3 +32,4 @@ credentials.md
 node_modules/
 .gstack/
 .worktrees/
+.omx/
