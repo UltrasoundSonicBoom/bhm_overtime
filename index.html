@@ -310,15 +310,15 @@
 
   <main class="main">
 
+    <!-- 데모 모드 배너 (모든 탭 공통) -->
+    <div id="demoBanner" style="display:none; align-items:center; gap:10px; background:var(--amber,#F5A623); color:var(--ink,#1a1a1a); padding:10px 16px; border-radius:10px; margin-bottom:8px; font-size:14px; font-weight:600;">
+      <span>🎮 데모 모드</span>
+      <span style="font-weight:400; flex:1;">샘플 데이터로 체험 중이에요. 실제 데이터는 저장되지 않아요.</span>
+      <button onclick="window.exitDemoMode && window.exitDemoMode(); location.href='onboarding.html';" style="background:var(--ink,#1a1a1a); color:#fff; border:none; border-radius:6px; padding:4px 10px; font-size:13px; font-weight:600; cursor:pointer; flex-shrink:0;">나가기</button>
+    </div>
+
     <!-- ═══════════ 🏠 홈 ═══════════ -->
     <div class="tab-content" id="tab-home">
-
-      <!-- 데모 모드 배너 -->
-      <div id="demoBanner" style="display:none; align-items:center; gap:10px; background:var(--amber,#F5A623); color:var(--ink,#1a1a1a); padding:10px 16px; border-radius:10px; margin-bottom:12px; font-size:14px; font-weight:600;">
-        <span>🎮 데모 모드</span>
-        <span style="font-weight:400; flex:1;">샘플 데이터로 체험 중이에요. 실제 데이터는 저장되지 않아요.</span>
-        <button onclick="window.exitDemoMode && window.exitDemoMode(); location.href='onboarding.html';" style="background:var(--ink,#1a1a1a); color:#fff; border:none; border-radius:6px; padding:4px 10px; font-size:13px; font-weight:600; cursor:pointer; flex-shrink:0;">나가기</button>
-      </div>
 
       <!-- 프로필 미저장 힌트 배너 -->
       <div id="homeProfileNudge" class="info-note-banner" style="display:none;">

@@ -161,6 +161,21 @@
     }
   }
 
+  // 데모 모드: 급여 탭 진입 시 '이번 달 예상액' 서브탭 기본 선택
+  document.addEventListener('DOMContentLoaded', function () {
+    if (localStorage.getItem('bhm_demo_mode') !== '1') return;
+    var orig = window.initPayrollTab;
+    window.initPayrollTab = function () {
+      document.querySelectorAll('#tab-payroll .pay-bookmark-tab').forEach(function (btn) {
+        btn.classList.toggle('active', btn.dataset.subtab === 'pay-calc');
+      });
+      document.querySelectorAll('#tab-payroll .sub-content').forEach(function (el) {
+        el.classList.toggle('active', el.id === 'sub-pay-calc');
+      });
+      if (typeof orig === 'function') orig();
+    };
+  });
+
   // 페이지 이동 후에도 demo 상태 복원 (googleSub이 날아갔을 경우 대비)
   (function restoreDemoIfNeeded() {
     if (localStorage.getItem('bhm_demo_mode') !== '1') return;
