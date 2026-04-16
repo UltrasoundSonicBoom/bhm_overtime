@@ -92,7 +92,9 @@
     btn.onclick = function () {
       var dlg = document.getElementById('googlePermissionDialog');
       if (dlg && typeof dlg.showModal === 'function') { dlg.showModal(); return; }
-      if (window.GoogleAuth) window.GoogleAuth.signIn();
+      if (window.GoogleAuth) { window.GoogleAuth.signIn(); return; }
+      // googleAuth.js가 없는 페이지(regulation.html 등) — 메인 앱으로 이동 후 연결
+      location.href = 'index.html?app=1&tab=home&google_auth=1';
     };
     auth.appendChild(btn);
   }
@@ -155,6 +157,24 @@
   // shared helper — index.html의 updateAuthUI가 이 함수를 호출할 수 있도록 expose
   window._sharedAuthRenderSignIn = _renderSignInButton;
   window._sharedAuthRenderUser   = _renderUserState;
+
+  // ── 베타 공지 티커 (헤더 바로 아래, 항상 표시) ──
+  function _renderBetaNoticeTicker() {
+    if (document.getElementById('betaNoticeTicker')) return;
+    var ticker = document.createElement('div');
+    ticker.id = 'betaNoticeTicker';
+    var inner = document.createElement('div');
+    inner.className = 'ticker-inner';
+    var msg = '🚧 정식 오픈전 테스터 목적외 데이터 저장 금지 · Do NOT store real personal data before official launch · 🚧 정식 오픈전 테스터 목적외 데이터 저장 금지 · Do NOT store real personal data before official launch';
+    var span = document.createElement('span');
+    span.textContent = msg;
+    inner.appendChild(span);
+    ticker.appendChild(inner);
+    var header = document.getElementById('sharedHeader');
+    if (header && header.parentNode) {
+      header.parentNode.insertBefore(ticker, header.nextSibling);
+    }
+  }
 
   // ── 게스트 안내 배너 (헤더 바로 아래, 1회만 표시) ──
   function _renderGuestNoticeBanner() {
@@ -344,6 +364,7 @@
 
   // ── Init: 헤더/푸터 즉시 렌더, ChannelIO는 DOM 준비 후 ──
   renderSharedHeader();
+  _renderBetaNoticeTicker();
   renderSharedFooter();
   // _renderGuestNoticeBanner();  // 사용자 요청으로 비활성화 (2026-04-15)
 

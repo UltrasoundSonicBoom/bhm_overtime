@@ -728,6 +728,20 @@
 
 <body>
 
+  <!-- ── 베타 공지 티커 ── -->
+  <div id="betaNoticeTicker" style="
+    width:100%;background:#1a1a1a;color:#FFD84D;
+    font-size:12px;font-weight:700;overflow:hidden;
+    white-space:nowrap;padding:5px 0;position:relative;z-index:99;
+    letter-spacing:0.01em;border-bottom:2px solid #FFD84D;">
+    <div class="ticker-inner" style="display:inline-block;animation:betaTicker 18s linear infinite;padding-left:100%;">
+      <span style="display:inline-block;padding-right:80px;">🚧 정식 오픈전 테스터 목적외 데이터 저장 금지 · Do NOT store real personal data before official launch · 🚧 정식 오픈전 테스터 목적외 데이터 저장 금지 · Do NOT store real personal data before official launch</span>
+    </div>
+  </div>
+  <style>
+    @keyframes betaTicker { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
+  </style>
+
   <!-- ════════ 1. Hero ════════ -->
   <section class="section hero">
     <div class="section-inner hero-inner">
@@ -771,6 +785,30 @@
           <div style="font-size: 12px; font-weight: 700; opacity: 0.7;">
             — 김계환, 서울대병원 핵의학과
           </div>
+        </div>
+
+        <!-- 베타 공지 알람 -->
+        <div class="reveal d3" style="
+          margin-top: 20px;
+          max-width: 360px;
+          width: 100%;
+          padding: 12px 16px;
+          background: #1a1a1a;
+          border: 2px solid #FFD84D;
+          border-radius: 12px;
+          box-shadow: 3px 3px 0 #FFD84D;
+          font-size: 13px;
+          line-height: 1.6;
+          color: #fff;
+          text-align: left;
+          word-break: keep-all;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+            <span style="font-size:18px;">⚠️</span>
+            <strong style="color:#FFD84D;font-size:13px;">테스터 공지</strong>
+          </div>
+          정식 오픈 전입니다.<br>
+          <strong style="color:#FFD84D;">실제 개인정보·급여 데이터를 저장하지 마세요.</strong><br>
+          <span style="opacity:0.7;font-size:12px;">테스트 목적 외 데이터 저장 금지</span>
         </div>
       </div>
     </div>
@@ -1283,6 +1321,7 @@
 
       </p>
       <div class="cta-group reveal d2">
+        <a href="./index.html?app=1&amp;demo=1" class="cta-primary" style="background: var(--amber, #F5A623); color: var(--ink, #1a1a1a);">🎮 샘플 데이터로 체험하기 &rarr;</a>
         <a href="./index.html?app=1" class="cta-primary">로그인 없이 바로 써보기 &rarr;</a>
         <a href="./index.html?app=1&amp;signin=google" class="cta-secondary" aria-label="Google로 연결해서 기기 넘나들기">
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" style="flex-shrink:0;">

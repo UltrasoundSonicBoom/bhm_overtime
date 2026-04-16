@@ -397,23 +397,47 @@
         '아직 등록된 명세서가 없습니다.',
         '급여명세서 PDF를 업로드하면 자동으로 정리됩니다.',
         function () {
-          // 이미 대기 중인 파일 선택기가 있으면 중복 생성 방지
-          if (document.querySelector('input[type="file"][data-pay-picker]')) return;
+          // 이미 열려 있는 picker가 있으면 제거 후 새로 생성 (iOS 취소 후 재시도 대응)
+          const prev = document.querySelector('input[type="file"][data-pay-picker]');
+          if (prev && prev.parentNode) prev.parentNode.removeChild(prev);
+
           const input = document.createElement('input');
           input.type = 'file';
           input.accept = '.pdf,.xlsx,.xls,.csv,.png,.jpg,.jpeg,.gif,.bmp,.webp';
-          input.style.display = 'none';
+          input.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
           input.dataset.payPicker = '1';
-          function cleanup() { if (input.parentNode) input.parentNode.removeChild(input); }
+
+          let cleaned = false;
+          function cleanup() {
+            if (cleaned) return;
+            cleaned = true;
+            window.removeEventListener('focus', onFocus);
+            document.removeEventListener('visibilitychange', onVisibility);
+            clearTimeout(safetyTimer);
+            if (input.parentNode) input.parentNode.removeChild(input);
+          }
+
           input.addEventListener('change', function () {
-            if (input.files.length > 0) handleInlineUpload(input.files[0]);
+            if (input.files && input.files.length > 0) handleInlineUpload(input.files[0]);
             cleanup();
           });
-          // 사용자가 파일 선택 없이 닫을 때도 정리 (focus 복귀 시)
-          window.addEventListener('focus', function onFocus() {
-            setTimeout(cleanup, 300);
-            window.removeEventListener('focus', onFocus);
-          });
+
+          // cancel 이벤트 (Chrome 113+, Safari 17.4+)
+          input.addEventListener('cancel', cleanup);
+
+          // Desktop: window focus 복귀 시 (파일 선택 없이 닫기)
+          function onFocus() { setTimeout(cleanup, 300); }
+          window.addEventListener('focus', onFocus, { once: true });
+
+          // Mobile(iOS/Android): 앱이 foreground로 돌아올 때
+          function onVisibility() {
+            if (document.visibilityState === 'visible') setTimeout(cleanup, 500);
+          }
+          document.addEventListener('visibilitychange', onVisibility);
+
+          // 안전 타임아웃: 30초 후 강제 정리
+          var safetyTimer = setTimeout(cleanup, 30000);
+
           document.body.appendChild(input);
           input.click();
         },
@@ -502,16 +526,19 @@
   // ── 텍스트 업로드 버튼 (명세서 탭 상단 우측) ──
   function buildTextUploadBtn() {
     const fileInput = el('input', { type: 'file', accept: 'application/pdf,.pdf' });
-    fileInput.style.display = 'none';
+    fileInput.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
 
     const btn = el('button', {
       className: 'pay-text-upload-btn',
       textContent: '급여 PDF 업로드',
-      onClick: function () { fileInput.click(); }
+      onClick: function () {
+        fileInput.value = '';  // 같은 파일 재선택 허용 (iOS/Android 포함)
+        fileInput.click();
+      }
     });
 
     fileInput.addEventListener('change', function () {
-      if (fileInput.files.length > 0) {
+      if (fileInput.files && fileInput.files.length > 0) {
         handleInlineUpload(fileInput.files[0]);
       }
     });
