@@ -264,6 +264,39 @@ body::before {
   flex-shrink: 0;
   font-size: 14px;
 }
+
+/* ── Beta Notice Ticker ── */
+#betaNoticeTicker {
+  width: 100%;
+  background: #1a1a1a;
+  color: #FFD84D;
+  font-size: 12px;
+  font-weight: 700;
+  overflow: hidden;
+  white-space: nowrap;
+  padding: 5px 0;
+  position: relative;
+  z-index: 99;
+  letter-spacing: 0.01em;
+}
+#betaNoticeTicker .ticker-inner {
+  display: inline-block;
+  animation: betaTicker 18s linear infinite;
+  padding-left: 100%;
+}
+#betaNoticeTicker .ticker-inner span {
+  display: inline-block;
+  padding-right: 80px;
+}
+@keyframes betaTicker {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+html[data-theme="neo"] #betaNoticeTicker {
+  background: #1a1a1a;
+  border-bottom: 2px solid #FFD84D;
+}
+
 html[data-theme="neo"] .google-signin-btn {
   background: var(--bg-card);
   border-color: var(--border-glass);

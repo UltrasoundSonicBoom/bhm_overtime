@@ -207,7 +207,7 @@ window.GoogleAuth = (function () {
         picture: settings.googlePicture
       });
     } else {
-      if (settings.googleSub && !isAllowlistedEmail(settings.googleEmail)) {
+      if (settings.googleSub && settings.googleSub !== 'demo' && !isAllowlistedEmail(settings.googleEmail)) {
         _clearUser();
       }
       updateAuthUI(null);

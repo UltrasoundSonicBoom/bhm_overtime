@@ -306,12 +306,19 @@
   <!-- ═══════════ Header & Footer (shared-layout.js에서 렌더) ═══════════ -->
   <header id="sharedHeader"></header>
   <nav id="sharedFooter"></nav>
-  <script src="shared-layout.js?v=1.2"></script>
+  <script src="shared-layout.js?v=1.4"></script>
 
   <main class="main">
 
     <!-- ═══════════ 🏠 홈 ═══════════ -->
     <div class="tab-content" id="tab-home">
+
+      <!-- 데모 모드 배너 -->
+      <div id="demoBanner" style="display:none; align-items:center; gap:10px; background:var(--amber,#F5A623); color:var(--ink,#1a1a1a); padding:10px 16px; border-radius:10px; margin-bottom:12px; font-size:14px; font-weight:600;">
+        <span>🎮 데모 모드</span>
+        <span style="font-weight:400; flex:1;">샘플 데이터로 체험 중이에요. 실제 데이터는 저장되지 않아요.</span>
+        <button onclick="window.exitDemoMode && window.exitDemoMode(); location.href='onboarding.html';" style="background:var(--ink,#1a1a1a); color:#fff; border:none; border-radius:6px; padding:4px 10px; font-size:13px; font-weight:600; cursor:pointer; flex-shrink:0;">나가기</button>
+      </div>
 
       <!-- 프로필 미저장 힌트 배너 -->
       <div id="homeProfileNudge" class="info-note-banner" style="display:none;">
@@ -2246,6 +2253,17 @@
 
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <!-- 데모 모드 — googleAuth.js보다 먼저 로드해야 googleSub='demo' 가 인식됨 -->
+  <script src="demo-data.js?v=1.0"></script>
+  <script>
+    (function () {
+      var params = new URLSearchParams(window.location.search);
+      if (params.get('demo') === '1') {
+        window.loadDemoData && window.loadDemoData();
+      }
+    })();
+  </script>
+
   <!-- Google Identity Services (GIS) — config.js + googleAuth.js + supabaseClient.js보다 먼저 -->
   <script src="config.js?v=1.0"></script>
   <script src="appLock.js?v=1.0"></script>
@@ -2255,18 +2273,18 @@
   <script src="syncManager.js?v=1.0"></script>
   <script src="googleCalendarSync.js?v=1.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabaseClient.js?v=1.5"></script>
-  <script src="data.js?v=1.3"></script>
-  <script src="calculators.js?v=1.4"></script>
+  <script src="supabaseClient.js?v=1.6"></script>
+  <script src="data.js?v=2.7"></script>
+  <script src="calculators.js?v=2.5"></script>
   <script src="holidays.js?v=1.2"></script>
-  <script src="profile.js?v=1.4"></script>
+  <script src="profile.js?v=2.5"></script>
   <script src="overtime.js?v=1.2"></script>
   <script src="leave.js?v=1.2"></script>
   <script src="payroll.js?v=1.4"></script>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <script src="salary-parser.js?v=2.4"></script>
   <script src="salary-parser-test.js?v=1.0"></script>
-  <script src="payroll-views.js?v=1.1"></script>
+  <script src="payroll-views.js?v=1.2"></script>
   <script src="resume.js?v=1.0"></script>
   <script src="job-templates.js?v=1.0"></script>
   <script src="app.js?v=1.9"></script>
@@ -2277,6 +2295,16 @@
       if (saved === 'linear') {
         document.documentElement.removeAttribute('data-theme');
         document.getElementById('themeToggle').textContent = '🌙';
+      }
+    })();
+
+    // 데모 배너 표시 (?demo=1 또는 bhm_demo_mode 플래그)
+    (function () {
+      var isDemoUrl = new URLSearchParams(window.location.search).get('demo') === '1';
+      var isDemoFlag = localStorage.getItem('bhm_demo_mode') === '1';
+      if (isDemoUrl || isDemoFlag) {
+        var banner = document.getElementById('demoBanner');
+        if (banner) banner.style.display = 'flex';
       }
     })();
 
