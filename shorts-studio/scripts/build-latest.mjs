@@ -263,7 +263,7 @@ function selectTopSources(category, news, papers, pipeline) {
     selected.push(item);
   });
 
-  while (selected.length < 2) {
+  while (selected.length < (pipeline.sourceLimitPerCategory || 3)) {
     const fallbackIndex = selected.length + 1;
     selected.push({
       id: `${keywordKey(category.label)}-fallback-${fallbackIndex}`,
