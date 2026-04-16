@@ -1,0 +1,92 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5] [cursor=pointer]:
+        - img "SNUH Mate" [ref=e6]
+        - generic [ref=e7]:
+          - heading "슬기로운 병원 생활 메이트" [level=1] [ref=e8]
+          - generic [ref=e9]: 2026.5.1 정식 오픈
+      - generic [ref=e10]:
+        - button "Google로 연결" [ref=e12] [cursor=pointer]:
+          - img [ref=e13]
+          - generic [ref=e19]: Google로 연결
+        - button "⚙️" [ref=e20] [cursor=pointer]
+  - navigation [ref=e21]:
+    - generic [ref=e22]:
+      - button "🏠 홈" [ref=e23] [cursor=pointer]:
+        - generic [ref=e24]: 🏠
+        - generic [ref=e25]: 홈
+      - button "📅 휴가" [ref=e26] [cursor=pointer]:
+        - generic [ref=e27]: 📅
+        - generic [ref=e28]: 휴가
+      - button "⏰ 시간외" [ref=e29] [cursor=pointer]:
+        - generic [ref=e30]: ⏰
+        - generic [ref=e31]: 시간외
+      - button "💰 급여" [ref=e32] [cursor=pointer]:
+        - generic [ref=e33]: 💰
+        - generic [ref=e34]: 급여
+      - link "📖 규정" [ref=e35] [cursor=pointer]:
+        - /url: regulation.html
+        - generic [ref=e36]: 📖
+        - generic [ref=e37]: 규정
+      - link "📰 뉴스" [ref=e38] [cursor=pointer]:
+        - /url: cardnews.html
+        - generic [ref=e39]: 📰
+        - generic [ref=e40]: 뉴스
+      - button "👤 info" [ref=e41] [cursor=pointer]:
+        - generic [ref=e42]: 👤
+        - generic [ref=e43]: info
+  - main [ref=e44]:
+    - generic [ref=e45]:
+      - tablist "정보 구분" [ref=e46]:
+        - tab "👤 개인 정보" [selected] [ref=e47] [cursor=pointer]
+        - tab "💼 근무 정보" [ref=e48] [cursor=pointer]
+      - generic [ref=e50]:
+        - generic [ref=e51]:
+          - generic [ref=e52]:
+            - generic [ref=e53]: 👤
+            - generic [ref=e54]: 홍길동님 정보
+            - generic [ref=e55]: 저장됨 ✓
+          - generic [ref=e56]:
+            - generic [ref=e58] [cursor=pointer]:
+              - generic [ref=e59]: ▸
+              - text: 기본 정보
+              - generic [ref=e60]: 저장됨
+            - generic [ref=e61] [cursor=pointer]: 홍길동 · 핵의학과 · 간호직 · 시니어3 (S3) · 4년차
+            - generic [ref=e63] [cursor=pointer]:
+              - generic [ref=e64]: ▸
+              - text: 가족 수당
+              - generic [ref=e65]: 통상임금 미포함 · 별도 지급
+            - generic [ref=e67] [cursor=pointer]:
+              - generic [ref=e68]: ▸
+              - text: 개인 수당
+              - generic [ref=e69]: 5개
+            - generic [ref=e71] [cursor=pointer]:
+              - generic [ref=e72]: ▸
+              - text: 고급 설정
+              - generic [ref=e73]: 승진일·호봉보정·근로시간
+            - generic [ref=e74]:
+              - generic [ref=e75]: ⚠️
+              - generic [ref=e76]:
+                - strong [ref=e77]: 공용 기기에서는 개인정보를 저장하지 마세요
+                - generic [ref=e78]:
+                  - text: 학교·도서관·직장 공용 컴퓨터에서는 개인정보를 입력하지 마세요. 데이터는 이 브라우저에만 저장되어
+                  - strong [ref=e79]: 다음 사용자가 동일 브라우저를 열면 볼 수 있습니다.
+            - generic [ref=e80]:
+              - button "💾 저장하기" [ref=e81] [cursor=pointer]
+              - button "🗑 초기화" [ref=e82] [cursor=pointer]
+        - generic [ref=e83]:
+          - generic [ref=e84]:
+            - generic [ref=e85]: 현재 직급/호봉
+            - generic [ref=e86]: 간호직 시니어3(S3) 4년차 · 근속 4년
+          - generic [ref=e87]:
+            - generic [ref=e88]: 월 통상임금
+            - generic [ref=e89]: 7,539,675원
+          - generic [ref=e90]:
+            - generic [ref=e91]: 시급 (÷209시간)
+            - generic [ref=e92]: 36,075원
+          - generic [ref=e93]: ⚠️ 조정급 미입력 시 근속가산기본급·명절지원비가 과소 계산됩니다. 내 정보에서 조정급을 입력해주세요.
+          - generic [ref=e94]: 💡 이 시급이 시간외·온콜 탭에 자동 반영됩니다.
+          - generic [ref=e96] [cursor=pointer]:
+            - generic [ref=e97]: ▸
+            - generic [ref=e98]: 통상임금 내역

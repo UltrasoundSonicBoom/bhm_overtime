@@ -5753,6 +5753,48 @@ function _isImageFile(file) {
   return /\.(jpg|jpeg|png|bmp|webp|heic|heif)$/i.test(file.name) || file.type.startsWith('image/');
 }
 
+// ── 공통 헬퍼: 파싱된 급여명세서의 employeeInfo 를 PROFILE 에 merge 저장 ──
+function _applyPayslipEmployeeInfo(parsed) {
+  const info = (parsed && parsed.employeeInfo) || {};
+  const patch = {};
+  if (info.name) patch.name = info.name;
+  if (info.hireDate) patch.hireDate = info.hireDate;
+  if (info.department) patch.department = info.department;
+  if (info.employeeNumber) patch.employeeNumber = String(info.employeeNumber).trim();
+
+  if (info.jobType) {
+    const jobTypeMap = { '간호': '간호직', '보건': '보건직', '약무': '약무직', '의료기사': '의료기사직', '의사': '의사직', '사무': '사무직', '기능': '기능직', '시설': '시설직', '환경미화': '환경미화직', '지원': '지원직' };
+    for (const [keyword, jt] of Object.entries(jobTypeMap)) {
+      if (info.jobType.includes(keyword)) { patch.jobType = jt; break; }
+    }
+  }
+
+  if (info.payGrade) {
+    const gm = info.payGrade.match(/([A-Za-z]\d+)\s*-\s*(\d+)/);
+    if (gm) {
+      patch.grade = gm[1].toUpperCase();
+      patch.year = parseInt(gm[2]) || 1;
+    }
+  }
+
+  if (Object.keys(patch).length > 0) PROFILE.save(patch);
+  return patch;
+}
+
+// ── 공통 헬퍼: info 탭의 자동갱신 배너 표시 + 급여탭 링크 숨김 ──
+function _showAutoSyncBanner(ym) {
+  const banner = document.getElementById('pfAutoSyncBanner');
+  const text = document.getElementById('pfAutoSyncText');
+  const link = document.getElementById('pfPayslipLink');
+  if (!banner) return;
+  if (text && ym && ym.year && ym.month) {
+    const typeStr = ym.type && ym.type !== '급여' ? ` (${ym.type})` : '';
+    text.textContent = `${ym.year}년 ${ym.month}월${typeStr} 명세서 기준 자동 갱신됨`;
+  }
+  banner.style.display = 'flex';
+  if (link) link.style.display = 'none';
+}
+
 async function handlePayslipUpload(file) {
   if (!file) return;
   const resultEl = document.getElementById('payslipResult');
@@ -5799,8 +5841,10 @@ async function handlePayslipUpload(file) {
     if (!ym) throw new Error('급여 기간을 인식하지 못했습니다. 파일을 확인해주세요.');
 
     SALARY_PARSER.saveMonthlyData(ym.year, ym.month, parsed, ym.type);
+    // employeeInfo (이름/직종/직급/호봉/부서/입사일/사번) merge 저장
+    const infoPatch = _applyPayslipEmployeeInfo(parsed);
     const stableRes = SALARY_PARSER.applyStableItemsToProfile(parsed);
-    const profileUpdated = stableRes && stableRes.changed;
+    const profileUpdated = (stableRes && stableRes.changed) || Object.keys(infoPatch).length > 0;
 
     // 자동 검증 (콘솔에 결과 출력)
     if (typeof SALARY_TEST !== 'undefined') {
@@ -5808,6 +5852,22 @@ async function handlePayslipUpload(file) {
       SALARY_TEST.validateStorage(parsed, ym);
       SALARY_TEST.validateProfileApply(parsed, stableRes);
     }
+
+    // info 탭 폼/토글 상태 동기화 (사용자가 info 탭으로 돌아오면 즉시 최신 상태)
+    const updated = PROFILE.load();
+    if (updated) {
+      if (typeof PROFILE_FIELDS !== 'undefined') PROFILE.applyToForm(updated, PROFILE_FIELDS);
+      if (typeof updateProfileGrades === 'function') updateProfileGrades();
+      _collapseBasicFieldsWithPreview(updated);
+      const statusBadge = document.getElementById('profileStatus');
+      if (statusBadge) {
+        statusBadge.textContent = '저장됨 ✓';
+        statusBadge.className = 'badge emerald';
+      }
+      const titleName = document.getElementById('pfTitleName');
+      if (titleName && updated.name) titleName.textContent = `${updated.name}님 정보`;
+    }
+    _showAutoSyncBanner(ym);
 
     renderPayslip(parsed, ym, profileUpdated, stableRes);
     renderVerification(parsed);

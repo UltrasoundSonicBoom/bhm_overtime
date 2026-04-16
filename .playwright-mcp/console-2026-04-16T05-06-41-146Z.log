@@ -1,0 +1,14 @@
+[     467ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ http://localhost:8765/data.js?v=1.3:629
+[     486ms] [LOG] 💾 2026년 공휴일 localStorage 캐시 사용 (23건) @ http://localhost:8765/holidays.js?v=1.2:316
+[    3542ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://ulamqyarenzjdxlisijl.supabase.co/rest/v1/app_events?columns=%22anon_id%22%2C%22event_type%22%2C%22payload%22%2C%22app_version%22%2C%22user_agent%22%2C%22ts%22:0
+[    3542ms] [WARNING] [Telemetry] insert failed: Could not find the table 'public.app_events' in the schema cache @ http://localhost:8765/supabaseClient.js?v=1.5:100
+[   16130ms] [ERROR] [SalaryTest] ❌ 구조 검증 실패: [summary 누락] @ http://localhost:8765/salary-parser-test.js?v=1.0:338
+[   16132ms] [ERROR] [PayslipParser] TypeError: Cannot read properties of undefined (reading 'grossPay')
+    at renderPayslip (http://localhost:8765/app.js?v=1.9:6164:103)
+    at handlePayslipUpload (http://localhost:8765/app.js?v=1.9:5872:5)
+    at async eval (eval at evaluate (:302:30), <anonymous>:35:5)
+    at async <anonymous>:328:30 @ http://localhost:8765/app.js?v=1.9:5884
+[   80151ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ http://localhost:8765/data.js?v=1.3:629
+[   80170ms] [LOG] 💾 2026년 공휴일 localStorage 캐시 사용 (23건) @ http://localhost:8765/holidays.js?v=1.2:316
+[   83228ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://ulamqyarenzjdxlisijl.supabase.co/rest/v1/app_events?columns=%22anon_id%22%2C%22event_type%22%2C%22payload%22%2C%22app_version%22%2C%22user_agent%22%2C%22ts%22:0
+[   83229ms] [WARNING] [Telemetry] insert failed: Could not find the table 'public.app_events' in the schema cache @ http://localhost:8765/supabaseClient.js?v=1.5:100
