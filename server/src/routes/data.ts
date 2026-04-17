@@ -29,8 +29,9 @@ dataRoutes.get('/nurse-regulation', async (c) => {
       scenarioReport,
     })
   } catch (error) {
+    console.error('[data] nurse regulation load failed:', error)
     return c.json({
-      error: error instanceof Error ? error.message : 'Failed to load nurse regulation',
+      error: 'Failed to load nurse regulation',
     }, 404)
   }
 })

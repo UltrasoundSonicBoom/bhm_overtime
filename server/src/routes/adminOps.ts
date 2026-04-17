@@ -1139,11 +1139,11 @@ adminOpsRoutes.put('/rule-versions/:id/activate', requireAdmin, async (c) => {
   const [target] = await sql`select * from rule_versions where id = ${id}`
   if (!target) return c.json({ error: '버전을 찾을 수 없습니다' }, 404)
 
-  // 기존 active 해제 후 새 버전 활성화 (트랜잭션 없음 — 단일 문장 두 개)
-  await sql`update rule_versions set is_active = false where is_active = true`
-  const [activated] = await sql`
-    update rule_versions set is_active = true where id = ${id} returning *
-  `
+  // 기존 active 해제 + 새 버전 활성화 (트랜잭션으로 원자성 보장)
+  const [activated] = await sql.begin(async (tx) => {
+    await tx`update rule_versions set is_active = false where is_active = true`
+    return tx`update rule_versions set is_active = true where id = ${id} returning *`
+  })
 
   await writeAuditLog({
     actorUserId: admin.userId,

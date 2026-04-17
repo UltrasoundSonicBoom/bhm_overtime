@@ -91,3 +91,18 @@ CREATE POLICY "Users can select own leave" ON leave_records FOR SELECT USING (us
 CREATE POLICY "Users can insert own leave" ON leave_records FOR INSERT WITH CHECK (user_id = auth.uid());
 CREATE POLICY "Users can update own leave" ON leave_records FOR UPDATE USING (user_id = auth.uid());
 CREATE POLICY "Users can delete own leave" ON leave_records FOR DELETE USING (user_id = auth.uid());
+
+-- ==========================================
+-- 캘린더 스냅샷 (공휴일/기념일 캐시)
+-- ==========================================
+CREATE TABLE IF NOT EXISTS calendar_snapshots (
+    id serial PRIMARY KEY,
+    year integer NOT NULL,
+    kind text NOT NULL,
+    items jsonb NOT NULL DEFAULT '[]'::jsonb,
+    source text NOT NULL DEFAULT 'manual',
+    refreshed_at timestamptz NOT NULL DEFAULT now(),
+    refreshed_by uuid
+);
+CREATE UNIQUE INDEX IF NOT EXISTS calendar_snapshots_year_kind_idx
+    ON calendar_snapshots (year, kind);

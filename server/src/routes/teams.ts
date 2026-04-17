@@ -1396,7 +1396,8 @@ teamRoutes.post('/:teamSlug/schedules/generate', async (c) => {
         finished_at = now()
       where id = ${runId}
     `
-    return c.json({ error: 'Schedule generation failed', detail: String(error) }, 500)
+    console.error('[teams] schedule generation failed:', error)
+    return c.json({ error: 'Schedule generation failed' }, 500)
   }
 })
 
@@ -1726,7 +1727,8 @@ teamRoutes.post('/:teamSlug/schedules/:id/repair', async (c) => {
         finished_at = now()
       where id = ${runId}
     `
-    return c.json({ error: 'Repair solve failed', detail: String(error) }, 500)
+    console.error('[teams] repair solve failed:', error)
+    return c.json({ error: 'Repair solve failed' }, 500)
   }
 })
 

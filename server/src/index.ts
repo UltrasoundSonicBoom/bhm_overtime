@@ -15,9 +15,16 @@ import resumeRoutes from './routes/resume'
 
 const app = new Hono().basePath('/api')
 
-// CORS 설정
+// CORS 설정 — 프로덕션은 화이트리스트만, 개발은 전체 허용
+const ALLOWED_ORIGINS = [
+  'https://snuhmate.com',
+  'https://www.snuhmate.com',
+  'https://angio.snuhmate.com',
+]
 app.use('*', cors({
-  origin: '*',
+  origin: process.env.NODE_ENV === 'production'
+    ? (origin) => ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0]
+    : '*',
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization'],
 }))

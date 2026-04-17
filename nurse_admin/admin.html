@@ -15,16 +15,16 @@
     <div class="brand-cluster">
       <img class="brand-mark" src="../snuhmatecircle.png" alt="SNUH Mate 로고">
       <div class="brand-copy">
-        <p class="eyebrow">Scheduler Admin</p>
-        <h1>근무표 생성 · 검토 · 배포</h1>
-        <p class="brand-sub">AI 후보안, 팀 이벤트, 규정 위반, 배포 직전 검증을 수간호사 관점으로 한 번에 확인합니다.</p>
+        <p class="eyebrow">Head Nurse Console</p>
+        <h1>운영 콘솔</h1>
+        <p class="brand-sub">AI 초안을 만들고, 수정하고, 검토한 뒤 팀 전체에 배포하는 화면입니다.</p>
       </div>
     </div>
 
     <div class="top-actions">
-      <a class="top-link" href="./index.html">배포판</a>
-      <a class="top-link" href="../dashboard.html">검증 대시보드</a>
-      <a class="top-link" href="../admin/index.html">규정 관리</a>
+      <a class="top-link" href="./index.html">팀 보드</a>
+      <a class="top-link" href="./my-day.html">내 일정</a>
+      <a class="top-link" href="../admin/index.html">규정</a>
       <div id="authStatus" class="auth-badge">로그인 필요</div>
       <button id="loginBtn" class="btn btn-secondary" type="button">구글 로그인</button>
     </div>
@@ -32,27 +32,36 @@
 
   <section class="workflow-band">
     <div class="workflow-copy">
-      <p class="eyebrow">Fitts · Postel · Peak-End</p>
-      <h2>준비 → 생성 → 검토 → 배포</h2>
-      <p>한 번에 모든 정보를 밀어 넣지 않고, 수간호사가 실제로 밟는 순서대로 화면을 나눴습니다. 데이터셋 상태를 보고, 후보안을 비교하고, 규정을 확인한 뒤 배포합니다.</p>
+      <p class="eyebrow">Head Nurse Workflow</p>
+      <h2>준비 → 생성 → 수정 → 배포</h2>
+      <p>왼쪽은 준비, 가운데는 후보안과 보드, 오른쪽은 수정과 검토입니다. 지금 필요한 일만 골라서 움직일 수 있게 정리했습니다.</p>
     </div>
     <ol class="workflow-steps" aria-label="관리자 작업 단계">
-      <li class="workflow-step">1. 데이터셋 상태 확인</li>
-      <li class="workflow-step">2. AI 후보안 생성</li>
-      <li class="workflow-step">3. 셀 · 이벤트 · 위반 검토</li>
-      <li class="workflow-step">4. 배포 직전 검증</li>
+      <li class="workflow-step">1. 팀과 기간을 고르고 데이터셋 상태를 확인합니다.</li>
+      <li class="workflow-step">2. AI 초안을 만들고 후보안을 나란히 비교합니다.</li>
+      <li class="workflow-step">3. 셀 고정, 이벤트 수정, 규정 위반을 정리합니다.</li>
+      <li class="workflow-step">4. 검증을 통과하면 배포하고 팀 보드에서 확인합니다.</li>
     </ol>
-    <div class="workflow-links">
-      <a class="top-link" href="./index.html">배포 확인</a>
-      <a class="top-link" href="../dashboard.html">검증 대시보드</a>
-      <a class="top-link" href="../admin/index.html">규정 관리</a>
+    <div class="workflow-summary-list">
+      <div class="workflow-summary-item">
+        <strong>AI와 만드는 영역</strong>
+        <span>왼쪽 제어 영역에서 팀과 기간을 고른 뒤 초안을 생성합니다.</span>
+      </div>
+      <div class="workflow-summary-item">
+        <strong>직접 손보는 영역</strong>
+        <span>가운데 보드와 오른쪽 인스펙터에서 셀, 이벤트, 핀을 수정합니다.</span>
+      </div>
+      <div class="workflow-summary-item">
+        <strong>배포 전 기준</strong>
+        <span>검증 큐와 규정 위반이 정리된 뒤에만 배포 버튼을 누릅니다.</span>
+      </div>
     </div>
   </section>
 
   <section class="mobile-workflow-nav" id="mobileWorkflowNav" aria-label="모바일 관리자 목차">
     <button class="workflow-tab active" type="button" data-admin-panel="overview">준비</button>
     <button class="workflow-tab" type="button" data-admin-panel="board">보드</button>
-    <button class="workflow-tab" type="button" data-admin-panel="review">검토</button>
+    <button class="workflow-tab" type="button" data-admin-panel="review">수정</button>
     <button class="workflow-tab" type="button" data-admin-panel="events">이벤트</button>
     <button class="workflow-tab" type="button" data-admin-panel="rules">규정</button>
   </section>

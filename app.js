@@ -573,7 +573,11 @@ async function autoFillMonth() {
     await renderMiniCalendar(year, month, workInfo);
 
   } catch (e) {
-    infoEl.innerHTML = `<span style="color:var(--accent-rose)">❌ 로드 실패: ${e.message}</span>`;
+    infoEl.textContent = '';
+    const errSpan = document.createElement('span');
+    errSpan.style.color = 'var(--accent-rose)';
+    errSpan.textContent = '\u274C \ub85c\ub4dc \uc2e4\ud328: ' + (e.message || 'Unknown error');
+    infoEl.appendChild(errSpan);
   }
 }
 
@@ -1500,7 +1504,12 @@ function calculatePromotion() {
   const r = CALC.calcPromotionDate(jobType, grade, new Date(parsed));
 
   if (r.message) {
-    document.getElementById('promoResult').innerHTML = `<div class="warning-box">${r.message}</div>`;
+    const warnBox = document.createElement('div');
+    warnBox.className = 'warning-box';
+    warnBox.textContent = r.message;
+    const promoEl = document.getElementById('promoResult');
+    promoEl.textContent = '';
+    promoEl.appendChild(warnBox);
     return;
   }
 
@@ -1747,9 +1756,16 @@ function addChatMessage(text, type, ref = null) {
   const container = document.getElementById('chatMessages');
   const msg = document.createElement('div');
   msg.className = `chat-msg ${type}`;
-  msg.innerHTML = text;
+  if (type === 'user') {
+    msg.textContent = text;
+  } else {
+    msg.insertAdjacentHTML('beforeend', text);
+  }
   if (ref) {
-    msg.innerHTML += `<span class="ref">📌 ${ref}</span>`;
+    const refSpan = document.createElement('span');
+    refSpan.className = 'ref';
+    refSpan.textContent = '\uD83D\uDCCC ' + ref;
+    msg.appendChild(refSpan);
   }
   container.appendChild(msg);
   container.scrollTop = container.scrollHeight;
