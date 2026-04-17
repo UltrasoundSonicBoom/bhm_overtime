@@ -3,9 +3,18 @@
   "name": "SNUH Mate Companion",
   "version": "0.1.0",
   "description": "SNUH Mate 빠른 초과근무 기록 + 급여명세서 PDF 가져오기",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "SNUH Mate 빠른 기록"
+    "default_title": "SNUH Mate 빠른 기록",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png"
+    }
   },
   "background": {
     "service_worker": "background.js"
