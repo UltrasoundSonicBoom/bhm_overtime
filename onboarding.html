@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Noto+Sans+KR:wght@400;500;600;700;900&display=swap">
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Noto+Sans+KR:wght@400;500;600;700;900&family=Ma+Shan+Zheng&display=swap">
   <style>
     * {
       margin: 0;
@@ -765,72 +765,43 @@
 
   <!-- ════════ 1. Hero ════════ -->
   <section class="section hero">
-    <div class="section-inner hero-inner">
-      <div class="hero-top">
-        <img src="./snuhmatecircle.png" alt="SNUH 메이트" class="hero-logo reveal">
-        <div class="hero-badge reveal d1">👋 서울대병원 동료가 만들었어요</div>
-        <div class="hero-launch reveal d1" style="
-          display:inline-flex;align-items:center;gap:6px;
-          margin-top:10px;padding:6px 12px;
-          background:var(--ink);color:#fff;
-          border-radius:999px;font-size:12px;font-weight:800;
-          letter-spacing:0.02em;box-shadow:var(--shadow-sm);">
-          <span
-            style="width:6px;height:6px;border-radius:50%;background:#FFD84D;display:inline-block; margin-bottom:20px"></span>
-          2026.5.1 정식 오픈
-        </div>
-      </div>
-      <div class="hero-text">
-        <h1 class="hero-title reveal d1">
-          <br>다음 달 월급<br>
-          얼마 들어올까??
-        </h1>
-
-
-        <div class="creator-quote reveal d3" style="
-          margin-top: 28px;
-          max-width: 360px;
-          padding: 14px 18px;
-          background: rgba(255,255,255,0.85);
-          border: 2px solid var(--ink);
-          border-radius: 14px;
-          box-shadow: var(--shadow-sm);
-          font-size: 13px;
-          line-height: 1.65;
+    <div class="section-inner" style="
+      min-height: calc(100dvh - 120px);
+      justify-content: center;
+      align-items: center;">
+      <div style="
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 28px;">
+        <a href="./index.html?app=1&amp;demo=1" class="reveal" style="
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          background: var(--ink);
+          color: #FFD84D;
+          font-size: clamp(18px, 5vw, 24px);
+          font-weight: 800;
+          padding: 20px 48px;
+          border-radius: 16px;
+          border: 3px solid var(--ink);
+          box-shadow: 6px 6px 0px rgba(0,0,0,0.3);
+          cursor: pointer;
+          text-decoration: none;
+          font-family: inherit;
+          transition: transform 0.1s, box-shadow 0.1s;
+          letter-spacing: 0.02em;"
+          onmouseover="this.style.transform='translate(-2px,-2px)';this.style.boxShadow='8px 8px 0px rgba(0,0,0,0.3)'"
+          onmouseout="this.style.transform='';this.style.boxShadow='6px 6px 0px rgba(0,0,0,0.3)'"
+          >🎮 샘플 데이터로 체험하기 →</a>
+        <div class="reveal d1" style="
+          font-family: 'Ma Shan Zheng', serif;
+          font-size: clamp(36px, 10vw, 52px);
           color: var(--ink);
-          text-align: left;
-          word-break: keep-all;">
-          <div style="font-style: italic; opacity: 0.85; margin-bottom: 6px;">
-            평소에 이런게 있으면 좋겠다했던 것들을 만들었습니다. <br>저만 그랬나요?
-          </div>
-          <div style="font-size: 12px; font-weight: 700; opacity: 0.7;">
-            — 김계환, 서울대병원 핵의학과
-          </div>
-        </div>
-
-        <!-- 베타 공지 알람 -->
-        <div class="reveal d3" style="
-          margin-top: 20px;
-          max-width: 360px;
-          width: 100%;
-          padding: 12px 16px;
-          background: #1a1a1a;
-          border: 2px solid #FFD84D;
-          border-radius: 12px;
-          box-shadow: 3px 3px 0 #FFD84D;
-          font-size: 13px;
-          line-height: 1.6;
-          color: #fff;
-          text-align: left;
-          word-break: keep-all;">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-            <span style="font-size:18px;">⚠️</span>
-            <strong style="color:#FFD84D;font-size:13px;">테스터 공지</strong>
-          </div>
-          정식 오픈 전입니다.<br>
-          <strong style="color:#FFD84D;">Demo 페이지에서 미리 체험해 보세요</strong><br>
-          <span style="opacity:0.7;font-size:12px;">테스트 목적 외 데이터 저장 금지</span>
-        </div>
+          opacity: 0.7;
+          letter-spacing: 0.18em;
+          font-weight: 400;">百聞不如一見</div>
       </div>
     </div>
     <div class="scroll-hint">
