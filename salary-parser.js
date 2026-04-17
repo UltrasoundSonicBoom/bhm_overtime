@@ -1021,11 +1021,20 @@ const SALARY_PARSER = (() => {
     return { employeeInfo: info, metadata, salaryItems, deductionItems, workStats: [], summary: { grossPay, totalDeduction, netPay } };
   }
 
-  // ── 이미지 OCR 파싱 (Tesseract.js) ──
+  // ── 이미지 OCR 파싱 (Tesseract.js — lazy load) ──
+  async function _loadTesseract() {
+    if (typeof Tesseract !== 'undefined') return;
+    return new Promise(function (resolve, reject) {
+      var s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+      s.onload = resolve;
+      s.onerror = function () { reject(new Error('OCR 라이브러리 로드 실패. 네트워크를 확인해주세요.')); };
+      document.head.appendChild(s);
+    });
+  }
+
   async function parseImage(file, onProgress) {
-    if (typeof Tesseract === 'undefined') {
-      throw new Error('OCR 라이브러리가 로드되지 않았습니다. 페이지를 새로고침해주세요.');
-    }
+    await _loadTesseract();
     const imageUrl = URL.createObjectURL(file);
     try {
       const result = await Tesseract.recognize(imageUrl, 'kor+eng', {
