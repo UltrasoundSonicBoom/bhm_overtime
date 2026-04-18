@@ -353,6 +353,41 @@ const OVERTIME = {
             }
         });
 
+        // ── 명세서 보충 정보 (base 수치는 변경하지 않음) ──
+        const payslipData = this.getPayslipData(year, month);
+        if (payslipData) {
+            const ws = payslipData.workStats || [];
+            const wsMap = {};
+            ws.forEach(s => { wsMap[s.name] = s.value; });
+
+            const psExtH = wsMap['시간외근무시간'] || 0;
+            const psNightH = wsMap['야간근무시간'] || wsMap['야간근로시간'] || 0;
+            const psHolidayH = wsMap['휴일근무시간'] || 0;
+
+            let manualExt = 0, manualNight = 0, manualHoliday = 0;
+            records.forEach(r => {
+                manualExt += r.breakdown?.extended || 0;
+                manualNight += (r.breakdown?.night || 0) + (r.breakdown?.holidayNight || 0);
+                manualHoliday += r.breakdown?.holiday || 0;
+            });
+
+            const extSupp = Math.max(0, psExtH - manualExt);
+            const nightSupp = Math.max(0, psNightH - manualNight);
+            const holidaySupp = Math.max(0, psHolidayH - manualHoliday);
+
+            if (extSupp > 0 || nightSupp > 0 || holidaySupp > 0) {
+                const hr = payslipData.hourlyRate || 0;
+                const rt = (typeof DATA !== 'undefined') ? DATA.allowances.overtimeRates : { extended: 1.5, night: 2.0, holiday: 1.5 };
+                stats.payslipSupplement = {
+                    extended: extSupp,
+                    night: nightSupp,
+                    holiday: holidaySupp,
+                    totalHours: extSupp + nightSupp + holidaySupp,
+                    pay: Math.round(extSupp * hr * rt.extended) + Math.round(nightSupp * hr * rt.night) + Math.round(holidaySupp * hr * rt.holiday),
+                };
+            }
+        }
+
         return stats;
     },
 
@@ -373,6 +408,11 @@ const OVERTIME = {
                                  (s.byType.oncall_callout.hours || 0);
             totalPay += s.totalPay || 0;
             recordCount += s.recordCount || 0;
+            // 명세서 보충분 합산
+            if (s.payslipSupplement) {
+                totalOvertimeHours += s.payslipSupplement.totalHours;
+                totalPay += s.payslipSupplement.pay;
+            }
         }
         return {
             totalOvertimeHours, totalOncallStandbyCount,

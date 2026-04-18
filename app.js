@@ -93,25 +93,41 @@ window.initHomeTab = initHomeTab;
 // 월 시간외 렌더
 function _renderHomeOtMonth(year, month) {
   const otStats = OVERTIME.calcMonthlyStats(year, month);
+  const supp = otStats.payslipSupplement;
   const otBody = document.getElementById('homeOtBody');
   const otStatsEl = document.getElementById('homeOtStats');
 
-  if (otStats.recordCount > 0) {
-    // month/year는 new Date()에서 온 정수. XSS 위험 없음
-    const lines = ['<div class="home-stat-period">' + month + '월 현황</div>'];
-    if (otStats.byType.overtime.count > 0) {
-      lines.push('<div class="home-stat-row"><span class="home-stat-label">시간외</span><span class="home-stat-value">' + otStats.byType.overtime.hours + '시간</span></div>');
-    }
-    if (otStats.byType.oncall_standby.count > 0) {
-      lines.push('<div class="home-stat-row"><span class="home-stat-label">온콜 대기</span><span class="home-stat-value">' + otStats.byType.oncall_standby.count + '일</span></div>');
-    }
-    if (otStats.byType.oncall_callout.count > 0) {
-      lines.push('<div class="home-stat-row"><span class="home-stat-label">온콜 출동</span><span class="home-stat-value">' + otStats.byType.oncall_callout.count + '회</span></div>');
-    }
-    if (otStats.totalPay > 0) {
-      lines.push('<div class="home-stat-row"><span class="home-stat-label">예상 수당</span><span class="home-stat-value amber">₩' + otStats.totalPay.toLocaleString() + '</span></div>');
-    }
-    otStatsEl.innerHTML = lines.join('');
+  const effectiveOtHours = otStats.byType.overtime.hours + (supp ? supp.totalHours : 0);
+  const effectivePay = otStats.totalPay + (supp ? supp.pay : 0);
+  const hasData = otStats.recordCount > 0 || supp;
+
+  if (hasData) {
+    while (otStatsEl.firstChild) otStatsEl.removeChild(otStatsEl.firstChild);
+
+    const period = document.createElement('div');
+    period.className = 'home-stat-period';
+    period.textContent = month + '월 현황';
+    otStatsEl.appendChild(period);
+
+    const addRow = (label, value, cls) => {
+      const row = document.createElement('div');
+      row.className = 'home-stat-row';
+      const lbl = document.createElement('span');
+      lbl.className = 'home-stat-label';
+      lbl.textContent = label;
+      const val = document.createElement('span');
+      val.className = 'home-stat-value' + (cls ? ' ' + cls : '');
+      val.textContent = value;
+      row.appendChild(lbl);
+      row.appendChild(val);
+      otStatsEl.appendChild(row);
+    };
+
+    if (effectiveOtHours > 0) addRow('시간외', effectiveOtHours + '시간');
+    if (otStats.byType.oncall_standby.count > 0) addRow('온콜 대기', otStats.byType.oncall_standby.count + '일');
+    if (otStats.byType.oncall_callout.count > 0) addRow('온콜 출동', otStats.byType.oncall_callout.count + '회');
+    if (effectivePay > 0) addRow('예상 수당', '\u20A9' + effectivePay.toLocaleString(), 'amber');
+
     otBody.style.display = '';
   } else {
     otBody.style.display = 'none';
@@ -2047,7 +2063,8 @@ function _renderOvertimeAlertBanner(year, month) {
   if (existing) existing.parentNode.removeChild(existing);
 
   var stats = OVERTIME.calcMonthlyStats(year, month);
-  var extHours = stats.overtimeHours || 0;
+  var supp = stats.payslipSupplement;
+  var extHours = (stats.overtimeHours || 0) + (supp ? supp.totalHours : 0);
 
   var WARNING_H = 40, CRITICAL_H = 48, LIMIT_H = 52;
   var level = extHours >= CRITICAL_H ? 'critical' : extHours >= WARNING_H ? 'warning' : null;
@@ -3014,25 +3031,61 @@ function deleteOtRecord(id) {
 // 월간 대시보드 렌더링 (수당 금액 중심)
 function renderOtDashboard(year, month) {
   const stats = OVERTIME.calcMonthlyStats(year, month);
+  const supp = stats.payslipSupplement;
+
+  const effectiveOtHours = stats.overtimeHours + (supp ? supp.totalHours : 0);
+  const effectivePay = stats.totalPay + (supp ? supp.pay : 0);
 
   const container = document.getElementById('otDashboard');
   if (container) {
+    while (container.firstChild) container.removeChild(container.firstChild);
+
+    // 메인 수당
+    const mainDiv = document.createElement('div');
+    mainDiv.className = 'ot-dash-main';
+    const labelDiv = document.createElement('div');
+    labelDiv.className = 'ot-dash-label';
+    labelDiv.textContent = '\uD83D\uDCB0 ' + month + '월 예상 수당';
+    const payDiv = document.createElement('div');
+    payDiv.className = 'ot-dash-pay';
+    payDiv.textContent = '\u20A9' + effectivePay.toLocaleString();
+    mainDiv.appendChild(labelDiv);
+    mainDiv.appendChild(payDiv);
+    if (supp) {
+      const suppNote = document.createElement('div');
+      suppNote.style.cssText = 'font-size:var(--text-body-small); color:var(--accent-indigo); margin-top:4px;';
+      suppNote.textContent = '명세서 보충 +' + supp.totalHours.toFixed(1) + 'h 포함';
+      mainDiv.appendChild(suppNote);
+    }
+    container.appendChild(mainDiv);
+
+    // 상세 항목
+    const detailsDiv = document.createElement('div');
+    detailsDiv.className = 'ot-dash-details';
     const detailItems = [
-      { label: '시간외', value: stats.overtimeHours.toFixed(1) + 'h', cls: 'rose' },
+      { label: '시간외', value: effectiveOtHours.toFixed(1) + 'h', cls: 'rose' },
       { label: '온콜출근', value: stats.byType.oncall_callout.hours.toFixed(1) + 'h', cls: 'indigo' },
       { label: '온콜대기', value: stats.oncallStandbyDays + '일', cls: 'cyan' },
     ];
-    const detailsHtml = detailItems
-      .filter(i => parseFloat(i.value) > 0)
-      .map(item => `<div class="ot-dash-item">${item.label} <span class="ot-dash-value ${item.cls}">${item.value}</span></div>`)
-      .join('');
-
-    container.innerHTML = `
-      <div class="ot-dash-main">
-        <div class="ot-dash-label">💰 ${month}월 예상 수당</div>
-        <div class="ot-dash-pay">₩${stats.totalPay.toLocaleString()}</div>
-      </div>
-      <div class="ot-dash-details">${detailsHtml || '<span style="color:var(--text-muted); font-size:var(--text-body-normal);">기록 없음</span>'}</div>`;
+    const visibleItems = detailItems.filter(i => parseFloat(i.value) > 0);
+    if (visibleItems.length > 0) {
+      visibleItems.forEach(item => {
+        const el = document.createElement('div');
+        el.className = 'ot-dash-item';
+        el.textContent = item.label + ' ';
+        const valSpan = document.createElement('span');
+        valSpan.className = 'ot-dash-value ' + item.cls;
+        valSpan.textContent = item.value;
+        el.appendChild(valSpan);
+        detailsDiv.appendChild(el);
+      });
+    } else {
+      const emptySpan = document.createElement('span');
+      emptySpan.style.cssText = 'color:var(--text-muted); font-size:var(--text-body-normal);';
+      emptySpan.textContent = '기록 없음';
+      detailsDiv.appendChild(emptySpan);
+    }
+    container.appendChild(detailsDiv);
   }
 
   const countEl = document.getElementById('otRecordCount');
