@@ -130,6 +130,7 @@ window.GoogleAuth = (function () {
 
   // ── init ──
   function init() {
+    if (_tokenClient) return; // 이미 초기화됨
     if (!GOOGLE_AUTH_ENABLED) return;
     if (!window.google || !window.google.accounts) {
       console.warn('[GoogleAuth] GIS SDK not loaded yet');
@@ -205,7 +206,11 @@ window.GoogleAuth = (function () {
   // ── signIn ──
   function signIn() {
     if (!_tokenClient) {
-      console.warn('[GoogleAuth] init()가 먼저 호출되어야 합니다.');
+      init(); // GIS SDK가 늦게 로드된 경우 재시도
+    }
+    if (!_tokenClient) {
+      console.warn('[GoogleAuth] GIS SDK가 아직 로드되지 않았습니다.');
+      _showToast('잠시 후 다시 시도해주세요.');
       return;
     }
     _tokenClient.requestAccessToken({ prompt: 'consent' });
