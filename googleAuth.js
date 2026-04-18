@@ -103,28 +103,10 @@ window.GoogleAuth = (function () {
   // 대신 google.accounts.id.initialize만 등록해두고,
   // GCP Authorized redirect URIs에 Supabase 콜백 URL이 추가된 뒤 prompt()를 쓸 수 있다.
   // → 현재는 no-op. SupabaseUserSync 구조는 유지되어 수동 호출이 가능하다.
-  function _attemptSupabaseAuth() {
-    if (!window.google || !window.google.accounts || !window.google.accounts.id) return;
-    if (!window.SupabaseUserSync) return;
-    window.SupabaseUserSync.getSession().then(function (user) {
-      if (user) return;
-      try {
-        window.google.accounts.id.initialize({
-          client_id: GOOGLE_CLIENT_ID,
-          auto_select: true,
-          cancel_on_tap_outside: false,
-          callback: function (cr) {
-            if (!cr.credential) return;
-            window.SupabaseUserSync.signInWithIdToken(cr.credential)
-              .then(function (supaUser) {
-                if (supaUser) console.log('[GoogleAuth] Supabase session:', supaUser.id);
-              });
-          }
-        });
-        window.google.accounts.id.prompt();
-      } catch (e) { console.warn('[GoogleAuth] _attemptSupabaseAuth failed:', e); }
-    });
-  }
+  // _attemptSupabaseAuth: 현재 비활성 (no-op)
+  // google.accounts.id.prompt()가 GIS token flow와 redirect_uri 충돌을 일으킴.
+  // Supabase auth는 별도 signInWithOAuth redirect flow로 구현 예정.
+  function _attemptSupabaseAuth() {}
 
   // ── fetchUserInfo ──
   function fetchUserInfo(token) {
