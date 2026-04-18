@@ -40,7 +40,9 @@ CREATE POLICY "users own data blobs"
 
 -- updated_at 자동 갱신 트리거
 CREATE OR REPLACE FUNCTION _bhm_set_updated_at()
-RETURNS TRIGGER LANGUAGE plpgsql AS $$
+RETURNS TRIGGER LANGUAGE plpgsql
+SET search_path = ''
+AS $$
 BEGIN
   NEW.updated_at = now();
   RETURN NEW;
