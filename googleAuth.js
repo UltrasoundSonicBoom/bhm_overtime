@@ -51,6 +51,9 @@ window.GoogleAuth = (function () {
   var _accessToken = null;
   var _tokenExpiry = 0;   // Date.now() 기준 ms
   var _grantedScopes = [];
+  // H-1 fix: GIS ignores per-call callbacks; use a resolver queue drained by the global callback
+  var _pendingTokenQueue = [];  // Array<{ resolve, reject, type: 'refresh'|'drive'|'calendar' }>
+  var _tokenRequestInFlight = false;
 
   var SCOPE_BASE = 'openid email profile';
   var SCOPE_DRIVE = 'https://www.googleapis.com/auth/drive.appdata';
@@ -103,29 +106,22 @@ window.GoogleAuth = (function () {
     });
   }
 
-  // ── handleTokenResponse ──
-  // GIS tokenClient.callback에서 호출됨
-  function handleTokenResponse(response, onSuccess, onError) {
-    if (response.error) {
-      console.error('[GoogleAuth] token error:', response.error);
-      if (onError) onError(response.error);
-      return;
-    }
-
-    _accessToken = response.access_token;
-    _tokenExpiry = Date.now() + (response.expires_in || 3600) * 1000;
-    if (response.scope) {
-      _grantedScopes = response.scope.split(' ');
-    }
-
-    fetchUserInfo(_accessToken).then(function (userInfo) {
-      _saveUser(userInfo);
-      updateAuthUI(userInfo);
-      if (onSuccess) onSuccess(userInfo);
-    }).catch(function (err) {
-      console.error('[GoogleAuth] fetchUserInfo failed:', err);
-      if (onError) onError(err);
+  // ── _flushTokenQueue ──
+  // 전역 콜백에서 pending resolver 큐를 한 번에 드레인
+  function _flushTokenQueue(err) {
+    var queue = _pendingTokenQueue.splice(0);
+    if (!queue.length) return false;
+    queue.forEach(function (p) {
+      if (err) { p.reject(err); return; }
+      if (p.type === 'drive') saveSettings({ driveEnabled: true });
+      if (p.type === 'calendar') saveSettings({ calendarEnabled: true });
+      p.resolve(_accessToken);
     });
+    if (!err) {
+      if (typeof updateDriveBackupUI === 'function') updateDriveBackupUI();
+      if (typeof updateCalendarUI === 'function') updateCalendarUI();
+    }
+    return true;
   }
 
   // ── init ──
@@ -148,15 +144,35 @@ window.GoogleAuth = (function () {
       client_id: GOOGLE_CLIENT_ID,
       scope: SCOPE_BASE + ' ' + SCOPE_DRIVE + ' ' + SCOPE_CALENDAR,
       callback: function (response) {
-        handleTokenResponse(response, function (user) {
-          // 데모 모드 자동 해제: Google 로그인 성공 시 샘플 데이터 제거
-          var wasDemo = localStorage.getItem('bhm_demo_mode') === '1';
+        _tokenRequestInFlight = false;
+
+        if (response.error) {
+          // 큐에 대기 중인 요청이 있으면 모두 reject, 아니면 초기 로그인 에러 로그
+          if (!_flushTokenQueue(new Error(response.error))) {
+            console.error('[GoogleAuth] token error:', response.error);
+          }
+          return;
+        }
+
+        // 공통: 토큰 상태 갱신
+        _accessToken = response.access_token;
+        _tokenExpiry = Date.now() + (response.expires_in || 3600) * 1000;
+        if (response.scope) { _grantedScopes = response.scope.split(' '); }
+
+        // 큐가 있으면 refresh/scope 요청 → resolve 후 종료
+        if (_flushTokenQueue(null)) return;
+
+        // 큐가 없으면 초기 로그인 → userInfo fetch + 전체 초기화
+        var wasDemo = localStorage.getItem('bhm_demo_mode') === '1';
+        fetchUserInfo(_accessToken).then(function (userInfo) {
+          _saveUser(userInfo);
+          updateAuthUI(userInfo);
+
           if (wasDemo && window.exitDemoMode) {
             window.exitDemoMode();
             var demoBanner = document.getElementById('demoBanner');
             if (demoBanner) demoBanner.style.display = 'none';
           }
-          // 로그인 성공 = Drive/Calendar 동의 완료. 즉시 활성화.
           if (response.scope) {
             var scopes = response.scope.split(' ');
             saveSettings({
@@ -168,7 +184,6 @@ window.GoogleAuth = (function () {
           if (typeof updateCalendarUI === 'function') updateCalendarUI();
           if (window.SyncManager) {
             window.SyncManager.fullSync().then(function () {
-              // 데모였다면 Drive 복원 여부와 무관하게 UI 갱신 (빈 상태 표시)
               if (wasDemo) {
                 if (window.OT && window.OT.renderList) window.OT.renderList();
                 if (window.LEAVE && window.LEAVE.renderList) window.LEAVE.renderList();
@@ -176,6 +191,8 @@ window.GoogleAuth = (function () {
               }
             });
           }
+        }).catch(function (err) {
+          console.error('[GoogleAuth] fetchUserInfo failed:', err);
         });
       }
     });
@@ -252,14 +269,17 @@ window.GoogleAuth = (function () {
       window.SyncManager.clearPendingPushes();
     }
 
+    // M-4: 토큰을 즉시 무효화해 revoke 완료 전 window에 노출되지 않도록 함
+    var tokenToRevoke = _accessToken;
+    _accessToken = null;
+    _tokenExpiry = 0;
+
     // Supabase 병행 세션 정리 (실패해도 흐름 진행)
     if (window.SupabaseClient && window.SupabaseClient.auth && typeof window.SupabaseClient.auth.signOut === 'function') {
       try { window.SupabaseClient.auth.signOut(); } catch (e) {
         console.warn('[GoogleAuth] supabase signOut failed:', e);
       }
     }
-
-    var tokenToRevoke = _accessToken;
 
     function finalize() {
       _clearUser();
@@ -334,20 +354,22 @@ window.GoogleAuth = (function () {
     return null;
   }
 
+  // ── _enqueueTokenRequest ──
+  // 공통: 큐에 resolver 추가 후 in-flight 아닐 때만 requestAccessToken 호출
+  function _enqueueTokenRequest(resolve, reject, type) {
+    _pendingTokenQueue.push({ resolve: resolve, reject: reject, type: type });
+    if (!_tokenRequestInFlight) {
+      _tokenRequestInFlight = true;
+      _tokenClient.requestAccessToken({ prompt: '' });
+    }
+  }
+
   // ── refreshToken ──
-  // access token이 만료된 경우 재발급 요청
   function refreshToken() {
     return new Promise(function (resolve, reject) {
       if (!_tokenClient) { reject(new Error('not initialized')); return; }
-      _tokenClient.requestAccessToken({
-        prompt: '',
-        callback: function (response) {
-          if (response.error) { reject(new Error(response.error)); return; }
-          _accessToken = response.access_token;
-          _tokenExpiry = Date.now() + (response.expires_in || 3600) * 1000;
-          resolve(_accessToken);
-        }
-      });
+      if (_isTokenValid()) { resolve(_accessToken); return; }
+      _enqueueTokenRequest(resolve, reject, 'refresh');
     });
   }
 
@@ -356,16 +378,7 @@ window.GoogleAuth = (function () {
     return new Promise(function (resolve, reject) {
       if (!_tokenClient) { reject(new Error('not initialized')); return; }
       if (hasScope(SCOPE_DRIVE) && _isTokenValid()) { resolve(_accessToken); return; }
-      _tokenClient.requestAccessToken({
-        scope: SCOPE_BASE + ' ' + SCOPE_DRIVE,
-        prompt: '',
-        callback: function (response) {
-          handleTokenResponse(response, function () {
-            saveSettings({ driveEnabled: true });
-            resolve(_accessToken);
-          }, reject);
-        }
-      });
+      _enqueueTokenRequest(resolve, reject, 'drive');
     });
   }
 
@@ -374,16 +387,7 @@ window.GoogleAuth = (function () {
     return new Promise(function (resolve, reject) {
       if (!_tokenClient) { reject(new Error('not initialized')); return; }
       if (hasScope(SCOPE_CALENDAR) && _isTokenValid()) { resolve(_accessToken); return; }
-      _tokenClient.requestAccessToken({
-        scope: SCOPE_BASE + ' ' + SCOPE_CALENDAR,
-        prompt: '',
-        callback: function (response) {
-          handleTokenResponse(response, function () {
-            saveSettings({ calendarEnabled: true });
-            resolve(_accessToken);
-          }, reject);
-        }
-      });
+      _enqueueTokenRequest(resolve, reject, 'calendar');
     });
   }
 

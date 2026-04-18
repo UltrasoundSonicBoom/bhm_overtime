@@ -210,6 +210,17 @@ function switchNewsTab(tab) {
   }
 }
 
+// ── HTML sanitize helper ──
+function _esc(str) {
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+// Only <br> is allowed through; every other tag is escaped
+function _escWithBr(str) {
+  return _esc(str).replace(/&lt;br\s*\/?&gt;/gi, '<br>');
+}
+
 // ── Notice: fetch & parse notice.md (pager 형식) ──
 let _noticeItems = null;
 let _noticeIdx = 0;
@@ -234,7 +245,8 @@ function renderNoticePager(items) {
   if (!content) return;
 
   _noticeIdx = Math.max(0, Math.min(_noticeIdx, items.length - 1));
-  content.innerHTML = `<div style="font-size:var(--text-body-normal); color:var(--text-secondary); line-height:1.5;">${items[_noticeIdx]}</div>`;
+  const safe = _escWithBr(items[_noticeIdx]); // H-2: same-origin static file; _esc escapes all tags except <br>
+  content.innerHTML = `<div style="font-size:var(--text-body-normal); color:var(--text-secondary); line-height:1.5;">${safe}</div>`;
 
   if (items.length > 1 && nav && indicator) {
     nav.style.display = 'flex';
@@ -298,9 +310,9 @@ function renderChangelogPage() {
 
   const e = _changelogEntries[_changelogIdx];
   el.innerHTML = `
-    <div class="home-changelog-date">${e.date}</div>
-    <div class="home-changelog-title">${e.title}</div>
-    <ul class="home-changelog-list">${e.items.map(i => `<li>${i}</li>`).join('')}</ul>
+    <div class="home-changelog-date">${_esc(e.date)}</div>
+    <div class="home-changelog-title">${_esc(e.title)}</div>
+    <ul class="home-changelog-list">${e.items.map(i => `<li>${_esc(i)}</li>`).join('')}</ul>
   `;
   indicator.textContent = `${_changelogIdx + 1} / ${_changelogEntries.length}`;
   prevBtn.disabled = _changelogIdx === 0;
