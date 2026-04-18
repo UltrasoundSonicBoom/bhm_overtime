@@ -157,14 +157,9 @@ window.GoogleAuth = (function () {
               });
           }
         });
-        window.google.accounts.id.prompt(function (notification) {
-          if (notification.isNotDisplayed && notification.isNotDisplayed()) {
-            console.warn('[GoogleAuth] FedCM 미표시:', notification.getNotDisplayedReason && notification.getNotDisplayedReason());
-          }
-          if (notification.isSkippedMoment && notification.isSkippedMoment()) {
-            console.warn('[GoogleAuth] FedCM 스킵:', notification.getSkippedReason && notification.getSkippedReason());
-          }
-        });
+        // FedCM 모드에서는 notification.isNotDisplayed / isSkippedMoment 가 deprecated (Chrome 145+ 제거 예정)
+        // 실패 원인은 initialize callback 미발동 또는 _triggerFedCM catch에서 감지
+        window.google.accounts.id.prompt();
       } catch (e) {
         console.warn('[GoogleAuth] _triggerFedCM 실패:', e);
       }
@@ -245,7 +240,7 @@ window.GoogleAuth = (function () {
         _attemptSupabaseAuth();
         fetchUserInfo(_accessToken).then(function (userInfo) {
           _saveUser(userInfo);
-          updateAuthUI(userInfo);
+          if (typeof updateAuthUI === 'function') updateAuthUI(userInfo);
 
           if (wasDemo && window.exitDemoMode) {
             window.exitDemoMode();
@@ -279,14 +274,14 @@ window.GoogleAuth = (function () {
     // 저장된 사용자 정보로 UI 복원 (token은 없지만 이름/아바타 표시)
     var settings = loadSettings();
     if (settings.googleSub) {
-      updateAuthUI({
+      if (typeof updateAuthUI === 'function') updateAuthUI({
         sub: settings.googleSub,
         email: settings.googleEmail,
         name: settings.googleName,
         picture: settings.googlePicture
       });
     } else {
-      updateAuthUI(null);
+      if (typeof updateAuthUI === 'function') updateAuthUI(null);
     }
 
     // I1: 탭 간 로그인 상태 동기화
@@ -362,7 +357,7 @@ window.GoogleAuth = (function () {
 
     function finalize() {
       _clearUser();
-      updateAuthUI(null);
+      if (typeof updateAuthUI === 'function') updateAuthUI(null);
       // getUserStorageKey는 이제 'guest'를 반환 → 기존 데이터 접근 불가 (의도된 동작)
       window.location.reload();
     }
