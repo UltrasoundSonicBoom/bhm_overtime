@@ -120,7 +120,6 @@ SupabaseTelemetry.track('app_open', { path: location.pathname + location.search 
 window.SupabaseTelemetry = SupabaseTelemetry;
 
 // ── 호환 shim: 구 SupabaseSync.pushCloudData 호출은 무시 ──
-// 잔여 호출이 있더라도 개인 데이터가 Supabase로 누설되지 않도록 no-op 처리.
 window.SupabaseSync = {
     pushCloudData: function () {},
     deleteCloudRecord: function () {},
@@ -128,3 +127,99 @@ window.SupabaseSync = {
     signInWithGoogle: function () {},
     signOut: function () {}
 };
+
+// ── SupabaseUserSync ──────────────────────────────────────────
+// 인증 사용자 전용 데이터 동기화 (user_data_blobs 테이블 + RLS).
+// Google ID 토큰으로 Supabase 세션을 확립한 뒤 push/pull 사용.
+// Drive가 기본 저장소, Supabase는 병렬 백업 + 서버-사이드 접근 제어.
+// ─────────────────────────────────────────────────────────────
+var SupabaseUserSync = {
+    _TABLE: 'user_data_blobs',
+
+    // ── signInWithIdToken ──
+    // Google ID 토큰(accounts.id credential)으로 Supabase 세션 확립.
+    // 실패해도 앱은 계속 동작 (Drive가 primary).
+    signInWithIdToken: function (idToken) {
+        if (!supabaseClient) return Promise.resolve(null);
+        return supabaseClient.auth.signInWithIdToken({
+            provider: 'google',
+            token: idToken
+        }).then(function (result) {
+            if (result.error) {
+                // "provider is not enabled" → Supabase Dashboard 설정 필요
+                console.warn('[SupabaseUserSync] signIn failed:', result.error.message);
+                return null;
+            }
+            return result.data && result.data.user ? result.data.user : null;
+        }).catch(function (e) {
+            console.warn('[SupabaseUserSync] signIn error:', e);
+            return null;
+        });
+    },
+
+    // ── signOut ──
+    signOut: function () {
+        if (!supabaseClient) return Promise.resolve();
+        return supabaseClient.auth.signOut().catch(function () {});
+    },
+
+    // ── getSession ──
+    // 현재 세션이 유효하면 user 객체, 없으면 null.
+    getSession: function () {
+        if (!supabaseClient) return Promise.resolve(null);
+        return supabaseClient.auth.getSession().then(function (r) {
+            return (r.data && r.data.session && r.data.session.user) || null;
+        }).catch(function () { return null; });
+    },
+
+    // ── push ──
+    // dataType: 'overtime'|'leave'|'profile'|'applock'|'overtime_payslip'
+    // data: plain JS object (JSON-serializable)
+    push: function (dataType, data) {
+        if (!supabaseClient) return Promise.resolve(false);
+        return this.getSession().then(function (user) {
+            if (!user) return false;
+            return supabaseClient
+                .from(SupabaseUserSync._TABLE)
+                .upsert(
+                    { user_id: user.id, data_type: dataType, data: data },
+                    { onConflict: 'user_id,data_type' }
+                )
+                .then(function (r) {
+                    if (r.error) {
+                        console.warn('[SupabaseUserSync] push failed:', r.error.message);
+                        return false;
+                    }
+                    return true;
+                });
+        }).catch(function (e) {
+            console.warn('[SupabaseUserSync] push error:', e);
+            return false;
+        });
+    },
+
+    // ── pullAll ──
+    // 이 사용자의 모든 data_type rows 반환: [{ data_type, data, updated_at }]
+    pullAll: function () {
+        if (!supabaseClient) return Promise.resolve(null);
+        return this.getSession().then(function (user) {
+            if (!user) return null;
+            return supabaseClient
+                .from(SupabaseUserSync._TABLE)
+                .select('data_type, data, updated_at')
+                .eq('user_id', user.id)
+                .then(function (r) {
+                    if (r.error) {
+                        console.warn('[SupabaseUserSync] pullAll failed:', r.error.message);
+                        return null;
+                    }
+                    return r.data || null;
+                });
+        }).catch(function (e) {
+            console.warn('[SupabaseUserSync] pullAll error:', e);
+            return null;
+        });
+    }
+};
+
+window.SupabaseUserSync = SupabaseUserSync;

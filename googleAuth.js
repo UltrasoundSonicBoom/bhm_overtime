@@ -96,6 +96,42 @@ window.GoogleAuth = (function () {
     _grantedScopes = [];
   }
 
+  // ── _attemptSupabaseAuth ──
+  // GIS 로그인 성공 후 Google ID 토큰을 조용히 획득 → Supabase 세션 확립.
+  // One Tap(accounts.id)은 이미 GIS 인증이 완료된 직후 호출하면 대부분 무 UI로 완료된다.
+  // 실패해도 앱 동작에 영향 없음 (Drive가 primary, Supabase는 병렬 백업).
+  function _attemptSupabaseAuth() {
+    if (!window.google || !window.google.accounts || !window.google.accounts.id) return;
+    if (!window.SupabaseUserSync) return;
+
+    // 이미 Supabase 세션이 있으면 스킵
+    window.SupabaseUserSync.getSession().then(function (user) {
+      if (user) return; // 이미 인증됨
+
+      try {
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          auto_select: true,       // 이미 Google에 로그인돼 있으면 UI 없이 자동 선택
+          cancel_on_tap_outside: false,
+          callback: function (credentialResponse) {
+            if (!credentialResponse.credential) return;
+            window.SupabaseUserSync.signInWithIdToken(credentialResponse.credential)
+              .then(function (supaUser) {
+                if (supaUser) console.log('[GoogleAuth] Supabase session:', supaUser.id);
+              });
+          }
+        });
+        window.google.accounts.id.prompt(function (notification) {
+          // isNotDisplayed: 브라우저 정책 등으로 표시 불가 → 무시
+          // isSkippedMoment: 사용자가 이전에 닫음 → 무시
+          // 두 경우 모두 앱은 Drive만으로 정상 동작
+        });
+      } catch (e) {
+        console.warn('[GoogleAuth] _attemptSupabaseAuth failed:', e);
+      }
+    });
+  }
+
   // ── fetchUserInfo ──
   function fetchUserInfo(token) {
     return fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
@@ -164,6 +200,8 @@ window.GoogleAuth = (function () {
 
         // 큐가 없으면 초기 로그인 → userInfo fetch + 전체 초기화
         var wasDemo = localStorage.getItem('bhm_demo_mode') === '1';
+        // Supabase 세션 확립 (비동기, 실패해도 앱 계속 동작)
+        _attemptSupabaseAuth();
         fetchUserInfo(_accessToken).then(function (userInfo) {
           _saveUser(userInfo);
           updateAuthUI(userInfo);
@@ -274,11 +312,11 @@ window.GoogleAuth = (function () {
     _accessToken = null;
     _tokenExpiry = 0;
 
-    // Supabase 병행 세션 정리 (실패해도 흐름 진행)
-    if (window.SupabaseClient && window.SupabaseClient.auth && typeof window.SupabaseClient.auth.signOut === 'function') {
-      try { window.SupabaseClient.auth.signOut(); } catch (e) {
-        console.warn('[GoogleAuth] supabase signOut failed:', e);
-      }
+    // Supabase 세션 정리 (실패해도 흐름 진행)
+    if (window.SupabaseUserSync) {
+      window.SupabaseUserSync.signOut().catch(function () {});
+    } else if (window.SupabaseClient && window.SupabaseClient.auth) {
+      try { window.SupabaseClient.auth.signOut(); } catch (e) {}
     }
 
     function finalize() {
