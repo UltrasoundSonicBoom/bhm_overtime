@@ -25,21 +25,25 @@ async function ensureSnuhmateTab(queryParams) {
   });
 }
 
-// ── PDF 다운로드 추적 ──
+// ── PDF 다운로드 감지 → 자동 가져오기 ──
 chrome.downloads.onChanged.addListener(function (delta) {
   if (!delta.state || delta.state.current !== 'complete') return;
   chrome.downloads.search({ id: delta.id }, function (items) {
     var item = items && items[0];
     if (!item) return;
     var name = item.finalUrl || item.url || item.filename || '';
-    if (!/\.pdf($|\?)/i.test(name)) return;
+    if (!/\.pdf($|\?)/i.test(name) && !/\.pdf$/i.test(item.filename || '')) return;
+
+    var url = item.finalUrl || item.url || '';
+    var fileName = (item.filename || 'payslip.pdf').split('/').pop().split('\\').pop();
+
+    // 수동 재시도용 저장
     chrome.storage.local.set({
-      lastPdfCandidate: {
-        url: item.finalUrl || item.url || '',
-        filename: item.filename || '',
-        at: Date.now()
-      }
+      lastPdfCandidate: { url: url, filename: item.filename || '', at: Date.now() }
     });
+
+    // 자동 가져오기 시도 (사용자 액션 불필요)
+    if (url) autoImportPdf(url, fileName);
   });
 });
 
@@ -93,6 +97,53 @@ async function fetchAndDeliverPdf(url, fileName) {
       message: 'PDF 가져오기 실패: ' + err.message
     });
   }
+}
+
+// ── 자동 PDF 가져오기 (다운로드 감지 시 호출) ──
+async function autoImportPdf(url, fileName) {
+  try {
+    var base64 = await fetchPdfAsBase64(url);
+    var tab = await ensureSnuhmateTab('&tab=payroll');
+
+    // 새 탭이면 로딩 대기 — content script + bridge 준비까지 retry
+    var result = await sendWithRetry(tab.id, {
+      type: 'IMPORT_PAYSLIP',
+      payload: { fileName: fileName, mimeType: 'application/pdf', base64: base64 }
+    }, 5);
+
+    if (!result || !result.ok) return; // 파싱 실패 = 명세서 아님 → 무시
+
+    var msg = '명세서를 자동으로 가져왔어요.';
+    if (result.year && result.month) {
+      msg = result.year + '년 ' + result.month + '월 '
+        + (result.type || '급여') + ' 명세서를 가져왔어요.';
+    }
+    chrome.notifications.create({
+      type: 'basic', iconUrl: 'icons/icon128.png',
+      title: 'SNUH Mate', message: msg
+    });
+  } catch (e) {
+    // 자동 시도 실패는 조용히 무시 (일반 PDF일 수 있음)
+  }
+}
+
+function sendWithRetry(tabId, message, retries) {
+  return new Promise(function (resolve, reject) {
+    function attempt(n) {
+      chrome.tabs.sendMessage(tabId, message, function (response) {
+        if (chrome.runtime.lastError) {
+          if (n > 0) {
+            setTimeout(function () { attempt(n - 1); }, 2000);
+          } else {
+            reject(new Error('SNUH Mate 페이지 연결 실패'));
+          }
+        } else {
+          resolve(response);
+        }
+      });
+    }
+    attempt(retries || 3);
+  });
 }
 
 // ── 메시지 핸들러 ──
