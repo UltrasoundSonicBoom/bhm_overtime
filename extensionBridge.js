@@ -74,19 +74,46 @@ window.SnuhmateExtensionBridge = (function () {
   async function importPayslipPayload(payload) {
     assertAuthenticated();
     if (!payload || !payload.base64 || !payload.fileName) throw new Error('invalid payslip payload');
+    if (!window.SALARY_PARSER) throw new Error('SALARY_PARSER unavailable');
 
-    // 급여 탭으로 전환
+    var file = base64ToFile(payload.base64, payload.fileName, payload.mimeType);
+
+    // handlePayslipUpload는 DOM(payslipResult)에 의존하므로,
+    // 확장프로그램에서는 파싱 → 저장 → UI 갱신을 분리 실행한다.
+    var parsed = await window.SALARY_PARSER.parseFile(file);
+    var ym = window.SALARY_PARSER.parsePeriodYearMonth(parsed);
+    if (!ym) throw new Error('급여 기간을 인식하지 못했습니다.');
+
+    window.SALARY_PARSER.saveMonthlyData(ym.year, ym.month, parsed, ym.type);
+
+    // 프로필 자동 반영
+    if (window.SALARY_PARSER.applyStableItemsToProfile) {
+      window.SALARY_PARSER.applyStableItemsToProfile(parsed);
+    }
+
+    // 급여 탭으로 전환 + UI 갱신 (DOM이 있으면)
     if (typeof window.switchTab === 'function') {
       window.switchTab('payroll');
     }
-    // 급여명세서 서브탭 클릭
     var payTab = document.querySelector('#tab-payroll .pay-bookmark-tab[data-subtab="pay-payslip"]');
     if (payTab) payTab.click();
 
-    var file = base64ToFile(payload.base64, payload.fileName, payload.mimeType);
-    await window.handlePayslipUpload(file);
+    // 명세서 뷰 갱신
+    if (typeof window.renderPayslipMgmt === 'function') {
+      window.renderPayslipMgmt();
+    }
 
-    return { ok: true, fileName: payload.fileName };
+    if (typeof window.showOtToast === 'function') {
+      window.showOtToast('확장프로그램에서 명세서를 가져왔어요.');
+    }
+
+    return {
+      ok: true,
+      fileName: payload.fileName,
+      year: ym.year,
+      month: ym.month,
+      type: ym.type || '급여'
+    };
   }
 
   // ── 브릿지 준비 완료 이벤트 ──

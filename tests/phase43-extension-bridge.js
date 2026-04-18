@@ -26,7 +26,8 @@ if (!bridgeJs.includes('assertAuthenticated')) throw new Error('missing auth che
 
 // ── Task 3: Payslip import logic ──
 if (!bridgeJs.includes('Uint8Array')) throw new Error('missing base64 reconstruction');
-if (!bridgeJs.includes('handlePayslipUpload')) throw new Error('missing payslip upload handoff');
+if (!bridgeJs.includes('SALARY_PARSER.parseFile')) throw new Error('missing SALARY_PARSER.parseFile call');
+if (!bridgeJs.includes('SALARY_PARSER.saveMonthlyData')) throw new Error('missing saveMonthlyData call');
 if (!bridgeJs.includes("switchTab")) throw new Error('missing payroll tab focus');
 
 console.log('✅ phase43-extension-bridge: all checks passed');
