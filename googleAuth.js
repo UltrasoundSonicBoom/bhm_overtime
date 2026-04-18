@@ -149,6 +149,13 @@ window.GoogleAuth = (function () {
       scope: SCOPE_BASE + ' ' + SCOPE_DRIVE + ' ' + SCOPE_CALENDAR,
       callback: function (response) {
         handleTokenResponse(response, function (user) {
+          // 데모 모드 자동 해제: Google 로그인 성공 시 샘플 데이터 제거
+          var wasDemo = localStorage.getItem('bhm_demo_mode') === '1';
+          if (wasDemo && window.exitDemoMode) {
+            window.exitDemoMode();
+            var demoBanner = document.getElementById('demoBanner');
+            if (demoBanner) demoBanner.style.display = 'none';
+          }
           // 로그인 성공 = Drive/Calendar 동의 완료. 즉시 활성화.
           if (response.scope) {
             var scopes = response.scope.split(' ');
@@ -159,7 +166,16 @@ window.GoogleAuth = (function () {
           }
           if (typeof updateDriveBackupUI === 'function') updateDriveBackupUI();
           if (typeof updateCalendarUI === 'function') updateCalendarUI();
-          if (window.SyncManager) window.SyncManager.fullSync();
+          if (window.SyncManager) {
+            window.SyncManager.fullSync().then(function () {
+              // 데모였다면 Drive 복원 여부와 무관하게 UI 갱신 (빈 상태 표시)
+              if (wasDemo) {
+                if (window.OT && window.OT.renderList) window.OT.renderList();
+                if (window.LEAVE && window.LEAVE.renderList) window.LEAVE.renderList();
+                if (window.PROFILE && window.PROFILE.render) window.PROFILE.render();
+              }
+            });
+          }
         });
       }
     });
