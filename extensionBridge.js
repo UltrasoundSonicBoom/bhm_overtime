@@ -86,6 +86,11 @@ window.SnuhmateExtensionBridge = (function () {
 
     window.SALARY_PARSER.saveMonthlyData(ym.year, ym.month, parsed, ym.type);
 
+    // 시간외 모듈에 명세서 데이터 전파 (월간 보충 반영용)
+    if (typeof window._propagatePayslipToOvertime === 'function') {
+      window._propagatePayslipToOvertime(parsed, ym);
+    }
+
     // 프로필 자동 반영
     if (window.SALARY_PARSER.applyStableItemsToProfile) {
       window.SALARY_PARSER.applyStableItemsToProfile(parsed);
