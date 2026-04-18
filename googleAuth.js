@@ -104,27 +104,26 @@ window.GoogleAuth = (function () {
   // GCP Authorized redirect URIs에 Supabase 콜백 URL이 추가된 뒤 prompt()를 쓸 수 있다.
   // → 현재는 no-op. SupabaseUserSync 구조는 유지되어 수동 호출이 가능하다.
   function _attemptSupabaseAuth() {
-    // TODO: GCP Console → Authorized redirect URIs에
-    //   https://ulamqyarenzjdxlisijl.supabase.co/auth/v1/callback
-    // 를 추가한 뒤 아래 주석을 해제하면 Supabase 세션이 자동 확립된다.
-    //
-    // if (!window.google || !window.google.accounts || !window.google.accounts.id) return;
-    // if (!window.SupabaseUserSync) return;
-    // window.SupabaseUserSync.getSession().then(function (user) {
-    //   if (user) return;
-    //   try {
-    //     window.google.accounts.id.initialize({
-    //       client_id: GOOGLE_CLIENT_ID,
-    //       auto_select: true,
-    //       cancel_on_tap_outside: false,
-    //       callback: function (cr) {
-    //         if (!cr.credential) return;
-    //         window.SupabaseUserSync.signInWithIdToken(cr.credential);
-    //       }
-    //     });
-    //     window.google.accounts.id.prompt();
-    //   } catch (e) { console.warn('[GoogleAuth] _attemptSupabaseAuth failed:', e); }
-    // });
+    if (!window.google || !window.google.accounts || !window.google.accounts.id) return;
+    if (!window.SupabaseUserSync) return;
+    window.SupabaseUserSync.getSession().then(function (user) {
+      if (user) return;
+      try {
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          auto_select: true,
+          cancel_on_tap_outside: false,
+          callback: function (cr) {
+            if (!cr.credential) return;
+            window.SupabaseUserSync.signInWithIdToken(cr.credential)
+              .then(function (supaUser) {
+                if (supaUser) console.log('[GoogleAuth] Supabase session:', supaUser.id);
+              });
+          }
+        });
+        window.google.accounts.id.prompt();
+      } catch (e) { console.warn('[GoogleAuth] _attemptSupabaseAuth failed:', e); }
+    });
   }
 
   // ── fetchUserInfo ──
