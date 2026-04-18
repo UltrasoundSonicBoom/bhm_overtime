@@ -3,8 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="SNUH Mate Published Nurse Schedule">
-  <title>SNUH Mate 배포 근무표</title>
+  <meta name="description" content="SNUH Mate Team Board">
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com;
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+    img-src 'self' data: https://*.googleusercontent.com;
+    font-src 'self' https://fonts.gstatic.com;
+    connect-src 'self' https://*.googleapis.com https://oauth2.googleapis.com https://accounts.google.com https://*.supabase.co;
+    frame-src 'self' https://accounts.google.com;
+    object-src 'none';
+    base-uri 'self';
+  ">
+  <title>SNUH Mate 팀 보드</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
@@ -15,43 +26,25 @@
     <div class="brand-block">
       <img class="brand-mark" src="../snuhmatecircle.png" alt="SNUH Mate 로고">
       <div>
-        <p class="eyebrow">Published Schedule</p>
-        <h1>배포 근무표</h1>
-        <p class="subtitle">확정 배포본만 보여주고, 휴가·교육·개인 캘린더 편의 기능만 남겼습니다.</p>
+        <p class="eyebrow">Viewer</p>
+        <h1>팀 보드</h1>
+        <p class="subtitle">오늘 누구와 근무하는지, 확정된 근무표가 어떤지 바로 확인합니다.</p>
       </div>
     </div>
-    <nav class="top-links">
-      <a href="./admin.html">관리자판</a>
-      <a href="../dashboard.html">검증 대시보드</a>
-      <a href="../admin/index.html">규정 관리</a>
-    </nav>
   </header>
 
-  <section class="wayfinding-band">
-    <div class="guide-copy">
-      <p class="eyebrow">Jacob · Hick · Miller</p>
-      <h2>지금 필요한 일부터 고르세요</h2>
-      <p>배포표 확인은 여기서 끝내고, 수정이나 검증이 필요할 때만 다른 화면으로 이동하게 구조를 나눴습니다.</p>
-    </div>
-    <div class="mode-strip" aria-label="서비스 역할 구분">
-      <a class="mode-pill active" href="./index.html">배포 확인</a>
-      <a class="mode-pill" href="./admin.html">생성 · 검토 · 배포</a>
-      <a class="mode-pill" href="../dashboard.html">데이터 · 규정 검증</a>
-    </div>
-    <div class="task-list" aria-label="이 페이지에서 할 수 있는 일">
-      <div class="task-item">
-        <strong>오늘 근무 보기</strong>
-        <span>확정 배포본만 확인합니다.</span>
+  <section class="utility-strip">
+    <nav class="viewer-tabs" aria-label="viewer pages">
+      <a class="viewer-tab active" href="./index.html">팀 보드</a>
+      <a class="viewer-tab" id="myDayLink" href="./my-day.html">내 일정</a>
+    </nav>
+    <details class="utility-menu">
+      <summary>운영 도구</summary>
+      <div class="utility-menu-panel">
+        <a href="./admin.html">운영 콘솔</a>
+        <a href="../admin/index.html">규정</a>
       </div>
-      <div class="task-item">
-        <strong>개인 일정 확인</strong>
-        <span>이름 검색, 개인 보기, .ics 내보내기를 사용합니다.</span>
-      </div>
-      <div class="task-item">
-        <strong>수정이 필요할 때</strong>
-        <span>휴가, 교육, 후보안 비교는 관리자판으로 이동합니다.</span>
-      </div>
-    </div>
+    </details>
   </section>
 
   <main class="publish-shell">
@@ -69,84 +62,46 @@
         <input id="memberSearchInput" type="search" placeholder="이름, 역할, 태그">
       </label>
       <label class="field">
-        <span>개인 보기</span>
+        <span>강조 인물</span>
         <select id="memberSelect"></select>
       </label>
-      <button id="downloadIcsBtn" class="action-btn" type="button">개인 .ics</button>
+      <a id="myDayActionLink" class="action-btn" href="./my-day.html">내 일정</a>
     </section>
 
-    <section class="surface-nav" id="surfaceNav" aria-label="배포판 목차">
-      <button class="surface-tab active" type="button" data-surface="overview">요약</button>
-      <button class="surface-tab" type="button" data-surface="board">근무표</button>
-      <button class="surface-tab" type="button" data-surface="personal">개인 일정</button>
-      <button class="surface-tab" type="button" data-surface="rules">규정</button>
+    <section id="focusBanner" class="focus-banner">오늘 근무 정보를 준비하는 중입니다.</section>
+    <section class="status-grid" id="statusGrid"></section>
+    <section class="crew-card">
+      <strong>같이 일하는 사람</strong>
+      <div id="todayCrewPanel">같이 일하는 사람을 불러오는 중입니다.</div>
     </section>
 
-    <section class="surface-panel" data-surface-panel="overview">
-      <section id="focusBanner" class="focus-banner">선택한 간호사의 핵심 일정을 준비하는 중입니다.</section>
-      <section id="overviewDigest" class="overview-digest">개인 요약을 준비하는 중입니다.</section>
-      <section class="status-grid" id="statusGrid"></section>
-    </section>
-
-    <section class="filter-strip">
-      <button class="filter-chip active" type="button" data-filter="all">전체</button>
-      <button class="filter-chip" type="button" data-filter="leave">휴가</button>
-      <button class="filter-chip" type="button" data-filter="education">교육</button>
-      <button class="filter-chip" type="button" data-filter="new-grad">신규</button>
-    </section>
-
-    <section class="surface-panel" data-surface-panel="board">
-      <section class="board-card">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">Published Board</p>
-            <h2 id="boardHeadline">배포본을 불러오는 중입니다.</h2>
-          </div>
-          <div id="publishMeta" class="publish-meta">대기 중</div>
+    <section class="board-card">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Board</p>
+          <h2 id="boardHeadline">확정 근무표를 불러오는 중입니다.</h2>
         </div>
-        <div class="legend-row">
-          <span class="legend-chip shift-D">D</span>
-          <span class="legend-chip shift-E">E</span>
-          <span class="legend-chip shift-N">N</span>
-          <span class="legend-chip shift-OFF">OFF</span>
-          <span class="legend-chip shift-LEAVE">LEAVE</span>
-          <span class="legend-chip shift-EDU">EDU</span>
-          <span class="legend-note">휴가, 교육, 팀 이벤트가 셀 안에 함께 표시됩니다.</span>
-        </div>
-        <div id="publishedBoard" class="board-shell">배포본을 불러오는 중입니다.</div>
-      </section>
-    </section>
+        <div id="publishMeta" class="publish-meta">대기 중</div>
+      </div>
 
-    <section class="detail-grid">
-      <article class="detail-card surface-panel" data-surface-panel="personal">
-        <div class="section-heading compact">
-          <div>
-            <p class="eyebrow">Personal Focus</p>
-            <h3 id="personalHeadline">선택한 간호사 일정</h3>
-          </div>
-        </div>
-        <div id="personalPanel" class="detail-list">팀원을 선택하면 이번 달 개인 일정을 보여줍니다.</div>
-      </article>
+      <p class="eyebrow">근무조 선택</p>
+      <div id="shiftFocusBar" class="shift-focus-bar" aria-label="근무조 선택"></div>
+      <div id="shiftFocusMeta" class="shift-focus-meta">근무조 정보를 불러오는 중입니다.</div>
 
-      <article class="detail-card surface-panel" data-surface-panel="rules">
-        <div class="section-heading compact">
-          <div>
-            <p class="eyebrow">Protection Rules</p>
-            <h3>배포본 참고 규칙</h3>
-          </div>
-        </div>
-        <div id="policyPanel" class="detail-list">규정 요약을 불러오는 중입니다.</div>
-      </article>
+      <div class="legend-row">
+        <span class="legend-chip shift-D">D</span>
+        <span class="legend-chip shift-E">E</span>
+        <span class="legend-chip shift-N">N</span>
+        <span class="legend-chip shift-OFF">OFF</span>
+        <span class="legend-chip shift-LEAVE">LEAVE</span>
+        <span class="legend-chip shift-EDU">EDU</span>
+      </div>
+
+      <div id="publishedBoard" class="board-shell">배포본을 불러오는 중입니다.</div>
     </section>
   </main>
 
-  <nav class="mobile-role-nav" aria-label="주요 화면 이동">
-    <a class="active" href="./index.html">배포</a>
-    <a href="./admin.html">관리</a>
-    <a href="../dashboard.html">검증</a>
-    <a href="../admin/index.html">규정</a>
-  </nav>
-
-  <script src="./publish.js"></script>
+  <script src="./demo-data.js"></script>
+  <script src="./team-board.js"></script>
 </body>
 </html>

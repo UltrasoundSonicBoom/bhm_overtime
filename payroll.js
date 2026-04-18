@@ -38,8 +38,15 @@ const PAYROLL = {
             hol += r.breakdown.holiday || 0;
             holNgt += r.breakdown.holidayNight || 0;
           });
+          // 명세서 보충분 가산
+          var supp = stats && stats.payslipSupplement;
+          if (supp) {
+            ext += supp.extended || 0;
+            ngt += supp.night || 0;
+            hol += supp.holiday || 0;
+          }
           var round15 = function(h) { return Math.floor(h * 4) / 4; };
-          return { ext: round15(ext), ngt: round15(ngt), hol: round15(hol), holNgt: round15(holNgt), hasData: true };
+          return { ext: round15(ext), ngt: round15(ngt), hol: round15(hol), holNgt: round15(holNgt), hasData: true, hasSupplement: !!supp };
         } catch(e) { return null; }
       },
       calc(profile, wage, inputs) {
@@ -88,7 +95,7 @@ const PAYROLL = {
         var ms = this._getThisMonthStats();
         var ext = ms ? ms.ext : 1, ngt = ms ? ms.ngt : 0, hol = ms ? ms.hol : 0, holNgt = ms ? ms.holNgt : 0;
         var autoTag = ms && ms.hasData
-          ? '<span class="ot-auto-badge">이번 달 자동 반영</span>'
+          ? '<span class="ot-auto-badge">이번 달 자동 반영' + (ms.hasSupplement ? ' + 명세서 보충' : '') + '</span>'
           : '<span class="ot-auto-badge ot-auto-manual">직접 입력 (기본 연장 1h)</span>';
         var makeStepInput = function(id, val, max) {
           return '<div class="ot-step-wrap">'

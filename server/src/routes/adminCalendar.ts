@@ -6,7 +6,6 @@ const adminCalendarRoutes = new Hono()
 const sql = postgres(process.env.DATABASE_URL!, { prepare: false })
 
 const API_BASE = 'https://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService'
-const DEFAULT_API_KEY = '590ecdf5a2e2ea517c853271d834f47f0d0cef966ec408e467106f063aa49e2c'
 
 const staticAnniversaries = [
   { name: '식목일', month: 4, day: 5 },
@@ -16,29 +15,11 @@ const staticAnniversaries = [
   { name: '한글날', month: 10, day: 9 },
 ]
 
-async function ensureCalendarSnapshotTable() {
-  await sql`
-    CREATE TABLE IF NOT EXISTS calendar_snapshots (
-      id serial PRIMARY KEY,
-      year integer NOT NULL,
-      kind text NOT NULL,
-      items jsonb NOT NULL DEFAULT '[]'::jsonb,
-      source text NOT NULL DEFAULT 'manual',
-      refreshed_at timestamptz NOT NULL DEFAULT now(),
-      refreshed_by uuid
-    )
-  `
-  await sql`
-    CREATE UNIQUE INDEX IF NOT EXISTS calendar_snapshots_year_kind_idx
-    ON calendar_snapshots (year, kind)
-  `
-}
-
 async function fetchHolidayItems(year: number) {
   const serviceKey =
     process.env.PUBLIC_DATA_API_KEY ||
     process.env.DATA_GO_KR_SERVICE_KEY ||
-    DEFAULT_API_KEY
+    ''
 
   const fetchOperation = async (operation: string) => {
     const url = new URL(`${API_BASE}/${operation}`)
@@ -104,7 +85,6 @@ adminCalendarRoutes.get('/snapshots', requireAdmin, async (c) => {
     return c.json({ error: 'Valid year is required' }, 400)
   }
 
-  await ensureCalendarSnapshotTable()
 
   const rows = await sql`
     select year, kind, items, source, refreshed_at
@@ -132,7 +112,6 @@ adminCalendarRoutes.post('/refresh', requireAdmin, async (c) => {
     return c.json({ error: 'Valid year is required' }, 400)
   }
 
-  await ensureCalendarSnapshotTable()
 
   const holidays = await fetchHolidayItems(year)
   const anniversaries = buildAnniversaryItems(year)

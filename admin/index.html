@@ -4,6 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com;
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+    img-src 'self' data: https://*.googleusercontent.com;
+    font-src 'self' https://fonts.gstatic.com;
+    connect-src 'self' https://*.googleapis.com https://oauth2.googleapis.com https://accounts.google.com https://*.supabase.co;
+    frame-src 'self' https://accounts.google.com;
+    object-src 'none';
+    base-uri 'self';
+  ">
   <title>SNUH Mate 운영 Admin</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -110,6 +121,16 @@
         감사 로그
       </button>
     </div>
+
+    <div class="sidebar-section">
+      <span class="sidebar-label">개발</span>
+      <a class="sidebar-item" href="./calc-flow.html">
+        <svg class="sidebar-icon" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
+        </svg>
+        계산 흐름 그래프
+      </a>
+    </div>
   </nav>
 
   <!-- ── 메인 콘텐츠 ──────────────────────────────────────────── -->
@@ -135,6 +156,12 @@
 
       <!-- 지표 카드 -->
       <div class="metric-grid" id="summaryGrid"></div>
+
+      <!-- 데이터 건강 모니터링 -->
+      <div class="metric-grid" id="healthGrid" style="margin-top:12px;"></div>
+
+      <!-- 데이터 무결성 경고 -->
+      <div id="healthAlerts" style="display:flex;flex-direction:column;gap:8px;margin-top:12px;"></div>
 
       <!-- 할 일 + 규정 현황 2컬럼 -->
       <div class="content-grid-2" style="margin-top:0;">
@@ -445,6 +472,7 @@
 </div><!-- /admin-shell -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./health-monitor.js"></script>
 <script src="./admin.js"></script>
 </body>
 </html>

@@ -524,7 +524,8 @@ const CALC = {
             const daysInMonth = new Date(y, m, 0).getDate();
 
             const stats = OVERTIME.calcMonthlyStats(y, m);
-            const otPay = stats.totalPay || 0;
+            const suppPay = stats.payslipSupplement ? stats.payslipSupplement.pay : 0;
+            const otPay = (stats.totalPay || 0) + suppPay;
             totalOtPay += otPay;
             totalCalendarDays += daysInMonth;
 

@@ -527,3 +527,16 @@ h1 {
     padding-bottom: 92px;
   }
 }
+
+/* ── Health Monitor Grid ── */
+#healthGrid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+@media (max-width: 1024px) {
+  #healthGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 640px) {
+  #healthGrid { grid-template-columns: 1fr 1fr; }
+}

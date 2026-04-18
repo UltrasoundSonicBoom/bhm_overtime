@@ -7,21 +7,17 @@ import { optionalAuth } from '../middleware/auth'
 const sql = postgres(process.env.DATABASE_URL!, { prepare: false })
 const chatRoutes = new Hono()
 
-// 세션별 rate limit (메모리 기반, 서버리스에서는 제한적)
-const rateLimits = new Map<string, { count: number; resetAt: number }>()
+// 세션별 rate limit — DB 기반 (서버리스 인스턴스 간 공유)
 const RATE_LIMIT = 20 // 분당 최대 요청
-const RATE_WINDOW = 60_000 // 1분
 
-function checkRateLimit(sessionId: string): boolean {
-  const now = Date.now()
-  const entry = rateLimits.get(sessionId)
-  if (!entry || now > entry.resetAt) {
-    rateLimits.set(sessionId, { count: 1, resetAt: now + RATE_WINDOW })
-    return true
-  }
-  if (entry.count >= RATE_LIMIT) return false
-  entry.count++
-  return true
+async function checkRateLimit(sessionId: string): Promise<boolean> {
+  const [row] = await sql`
+    SELECT count(*)::int AS cnt
+    FROM chat_history
+    WHERE session_id = ${sessionId}
+      AND created_at > now() - interval '1 minute'
+  `
+  return (row?.cnt ?? 0) < RATE_LIMIT
 }
 
 /**
@@ -32,11 +28,15 @@ chatRoutes.post('/', optionalAuth, async (c) => {
   const body = await c.req.json<{ message: string; sessionId?: string }>()
   const { message, sessionId = `anon-${Date.now()}` } = body
 
+  const MAX_MESSAGE_LENGTH = 2000
   if (!message?.trim()) {
     return c.json({ error: 'message is required' }, 400)
   }
+  if (message.length > MAX_MESSAGE_LENGTH) {
+    return c.json({ error: `Message too long (max ${MAX_MESSAGE_LENGTH} chars)` }, 400)
+  }
 
-  if (!checkRateLimit(sessionId)) {
+  if (!(await checkRateLimit(sessionId))) {
     return c.json({ error: 'Rate limit exceeded (20/min)' }, 429)
   }
 
@@ -82,12 +82,22 @@ chatRoutes.get('/history', optionalAuth, async (c) => {
     return c.json({ error: 'sessionId required' }, 400)
   }
 
-  const messages = await sql`
-    SELECT role, content, source_docs, model, created_at
-    FROM chat_history
-    WHERE session_id = ${sessionId}
-    ORDER BY created_at ASC
-  `
+  const userId = (c as any).get('userId') as string | null
+
+  // 세션 격리: 인증 사용자는 본인 세션만, 비인증은 anon 세션만 조회
+  const messages = userId
+    ? await sql`
+        SELECT role, content, source_docs, model, created_at
+        FROM chat_history
+        WHERE session_id = ${sessionId} AND user_id = ${userId}
+        ORDER BY created_at ASC
+      `
+    : await sql`
+        SELECT role, content, source_docs, model, created_at
+        FROM chat_history
+        WHERE session_id = ${sessionId} AND user_id IS NULL
+        ORDER BY created_at ASC
+      `
 
   return c.json({ messages })
 })

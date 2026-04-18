@@ -3,6 +3,21 @@ import { generateCardNewsDecks, normalizeKeywords, summarizeArticle } from '../s
 
 const cardNewsRoutes = new Hono()
 
+// SSRF 방어: https만 허용, private IP 차단
+function isSafeUrl(raw: string): boolean {
+  let parsed: URL
+  try { parsed = new URL(raw) } catch { return false }
+  if (parsed.protocol !== 'https:') return false
+  const h = parsed.hostname
+  if (
+    h === 'localhost' ||
+    h.endsWith('.local') ||
+    /^(127\.|10\.|0\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.)/.test(h) ||
+    h === '::1' || h === '[::1]'
+  ) return false
+  return true
+}
+
 async function resolveKeywords(requestBody: unknown, queryValue: string | undefined): Promise<string[]> {
   if (Array.isArray((requestBody as Record<string, unknown> | null)?.keywords)) {
     return normalizeKeywords(
@@ -55,6 +70,9 @@ cardNewsRoutes.post('/resolve', async (c) => {
   if (!url) {
     return c.json({ error: 'url is required' }, 400)
   }
+  if (!isSafeUrl(url)) {
+    return c.json({ error: 'Invalid or disallowed URL' }, 400)
+  }
 
   try {
     const res = await fetch(url, {
@@ -77,6 +95,9 @@ cardNewsRoutes.post('/summarize', async (c) => {
 
   if (!url) {
     return c.json({ error: 'url is required' }, 400)
+  }
+  if (!isSafeUrl(url)) {
+    return c.json({ error: 'Invalid or disallowed URL' }, 400)
   }
 
   const result = await summarizeArticle(url, title || undefined, fallbackText || undefined)

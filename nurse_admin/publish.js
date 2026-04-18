@@ -27,6 +27,7 @@ const state = {
   filter: 'all',
   search: '',
   surface: 'overview',
+  boardShiftFocus: 'all',
 };
 
 const els = {
@@ -38,8 +39,11 @@ const els = {
   focusBanner: document.getElementById('focusBanner'),
   overviewDigest: document.getElementById('overviewDigest'),
   statusGrid: document.getElementById('statusGrid'),
+  todayCrewPanel: document.getElementById('todayCrewPanel'),
   boardHeadline: document.getElementById('boardHeadline'),
   publishMeta: document.getElementById('publishMeta'),
+  shiftFocusBar: document.getElementById('shiftFocusBar'),
+  shiftFocusMeta: document.getElementById('shiftFocusMeta'),
   publishedBoard: document.getElementById('publishedBoard'),
   personalHeadline: document.getElementById('personalHeadline'),
   personalPanel: document.getElementById('personalPanel'),
@@ -185,6 +189,87 @@ function resolvePublishedAssignments() {
   return state.schedule?.published?.assignments_snapshot || [];
 }
 
+function getBoardFocusDate() {
+  const dates = (state.dataset?.coverage || []).map((day) => day.date);
+  if (!dates.length) return '';
+  if (TODAY.startsWith(`${state.period}-`) && dates.includes(TODAY)) return TODAY;
+  return dates[0];
+}
+
+function getBoardShiftOptions(dateStr) {
+  const assignments = resolvePublishedAssignments().filter((assignment) => assignment.date === dateStr);
+  const counts = { all: assignments.length, D: 0, E: 0, N: 0 };
+  assignments.forEach((assignment) => {
+    if (assignment.shiftCode === 'D') counts.D += 1;
+    if (assignment.shiftCode === 'E') counts.E += 1;
+    if (assignment.shiftCode === 'N') counts.N += 1;
+  });
+  return counts;
+}
+
+function getBoardCrew(dateStr) {
+  const visibleMembers = getVisibleMembers();
+  const assignmentMap = buildAssignmentMap();
+  const filtered = visibleMembers.filter((member) => {
+    if (state.boardShiftFocus === 'all') return true;
+    return assignmentMap.get(`${member.id}:${dateStr}`) === state.boardShiftFocus;
+  });
+  return filtered.slice(0, 8).map((member) => ({
+    member,
+    shiftCode: assignmentMap.get(`${member.id}:${dateStr}`) || '-',
+  }));
+}
+
+function renderShiftFocusBar() {
+  const focusDate = getBoardFocusDate();
+  if (!focusDate || !els.shiftFocusBar || !els.shiftFocusMeta) return;
+  const options = getBoardShiftOptions(focusDate);
+  const items = [
+    ['all', '전체', options.all],
+    ['D', 'D', options.D],
+    ['E', 'E', options.E],
+    ['N', 'N', options.N],
+  ];
+  els.shiftFocusBar.innerHTML = items.map(([key, label, count]) => `
+    <button class="shift-focus-btn ${state.boardShiftFocus === key ? 'active' : ''}" type="button" data-shift-focus="${key}">
+      ${escapeHtml(label)}${count ? ` · ${count}` : ''}
+    </button>
+  `).join('');
+  const selectedText = state.boardShiftFocus === 'all' ? '전체 근무' : `${state.boardShiftFocus} 근무`;
+  els.shiftFocusMeta.textContent = `${formatDateLabel(focusDate)} 기준 ${selectedText}를 보고 있습니다.`;
+  els.shiftFocusBar.querySelectorAll('[data-shift-focus]').forEach((button) => {
+    button.addEventListener('click', () => {
+      state.boardShiftFocus = button.getAttribute('data-shift-focus') || 'all';
+      renderBoard();
+      renderTodayCrewPanel();
+    });
+  });
+}
+
+function renderTodayCrewPanel() {
+  if (!els.todayCrewPanel) return;
+  const focusDate = getBoardFocusDate();
+  if (!focusDate) {
+    els.todayCrewPanel.textContent = '함께 일하는 사람을 불러오는 중입니다.';
+    return;
+  }
+  const selectedMember = (state.dataset?.members || []).find((item) => String(item.id) === state.memberId) || null;
+  const crew = getBoardCrew(focusDate);
+  const selectedEntry = crew.find((item) => item.member.id === selectedMember?.id) || null;
+  const shiftLabel = state.boardShiftFocus === 'all' ? (selectedEntry?.shiftCode || '전체') : state.boardShiftFocus;
+  els.todayCrewPanel.innerHTML = `
+    <strong>${escapeHtml(`${formatDateLabel(focusDate)} · ${shiftLabel} 근무`)}</strong>
+    <span>${escapeHtml(selectedEntry ? `${selectedMember.name}님과 같은 시간대 근무자입니다.` : '현재 선택된 근무조 인원을 보여줍니다.')}</span>
+    <div class="crew-chip-row">
+      ${crew.length ? crew.map((entry) => `
+        <span class="crew-chip ${selectedMember && entry.member.id === selectedMember.id ? 'self' : ''}">
+          ${escapeHtml(`${entry.member.name} · ${entry.shiftCode}`)}
+        </span>
+      `).join('') : '<span class="crew-chip">표시할 인원이 없습니다.</span>'}
+    </div>
+  `;
+}
+
 function buildAssignmentMap() {
   const map = new Map();
   resolvePublishedAssignments().forEach((assignment) => {
@@ -224,18 +309,20 @@ function renderStatusGrid() {
   const educationCount = (state.dataset?.memberEvents || [])
     .filter((event) => ['education', 'orientation', 'conference'].includes(event.eventType))
     .length;
+  const selectedMember = (state.dataset?.members || []).find((item) => String(item.id) === state.memberId) || state.dataset?.members?.[0];
+  const assignmentMap = selectedMember ? getMemberAssignmentMap(selectedMember.id) : new Map();
+  const todayShift = selectedMember ? assignmentMap.get(getBoardFocusDate()) || '-' : '-';
   const cards = [
-    ['배포 버전', state.schedule?.published?.version_number ? `v${state.schedule.published.version_number}` : '없음', state.schedule?.published ? '확정 배포본' : '아직 배포되지 않음'],
-    ['팀원', `${state.dataset?.members?.length || 0}명`, '읽기 전용 배포판'],
-    ['휴가', `${state.dataset?.approvedLeaves?.length || 0}일`, '승인 휴가 포함'],
-    ['교육', `${educationCount}건`, '개인 교육·오리엔테이션'],
-    ['검증 경고', `${validation.summary.errors || 0}E / ${validation.summary.warnings || 0}W`, validation.summary.blocking ? '관리자 확인 필요' : '배포본 참조 가능'],
+    ['확정본', state.schedule?.published?.version_number ? `v${state.schedule.published.version_number}` : '없음'],
+    ['오늘 근무', `${todayShift}`],
+    ['휴가', `${state.dataset?.approvedLeaves?.length || 0}일`],
+    ['교육', `${educationCount}건`],
   ];
   els.statusGrid.innerHTML = cards.map(([label, value, note]) => `
     <article class="status-card">
       <span>${escapeHtml(label)}</span>
       <strong>${escapeHtml(value)}</strong>
-      <span>${escapeHtml(note)}</span>
+      ${note ? `<span>${escapeHtml(note)}</span>` : ''}
     </article>
   `).join('');
 }
@@ -247,9 +334,11 @@ function renderFocusBanner() {
     els.focusBanner.innerHTML = '선택한 간호사의 핵심 일정을 준비하는 중입니다.';
     return;
   }
-  const message = `${member.name}님 기준으로 휴가 ${ledger?.annualLeaveDays || 0}일, 교육 ${ledger?.educationDays || 0}일, 최근 야간 ${ledger?.recentNightCount || 0}회를 먼저 보여드립니다.`;
+  const assignmentMap = getMemberAssignmentMap(member.id);
+  const todayShift = assignmentMap.get(getBoardFocusDate()) || '-';
+  const message = `${member.name}님 · 오늘 ${todayShift} 근무 · 휴가 ${ledger?.annualLeaveDays || 0}일 · 교육 ${ledger?.educationDays || 0}일`;
   els.focusBanner.innerHTML = `
-    <strong>${escapeHtml(`${member.name}님의 이번 달 확인`)}</strong>
+    <strong>${escapeHtml(`${member.name}님의 오늘`)}</strong>
     <span>${escapeHtml(message)}</span>
   `;
 }
@@ -272,8 +361,8 @@ function renderOverviewDigest() {
 
   els.overviewDigest.innerHTML = `
     <article class="digest-card">
-      <strong>${escapeHtml(`${member.name}님 기준`)}</strong>
-      <span>${escapeHtml(todayAssignment ? `오늘은 ${todayAssignment.shiftCode} 근무입니다.` : '오늘 배포된 근무가 없거나 미래 기간입니다.')}</span>
+      <strong>${escapeHtml(`${member.name}님 일정`)}</strong>
+      <span>${escapeHtml(todayAssignment ? `오늘 ${todayAssignment.shiftCode} 근무` : '오늘 근무 없음') }</span>
       <div class="digest-tags">
         <span class="digest-tag">${escapeHtml(`휴가 ${ledger?.annualLeaveDays || 0}일`)}</span>
         <span class="digest-tag">${escapeHtml(`교육 ${ledger?.educationDays || 0}일`)}</span>
@@ -286,8 +375,8 @@ function renderOverviewDigest() {
       </div>
     </article>
     <article class="digest-card">
-      <strong>${escapeHtml(nextAssignment ? '이번 달 캘린더' : '개인 캘린더') }</strong>
-      <span>${escapeHtml(nextAssignment ? `${formatDateLabel(nextAssignment.date)} · ${nextAssignment.shiftCode}가 가장 가깝습니다.` : '날짜를 누르면 아래에서 상세를 봅니다.')}</span>
+      <strong>${escapeHtml(nextAssignment ? '이번 달 일정' : '개인 일정') }</strong>
+      <span>${escapeHtml(nextAssignment ? `${formatDateLabel(nextAssignment.date)} · ${nextAssignment.shiftCode}` : '날짜를 눌러 일정을 확인하세요.')}</span>
       ${buildPersonalCalendar(member, { compact: true, triggerAttr: 'data-overview-date' })}
     </article>
   `;
@@ -310,16 +399,21 @@ function renderBoard() {
     return;
   }
 
-  const visibleMembers = getVisibleMembers();
+  const focusDate = getBoardFocusDate();
+  const assignmentMap = buildAssignmentMap();
+  renderShiftFocusBar();
+  const visibleMembers = getVisibleMembers().filter((member) => {
+    if (state.boardShiftFocus === 'all') return true;
+    return assignmentMap.get(`${member.id}:${focusDate}`) === state.boardShiftFocus;
+  });
   if (!visibleMembers.length) {
     els.publishedBoard.innerHTML = '<div class="empty-copy">필터 조건에 맞는 팀원이 없습니다.</div>';
     return;
   }
 
   els.boardHeadline.textContent = `${state.dataset?.team?.name || state.teamSlug} · ${state.period}`;
-  els.publishMeta.textContent = `Published v${state.schedule?.published?.version_number || '-'}`;
+  els.publishMeta.textContent = `v${state.schedule?.published?.version_number || '-'}`;
 
-  const assignmentMap = buildAssignmentMap();
   const coverageCounts = new Map();
   assignments.forEach((assignment) => {
     if (!['D', 'E', 'N'].includes(assignment.shiftCode)) return;
@@ -347,8 +441,7 @@ function renderBoard() {
     return `
       <tr>
         <th class="member-col sticky-col">
-          <div class="member-name">${shiftCode} coverage</div>
-          <div class="member-meta">배포본 충원 상태</div>
+          <div class="member-name">${shiftCode} 충원</div>
         </th>
         ${cells}
       </tr>
@@ -445,6 +538,7 @@ function renderAll() {
   renderFocusBanner();
   renderOverviewDigest();
   renderStatusGrid();
+  renderTodayCrewPanel();
   renderBoard();
   renderPersonalPanel();
   renderPolicyPanel();

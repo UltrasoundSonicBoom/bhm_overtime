@@ -1,6 +1,5 @@
 // ============================================================
-// config.js — Google 연동 공개 제어 설정
-// 운영 도메인에서도 심사 전까지는 리뷰/QA 사용자만 Google 기능 사용
+// config.js — Google 연동 설정
 // ============================================================
 
 window.BHM_CONFIG = {
@@ -20,16 +19,4 @@ window.BHM_CONFIG = {
   googleCalendarMode: 'appCreatedCalendar',
   googleCalendarScope: 'https://www.googleapis.com/auth/calendar.app.created',
 
-  // 심사/QA 리뷰 모드
-  reviewModeEnabled: true,
-  reviewQueryParam: 'google_beta',
-  reviewQueryValue: '1',
-  allowLocalhostInReviewMode: true,
-
-  // 심사 전 허용 사용자 제한
-  allowlistEnabled: true,
-  allowlistEmails: [
-    'stevegogothing@gmail.com',
-    'steve.gogothing@gmail.com'
-  ]
 };
