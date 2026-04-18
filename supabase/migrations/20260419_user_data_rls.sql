@@ -56,5 +56,11 @@ CREATE TRIGGER user_data_blobs_updated_at
 CREATE INDEX IF NOT EXISTS idx_user_data_blobs_user ON user_data_blobs (user_id);
 
 -- ── app_events: 기존 telemetry 테이블 보완 ───────────────────
--- 인증된 사용자 이벤트에 user_id 컬럼 추가 (nullable: 기존 anon 이벤트 유지)
-ALTER TABLE app_events ADD COLUMN IF NOT EXISTS user_id uuid REFERENCES auth.users(id);
+-- app_events가 이미 존재할 때만 user_id 컬럼 추가 (없으면 skip)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = 'app_events') THEN
+    ALTER TABLE app_events ADD COLUMN IF NOT EXISTS user_id uuid REFERENCES auth.users(id);
+  END IF;
+END;
+$$;
