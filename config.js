@@ -21,13 +21,13 @@ window.BHM_CONFIG = {
   googleCalendarScope: 'https://www.googleapis.com/auth/calendar.app.created',
 
   // 심사/QA 리뷰 모드
-  reviewModeEnabled: true,
+  reviewModeEnabled: false,
   reviewQueryParam: 'google_beta',
   reviewQueryValue: '1',
   allowLocalhostInReviewMode: true,
 
   // 심사 전 허용 사용자 제한
-  allowlistEnabled: true,
+  allowlistEnabled: false,
   allowlistEmails: [
     'stevegogothing@gmail.com',
     'steve.gogothing@gmail.com'
