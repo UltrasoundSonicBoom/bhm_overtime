@@ -97,39 +97,34 @@ window.GoogleAuth = (function () {
   }
 
   // ── _attemptSupabaseAuth ──
-  // GIS 로그인 성공 후 Google ID 토큰을 조용히 획득 → Supabase 세션 확립.
-  // One Tap(accounts.id)은 이미 GIS 인증이 완료된 직후 호출하면 대부분 무 UI로 완료된다.
-  // 실패해도 앱 동작에 영향 없음 (Drive가 primary, Supabase는 병렬 백업).
+  // GIS 로그인 성공 후 Supabase 세션을 확립한다.
+  // google.accounts.id.prompt()는 redirect 폴백이 발생할 경우
+  // GCP 미등록 Supabase 콜백 URL로 redirect_uri_mismatch를 일으키므로 사용하지 않는다.
+  // 대신 google.accounts.id.initialize만 등록해두고,
+  // GCP Authorized redirect URIs에 Supabase 콜백 URL이 추가된 뒤 prompt()를 쓸 수 있다.
+  // → 현재는 no-op. SupabaseUserSync 구조는 유지되어 수동 호출이 가능하다.
   function _attemptSupabaseAuth() {
-    if (!window.google || !window.google.accounts || !window.google.accounts.id) return;
-    if (!window.SupabaseUserSync) return;
-
-    // 이미 Supabase 세션이 있으면 스킵
-    window.SupabaseUserSync.getSession().then(function (user) {
-      if (user) return; // 이미 인증됨
-
-      try {
-        window.google.accounts.id.initialize({
-          client_id: GOOGLE_CLIENT_ID,
-          auto_select: true,       // 이미 Google에 로그인돼 있으면 UI 없이 자동 선택
-          cancel_on_tap_outside: false,
-          callback: function (credentialResponse) {
-            if (!credentialResponse.credential) return;
-            window.SupabaseUserSync.signInWithIdToken(credentialResponse.credential)
-              .then(function (supaUser) {
-                if (supaUser) console.log('[GoogleAuth] Supabase session:', supaUser.id);
-              });
-          }
-        });
-        window.google.accounts.id.prompt(function (notification) {
-          // isNotDisplayed: 브라우저 정책 등으로 표시 불가 → 무시
-          // isSkippedMoment: 사용자가 이전에 닫음 → 무시
-          // 두 경우 모두 앱은 Drive만으로 정상 동작
-        });
-      } catch (e) {
-        console.warn('[GoogleAuth] _attemptSupabaseAuth failed:', e);
-      }
-    });
+    // TODO: GCP Console → Authorized redirect URIs에
+    //   https://ulamqyarenzjdxlisijl.supabase.co/auth/v1/callback
+    // 를 추가한 뒤 아래 주석을 해제하면 Supabase 세션이 자동 확립된다.
+    //
+    // if (!window.google || !window.google.accounts || !window.google.accounts.id) return;
+    // if (!window.SupabaseUserSync) return;
+    // window.SupabaseUserSync.getSession().then(function (user) {
+    //   if (user) return;
+    //   try {
+    //     window.google.accounts.id.initialize({
+    //       client_id: GOOGLE_CLIENT_ID,
+    //       auto_select: true,
+    //       cancel_on_tap_outside: false,
+    //       callback: function (cr) {
+    //         if (!cr.credential) return;
+    //         window.SupabaseUserSync.signInWithIdToken(cr.credential);
+    //       }
+    //     });
+    //     window.google.accounts.id.prompt();
+    //   } catch (e) { console.warn('[GoogleAuth] _attemptSupabaseAuth failed:', e); }
+    // });
   }
 
   // ── fetchUserInfo ──
