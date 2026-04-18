@@ -149,6 +149,7 @@
 
   function exitDemoMode() {
     localStorage.removeItem('bhm_demo_mode');
+    sessionStorage.removeItem('bhm_demo_session');
     localStorage.removeItem('bhm_hr_profile_' + DEMO_UID);
     localStorage.removeItem('overtimeRecords_' + DEMO_UID);
     localStorage.removeItem('leaveRecords_' + DEMO_UID);
@@ -178,9 +179,19 @@
     };
   });
 
-  // 페이지 이동 후에도 demo 상태 복원 (googleSub이 날아갔을 경우 대비)
+  // 페이지 이동 후에도 demo 상태 복원 (SPA 탭 전환 시 googleSub 유지)
+  // sessionStorage 가드: 이 세션에서 ?demo=1로 진입한 경우에만 복원.
+  // 다른 탭·창에서 남긴 localStorage 잔여물이 비데모 URL에 전파되는 것을 차단한다.
   (function restoreDemoIfNeeded() {
     if (localStorage.getItem('bhm_demo_mode') !== '1') return;
+    if (!sessionStorage.getItem('bhm_demo_session')) {
+      // 이 세션에서 demo=1로 진입한 적 없음 → localStorage 잔여물 정리
+      localStorage.removeItem('bhm_demo_mode');
+      var s = {};
+      try { s = JSON.parse(localStorage.getItem('bhm_settings') || '{}'); } catch (e) {}
+      if (s.googleSub === DEMO_UID) { delete s.googleSub; localStorage.setItem('bhm_settings', JSON.stringify(s)); }
+      return;
+    }
     var settings = {};
     try { settings = JSON.parse(localStorage.getItem('bhm_settings') || '{}'); } catch (e) {}
     if (settings.googleSub !== DEMO_UID) {

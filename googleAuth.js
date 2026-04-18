@@ -238,6 +238,16 @@ window.GoogleAuth = (function () {
   //    - Promise 콜백 경로가 우선, 페이지 종료 시 sendBeacon 으로 백업
   // 3) Supabase 세션도 함께 종료 (I4: 이중 auth 상태 불일치 제거)
   function signOut() {
+    // 데모 모드에서 연결 해제: exitDemoMode + sessionStorage 정리 후 clean URL 이동
+    if (localStorage.getItem('bhm_demo_mode') === '1') {
+      if (window.exitDemoMode) window.exitDemoMode();
+      if (window.SyncManager && typeof window.SyncManager.clearPendingPushes === 'function') {
+        window.SyncManager.clearPendingPushes();
+      }
+      window.location.href = 'index.html?app=1';
+      return;
+    }
+
     if (window.SyncManager && typeof window.SyncManager.clearPendingPushes === 'function') {
       window.SyncManager.clearPendingPushes();
     }
