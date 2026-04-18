@@ -1369,6 +1369,17 @@
       <!-- Zone B: 대시보드 (수당 금액 중심) -->
       <div id="otDashboard" class="ot-dashboard"></div>
 
+      <!-- Zone V: 명세서 자동 보충 카드 -->
+      <div id="otVerifyCard" class="card" style="margin-bottom:12px; display:none;">
+        <div class="card-title" style="cursor:pointer;" onclick="toggleOtVerifyDetail()">
+          <span class="icon" style="font-size:18px;">💡</span>
+          <span id="otVerifyTitle">명세서 자동 보충</span>
+          <span id="otVerifyBadge" class="badge emerald" style="margin-left:auto;"></span>
+          <span id="otVerifyArrow" style="font-size:12px; color:var(--text-muted); transition:transform 0.3s; margin-left:8px;">▼</span>
+        </div>
+        <div id="otVerifyContent"></div>
+      </div>
+
       <!-- Zone D: 바텀 시트 오버레이 및 패널 -->
       <div id="otInputOverlay" class="ot-bottom-sheet-overlay" onclick="closeOtBottomSheet()"></div>
       <div id="otInputPanel" class="ot-bottom-sheet">

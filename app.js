@@ -2406,6 +2406,7 @@ async function refreshOtCalendar() {
   renderOtCalendar(year, month, recordsByDay);
   renderOtRecordList(records);
   renderOtDashboard(year, month);
+  renderOtVerification(year, month);
   resetOtPanel();
 
   // 2. 공휴일 데이터 (휴가 캘린더와 동일 패턴) 백그라운드 로드
@@ -2419,6 +2420,7 @@ async function refreshOtCalendar() {
   // 3. 공휴일 데이터가 준비되면 다시 렌더링 (깜빡임 없이 속성만 추가됨)
   renderOtCalendar(year, month, recordsByDay);
   renderOtDashboard(year, month); // 대시보드도 공휴일 영향을 받을 수 있으므로 재렌더링
+  renderOtVerification(year, month);
   autoSelectToday();
 }
 
@@ -3040,6 +3042,183 @@ function renderOtDashboard(year, month) {
   if (monthEl) monthEl.textContent = month;
 }
 
+// ── 명세서 자동 보충 카드 렌더링 ──
+function renderOtVerification(year, month) {
+  const card = document.getElementById('otVerifyCard');
+  const content = document.getElementById('otVerifyContent');
+  const titleEl = document.getElementById('otVerifyTitle');
+  const badge = document.getElementById('otVerifyBadge');
+  if (!card || !content) return;
+
+  const result = OVERTIME.crossVerify(year, month);
+
+  if (!result) {
+    card.style.display = 'none';
+    return;
+  }
+
+  card.style.display = '';
+  const fmt = n => n != null ? n.toLocaleString() + '원' : '-';
+
+  // 보충 항목: 명세서 > 내 기록 (diff < -0.25 → 내가 덜 기록)
+  const supplements = result.items.filter(i => i.diffHours < -0.25);
+  const hasSupplement = supplements.length > 0;
+
+  titleEl.textContent = month + '월 명세서 자동 보충';
+  if (hasSupplement) {
+    badge.textContent = supplements.length + '건 보충';
+    badge.className = 'badge indigo';
+  } else if (result.hasManualRecords) {
+    badge.textContent = '✅ 일치';
+    badge.className = 'badge emerald';
+  } else {
+    badge.textContent = '';
+    badge.className = 'badge';
+  }
+
+  content.textContent = '';
+
+  // ── 보충 안내 메시지 ──
+  if (hasSupplement) {
+    const msgBox = document.createElement('div');
+    msgBox.style.cssText = 'margin-bottom:14px; padding:14px 16px; background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.18); border-radius:10px; line-height:1.7;';
+    const headline = document.createElement('div');
+    headline.style.cssText = 'font-weight:600; font-size:var(--text-body-normal); color:var(--text-primary);';
+    headline.textContent = '직접 입력 못하신 부분을 명세서에서 확인했어요';
+    msgBox.appendChild(headline);
+    const detail = document.createElement('div');
+    detail.style.cssText = 'margin-top:6px; font-size:var(--text-body-small); color:var(--text-secondary);';
+    const parts = supplements.map(s => s.label + ' ' + Math.abs(s.diffHours).toFixed(1) + '시간');
+    detail.textContent = parts.join(', ') + ' 보충';
+    msgBox.appendChild(detail);
+    content.appendChild(msgBox);
+  } else if (result.hasManualRecords) {
+    const okBox = document.createElement('div');
+    okBox.style.cssText = 'margin-bottom:14px; padding:14px 16px; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.18); border-radius:10px; font-size:var(--text-body-normal); color:var(--text-primary);';
+    okBox.textContent = '직접 기록하신 내용과 명세서가 일치해요.';
+    content.appendChild(okBox);
+  }
+
+  // ── 비교 테이블 ──
+  const table = document.createElement('table');
+  table.style.cssText = 'width:100%; border-collapse:collapse; font-size:var(--text-body-normal);';
+
+  const thead = document.createElement('thead');
+  const headRow = document.createElement('tr');
+  headRow.style.cssText = 'background:var(--bg-hover); color:var(--text-muted);';
+  ['항목', '직접 기록', '명세서', '보충'].forEach((t, i) => {
+    const th = document.createElement('th');
+    th.style.cssText = 'padding:8px 6px;' + (i > 0 ? ' text-align:right;' : ' text-align:left;');
+    th.textContent = t;
+    headRow.appendChild(th);
+  });
+  thead.appendChild(headRow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+
+  result.items.forEach(item => {
+    if (item.manualHours === 0 && item.payslipHours === 0) return;
+    const diff = item.diffHours; // manual - payslip
+
+    let statusText, statusColor;
+    if (Math.abs(diff) < 0.25) {
+      statusText = '✅';
+      statusColor = 'var(--accent-emerald)';
+    } else if (diff < 0) {
+      // 명세서가 더 많음 → 보충
+      statusText = '+' + Math.abs(diff).toFixed(1) + 'h';
+      statusColor = 'var(--accent-indigo)';
+    } else {
+      // 내가 더 많이 기록 → 추가 기록 (중립)
+      statusText = '+' + diff.toFixed(1) + 'h 직접';
+      statusColor = 'var(--text-muted)';
+    }
+
+    const tr = document.createElement('tr');
+    const td1 = document.createElement('td'); td1.style.padding = '7px 6px'; td1.textContent = item.label;
+    const td2 = document.createElement('td'); td2.style.cssText = 'padding:7px 6px; text-align:right;'; td2.textContent = item.manualHours.toFixed(1) + 'h';
+    const td3 = document.createElement('td'); td3.style.cssText = 'padding:7px 6px; text-align:right;'; td3.textContent = item.payslipHours.toFixed(1) + 'h';
+    const td4 = document.createElement('td'); td4.style.cssText = 'padding:7px 6px; text-align:right; font-weight:600; color:' + statusColor + ';'; td4.textContent = statusText;
+    tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3); tr.appendChild(td4);
+    tbody.appendChild(tr);
+  });
+
+  // 온콜 행
+  const addOncallRow = (label, count, unit) => {
+    if (count <= 0) return;
+    const tr = document.createElement('tr');
+    tr.style.color = 'var(--text-muted)';
+    const td1 = document.createElement('td'); td1.style.padding = '7px 6px'; td1.textContent = label;
+    const td2 = document.createElement('td'); td2.style.cssText = 'padding:7px 6px; text-align:right;'; td2.textContent = count + unit;
+    const td3 = document.createElement('td'); td3.style.cssText = 'padding:7px 6px; text-align:right; font-size:var(--text-body-small);'; td3.textContent = '-';
+    const td4 = document.createElement('td'); td4.style.cssText = 'padding:7px 6px; text-align:right; font-size:var(--text-body-small);'; td4.textContent = '';
+    tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3); tr.appendChild(td4);
+    tbody.appendChild(tr);
+  };
+  addOncallRow('온콜출근', result.oncall.callout, '회');
+  addOncallRow('온콜대기', result.oncall.standby, '일');
+
+  // 수당 합계 행
+  if (result.summary.totalManualPay > 0 || result.summary.totalPayslipPay > 0) {
+    const payDiff = result.summary.diff; // manual - payslip
+    let payStatusText, payStatusColor;
+    if (Math.abs(payDiff) < 1000) {
+      payStatusText = '✅';
+      payStatusColor = 'var(--accent-emerald)';
+    } else if (payDiff < 0) {
+      // 명세서가 더 많음 → 보충분
+      payStatusText = '+' + Math.abs(payDiff).toLocaleString() + '원';
+      payStatusColor = 'var(--accent-indigo)';
+    } else {
+      payStatusText = '+' + payDiff.toLocaleString() + '원 직접';
+      payStatusColor = 'var(--text-muted)';
+    }
+    const tr = document.createElement('tr');
+    tr.style.cssText = 'border-top:2px solid var(--border-glass); font-weight:700;';
+    const td1 = document.createElement('td'); td1.style.padding = '8px 6px'; td1.textContent = '수당 합계';
+    const td2 = document.createElement('td'); td2.style.cssText = 'padding:8px 6px; text-align:right;'; td2.textContent = fmt(result.summary.totalManualPay);
+    const td3 = document.createElement('td'); td3.style.cssText = 'padding:8px 6px; text-align:right;'; td3.textContent = fmt(result.summary.totalPayslipPay);
+    const td4 = document.createElement('td'); td4.style.cssText = 'padding:8px 6px; text-align:right; color:' + payStatusColor + ';'; td4.textContent = payStatusText;
+    tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3); tr.appendChild(td4);
+    tbody.appendChild(tr);
+  }
+
+  table.appendChild(tbody);
+  content.appendChild(table);
+
+  // 수동 기록 없을 때 안내
+  if (!result.hasManualRecords) {
+    const guide = document.createElement('div');
+    guide.style.cssText = 'margin-top:12px; padding:14px 16px; background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.18); border-radius:10px; font-size:var(--text-body-normal); color:var(--text-secondary); text-align:center; line-height:1.6;';
+    const p1 = document.createElement('p');
+    p1.textContent = '명세서 기준으로 이번 달 수당 내역을 정리했어요.';
+    guide.appendChild(p1);
+    const p2 = document.createElement('p');
+    p2.style.cssText = 'font-size:var(--text-body-small); margin-top:4px; color:var(--text-muted);';
+    p2.textContent = '직접 기록을 추가하면 더 정확하게 비교할 수 있어요.';
+    guide.appendChild(p2);
+    content.appendChild(guide);
+  }
+
+  // 시급 정보
+  if (result.hourlyRate > 0) {
+    const rateEl = document.createElement('div');
+    rateEl.style.cssText = 'margin-top:8px; font-size:var(--text-body-small); color:var(--text-muted); text-align:right;';
+    rateEl.textContent = '기준 시급: ' + fmt(result.hourlyRate);
+    content.appendChild(rateEl);
+  }
+}
+
+function toggleOtVerifyDetail() {
+  const content = document.getElementById('otVerifyContent');
+  const arrow = document.getElementById('otVerifyArrow');
+  if (!content) return;
+  const isHidden = content.style.display === 'none';
+  content.style.display = isHidden ? '' : 'none';
+  if (arrow) arrow.style.transform = isHidden ? 'rotate(180deg)' : '';
+}
+
 // 하위 호환
 function renderOtStats(year, month) { renderOtDashboard(year, month); }
 
@@ -3271,6 +3450,55 @@ function _applyPayslipEmployeeInfo(parsed) {
   return patch;
 }
 
+/// ── 명세서 → 시간외 탭 교차 검증 데이터 전파 ──
+function _propagatePayslipToOvertime(parsed, ym) {
+  if (typeof OVERTIME === 'undefined') return;
+
+  const ymKey = `${ym.year}-${String(ym.month).padStart(2, '0')}`;
+
+  // workStats 추출
+  const workStats = (parsed.workStats || []).map(s => ({ name: s.name, value: s.value }));
+
+  // 시간외 관련 수당 금액 추출
+  const otPatterns = [
+    /시간외수당|시간외근무수당/, /야간수당|야간근무수당|야간근무가산/,
+    /휴일수당|휴일근무수당/, /당직비|숙직비/, /야간근무가산금/,
+    /대체근무가산금/, /통상야간/,
+  ];
+  const overtimeItems = [];
+  (parsed.salaryItems || []).forEach(item => {
+    if (otPatterns.some(p => p.test(item.name)) && item.amount > 0) {
+      overtimeItems.push({ name: item.name, amount: item.amount });
+    }
+  });
+
+  // 시급 계산 (프로필 기반)
+  let hourlyRate = 0;
+  if (typeof PROFILE !== 'undefined' && typeof CALC !== 'undefined') {
+    const profile = PROFILE.load();
+    if (profile && profile.jobType && profile.grade) {
+      const serviceYears = profile.hireDate ? PROFILE.calcServiceYears(profile.hireDate) : 0;
+      const wage = CALC.calcOrdinaryWage(
+        profile.jobType, profile.grade, parseInt(profile.year) || 1,
+        {
+          hasMilitary: profile.hasMilitary, hasSeniority: profile.hasSeniority,
+          seniorityYears: profile.hasSeniority ? serviceYears : 0,
+          longServiceYears: serviceYears,
+          adjustPay: parseInt(profile.adjustPay) || 0,
+          upgradeAdjustPay: parseInt(profile.upgradeAdjustPay) || 0,
+          specialPayAmount: parseInt(profile.specialPay) || 0,
+          positionPay: parseInt(profile.positionPay) || 0,
+          workSupportPay: parseInt(profile.workSupportPay) || 0,
+        }
+      );
+      if (wage) hourlyRate = wage.hourlyRate;
+    }
+  }
+
+  OVERTIME.savePayslipData(ymKey, { workStats, overtimeItems, hourlyRate });
+  console.log(`[Overtime] 명세서 데이터 전파 완료: ${ymKey}, workStats ${workStats.length}건, 수당항목 ${overtimeItems.length}건`);
+}
+
 // ── 공통 헬퍼: info 탭의 자동갱신 배너 표시 + 급여탭 링크 숨김 ──
 function _showAutoSyncBanner(ym) {
   const banner = document.getElementById('pfAutoSyncBanner');
@@ -3361,6 +3589,10 @@ async function handlePayslipUpload(file) {
 
     renderPayslip(parsed, ym, profileUpdated, stableRes);
     renderVerification(parsed);
+
+    // ── 시간외 탭 교차 검증용 데이터 전파 ──
+    _propagatePayslipToOvertime(parsed, ym);
+
     // 급여명세서 관리 뷰 갱신 (업로드한 월 선택)
     const mgmtContainer = document.getElementById('payslipMgmtView');
     if (mgmtContainer) mgmtContainer.dataset.activeMonth = `${ym.year}_${ym.month}_${ym.type || '급여'}`;

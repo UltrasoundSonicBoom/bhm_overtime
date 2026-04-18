@@ -434,4 +434,145 @@ const OVERTIME = {
         };
         return colors[type] || 'var(--text-muted)';
     },
+
+    // ── 명세서 데이터 저장/조회 (교차 검증용) ──
+
+    get PAYSLIP_STORAGE_KEY() {
+        return window.getUserStorageKey ? window.getUserStorageKey('overtimePayslipData') : 'overtimePayslipData';
+    },
+
+    _loadPayslipAll() {
+        try {
+            return JSON.parse(localStorage.getItem(this.PAYSLIP_STORAGE_KEY)) || {};
+        } catch { return {}; }
+    },
+
+    _savePayslipAll(data) {
+        localStorage.setItem(this.PAYSLIP_STORAGE_KEY, JSON.stringify(data));
+    },
+
+    /**
+     * 명세서 파싱 결과를 교차 검증용으로 저장 (upsert)
+     * @param {string} ym - 'YYYY-MM'
+     * @param {object} data - { workStats, overtimeItems, hourlyRate }
+     *   workStats: [{ name, value }]  (salary-parser workStats)
+     *   overtimeItems: [{ name, amount }]  (시간외/야간/휴일 수당 금액)
+     *   hourlyRate: number (역계산 기준 시급)
+     */
+    savePayslipData(ym, data) {
+        const all = this._loadPayslipAll();
+        all[ym] = { ...data, savedAt: new Date().toISOString() };
+        this._savePayslipAll(all);
+    },
+
+    getPayslipData(year, month) {
+        const all = this._loadPayslipAll();
+        return all[this._monthKey(year, month)] || null;
+    },
+
+    /**
+     * 교차 검증: 수동 기록 vs 명세서 데이터
+     * @returns {{ items, summary, alerts }}
+     */
+    crossVerify(year, month) {
+        const manualStats = this.calcMonthlyStats(year, month);
+        const payslipData = this.getPayslipData(year, month);
+
+        if (!payslipData) return null;
+
+        const ws = payslipData.workStats || [];
+        const hourlyRate = payslipData.hourlyRate || 0;
+        const rates = (typeof DATA !== 'undefined') ? DATA.allowances.overtimeRates : { extended: 1.5, night: 2.0, holiday: 1.5 };
+
+        // workStats에서 시간 추출
+        const wsMap = {};
+        ws.forEach(s => { wsMap[s.name] = s.value; });
+
+        const psExtH = wsMap['시간외근무시간'] || 0;
+        const psNightH = wsMap['야간근무시간'] || wsMap['야간근로시간'] || 0;
+        const psHolidayH = wsMap['휴일근무시간'] || 0;
+
+        // 수동 기록 합산 (모든 유형의 breakdown 합산)
+        const records = this.getMonthRecords(year, month);
+        let manualExt = 0, manualNight = 0, manualHoliday = 0, manualHolidayNight = 0;
+        let oncallStandbyCount = 0, oncallCalloutCount = 0;
+        records.forEach(r => {
+            manualExt += r.breakdown?.extended || 0;
+            manualNight += r.breakdown?.night || 0;
+            manualHoliday += r.breakdown?.holiday || 0;
+            manualHolidayNight += r.breakdown?.holidayNight || 0;
+            if (r.type === 'oncall_standby') oncallStandbyCount++;
+            if (r.type === 'oncall_callout') oncallCalloutCount++;
+        });
+
+        // 명세서 수당 금액 (salaryItems에서)
+        const otItems = payslipData.overtimeItems || [];
+        const otMap = {};
+        otItems.forEach(i => { otMap[i.name] = i.amount; });
+
+        const psExtPay = otMap['시간외수당'] || otMap['시간외근무수당'] || 0;
+        const psNightPay = otMap['야간수당'] || otMap['야간근무수당'] || otMap['야간근무가산'] || 0;
+        const psHolidayPay = otMap['휴일수당'] || otMap['휴일근무수당'] || 0;
+
+        // 비교 항목 생성
+        const items = [
+            {
+                label: '연장근무',
+                manualHours: manualExt,
+                payslipHours: psExtH,
+                diffHours: manualExt - psExtH,
+                manualPay: Math.round(manualExt * hourlyRate * rates.extended),
+                payslipPay: psExtPay,
+            },
+            {
+                label: '야간근무',
+                manualHours: manualNight + manualHolidayNight,
+                payslipHours: psNightH,
+                diffHours: (manualNight + manualHolidayNight) - psNightH,
+                manualPay: Math.round((manualNight + manualHolidayNight) * hourlyRate * rates.night),
+                payslipPay: psNightPay,
+            },
+            {
+                label: '휴일근무',
+                manualHours: manualHoliday,
+                payslipHours: psHolidayH,
+                diffHours: manualHoliday - psHolidayH,
+                manualPay: Math.round(manualHoliday * hourlyRate * rates.holiday),
+                payslipPay: psHolidayPay,
+            },
+        ];
+
+        // 합계
+        const totalManualPay = manualStats.totalPay;
+        const totalPayslipPay = psExtPay + psNightPay + psHolidayPay;
+
+        // 알림 생성
+        const alerts = [];
+        items.forEach(item => {
+            if (Math.abs(item.diffHours) >= 0.5) {
+                const dir = item.diffHours > 0 ? '많음' : '부족';
+                alerts.push(`${item.label}: 내 기록이 명세서보다 ${Math.abs(item.diffHours).toFixed(1)}시간 ${dir}`);
+            }
+        });
+        if (totalManualPay > 0 && totalPayslipPay > 0) {
+            const payDiff = totalManualPay - totalPayslipPay;
+            if (Math.abs(payDiff) >= 1000) {
+                alerts.push(`수당 합계: ${payDiff > 0 ? '명세서가 ' + Math.abs(payDiff).toLocaleString() + '원 부족' : '명세서가 ' + Math.abs(payDiff).toLocaleString() + '원 초과'}`);
+            }
+        }
+
+        return {
+            items,
+            oncall: { standby: oncallStandbyCount, callout: oncallCalloutCount },
+            summary: {
+                totalManualPay,
+                totalPayslipPay,
+                diff: totalManualPay - totalPayslipPay,
+            },
+            alerts,
+            hourlyRate,
+            hasManualRecords: records.length > 0,
+            hasPayslipData: true,
+        };
+    },
 };
