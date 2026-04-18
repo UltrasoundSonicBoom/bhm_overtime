@@ -106,6 +106,8 @@ const els = {
   contentResetBtn: document.getElementById('contentResetBtn'),
   contentStatusActions: document.getElementById('contentStatusActions'),
   contentRevisions: document.getElementById('contentRevisions'),
+  healthGrid: document.getElementById('healthGrid'),
+  healthAlerts: document.getElementById('healthAlerts'),
 };
 
 if (els.yearInput) els.yearInput.value = String(state.year);
@@ -908,6 +910,104 @@ async function changeContentStatus(newStatus) {
   }
 }
 
+// ── 데이터 건강 모니터링 카드 ──
+function renderHealthMonitor() {
+  if (!els.healthGrid || !window.HealthMonitor) return;
+  var result = window.HealthMonitor.scan();
+  var statusIcon = { ok: '\u2705', warn: '\u26A0\uFE0F', error: '\u274C' };
+  var accentClass = { ok: ' accent-green', warn: '', error: ' accent-red' };
+
+  var cards = [
+    { label: '\uC885\uD569 \uC810\uC218', value: result.score + '%', note: result.overall === 'ok' ? '\uC815\uC0C1' : result.overall === 'warn' ? '\uD655\uC778 \uD544\uC694' : '\uC870\uCE58 \uD544\uC694', status: result.overall },
+    { label: '\uD504\uB85C\uD544 \uC644\uC804\uC131', value: result.profile.label, note: result.profile.status === 'ok' ? '\uD544\uC218 \uD56D\uBAA9 \uC644\uB8CC' : result.profile.missing.length + '\uAC74 \uB204\uB77D', status: result.profile.status },
+    { label: '\uC2DC\uAC04\uC678 \uC815\uD569\uC131', value: result.overtime.label, note: result.overtime.issues.length > 0 ? result.overtime.issues.length + '\uAC74 \uC774\uC0C1' : '\uC815\uC0C1', status: result.overtime.status },
+    { label: '\uB3D9\uAE30\uD654 \uC0C1\uD0DC', value: result.sync.label, note: result.sync.status === 'ok' ? '\uCD5C\uADFC \uB3D9\uAE30\uD654' : result.sync.status === 'warn' ? '\uC7A5\uAE30 \uBBF8\uC2E4\uD589' : '\uD655\uC778 \uD544\uC694', status: result.sync.status },
+    { label: '\uC0C1\uC218 \uC720\uD6A8\uC131', value: result.constants.label, note: result.constants.issues.length > 0 ? result.constants.issues.length + '\uAC74 \uC774\uC0C1' : '\uC815\uC0C1', status: result.constants.status },
+  ];
+
+  els.healthGrid.textContent = '';
+  cards.forEach(function (card) {
+    var article = document.createElement('article');
+    article.className = 'metric-card' + (accentClass[card.status] || '');
+    var labelEl = document.createElement('div');
+    labelEl.className = 'metric-label';
+    labelEl.textContent = statusIcon[card.status] + ' ' + card.label;
+    var valueEl = document.createElement('div');
+    valueEl.className = 'metric-value';
+    valueEl.textContent = card.value;
+    var noteEl = document.createElement('div');
+    noteEl.className = 'metric-note';
+    noteEl.textContent = card.note;
+    article.appendChild(labelEl);
+    article.appendChild(valueEl);
+    article.appendChild(noteEl);
+    els.healthGrid.appendChild(article);
+  });
+}
+
+// ── 데이터 무결성 경고 ──
+var _dismissedAlerts = new Set();
+
+function renderHealthAlerts() {
+  if (!els.healthAlerts || !window.HealthMonitor) return;
+  var alerts = window.HealthMonitor.getAlerts();
+
+  // 이미 닫은 알림 제외
+  alerts = alerts.filter(function (a) { return !_dismissedAlerts.has(a.title); });
+
+  els.healthAlerts.textContent = '';
+  if (alerts.length === 0) {
+    els.healthAlerts.style.display = 'none';
+    return;
+  }
+  els.healthAlerts.style.display = '';
+
+  var severityClass = { error: 'alert-error', warn: 'alert-warn', info: 'alert-info' };
+
+  alerts.forEach(function (alert) {
+    var div = document.createElement('div');
+    div.className = 'alert ' + (severityClass[alert.severity] || 'alert-info');
+    div.style.cssText = 'display:flex;align-items:flex-start;gap:10px;cursor:pointer;';
+    div.title = '\uD074\uB9AD\uD558\uC5EC \uB2EB\uAE30';
+
+    var textWrap = document.createElement('div');
+    textWrap.style.flex = '1';
+
+    var titleEl = document.createElement('strong');
+    titleEl.textContent = alert.title;
+
+    var msgEl = document.createElement('div');
+    msgEl.style.cssText = 'font-size:13px;margin-top:2px;';
+    msgEl.textContent = alert.message;
+
+    if (alert.action) {
+      var actionEl = document.createElement('div');
+      actionEl.style.cssText = 'font-size:12px;margin-top:4px;opacity:0.8;';
+      actionEl.textContent = '\u2192 ' + alert.action;
+      textWrap.appendChild(titleEl);
+      textWrap.appendChild(msgEl);
+      textWrap.appendChild(actionEl);
+    } else {
+      textWrap.appendChild(titleEl);
+      textWrap.appendChild(msgEl);
+    }
+
+    var closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.textContent = '\u2715';
+    closeBtn.style.cssText = 'background:none;border:none;font-size:16px;cursor:pointer;color:inherit;opacity:0.6;padding:0;line-height:1;';
+    closeBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      _dismissedAlerts.add(alert.title);
+      renderHealthAlerts();
+    });
+
+    div.appendChild(textWrap);
+    div.appendChild(closeBtn);
+    els.healthAlerts.appendChild(div);
+  });
+}
+
 function renderAll() {
   renderSummary();
   renderQuickFacts();
@@ -921,11 +1021,17 @@ function renderAll() {
   renderReviewList();
   renderAuditLogs();
   syncSurfaceNav();
+  renderHealthMonitor();
+  renderHealthAlerts();
 }
 
 async function loadPublicData() {
-  const data = await apiJson(`/data/nurse-regulation?year=${state.year}`);
-  state.regulation = data;
+  try {
+    const data = await apiJson(`/data/nurse-regulation?year=${state.year}`);
+    state.regulation = data;
+  } catch (_) {
+    state.regulation = null;
+  }
 }
 
 async function loadFaqs() {
@@ -1235,3 +1341,12 @@ async function initApp() {
 initApp().catch((error) => {
   setResult(error instanceof Error ? error.message : String(error));
 });
+
+// ── 건강 모니터링 자동 갱신 (30초) ──
+setInterval(function () {
+  if (state.surface === 'dashboard' && window.HealthMonitor) {
+    window.HealthMonitor.invalidateCache();
+    renderHealthMonitor();
+    renderHealthAlerts();
+  }
+}, 30000);

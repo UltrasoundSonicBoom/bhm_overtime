@@ -3,9 +3,10 @@
 // Phase 2: Drive 백업 / 복원 / 충돌 해결
 // ============================================================
 // Drive 파일 구조:
-//   leave.json      → leaveRecords
-//   overtime.json   → overtimeRecords
-//   profile.json    → bhm_hr_profile
+//   leave.json               → leaveRecords
+//   overtime.json             → overtimeRecords
+//   profile.json              → bhm_hr_profile
+//   overtime_payslip.json     → overtimePayslipData (명세서 보충 데이터)
 //   payslips/payslip_YYYY_MM.json → payslip 파싱 결과
 //
 // localStorage 키 → Drive 파일 매핑은 DATA_MAP에 정의됨
@@ -21,7 +22,8 @@ window.SyncManager = (function () {
   var DATA_MAP = {
     leave:    { localKey: 'leaveRecords',     driveFile: 'leave.json' },
     overtime: { localKey: 'overtimeRecords',  driveFile: 'overtime.json' },
-    profile:  { localKey: 'bhm_hr_profile',   driveFile: 'profile.json' }
+    profile:  { localKey: 'bhm_hr_profile',   driveFile: 'profile.json' },
+    overtimePayslip: { localKey: 'overtimePayslipData', driveFile: 'overtime_payslip.json' }
     // payslip: 별도 처리 (enqueuePush('payslip', year, month) 형태)
     // applock: 별도 처리 (_pushAppLock / _pullAppLock) — PIN 필드만 분리 동기화
   };

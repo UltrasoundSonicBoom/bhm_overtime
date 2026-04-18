@@ -503,6 +503,7 @@ const OVERTIME = {
         const all = this._loadPayslipAll();
         all[ym] = { ...data, savedAt: new Date().toISOString() };
         this._savePayslipAll(all);
+        if (window.SyncManager) window.SyncManager.enqueuePush('overtimePayslip');
     },
 
     getPayslipData(year, month) {

@@ -174,6 +174,14 @@ function calcMonthEstimate(year, month) {
     }
   });
 
+  // 명세서 보충분 반영 (직접 기록 못한 시간을 명세서에서 보충)
+  const supp = otStats.payslipSupplement;
+  if (supp) {
+    extHours += supp.extended || 0;
+    nightHours += supp.night || 0;
+    holHours += supp.holiday || 0;
+  }
+
   const params = {
     jobType: profile.jobType,
     grade: profile.grade,
@@ -231,7 +239,7 @@ function calcYearlyEstimate(year) {
       deductions: est.result.공제총액,
       net: est.result.실지급액,
       flags: est.flags,
-      otPay: est.otStats.totalPay
+      otPay: est.otStats.totalPay + (est.otStats.payslipSupplement ? est.otStats.payslipSupplement.pay : 0)
     });
   }
   return results;
@@ -353,8 +361,9 @@ function renderPayEstHero() {
   if (flags.tags.length > 0) {
     tagsHtml = flags.tags.map(t => `<span class="pe-tag">${escapeHtml(t)}</span>`).join('');
   }
-  if (otStats.totalPay > 0) {
-    tagsHtml += `<span class="pe-tag ot">시간외·온콜 ${fmtW(otStats.totalPay)} 반영</span>`;
+  const effectiveOtPay = otStats.totalPay + (otStats.payslipSupplement ? otStats.payslipSupplement.pay : 0);
+  if (effectiveOtPay > 0) {
+    tagsHtml += `<span class="pe-tag ot">시간외·온콜 ${fmtW(effectiveOtPay)} 반영</span>`;
   }
 
   if (hasActual) {
