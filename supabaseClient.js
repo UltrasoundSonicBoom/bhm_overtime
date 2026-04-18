@@ -138,15 +138,14 @@ var SupabaseUserSync = {
 
     // ── signInWithIdToken ──
     // Google ID 토큰(accounts.id credential)으로 Supabase 세션 확립.
+    // nonce: FedCM replay 방지용 (raw nonce, Google initialize에는 hashed 버전 전달됨).
     // 실패해도 앱은 계속 동작 (Drive가 primary).
-    signInWithIdToken: function (idToken) {
+    signInWithIdToken: function (idToken, nonce) {
         if (!supabaseClient) return Promise.resolve(null);
-        return supabaseClient.auth.signInWithIdToken({
-            provider: 'google',
-            token: idToken
-        }).then(function (result) {
+        var params = { provider: 'google', token: idToken };
+        if (nonce) params.nonce = nonce;
+        return supabaseClient.auth.signInWithIdToken(params).then(function (result) {
             if (result.error) {
-                // "provider is not enabled" → Supabase Dashboard 설정 필요
                 console.warn('[SupabaseUserSync] signIn failed:', result.error.message);
                 return null;
             }

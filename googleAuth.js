@@ -98,15 +98,80 @@ window.GoogleAuth = (function () {
 
   // ── _attemptSupabaseAuth ──
   // GIS 로그인 성공 후 Supabase 세션을 확립한다.
-  // google.accounts.id.prompt()는 redirect 폴백이 발생할 경우
-  // GCP 미등록 Supabase 콜백 URL로 redirect_uri_mismatch를 일으키므로 사용하지 않는다.
-  // 대신 google.accounts.id.initialize만 등록해두고,
-  // GCP Authorized redirect URIs에 Supabase 콜백 URL이 추가된 뒤 prompt()를 쓸 수 있다.
-  // → 현재는 no-op. SupabaseUserSync 구조는 유지되어 수동 호출이 가능하다.
-  // _attemptSupabaseAuth: 현재 비활성 (no-op)
-  // google.accounts.id.prompt()가 GIS token flow와 redirect_uri 충돌을 일으킴.
-  // Supabase auth는 별도 signInWithOAuth redirect flow로 구현 예정.
-  function _attemptSupabaseAuth() {}
+  // FedCM 모드 (use_fedcm_for_prompt: true) 사용 — 브라우저 네이티브 UI, redirect 없음.
+  // 이전 시도: google.accounts.id.prompt()의 redirect 폴백으로 redirect_uri_mismatch 발생.
+  // 해결: FedCM 강제 + nonce 기반 replay 방지.
+  function _generateNonce() {
+    var bytes = new Uint8Array(32);
+    crypto.getRandomValues(bytes);
+    var nonce = btoa(String.fromCharCode.apply(null, bytes))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    return crypto.subtle.digest('SHA-256', new TextEncoder().encode(nonce))
+      .then(function (hashBuffer) {
+        var bytes = Array.prototype.slice.call(new Uint8Array(hashBuffer));
+        var hashedNonce = bytes.map(function (b) {
+          return ('0' + b.toString(16)).slice(-2);
+        }).join('');
+        return { nonce: nonce, hashedNonce: hashedNonce };
+      });
+  }
+
+  function _attemptSupabaseAuth() {
+    if (!window.google || !window.google.accounts || !window.google.accounts.id) return;
+    if (!window.SupabaseUserSync) return;
+
+    window.SupabaseUserSync.getSession().then(function (existingUser) {
+      if (existingUser) {
+        console.log('[GoogleAuth] Supabase 세션 이미 확립됨:', existingUser.id);
+        return;
+      }
+      _triggerFedCM();
+    }).catch(function (e) {
+      console.warn('[GoogleAuth] getSession 실패:', e);
+    });
+  }
+
+  function _triggerFedCM() {
+    _generateNonce().then(function (result) {
+      try {
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          auto_select: true,
+          use_fedcm_for_prompt: true,
+          nonce: result.hashedNonce,
+          callback: function (response) {
+            if (!response.credential) {
+              console.warn('[GoogleAuth] FedCM credential 없음');
+              return;
+            }
+            window.SupabaseUserSync.signInWithIdToken(response.credential, result.nonce)
+              .then(function (user) {
+                if (user) {
+                  console.log('[GoogleAuth] Supabase 세션 확립:', user.id);
+                  if (window.SyncManager && typeof window.SyncManager.fullSync === 'function') {
+                    window.SyncManager.fullSync();
+                  }
+                } else {
+                  console.warn('[GoogleAuth] Supabase signInWithIdToken 실패 (user null)');
+                }
+              });
+          }
+        });
+        window.google.accounts.id.prompt(function (notification) {
+          if (notification.isNotDisplayed && notification.isNotDisplayed()) {
+            console.warn('[GoogleAuth] FedCM 미표시:', notification.getNotDisplayedReason && notification.getNotDisplayedReason());
+          }
+          if (notification.isSkippedMoment && notification.isSkippedMoment()) {
+            console.warn('[GoogleAuth] FedCM 스킵:', notification.getSkippedReason && notification.getSkippedReason());
+          }
+        });
+      } catch (e) {
+        console.warn('[GoogleAuth] _triggerFedCM 실패:', e);
+      }
+    }).catch(function (e) {
+      console.warn('[GoogleAuth] nonce 생성 실패:', e);
+    });
+  }
 
   // ── fetchUserInfo ──
   function fetchUserInfo(token) {
