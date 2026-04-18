@@ -65,27 +65,6 @@ window.GoogleAuth = (function () {
     toast._hideTimer = setTimeout(function () { toast.style.display = 'none'; }, 4000);
   }
 
-  function _isLocalhost() {
-    return location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-  }
-
-  function isReviewModeActive() {
-    if (!CONFIG.reviewModeEnabled) return true;
-    if (CONFIG.allowLocalhostInReviewMode && _isLocalhost()) return true;
-    var params = new URLSearchParams(window.location.search);
-    return params.get(CONFIG.reviewQueryParam || 'google_beta') === String(CONFIG.reviewQueryValue || '1');
-  }
-
-  function shouldExposeGoogleAuth() {
-    return GOOGLE_AUTH_ENABLED && isReviewModeActive();
-  }
-
-  function isAllowlistedEmail(email) {
-    if (!CONFIG.allowlistEnabled) return true;
-    var list = CONFIG.allowlistEmails || [];
-    return !!email && list.indexOf(email) !== -1;
-  }
-
   // ── 내부 헬퍼 ──
   function _isTokenValid() {
     return !!_accessToken && Date.now() < _tokenExpiry - 60000; // 1분 여유
@@ -140,16 +119,6 @@ window.GoogleAuth = (function () {
     }
 
     fetchUserInfo(_accessToken).then(function (userInfo) {
-      if (!isAllowlistedEmail(userInfo.email)) {
-        _clearUser();
-        updateAuthUI(null);
-        if (typeof updateDriveBackupUI === 'function') updateDriveBackupUI();
-        if (typeof updateCalendarUI === 'function') updateCalendarUI();
-        _showToast('현재 Google 연동은 리뷰/QA 계정만 사용할 수 있어요.');
-        if (onError) onError('not_allowlisted');
-        return;
-      }
-
       _saveUser(userInfo);
       updateAuthUI(userInfo);
       if (onSuccess) onSuccess(userInfo);
@@ -161,10 +130,7 @@ window.GoogleAuth = (function () {
 
   // ── init ──
   function init() {
-    // 리뷰 모드가 아니면 로그인 기능만 비활성화 (UI는 유지 — 헤더 레이아웃 안정성)
-    if (!shouldExposeGoogleAuth()) {
-      return;
-    }
+    if (!GOOGLE_AUTH_ENABLED) return;
     if (!window.google || !window.google.accounts) {
       console.warn('[GoogleAuth] GIS SDK not loaded yet');
       return;
@@ -199,7 +165,7 @@ window.GoogleAuth = (function () {
 
     // 저장된 사용자 정보로 UI 복원 (token은 없지만 이름/아바타 표시)
     var settings = loadSettings();
-    if (settings.googleSub && isAllowlistedEmail(settings.googleEmail)) {
+    if (settings.googleSub) {
       updateAuthUI({
         sub: settings.googleSub,
         email: settings.googleEmail,
@@ -207,9 +173,6 @@ window.GoogleAuth = (function () {
         picture: settings.googlePicture
       });
     } else {
-      if (settings.googleSub && settings.googleSub !== 'demo' && !isAllowlistedEmail(settings.googleEmail)) {
-        _clearUser();
-      }
       updateAuthUI(null);
     }
 
@@ -241,10 +204,6 @@ window.GoogleAuth = (function () {
 
   // ── signIn ──
   function signIn() {
-    if (!shouldExposeGoogleAuth()) {
-      _showToast('현재 Google 연동은 리뷰 모드에서만 열려 있어요.');
-      return;
-    }
     if (!_tokenClient) {
       console.warn('[GoogleAuth] init()가 먼저 호출되어야 합니다.');
       return;
@@ -415,9 +374,6 @@ window.GoogleAuth = (function () {
     requestDriveScope: requestDriveScope,
     requestCalendarScope: requestCalendarScope,
     hasScope: hasScope,
-    isReviewModeActive: isReviewModeActive,
-    shouldExposeGoogleAuth: shouldExposeGoogleAuth,
-    isAllowlistedEmail: isAllowlistedEmail,
     // 테스트용 내부 접근
     _fetchUserInfo: fetchUserInfo
   };
