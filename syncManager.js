@@ -401,6 +401,9 @@ window.SyncManager = (function () {
   var _lastResumePull = 0;
   function pullOnResume() {
     if (!window.GoogleAuth || !window.GoogleAuth.isSignedIn()) return;
+    // 페이지 로드 중 focus 이벤트로 발화할 때 GIS init이 아직 안 끝났을 수 있음.
+    // 이 경우 조용히 스킵 — init 완료 후 다음 focus 이벤트에서 정상 동작.
+    if (typeof window.GoogleAuth.isReady === 'function' && !window.GoogleAuth.isReady()) return;
     if (!window.GoogleDriveStore) return;
     var now = Date.now();
     if (now - _lastResumePull < RESUME_COOLDOWN_MS) return;

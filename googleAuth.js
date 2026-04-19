@@ -390,11 +390,20 @@ window.GoogleAuth = (function () {
     return _grantedScopes.indexOf(scope) !== -1;
   }
 
+  // ── isReady ──
+  // GIS token client 가 init 완료되어 token 요청 가능한 상태인지.
+  // pullOnResume 같은 이벤트 핸들러가 페이지 로드 중에 발화할 때
+  // 아직 init 안 됐으면 Drive 호출을 스킵하기 위함 (race condition 방지).
+  function isReady() {
+    return !!_tokenClient;
+  }
+
   return {
     init: init,
     signIn: signIn,
     signOut: signOut,
     isSignedIn: isSignedIn,
+    isReady: isReady,
     hasValidToken: hasValidToken,
     hasAccountLink: hasAccountLink,
     getUser: getUser,
