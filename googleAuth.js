@@ -33,9 +33,8 @@ function saveSettings(patch) {
 window.loadSettings = loadSettings;
 window.saveSettings = saveSettings;
 
-// ── getUserStorageKey 재정의 ──
-// supabaseClient.js의 함수를 덮어써서 Google sub 기반 키 사용
-// Phase 5 이후 supabaseClient.js에서 중복 제거
+// ── getUserStorageKey ──
+// Google sub 기반으로 사용자별 localStorage 키 namespace 생성
 function getUserStorageKey(baseKey) {
   var settings = loadSettings();
   var uid = settings.googleSub || 'guest';
@@ -96,77 +95,8 @@ window.GoogleAuth = (function () {
     _grantedScopes = [];
   }
 
-  // ── _attemptSupabaseAuth ──
-  // GIS 로그인 성공 후 Supabase 세션을 확립한다.
-  // FedCM 모드 (use_fedcm_for_prompt: true) 사용 — 브라우저 네이티브 UI, redirect 없음.
-  // 이전 시도: google.accounts.id.prompt()의 redirect 폴백으로 redirect_uri_mismatch 발생.
-  // 해결: FedCM 강제 + nonce 기반 replay 방지.
-  function _generateNonce() {
-    var bytes = new Uint8Array(32);
-    crypto.getRandomValues(bytes);
-    var nonce = btoa(String.fromCharCode.apply(null, bytes))
-      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-    return crypto.subtle.digest('SHA-256', new TextEncoder().encode(nonce))
-      .then(function (hashBuffer) {
-        var bytes = Array.prototype.slice.call(new Uint8Array(hashBuffer));
-        var hashedNonce = bytes.map(function (b) {
-          return ('0' + b.toString(16)).slice(-2);
-        }).join('');
-        return { nonce: nonce, hashedNonce: hashedNonce };
-      });
-  }
-
-  function _attemptSupabaseAuth() {
-    if (!window.google || !window.google.accounts || !window.google.accounts.id) return;
-    if (!window.SupabaseUserSync) return;
-
-    window.SupabaseUserSync.getSession().then(function (existingUser) {
-      if (existingUser) {
-        console.log('[GoogleAuth] Supabase 세션 이미 확립됨:', existingUser.id);
-        return;
-      }
-      _triggerFedCM();
-    }).catch(function (e) {
-      console.warn('[GoogleAuth] getSession 실패:', e);
-    });
-  }
-
-  function _triggerFedCM() {
-    _generateNonce().then(function (result) {
-      try {
-        window.google.accounts.id.initialize({
-          client_id: GOOGLE_CLIENT_ID,
-          auto_select: true,
-          use_fedcm_for_prompt: true,
-          nonce: result.hashedNonce,
-          callback: function (response) {
-            if (!response.credential) {
-              console.warn('[GoogleAuth] FedCM credential 없음');
-              return;
-            }
-            window.SupabaseUserSync.signInWithIdToken(response.credential, result.nonce)
-              .then(function (user) {
-                if (user) {
-                  console.log('[GoogleAuth] Supabase 세션 확립:', user.id);
-                  if (window.SyncManager && typeof window.SyncManager.fullSync === 'function') {
-                    window.SyncManager.fullSync();
-                  }
-                } else {
-                  console.warn('[GoogleAuth] Supabase signInWithIdToken 실패 (user null)');
-                }
-              });
-          }
-        });
-        // FedCM 모드에서는 notification.isNotDisplayed / isSkippedMoment 가 deprecated (Chrome 145+ 제거 예정)
-        // 실패 원인은 initialize callback 미발동 또는 _triggerFedCM catch에서 감지
-        window.google.accounts.id.prompt();
-      } catch (e) {
-        console.warn('[GoogleAuth] _triggerFedCM 실패:', e);
-      }
-    }).catch(function (e) {
-      console.warn('[GoogleAuth] nonce 생성 실패:', e);
-    });
-  }
+  // 데이터는 사용자의 Google Drive에 직접 저장된다 (개인정보보호 정책).
+  // Supabase 세션 확립이나 백업 동기화는 사용하지 않는다 (2026-04-19 결정).
 
   // ── fetchUserInfo ──
   function fetchUserInfo(token) {
@@ -236,8 +166,6 @@ window.GoogleAuth = (function () {
 
         // 큐가 없으면 초기 로그인 → userInfo fetch + 전체 초기화
         var wasDemo = localStorage.getItem('bhm_demo_mode') === '1';
-        // Supabase 세션 확립 (비동기, 실패해도 앱 계속 동작)
-        _attemptSupabaseAuth();
         fetchUserInfo(_accessToken).then(function (userInfo) {
           _saveUser(userInfo);
           if (typeof updateAuthUI === 'function') updateAuthUI(userInfo);
@@ -327,7 +255,6 @@ window.GoogleAuth = (function () {
   // 1) 진행 중인 Drive push 큐를 즉시 취소 (C4: 계정 전환 경합 차단)
   // 2) revoke 가 실제로 전송된 뒤 reload (C3: 토큰 원격 무효화 보장)
   //    - Promise 콜백 경로가 우선, 페이지 종료 시 sendBeacon 으로 백업
-  // 3) Supabase 세션도 함께 종료 (I4: 이중 auth 상태 불일치 제거)
   function signOut() {
     // 데모 모드에서 연결 해제: exitDemoMode + sessionStorage 정리 후 clean URL 이동
     if (localStorage.getItem('bhm_demo_mode') === '1') {
@@ -347,13 +274,6 @@ window.GoogleAuth = (function () {
     var tokenToRevoke = _accessToken;
     _accessToken = null;
     _tokenExpiry = 0;
-
-    // Supabase 세션 정리 (실패해도 흐름 진행)
-    if (window.SupabaseUserSync) {
-      window.SupabaseUserSync.signOut().catch(function () {});
-    } else if (window.SupabaseClient && window.SupabaseClient.auth) {
-      try { window.SupabaseClient.auth.signOut(); } catch (e) {}
-    }
 
     function finalize() {
       _clearUser();

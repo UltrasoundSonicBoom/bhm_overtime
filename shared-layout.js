@@ -135,8 +135,8 @@
     signout.onclick = function () {
       if (window.GoogleAuth && typeof window.GoogleAuth.signOut === 'function') {
         window.GoogleAuth.signOut();
-      } else if (window.SupabaseClient && window.SupabaseClient.auth) {
-        window.SupabaseClient.auth.signOut().finally(function () { window.location.reload(); });
+      } else {
+        window.location.reload();
       }
     };
     info.appendChild(signout);

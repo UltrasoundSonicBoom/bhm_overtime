@@ -132,50 +132,8 @@ window.SyncManager = (function () {
     toast._t = setTimeout(function () { toast.style.display = 'none'; }, duration || 3000);
   }
 
-  // ── Supabase 병렬 동기화 헬퍼 ──────────────────────────────
-  // Drive가 primary. Supabase는 병렬 백업 + 서버-사이드 RLS.
-  // 실패해도 경고만 출력하고 Drive 흐름은 계속 진행한다.
-  var _SB_TYPE_MAP = {
-    leave: 'leave', overtime: 'overtime',
-    profile: 'profile', overtimePayslip: 'overtime_payslip'
-  };
-
-  function _pushToSupabase(dataType, data) {
-    if (!window.SupabaseUserSync) return;
-    var sbType = _SB_TYPE_MAP[dataType];
-    if (!sbType) return;
-    window.SupabaseUserSync.push(sbType, data).then(function (ok) {
-      if (!ok) console.warn('[SyncManager] Supabase push skipped (no session or error):', dataType);
-    });
-  }
-
-  function _pullFromSupabase() {
-    if (!window.SupabaseUserSync) return Promise.resolve(null);
-    return window.SupabaseUserSync.pullAll();
-  }
-
-  function _applySupabaseRows(rows) {
-    if (!Array.isArray(rows) || rows.length === 0) return [];
-    var localKeyMap = {};
-    Object.keys(_SB_TYPE_MAP).forEach(function (k) {
-      localKeyMap[_SB_TYPE_MAP[k]] = DATA_MAP[k] && DATA_MAP[k].localKey;
-    });
-    var restored = [];
-    rows.forEach(function (row) {
-      var baseKey = localKeyMap[row.data_type];
-      if (!baseKey || !row.data) return;
-      var localKey = window.getUserStorageKey ? window.getUserStorageKey(baseKey) : baseKey + '_guest';
-      var remoteTime = row.updated_at ? new Date(row.updated_at).getTime() : 0;
-      var localTime = getLocalEditTime(localKey);
-      if (!localStorage.getItem(localKey) || remoteTime > localTime) {
-        localStorage.setItem(localKey, JSON.stringify(row.data));
-        if (row.updated_at) localStorage.setItem('bhm_lastEdit_' + localKey, row.updated_at);
-        restored.push(row.data_type);
-      }
-    });
-    return restored;
-  }
-  // ───────────────────────────────────────────────────────────
+  // 데이터는 Google Drive 단독 저장 (개인정보보호 정책).
+  // 이전에는 Supabase 병렬 백업이 있었지만 2026-04-19에 제거.
 
   // ── enqueuePush ──
   // 3초 디바운스. dataType = 'leave'|'overtime'|'profile'|'payslip'
@@ -217,8 +175,6 @@ window.SyncManager = (function () {
     return window.GoogleDriveStore.writeJsonFile(map.driveFile, _wrap(data, editedAt)).then(function () {
       _lastSync = new Date();
       _updateSyncLabel();
-      // Supabase 병렬 백업 (fire-and-forget)
-      _pushToSupabase(dataType, data);
     });
   }
 
@@ -310,15 +266,7 @@ window.SyncManager = (function () {
 
     if (!settings.driveEnabled) {
       if (typeof updateDriveBackupUI === 'function') updateDriveBackupUI();
-      // Drive 미사용 → Supabase에서 pull 시도 (있으면 복원)
-      return _pullFromSupabase().then(function (rows) {
-        if (!rows) return;
-        var restored = _applySupabaseRows(rows);
-        if (restored.length > 0) {
-          _showToast('☁️ 서버에서 데이터를 복원했어요.', 4000);
-          _refreshUI();
-        }
-      }).catch(function () {});
+      return Promise.resolve();
     }
 
     return Promise.all([
@@ -339,22 +287,8 @@ window.SyncManager = (function () {
       _updateSyncLabel();
       if (typeof updateDriveBackupUI === 'function') updateDriveBackupUI();
     }).catch(function (err) {
-      console.warn('[SyncManager] Drive fullSync failed, trying Supabase fallback:', err);
-      _showToast('⚠️ Drive 동기화 실패. 서버 백업을 시도합니다.', 4000);
-      // Drive 실패 시 Supabase로 fallback
-      return _pullFromSupabase().then(function (rows) {
-        if (!rows) {
-          _showToast('⚠️ 동기화 실패. 로컬 데이터로 계속합니다.', 4000);
-          return;
-        }
-        var restored = _applySupabaseRows(rows);
-        if (restored.length > 0) {
-          _showToast('☁️ 서버 백업에서 데이터를 복원했어요.', 4000);
-          _refreshUI();
-        }
-      }).catch(function () {
-        _showToast('⚠️ 동기화 실패. 로컬 데이터로 계속합니다.', 4000);
-      });
+      console.warn('[SyncManager] Drive fullSync failed:', err);
+      _showToast('⚠️ Drive 동기화 실패. 로컬 데이터로 계속합니다.', 4000);
     });
   }
 
