@@ -32,6 +32,16 @@
 2. [단계] → 검증: [확인 방법]
 ```
 
+### 5. 인증/동기화 도돌이표 방지 규칙
+
+> 2026-04-02 ~ 2026-04-19 사이 `redirect_uri_mismatch` 이슈로 3번 반복 해결 시도 → FedCM 이 유일 해법으로 판명. 재발 방지 규칙 고정.
+
+- **클라이언트 코드 수정 시 반드시 `?v=` 번프**: `googleAuth.js` / `supabaseClient.js` / `syncManager.js` / `shared-layout.js` / `app.js` / `settings-ui.js` 를 수정하면 `index.html` 의 해당 `<script src="...?v=X">` 버전을 증가. 잊으면 브라우저 캐시로 변경사항이 반영 안 됨.
+- **Supabase DB 변경 시**: MCP `apply_migration` + 로컬 `supabase/migrations/*.sql` 파일 둘 다 갱신. 한 쪽만 변경하면 재배포 시 상태 불일치.
+- **user-facing 번들에 `supabase.auth.signInWithOAuth` 호출 추가 금지**: `tests/regression-no-user-oauth.js` 가 자동 검증. 어드민 페이지 (admin/, nurse_admin/) 는 예외.
+- **인증 변경 후 검증**: Supabase MCP 로 `SELECT count(*) FROM auth.users WHERE last_sign_in_at > NOW() - INTERVAL '10 minutes';` 실행해서 실제로 세션이 확립되는지 확인. 콘솔 로그만으로는 부족.
+- **"설정만 하면 작동할 것" 가정 금지**: GCP/Supabase Dashboard 설정 변경은 반드시 실제 로그인 테스트로 검증 후 commit.
+
 ---
 
 ## Skill routing
