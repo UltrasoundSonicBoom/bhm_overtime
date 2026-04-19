@@ -1,0 +1,7 @@
+[     272ms] [ERROR] Connecting to 'http://localhost:3001/api/data/bundle' violates the following Content Security Policy directive: "connect-src 'self' https://*.googleapis.com https://oauth2.googleapis.com https://accounts.google.com https://www.google-analytics.com https://www.google.com https://www.googletagmanager.com https://*.supabase.co https://apis.data.go.kr https://api.rss2json.com https://api.openalex.org https://news.google.com https://*.channel.io wss://*.channel.io https://*.sentry.io https://tally.so https://cdn.jsdelivr.net". The action has been blocked. @ http://localhost:8080/data.js?v=2.7:658
+[     273ms] [ERROR] Fetch API cannot load http://localhost:3001/api/data/bundle. Refused to connect because it violates the document's Content Security Policy. @ http://localhost:8080/data.js?v=2.7:658
+[     274ms] [LOG] [DATA] API 로드 실패, static fallback 사용: Failed to fetch @ http://localhost:8080/data.js?v=2.7:676
+[     326ms] [LOG] 📋 2026년 공휴일 정적 데이터 사용 (23건) @ http://localhost:8080/holidays.js?v=1.2:331
+[     340ms] [LOG] 📋 2026년 기념일 정적 데이터 사용 (5건) @ http://localhost:8080/holidays.js?v=1.2:416
+[    4149ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://ulamqyarenzjdxlisijl.supabase.co/rest/v1/app_events?columns=%22anon_id%22%2C%22event_type%22%2C%22payload%22%2C%22app_version%22%2C%22user_agent%22%2C%22ts%22:0
+[    4150ms] [WARNING] [Telemetry] insert failed: Could not find the table 'public.app_events' in the schema cache @ http://localhost:8080/supabaseClient.js?v=1.6:100

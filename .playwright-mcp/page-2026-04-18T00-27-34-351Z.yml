@@ -1,0 +1,217 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5] [cursor=pointer]:
+        - img "SNUH Mate" [ref=e6]
+        - generic [ref=e7]:
+          - heading "슬기로운 병원 생활 메이트" [level=1] [ref=e8]
+          - generic [ref=e9]: 2026.5.1 정식 오픈
+      - generic [ref=e10]:
+        - button "Google로 연결" [ref=e12] [cursor=pointer]:
+          - img [ref=e13]
+          - generic [ref=e19]: Google로 연결
+        - button "⚙️" [ref=e20] [cursor=pointer]
+  - generic [ref=e23]: 🚧 정식 오픈전 테스터 목적외 데이터 저장 금지 · Do NOT store real personal data before official launch · 🚧 정식 오픈전 테스터 목적외 데이터 저장 금지 · Do NOT store real personal data before official launch
+  - navigation [ref=e24]:
+    - generic [ref=e25]:
+      - button "🏠 홈" [ref=e26] [cursor=pointer]:
+        - generic [ref=e27]: 🏠
+        - generic [ref=e28]: 홈
+      - button "📅 휴가" [ref=e29] [cursor=pointer]:
+        - generic [ref=e30]: 📅
+        - generic [ref=e31]: 휴가
+      - button "⏰ 시간외" [ref=e32] [cursor=pointer]:
+        - generic [ref=e33]: ⏰
+        - generic [ref=e34]: 시간외
+      - button "💰 급여" [ref=e35] [cursor=pointer]:
+        - generic [ref=e36]: 💰
+        - generic [ref=e37]: 급여
+      - link "📖 규정" [ref=e38] [cursor=pointer]:
+        - /url: regulation.html
+        - generic [ref=e39]: 📖
+        - generic [ref=e40]: 규정
+      - button "👤 info" [ref=e41] [cursor=pointer]:
+        - generic [ref=e42]: 👤
+        - generic [ref=e43]: info
+  - main [ref=e44]:
+    - generic [ref=e101]:
+      - generic [ref=e103] [cursor=pointer]:
+        - generic [ref=e104]: ℹ️
+        - generic [ref=e105]:
+          - text: 수당 계산이 궁금하신가요?
+          - strong [ref=e106]: 도움말 보기
+        - generic [ref=e107]: ▼
+      - generic [ref=e108]:
+        - generic [ref=e109]:
+          - generic [ref=e110]: "적용 시급:"
+          - spinbutton [ref=e111]: "0"
+          - generic [ref=e112]: 원
+          - generic [ref=e113]: ⬅ 시급을 입력하세요
+        - generic [ref=e114]:
+          - generic [ref=e115]: ⚠️
+          - generic [ref=e116]:
+            - strong [ref=e117]: 개인정보를 먼저 입력해주세요
+            - generic [ref=e118]: 직종·호봉을 입력해야 시간외 수당이 자동 계산됩니다.
+            - button "👤 개인정보 입력하기 →" [ref=e119] [cursor=pointer]
+          - button "✕" [ref=e120] [cursor=pointer]
+        - generic [ref=e214]:
+          - generic [ref=e215]:
+            - button "◀" [ref=e216] [cursor=pointer]
+            - generic [ref=e217] [cursor=pointer]: 2026년 4월
+            - button "▶" [ref=e218] [cursor=pointer]
+          - generic [ref=e219]:
+            - generic [ref=e220]: 일
+            - generic [ref=e221]: 월
+            - generic [ref=e222]: 화
+            - generic [ref=e223]: 수
+            - generic [ref=e224]: 목
+            - generic [ref=e225]: 금
+            - generic [ref=e226]: 토
+            - generic [ref=e227] [cursor=pointer]: "1"
+            - generic [ref=e228] [cursor=pointer]: "2"
+            - generic [ref=e229] [cursor=pointer]: "3"
+            - generic [ref=e230] [cursor=pointer]: "4"
+            - generic [ref=e231] [cursor=pointer]: "5"
+            - generic [ref=e232] [cursor=pointer]: "6"
+            - generic [ref=e233] [cursor=pointer]: "7"
+            - generic [ref=e234] [cursor=pointer]: "8"
+            - generic [ref=e235] [cursor=pointer]: "9"
+            - generic "2건 기록" [ref=e236] [cursor=pointer]:
+              - text: "10"
+              - generic [ref=e237]:
+                - generic [ref=e238]: ⏰4h
+                - generic [ref=e239]: ⏰4h
+                - generic [ref=e240]: 22만
+            - generic [ref=e241] [cursor=pointer]: "11"
+            - generic [ref=e242] [cursor=pointer]: "12"
+            - generic [ref=e243] [cursor=pointer]: "13"
+            - generic [ref=e244] [cursor=pointer]: "14"
+            - generic "2건 기록" [ref=e245] [cursor=pointer]:
+              - text: "15"
+              - generic [ref=e246]:
+                - generic [ref=e247]: ⏰4h
+                - generic [ref=e248]: ⏰4h
+                - generic [ref=e249]: 29만
+            - generic [ref=e250] [cursor=pointer]: "16"
+            - generic [ref=e251] [cursor=pointer]: "17"
+            - generic [ref=e252] [cursor=pointer]: "18"
+            - generic [ref=e253] [cursor=pointer]: "19"
+            - generic [ref=e254] [cursor=pointer]: "20"
+            - generic [ref=e255] [cursor=pointer]: "21"
+            - generic [ref=e256] [cursor=pointer]: "22"
+            - generic [ref=e257] [cursor=pointer]: "23"
+            - generic [ref=e258] [cursor=pointer]: "24"
+            - generic [ref=e259] [cursor=pointer]: "25"
+            - generic [ref=e260] [cursor=pointer]: "26"
+            - generic [ref=e261] [cursor=pointer]: "27"
+            - generic [ref=e262] [cursor=pointer]: "28"
+            - generic [ref=e263] [cursor=pointer]: "29"
+            - generic [ref=e264] [cursor=pointer]: "30"
+          - generic [ref=e265]:
+            - generic [ref=e267]: ⏰ 시간외
+            - generic [ref=e269]: 📞 대기
+            - generic [ref=e271]: 🚗 출근
+            - generic [ref=e272]: 공휴일
+      - generic [ref=e174]:
+        - generic [ref=e274]:
+          - generic [ref=e275]: 💰 4월 예상 수당
+          - generic [ref=e276]: ₩510,552
+        - generic [ref=e278]:
+          - text: 시간외
+          - generic [ref=e279]: 16.0h
+      - generic [ref=e281] [cursor=pointer]:
+        - generic [ref=e282]: 📋
+        - generic [ref=e283]: 4월 명세서 검증
+        - generic [ref=e284]: ⚠️ 3건
+        - generic [ref=e285]: ▼
+      - generic [ref=e180]:
+        - generic [ref=e182]:
+          - generic [ref=e183]: 날짜를 선택하세요
+          - button "✕" [ref=e184] [cursor=pointer]:
+            - generic [ref=e185]: ✕
+        - generic [ref=e186]:
+          - generic [ref=e187]: 유형
+          - generic [ref=e188]:
+            - generic [ref=e190] [cursor=pointer]: ⏰ 시간외
+            - generic [ref=e192] [cursor=pointer]: 🚗 온콜출근
+            - generic [ref=e194] [cursor=pointer]: 📞 온콜대기
+        - generic [ref=e195]:
+          - generic [ref=e196]: 근무 시간
+          - generic [ref=e197]:
+            - textbox [ref=e198]: 18:00
+            - generic [ref=e199]: ~
+            - textbox [ref=e200]: 22:00
+        - generic [ref=e202]:
+          - generic [ref=e203]: 메모 (선택)
+          - 'textbox "예: 응급환자 대응" [ref=e204]'
+        - button "저장" [disabled] [ref=e206]
+      - generic [ref=e207]:
+        - generic [ref=e208]:
+          - generic [ref=e209]: 📋
+          - generic [ref=e210]: 4월 기록
+          - generic [ref=e211]: 4건
+        - generic [ref=e212]:
+          - generic [ref=e318]:
+            - generic [ref=e319] [cursor=pointer]:
+              - generic [ref=e320]: 16.0h
+              - generic [ref=e321]: 시간외
+            - generic [ref=e322] [cursor=pointer]:
+              - generic [ref=e323]: 0.0h
+              - generic [ref=e324]: 온콜출근
+            - generic [ref=e325] [cursor=pointer]:
+              - generic [ref=e326]: 0일
+              - generic [ref=e327]: 온콜대기
+            - generic [ref=e328]:
+              - generic [ref=e329]: ₩510,552
+              - generic [ref=e330]: 예상수당
+          - generic [ref=e331] [cursor=pointer]:
+            - generic [ref=e332]:
+              - generic [ref=e333]: ▸
+              - generic [ref=e334]: 시간외
+              - generic [ref=e335]: 4건 · 16.0h
+              - generic [ref=e336]: ₩510,552
+            - generic [ref=e337]:
+              - generic [ref=e338]:
+                - generic [ref=e339]:
+                  - generic [ref=e340]: 10 금
+                  - generic [ref=e341]: ₩109,404
+                - generic [ref=e342]:
+                  - generic [ref=e343]:
+                    - generic [ref=e344]: 실제근무
+                    - generic [ref=e345]: 18:00~22:00 (4h)
+                  - generic [ref=e346]:
+                    - generic [ref=e347]: 연장 4h × 150%
+                    - generic [ref=e348]: ₩109,404
+              - generic [ref=e349]:
+                - generic [ref=e350]:
+                  - generic [ref=e351]: 10 금
+                  - generic [ref=e352]: ₩109,404
+                - generic [ref=e353]:
+                  - generic [ref=e354]:
+                    - generic [ref=e355]: 실제근무
+                    - generic [ref=e356]: 18:00~22:00 (4h)
+                  - generic [ref=e357]:
+                    - generic [ref=e358]: 연장 4h × 150%
+                    - generic [ref=e359]: ₩109,404
+              - generic [ref=e360]:
+                - generic [ref=e361]:
+                  - generic [ref=e362]: 15 수
+                  - generic [ref=e363]: ₩145,872
+                - generic [ref=e364]:
+                  - generic [ref=e365]:
+                    - generic [ref=e366]: 실제근무
+                    - generic [ref=e367]: 22:00~02:00 (4h)
+                  - generic [ref=e368]:
+                    - generic [ref=e369]: 야간 4h × 200%
+                    - generic [ref=e370]: ₩145,872
+              - generic [ref=e371]:
+                - generic [ref=e372]:
+                  - generic [ref=e373]: 15 수
+                  - generic [ref=e374]: ₩145,872
+                - generic [ref=e375]:
+                  - generic [ref=e376]:
+                    - generic [ref=e377]: 실제근무
+                    - generic [ref=e378]: 22:00~02:00 (4h)
+                  - generic [ref=e379]:
+                    - generic [ref=e380]: 야간 4h × 200%
+                    - generic [ref=e381]: ₩145,872

@@ -1,0 +1,12 @@
+[     550ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ https://snuhmate.com/data.js?v=2.7:646
+[     885ms] [LOG] 📋 2026년 공휴일 정적 데이터 사용 (23건) @ https://snuhmate.com/holidays.js?v=1.2:331
+[     899ms] [LOG] 📋 2026년 기념일 정적 데이터 사용 (5건) @ https://snuhmate.com/holidays.js?v=1.2:416
+[    4388ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://ulamqyarenzjdxlisijl.supabase.co/rest/v1/app_events?columns=%22anon_id%22%2C%22event_type%22%2C%22payload%22%2C%22app_version%22%2C%22user_agent%22%2C%22ts%22:0
+[    4389ms] [WARNING] [Telemetry] insert failed: Could not find the table 'public.app_events' in the schema cache @ https://snuhmate.com/supabaseClient.js?v=1.6:100
+[   17596ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ https://snuhmate.com/data.js?v=2.7:646
+[   17608ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ https://snuhmate.com/regulation.html:0
+[   17638ms] [LOG] [regulation.js] Loaded handbook from JSON (5 chapters visible / 12 total, 30 articles visible / 68 total) @ https://snuhmate.com/regulation.js?v=2.9:310
+[   18575ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ https://snuhmate.com/data.js?v=2.7:646
+[   18725ms] [LOG] 💾 2026년 공휴일 localStorage 캐시 사용 (23건) @ https://snuhmate.com/holidays.js?v=1.2:316
+[   21705ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://ulamqyarenzjdxlisijl.supabase.co/rest/v1/app_events?columns=%22anon_id%22%2C%22event_type%22%2C%22payload%22%2C%22app_version%22%2C%22user_agent%22%2C%22ts%22:0
+[   21706ms] [WARNING] [Telemetry] insert failed: Could not find the table 'public.app_events' in the schema cache @ https://snuhmate.com/supabaseClient.js?v=1.6:100

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-16T15:58:20.046Z",
+  "generatedAt": "2026-04-18T15:57:28.059Z",
   "cadenceHours": 48,
   "lookbackDays": 2,
   "promptSummary": {
@@ -17,7 +17,7 @@
           "kind": "news",
           "title": "서울대학교병원 최신 공개 자료 보강 필요",
           "source": "SNUH 메이트",
-          "publishedAt": "2026-04-16T15:58:20.034Z",
+          "publishedAt": "2026-04-18T15:57:28.047Z",
           "summary": "서울대학교병원 카테고리는 최근 48시간 공개 자료가 적어 다음 회차 보강 관찰이 필요합니다.",
           "url": "https://snuhmate.com",
           "meta": "fallback"
@@ -27,7 +27,7 @@
           "kind": "news",
           "title": "서울대학교병원 최신 공개 자료 보강 필요",
           "source": "SNUH 메이트",
-          "publishedAt": "2026-04-16T15:58:20.034Z",
+          "publishedAt": "2026-04-18T15:57:28.047Z",
           "summary": "서울대학교병원 카테고리는 최근 48시간 공개 자료가 적어 다음 회차 보강 관찰이 필요합니다.",
           "url": "https://snuhmate.com",
           "meta": "fallback"
@@ -37,14 +37,14 @@
           "kind": "news",
           "title": "서울대학교병원 최신 공개 자료 보강 필요",
           "source": "SNUH 메이트",
-          "publishedAt": "2026-04-16T15:58:20.034Z",
+          "publishedAt": "2026-04-18T15:57:28.047Z",
           "summary": "서울대학교병원 카테고리는 최근 48시간 공개 자료가 적어 다음 회차 보강 관찰이 필요합니다.",
           "url": "https://snuhmate.com",
           "meta": "fallback"
         }
       ],
       "angle": "병원 운영과 연구 현장에서 지금 바로 읽어야 할 변화",
-      "generatedAt": "2026-04-16T15:58:20.034Z"
+      "generatedAt": "2026-04-18T15:57:28.047Z"
     },
     {
       "categoryId": "medical-ai",
@@ -56,7 +56,7 @@
           "kind": "news",
           "title": "의료AI 최신 공개 자료 보강 필요",
           "source": "SNUH 메이트",
-          "publishedAt": "2026-04-16T15:58:20.037Z",
+          "publishedAt": "2026-04-18T15:57:28.050Z",
           "summary": "의료AI 카테고리는 최근 48시간 공개 자료가 적어 다음 회차 보강 관찰이 필요합니다.",
           "url": "https://snuhmate.com",
           "meta": "fallback"
@@ -66,7 +66,7 @@
           "kind": "news",
           "title": "의료AI 최신 공개 자료 보강 필요",
           "source": "SNUH 메이트",
-          "publishedAt": "2026-04-16T15:58:20.037Z",
+          "publishedAt": "2026-04-18T15:57:28.050Z",
           "summary": "의료AI 카테고리는 최근 48시간 공개 자료가 적어 다음 회차 보강 관찰이 필요합니다.",
           "url": "https://snuhmate.com",
           "meta": "fallback"
@@ -76,14 +76,14 @@
           "kind": "news",
           "title": "의료AI 최신 공개 자료 보강 필요",
           "source": "SNUH 메이트",
-          "publishedAt": "2026-04-16T15:58:20.037Z",
+          "publishedAt": "2026-04-18T15:57:28.050Z",
           "summary": "의료AI 카테고리는 최근 48시간 공개 자료가 적어 다음 회차 보강 관찰이 필요합니다.",
           "url": "https://snuhmate.com",
           "meta": "fallback"
         }
       ],
       "angle": "진단, 판독, 운영 자동화 흐름에서 바로 체감되는 변화",
-      "generatedAt": "2026-04-16T15:58:20.037Z"
+      "generatedAt": "2026-04-18T15:57:28.050Z"
     },
     {
       "categoryId": "ai-use",
@@ -95,7 +95,7 @@
           "kind": "news",
           "title": "AI 활용 최신 공개 자료 보강 필요",
           "source": "SNUH 메이트",
-          "publishedAt": "2026-04-16T15:58:20.040Z",
+          "publishedAt": "2026-04-18T15:57:28.052Z",
           "summary": "AI 활용 카테고리는 최근 48시간 공개 자료가 적어 다음 회차 보강 관찰이 필요합니다.",
           "url": "https://snuhmate.com",
           "meta": "fallback"
@@ -105,7 +105,7 @@
           "kind": "news",
           "title": "AI 활용 최신 공개 자료 보강 필요",
           "source": "SNUH 메이트",
-          "publishedAt": "2026-04-16T15:58:20.040Z",
+          "publishedAt": "2026-04-18T15:57:28.052Z",
           "summary": "AI 활용 카테고리는 최근 48시간 공개 자료가 적어 다음 회차 보강 관찰이 필요합니다.",
           "url": "https://snuhmate.com",
           "meta": "fallback"
@@ -115,14 +115,14 @@
           "kind": "news",
           "title": "AI 활용 최신 공개 자료 보강 필요",
           "source": "SNUH 메이트",
-          "publishedAt": "2026-04-16T15:58:20.040Z",
+          "publishedAt": "2026-04-18T15:57:28.052Z",
           "summary": "AI 활용 카테고리는 최근 48시간 공개 자료가 적어 다음 회차 보강 관찰이 필요합니다.",
           "url": "https://snuhmate.com",
           "meta": "fallback"
         }
       ],
       "angle": "업무 생산성과 도입 장벽을 함께 보여주는 활용 사례",
-      "generatedAt": "2026-04-16T15:58:20.040Z"
+      "generatedAt": "2026-04-18T15:57:28.052Z"
     },
     {
       "categoryId": "year-end-tax",
@@ -134,7 +134,7 @@
           "kind": "news",
           "title": "연말정산 최신 공개 자료 보강 필요",
           "source": "SNUH 메이트",
-          "publishedAt": "2026-04-16T15:58:20.043Z",
+          "publishedAt": "2026-04-18T15:57:28.057Z",
           "summary": "연말정산 카테고리는 최근 48시간 공개 자료가 적어 다음 회차 보강 관찰이 필요합니다.",
           "url": "https://snuhmate.com",
           "meta": "fallback"
@@ -144,7 +144,7 @@
           "kind": "news",
           "title": "연말정산 최신 공개 자료 보강 필요",
           "source": "SNUH 메이트",
-          "publishedAt": "2026-04-16T15:58:20.043Z",
+          "publishedAt": "2026-04-18T15:57:28.057Z",
           "summary": "연말정산 카테고리는 최근 48시간 공개 자료가 적어 다음 회차 보강 관찰이 필요합니다.",
           "url": "https://snuhmate.com",
           "meta": "fallback"
@@ -154,14 +154,14 @@
           "kind": "news",
           "title": "연말정산 최신 공개 자료 보강 필요",
           "source": "SNUH 메이트",
-          "publishedAt": "2026-04-16T15:58:20.043Z",
+          "publishedAt": "2026-04-18T15:57:28.057Z",
           "summary": "연말정산 카테고리는 최근 48시간 공개 자료가 적어 다음 회차 보강 관찰이 필요합니다.",
           "url": "https://snuhmate.com",
           "meta": "fallback"
         }
       ],
       "angle": "공제, 세액, 신고 변화 중 체감도 높은 포인트 정리",
-      "generatedAt": "2026-04-16T15:58:20.043Z"
+      "generatedAt": "2026-04-18T15:57:28.057Z"
     },
     {
       "categoryId": "wealth",
@@ -173,7 +173,7 @@
           "kind": "news",
           "title": "재테크 최신 공개 자료 보강 필요",
           "source": "SNUH 메이트",
-          "publishedAt": "2026-04-16T15:58:20.046Z",
+          "publishedAt": "2026-04-18T15:57:28.059Z",
           "summary": "재테크 카테고리는 최근 48시간 공개 자료가 적어 다음 회차 보강 관찰이 필요합니다.",
           "url": "https://snuhmate.com",
           "meta": "fallback"
@@ -183,7 +183,7 @@
           "kind": "news",
           "title": "재테크 최신 공개 자료 보강 필요",
           "source": "SNUH 메이트",
-          "publishedAt": "2026-04-16T15:58:20.046Z",
+          "publishedAt": "2026-04-18T15:57:28.059Z",
           "summary": "재테크 카테고리는 최근 48시간 공개 자료가 적어 다음 회차 보강 관찰이 필요합니다.",
           "url": "https://snuhmate.com",
           "meta": "fallback"
@@ -193,14 +193,14 @@
           "kind": "news",
           "title": "재테크 최신 공개 자료 보강 필요",
           "source": "SNUH 메이트",
-          "publishedAt": "2026-04-16T15:58:20.046Z",
+          "publishedAt": "2026-04-18T15:57:28.059Z",
           "summary": "재테크 카테고리는 최근 48시간 공개 자료가 적어 다음 회차 보강 관찰이 필요합니다.",
           "url": "https://snuhmate.com",
           "meta": "fallback"
         }
       ],
       "angle": "개인 투자와 자산관리에서 바로 반영할 만한 흐름",
-      "generatedAt": "2026-04-16T15:58:20.046Z"
+      "generatedAt": "2026-04-18T15:57:28.059Z"
     }
   ],
   "clips": [
@@ -221,11 +221,11 @@
       "sourceName": "SNUH 메이트",
       "sourceTitle": "서울대학교병원 최신 공개 자료 보강 필요",
       "sourceUrl": "https://snuhmate.com",
-      "publishedAt": "2026-04-16T15:58:20.034Z",
+      "publishedAt": "2026-04-18T15:57:28.047Z",
       "durationSec": 10,
       "renderTemplate": "hook-top / insight-center / source-bottom",
       "sourceLabel": "뉴스 · SNUH 메이트",
-      "publishedLabel": "2026.04.17"
+      "publishedLabel": "2026.04.19"
     },
     {
       "id": "short-02",
@@ -244,11 +244,11 @@
       "sourceName": "SNUH 메이트",
       "sourceTitle": "서울대학교병원 최신 공개 자료 보강 필요",
       "sourceUrl": "https://snuhmate.com",
-      "publishedAt": "2026-04-16T15:58:20.034Z",
+      "publishedAt": "2026-04-18T15:57:28.047Z",
       "durationSec": 10,
       "renderTemplate": "hook-top / insight-center / source-bottom",
       "sourceLabel": "뉴스 · SNUH 메이트",
-      "publishedLabel": "2026.04.17"
+      "publishedLabel": "2026.04.19"
     },
     {
       "id": "short-03",
@@ -267,11 +267,11 @@
       "sourceName": "SNUH 메이트",
       "sourceTitle": "의료AI 최신 공개 자료 보강 필요",
       "sourceUrl": "https://snuhmate.com",
-      "publishedAt": "2026-04-16T15:58:20.037Z",
+      "publishedAt": "2026-04-18T15:57:28.050Z",
       "durationSec": 10,
       "renderTemplate": "hook-top / insight-center / source-bottom",
       "sourceLabel": "뉴스 · SNUH 메이트",
-      "publishedLabel": "2026.04.17"
+      "publishedLabel": "2026.04.19"
     },
     {
       "id": "short-04",
@@ -290,11 +290,11 @@
       "sourceName": "SNUH 메이트",
       "sourceTitle": "의료AI 최신 공개 자료 보강 필요",
       "sourceUrl": "https://snuhmate.com",
-      "publishedAt": "2026-04-16T15:58:20.037Z",
+      "publishedAt": "2026-04-18T15:57:28.050Z",
       "durationSec": 10,
       "renderTemplate": "hook-top / insight-center / source-bottom",
       "sourceLabel": "뉴스 · SNUH 메이트",
-      "publishedLabel": "2026.04.17"
+      "publishedLabel": "2026.04.19"
     },
     {
       "id": "short-05",
@@ -313,11 +313,11 @@
       "sourceName": "SNUH 메이트",
       "sourceTitle": "AI 활용 최신 공개 자료 보강 필요",
       "sourceUrl": "https://snuhmate.com",
-      "publishedAt": "2026-04-16T15:58:20.040Z",
+      "publishedAt": "2026-04-18T15:57:28.052Z",
       "durationSec": 10,
       "renderTemplate": "hook-top / insight-center / source-bottom",
       "sourceLabel": "뉴스 · SNUH 메이트",
-      "publishedLabel": "2026.04.17"
+      "publishedLabel": "2026.04.19"
     },
     {
       "id": "short-06",
@@ -336,11 +336,11 @@
       "sourceName": "SNUH 메이트",
       "sourceTitle": "AI 활용 최신 공개 자료 보강 필요",
       "sourceUrl": "https://snuhmate.com",
-      "publishedAt": "2026-04-16T15:58:20.040Z",
+      "publishedAt": "2026-04-18T15:57:28.052Z",
       "durationSec": 10,
       "renderTemplate": "hook-top / insight-center / source-bottom",
       "sourceLabel": "뉴스 · SNUH 메이트",
-      "publishedLabel": "2026.04.17"
+      "publishedLabel": "2026.04.19"
     },
     {
       "id": "short-07",
@@ -359,11 +359,11 @@
       "sourceName": "SNUH 메이트",
       "sourceTitle": "연말정산 최신 공개 자료 보강 필요",
       "sourceUrl": "https://snuhmate.com",
-      "publishedAt": "2026-04-16T15:58:20.043Z",
+      "publishedAt": "2026-04-18T15:57:28.057Z",
       "durationSec": 10,
       "renderTemplate": "hook-top / insight-center / source-bottom",
       "sourceLabel": "뉴스 · SNUH 메이트",
-      "publishedLabel": "2026.04.17"
+      "publishedLabel": "2026.04.19"
     },
     {
       "id": "short-08",
@@ -382,11 +382,11 @@
       "sourceName": "SNUH 메이트",
       "sourceTitle": "연말정산 최신 공개 자료 보강 필요",
       "sourceUrl": "https://snuhmate.com",
-      "publishedAt": "2026-04-16T15:58:20.043Z",
+      "publishedAt": "2026-04-18T15:57:28.057Z",
       "durationSec": 10,
       "renderTemplate": "hook-top / insight-center / source-bottom",
       "sourceLabel": "뉴스 · SNUH 메이트",
-      "publishedLabel": "2026.04.17"
+      "publishedLabel": "2026.04.19"
     },
     {
       "id": "short-09",
@@ -405,11 +405,11 @@
       "sourceName": "SNUH 메이트",
       "sourceTitle": "재테크 최신 공개 자료 보강 필요",
       "sourceUrl": "https://snuhmate.com",
-      "publishedAt": "2026-04-16T15:58:20.046Z",
+      "publishedAt": "2026-04-18T15:57:28.059Z",
       "durationSec": 10,
       "renderTemplate": "hook-top / insight-center / source-bottom",
       "sourceLabel": "뉴스 · SNUH 메이트",
-      "publishedLabel": "2026.04.17"
+      "publishedLabel": "2026.04.19"
     },
     {
       "id": "short-10",
@@ -428,11 +428,11 @@
       "sourceName": "SNUH 메이트",
       "sourceTitle": "재테크 최신 공개 자료 보강 필요",
       "sourceUrl": "https://snuhmate.com",
-      "publishedAt": "2026-04-16T15:58:20.046Z",
+      "publishedAt": "2026-04-18T15:57:28.059Z",
       "durationSec": 10,
       "renderTemplate": "hook-top / insight-center / source-bottom",
       "sourceLabel": "뉴스 · SNUH 메이트",
-      "publishedLabel": "2026.04.17"
+      "publishedLabel": "2026.04.19"
     }
   ]
 }

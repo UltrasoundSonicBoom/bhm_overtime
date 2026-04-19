@@ -1,0 +1,5 @@
+[   18108ms] ReferenceError: updateAuthUI is not defined
+    at init (https://www.snuhmate.com/googleAuth.js?v=1.6:289:7)
+    at Object.signIn (https://www.snuhmate.com/googleAuth.js?v=1.6:321:7)
+    at btn.onclick (https://www.snuhmate.com/shared-layout.js?v=1.4:95:50)
+[   18195ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ https://www.snuhmate.com/data.js?v=2.7:646

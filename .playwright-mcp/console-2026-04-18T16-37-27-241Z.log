@@ -1,0 +1,105 @@
+[     290ms] ReferenceError: updateAuthUI is not defined
+    at init (https://www.snuhmate.com/googleAuth.js?v=1.6:289:7)
+    at Object.signIn (https://www.snuhmate.com/googleAuth.js?v=1.6:321:7)
+    at btn.onclick (https://www.snuhmate.com/shared-layout.js?v=1.4:95:50)
+[     363ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ https://www.snuhmate.com/data.js?v=2.7:646
+[    4209ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://ulamqyarenzjdxlisijl.supabase.co/rest/v1/app_events?columns=%22anon_id%22%2C%22event_type%22%2C%22payload%22%2C%22app_version%22%2C%22user_agent%22%2C%22ts%22:0
+[    4209ms] [WARNING] [Telemetry] insert failed: Could not find the table 'public.app_events' in the schema cache @ https://www.snuhmate.com/supabaseClient.js?v=1.7:100
+[    4969ms] [LOG] 💾 2026년 공휴일 localStorage 캐시 사용 (23건) @ https://www.snuhmate.com/holidays.js?v=1.2:316
+[    7926ms] [ERROR] Cross-Origin-Opener-Policy policy would block the window.closed call. @ https://accounts.google.com/gsi/client:97
+[    7926ms] [ERROR] Cross-Origin-Opener-Policy policy would block the window.closed call. @ https://accounts.google.com/gsi/client:97
+[   47025ms] [ERROR] Loading the stylesheet 'https://accounts.google.com/gsi/style' violates the following Content Security Policy directive: "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net". Note that 'style-src-elem' was not explicitly set, so 'style-src' is used as a fallback. The action has been blocked. @ https://accounts.google.com/gsi/client:282
+[   47026ms] [WARNING] [GSI_LOGGER]: Your client application uses one of the Google One Tap prompt UI status methods that may stop functioning when FedCM becomes mandatory. Refer to the migration guide to update your code accordingly and opt-in to FedCM to test your changes. Learn more: https://developers.google.com/identity/gsi/web/guides/fedcm-migration?s=dc#display_moment and https://developers.google.com/identity/gsi/web/guides/fedcm-migration?s=dc#skipped_moment @ https://accounts.google.com/gsi/client:84
+[   47375ms] [LOG] [SyncManager] migrated guest keys: [bhm_hr_profile] @ https://www.snuhmate.com/syncManager.js?v=1.1:426
+[   47926ms] [WARNING] The 'nonce' parameter should be passed within the 'params' object instead of as a top-level parameter. Top-level nonce support will be removed in Chrome 145. @ https://www.snuhmate.com/index.html?app=1&signin=google:0
+[   49907ms] [WARNING] [GoogleAuth] FedCM 스킵: tap_outside @ https://www.snuhmate.com/googleAuth.js?v=1.6:164
+[   49907ms] [ERROR] The request has been aborted. @ https://www.snuhmate.com/index.html?app=1&signin=google:0
+[   49911ms] [ERROR] [GSI_LOGGER]: FedCM get() rejects with AbortError: signal is aborted without reason @ https://accounts.google.com/gsi/client:85
+[   72761ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ https://www.snuhmate.com/data.js?v=2.7:646
+[   73013ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ https://www.snuhmate.com/regulation.html:0
+[   73231ms] [LOG] [regulation.js] JSON handbook load failed: Failed to fetch @ https://www.snuhmate.com/regulation.js?v=2.9:313
+[   73542ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ https://www.snuhmate.com/data.js?v=2.7:646
+[   74000ms] [LOG] 💾 2026년 공휴일 localStorage 캐시 사용 (23건) @ https://www.snuhmate.com/holidays.js?v=1.2:316
+[   76661ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://ulamqyarenzjdxlisijl.supabase.co/rest/v1/app_events?columns=%22anon_id%22%2C%22event_type%22%2C%22payload%22%2C%22app_version%22%2C%22user_agent%22%2C%22ts%22:0
+[   76662ms] [WARNING] [Telemetry] insert failed: Could not find the table 'public.app_events' in the schema cache @ https://www.snuhmate.com/supabaseClient.js?v=1.7:100
+[  695393ms] ReferenceError: updateAuthUI is not defined
+    at finalize (https://www.snuhmate.com/googleAuth.js?v=1.6:365:7)
+    at Object.signOut (https://www.snuhmate.com/googleAuth.js?v=1.6:394:7)
+    at signout.onclick (https://www.snuhmate.com/shared-layout.js?v=1.4:137:27)
+[  695929ms] ReferenceError: updateAuthUI is not defined
+    at finalize (https://www.snuhmate.com/googleAuth.js?v=1.6:365:7)
+    at Object.signOut (https://www.snuhmate.com/googleAuth.js?v=1.6:394:7)
+    at signout.onclick (https://www.snuhmate.com/shared-layout.js?v=1.4:137:27)
+[  696637ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ https://www.snuhmate.com/data.js?v=2.7:646
+[  698631ms] ReferenceError: updateAuthUI is not defined
+    at finalize (https://www.snuhmate.com/googleAuth.js?v=1.6:365:7)
+    at Object.signOut (https://www.snuhmate.com/googleAuth.js?v=1.6:394:7)
+    at signout.onclick (https://www.snuhmate.com/shared-layout.js?v=1.4:137:27)
+[  699147ms] ReferenceError: updateAuthUI is not defined
+    at finalize (https://www.snuhmate.com/googleAuth.js?v=1.6:365:7)
+    at Object.signOut (https://www.snuhmate.com/googleAuth.js?v=1.6:394:7)
+    at signout.onclick (https://www.snuhmate.com/shared-layout.js?v=1.4:137:27)
+[  699372ms] ReferenceError: updateAuthUI is not defined
+    at finalize (https://www.snuhmate.com/googleAuth.js?v=1.6:365:7)
+    at Object.signOut (https://www.snuhmate.com/googleAuth.js?v=1.6:394:7)
+    at signout.onclick (https://www.snuhmate.com/shared-layout.js?v=1.4:137:27)
+[  699530ms] ReferenceError: updateAuthUI is not defined
+    at finalize (https://www.snuhmate.com/googleAuth.js?v=1.6:365:7)
+    at Object.signOut (https://www.snuhmate.com/googleAuth.js?v=1.6:394:7)
+    at signout.onclick (https://www.snuhmate.com/shared-layout.js?v=1.4:137:27)
+[  699743ms] ReferenceError: updateAuthUI is not defined
+    at finalize (https://www.snuhmate.com/googleAuth.js?v=1.6:365:7)
+    at Object.signOut (https://www.snuhmate.com/googleAuth.js?v=1.6:394:7)
+    at signout.onclick (https://www.snuhmate.com/shared-layout.js?v=1.4:137:27)
+[  700006ms] ReferenceError: updateAuthUI is not defined
+    at finalize (https://www.snuhmate.com/googleAuth.js?v=1.6:365:7)
+    at Object.signOut (https://www.snuhmate.com/googleAuth.js?v=1.6:394:7)
+    at signout.onclick (https://www.snuhmate.com/shared-layout.js?v=1.4:137:27)
+[  702813ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ https://www.snuhmate.com/data.js?v=2.7:646
+[  703990ms] [LOG] 💾 2026년 공휴일 localStorage 캐시 사용 (23건) @ https://www.snuhmate.com/holidays.js?v=1.2:316
+[  714210ms] [ERROR] Loading the stylesheet 'https://accounts.google.com/gsi/style' violates the following Content Security Policy directive: "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net". Note that 'style-src-elem' was not explicitly set, so 'style-src' is used as a fallback. The action has been blocked. @ https://accounts.google.com/gsi/client:282
+[  714211ms] [WARNING] [GSI_LOGGER]: Your client application uses one of the Google One Tap prompt UI status methods that may stop functioning when FedCM becomes mandatory. Refer to the migration guide to update your code accordingly and opt-in to FedCM to test your changes. Learn more: https://developers.google.com/identity/gsi/web/guides/fedcm-migration?s=dc#display_moment and https://developers.google.com/identity/gsi/web/guides/fedcm-migration?s=dc#skipped_moment @ https://accounts.google.com/gsi/client:84
+[  714979ms] [WARNING] The 'nonce' parameter should be passed within the 'params' object instead of as a top-level parameter. Top-level nonce support will be removed in Chrome 145. @ https://www.snuhmate.com/index.html?app=1&tab=profile:0
+[  718394ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://ulamqyarenzjdxlisijl.supabase.co/auth/v1/token?grant_type=id_token:0
+[  718396ms] [WARNING] [SupabaseUserSync] signIn failed: Unacceptable audience in id_token: [914163950802-vov9iusqqaj0139g06ccbo4q8pp6dcbl.apps.googleusercontent.com] @ https://www.snuhmate.com/supabaseClient.js?v=1.7:148
+[  718397ms] [WARNING] [GoogleAuth] Supabase signInWithIdToken 실패 (user null) @ https://www.snuhmate.com/googleAuth.js?v=1.6:154
+[  746063ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ https://www.snuhmate.com/data.js?v=2.7:646
+[  746149ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ https://www.snuhmate.com/regulation.html:0
+[  746439ms] [LOG] [regulation.js] Loaded handbook from JSON (5 chapters visible / 12 total, 30 articles visible / 68 total) @ https://www.snuhmate.com/regulation.js?v=2.9:310
+[  750958ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ https://www.snuhmate.com/data.js?v=2.7:646
+[  754835ms] ReferenceError: updateAuthUI is not defined
+    at finalize (https://www.snuhmate.com/googleAuth.js?v=1.6:365:7)
+    at Object.signOut (https://www.snuhmate.com/googleAuth.js?v=1.6:394:7)
+    at signout.onclick (https://www.snuhmate.com/shared-layout.js?v=1.4:137:27)
+[  756610ms] [LOG] 💾 2026년 공휴일 localStorage 캐시 사용 (23건) @ https://www.snuhmate.com/holidays.js?v=1.2:316
+[  789677ms] [ERROR] Loading the stylesheet 'https://accounts.google.com/gsi/style' violates the following Content Security Policy directive: "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net". Note that 'style-src-elem' was not explicitly set, so 'style-src' is used as a fallback. The action has been blocked. @ https://accounts.google.com/gsi/client:282
+[  789677ms] [WARNING] [GSI_LOGGER]: Your client application uses one of the Google One Tap prompt UI status methods that may stop functioning when FedCM becomes mandatory. Refer to the migration guide to update your code accordingly and opt-in to FedCM to test your changes. Learn more: https://developers.google.com/identity/gsi/web/guides/fedcm-migration?s=dc#display_moment and https://developers.google.com/identity/gsi/web/guides/fedcm-migration?s=dc#skipped_moment @ https://accounts.google.com/gsi/client:84
+[  790366ms] [INFO] Auto re-authn was previously triggered less than 10 minutes ago. Only one auto re-authn request can be made every 10 minutes. @ https://www.snuhmate.com/index.html?app=1&tab=home:0
+[  792955ms] [WARNING] The 'nonce' parameter should be passed within the 'params' object instead of as a top-level parameter. Top-level nonce support will be removed in Chrome 145. @ https://www.snuhmate.com/index.html?app=1&tab=home:0
+[  796100ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://ulamqyarenzjdxlisijl.supabase.co/auth/v1/token?grant_type=id_token:0
+[  796103ms] [WARNING] [SupabaseUserSync] signIn failed: Unacceptable audience in id_token: [914163950802-vov9iusqqaj0139g06ccbo4q8pp6dcbl.apps.googleusercontent.com] @ https://www.snuhmate.com/supabaseClient.js?v=1.7:148
+[  796103ms] [WARNING] [GoogleAuth] Supabase signInWithIdToken 실패 (user null) @ https://www.snuhmate.com/googleAuth.js?v=1.6:154
+[ 1215436ms] [WARNING] [DriveStore] readJsonFile(profile.json) failed: TypeError: Failed to fetch
+    at https://www.snuhmate.com/googleDriveStore.js?v=1.0:45:14
+    at async Promise.all (index 2) @ https://www.snuhmate.com/googleDriveStore.js?v=1.0:147
+[ 1215436ms] [WARNING] [DriveStore] readJsonFile(overtime_payslip.json) failed: TypeError: Failed to fetch
+    at https://www.snuhmate.com/googleDriveStore.js?v=1.0:45:14
+    at async Promise.all (index 3) @ https://www.snuhmate.com/googleDriveStore.js?v=1.0:147
+[ 1215436ms] [WARNING] [DriveStore] readJsonFile(leave.json) failed: TypeError: Failed to fetch
+    at https://www.snuhmate.com/googleDriveStore.js?v=1.0:45:14
+    at async Promise.all (index 0) @ https://www.snuhmate.com/googleDriveStore.js?v=1.0:147
+[ 1215436ms] [WARNING] [DriveStore] readJsonFile(overtime.json) failed: TypeError: Failed to fetch
+    at https://www.snuhmate.com/googleDriveStore.js?v=1.0:45:14
+    at async Promise.all (index 1) @ https://www.snuhmate.com/googleDriveStore.js?v=1.0:147
+[ 1215956ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ https://www.snuhmate.com/data.js?v=2.7:646
+[ 1216362ms] [LOG] 💾 2026년 공휴일 localStorage 캐시 사용 (23건) @ https://www.snuhmate.com/holidays.js?v=1.2:316
+[ 1229026ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ https://www.snuhmate.com/data.js?v=2.7:646
+[ 1229329ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ https://www.snuhmate.com/regulation.html:0
+[ 1229766ms] [LOG] [regulation.js] Loaded handbook from JSON (5 chapters visible / 12 total, 30 articles visible / 68 total) @ https://www.snuhmate.com/regulation.js?v=2.9:310
+[ 1234316ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ https://www.snuhmate.com/data.js?v=2.7:646
+[ 1234746ms] [LOG] 💾 2026년 공휴일 localStorage 캐시 사용 (23건) @ https://www.snuhmate.com/holidays.js?v=1.2:316
+[ 1245465ms] [WARNING] [SyncManager] Supabase push skipped (no session or error): leave @ https://www.snuhmate.com/syncManager.js?v=1.1:147
+[ 1251031ms] [WARNING] [SyncManager] Supabase push skipped (no session or error): leave @ https://www.snuhmate.com/syncManager.js?v=1.1:147
+[ 1258334ms] [WARNING] [SyncManager] Supabase push skipped (no session or error): leave @ https://www.snuhmate.com/syncManager.js?v=1.1:147
+[ 1266321ms] [WARNING] [SyncManager] Supabase push skipped (no session or error): overtime @ https://www.snuhmate.com/syncManager.js?v=1.1:147
+[ 1272065ms] [WARNING] [SyncManager] Supabase push skipped (no session or error): overtime @ https://www.snuhmate.com/syncManager.js?v=1.1:147

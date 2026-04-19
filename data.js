@@ -682,4 +682,6 @@ async function loadDataFromAPI() {
 
   return dataLoadPromise;
 }
-loadDataFromAPI();
+// 초기 로드를 10초 지연: 앱 렌더에 필요한 데이터는 DATA_STATIC로 즉시 충족.
+// API 데이터는 월간 업데이트용이라 지연해도 사용자 체감 영향 없음.
+setTimeout(loadDataFromAPI, 10000);

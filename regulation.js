@@ -1573,6 +1573,9 @@ function closePdfSheet() {
 }
 
 async function loadPdf(url, startPage) {
+  if (typeof window.loadPDFJS === 'function') {
+    try { await window.loadPDFJS(); } catch (e) { /* fallthrough */ }
+  }
   if (typeof pdfjsLib === 'undefined') {
     alert('PDF.js 라이브러리가 로드되지 않았습니다.');
     return;

@@ -306,7 +306,7 @@
   <!-- ═══════════ Header & Footer (shared-layout.js에서 렌더) ═══════════ -->
   <header id="sharedHeader"></header>
   <nav id="sharedFooter"></nav>
-  <script src="shared-layout.js?v=1.4"></script>
+  <script src="shared-layout.js?v=1.4" defer></script>
 
   <main class="main">
 
@@ -2262,12 +2262,12 @@
   </main>
 
 
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <!-- xlsx.js / pdf.js는 utils-lazy.js를 통해 필요 시점에만 로드 (홈 진입 시 1.1MB 다운로드 회피) -->
+  <script src="utils-lazy.js?v=1.0" defer></script>
   <!-- 데모 모드 — googleAuth.js보다 먼저 로드해야 googleSub='demo' 가 인식됨 -->
-  <script src="demo-data.js?v=1.1"></script>
+  <script src="demo-data.js?v=1.1" defer></script>
   <script>
-    (function () {
+    document.addEventListener('DOMContentLoaded', function () {
       var params = new URLSearchParams(window.location.search);
       if (params.get('demo') === '1') {
         window.loadDemoData && window.loadDemoData();
@@ -2275,62 +2275,62 @@
       }
       // ?signin=google: 구글 로그인 다이얼로그 자동 오픈
       if (params.get('signin') === 'google' && localStorage.getItem('bhm_demo_mode') !== '1') {
-        window.addEventListener('load', function () {
-          var dlg = document.getElementById('googlePermissionDialog');
-          if (dlg && typeof dlg.showModal === 'function') { dlg.showModal(); }
-          else if (window.GoogleAuth) { setTimeout(function () { window.GoogleAuth.signIn(); }, 500); }
-        });
+        var dlg = document.getElementById('googlePermissionDialog');
+        if (dlg && typeof dlg.showModal === 'function') { dlg.showModal(); }
+        else if (window.GoogleAuth) { setTimeout(function () { window.GoogleAuth.signIn(); }, 500); }
       }
-    })();
+    });
   </script>
 
   <!-- Google Identity Services (GIS) — config.js + googleAuth.js 보다 먼저 -->
-  <script src="config.js?v=1.1"></script>
-  <script src="appLock.js?v=1.0"></script>
+  <script src="config.js?v=1.1" defer></script>
+  <script src="appLock.js?v=1.0" defer></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <script src="googleAuth.js?v=2.1"></script>
-  <script src="googleDriveStore.js?v=1.0"></script>
-  <script src="syncManager.js?v=2.1"></script>
-  <script src="googleCalendarSync.js?v=1.0"></script>
+  <script src="googleAuth.js?v=2.1" defer></script>
+  <script src="googleDriveStore.js?v=1.0" defer></script>
+  <script src="syncManager.js?v=2.1" defer></script>
+  <script src="googleCalendarSync.js?v=1.0" defer></script>
   <script src="sentry.js?v=1.0" defer></script>
-  <script src="data.js?v=2.7"></script>
-  <script src="calculators.js?v=2.5"></script>
-  <script src="holidays.js?v=1.2"></script>
-  <script src="profile.js?v=2.5"></script>
-  <script src="overtime.js?v=1.3"></script>
-  <script src="leave.js?v=1.2"></script>
-  <script src="payroll.js?v=1.4"></script>
+  <script src="data.js?v=2.7" defer></script>
+  <script src="calculators.js?v=2.5" defer></script>
+  <script src="holidays.js?v=1.2" defer></script>
+  <script src="profile.js?v=2.5" defer></script>
+  <script src="overtime.js?v=1.3" defer></script>
+  <script src="leave.js?v=1.2" defer></script>
+  <script src="payroll.js?v=1.4" defer></script>
 
-  <script src="salary-parser.js?v=2.4"></script>
+  <script src="salary-parser.js?v=2.4" defer></script>
 
-  <script src="payroll-views.js?v=1.2"></script>
-  <script src="resume.js?v=1.0"></script>
-  <script src="job-templates.js?v=1.0"></script>
-  <script src="profile-tab.js?v=1.0"></script>
-  <script src="work-history.js?v=1.0"></script>
-  <script src="pay-estimation.js?v=1.0"></script>
-  <script src="payslip-tab.js?v=1.0"></script>
-  <script src="leave-tab.js?v=1.0"></script>
-  <script src="app.js?v=2.2"></script>
+  <script src="payroll-views.js?v=1.2" defer></script>
+  <script src="resume.js?v=1.0" defer></script>
+  <script src="job-templates.js?v=1.0" defer></script>
+  <script src="profile-tab.js?v=1.0" defer></script>
+  <script src="work-history.js?v=1.0" defer></script>
+  <script src="pay-estimation.js?v=1.0" defer></script>
+  <script src="payslip-tab.js?v=1.0" defer></script>
+  <script src="leave-tab.js?v=1.0" defer></script>
+  <script src="app.js?v=2.2" defer></script>
   <script>
-    // ── 테마 전환 시스템 ──
-    (function initTheme() {
-      const saved = localStorage.getItem('theme');
-      if (saved === 'linear') {
-        document.documentElement.removeAttribute('data-theme');
-        document.getElementById('themeToggle').textContent = '🌙';
-      }
+    // 테마 속성은 DOM 생성 전에 즉시 반영 (flicker 방지)
+    (function () {
+      var saved = localStorage.getItem('theme');
+      if (saved === 'linear') document.documentElement.removeAttribute('data-theme');
     })();
 
-    // 데모 배너 표시 (?demo=1 또는 bhm_demo_mode 플래그)
-    (function () {
+    // themeToggle / demoBanner 엘리먼트 접근은 shared-layout.js(defer)가 렌더한 이후여야 함
+    document.addEventListener('DOMContentLoaded', function () {
+      var saved = localStorage.getItem('theme');
+      if (saved === 'linear') {
+        var tgl = document.getElementById('themeToggle');
+        if (tgl) tgl.textContent = '🌙';
+      }
       var isDemoUrl = new URLSearchParams(window.location.search).get('demo') === '1';
       var isDemoFlag = localStorage.getItem('bhm_demo_mode') === '1';
       if (isDemoUrl || isDemoFlag) {
         var banner = document.getElementById('demoBanner');
         if (banner) banner.style.display = 'flex';
       }
-    })();
+    });
 
     function toggleTheme() {
       const html = document.documentElement;
@@ -2338,18 +2338,18 @@
       const isNeo = html.getAttribute('data-theme') === 'neo';
       if (isNeo) {
         html.removeAttribute('data-theme');
-        btn.textContent = '🌙';
+        if (btn) btn.textContent = '🌙';
         localStorage.setItem('theme', 'linear');
       } else {
         html.setAttribute('data-theme', 'neo');
-        btn.textContent = '🎨';
+        if (btn) btn.textContent = '🎨';
         localStorage.setItem('theme', 'neo');
       }
     }
   </script>
 
-  <script src="extensionBridge.js?v=1.1"></script>
-  <script src="settings-ui.js?v=1.0"></script>
+  <script src="extensionBridge.js?v=1.1" defer></script>
+  <script src="settings-ui.js?v=1.0" defer></script>
   <!-- Toast notification -->
   <div id="otToast" class="ot-toast" style="display:none;"></div>
 
@@ -2449,9 +2449,9 @@
     }
 
   </script>
-  <script src="share-utils.js?v=1.0"></script>
-  <script src="migration-overlay.js?v=1.0"></script>
-  <script src="orphan-recovery.js?v=1.0"></script>
+  <script src="share-utils.js?v=1.0" defer></script>
+  <script src="migration-overlay.js?v=1.0" defer></script>
+  <script src="orphan-recovery.js?v=1.0" defer></script>
   <script>
     // 시간외 탭 전환 시 경고 확인
     document.addEventListener('DOMContentLoaded', () => {

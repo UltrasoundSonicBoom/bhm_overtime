@@ -282,6 +282,7 @@ const SALARY_PARSER = (() => {
 
   // ── Excel/CSV 파싱 ──
   async function parseExcel(file) {
+    if (typeof window.loadXLSX === 'function') await window.loadXLSX();
     if (typeof XLSX === 'undefined') throw new Error('xlsx.js가 로드되지 않았습니다.');
     const buf = await file.arrayBuffer();
     const wb = XLSX.read(buf, { type: 'array', cellDates: true });
@@ -299,6 +300,7 @@ const SALARY_PARSER = (() => {
 
   // ── PDF 파싱 (pdf.js 기반, 좌표→행 그룹핑→x좌표 직접 매칭) ──
   async function parsePDF(file) {
+    if (typeof window.loadPDFJS === 'function') await window.loadPDFJS();
     if (typeof pdfjsLib === 'undefined') {
       throw new Error('pdf.js가 로드되지 않았습니다.');
     }

@@ -1,0 +1,73 @@
+- main [ref=e2]:
+  - generic [ref=e3]:
+    - heading "SNUH Mate 빠른 기록" [level=1] [ref=e4]
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - button "◀" [ref=e7] [cursor=pointer]
+        - generic [ref=e8]: "2026.04"
+        - button "▶" [ref=e9] [cursor=pointer]
+      - generic [ref=e10]:
+        - generic [ref=e11]: 일
+        - generic [ref=e12]: 월
+        - generic [ref=e13]: 화
+        - generic [ref=e14]: 수
+        - generic [ref=e15]: 목
+        - generic [ref=e16]: 금
+        - generic [ref=e17]: 토
+        - button "29" [ref=e18] [cursor=pointer]
+        - button "30" [ref=e19] [cursor=pointer]
+        - button "31" [ref=e20] [cursor=pointer]
+        - button "1" [ref=e21] [cursor=pointer]
+        - button "2" [ref=e22] [cursor=pointer]
+        - button "3" [ref=e23] [cursor=pointer]
+        - button "4" [ref=e24] [cursor=pointer]
+        - button "5" [ref=e25] [cursor=pointer]
+        - button "6" [ref=e26] [cursor=pointer]
+        - button "7" [ref=e27] [cursor=pointer]
+        - button "8" [ref=e28] [cursor=pointer]
+        - button "9" [ref=e29] [cursor=pointer]
+        - button "10" [ref=e30] [cursor=pointer]
+        - button "11" [ref=e31] [cursor=pointer]
+        - button "12" [ref=e32] [cursor=pointer]
+        - button "13" [ref=e33] [cursor=pointer]
+        - button "14" [ref=e34] [cursor=pointer]
+        - button "15" [ref=e35] [cursor=pointer]
+        - button "16" [ref=e36] [cursor=pointer]
+        - button "17" [ref=e37] [cursor=pointer]
+        - button "18" [ref=e38] [cursor=pointer]
+        - button "19" [ref=e39] [cursor=pointer]
+        - button "20" [ref=e40] [cursor=pointer]
+        - button "21" [ref=e41] [cursor=pointer]
+        - button "22" [ref=e42] [cursor=pointer]
+        - button "23" [ref=e43] [cursor=pointer]
+        - button "24" [ref=e44] [cursor=pointer]
+        - button "25" [ref=e45] [cursor=pointer]
+        - button "26" [ref=e46] [cursor=pointer]
+        - button "27" [ref=e47] [cursor=pointer]
+        - button "28" [ref=e48] [cursor=pointer]
+        - button "29" [ref=e49] [cursor=pointer]
+        - button "30" [ref=e50] [cursor=pointer]
+        - button "1" [ref=e51] [cursor=pointer]
+        - button "2" [ref=e52] [cursor=pointer]
+    - generic [ref=e53]:
+      - button "시간외" [ref=e54] [cursor=pointer]
+      - button "온콜대기" [ref=e55] [cursor=pointer]
+      - button "온콜출근" [ref=e56] [cursor=pointer]
+    - generic [ref=e57]:
+      - generic [ref=e58]:
+        - generic [ref=e59]: 시작
+        - textbox "시작" [ref=e60]: 18:00
+      - generic [ref=e61]:
+        - generic [ref=e62]: 종료
+        - textbox "종료" [ref=e63]: 20:00
+    - textbox "메모 (선택)" [ref=e65]
+    - generic [ref=e67] [cursor=pointer]:
+      - checkbox "공휴일/휴일 근무" [ref=e68]
+      - generic [ref=e69]: 공휴일/휴일 근무
+    - button "저장" [ref=e70] [cursor=pointer]
+  - generic [ref=e72]:
+    - heading "PDF 가져오기" [level=2] [ref=e73]
+    - paragraph [ref=e75]: 최근 PDF 없음
+    - button "현재 탭 PDF 가져오기" [ref=e76] [cursor=pointer]
+  - link "SNUH Mate 열기" [ref=e78] [cursor=pointer]:
+    - /url: https://snuhmate.com/?app=1

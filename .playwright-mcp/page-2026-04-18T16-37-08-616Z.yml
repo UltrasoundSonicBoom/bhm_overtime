@@ -1,0 +1,310 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e4]: 🚧 정식 오픈전 테스터 목적외 데이터 저장 금지 · Do NOT store real personal data before official launch · 🚧 정식 오픈전 테스터 목적외 데이터 저장 금지 · Do NOT store real personal data before official launch
+  - generic [ref=e5]:
+    - generic [ref=e7]:
+      - link "🎮 샘플 데이터로 체험하기 →" [ref=e8] [cursor=pointer]:
+        - /url: ./index.html?app=1&demo=1
+      - generic [ref=e9]: 百聞不如一見
+    - generic [ref=e10]:
+      - generic [ref=e11]:
+        - text: 아래로 스크롤하세요
+        - img [ref=e12]
+      - generic [ref=e14] [cursor=pointer]:
+        - text: 끝으로
+        - img [ref=e15]
+  - generic [ref=e17]:
+    - generic [ref=e18]:
+      - generic [ref=e19]: 😮 야간 수당, 계산대로 들어온 건지 알 수가 없어요
+      - heading "기록하면, 수당이 바로 계산돼요" [level=2] [ref=e20]:
+        - text: 기록하면,
+        - text: 수당이 바로 계산돼요
+      - paragraph [ref=e21]:
+        - text: 야간·연장·온콜 수식 그대로.
+        - text: 기록하면 수당이 자동으로 나와요.
+        - text: 엑셀은 이제 안 써도 돼요.
+      - generic [ref=e22]:
+        - generic [ref=e23]:
+          - generic [ref=e24]: ⏰
+          - generic [ref=e25]:
+            - generic [ref=e26]: 4/7 (월) 시간외
+            - generic [ref=e27]: 18:00 ~ 21:00 · 3시간
+          - generic [ref=e28]: +38,400
+        - generic [ref=e29]:
+          - generic [ref=e30]: 🌔
+          - generic [ref=e31]:
+            - generic [ref=e32]: 4/8 (화) 당직
+            - generic [ref=e33]: 17:30 ~ 08:30 · 15시간
+          - generic [ref=e34]: +192,000
+        - generic [ref=e35]:
+          - generic [ref=e36]: 📞
+          - generic [ref=e37]:
+            - generic [ref=e38]: 4/9 (수) 온콜
+            - generic [ref=e39]: 호출 1회 · 2시간
+          - generic [ref=e40]: +25,600
+        - generic [ref=e41]:
+          - generic [ref=e42]: 4월 예상 수당
+          - generic [ref=e43]: 620,400원
+    - generic [ref=e44]:
+      - generic [ref=e45]:
+        - text: 아래로 스크롤하세요
+        - img [ref=e46]
+      - generic [ref=e48] [cursor=pointer]:
+        - text: 끝으로
+        - img [ref=e49]
+  - generic [ref=e51]:
+    - generic [ref=e52]:
+      - generic [ref=e53]: 🤔 내가 휴가 얼마나 남았더라?
+      - heading "쓸 때마다 자동으로 차감돼요" [level=2] [ref=e54]:
+        - text: 쓸 때마다
+        - text: 자동으로 차감돼요
+      - paragraph [ref=e55]:
+        - text: 연차, 병가, 공가, 청원휴가까지
+        - text: 직접 입력하면 바로 차감돼요.
+        - text: 휴가 계획, 혼자 짤 수 있어요.
+      - generic [ref=e56]:
+        - generic [ref=e57]: ▼
+        - generic [ref=e58]: ⛱
+        - generic [ref=e59]: 2026년 휴가 현황
+      - generic [ref=e60]:
+        - generic [ref=e61]:
+          - generic [ref=e62]:
+            - generic [ref=e63]: 연차
+            - generic [ref=e64]: 24일
+          - generic [ref=e67]: 5/24일 사용
+        - generic [ref=e68]:
+          - generic [ref=e69]:
+            - generic [ref=e70]: 검진휴가
+            - generic [ref=e71]: 1일
+          - generic [ref=e73]: 0/1일 사용
+        - generic [ref=e74]:
+          - generic [ref=e75]:
+            - generic [ref=e76]: 교육연수
+            - generic [ref=e77]: 3일
+          - generic [ref=e80]: 2/3일 사용
+        - generic [ref=e81]:
+          - generic [ref=e82]:
+            - generic [ref=e83]: 병원 필수
+            - generic [ref=e84]: 3일
+          - generic [ref=e87]: 1/3일 사용
+    - generic [ref=e88]:
+      - generic [ref=e89]:
+        - text: 아래로 스크롤하세요
+        - img [ref=e90]
+      - generic [ref=e92] [cursor=pointer]:
+        - text: 끝으로
+        - img [ref=e93]
+  - generic [ref=e95]:
+    - generic [ref=e96]:
+      - generic [ref=e97]: 💸 다음 달 월급이 얼마지?
+      - heading "시간외, 온콜 반영됐나?" [level=2] [ref=e98]
+      - paragraph [ref=e99]:
+        - text: 시간외·온콜 입력하면
+        - text: 예상 지급총액과 통상임금도 알 수 있어요
+      - generic [ref=e100]:
+        - generic [ref=e101]:
+          - generic [ref=e102]: 급여명세서
+          - generic [ref=e103]: 이번달예상액
+          - generic [ref=e104]: 수당계산기
+          - generic [ref=e105]: 퇴직금
+        - generic [ref=e106]:
+          - generic [ref=e107]: ◄
+          - generic [ref=e108]: 2026년 4월 예상
+          - generic [ref=e109]: ►
+        - generic [ref=e110]:
+          - generic [ref=e111]: 예상 실수령액
+          - generic [ref=e112]: ₩6,602,253
+          - generic [ref=e113]:
+            - generic [ref=e114]: 지급 ₩8,052,229
+            - generic [ref=e115]: 공제 ₩1,449,976
+          - generic [ref=e116]: 시간외·온콜 ₩1,287,618 반영
+        - generic [ref=e117]:
+          - generic [ref=e118]: 지급 항목
+          - generic [ref=e119]:
+            - generic [ref=e120]:
+              - generic [ref=e121]: 기준기본급
+              - generic [ref=e122]: ₩3,085,900
+            - generic [ref=e123]:
+              - generic [ref=e124]: 능력급
+              - generic [ref=e125]: ₩1,075,700
+            - generic [ref=e126]:
+              - generic [ref=e127]: 시간외·온콜
+              - generic [ref=e128]: ₩1,287,618
+            - generic [ref=e129]:
+              - generic [ref=e130]: 상여금 외
+              - generic [ref=e131]: ₩603,011
+    - generic [ref=e132]:
+      - generic [ref=e133]:
+        - text: 아래로 스크롤하세요
+        - img [ref=e134]
+      - generic [ref=e136] [cursor=pointer]:
+        - text: 끝으로
+        - img [ref=e137]
+  - generic [ref=e139]:
+    - generic [ref=e140]:
+      - generic [ref=e141]: 💼 퇴직이 가까워지는데, 공로연수,임금피크제가 얼마나 차이나는지 잘 모르겠어요
+      - heading "공로연수 vs 임금피크제, 내 급여로 직접 계산해요" [level=2] [ref=e142]:
+        - text: 공로연수 vs 임금피크제,
+        - text: 내 급여로 직접 계산해요
+      - paragraph [ref=e143]:
+        - text: 선택에 따라 수천만 원 차이가 날 수 있어요.
+        - text: 시뮬레이션 먼저 해보세요.
+      - generic [ref=e144]:
+        - generic [ref=e145]: 💼 퇴직 시뮬레이션 (내 급여 기준)
+        - generic [ref=e146]:
+          - generic [ref=e147]:
+            - generic [ref=e148]: 공로연수 선택 시
+            - generic [ref=e149]: +2,400만원
+            - generic [ref=e150]: 퇴직금 기준 예상
+          - generic [ref=e151]:
+            - generic [ref=e152]: 임금피크제 선택 시
+            - generic [ref=e153]: +1,860만원
+            - generic [ref=e154]: 퇴직금 기준 예상
+        - generic [ref=e155]: 📌 내 급여 입력하면 정확한 수치로 계산돼요
+    - generic [ref=e156]:
+      - generic [ref=e157]:
+        - text: 아래로 스크롤하세요
+        - img [ref=e158]
+      - generic [ref=e160] [cursor=pointer]:
+        - text: 끝으로
+        - img [ref=e161]
+  - generic [ref=e163]:
+    - generic [ref=e164]:
+      - generic [ref=e165]: 📋 10년 근무했는데 로테이션 언제, 어디 갔었는지 기억이 없어;
+      - heading "부서·업무 이력을 내가 직접 쌓아가요" [level=2] [ref=e166]:
+        - text: 부서·업무 이력을
+        - text: 내가 직접 쌓아가요
+      - paragraph [ref=e167]:
+        - text: 연도별·부서별로 타임라인이 만들어져요.
+        - text: 내 커리어, 내가 기록해두세요.
+      - generic [ref=e168]:
+        - generic [ref=e169]: 📌 근무 이력 타임라인
+        - generic [ref=e170]:
+          - generic [ref=e173]:
+            - generic [ref=e174]: 2024 — 현재
+            - generic [ref=e175]: 101병동
+          - generic [ref=e178]:
+            - generic [ref=e179]: 2022 — 2024
+            - generic [ref=e180]: 응급실
+          - generic [ref=e183]:
+            - generic [ref=e184]: 2020 — 2022
+            - generic [ref=e185]: 중환자실
+          - generic [ref=e188]:
+            - generic [ref=e189]: 2018 — 2020
+            - generic [ref=e190]: 신경외과
+    - generic [ref=e191]:
+      - generic [ref=e192]:
+        - text: 아래로 스크롤하세요
+        - img [ref=e193]
+      - generic [ref=e195] [cursor=pointer]:
+        - text: 끝으로
+        - img [ref=e196]
+  - generic [ref=e198]:
+    - generic [ref=e199]:
+      - generic [ref=e200]: 📖 올해 규정 뭐가 바뀌었더라?
+      - heading "규정 원문, 조항별로 바로 찾아요" [level=2] [ref=e201]:
+        - text: 규정 원문,
+        - text: 조항별로 바로 찾아요
+      - paragraph [ref=e202]: FAQ, 원문 검색, PDF 뷰어.
+      - generic [ref=e203]:
+        - generic [ref=e204]:
+          - generic [ref=e205]: 퇴직수당 지급금표
+          - generic [ref=e206]: "[별표] 보수규정 제44조 관련"
+        - table [ref=e207]:
+          - rowgroup [ref=e208]:
+            - row "재직기간 산정기준 지급율" [ref=e209]:
+              - columnheader "재직기간" [ref=e210]
+              - columnheader "산정기준" [ref=e211]
+              - columnheader "지급율" [ref=e212]
+          - rowgroup [ref=e213]:
+            - row "20년 이상 퇴직 전 평균임금 × 60/100" [ref=e214]:
+              - cell "20년 이상" [ref=e215]
+              - cell "퇴직 전 평균임금 ×" [ref=e216]:
+                - text: 퇴직 전
+                - text: 평균임금 ×
+              - cell "60/100" [ref=e217]
+            - row "16년 이상 20년 미만 평균임금 × 50/100" [ref=e218]:
+              - cell "16년 이상 20년 미만" [ref=e219]:
+                - text: 16년 이상
+                - text: 20년 미만
+              - cell "평균임금 ×" [ref=e220]
+              - cell "50/100" [ref=e221]
+            - row "10년 이상 16년 미만 평균임금 × 45/100" [ref=e222]:
+              - cell "10년 이상 16년 미만" [ref=e223]:
+                - text: 10년 이상
+                - text: 16년 미만
+              - cell "평균임금 ×" [ref=e224]
+              - cell "45/100" [ref=e225]
+            - row "5년 이상 10년 미만 평균임금 × 35/100" [ref=e226]:
+              - cell "5년 이상 10년 미만" [ref=e227]:
+                - text: 5년 이상
+                - text: 10년 미만
+              - cell "평균임금 ×" [ref=e228]
+              - cell "35/100" [ref=e229]
+            - row "1년 이상 5년 미만 평균임금 × 10/100" [ref=e230]:
+              - cell "1년 이상 5년 미만" [ref=e231]:
+                - text: 1년 이상
+                - text: 5년 미만
+              - cell "평균임금 ×" [ref=e232]
+              - cell "10/100" [ref=e233]
+        - generic [ref=e234]:
+          - generic [ref=e235]: 📌 부속합의 — 리프레시지원비 36만원
+          - generic [ref=e236]:
+            - text: 인사팀(급여계)
+            - link "PDF" [ref=e237] [cursor=pointer]:
+              - /url: "#"
+            - text: "| ☎ 02-2072-2716 | ✉ payroll@snuh.org"
+    - generic [ref=e238]:
+      - generic [ref=e239]:
+        - text: 아래로 스크롤하세요
+        - img [ref=e240]
+      - generic [ref=e242] [cursor=pointer]:
+        - text: 끝으로
+        - img [ref=e243]
+  - generic [ref=e245]:
+    - generic [ref=e246]:
+      - generic [ref=e247]: 🔒
+      - heading "내 급여 데이터는 내 폰에만! 혹은 내 구글 계정에만 저장되요" [level=2] [ref=e248]:
+        - text: 내 급여 데이터는 내 폰에만!
+        - text: 혹은 내 구글 계정에만 저장되요
+      - paragraph [ref=e249]:
+        - text: 로그인 없이 써도 완전히 동작해요.
+        - text: 구글 연동하면 내 드라이브에만 저장됩니다.
+        - text: 개인정보를 안전하게 관리하세요
+        - text: 개발자도 볼 수 없어요.
+      - generic [ref=e250]:
+        - generic [ref=e251]: ✅ 로컬 우선 저장
+        - generic [ref=e252]: ☁️ 내 구글 드라이브만
+        - generic [ref=e253]: 📊 익명 통계만
+    - generic [ref=e254]:
+      - generic [ref=e255]:
+        - text: 아래로 스크롤하세요
+        - img [ref=e256]
+      - generic [ref=e258] [cursor=pointer]:
+        - text: 끝으로
+        - img [ref=e259]
+  - generic [ref=e261]:
+    - generic [ref=e262]:
+      - heading "슬기로운 병원생활 SNUH 메이트가 도와드립니다." [level=2] [ref=e263]:
+        - text: 슬기로운 병원생활
+        - text: SNUH 메이트가 도와드립니다.
+      - paragraph
+      - generic [ref=e264]:
+        - link "🎮 데모 페이지에서 미리 체험하기 →" [ref=e265] [cursor=pointer]:
+          - /url: ./index.html?app=1&demo=1
+        - link "로그인 없이 바로 써보기 →" [ref=e266] [cursor=pointer]:
+          - /url: ./index.html?app=1
+        - link "Google로 연결해서 기기 넘나들기" [ref=e267] [cursor=pointer]:
+          - /url: ./index.html?app=1&signin=google
+          - img [ref=e268]
+          - generic [ref=e273]: Google로 연결해서 기기 넘나들기
+      - generic [ref=e274]:
+        - generic [ref=e275]:
+          - text: SNUH 메이트는 서울대학교병원 그룹 직원들을 위한
+          - text: 급여·휴가·시간외 관리 도구입니다.
+        - generic [ref=e276]: Google 연동 기능은 선택적으로 제공되며, 사용자의 데이터는 본인 기기 또는 본인 Google 계정에 저장되도록 설계되어 있습니다.
+        - generic [ref=e277]:
+          - link "개인정보처리방침" [ref=e278] [cursor=pointer]:
+            - /url: ./privacy.html
+          - link "서비스 약관" [ref=e279] [cursor=pointer]:
+            - /url: ./terms.html
+    - generic [ref=e280]: "만든 사람: 김계환 (핵의학과)"
