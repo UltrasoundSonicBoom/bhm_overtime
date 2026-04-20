@@ -3,10 +3,14 @@ import OpenAI from 'openai'
 const MODEL = 'text-embedding-3-small'
 const DIMENSIONS = 1536
 
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+let _client: OpenAI | null = null
+function client(): OpenAI {
+  if (!_client) _client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  return _client
+}
 
 export async function embedOne(text: string): Promise<number[]> {
-  const res = await client.embeddings.create({
+  const res = await client().embeddings.create({
     model: MODEL,
     input: text,
     dimensions: DIMENSIONS,
@@ -22,7 +26,7 @@ export async function embedBatch(texts: string[]): Promise<number[][]> {
     let attempt = 0
     while (attempt < 3) {
       try {
-        const res = await client.embeddings.create({
+        const res = await client().embeddings.create({
           model: MODEL,
           input: slice,
           dimensions: DIMENSIONS,
