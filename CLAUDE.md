@@ -42,6 +42,12 @@
 - **텔레메트리/에러 추적**: Sentry (`window.Telemetry.track`, `window.Telemetry.error`). DSN은 `BHM_CONFIG.sentryDsn` 으로 주입. 미설정 시 조용히 no-op.
 - **어드민 Supabase 변경 시**: MCP `apply_migration` + 로컬 `supabase/migrations/*.sql` 파일 둘 다 갱신. 일반 사용자 페이지에 영향 가는지 (regression test) 확인.
 - **"설정만 하면 작동할 것" 가정 금지**: GCP/Supabase Dashboard 설정 변경은 반드시 실제 로그인 테스트로 검증 후 commit.
+- **OAuth `prompt` 값**: `signIn()` 에서 `prompt: 'consent'` 금지 → `'select_account'` 사용. `'consent'`는 이미 동의한 사용자에게도 매번 동의 화면 강제. 신규 scope 추가 시엔 Google이 자동으로 1회 동의 화면 표시.
+- **Drive scope 혼합 원칙**: 내부 JSON 데이터는 `drive.appdata` (숨김, 사용자 Drive UI에 안 보임), 사용자 가시 파일(PDF 원본 등)은 `drive.file` (내 드라이브 공개 폴더). 한 scope 로 통합하려 하지 말 것.
+- **신규 scope 추가 시 권한 다이얼로그 카피 동기화 필수**: `index.html` 의 `googlePermissionDialog` 설명 항목과 실제 요청 scope 가 어긋나면 사용자 신뢰 훼손. scope 추가 PR에서 다이얼로그도 같이 업데이트.
+- **업로드 경로 이중화 주의**: `app.js:handlePayslipUpload` (info 탭) 와 `payroll-views.js:handleInlineUpload` (급여명세서 관리 탭) 두 곳이 별도로 존재. Drive 업로드 / 분석 등 업로드 후 처리 로직 추가 시 **두 경로 모두 수정** 필요. 하나만 고치면 탭별로 동작이 달라짐.
+- **URL 파라미터로 auth/로그인 다이얼로그 자동 오픈 금지**: `?signin=google` 같은 파라미터로 페이지 로드 시 다이얼로그 `showModal()` 호출하지 말 것. localStorage 만 쓰는 사용자에게 pushy UX. 로그인 UI 는 반드시 사용자의 명시적 버튼 클릭에만 반응.
+- **"항상 켜지는 표시" 는 노이즈**: 초기 로그인 시 Drive + Calendar scope 를 한 번에 요청하므로, 로그인한 사용자는 반드시 두 권한을 가짐. 따라서 "Drive 연결됨" / "Cal 연결됨" 같은 배지는 정보 가치 없음. 상태가 변할 수 있는 것만 UI 로 표시.
 
 ---
 
