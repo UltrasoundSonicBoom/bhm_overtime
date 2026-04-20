@@ -597,9 +597,9 @@
       if (ym) {
         SALARY_PARSER.saveMonthlyData(ym.year, ym.month, result, ym.type);
 
-        // 프로필 자동 반영 (grade/year/부서/입사일/직종 등)
-        if (window.SALARY_PARSER && typeof window.SALARY_PARSER.applyStableItemsToProfile === 'function') {
-          window.SALARY_PARSER.applyStableItemsToProfile(result);
+        // 프로필 자동 반영 (grade/year/부서/입사일/직종 등) — const SALARY_PARSER 는 top-level 이라 직접 참조 가능
+        if (typeof SALARY_PARSER !== 'undefined' && typeof SALARY_PARSER.applyStableItemsToProfile === 'function') {
+          SALARY_PARSER.applyStableItemsToProfile(result);
         }
 
         // 근무정보 자동 배치 이력 생성
