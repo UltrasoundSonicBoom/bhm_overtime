@@ -1,0 +1,3 @@
+[     493ms] [LOG] 💾 2026년 공휴일 localStorage 캐시 사용 (23건) @ http://localhost:8765/holidays.js?v=1.2:247
+[     495ms] [LOG] [LEAVE] 기존 기록 마이그레이션 완료 (규정 변경 반영) @ http://localhost:8765/leave.js?v=1.2:463
+[    1237ms] [WARNING] [GoogleAuth] init-time token warmup failed (sign-in required): token_error: popup_closed @ http://localhost:8765/googleAuth.js?v=2.6:236

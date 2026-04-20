@@ -1,0 +1,6 @@
+[     126ms] [LOG] 💾 2026년 공휴일 localStorage 캐시 사용 (23건) @ http://localhost:8765/holidays.js?v=1.2:247
+[     128ms] [LOG] [LEAVE] 기존 기록 마이그레이션 완료 (규정 변경 반영) @ http://localhost:8765/leave.js?v=1.2:463
+[   10119ms] [LOG] [DATA] 월간 재시도 대기 중, static fallback 사용 @ http://localhost:8765/data.js?v=2.7:646
+[   12298ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ http://localhost:8765/regulation.html:0
+[   12299ms] [LOG] [regulation.js] Loaded handbook from JSON (5 chapters visible / 12 total, 30 articles visible / 68 total) @ http://localhost:8765/regulation.js?v=2.9:310
+[   13179ms] [LOG] 💾 2026년 공휴일 localStorage 캐시 사용 (23건) @ http://localhost:8765/holidays.js?v=1.2:247

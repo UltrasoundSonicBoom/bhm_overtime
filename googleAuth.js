@@ -69,6 +69,43 @@ window.GoogleAuth = (function () {
     toast._hideTimer = setTimeout(function () { toast.style.display = 'none'; }, 4000);
   }
 
+  // ── 로그인 성공 전용 토스트 (체크 + fade-in + 체크 bounce) ──
+  // otToast 가 있으면 재사용, 없으면 신규 div 를 띄운다. reload 전 1.5 초 노출.
+  function _showLoginSuccessToast() {
+    // 스타일을 1회만 주입
+    if (!document.getElementById('bhm-login-toast-style')) {
+      var style = document.createElement('style');
+      style.id = 'bhm-login-toast-style';
+      style.textContent =
+        '@keyframes bhm-login-toast-in{0%{opacity:0;transform:translate(-50%,10px) scale(.92)}100%{opacity:1;transform:translate(-50%,0) scale(1)}}' +
+        '@keyframes bhm-login-check-pop{0%{transform:scale(0) rotate(-12deg)}60%{transform:scale(1.25) rotate(5deg)}100%{transform:scale(1) rotate(0)}}' +
+        '#bhm-login-toast{position:fixed;left:50%;top:24px;transform:translate(-50%,0);z-index:99999;' +
+        'display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:999px;' +
+        'background:#10b981;color:#fff;font-weight:700;font-size:14px;' +
+        'box-shadow:0 8px 24px rgba(16,185,129,.35),0 2px 6px rgba(0,0,0,.12);' +
+        'animation:bhm-login-toast-in .28s cubic-bezier(.2,.8,.2,1) both;pointer-events:none}' +
+        '#bhm-login-toast .chk{display:inline-flex;align-items:center;justify-content:center;' +
+        'width:22px;height:22px;border-radius:50%;background:#fff;color:#10b981;font-weight:900;' +
+        'animation:bhm-login-check-pop .4s cubic-bezier(.2,.9,.3,1.2) .08s both}';
+      document.head.appendChild(style);
+    }
+    // 기존 것 제거 후 재생성
+    var old = document.getElementById('bhm-login-toast');
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+    var toast = document.createElement('div');
+    toast.id = 'bhm-login-toast';
+    toast.setAttribute('role', 'status');
+    toast.setAttribute('aria-live', 'polite');
+    var chk = document.createElement('span');
+    chk.className = 'chk';
+    chk.textContent = '✓';
+    var txt = document.createElement('span');
+    txt.textContent = '로그인에 성공했습니다';
+    toast.appendChild(chk);
+    toast.appendChild(txt);
+    document.body.appendChild(toast);
+  }
+
   // ── 내부 헬퍼 ──
   function _isTokenValid() {
     return !!_accessToken && Date.now() < _tokenExpiry - 60000; // 1분 여유
@@ -194,6 +231,16 @@ window.GoogleAuth = (function () {
                 if (window.LEAVE && window.LEAVE.renderList) window.LEAVE.renderList();
                 if (window.PROFILE && window.PROFILE.render) window.PROFILE.render();
               }
+              // 로그인 성공 애니메이션 토스트 → 1.5초 후 페이지 리프레시.
+              // Drive 에서 pull 된 데이터(profile/overtime/leave/payslip)를 UI 전체에
+              // 일관되게 반영하기 위해 reload. 토스트가 사라지기 전 reload 되므로
+              // 사용자는 "로그인 성공 → 데이터 로딩" 흐름으로 인지한다.
+              _showLoginSuccessToast();
+              setTimeout(function () { window.location.reload(); }, 1500);
+            }).catch(function () {
+              // fullSync 가 실패해도 로그인 자체는 성공 — 토스트만 띄우고 reload
+              _showLoginSuccessToast();
+              setTimeout(function () { window.location.reload(); }, 1500);
             });
           }
         }).catch(function (err) {
