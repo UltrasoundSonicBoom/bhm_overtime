@@ -3,6 +3,8 @@
  * 컨텍스트 메뉴, 탭 관리, 메시지 라우팅
  */
 
+// TODO(Task 6): 이 파일은 Task 6에서 완전히 교체됩니다. chrome.tabs API 미사용 예정.
+
 // ── 설치 시 컨텍스트 메뉴 등록 ──
 chrome.runtime.onInstalled.addListener(function () {
   chrome.contextMenus.create({
