@@ -66,12 +66,12 @@ const BhmAuth = {
   },
 
   async applyApplockData(data, storage) {
-    if (!data || !data.pinEnabled || !data.pinHash) return false;
+    if (!data || !data.pinEnabled || typeof data.pinHash !== 'string' || data.pinHash.length !== 64) return false;
     const local = await storage.get([storage.KEYS.PIN_HASH]);
     if (local[storage.KEYS.PIN_HASH]) return false;
     await storage.set({
       [storage.KEYS.PIN_HASH]:         data.pinHash,
-      [storage.KEYS.PIN_SALT]:         data.pinSalt || '',
+      [storage.KEYS.PIN_SALT]:         data.pinSalt || null,
       [storage.KEYS.PIN_LENGTH]:       data.pinLength || 4,
       [storage.KEYS.PIN_ATTEMPTS]:     0,
       [storage.KEYS.PIN_LOCKED_UNTIL]: null,

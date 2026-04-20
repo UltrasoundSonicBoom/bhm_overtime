@@ -40,14 +40,16 @@ async function run() {
     set(items) { Object.assign(this._s,items); return Promise.resolve(); },
     remove(keys) { keys.forEach(k=>delete this._s[k]); return Promise.resolve(); },
   };
+  const hash1 = await BhmAuth.hashPin('1234', 'salt1');
+  const hash2 = await BhmAuth.hashPin('5678', 'salt2');
   const r1 = await BhmAuth.applyApplockData(
-    { pinEnabled:true, pinHash:'deadbeef', pinSalt:'salt1', pinLength:4 }, ms);
-  ok(r1 === true,                         'applyApplockData PIN 없을 때 적용');
-  ok(ms._s['bhm_pin_hash']==='deadbeef',  'applyApplockData pinHash 저장');
+    { pinEnabled:true, pinHash:hash1, pinSalt:'salt1', pinLength:4 }, ms);
+  ok(r1 === true,                    'applyApplockData PIN 없을 때 적용');
+  ok(ms._s['bhm_pin_hash']===hash1,  'applyApplockData pinHash 저장');
   const r2 = await BhmAuth.applyApplockData(
-    { pinEnabled:true, pinHash:'other',    pinSalt:'salt2', pinLength:4 }, ms);
-  ok(r2 === false,                        'applyApplockData 이미 있으면 스킵');
-  ok(ms._s['bhm_pin_hash']==='deadbeef',  'applyApplockData 기존 PIN 유지');
+    { pinEnabled:true, pinHash:hash2, pinSalt:'salt2', pinLength:4 }, ms);
+  ok(r2 === false,                   'applyApplockData 이미 있으면 스킵');
+  ok(ms._s['bhm_pin_hash']===hash1,  'applyApplockData 기존 PIN 유지');
 
   console.log(p + ' passed, ' + f + ' failed');
   process.exit(f > 0 ? 1 : 0);
