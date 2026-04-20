@@ -1,9 +1,12 @@
 'use strict';
 const PinSetupScreen = {
+  // Set by render(); called externally by popup.js when Drive restores an existing PIN.
+  // Nulled at render start to prevent stale closure from previous session.
   _advance: null,
 
   render(container, { user, onComplete }) {
     let cancelled = false;
+    PinSetupScreen._advance = null; // clear previous session's closure
 
     PinSetupScreen._advance = function() {
       if (cancelled) return;
@@ -24,7 +27,7 @@ const PinSetupScreen = {
 
     const greeting = document.createElement('div');
     greeting.style.cssText = 'font-size:13px;font-weight:700;margin-bottom:4px';
-    greeting.textContent = user.name + '님, 환영합니다!';
+    greeting.textContent = (user.name || '사용자') + '님, 환영합니다!';
     body.appendChild(greeting);
 
     const desc = document.createElement('div');
@@ -51,7 +54,7 @@ const PinSetupScreen = {
     let entered = '';
 
     function refreshDots() {
-      dotsEl.textContent = '';
+      dotsEl.innerHTML = '';
       for (let i = 0; i < 4; i++) {
         const d = document.createElement('div');
         d.className = 'pin-dot' + (i < entered.length ? ' on' : '');
@@ -103,12 +106,21 @@ const PinSetupScreen = {
         refreshDots();
         return;
       }
-      await BhmAuth.setPin(entered, BhmStorage);
-      chrome.runtime.sendMessage({ type: 'SYNC_NOW' }, function() {
-        if (chrome.runtime.lastError) { /* 비동기 동기화 실패 무시 */ }
-      });
-      cancelled = true;
-      onComplete();
+      grid.style.pointerEvents = 'none';
+      try {
+        await BhmAuth.setPin(entered, BhmStorage);
+        chrome.runtime.sendMessage({ type: 'SYNC_NOW' }, function() {
+          if (chrome.runtime.lastError) { /* 비동기 동기화 실패 무시 */ }
+        });
+        cancelled = true;
+        onComplete();
+      } catch (_) {
+        errorEl.textContent = 'PIN 저장 실패. 다시 시도해주세요.';
+        entered = ''; firstPin = ''; step = 1;
+        stepLabel.textContent = '새 PIN 입력';
+        refreshDots();
+        grid.style.pointerEvents = '';
+      }
     });
   },
 };
