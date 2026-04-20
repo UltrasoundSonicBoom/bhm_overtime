@@ -53,6 +53,7 @@ window.GoogleAuth = (function () {
   // H-1 fix: GIS ignores per-call callbacks; use a resolver queue drained by the global callback
   var _pendingTokenQueue = [];  // Array<{ resolve, reject, type: 'refresh'|'drive'|'calendar' }>
   var _tokenRequestInFlight = false;
+  var _signingOut = false; // signOut() 진행 중 → GIS 콜백 무시
 
   var SCOPE_BASE = 'openid email profile';
   var SCOPE_DRIVE = 'https://www.googleapis.com/auth/drive.appdata';
@@ -148,6 +149,7 @@ window.GoogleAuth = (function () {
       scope: SCOPE_BASE + ' ' + SCOPE_DRIVE + ' ' + SCOPE_DRIVE_FILE + ' ' + SCOPE_CALENDAR,
       callback: function (response) {
         _tokenRequestInFlight = false;
+        if (_signingOut) return; // signOut 진행 중 → 계정 선택창 표시 방지
 
         if (response.error) {
           // 큐에 대기 중인 요청이 있으면 모두 reject, 아니면 초기 로그인 에러 로그
@@ -257,6 +259,11 @@ window.GoogleAuth = (function () {
   // 2) revoke 가 실제로 전송된 뒤 reload (C3: 토큰 원격 무효화 보장)
   //    - Promise 콜백 경로가 우선, 페이지 종료 시 sendBeacon 으로 백업
   function signOut() {
+    // in-flight 토큰 요청이 계정 선택창을 열지 못하도록 즉시 차단
+    _signingOut = true;
+    _pendingTokenQueue.splice(0);
+    _tokenRequestInFlight = false;
+
     // 데모 모드에서 연결 해제: exitDemoMode + sessionStorage 정리 후 clean URL 이동
     if (localStorage.getItem('bhm_demo_mode') === '1') {
       if (window.exitDemoMode) window.exitDemoMode();
@@ -363,6 +370,7 @@ window.GoogleAuth = (function () {
   function refreshToken() {
     return new Promise(function (resolve, reject) {
       if (!_tokenClient) { reject(new Error('not initialized')); return; }
+      if (_signingOut || !hasAccountLink()) { reject(new Error('not signed in')); return; }
       if (_isTokenValid()) { resolve(_accessToken); return; }
       _enqueueTokenRequest(resolve, reject, 'refresh');
     });
