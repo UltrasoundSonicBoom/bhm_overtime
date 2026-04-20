@@ -603,88 +603,12 @@ const DATA_STATIC = {
   }
 };
 
-// DATA 객체: 초기값은 static, API 로드 성공 시 덮어쓰기
+// DATA 객체: 정적으로 확정. 월간 업데이트는 Vercel+Neon 재배포로 처리하므로
+// 런타임에 별도 /api/data/bundle 재조회는 하지 않는다.
 let DATA = DATA_STATIC;
-let dataLoadPromise = null;
 
-const DATA_BUNDLE_CACHE_KEY = 'data_bundle_cache_2026-04';
-const DATA_BUNDLE_STATUS_KEY = 'data_bundle_status_2026-04';
-
-function getCurrentMonthKey() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-}
-
-function readStorageJSON(key) {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : null;
-  } catch (e) {
-    return null;
-  }
-}
-
-function writeStorageJSON(key, value) {
-  try {
-    localStorage.setItem(key, JSON.stringify(value));
-  } catch (e) { /* 저장 실패 무시 */ }
-}
-
-// API에서 최신 데이터 로드 (비동기, 실패 시 static fallback 유지)
-async function loadDataFromAPI() {
-  if (dataLoadPromise) return dataLoadPromise;
-
-  const monthKey = getCurrentMonthKey();
-  const cached = readStorageJSON(DATA_BUNDLE_CACHE_KEY);
-  if (cached?.monthKey === monthKey && cached?.data) {
-    // 이미 regulation.js 등이 설정한 런타임 필드(예: DATA.handbook)를 보존하기 위해
-    // DATA 를 재할당하지 않고 mutate 한다.
-    Object.assign(DATA, DATA_STATIC, cached.data);
-    console.log('[DATA] 월간 캐시 사용');
-    return;
-  }
-
-  const status = readStorageJSON(DATA_BUNDLE_STATUS_KEY);
-  if (status?.monthKey === monthKey && status?.state === 'skip') {
-    console.log('[DATA] 월간 재시도 대기 중, static fallback 사용');
-    return;
-  }
-
-  dataLoadPromise = (async () => {
-  try {
-    const _apiBase = (function() {
-      if (location.protocol === 'file:') return 'http://localhost:3001/api';
-      var _lh = { 'localhost': true, '127.0.0.1': true, '::1': true };
-      if (_lh[location.hostname] && location.port !== '3001') return 'http://localhost:3001/api';
-      return '/api';
-    })();
-    const res = await fetch(_apiBase + '/data/bundle');
-    if (!res.ok) throw new Error(`API ${res.status}`);
-    const contentType = res.headers.get('content-type') || '';
-    if (!contentType.includes('application/json')) {
-      throw new Error(`Expected JSON but received ${contentType || 'unknown content-type'}`);
-    }
-    const apiData = await res.json();
-    // 런타임 설정 필드(DATA.handbook 등) 보존을 위해 mutate.
-    Object.assign(DATA, DATA_STATIC, apiData);
-    writeStorageJSON(DATA_BUNDLE_CACHE_KEY, { monthKey, data: apiData, fetchedAt: Date.now() });
-    writeStorageJSON(DATA_BUNDLE_STATUS_KEY, { monthKey, state: 'ok', checkedAt: Date.now() });
-    console.log('[DATA] API 데이터 로드 완료');
-  } catch (e) {
-    writeStorageJSON(DATA_BUNDLE_STATUS_KEY, {
-      monthKey,
-      state: 'skip',
-      checkedAt: Date.now(),
-      reason: e.message || String(e)
-    });
-    console.log('[DATA] API 로드 실패, static fallback 사용:', e.message || e);
-  } finally {
-    dataLoadPromise = null;
-  }
-  })();
-
-  return dataLoadPromise;
-}
-// 초기 로드를 10초 지연: 앱 렌더에 필요한 데이터는 DATA_STATIC로 즉시 충족.
-// API 데이터는 월간 업데이트용이라 지연해도 사용자 체감 영향 없음.
-setTimeout(loadDataFromAPI, 10000);
+// 과거 월간 API 캐시 키 정리 (구 버전 사용자의 localStorage 잔여물 제거).
+try {
+  localStorage.removeItem('data_bundle_cache_2026-04');
+  localStorage.removeItem('data_bundle_status_2026-04');
+} catch (e) { /* ignore */ }
