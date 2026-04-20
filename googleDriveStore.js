@@ -130,6 +130,33 @@ window.GoogleDriveStore = (function () {
     });
   }
 
+  // ── listAppDataFiles ──
+  // appDataFolder 안에서 name 이 prefix 로 시작하는 파일 목록 조회.
+  // Drive search 는 'name contains' 를 제공하므로 정확한 prefix 매칭이 아니지만,
+  // 호출자가 prefix 로 추가 필터링한다. (예: 'payslip_' prefix → 'payslips/payslip_...' 도 포함)
+  function listAppDataFiles(prefix) {
+    var q = "trashed=false";
+    if (prefix) q += " and name contains '" + String(prefix).replace(/'/g, "\\'") + "'";
+    return _withToken(function () {
+      return fetch(
+        BASE_URL + '/files?spaces=appDataFolder&pageSize=1000&fields=files(id,name)&q=' + encodeURIComponent(q),
+        { headers: _headers() }
+      );
+    }).then(function (r) {
+      if (!r.ok) throw new Error('Drive list ' + r.status);
+      return r.json();
+    }).then(function (data) {
+      var list = (data.files || []).map(function (f) { return { id: f.id, name: f.name }; });
+      if (prefix) {
+        list = list.filter(function (f) { return String(f.name).indexOf(prefix) >= 0; });
+      }
+      return list;
+    }).catch(function (err) {
+      console.warn('[DriveStore] listAppDataFiles(' + prefix + ') failed:', err);
+      return [];
+    });
+  }
+
   // ── readJsonFile ──
   function readJsonFile(name) {
     return _getFileId(name).then(function (fileId) {
@@ -287,6 +314,7 @@ window.GoogleDriveStore = (function () {
   return {
     readJsonFile: readJsonFile,
     writeJsonFile: writeJsonFile,
+    listAppDataFiles: listAppDataFiles,
     deleteFile: deleteFile,
     uploadPdf: uploadPdf,
     uploadPdfToMyDrive: uploadPdfToMyDrive,

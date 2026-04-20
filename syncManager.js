@@ -201,6 +201,51 @@ window.SyncManager = (function () {
     });
   }
 
+  // ── payslip 전용 pull ──
+  // Drive 의 payslips/*.json 을 모두 읽어 localStorage 로 복구.
+  // 로그아웃 → 재로그인 시 "업로드했던 급여명세서가 사라짐" 현상을 방지.
+  function _pullPayslip() {
+    if (!window.GoogleDriveStore || typeof window.GoogleDriveStore.listAppDataFiles !== 'function') {
+      return Promise.resolve([]);
+    }
+    var settings = {};
+    try { settings = JSON.parse(localStorage.getItem('bhm_settings') || '{}'); } catch (e) {}
+    var uid = settings.googleSub;
+    if (!uid) return Promise.resolve([]);
+
+    return window.GoogleDriveStore.listAppDataFiles('payslip_').then(function (files) {
+      var reads = files.filter(function (f) {
+        // 'payslips/payslip_YYYY_MM.json' 또는 'payslip_YYYY_MM*.json' 형태만 복구
+        return /payslip_(\d{4})_(\d{2})/.test(f.name);
+      }).map(function (f) {
+        return window.GoogleDriveStore.readJsonFile(f.name).then(function (wrapped) {
+          if (!wrapped || !wrapped.data) return { file: f.name, result: 'no_data' };
+          var m = f.name.match(/payslip_(\d{4})_(\d{2})(?:_([^.]+))?/);
+          if (!m) return { file: f.name, result: 'bad_name' };
+          var localKey = 'payslip_' + uid + '_' + m[1] + '_' + m[2] + (m[3] ? '_' + m[3] : '');
+          var existing = localStorage.getItem(localKey);
+          if (!existing) {
+            localStorage.setItem(localKey, JSON.stringify(wrapped.data));
+            if (wrapped.updatedAt) localStorage.setItem('bhm_lastEdit_' + localKey, wrapped.updatedAt);
+            return { file: f.name, result: 'restored', key: localKey };
+          }
+          // 이미 로컬에 있음 — 충돌 해결 규칙 준수
+          var conflict = resolveConflict(localKey, wrapped);
+          if (conflict === 'remote') {
+            localStorage.setItem(localKey, JSON.stringify(wrapped.data));
+            if (wrapped.updatedAt) localStorage.setItem('bhm_lastEdit_' + localKey, wrapped.updatedAt);
+            return { file: f.name, result: 'remote_wins', key: localKey };
+          }
+          return { file: f.name, result: 'local_wins', key: localKey };
+        });
+      });
+      return Promise.all(reads);
+    }).catch(function (err) {
+      console.warn('[SyncManager] _pullPayslip failed:', err);
+      return [];
+    });
+  }
+
   // ── pullFromDrive ──
   // Drive → localStorage 복원. updatedAt 비교 후 최신 데이터 사용.
   function pullFromDrive() {
@@ -242,7 +287,14 @@ window.SyncManager = (function () {
       });
     });
 
-    return Promise.all(promises);
+    // payslip 은 DATA_MAP 방식이 아닌 별도 flow — 로그인 시 함께 복구
+    var payslipPromise = _pullPayslip().then(function (arr) {
+      return (arr || []).map(function (r) { return Object.assign({ type: 'payslip' }, r); });
+    });
+
+    return Promise.all([Promise.all(promises), payslipPromise]).then(function (r) {
+      return r[0].concat(r[1] || []);
+    });
   }
 
   // ── resolveConflict ──

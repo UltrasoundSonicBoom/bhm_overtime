@@ -228,6 +228,17 @@ window.GoogleAuth = (function () {
     // 이 탭이 메모리에 갖고 있는 _accessToken 은 이전 계정 것이므로 그대로 쓰면 데이터가 섞인다.
     // → 현재 탭의 pending push 를 중단하고 새로고침해 상태를 재정합.
     _attachCrossTabSync();
+
+    // 페이지 로드 직후 token warmup — 로그인 상태면 silent refresh 로 _accessToken 을
+    // 미리 받아둔다. 실패(세션 만료/쿠키 차단) 하면 error_callback 이 조용히 reject —
+    // 사용자가 Drive 작업을 시도할 때 "다시 연결" 안내를 보게 된다. picker 는 뜨지 않는다.
+    // 데모 모드는 googleSub='demo' 허수 값이므로 warmup 건너뛴다.
+    var isDemoMode = localStorage.getItem('bhm_demo_mode') === '1';
+    if (settings.googleSub && settings.googleSub !== 'demo' && !isDemoMode) {
+      refreshToken().catch(function (err) {
+        console.warn('[GoogleAuth] init-time token warmup failed (sign-in required):', err && err.message);
+      });
+    }
   }
 
   var _knownSub = null;
@@ -365,12 +376,15 @@ window.GoogleAuth = (function () {
   }
 
   // ── _enqueueTokenRequest ──
-  // 공통: 큐에 resolver 추가 후 in-flight 아닐 때만 requestAccessToken 호출
+  // 공통: 큐에 resolver 추가 후 in-flight 아닐 때만 requestAccessToken 호출.
+  // prompt: 'none' → 조용한 refresh 만 시도. 세션 만료/쿠키 차단 등으로 interactive 가
+  // 필요하면 GIS 가 picker 를 띄우는 대신 error_callback 을 호출 → 조용히 reject.
+  // 이걸로 "로그인 되어있는데 업로드 클릭 시 계정 선택창 뜸" 문제를 차단한다.
   function _enqueueTokenRequest(resolve, reject, type) {
     _pendingTokenQueue.push({ resolve: resolve, reject: reject, type: type });
     if (!_tokenRequestInFlight) {
       _tokenRequestInFlight = true;
-      _tokenClient.requestAccessToken({ prompt: '' });
+      _tokenClient.requestAccessToken({ prompt: 'none' });
     }
   }
 

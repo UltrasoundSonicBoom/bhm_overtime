@@ -560,7 +560,7 @@
     const note = el('div', {
       style: { fontSize: 'var(--text-body-small)', color: 'var(--text-muted)', textAlign: 'right', maxWidth: '280px' },
       textContent: signedIn
-        ? '내 드라이브 BHM Overtime/급여명세서/ 폴더에 저장돼요.'
+        ? '내 드라이브 snuhmate/YYMM/ 폴더에 저장돼요.'
         : '현재 이 브라우저에만 저장됩니다. 다른 기기에서 보려면 Google 로그인이 필요해요.'
     });
     wrap.appendChild(note);
