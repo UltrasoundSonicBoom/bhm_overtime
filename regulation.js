@@ -613,16 +613,15 @@ function renderArticles(articles, container, options) {
       // ── 부속 합의 박스 (라벤더) ──
       + relatedHtml
       + calcBlock
-      // ── 파랑 연락망 박스 (3버튼 통합) — AI 질문 버튼은 차후 고도화 예정 ──
+      // ── 파랑 연락망 박스 (4버튼: PDF / 전화 / 이메일 / AI 질문) ──
       + '<div class="reg-box-contact">'
       +   '<span class="reg-box-label reg-box-label-contact">📞 담당 부서</span>'
       +   '<div class="reg-contact-dept">' + escapeHtml(deptName) + '</div>'
-      +   '<div class="reg-action-grid-3">'
+      +   '<div class="reg-action-grid-4">'
       +     '<button class="reg-action-btn btn-pdf" onclick="openPdfForRef(\'' + escapedRef + '\')">📄<br>PDF<span class="reg-action-btn-sub">원문 보기</span></button>'
       +     '<a class="reg-action-btn btn-call" href="' + telHref + '">📞<br>전화' + (deptInfo.phone ? '<span class="reg-action-btn-sub">' + escapeHtml(deptInfo.phone) + '</span>' : '') + '</a>'
       +     '<a class="reg-action-btn btn-mail" href="' + mailtoHref + '">✉️<br>이메일<span class="reg-action-btn-sub">' + escapeHtml(deptInfo.email || '문의') + '</span></a>'
-      // AI 질문 버튼 (차후 RAG 고도화):
-      // + '<button class="reg-action-btn" onclick="askAboutArticle(\'' + escapeHtml(article.title).replace(/\u0027/g, "\\u0027") + '\')">💬 AI 질문</button>'
+      +     '<button class="reg-action-btn btn-ai" onclick="askAboutArticle(\'' + escapeHtml(article.title).replace(/\u0027/g, "\\u0027") + '\',\'' + escapedRef + '\')">💬<br>AI 질문<span class="reg-action-btn-sub">규정 상담</span></button>'
       +   '</div>'
       + '</div>'
       + '</div>'
@@ -865,16 +864,28 @@ function openPdfForRef(ref) {
   openPdfSheet(getHandbookPdfUrl(), label, page);
 }
 
-function askAboutArticle(title) {
-  // Switch to 물어보기 tab and pre-fill
-  var askTab = document.querySelector('#regSubTabs .reg-bookmark-tab[data-subtab="ask"]');
-  if (askTab) askTab.click();
-  var input = document.getElementById('chatInput');
-  if (input) {
-    input.value = title;
-    input.focus();
+function askAboutArticle(title, articleRef) {
+  // Open the new RAG chat bottom-sheet (chat-ui.js) with article context prefilled.
+  if (window.AskChatUI && window.AskChatUI.open) {
+    window.AskChatUI.open({
+      title: title || '',
+      articleRef: articleRef || '',
+      prefill: ''
+    });
   }
 }
+
+window.scrollToArticle = function(refOrTitle) {
+  if (!refOrTitle) return;
+  var cards = document.querySelectorAll('.reg-card, [data-article-ref]');
+  for (var i = 0; i < cards.length; i++) {
+    var txt = cards[i].textContent || '';
+    if (txt.indexOf(refOrTitle) !== -1) {
+      cards[i].scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+  }
+};
 
 // ═══════════ 💬 물어보기 (AI 상담) ═══════════
 

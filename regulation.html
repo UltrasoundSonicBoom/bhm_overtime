@@ -579,6 +579,18 @@
       grid-template-columns: 1fr 1fr 1fr;
       gap: 6px;
     }
+    /* ── 4 액션 버튼 그리드 (PDF / 전화 / 이메일 / AI 질문) ── */
+    .reg-action-grid-4 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 6px;
+    }
+    @media (max-width: 380px) {
+      .reg-action-grid-4 {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    .reg-action-btn.btn-ai { background: #fff; }
     .reg-action-btn {
       padding: 10px 6px;
       border: 2px solid var(--text-primary);
@@ -1251,7 +1263,8 @@
   <script src="data.js?v=2.7"></script>
   <script src="profile.js?v=2.5"></script>
   <script src="calculators.js?v=2.5"></script>
-  <script src="regulation.js?v=2.9"></script>
+  <script src="chat-ui.js?v=1.0"></script>
+  <script src="regulation.js?v=3.0"></script>
   <style>
     #ch-plugin-script-iframe { max-width: 500px !important; }
   </style>
