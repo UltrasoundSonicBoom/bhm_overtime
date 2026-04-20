@@ -1,8 +1,11 @@
 'use strict';
 var LEAVE_TYPES=[
-  {id:'annual',label:'연차',cal:false},{id:'half',label:'반차',cal:false},
-  {id:'sick',label:'병가',cal:true},{id:'ceremony',label:'경조사',cal:false},
-  {id:'unpaid',label:'무급',cal:false},{id:'other',label:'기타',cal:false},
+  {id:'annual',    label:'연차',   cal:false},
+  {id:'time_leave',label:'시간차', isTimeBased:true},
+  {id:'sick',      label:'병가',   cal:true},
+  {id:'ceremony',  label:'경조사', cal:false},
+  {id:'unpaid',    label:'무급',   cal:false},
+  {id:'other',     label:'기타',   cal:false},
 ];
 const LeaveScreen = {
   render(container, { user }) {
@@ -17,9 +20,16 @@ const LeaveScreen = {
       '<div class="leave-type-grid" id="ltg">'+
         LEAVE_TYPES.map(function(t){return '<div class="leave-type-item'+(t.id==='annual'?' active':'')+'" data-id="'+t.id+'">'+t.label+'</div>';}).join('')+
       '</div>'+
-      '<div style="display:flex;gap:6px;margin-bottom:10px">'+
+      '<div id="ldates" style="display:flex;gap:6px;margin-bottom:10px">'+
         '<div class="field" style="flex:1"><label class="field-label">시작</label><input class="field-input" type="date" id="ls"></div>'+
         '<div class="field" style="flex:1"><label class="field-label">종료</label><input class="field-input" type="date" id="le"></div>'+
+      '</div>'+
+      '<div id="ltimes" style="display:none;margin-bottom:10px">'+
+        '<div style="display:flex;gap:6px;align-items:center">'+
+          '<div class="field" style="flex:1"><label class="field-label">시작</label><input class="field-input" type="time" id="lst" value="09:00"></div>'+
+          '<div style="align-self:flex-end;padding-bottom:8px;color:#6b7280">~</div>'+
+          '<div class="field" style="flex:1"><label class="field-label">종료</label><input class="field-input" type="time" id="let" value="18:00"></div>'+
+        '</div>'+
       '</div>'+
       '<div class="field"><label class="field-label">사유</label><input class="field-input" type="text" id="lr" maxlength="100" placeholder="선택"></div>'+
       '<div class="info-bar green" id="li">날짜를 선택하세요</div>'+
@@ -35,11 +45,17 @@ const LeaveScreen = {
     container.querySelectorAll('.leave-type-item').forEach(function(el){
       el.onclick=function(){
         container.querySelectorAll('.leave-type-item').forEach(function(x){x.classList.remove('active');});
-        el.classList.add('active'); selType=el.dataset.id; recalc();
+        el.classList.add('active'); selType=el.dataset.id;
+        var isTime=(LEAVE_TYPES.find(function(t){return t.id===selType;})||{}).isTimeBased;
+        container.querySelector('#ldates').style.display=isTime?'none':'flex';
+        container.querySelector('#ltimes').style.display=isTime?'block':'none';
+        recalc();
       };
     });
     container.querySelector('#ls').oninput=function(){selStart=this.value; renderCal(); recalc();};
     container.querySelector('#le').oninput=function(){selEnd=this.value; renderCal(); recalc();};
+    container.querySelector('#lst').oninput=recalc;
+    container.querySelector('#let').oninput=recalc;
     container.querySelector('#lb').onclick=save;
 
     function renderCal() {
@@ -82,32 +98,65 @@ const LeaveScreen = {
     }
 
     function recalc(){
-      var s=container.querySelector('#ls').value, e=container.querySelector('#le').value;
       var li=container.querySelector('#li');
-      if(!s||!e||s>e){li.textContent='날짜를 선택하세요';return;}
       var t=LEAVE_TYPES.find(function(x){return x.id===selType;});
-      var days=selType==='half'?0.5:calcLeaveDays(s,e,t.cal);
-      li.textContent='📊 '+days+'일 신청';
+      if(t&&t.isTimeBased){
+        var st=container.querySelector('#lst').value;
+        var et=container.querySelector('#let').value;
+        if(!st||!et){li.textContent='시간을 선택하세요';return;}
+        var sh=parseInt(st),sm=parseInt((st.split(':')[1])||0);
+        var eh=parseInt(et),em=parseInt((et.split(':')[1])||0);
+        var hours=(eh+em/60)-(sh+sm/60);
+        if(hours<0)hours+=24;
+        if(hours>=4)hours-=1;
+        hours=Math.max(0,hours);
+        var days=Math.round(hours/8*10)/10;
+        li.textContent='📊 '+hours.toFixed(1)+'시간 = '+days.toFixed(1)+'일';
+        return;
+      }
+      var s=container.querySelector('#ls').value, e=container.querySelector('#le').value;
+      if(!s||!e||s>e){li.textContent='날짜를 선택하세요';return;}
+      var days2=calcLeaveDays(s,e,t.cal||false);
+      li.textContent='📊 '+days2+'일 신청';
     }
 
     async function save(){
       var btn=container.querySelector('#lb'), ss=container.querySelector('#lss');
       btn.disabled=true;
-      var s=container.querySelector('#ls').value, e=container.querySelector('#le').value;
-      if(!s||!e||s>e){ss.textContent='날짜 확인'; ss.className='status-msg err'; btn.disabled=false; return;}
+      var t=LEAVE_TYPES.find(function(x){return x.id===selType;});
+      var rec;
+      if(t&&t.isTimeBased){
+        var st=container.querySelector('#lst').value;
+        var et=container.querySelector('#let').value;
+        if(!st||!et){ss.textContent='시간 입력 필요';ss.className='status-msg err';btn.disabled=false;return;}
+        var sh=parseInt(st),sm=parseInt((st.split(':')[1])||0);
+        var eh=parseInt(et),em=parseInt((et.split(':')[1])||0);
+        var hours=(eh+em/60)-(sh+sm/60);
+        if(hours<0)hours+=24;
+        if(hours>=4)hours-=1;
+        hours=Math.max(0,Math.round(hours*10)/10);
+        var days=Math.round(hours/8*10)/10;
+        var today2=container.querySelector('#ls').value||todayStr;
+        rec={id:'lv_'+Date.now(),type:selType,startDate:today2,endDate:today2,startTime:st,endTime:et,hours:hours,days:days,reason:container.querySelector('#lr').value.trim(),createdAt:new Date().toISOString()};
+      } else {
+        var s=container.querySelector('#ls').value, e=container.querySelector('#le').value;
+        if(!s||!e||s>e){ss.textContent='날짜 확인';ss.className='status-msg err';btn.disabled=false;return;}
+        var d2=calcLeaveDays(s,e,t.cal||false);
+        rec={id:'lv_'+Date.now(),type:selType,startDate:s,endDate:e,days:d2,reason:container.querySelector('#lr').value.trim(),createdAt:new Date().toISOString()};
+      }
       try{
-        var t=LEAVE_TYPES.find(function(x){return x.id===selType;});
-        var days=selType==='half'?0.5:calcLeaveDays(s,e,t.cal);
-        var rec={id:'lv_'+Date.now(),type:selType,startDate:s,endDate:e,days:days,reason:container.querySelector('#lr').value.trim(),createdAt:new Date().toISOString()};
         var d=await BhmStorage.get([BhmStorage.KEYS.LEAVE]);
         var recs=d[BhmStorage.KEYS.LEAVE]||[]; recs.push(rec);
         await BhmStorage.set({[BhmStorage.KEYS.LEAVE]:recs});
         chrome.runtime.sendMessage({type:'SYNC_NOW'});
-        ss.textContent='✅ '+days+'일 저장 완료'; ss.className='status-msg ok';
+        var label=t.isTimeBased?rec.hours+'시간':rec.days+'일';
+        ss.textContent='✅ '+label+' 저장 완료'; ss.className='status-msg ok';
         container.querySelector('#lr').value='';
-        selStart=todayStr; selEnd=todayStr;
-        container.querySelector('#ls').value=selStart;
-        container.querySelector('#le').value=selEnd;
+        if(!t.isTimeBased){
+          selStart=todayStr; selEnd=todayStr;
+          container.querySelector('#ls').value=selStart;
+          container.querySelector('#le').value=selEnd;
+        }
         renderCal(); recalc();
         setTimeout(function(){ss.textContent='';},2000);
       } finally { btn.disabled=false; }

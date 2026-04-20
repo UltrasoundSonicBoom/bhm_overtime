@@ -39,7 +39,16 @@ const LoginScreen = {
         const user  = await BhmAuth.fetchProfile(token);
         await onLogin(user);
       } catch (e) {
-        status.textContent = '로그인 실패: ' + e.message;
+        var msg = e.message || '';
+        var userMsg;
+        if (msg.includes('redirect_uri_mismatch') || msg.includes('403')) {
+          userMsg = '⚙️ GCP 설정 필요 — chrome.identity.getRedirectURL() 주소를 OAuth 클라이언트 허용 URI에 추가하세요';
+        } else if (msg.includes('cancelled') || msg.includes('cancel')) {
+          userMsg = '로그인을 취소했습니다';
+        } else {
+          userMsg = '로그인 실패: ' + msg;
+        }
+        status.textContent = userMsg;
         status.className   = 'status-msg err';
         btn.disabled       = false;
         btnLabel.textContent = 'Google 계정으로 로그인';

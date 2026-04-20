@@ -120,8 +120,13 @@ const BhmAuth = {
       const d = await new Promise(r => chrome.storage.local.get(['_web_token'], r));
       if (d['_web_token']) await fetch('https://accounts.google.com/o/oauth2/revoke?token=' + d['_web_token']).catch(() => {});
     } catch (_) {}
-    await storage.remove([...Object.values(storage.KEYS), 'bhm_last_pdf']);
-    await new Promise(r => chrome.storage.local.remove(['_web_token', '_web_token_exp'], r));
+    await new Promise(resolve => {
+      chrome.storage.local.get(null, function(all) {
+        const keys = Object.keys(all).filter(k => k.startsWith('bhm_') || k.startsWith('_web_'));
+        if (keys.length === 0) { resolve(); return; }
+        chrome.storage.local.remove(keys, resolve);
+      });
+    });
   },
 };
 if (typeof module !== 'undefined') {
