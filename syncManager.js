@@ -183,8 +183,10 @@ window.SyncManager = (function () {
   // ── payslip 전용 push ──
   function _pushPayslip(year, month) {
     var mm = String(month).padStart(2, '0');
-    var localKey = 'payslip_' + year + '_' + mm;
-    // getUserStorageKey는 payslip에서는 사용하지 않음 (기존 salary-parser 패턴 유지)
+    var settings = {};
+    try { settings = JSON.parse(localStorage.getItem('bhm_settings') || '{}'); } catch (e) {}
+    var uid = settings.googleSub || 'guest';
+    var localKey = 'payslip_' + uid + '_' + year + '_' + mm;
     var raw = localStorage.getItem(localKey);
     if (!raw) return Promise.resolve();
     var data;
@@ -366,6 +368,28 @@ window.SyncManager = (function () {
       console.warn('[SyncManager] guest/login conflicts archived as _orphan:', orphaned);
       _showToast('⚠️ 비로그인 편집분 중 일부를 _orphan 백업으로 보관했어요. 관리자에게 문의해 주세요.', 6000);
     }
+
+    // payslip 구 키 (payslip_YYYY_MM) → 신규 키 (payslip_<googleSub>_YYYY_MM) 마이그레이션
+    (function migratePayslipKeys() {
+      var oldPattern = /^payslip_(\d{4})_(\d{2})(?:_(.+))?$/;
+      var keysToMigrate = [];
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (k && oldPattern.test(k)) keysToMigrate.push(k);
+      }
+      keysToMigrate.forEach(function(k) {
+        var m = k.match(oldPattern);
+        if (!m) return;
+        var newKey = 'payslip_' + googleSub + '_' + m[1] + '_' + m[2] + (m[3] ? '_' + m[3] : '');
+        if (!localStorage.getItem(newKey)) {
+          localStorage.setItem(newKey, localStorage.getItem(k));
+        }
+        localStorage.removeItem(k);
+      });
+      if (keysToMigrate.length > 0) {
+        console.log('[SyncManager] migrated ' + keysToMigrate.length + ' payslip keys to namespace payslip_' + googleSub + '_*');
+      }
+    }());
   }
 
   // ── UI 헬퍼 ──

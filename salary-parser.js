@@ -1072,9 +1072,16 @@ const SALARY_PARSER = (() => {
   }
 
   // ── localStorage 월별 저장/불러오기 ──
+  function _payslipUid() {
+    var settings = {};
+    try { settings = JSON.parse(localStorage.getItem('bhm_settings') || '{}'); } catch (e) {}
+    return settings.googleSub || 'guest';
+  }
+
   function storageKey(year, month, type) {
-    const base = `payslip_${year}_${String(month).padStart(2, '0')}`;
-    return (type && type !== '급여') ? `${base}_${type}` : base;
+    var uid = _payslipUid();
+    var base = 'payslip_' + uid + '_' + year + '_' + String(month).padStart(2, '0');
+    return (type && type !== '급여') ? base + '_' + type : base;
   }
 
   function saveMonthlyData(year, month, data, type, overwrite = false) {
@@ -1154,18 +1161,20 @@ const SALARY_PARSER = (() => {
   }
 
   function listSavedMonths() {
-    const months = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (k && k.startsWith('payslip_')) {
-        const m = k.match(/payslip_(\d{4})_(\d{2})(?:_(.+))?$/);
-        if (m) months.push({ year: parseInt(m[1]), month: parseInt(m[2]), type: m[3] || '급여', key: k });
-      }
+    var uid = _payslipUid();
+    var prefix = 'payslip_' + uid + '_';
+    var months = [];
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (!k || !k.startsWith(prefix)) continue;
+      var rest = k.slice(prefix.length);
+      var m = rest.match(/^(\d{4})_(\d{2})(?:_(.+))?$/);
+      if (m) months.push({ year: parseInt(m[1]), month: parseInt(m[2]), type: m[3] || '급여', key: k });
     }
-    return months.sort((a, b) =>
-      b.year - a.year || b.month - a.month ||
-      (a.type === '급여' ? -1 : b.type === '급여' ? 1 : 0)
-    );
+    return months.sort(function(a, b) {
+      return b.year - a.year || b.month - a.month ||
+        (a.type === '급여' ? -1 : b.type === '급여' ? 1 : 0);
+    });
   }
 
   // 편집 저장 전용: merge 없이 전체 교체
