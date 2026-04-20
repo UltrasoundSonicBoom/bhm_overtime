@@ -307,10 +307,11 @@ window.SyncManager = (function () {
   // 어떤 경우에도 guest 편집분이 조용히 사라지지 않도록 보장한다.
   function migrateGuestData(googleSub) {
     var MIGRATE_KEYS = [
-      { base: 'bhm_hr_profile',  dataType: 'profile' },
-      { base: 'overtimeRecords', dataType: 'overtime' },
-      { base: 'leaveRecords',    dataType: 'leave' },
-      { base: 'otManualHourly',  dataType: null }
+      { base: 'bhm_hr_profile',   dataType: 'profile' },
+      { base: 'overtimeRecords',  dataType: 'overtime' },
+      { base: 'leaveRecords',     dataType: 'leave' },
+      { base: 'otManualHourly',   dataType: null },
+      { base: 'bhm_work_history', dataType: null },
     ];
 
     var guestSuffix = '_guest';

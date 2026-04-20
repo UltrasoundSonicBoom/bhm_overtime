@@ -1,11 +1,16 @@
 // work-history.js — 근무이력 관리
 // ── E1: 근무이력 ──────────────────────────────────────────────────
 var _whEditId = null;
-var WH_KEY = 'bhm_work_history';
+function _whKey() {
+  return window.getUserStorageKey ? window.getUserStorageKey('bhm_work_history') : 'bhm_work_history_guest';
+}
+function _whSeedKey() {
+  return window.getUserStorageKey ? window.getUserStorageKey('bhm_work_history_seeded') : 'bhm_work_history_seeded_guest';
+}
 
 function _loadWorkHistory() {
   try {
-    var list = JSON.parse(localStorage.getItem(WH_KEY) || '[]');
+    var list = JSON.parse(localStorage.getItem(_whKey()) || '[]');
     // lazy 마이그레이션
     list.forEach(function(item) {
       if (!Array.isArray(item.rotations)) item.rotations = [];
@@ -62,7 +67,7 @@ window.updateRotation = updateRotation;
 window.deleteRotation = deleteRotation;
 
 function _saveWorkHistory(list) {
-  localStorage.setItem(WH_KEY, JSON.stringify(list));
+  localStorage.setItem(_whKey(), JSON.stringify(list));
   if (window.SyncManager && typeof window.SyncManager.push === 'function') {
     try { window.SyncManager.push(); } catch(e) {}
   }
@@ -106,7 +111,7 @@ function renderWorkHistory() {
     }
   }
   // 스테일 플래그 정리 (이전 버전 호환)
-  try { localStorage.removeItem('bhm_work_history_seeded'); } catch (e) {}
+  try { localStorage.removeItem(_whSeedKey()); } catch (e) {}
 
   if (list.length === 0) {
     var empty = document.createElement('div');

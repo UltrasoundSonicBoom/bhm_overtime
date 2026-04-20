@@ -421,7 +421,8 @@
     var p = _profile();
     if (!p) return;
     var wh;
-    try { wh = JSON.parse(localStorage.getItem('bhm_work_history') || '[]'); } catch (e) { wh = []; }
+    var _rhK = window.getUserStorageKey ? window.getUserStorageKey('bhm_work_history') : 'bhm_work_history_guest';
+    try { wh = JSON.parse(localStorage.getItem(_rhK) || '[]'); } catch (e) { wh = []; }
     (wh || []).forEach(function (it) { if (!Array.isArray(it.rotations)) it.rotations = []; });
 
     var target = document.getElementById('printableResume');

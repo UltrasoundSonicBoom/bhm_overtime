@@ -34,7 +34,12 @@ assert(appJs.includes('function _saveWorkHistory'), '_saveWorkHistory 함수 존
 assert(appJs.includes('function openWorkHistorySheet'), 'openWorkHistorySheet 함수 존재');
 assert(appJs.includes('function saveWorkHistoryEntry'), 'saveWorkHistoryEntry 함수 존재');
 assert(appJs.includes('function deleteWorkHistoryEntry'), 'deleteWorkHistoryEntry 함수 존재');
-assert(appJs.includes("'bhm_work_history'") || appJs.includes('"bhm_work_history"'), 'localStorage 키 bhm_work_history');
+var workHistoryJs = fs.readFileSync(path.join(__dirname, '..', 'work-history.js'), 'utf8');
+assert(
+  appJs.includes("'bhm_work_history'") || appJs.includes('"bhm_work_history"') ||
+  workHistoryJs.includes('_whKey') || workHistoryJs.includes("'bhm_work_history'"),
+  'localStorage 키 bhm_work_history (namespaced)'
+);
 assert(appJs.includes('SyncManager') && appJs.includes('.push'), 'SyncManager.push() 호출');
 
 // ── Test 2: E1 근무이력 — HTML 요소 ──────────────────────────────
