@@ -80,11 +80,14 @@ const BhmDrive = {
   },
 
   async pushApplock(storage, token) {
-    const d = await storage.get([
-      storage.KEYS.PIN_HASH, storage.KEYS.PIN_SALT, storage.KEYS.PIN_LENGTH,
-    ]);
-    if (!d[storage.KEYS.PIN_HASH]) return;
     try {
+      const d = await storage.get([
+        storage.KEYS.PIN_HASH, storage.KEYS.PIN_SALT, storage.KEYS.PIN_LENGTH,
+      ]);
+      if (!d[storage.KEYS.PIN_HASH]) {
+        await BhmDrive.writeJson('applock.json', { pinEnabled: false }, token);
+        return;
+      }
       await BhmDrive.writeJson('applock.json', {
         pinEnabled: true,
         pinHash:    d[storage.KEYS.PIN_HASH],
