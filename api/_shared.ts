@@ -2,4 +2,5 @@ import { handle } from '@hono/node-server/vercel'
 import app from '../server/src/index'
 
 export const config = { api: { bodyParser: false } }
-export default handle(app)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export default handle(app as any)
