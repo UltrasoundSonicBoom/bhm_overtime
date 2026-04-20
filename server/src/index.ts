@@ -12,6 +12,7 @@ import meRoutes from './routes/me'
 import cardNewsRoutes from './routes/cardNews'
 import regulationRoutes from './routes/regulations'
 import resumeRoutes from './routes/resume'
+import ragChatRoutes from './routes/ragChat'
 
 const app = new Hono().basePath('/api')
 
@@ -55,6 +56,7 @@ app.route('/regulations', regulationRoutes)
 app.route('/teams', teamRoutes)
 app.route('/me', meRoutes)
 app.route('/resume', resumeRoutes)
+app.route('/rag/chat', ragChatRoutes)
 
 // Vercel serverless export
 export default app
