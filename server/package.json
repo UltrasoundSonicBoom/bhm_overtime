@@ -19,6 +19,8 @@
     "rag:ingest": "tsx scripts/ingest-regulation-docs.ts",
     "rag:embed:regulations": "tsx scripts/embed-regulation-docs.ts",
     "rag:verify": "tsx scripts/verify-rag-quality.ts",
+    "rag:v2:ingest": "tsx scripts/ingest-rag-v2.ts",
+    "rag:v2:verify": "tsx scripts/verify-rag-v2.ts",
     "schedule:solver:check": "python3 -m py_compile workers/schedule_solver.py"
   },
   "dependencies": {
