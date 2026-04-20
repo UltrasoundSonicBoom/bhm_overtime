@@ -1220,13 +1220,33 @@ const SALARY_PARSER = (() => {
       }
     });
 
-    // 직원 정보 반영 (입사일/부서/직종/사번) — 프로필이 비어있을 때만
+    // 직원 정보 반영 (입사일/부서/직종/사번/직급/호봉) — 명세서가 source of truth.
+    // 명세서 값이 있으면 항상 최신화 (부서 이동, 승급 등 반영). 이름/사번은 신규 생성 시만 — 오탈자 보호.
     const ei = data.employeeInfo || {};
-    if (ei.hireDate && !profile.hireDate) { profile.hireDate = ei.hireDate; changed = true; applied.push({ name: '입사일', amount: 0, note: ei.hireDate }); }
-    if (ei.department && !profile.department) { profile.department = ei.department; changed = true; applied.push({ name: '부서', amount: 0, note: ei.department }); }
-    if (ei.jobType && !profile.jobType) { profile.jobType = ei.jobType; changed = true; applied.push({ name: '직종', amount: 0, note: ei.jobType }); }
+    if (ei.hireDate && profile.hireDate !== ei.hireDate) { profile.hireDate = ei.hireDate; changed = true; applied.push({ name: '입사일', amount: 0, note: ei.hireDate }); }
+    if (ei.department && profile.department !== ei.department) { profile.department = ei.department; changed = true; applied.push({ name: '부서', amount: 0, note: ei.department }); }
+    if (ei.jobType) {
+      // 명세서의 raw jobType (예: '간호', '보건') 을 앱 내부 표준 ('간호직', '보건직') 으로 매핑
+      const jobTypeMap = { '간호': '간호직', '보건': '보건직', '약무': '약무직', '의료기사': '의료기사직', '의사': '의사직', '사무': '사무직', '기능': '기능직', '시설': '시설직', '환경미화': '환경미화직', '지원': '지원직' };
+      let mappedJobType = ei.jobType;
+      for (const [keyword, jt] of Object.entries(jobTypeMap)) {
+        if (ei.jobType.includes(keyword)) { mappedJobType = jt; break; }
+      }
+      if (profile.jobType !== mappedJobType) { profile.jobType = mappedJobType; changed = true; applied.push({ name: '직종', amount: 0, note: mappedJobType }); }
+    }
     if (ei.employeeNumber && !profile.employeeNumber) { profile.employeeNumber = String(ei.employeeNumber).trim(); changed = true; }
     if (ei.name && !profile.name) { profile.name = ei.name; changed = true; }
+
+    // payGrade → grade/year 파싱 (예: "J3-5" → grade='J3', year=5)
+    if (ei.payGrade) {
+      const gm = String(ei.payGrade).match(/([A-Za-z]+\d*)\s*-\s*(\d+)/);
+      if (gm) {
+        const newGrade = gm[1].toUpperCase();
+        const newYear = parseInt(gm[2], 10) || 1;
+        if (profile.grade !== newGrade) { profile.grade = newGrade; changed = true; applied.push({ name: '직급', amount: 0, note: newGrade }); }
+        if (profile.year !== newYear) { profile.year = newYear; changed = true; applied.push({ name: '호봉', amount: 0, note: String(newYear) }); }
+      }
+    }
 
     // 가족수당 관련 항목 자동 반영
     const payslipMap = {};

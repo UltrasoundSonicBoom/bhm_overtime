@@ -199,6 +199,14 @@ window.GoogleAuth = (function () {
         }).catch(function (err) {
           console.error('[GoogleAuth] fetchUserInfo failed:', err);
         });
+      },
+      error_callback: function (err) {
+        // GIS silent refresh 실패 등 — 계정 선택창/리다이렉트 대신 조용히 reject.
+        // 대기 중인 _withToken 호출들은 error 를 받아 각자 처리 (대부분 조용히 스킵).
+        _tokenRequestInFlight = false;
+        if (!_flushTokenQueue(new Error('token_error: ' + (err && (err.type || err.message) || 'unknown')))) {
+          console.warn('[GoogleAuth] token error_callback (no queue):', err && err.type, err && err.message);
+        }
       }
     });
 

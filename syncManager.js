@@ -23,7 +23,8 @@ window.SyncManager = (function () {
     leave:    { localKey: 'leaveRecords',     driveFile: 'leave.json' },
     overtime: { localKey: 'overtimeRecords',  driveFile: 'overtime.json' },
     profile:  { localKey: 'bhm_hr_profile',   driveFile: 'profile.json' },
-    overtimePayslip: { localKey: 'overtimePayslipData', driveFile: 'overtime_payslip.json' }
+    overtimePayslip: { localKey: 'overtimePayslipData', driveFile: 'overtime_payslip.json' },
+    work_history: { localKey: 'bhm_work_history', driveFile: 'work_history.json' }
     // payslip: 별도 처리 (enqueuePush('payslip', year, month) 형태)
     // applock: 별도 처리 (_pushAppLock / _pullAppLock) — PIN 필드만 분리 동기화
   };
@@ -119,7 +120,8 @@ window.SyncManager = (function () {
   function _driveReady() {
     if (localStorage.getItem('bhm_demo_mode') === '1') return false;
     if (!window.GoogleAuth || !window.GoogleAuth.isSignedIn()) return false;
-    if (typeof window.GoogleAuth.hasValidToken === 'function' && !window.GoogleAuth.hasValidToken()) return false;
+    // 토큰 만료 시에도 sync 시도 — _withToken 이 refreshToken 을 silent 호출.
+    // 실패 시 initTokenClient.error_callback 이 조용히 reject (팝업/리다이렉트 없음).
     if (!window.GoogleDriveStore) return false;
     var settings = window.loadSettings ? window.loadSettings() : {};
     return !!settings.driveEnabled;
@@ -312,7 +314,7 @@ window.SyncManager = (function () {
       { base: 'overtimeRecords',  dataType: 'overtime' },
       { base: 'leaveRecords',     dataType: 'leave' },
       { base: 'otManualHourly',   dataType: null },
-      { base: 'bhm_work_history', dataType: null },
+      { base: 'bhm_work_history', dataType: 'work_history' },
     ];
 
     var guestSuffix = '_guest';
@@ -432,7 +434,6 @@ window.SyncManager = (function () {
     // 페이지 로드 중 focus 이벤트로 발화할 때 GIS init이 아직 안 끝났을 수 있음.
     // 이 경우 조용히 스킵 — init 완료 후 다음 focus 이벤트에서 정상 동작.
     if (typeof window.GoogleAuth.isReady === 'function' && !window.GoogleAuth.isReady()) return;
-    if (typeof window.GoogleAuth.hasValidToken === 'function' && !window.GoogleAuth.hasValidToken()) return;
     if (!window.GoogleDriveStore) return;
     var now = Date.now();
     if (now - _lastResumePull < RESUME_COOLDOWN_MS) return;

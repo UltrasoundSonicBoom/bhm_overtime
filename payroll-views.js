@@ -597,12 +597,22 @@
       if (ym) {
         SALARY_PARSER.saveMonthlyData(ym.year, ym.month, result, ym.type);
 
+        // 프로필 자동 반영 (grade/year/부서/입사일/직종 등)
+        if (window.SALARY_PARSER && typeof window.SALARY_PARSER.applyStableItemsToProfile === 'function') {
+          window.SALARY_PARSER.applyStableItemsToProfile(result);
+        }
+
+        // 근무정보 자동 배치 이력 생성
+        if (typeof window._propagatePayslipToWorkHistory === 'function') {
+          window._propagatePayslipToWorkHistory(result, ym);
+        }
+
         // PDF 원본을 내 드라이브에 보관 (drive.file scope + 로그인 시)
         const isPdf = file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf';
-        if (isPdf && _isSignedIn() && window.GoogleAuth && window.GoogleAuth.hasValidToken && window.GoogleAuth.hasValidToken() && window.GoogleDriveStore) {
+        if (isPdf && _isSignedIn() && window.GoogleDriveStore) {
           const typeLabel = ym.type && ym.type !== '급여' ? `_${ym.type}` : '';
-          const pdfName = `${ym.year}년_${String(ym.month).padStart(2, '0')}월_급여명세서${typeLabel}.pdf`;
-          window.GoogleDriveStore.uploadPdfToMyDrive(pdfName, file).then(function (r) {
+          const title = `급여명세서${typeLabel}`;
+          window.GoogleDriveStore.uploadPdfToMyDrive(title, file, { year: ym.year, month: ym.month }).then(function (r) {
             if (r && typeof showOtToast === 'function') showOtToast('📁 내 드라이브에 PDF 저장됨');
           });
         }

@@ -226,10 +226,21 @@ window.GoogleDriveStore = (function () {
 
   // ── uploadPdfToMyDrive ──
   // PDF 원본을 사용자 My Drive에 저장 (drive.file scope 필요)
-  // 경로: 내 드라이브/BHM Overtime/급여명세서/{fileName}
-  function uploadPdfToMyDrive(fileName, blob) {
-    return _findOrCreateFolder('BHM Overtime', null)
-      .then(function (rootId) { return _findOrCreateFolder('급여명세서', rootId); })
+  // 경로: 내 드라이브/snuhmate/YYMM/YYMM_{title}.pdf
+  //   title 예: '급여명세서', '급여명세서_연차수당'
+  //   ym: { year, month } — YY=년 끝2자리, MM=2자리 월
+  function uploadPdfToMyDrive(title, blob, ym) {
+    if (!ym || !ym.year || !ym.month) {
+      console.warn('[DriveStore] uploadPdfToMyDrive: ym 누락');
+      return Promise.resolve(null);
+    }
+    var yy = String(ym.year).slice(-2);
+    var mm = String(ym.month).padStart(2, '0');
+    var ymPrefix = yy + mm;
+    var fileName = ymPrefix + '_' + title + '.pdf';
+
+    return _findOrCreateFolder('snuhmate', null)
+      .then(function (rootId) { return _findOrCreateFolder(ymPrefix, rootId); })
       .then(function (folderId) {
         var q = "name='" + fileName.replace(/'/g, "\\'") + "' and '" + folderId + "' in parents and trashed=false";
         return _withToken(function () {

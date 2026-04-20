@@ -68,8 +68,10 @@ window.deleteRotation = deleteRotation;
 
 function _saveWorkHistory(list) {
   localStorage.setItem(_whKey(), JSON.stringify(list));
-  if (window.SyncManager && typeof window.SyncManager.push === 'function') {
-    try { window.SyncManager.push(); } catch(e) {}
+  // bhm_lastEdit_<key> 도 갱신 → SyncManager 충돌 비교에 필요
+  localStorage.setItem('bhm_lastEdit_' + _whKey(), new Date().toISOString());
+  if (window.SyncManager && typeof window.SyncManager.enqueuePush === 'function') {
+    try { window.SyncManager.enqueuePush('work_history'); } catch(e) {}
   }
 }
 

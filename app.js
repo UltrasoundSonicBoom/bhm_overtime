@@ -3487,33 +3487,56 @@ function _isImageFile(file) {
   return /\.(jpg|jpeg|png|bmp|webp|heic|heif)$/i.test(file.name) || file.type.startsWith('image/');
 }
 
-// ── 공통 헬퍼: 파싱된 급여명세서의 employeeInfo 를 PROFILE 에 merge 저장 ──
-function _applyPayslipEmployeeInfo(parsed) {
-  const info = (parsed && parsed.employeeInfo) || {};
-  const patch = {};
-  if (info.name) patch.name = info.name;
-  if (info.hireDate) patch.hireDate = info.hireDate;
-  if (info.department) patch.department = info.department;
-  if (info.employeeNumber) patch.employeeNumber = String(info.employeeNumber).trim();
+// (_applyPayslipEmployeeInfo 는 salary-parser.js:applyStableItemsToProfile 로 일원화됨 — 2026-04-20)
 
-  if (info.jobType) {
-    const jobTypeMap = { '간호': '간호직', '보건': '보건직', '약무': '약무직', '의료기사': '의료기사직', '의사': '의사직', '사무': '사무직', '기능': '기능직', '시설': '시설직', '환경미화': '환경미화직', '지원': '지원직' };
-    for (const [keyword, jt] of Object.entries(jobTypeMap)) {
-      if (info.jobType.includes(keyword)) { patch.jobType = jt; break; }
-    }
+/// ── 명세서 → 근무정보 (work_history) 자동 배치 이력 생성 ──
+// 같은 부서가 해당 월 구간에 이미 존재하면 skip. 신규 부서면 월 단위로 entry 추가.
+function _propagatePayslipToWorkHistory(parsed, ym) {
+  if (!parsed || !parsed.employeeInfo || !ym) return;
+  var ei = parsed.employeeInfo;
+  if (!ei.department) return;
+
+  var whKey = window.getUserStorageKey ? window.getUserStorageKey('bhm_work_history') : 'bhm_work_history_guest';
+  var list = [];
+  try { list = JSON.parse(localStorage.getItem(whKey) || '[]') || []; } catch (e) { list = []; }
+  if (!Array.isArray(list)) list = [];
+
+  var yy = ym.year;
+  var mm = ym.month;
+  var monthStart = yy + '-' + String(mm).padStart(2, '0') + '-01';
+  var lastDay = new Date(yy, mm, 0).getDate();
+  var monthEnd = yy + '-' + String(mm).padStart(2, '0') + '-' + String(lastDay).padStart(2, '0');
+
+  // 같은 부서가 이번 월을 포함하는 기간으로 이미 존재하면 skip
+  var hasOverlap = list.some(function (w) {
+    if (!w || !w.from) return false;
+    if (w.dept !== ei.department) return false;
+    var from = w.from;
+    var to = w.to || '9999-12-31';
+    return from <= monthEnd && to >= monthStart;
+  });
+  if (hasOverlap) return;
+
+  var entry = {
+    id: 'wh_ps_' + yy + String(mm).padStart(2, '0') + '_' + Date.now().toString(36),
+    workplace: '서울대학교병원',
+    dept: ei.department,
+    from: monthStart,
+    to: monthEnd,
+    rotations: [],
+    source: 'payslip_auto',
+    createdAt: new Date().toISOString(),
+  };
+  list.push(entry);
+  list.sort(function (a, b) { return (a.from || '') < (b.from || '') ? -1 : 1; });
+  localStorage.setItem(whKey, JSON.stringify(list));
+
+  if (window.SyncManager && typeof window.SyncManager.enqueuePush === 'function') {
+    window.SyncManager.enqueuePush('work_history');
   }
-
-  if (info.payGrade) {
-    const gm = info.payGrade.match(/([A-Za-z]\d+)\s*-\s*(\d+)/);
-    if (gm) {
-      patch.grade = gm[1].toUpperCase();
-      patch.year = parseInt(gm[2]) || 1;
-    }
-  }
-
-  if (Object.keys(patch).length > 0) PROFILE.save(patch);
-  return patch;
 }
+// payroll-views.js 에서도 호출 가능하도록 노출
+window._propagatePayslipToWorkHistory = _propagatePayslipToWorkHistory;
 
 /// ── 명세서 → 시간외 탭 교차 검증 데이터 전파 ──
 function _propagatePayslipToOvertime(parsed, ym) {
@@ -3627,18 +3650,26 @@ async function handlePayslipUpload(file) {
 
     // PDF 원본을 내 드라이브에 보관 (drive.file scope 있을 때만)
     const isPdf = file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf';
-    if (isPdf && window.GoogleAuth && window.GoogleAuth.isSignedIn() && window.GoogleAuth.hasValidToken && window.GoogleAuth.hasValidToken() && window.GoogleDriveStore) {
+    if (isPdf && window.GoogleAuth && window.GoogleAuth.isSignedIn() && window.GoogleDriveStore) {
       const typeLabel = ym.type && ym.type !== '급여' ? `_${ym.type}` : '';
-      const pdfName = `${ym.year}년_${String(ym.month).padStart(2, '0')}월_급여명세서${typeLabel}.pdf`;
-      window.GoogleDriveStore.uploadPdfToMyDrive(pdfName, file).then(function (result) {
+      const title = `급여명세서${typeLabel}`;
+      window.GoogleDriveStore.uploadPdfToMyDrive(title, file, { year: ym.year, month: ym.month }).then(function (result) {
         if (result) showOtToast('📁 내 드라이브에 PDF 저장됨');
       });
     }
 
-    // employeeInfo (이름/직종/직급/호봉/부서/입사일/사번) merge 저장
-    const infoPatch = _applyPayslipEmployeeInfo(parsed);
+    // employeeInfo (이름/직종/직급/호봉/부서/입사일/사번) + 수당 항목 일괄 반영
+    // (이전에 분산되어 있던 _applyPayslipEmployeeInfo 로직은 applyStableItemsToProfile 로 일원화)
     const stableRes = SALARY_PARSER.applyStableItemsToProfile(parsed);
-    const profileUpdated = (stableRes && stableRes.changed) || Object.keys(infoPatch).length > 0;
+    const profileUpdated = !!(stableRes && stableRes.changed);
+
+    // grade/year 자동 설정 실패 시 사용자에게 안내 — 시급 계산 전제 조건
+    const profileAfterPayslip = PROFILE.load() || {};
+    if (!profileAfterPayslip.grade || !profileAfterPayslip.year) {
+      if (typeof showOtToast === 'function') {
+        showOtToast('⚠️ 직급/호봉이 자동 설정되지 않았습니다. 내 정보에서 확인해주세요.', 4500);
+      }
+    }
 
     // 자동 검증 (콘솔에 결과 출력)
     if (typeof SALARY_TEST !== 'undefined') {
@@ -3668,6 +3699,9 @@ async function handlePayslipUpload(file) {
 
     // ── 시간외 탭 교차 검증용 데이터 전파 ──
     _propagatePayslipToOvertime(parsed, ym);
+
+    // ── 근무정보 (work_history) 자동 배치 이력 생성 ──
+    _propagatePayslipToWorkHistory(parsed, ym);
 
     // 급여명세서 관리 뷰 갱신 (업로드한 월 선택)
     const mgmtContainer = document.getElementById('payslipMgmtView');
