@@ -2273,11 +2273,15 @@
         window.loadDemoData && window.loadDemoData();
         sessionStorage.setItem('bhm_demo_session', '1');
       }
-      // ?signin=google: 구글 로그인 다이얼로그 자동 오픈
+      // ?signin=google: 미로그인 상태일 때만 구글 로그인 다이얼로그 자동 오픈
       if (params.get('signin') === 'google' && localStorage.getItem('bhm_demo_mode') !== '1') {
-        var dlg = document.getElementById('googlePermissionDialog');
-        if (dlg && typeof dlg.showModal === 'function') { dlg.showModal(); }
-        else if (window.GoogleAuth) { setTimeout(function () { window.GoogleAuth.signIn(); }, 500); }
+        var _alreadyLoggedIn = false;
+        try { _alreadyLoggedIn = !!(JSON.parse(localStorage.getItem('bhm_settings') || '{}').googleSub); } catch (e) {}
+        if (!_alreadyLoggedIn) {
+          var dlg = document.getElementById('googlePermissionDialog');
+          if (dlg && typeof dlg.showModal === 'function') { dlg.showModal(); }
+          else if (window.GoogleAuth) { setTimeout(function () { window.GoogleAuth.signIn(); }, 500); }
+        }
       }
     });
   </script>
