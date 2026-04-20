@@ -311,10 +311,12 @@
   <main class="main">
 
     <!-- 데모 모드 배너 (모든 탭 공통) -->
-    <div id="demoBanner" style="display:none; align-items:center; gap:10px; background:var(--amber,#F5A623); color:var(--ink,#1a1a1a); padding:10px 16px; border-radius:10px; margin-bottom:8px; font-size:14px; font-weight:600;">
+    <div id="demoBanner"
+      style="display:none; align-items:center; gap:10px; background:var(--amber,#F5A623); color:var(--ink,#1a1a1a); padding:10px 16px; border-radius:10px; margin-bottom:8px; font-size:14px; font-weight:600;">
       <span>🎮 데모 모드</span>
       <span style="font-weight:400; flex:1;">샘플 데이터로 체험 중이에요. 실제 데이터는 저장되지 않아요.</span>
-      <button onclick="window.exitDemoMode && window.exitDemoMode(); location.href='onboarding.html';" style="background:var(--ink,#1a1a1a); color:#fff; border:none; border-radius:6px; padding:4px 10px; font-size:13px; font-weight:600; cursor:pointer; flex-shrink:0;">나가기</button>
+      <button onclick="window.exitDemoMode && window.exitDemoMode(); location.href='onboarding.html';"
+        style="background:var(--ink,#1a1a1a); color:#fff; border:none; border-radius:6px; padding:4px 10px; font-size:13px; font-weight:600; cursor:pointer; flex-shrink:0;">나가기</button>
     </div>
 
     <!-- ═══════════ 🏠 홈 ═══════════ -->
@@ -1375,7 +1377,8 @@
           <span class="icon" style="font-size:18px;">💡</span>
           <span id="otVerifyTitle">명세서 자동 보충</span>
           <span id="otVerifyBadge" class="badge emerald" style="margin-left:auto;"></span>
-          <span id="otVerifyArrow" style="font-size:12px; color:var(--text-muted); transition:transform 0.3s; margin-left:8px;">▼</span>
+          <span id="otVerifyArrow"
+            style="font-size:12px; color:var(--text-muted); transition:transform 0.3s; margin-left:8px;">▼</span>
         </div>
         <div id="otVerifyContent"></div>
       </div>
@@ -1642,15 +1645,15 @@
           </div>
 
           <!-- 급여탭 안내 링크 (PDF 배너 대체) -->
-          <div id="pfPayslipLink"
-            onclick="if(window.switchTab)switchTab('payroll');"
+          <div id="pfPayslipLink" onclick="if(window.switchTab)switchTab('payroll');"
             style="display:flex; align-items:center; gap:10px; padding:10px 14px; margin-bottom:14px; background:rgba(99,102,241,0.08); border:2px solid var(--accent-indigo); border-radius:8px; cursor:pointer; font-size:var(--text-body-normal); font-weight:600; color:var(--accent-indigo);">
             <span style="font-size:1.2rem;">💰</span>
             <span>급여 탭에서 명세서를 등록하면 자동으로 채워집니다</span>
             <span style="margin-left:auto;">→</span>
           </div>
           <!-- 자동갱신 상태 배너 (JS에서 표시) -->
-          <div id="pfAutoSyncBanner" style="display:none; align-items:center; gap:8px; padding:8px 14px; margin-bottom:10px; background:rgba(16,185,129,0.08); border:1px solid var(--accent-emerald); border-radius:8px; font-size:var(--text-body-small); font-weight:600; color:var(--accent-emerald);">
+          <div id="pfAutoSyncBanner"
+            style="display:none; align-items:center; gap:8px; padding:8px 14px; margin-bottom:10px; background:rgba(16,185,129,0.08); border:1px solid var(--accent-emerald); border-radius:8px; font-size:var(--text-body-small); font-weight:600; color:var(--accent-emerald);">
             <span>✅</span> <span id="pfAutoSyncText">명세서 기준 자동 갱신됨</span>
           </div>
 
@@ -1665,109 +1668,113 @@
                 <span id="pfBasicBadge" class="badge emerald" style="display:none; font-size:10px;">저장됨</span>
               </span>
             </div>
-            <div id="pfBasicPreview" style="display:none; padding:6px 14px; font-size:var(--text-body-small); color:var(--text-muted); font-weight:600; background:var(--bg-hover); border-radius:0 0 8px 8px; margin-top:-2px; cursor:pointer;" onclick="toggleCollapsible('pfBasicFields')"></div>
+            <div id="pfBasicPreview"
+              style="display:none; padding:6px 14px; font-size:var(--text-body-small); color:var(--text-muted); font-weight:600; background:var(--bg-hover); border-radius:0 0 8px 8px; margin-top:-2px; cursor:pointer;"
+              onclick="toggleCollapsible('pfBasicFields')"></div>
             <div class="collapsible-body" id="pfBasicFields" style="display:none;">
-            <div class="form-row">
-              <div class="form-group">
-                <label>이름 (별칭)</label>
-                <input type="text" id="pfName" placeholder="예: 홍길동" autocomplete="off">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>이름 (별칭)</label>
+                  <input type="text" id="pfName" placeholder="예: 홍길동" autocomplete="off">
+                </div>
+                <div class="form-group">
+                  <label style="white-space:nowrap;">성별 <small style="color:var(--text-muted)">(생휴 여부)</small></label>
+                  <select id="pfGender">
+                    <option value="">미설정</option>
+                    <option value="M">남성</option>
+                    <option value="F">여성</option>
+                  </select>
+                </div>
               </div>
-              <div class="form-group">
-                <label style="white-space:nowrap;">성별 <small style="color:var(--text-muted)">(생휴 여부)</small></label>
-                <select id="pfGender">
-                  <option value="">미설정</option>
-                  <option value="M">남성</option>
-                  <option value="F">여성</option>
-                </select>
+              <div class="form-row">
+                <div class="form-group">
+                  <label style="white-space:nowrap;">생년월일 <small style="color:var(--text-muted)">(정년 산정)</small></label>
+                  <input type="date" id="pfBirthDate" oninput="syncBirthDateToRetirement(this.value)">
+                </div>
+                <div class="form-group">
+                  <label>부서</label>
+                  <input type="text" id="pfDepartment" placeholder="예: 핵의학과, 중환자실" autocomplete="off">
+                </div>
               </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label style="white-space:nowrap;">생년월일 <small style="color:var(--text-muted)">(정년 산정)</small></label>
-                <input type="date" id="pfBirthDate" oninput="syncBirthDateToRetirement(this.value)">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>직종</label>
+                  <select id="pfJobType" onchange="updateProfileGrades()"></select>
+                </div>
+                <div class="form-group">
+                  <label>직급·등급</label>
+                  <select id="pfGrade" onchange="_suggestYear(document.getElementById('pfHireDate').value)"></select>
+                </div>
               </div>
-              <div class="form-group">
-                <label>부서</label>
-                <input type="text" id="pfDepartment" placeholder="예: 핵의학과, 중환자실" autocomplete="off">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>입사일</label>
+                  <input type="text" id="pfHireDate" placeholder="예: 2021-01-01">
+                  <small id="pfServiceDisplay" style="color:var(--text-muted)"></small>
+                </div>
+                <div class="form-group">
+                  <label>호봉 (연차)</label>
+                  <select id="pfYear">
+                    <option value="1">1년차</option>
+                    <option value="2">2년차</option>
+                    <option value="3">3년차</option>
+                    <option value="4">4년차</option>
+                    <option value="5">5년차</option>
+                    <option value="6">6년차</option>
+                    <option value="7">7년차</option>
+                    <option value="8">8년차</option>
+                  </select>
+                  <small id="pfYearHint" style="color:var(--text-muted)"></small>
+                </div>
               </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>직종</label>
-                <select id="pfJobType" onchange="updateProfileGrades()"></select>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>사번</label>
+                  <input type="text" id="pfEmployeeNumber" placeholder="예: 20842" autocomplete="off"
+                    inputmode="numeric">
+                </div>
+                <div class="form-group">
+                  <label>조정급 (필수!!)</label>
+                  <input type="number" id="pfAdjust" value="0" placeholder="급여명세서 확인">
+                </div>
               </div>
-              <div class="form-group">
-                <label>직급·등급</label>
-                <select id="pfGrade" onchange="_suggestYear(document.getElementById('pfHireDate').value)"></select>
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>입사일</label>
-                <input type="text" id="pfHireDate" placeholder="예: 2021-01-01">
-                <small id="pfServiceDisplay" style="color:var(--text-muted)"></small>
-              </div>
-              <div class="form-group">
-                <label>호봉 (연차)</label>
-                <select id="pfYear">
-                  <option value="1">1년차</option>
-                  <option value="2">2년차</option>
-                  <option value="3">3년차</option>
-                  <option value="4">4년차</option>
-                  <option value="5">5년차</option>
-                  <option value="6">6년차</option>
-                  <option value="7">7년차</option>
-                  <option value="8">8년차</option>
-                </select>
-                <small id="pfYearHint" style="color:var(--text-muted)"></small>
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>사번</label>
-                <input type="text" id="pfEmployeeNumber" placeholder="예: 20842" autocomplete="off" inputmode="numeric">
-              </div>
-              <div class="form-group">
-                <label>조정급 (필수!!)</label>
-                <input type="number" id="pfAdjust" value="0" placeholder="급여명세서 확인">
-              </div>
-            </div>
             </div><!-- /pfBasicFields -->
 
             <!-- ▸ 가족 수당 (아코디언) -->
             <div class="collapsible-header" onclick="toggleCollapsible('pfFamilyFields')" style="margin-top:8px;">
               <span style="display:flex; align-items:center; gap:8px;">
-                <span class="toggle-icon">▸</span> 가족 수당 <small style="font-weight:400; color:var(--text-muted); margin-left:4px;">통상임금 미포함 · 별도 지급</small>
+                <span class="toggle-icon">▸</span> 가족 수당 <small
+                  style="font-weight:400; color:var(--text-muted); margin-left:4px;">통상임금 미포함 · 별도 지급</small>
               </span>
             </div>
             <div class="collapsible-body" id="pfFamilyFields" style="display:none;">
-            <div class="form-row profile-row-solo">
-              <div class="form-group">
-                <label>가족 수 <small style="color:var(--text-muted)">(자녀 제외·최대 5인)</small></label>
-                <input type="number" id="pfFamily" value="0" min="0" max="5" onchange="updateFamilyUI()"
-                  oninput="updateFamilyUI()">
-                <small style="color:var(--text-muted)">배우자 4만원 / 추가 1인당 2만원</small>
+              <div class="form-row profile-row-solo">
+                <div class="form-group">
+                  <label>가족 수 <small style="color:var(--text-muted)">(자녀 제외·최대 5인)</small></label>
+                  <input type="number" id="pfFamily" value="0" min="0" max="5" onchange="updateFamilyUI()"
+                    oninput="updateFamilyUI()">
+                  <small style="color:var(--text-muted)">배우자 4만원 / 추가 1인당 2만원</small>
+                </div>
               </div>
-            </div>
-            <div id="pfChildrenRow" class="form-row" style="display:none;">
-              <div class="form-group">
-                <label>자녀 수</label>
-                <input type="number" id="pfChildren" value="0" min="0" max="10" onchange="updateFamilyUI()"
-                  oninput="updateFamilyUI()">
-                <small style="color:var(--text-muted)">첫째 3만 / 둘째 7만 / 셋째이상 11만</small>
+              <div id="pfChildrenRow" class="form-row" style="display:none;">
+                <div class="form-group">
+                  <label>자녀 수</label>
+                  <input type="number" id="pfChildren" value="0" min="0" max="10" onchange="updateFamilyUI()"
+                    oninput="updateFamilyUI()">
+                  <small style="color:var(--text-muted)">첫째 3만 / 둘째 7만 / 셋째이상 11만</small>
+                </div>
               </div>
-            </div>
-            <div id="childExtraRow" class="form-row" style="display:none;">
-              <div class="form-group">
-                <label>6세이하 자녀수당 <small style="color:var(--text-muted)">(월액 직접 입력)</small></label>
-                <input type="number" id="pfChildrenUnder6Pay" value="0" min="0" step="10000" placeholder="급여명세서 확인"
-                  onchange="updateFamilyUI()" oninput="updateFamilyUI()">
-                <small style="color:var(--text-muted)">급여명세서의 6세이하자녀수당 금액 그대로 입력</small>
+              <div id="childExtraRow" class="form-row" style="display:none;">
+                <div class="form-group">
+                  <label>6세이하 자녀수당 <small style="color:var(--text-muted)">(월액 직접 입력)</small></label>
+                  <input type="number" id="pfChildrenUnder6Pay" value="0" min="0" step="10000" placeholder="급여명세서 확인"
+                    onchange="updateFamilyUI()" oninput="updateFamilyUI()">
+                  <small style="color:var(--text-muted)">급여명세서의 6세이하자녀수당 금액 그대로 입력</small>
+                </div>
               </div>
-            </div>
-            <div id="pfFamilySummary"
-              style="display:none; margin-top:4px; padding:8px 12px; background:var(--bg-hover); border-radius:8px; font-size:var(--text-body-small);">
-            </div>
+              <div id="pfFamilySummary"
+                style="display:none; margin-top:4px; padding:8px 12px; background:var(--bg-hover); border-radius:8px; font-size:var(--text-body-small);">
+              </div>
             </div>
 
             <!-- ▸ 개인 수당 (아코디언) -->
@@ -2282,7 +2289,7 @@
   <script src="config.js?v=1.1" defer></script>
   <script src="appLock.js?v=1.0" defer></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <script src="googleAuth.js?v=2.6" defer></script>
+  <script src="googleAuth.js?v=2.7" defer></script>
   <script src="googleDriveStore.js?v=1.3" defer></script>
   <script src="syncManager.js?v=2.8" defer></script>
   <script src="googleCalendarSync.js?v=1.0" defer></script>
