@@ -5,8 +5,9 @@ const BhmAuth = {
   LOCK_DURATION: 60 * 60 * 1000,
   MAX_ATTEMPTS:  5,
 
-  async hashPin(pin) {
-    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pin));
+  async hashPin(pin, salt) {
+    const input = salt ? pin + salt : pin;
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
     return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
   },
 
@@ -25,14 +26,14 @@ const BhmAuth = {
   },
 
   async verifyPin(pin, storage) {
-    // reset attempts counter if previous lockout has expired
     const lockedUntil = (await storage.get([storage.KEYS.PIN_LOCKED_UNTIL]))[storage.KEYS.PIN_LOCKED_UNTIL];
     if (lockedUntil && BhmAuth._isLockExpired(lockedUntil)) {
       await storage.remove([storage.KEYS.PIN_LOCKED_UNTIL, storage.KEYS.PIN_ATTEMPTS]);
     }
-    const d = await storage.get([storage.KEYS.PIN_HASH, storage.KEYS.PIN_ATTEMPTS]);
+    const d = await storage.get([storage.KEYS.PIN_HASH, storage.KEYS.PIN_SALT, storage.KEYS.PIN_ATTEMPTS]);
     if (!d[storage.KEYS.PIN_HASH]) return { ok: false, error: 'no_pin' };
-    const hash = await BhmAuth.hashPin(pin);
+    const salt = d[storage.KEYS.PIN_SALT] || undefined;
+    const hash = await BhmAuth.hashPin(pin, salt);
     if (hash !== d[storage.KEYS.PIN_HASH]) {
       const attempts = (d[storage.KEYS.PIN_ATTEMPTS] || 0) + 1;
       const update = { [storage.KEYS.PIN_ATTEMPTS]: attempts };
@@ -42,21 +43,41 @@ const BhmAuth = {
       return { ok: false, attempts, locked: attempts >= BhmAuth.MAX_ATTEMPTS };
     }
     await storage.set({
-      [storage.KEYS.PIN_ATTEMPTS]: 0,
+      [storage.KEYS.PIN_ATTEMPTS]:     0,
       [storage.KEYS.PIN_LOCKED_UNTIL]: null,
-      [storage.KEYS.PIN_UNLOCKED_AT]: Date.now(),
+      [storage.KEYS.PIN_UNLOCKED_AT]:  Date.now(),
     });
     return { ok: true };
   },
 
   async setPin(pin, storage) {
-    const hash = await BhmAuth.hashPin(pin);
+    const saltArr = new Uint8Array(16);
+    crypto.getRandomValues(saltArr);
+    const salt = Array.from(saltArr).map(b => b.toString(16).padStart(2, '0')).join('');
+    const hash = await BhmAuth.hashPin(pin, salt);
     await storage.set({
-      [storage.KEYS.PIN_HASH]: hash,
-      [storage.KEYS.PIN_ATTEMPTS]: 0,
+      [storage.KEYS.PIN_HASH]:         hash,
+      [storage.KEYS.PIN_SALT]:         salt,
+      [storage.KEYS.PIN_LENGTH]:       pin.length,
+      [storage.KEYS.PIN_ATTEMPTS]:     0,
       [storage.KEYS.PIN_LOCKED_UNTIL]: null,
-      [storage.KEYS.PIN_UNLOCKED_AT]: Date.now(),
+      [storage.KEYS.PIN_UNLOCKED_AT]:  Date.now(),
     });
+  },
+
+  async applyApplockData(data, storage) {
+    if (!data || !data.pinEnabled || !data.pinHash) return false;
+    const local = await storage.get([storage.KEYS.PIN_HASH]);
+    if (local[storage.KEYS.PIN_HASH]) return false;
+    await storage.set({
+      [storage.KEYS.PIN_HASH]:         data.pinHash,
+      [storage.KEYS.PIN_SALT]:         data.pinSalt || '',
+      [storage.KEYS.PIN_LENGTH]:       data.pinLength || 4,
+      [storage.KEYS.PIN_ATTEMPTS]:     0,
+      [storage.KEYS.PIN_LOCKED_UNTIL]: null,
+      [storage.KEYS.PIN_UNLOCKED_AT]:  null,
+    });
+    return true;
   },
 
   getToken(interactive) {
