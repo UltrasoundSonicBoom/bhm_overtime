@@ -268,8 +268,21 @@ function tryLoadBrowseFromJson() {
       if (!res.ok) throw new Error('HTTP ' + res.status);
       return res.json();
     })
-    .then(function(articles) {
-      if (!Array.isArray(articles) || articles.length === 0) return;
+    .then(function(raw) {
+      // Support both legacy array schema and new object schema
+      // ({ meta, articles, side_agreements, appendix, computation_refs }).
+      var articles;
+      if (Array.isArray(raw)) {
+        articles = raw;
+      } else if (raw && Array.isArray(raw.articles)) {
+        // Include side_agreements + appendix so browse still shows them
+        articles = raw.articles
+          .concat(Array.isArray(raw.side_agreements) ? raw.side_agreements : [])
+          .concat(Array.isArray(raw.appendix) ? raw.appendix : []);
+      } else {
+        return;
+      }
+      if (!articles.length) return;
       var byChapter = {};
       var order = [];
       articles.forEach(function(art) {
