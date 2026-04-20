@@ -22,24 +22,24 @@ const OvertimeScreen = {
       '<div class="status-msg" id="ss"></div>';
 
     renderCal(cy, cm);
-    document.getElementById('cp').onclick = function() { cm--; if(cm<0){cy--;cm=11;} renderCal(cy,cm); };
-    document.getElementById('cn').onclick = function() { cm++; if(cm>11){cy++;cm=0;} renderCal(cy,cm); };
+    container.querySelector('#cp').onclick = function() { cm--; if(cm<0){cy--;cm=11;} renderCal(cy,cm); };
+    container.querySelector('#cn').onclick = function() { cm++; if(cm>11){cy++;cm=0;} renderCal(cy,cm); };
     container.querySelectorAll('.type-btn').forEach(function(b) {
       b.onclick = function() {
         container.querySelectorAll('.type-btn').forEach(function(x){x.classList.remove('active');});
         b.classList.add('active'); selType = b.dataset.type;
-        document.getElementById('tr').hidden = selType === 'oncall_standby';
+        container.querySelector('#tr').hidden = selType === 'oncall_standby';
         recalc();
       };
     });
-    document.getElementById('st').oninput = recalc;
-    document.getElementById('et').oninput = recalc;
-    document.getElementById('ih').onchange = recalc;
-    document.getElementById('sv').onclick = save;
+    container.querySelector('#st').oninput = recalc;
+    container.querySelector('#et').oninput = recalc;
+    container.querySelector('#ih').onchange = recalc;
+    container.querySelector('#sv').onclick = save;
 
     function renderCal(y, m) {
-      document.getElementById('ct').textContent = y + '년 ' + (m+1) + '월';
-      var grid = document.getElementById('cg'); grid.innerHTML = '';
+      container.querySelector('#ct').textContent = y + '년 ' + (m+1) + '월';
+      var grid = container.querySelector('#cg'); grid.innerHTML = '';
       ['일','월','화','수','목','금','토'].forEach(function(d) {
         var el = document.createElement('div'); el.className='cal-cell hd'; el.textContent=d; grid.appendChild(el);
       });
@@ -57,27 +57,31 @@ const OvertimeScreen = {
     }
 
     function recalc() {
-      var ci=document.getElementById('ci');
+      var ci=container.querySelector('#ci');
       if(selType==='oncall_standby'){ci.textContent='온콜대기: 시간 입력 불필요';return;}
-      var s=document.getElementById('st').value, e=document.getElementById('et').value, h=document.getElementById('ih').checked;
+      var s=container.querySelector('#st').value, e=container.querySelector('#et').value, h=container.querySelector('#ih').checked;
       var r=calcTimeBreakdown(selDate,s,e,selType,h);
       ci.textContent='📊 연장 '+r.extended+'h · 야간 '+r.night+'h · 휴일 '+r.holiday+'h';
     }
 
     async function save() {
-      var btn=document.getElementById('sv'), ss=document.getElementById('ss');
+      var btn=container.querySelector('#sv'), ss=container.querySelector('#ss');
       btn.disabled=true;
-      var profile=(await BhmStorage.get([BhmStorage.KEYS.PROFILE]))[BhmStorage.KEYS.PROFILE]||{};
-      var s=document.getElementById('st').value, e=document.getElementById('et').value, h=document.getElementById('ih').checked;
-      var bd=selType==='oncall_standby'?{extended:0,night:0,holiday:0,holidayNight:0}:calcTimeBreakdown(selDate,s,e,selType,h);
-      var rec={id:'ot_'+Date.now(),date:selDate,startTime:selType==='oncall_standby'?'':s,endTime:selType==='oncall_standby'?'':e,type:selType,isHoliday:h,memo:document.getElementById('memo').value.trim(),hourlyRate:profile.hourlyRate||0,breakdown:bd,createdAt:new Date().toISOString()};
-      var d=await BhmStorage.get([BhmStorage.KEYS.OVERTIME]);
-      var recs=d[BhmStorage.KEYS.OVERTIME]||[]; recs.push(rec);
-      await BhmStorage.set({[BhmStorage.KEYS.OVERTIME]:recs});
-      chrome.runtime.sendMessage({type:'SYNC_NOW'});
-      ss.textContent='✅ 저장 완료'; ss.className='status-msg ok';
-      document.getElementById('memo').value=''; btn.disabled=false;
-      setTimeout(function(){ss.textContent='';},2000);
+      try {
+        var profile=(await BhmStorage.get([BhmStorage.KEYS.PROFILE]))[BhmStorage.KEYS.PROFILE]||{};
+        var s=container.querySelector('#st').value, e=container.querySelector('#et').value, h=container.querySelector('#ih').checked;
+        var bd=selType==='oncall_standby'?{extended:0,night:0,holiday:0,holidayNight:0}:calcTimeBreakdown(selDate,s,e,selType,h);
+        var rec={id:'ot_'+Date.now(),date:selDate,startTime:selType==='oncall_standby'?'':s,endTime:selType==='oncall_standby'?'':e,type:selType,isHoliday:h,memo:container.querySelector('#memo').value.trim(),hourlyRate:profile.hourlyRate||0,breakdown:bd,createdAt:new Date().toISOString()};
+        var d=await BhmStorage.get([BhmStorage.KEYS.OVERTIME]);
+        var recs=d[BhmStorage.KEYS.OVERTIME]||[]; recs.push(rec);
+        await BhmStorage.set({[BhmStorage.KEYS.OVERTIME]:recs});
+        chrome.runtime.sendMessage({type:'SYNC_NOW'});
+        ss.textContent='✅ 저장 완료'; ss.className='status-msg ok';
+        container.querySelector('#memo').value='';
+        setTimeout(function(){ss.textContent='';},2000);
+      } finally {
+        btn.disabled=false;
+      }
     }
   },
 };

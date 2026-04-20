@@ -22,8 +22,8 @@ const LeaveScreen = {
       '<button class="btn-primary btn-green" id="lb">🌴 휴가 신청</button>'+
       '<div class="status-msg" id="lss"></div>';
 
-    document.getElementById('ls').value=todayStr;
-    document.getElementById('le').value=todayStr;
+    container.querySelector('#ls').value=todayStr;
+    container.querySelector('#le').value=todayStr;
 
     container.querySelectorAll('.leave-type-item').forEach(function(el){
       el.onclick=function(){
@@ -31,12 +31,12 @@ const LeaveScreen = {
         el.classList.add('active'); selType=el.dataset.id; recalc();
       };
     });
-    document.getElementById('ls').oninput=recalc;
-    document.getElementById('le').oninput=recalc;
-    document.getElementById('lb').onclick=save;
+    container.querySelector('#ls').oninput=recalc;
+    container.querySelector('#le').oninput=recalc;
+    container.querySelector('#lb').onclick=save;
 
     function recalc(){
-      var s=document.getElementById('ls').value, e=document.getElementById('le').value, li=document.getElementById('li');
+      var s=container.querySelector('#ls').value, e=container.querySelector('#le').value, li=container.querySelector('#li');
       if(!s||!e||s>e){li.textContent='날짜를 선택하세요';return;}
       var t=LEAVE_TYPES.find(function(x){return x.id===selType;});
       var days=selType==='half'?0.5:calcLeaveDays(s,e,t.cal);
@@ -44,20 +44,24 @@ const LeaveScreen = {
     }
 
     async function save(){
-      var btn=document.getElementById('lb'), ss=document.getElementById('lss');
+      var btn=container.querySelector('#lb'), ss=container.querySelector('#lss');
       btn.disabled=true;
-      var s=document.getElementById('ls').value, e=document.getElementById('le').value;
+      var s=container.querySelector('#ls').value, e=container.querySelector('#le').value;
       if(!s||!e||s>e){ss.textContent='날짜 확인'; ss.className='status-msg err'; btn.disabled=false; return;}
-      var t=LEAVE_TYPES.find(function(x){return x.id===selType;});
-      var days=selType==='half'?0.5:calcLeaveDays(s,e,t.cal);
-      var rec={id:'lv_'+Date.now(),type:selType,startDate:s,endDate:e,days:days,reason:document.getElementById('lr').value.trim(),createdAt:new Date().toISOString()};
-      var d=await BhmStorage.get([BhmStorage.KEYS.LEAVE]);
-      var recs=d[BhmStorage.KEYS.LEAVE]||[]; recs.push(rec);
-      await BhmStorage.set({[BhmStorage.KEYS.LEAVE]:recs});
-      chrome.runtime.sendMessage({type:'SYNC_NOW'});
-      ss.textContent='✅ '+days+'일 저장 완료'; ss.className='status-msg ok';
-      document.getElementById('lr').value=''; btn.disabled=false;
-      setTimeout(function(){ss.textContent='';},2000);
+      try {
+        var t=LEAVE_TYPES.find(function(x){return x.id===selType;});
+        var days=selType==='half'?0.5:calcLeaveDays(s,e,t.cal);
+        var rec={id:'lv_'+Date.now(),type:selType,startDate:s,endDate:e,days:days,reason:container.querySelector('#lr').value.trim(),createdAt:new Date().toISOString()};
+        var d=await BhmStorage.get([BhmStorage.KEYS.LEAVE]);
+        var recs=d[BhmStorage.KEYS.LEAVE]||[]; recs.push(rec);
+        await BhmStorage.set({[BhmStorage.KEYS.LEAVE]:recs});
+        chrome.runtime.sendMessage({type:'SYNC_NOW'});
+        ss.textContent='✅ '+days+'일 저장 완료'; ss.className='status-msg ok';
+        container.querySelector('#lr').value='';
+        setTimeout(function(){ss.textContent='';},2000);
+      } finally {
+        btn.disabled=false;
+      }
     }
   },
 };

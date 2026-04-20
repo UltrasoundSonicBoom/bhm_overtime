@@ -27,26 +27,26 @@ const SettingsScreen = {
       '</div>'+
       '<button class="btn-primary btn-danger" id="so">로그아웃</button>');
 
-    document.getElementById('sp').onclick=async function(){
-      var pin=document.getElementById('np').value, pcs=document.getElementById('pcs');
+    container.querySelector('#sp').onclick=async function(){
+      var pin=container.querySelector('#np').value, pcs=container.querySelector('#pcs');
       if(!/^\d{4}$/.test(pin)){pcs.textContent='4자리 숫자 필요'; pcs.className='status-msg err'; return;}
       await BhmAuth.setPin(pin,BhmStorage);
       pcs.textContent='✅ PIN 변경 완료'; pcs.className='status-msg ok';
-      document.getElementById('np').value='';
+      container.querySelector('#np').value='';
     };
 
     BhmStorage.get([BhmStorage.KEYS.DRIVE_SYNC_AT]).then(function(d){
-      var at=d[BhmStorage.KEYS.DRIVE_SYNC_AT], si=document.getElementById('si');
+      var at=d[BhmStorage.KEYS.DRIVE_SYNC_AT], si=container.querySelector('#si');
       si.textContent=at?'마지막: '+new Date(at).toLocaleString('ko-KR'):'아직 동기화 안됨';
     });
 
-    document.getElementById('sn').onclick=function(){
+    container.querySelector('#sn').onclick=function(){
       chrome.runtime.sendMessage({type:'SYNC_NOW'},function(){
-        document.getElementById('si').textContent='✅ 동기화 완료';
+        container.querySelector('#si').textContent='✅ 동기화 완료';
       });
     };
 
-    document.getElementById('so').onclick=function(){
+    container.querySelector('#so').onclick=function(){
       if(confirm('로그아웃하면 로컬 데이터가 삭제됩니다. 계속하시겠습니까?')) onSignOut();
     };
   },

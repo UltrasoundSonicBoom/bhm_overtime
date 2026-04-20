@@ -7,9 +7,9 @@ const PdfScreen = {
       '<div id="rp"></div>'+
       '<div class="status-msg" id="ps"></div>';
 
-    document.getElementById('pd').onclick=function(){document.getElementById('pf').click();};
-    document.getElementById('pf').onchange=function(e){if(e.target.files[0])handleFile(e.target.files[0]);};
-    var drop=document.getElementById('pd');
+    container.querySelector('#pd').onclick=function(){container.querySelector('#pf').click();};
+    container.querySelector('#pf').onchange=function(e){if(e.target.files[0])handleFile(e.target.files[0]);};
+    var drop=container.querySelector('#pd');
     drop.ondragover=function(e){e.preventDefault();drop.style.borderColor='#1a56db';};
     drop.ondragleave=function(){drop.style.borderColor='';};
     drop.ondrop=function(e){e.preventDefault();drop.style.borderColor='';var f=e.dataTransfer.files[0];if(f&&f.name.endsWith('.pdf'))handleFile(f);};
@@ -29,7 +29,7 @@ const PdfScreen = {
       var btn=document.createElement('button'); btn.className='pdf-import-btn'; btn.textContent='가져오기';
       btn.onclick=function(){importBase64(pdf.base64,pdf.fileName);};
       item.appendChild(icon); item.appendChild(info); item.appendChild(btn);
-      document.getElementById('rp').appendChild(item);
+      container.querySelector('#rp').appendChild(item);
     });
 
     function handleFile(file){
@@ -44,7 +44,7 @@ const PdfScreen = {
     }
 
     async function importBase64(base64,fileName){
-      var ps=document.getElementById('ps'); ps.textContent='⏳ Drive에 저장 중...'; ps.className='status-msg';
+      var ps=container.querySelector('#ps'); ps.textContent='⏳ Drive에 저장 중...'; ps.className='status-msg';
       try {
         var token=await BhmAuth.getToken(false);
         await BhmDrive.uploadPdf(fileName,base64,token);
