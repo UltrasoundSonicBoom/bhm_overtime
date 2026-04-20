@@ -1,207 +1,21 @@
 <!DOCTYPE html>
-<html lang="ko" data-theme="neo">
+<html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="description" content="키워드별 최신 뉴스와 논문을 큐레이션합니다.">
-  <title>SNUH 메이트 - 뉴스</title>
-  <link rel="manifest" href="manifest.json?v=1.3">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="SNUH 메이트">
-  <link rel="apple-touch-icon" href="snuhmaterect.png?v=1.3">
-  <link rel="icon" type="image/png" sizes="32x32" href="snuhmaterect.png?v=1.3">
-  <link rel="shortcut icon" href="snuhmaterect.png?v=1.3">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700;800&family=Noto+Sans+KR:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=2.6">
+  <title>서비스 일시 중단 — SNUH Mate</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    :root {
-      --bg:#FFFDF5; --bg2:#FFF8E7; --card:#FFF; --ink:#1a1a1a; --ink2:#4a4a4a; --ink3:#8a8a8a;
-      --amber:#FDCB6E; --bluelt:#dce9ff; --blue:#1846b8; --green:#bff0cf;
-      --b:2px solid #1a1a1a; --sh:2px 2px 0 #1a1a1a; --sh2:4px 4px 0 #1a1a1a; --r:6px;
-    }
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    html,body{font-family:'Space Grotesk','Noto Sans KR',-apple-system,sans-serif;background:var(--bg2);color:var(--ink);-webkit-font-smoothing:antialiased}
-
-    /* Shell */
-    .cn-shell{max-width:640px;margin:0 auto;background:var(--bg);padding-bottom:72px}
-
-    /* Category tabs */
-    .cat-tabs{padding:6px 12px;gap:5px;display:flex;align-items:center;overflow-x:auto;scrollbar-width:none;background:var(--card);border-bottom:var(--b)}
-    .cat-tabs::-webkit-scrollbar{display:none}
-    .cat-tabs-actions{display:flex;gap:6px;margin-left:auto;flex-shrink:0}
-    .cn-icon-btn{width:30px;height:30px;border-radius:var(--r);background:var(--card);border:var(--b);box-shadow:var(--sh);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;font-family:inherit;transition:transform .1s,box-shadow .1s;color:var(--ink)}
-    .cn-icon-btn:active{transform:translate(2px,2px);box-shadow:none}
-    .ctab{flex-shrink:0;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;border:var(--b);background:var(--card);color:var(--ink2);cursor:pointer;box-shadow:var(--sh);transition:transform .1s,box-shadow .1s;font-family:inherit}
-    .ctab:active{transform:translate(2px,2px);box-shadow:none}
-    .ctab.on{background:var(--ink);color:var(--amber)}
-
-    /* Status */
-    .cn-status{display:none;padding:10px 14px;font-size:13px;font-weight:700;line-height:1.5;border-bottom:1px solid rgba(26,26,26,.1)}
-    .cn-status.active{display:block}
-    .cn-status[data-tone="info"]{background:var(--bluelt)}
-    .cn-status[data-tone="success"]{background:var(--green)}
-    .cn-status[data-tone="error"]{background:#ffc7d0}
-
-    /* Feed */
-    .cn-feed{padding:10px 12px 16px;display:flex;flex-direction:column;gap:8px}
-
-    /* Empty */
-    .cn-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:60px 20px;text-align:center}
-    .cn-empty-title{font-size:15px;font-weight:800}
-    .cn-empty-sub{font-size:13px;color:var(--ink3);font-weight:600}
-
-    /* Feed item */
-    .cn-item{background:var(--card);border:var(--b);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden}
-    .cn-item-hd{display:flex;gap:10px;padding:11px 13px;align-items:flex-start}
-    .cn-item-rank{width:22px;height:22px;border-radius:999px;background:var(--ink);color:var(--amber);font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
-    .cn-item-info{flex:1;min-width:0}
-    .cn-item-title{font-size:13px;font-weight:800;color:var(--ink);line-height:1.4;word-break:keep-all;text-decoration:none;display:block}
-    .cn-item-title:hover{text-decoration:underline}
-    .cn-item-title:visited{color:var(--ink2)}
-    .cn-item-meta{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px;align-items:center}
-    .cn-item-source{font-size:10px;font-weight:700;color:var(--ink3)}
-    .cn-badge{font-size:9px;font-weight:800;padding:1px 6px;border-radius:999px;border:var(--b)}
-    .cn-badge-news{background:var(--bg2);color:var(--ink)}
-    .cn-badge-paper{background:var(--bluelt);color:var(--blue)}
-    .cn-badge-cat{background:var(--amber);color:var(--ink);border-color:var(--ink)}
-    .cn-item-date{font-size:10px;font-weight:600;color:var(--ink3)}
-
-    /* Inline subtitle summary */
-    .cn-item-subtitle{padding:7px 13px 9px;font-size:11px;color:var(--ink2);font-weight:600;line-height:1.5;cursor:pointer;word-break:keep-all;border-top:1px solid rgba(26,26,26,.1);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;-webkit-tap-highlight-color:transparent;transition:background .1s}
-    .cn-item-subtitle:hover{background:var(--bg2)}
-    .cn-item-summary{display:none;padding:0 13px 12px;font-size:12px;color:var(--ink2);line-height:1.7;font-weight:600;word-break:keep-all}
-    .cn-item.expanded .cn-item-subtitle{-webkit-line-clamp:unset;color:var(--ink);font-weight:700}
-    .cn-item.expanded .cn-item-summary{display:block}
-    .cn-item-summary-meta{margin-top:8px;font-size:10px;color:var(--ink3);font-weight:700}
-
-    /* Settings sheet */
-    .cn-settings{display:none;position:fixed;inset:0;z-index:1400;background:var(--bg);flex-direction:column}
-    .cn-settings.on{display:flex}
-    .cs-hd{flex-shrink:0;padding:11px 14px;display:flex;align-items:center;gap:10px;background:var(--amber);border-bottom:var(--b)}
-    .cs-back{font-size:20px;font-weight:800;background:none;border:none;cursor:pointer;font-family:inherit;color:var(--ink);padding:0}
-    .cs-ttl{font-size:15px;font-weight:800}
-    .cs-body{flex:1;overflow-y:auto;padding:14px 13px;display:flex;flex-direction:column;gap:18px}
-    .cs-sec label{display:block;font-size:10px;font-weight:800;color:var(--ink2);margin-bottom:7px;text-transform:uppercase;letter-spacing:.3px}
-    .qchips{display:flex;flex-wrap:wrap;gap:6px}
-    .qchip{padding:5px 11px;border-radius:999px;background:var(--card);border:var(--b);font-size:12px;font-weight:700;color:var(--ink2);cursor:pointer;box-shadow:var(--sh);transition:transform .1s,box-shadow .1s;font-family:inherit}
-    .qchip:active{transform:translate(2px,2px);box-shadow:none}
-    .qchip.on{background:var(--ink);color:var(--amber);border-color:var(--ink)}
-    .qchip-del{margin-left:4px;font-size:10px;opacity:.6;cursor:pointer}
-    .qchip-del:hover{opacity:1}
-    .cs-kw-row{display:flex;gap:6px;margin-bottom:8px}
-    .cs-kw-input{flex:1;padding:7px 10px;border-radius:var(--r);border:var(--b);background:var(--card);color:var(--ink);font-size:12px;font-family:inherit;font-weight:600;outline:none;box-shadow:var(--sh)}
-    .cs-kw-input::placeholder{color:var(--ink3)}
-    .cs-opts{display:flex;gap:5px}
-    .cs-opt{flex:1;padding:7px 4px;border-radius:var(--r);border:var(--b);background:var(--card);font-size:11px;font-weight:700;color:var(--ink2);cursor:pointer;text-align:center;font-family:inherit;box-shadow:var(--sh);transition:transform .1s,box-shadow .1s}
-    .cs-opt:active{transform:translate(2px,2px);box-shadow:none}
-    .cs-opt.on{background:var(--ink);color:var(--amber);border-color:var(--ink)}
-    .cs-foot{flex-shrink:0;padding:11px 13px 22px;background:var(--card);border-top:var(--b)}
-    .cs-btn{width:100%;padding:13px;border-radius:var(--r);border:var(--b);background:var(--ink);color:var(--amber);font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:var(--sh2);transition:transform .1s,box-shadow .1s}
-    .cs-btn:active{transform:translate(2px,2px);box-shadow:var(--sh)}
-    .cs-btn:disabled{opacity:.55;cursor:wait}
-
-    /* Detail view (hada.io style) */
-    .cn-detail{display:none;position:fixed;inset:0;z-index:1300;background:var(--bg);flex-direction:column}
-    .cn-detail.on{display:flex}
-    .cd-hd{flex-shrink:0;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;background:var(--card);border-bottom:var(--b)}
-    .cd-back{font-size:20px;font-weight:800;background:none;border:none;cursor:pointer;font-family:inherit;color:var(--ink);padding:0}
-    .cd-link{font-size:12px;font-weight:700;color:var(--blue);text-decoration:none;display:flex;align-items:center;gap:3px}
-    .cd-link:hover{text-decoration:underline}
-    .cd-body{flex:1;overflow-y:auto;padding:16px 14px 80px}
-    .cd-badges{display:flex;gap:5px;margin-bottom:10px}
-    .cd-title{font-size:17px;font-weight:800;line-height:1.4;word-break:keep-all;margin-bottom:8px}
-    .cd-meta{font-size:11px;color:var(--ink3);font-weight:600;margin-bottom:16px}
-    .cd-section{margin-bottom:18px}
-    .cd-section-title{font-size:11px;font-weight:800;color:var(--ink2);text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px;padding-bottom:5px;border-bottom:2px solid var(--ink)}
-    .cd-text{font-size:13px;color:var(--ink);line-height:1.75;font-weight:600;word-break:keep-all}
-    .cd-points{list-style:none;display:flex;flex-direction:column;gap:7px}
-    .cd-point{display:flex;gap:8px;align-items:flex-start;background:var(--card);border:var(--b);border-radius:var(--r);padding:9px 11px;box-shadow:var(--sh)}
-    .cd-point-dot{width:7px;height:7px;border-radius:50%;background:var(--blue);border:2px solid var(--ink);flex-shrink:0;margin-top:5px}
-    .cd-point-text{font-size:12px;color:var(--ink);line-height:1.5;font-weight:600;word-break:keep-all}
-    .cd-related{margin-top:18px}
-    .cd-related-title{font-size:11px;font-weight:800;color:var(--ink2);margin-bottom:8px}
-    .cd-related-item{display:flex;gap:6px;align-items:baseline;padding:7px 0;border-bottom:1px solid rgba(26,26,26,.08);font-size:12px;font-weight:600;color:var(--ink);cursor:pointer;text-decoration:none}
-    .cd-related-item:hover{color:var(--blue)}
-    .cd-related-item::before{content:'·';color:var(--ink3);font-weight:800;flex-shrink:0}
-    .cd-related-meta{font-size:10px;color:var(--ink3);font-weight:600;flex-shrink:0}
-    .cd-cta{display:block;margin-top:18px;padding:12px;background:var(--ink);border:var(--b);border-radius:var(--r);box-shadow:var(--sh2);color:var(--amber);font-size:13px;font-weight:800;text-align:center;text-decoration:none;cursor:pointer;transition:transform .1s,box-shadow .1s}
-    .cd-cta:active{transform:translate(2px,2px);box-shadow:var(--sh)}
-    .cd-loading{text-align:center;padding:20px;font-size:12px;color:var(--ink3);font-weight:700}
+    body { font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 40px 20px; text-align: center; background: #fafafa; }
+    .icon { font-size: 48px; margin-bottom: 16px; }
+    h1 { font-size: 20px; margin-bottom: 12px; }
+    p { color: #666; margin-bottom: 20px; max-width: 420px; margin-left: auto; margin-right: auto; line-height: 1.5; }
+    a { display: inline-block; padding: 10px 20px; background: #1a1a1a; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 600; }
   </style>
-  <!-- FOUC 방지: PIN 활성화 시 body 숨김 -->
-  <script>(function(){try{var s=JSON.parse(localStorage.getItem('bhm_settings')||'{}');if(s.pinEnabled){document.documentElement.style.visibility='hidden';}}catch(e){}})();</script>
 </head>
 <body>
-  <header id="sharedHeader"></header>
-  <nav id="sharedFooter"></nav>
-  <script src="appLock.js?v=1.0"></script>
-  <script src="shared-layout.js?v=1.2"></script>
-
-  <main class="cn-shell">
-    <div class="cat-tabs" id="catTabs">
-      <div class="ctab on">전체</div>
-    </div>
-    <div id="cnStatus" class="cn-status" data-tone="info" aria-live="polite"></div>
-    <div class="cn-feed" id="cnFeed">
-      <div class="cn-empty">
-        <div class="cn-empty-title">뉴스가 없습니다</div>
-        <div class="cn-empty-sub">⚙ 설정에서 카테고리를 선택하고 수집하세요</div>
-      </div>
-    </div>
-  </main>
-
-  <!-- Detail view (hada.io style) -->
-  <div class="cn-detail" id="cnDetail">
-    <div class="cd-hd">
-      <button class="cd-back" id="cdBack" aria-label="뒤로">‹</button>
-      <a class="cd-link" id="cdOrigLink" href="#" target="_blank" rel="noopener">원문 ↗</a>
-    </div>
-    <div class="cd-body" id="cdBody"></div>
-  </div>
-
-  <!-- Settings sheet -->
-  <div class="cn-settings" id="cnSettings">
-    <div class="cs-hd">
-      <button class="cs-back" id="cnSettingsBack" aria-label="닫기">‹</button>
-      <div class="cs-ttl">뉴스 설정</div>
-    </div>
-    <div class="cs-body">
-      <div class="cs-sec">
-        <label>카테고리 선택</label>
-        <div class="qchips" id="csChips"></div>
-      </div>
-      <div class="cs-sec">
-        <label>내 키워드</label>
-        <div class="cs-kw-row">
-          <input type="text" id="csKwInput" class="cs-kw-input" placeholder="키워드 입력…" maxlength="20">
-          <button class="cn-icon-btn" id="csKwAddBtn" title="추가">+</button>
-        </div>
-        <div class="qchips" id="csCustomChips"></div>
-      </div>
-      <div class="cs-sec">
-        <label>수집 기간</label>
-        <div class="cs-opts" id="csRange">
-          <button class="cs-opt on" data-val="2">최근 48시간</button>
-          <button class="cs-opt" data-val="7">1주일</button>
-          <button class="cs-opt" data-val="30">한 달</button>
-        </div>
-      </div>
-      <div class="cs-sec">
-        <label>출처 유형</label>
-        <div class="cs-opts" id="csType">
-          <button class="cs-opt on" data-val="all">기사 + 논문</button>
-          <button class="cs-opt" data-val="news">기사만</button>
-          <button class="cs-opt" data-val="paper">논문만</button>
-        </div>
-      </div>
-    </div>
-    <div class="cs-foot">
-      <button class="cs-btn" id="csGenBtn" type="button">새로 수집하기</button>
-    </div>
-  </div>
-
-  <script src="cardnews-pipeline.js?v=2.0"></script>
-  <script src="cardnews.js?v=3.0"></script>
+  <div class="icon">📭</div>
+  <h1>카드뉴스 서비스 일시 중단</h1>
+  <p>규정 Q&amp;A 는 '규정' 탭의 조항 카드에서 <strong>💬 AI 질문</strong> 버튼으로 이용해주세요.</p>
+  <a href="/index.html">홈으로</a>
 </body>
 </html>
