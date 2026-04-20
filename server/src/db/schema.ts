@@ -1169,3 +1169,24 @@ export const yearlyArchives = pgTable(
     uniqueIndex('yearly_archives_user_year_unique').on(table.userId, table.year),
   ],
 )
+
+// ── RAG v2: rag_chunks_v2 (isolated from regulation_documents/faq_entries for rollback) ──
+export const ragChunksV2 = pgTable(
+  'rag_chunks_v2',
+  {
+    id: serial('id').primaryKey(),
+    source: text('source').notNull(), // 'regulations_md' | 'union_regulation_json'
+    docId: text('doc_id'),            // e.g. art_36 or md-slug
+    chapter: text('chapter'),
+    articleTitle: text('article_title'),
+    content: text('content').notNull(),
+    embedding: vector('embedding'),
+    tokenCount: integer('token_count'),
+    metadata: jsonb('metadata').$type<Record<string, unknown>>().default({}),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index('rag_v2_source_idx').on(table.source),
+    index('rag_v2_doc_idx').on(table.docId),
+  ],
+)

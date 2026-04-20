@@ -43,6 +43,13 @@
       "when": 1776350400000,
       "tag": "0005_yearly_archives_resume_hnsw",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1776669423931,
+      "tag": "0006_rag_chunks_v2",
+      "breakpoints": true
     }
   ]
 }
