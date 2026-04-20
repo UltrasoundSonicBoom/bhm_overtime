@@ -68,12 +68,41 @@ const BhmDrive = {
     });
   },
 
+  async pullApplock(storage, token) {
+    try {
+      const wrapped = await BhmDrive.readJson('applock.json', token);
+      if (!wrapped || !wrapped.data) return false;
+      return BhmAuth.applyApplockData(wrapped.data, storage);
+    } catch (e) {
+      console.warn('[BHM] pullApplock failed:', e.message);
+      return false;
+    }
+  },
+
+  async pushApplock(storage, token) {
+    const d = await storage.get([
+      storage.KEYS.PIN_HASH, storage.KEYS.PIN_SALT, storage.KEYS.PIN_LENGTH,
+    ]);
+    if (!d[storage.KEYS.PIN_HASH]) return;
+    try {
+      await BhmDrive.writeJson('applock.json', {
+        pinEnabled: true,
+        pinHash:    d[storage.KEYS.PIN_HASH],
+        pinSalt:    d[storage.KEYS.PIN_SALT]   || '',
+        pinLength:  d[storage.KEYS.PIN_LENGTH] || 4,
+      }, token);
+    } catch (e) {
+      console.warn('[BHM] pushApplock failed:', e.message);
+    }
+  },
+
   async pushAll(storage, token) {
     const d = await storage.get([storage.KEYS.OVERTIME, storage.KEYS.LEAVE, storage.KEYS.PROFILE]);
     await Promise.all([
       BhmDrive.writeJson('overtime.json', d[storage.KEYS.OVERTIME] || [], token),
       BhmDrive.writeJson('leave.json',    d[storage.KEYS.LEAVE]    || [], token),
       BhmDrive.writeJson('profile.json',  d[storage.KEYS.PROFILE]  || {}, token),
+      BhmDrive.pushApplock(storage, token),
     ]);
     await storage.set({ [storage.KEYS.DRIVE_SYNC_AT]: new Date().toISOString() });
   },
@@ -89,5 +118,6 @@ const BhmDrive = {
     if (lv) update[storage.KEYS.LEAVE]    = lv.data;
     if (pr) update[storage.KEYS.PROFILE]  = pr.data;
     if (Object.keys(update).length) await storage.set(update);
+    await BhmDrive.pullApplock(storage, token);
   },
 };
