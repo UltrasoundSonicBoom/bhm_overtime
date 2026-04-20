@@ -1,1 +1,1 @@
-export { default } from '../../_shared'
+export { default, config } from '../../_shared'

@@ -11,13 +11,18 @@ import vm from 'node:vm'
 
 const sqlClient = postgres(process.env.DATABASE_URL!, { prepare: false })
 
-// data.js에서 DATA 객체를 Node.js vm 모듈로 안전하게 로드
+// data.js에서 DATA_STATIC 객체를 Node.js vm 모듈로 안전하게 로드
 function loadDataFromFile(): Record<string, unknown> {
   const dataPath = join(import.meta.dirname, '..', '..', 'data.js')
   const content = readFileSync(dataPath, 'utf-8')
-  // 첫 번째 { 부터 마지막 }; 까지 추출
-  const start = content.indexOf('{')
-  const end = content.lastIndexOf('};')
+  // 'const DATA_STATIC = {' 이후 중괄호 카운팅으로 정확한 범위 추출
+  const markerIdx = content.indexOf('const DATA_STATIC = {')
+  const start = content.indexOf('{', markerIdx)
+  let depth = 0, end = start
+  for (let i = start; i < content.length; i++) {
+    if (content[i] === '{') depth++
+    else if (content[i] === '}') { depth--; if (depth === 0) { end = i; break } }
+  }
   const objStr = content.slice(start, end + 1)
   const script = new vm.Script('var result = ' + objStr)
   const context = vm.createContext({ result: null })

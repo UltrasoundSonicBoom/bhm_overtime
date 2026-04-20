@@ -1,7 +1,5 @@
+import { handle } from '@hono/node-server/vercel'
 import app from '../server/src/index'
 
-export default {
-  fetch(request: Request) {
-    return app.fetch(request)
-  },
-}
+export const config = { api: { bodyParser: false } }
+export default handle(app)
