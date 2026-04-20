@@ -2,6 +2,7 @@
 // 실행: node chrome-extension/tests/auth.test.js
 if (typeof crypto === 'undefined') global.crypto = require('crypto').webcrypto;
 const { BhmAuth } = require('../shared/auth.js');
+const { BhmStorage } = require('../shared/storage.js');
 let p = 0, f = 0;
 const ok  = (c, m) => c ? (console.log('  PASS', m), p++) : (console.error('  FAIL', m), f++);
 
@@ -18,6 +19,9 @@ async function run() {
   ok(BhmAuth._isAutoLocked(null)                 === true,  '기록 없음 → 자동 잠금');
   ok(BhmAuth._isAutoLocked(Date.now() - 1800001) === true,  '31분 전 → 자동 잠금');
   ok(BhmAuth._isAutoLocked(Date.now() - 1799000) === false, '29분 전 → 정상');
+
+  ok(BhmStorage.KEYS.PIN_SALT   === 'bhm_pin_salt',   'PIN_SALT 키');
+  ok(BhmStorage.KEYS.PIN_LENGTH === 'bhm_pin_length', 'PIN_LENGTH 키');
 
   console.log(p + ' passed, ' + f + ' failed');
   process.exit(f > 0 ? 1 : 0);
