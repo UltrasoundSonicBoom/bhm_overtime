@@ -119,6 +119,7 @@ window.SyncManager = (function () {
   function _driveReady() {
     if (localStorage.getItem('bhm_demo_mode') === '1') return false;
     if (!window.GoogleAuth || !window.GoogleAuth.isSignedIn()) return false;
+    if (typeof window.GoogleAuth.hasValidToken === 'function' && !window.GoogleAuth.hasValidToken()) return false;
     if (!window.GoogleDriveStore) return false;
     var settings = window.loadSettings ? window.loadSettings() : {};
     return !!settings.driveEnabled;
@@ -431,6 +432,7 @@ window.SyncManager = (function () {
     // 페이지 로드 중 focus 이벤트로 발화할 때 GIS init이 아직 안 끝났을 수 있음.
     // 이 경우 조용히 스킵 — init 완료 후 다음 focus 이벤트에서 정상 동작.
     if (typeof window.GoogleAuth.isReady === 'function' && !window.GoogleAuth.isReady()) return;
+    if (typeof window.GoogleAuth.hasValidToken === 'function' && !window.GoogleAuth.hasValidToken()) return;
     if (!window.GoogleDriveStore) return;
     var now = Date.now();
     if (now - _lastResumePull < RESUME_COOLDOWN_MS) return;

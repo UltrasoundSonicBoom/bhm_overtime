@@ -599,7 +599,7 @@
 
         // PDF 원본을 내 드라이브에 보관 (drive.file scope + 로그인 시)
         const isPdf = file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf';
-        if (isPdf && _isSignedIn() && window.GoogleDriveStore) {
+        if (isPdf && _isSignedIn() && window.GoogleAuth && window.GoogleAuth.hasValidToken && window.GoogleAuth.hasValidToken() && window.GoogleDriveStore) {
           const typeLabel = ym.type && ym.type !== '급여' ? `_${ym.type}` : '';
           const pdfName = `${ym.year}년_${String(ym.month).padStart(2, '0')}월_급여명세서${typeLabel}.pdf`;
           window.GoogleDriveStore.uploadPdfToMyDrive(pdfName, file).then(function (r) {
