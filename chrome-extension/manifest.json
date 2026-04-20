@@ -3,21 +3,40 @@
   "name": "SNUH Mate",
   "version": "1.0.0",
   "description": "시간외·휴가·급여명세서 기록 — snuhmate.com 없이 바로 사용",
-  "icons": { "16": "icons/icon16.png", "48": "icons/icon48.png", "128": "icons/icon128.png" },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
   "action": {
     "default_popup": "popup.html",
     "default_title": "SNUH Mate",
-    "default_icon": { "16": "icons/icon16.png", "48": "icons/icon48.png" }
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png"
+    }
   },
-  "background": { "service_worker": "background.js" },
-  "permissions": ["identity", "storage", "downloads", "contextMenus", "notifications"],
-  "host_permissions": ["https://www.googleapis.com/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": [
+    "identity",
+    "storage",
+    "downloads",
+    "contextMenus",
+    "notifications"
+  ],
+  "host_permissions": [
+    "https://www.googleapis.com/*"
+  ],
   "oauth2": {
-    "client_id": "__REPLACE_WITH_GCP_CLIENT_ID__",
+    "client_id": "914163950802-eim57mnvrb223ia7r2ob9udb9m1jucru.apps.googleusercontent.com",
     "scopes": [
       "https://www.googleapis.com/auth/drive.appdata",
       "https://www.googleapis.com/auth/drive.file",
-      "openid", "email", "profile"
+      "openid",
+      "email",
+      "profile"
     ]
   }
 }
