@@ -129,14 +129,20 @@
           if (res.status === 429) throw new Error('요청이 너무 많습니다. 잠시 후 다시 시도해주세요.');
           throw new Error('서버 오류 (' + res.status + ')');
         }
+        if (!res.body) throw new Error('스트리밍 응답을 받을 수 없습니다.');
         var reader = res.body.getReader();
         var decoder = new TextDecoder();
         var buffer = '';
         var sources = null;
+        var serverError = null;
         function pump() {
           return reader.read().then(function(chunk) {
             if (chunk.done) {
-              renderSources(assistantNode, sources);
+              if (serverError) {
+                msgs.appendChild(el('div', 'ask-error', serverError));
+              } else {
+                renderSources(assistantNode, sources);
+              }
               return;
             }
             buffer += decoder.decode(chunk.value, { stream: true });
@@ -152,6 +158,8 @@
                   msgs.scrollTop = msgs.scrollHeight;
                 } else if (ev.type === 'done') {
                   sources = ev.sources;
+                } else if (ev.type === 'error') {
+                  serverError = ev.message || '서버에서 오류가 발생했습니다.';
                 }
               } catch (e) { /* ignore partial */ }
             }

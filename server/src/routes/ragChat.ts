@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { stream } from 'hono/streaming'
 import postgres from 'postgres'
+import { randomUUID } from 'node:crypto'
 import 'dotenv/config'
 import { retrieve, streamRagAnswer } from '../services/rag/index.js'
 
@@ -29,7 +30,7 @@ async function checkRateLimit(sessionId: string): Promise<boolean> {
 route.post('/', async (c) => {
   const body = await c.req.json<{ question: string; sessionId?: string; articleHint?: string }>()
   const question = (body.question ?? '').trim()
-  const sessionId = body.sessionId ?? `anon-${Date.now()}`
+  const sessionId = body.sessionId ?? `anon-${randomUUID()}`
   const articleHint = body.articleHint?.trim() || undefined
 
   if (!question) return c.json({ error: 'question is required' }, 400)
@@ -39,30 +40,38 @@ route.post('/', async (c) => {
   const results = await retrieve(question, 6)
 
   const s = sql()
-  await s`
+  // Fire-and-forget user row so we don't block time-to-first-token.
+  void s`
     INSERT INTO chat_history (session_id, role, content)
     VALUES (${sessionId}, 'user', ${question})
-  `
+  `.catch((e) => console.error('chat_history user insert failed:', e))
 
   const result = streamRagAnswer({ question, results, articleHint })
 
   return stream(c, async (writer) => {
     let fullAnswer = ''
-    for await (const delta of result.textStream) {
-      fullAnswer += delta
-      await writer.write(`data: ${JSON.stringify({ type: 'delta', text: delta })}\n\n`)
-    }
-    const sources = results.map((r) => ({
-      title: r.articleTitle,
-      ref: r.docId,
-      score: r.score,
-    }))
-    await writer.write(`data: ${JSON.stringify({ type: 'done', sources })}\n\n`)
+    try {
+      for await (const delta of result.textStream) {
+        fullAnswer += delta
+        await writer.write(`data: ${JSON.stringify({ type: 'delta', text: delta })}\n\n`)
+      }
+      const sources = results.map((r) => ({
+        title: r.articleTitle,
+        ref: r.docId,
+        score: r.score,
+      }))
+      await writer.write(`data: ${JSON.stringify({ type: 'done', sources })}\n\n`)
 
-    await s`
-      INSERT INTO chat_history (session_id, role, content, source_docs, model)
-      VALUES (${sessionId}, 'assistant', ${fullAnswer}, ${s.json(sources)}, 'gpt-4o-mini')
-    `
+      void s`
+        INSERT INTO chat_history (session_id, role, content, source_docs, model)
+        VALUES (${sessionId}, 'assistant', ${fullAnswer}, ${s.json(sources)}, 'gpt-4o-mini')
+      `.catch((e) => console.error('chat_history assistant insert failed:', e))
+    } catch (err) {
+      console.error('rag-chat stream error:', err)
+      await writer.write(
+        `data: ${JSON.stringify({ type: 'error', message: '응답 생성 중 오류가 발생했습니다.' })}\n\n`,
+      )
+    }
   })
 })
 
