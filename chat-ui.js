@@ -207,7 +207,8 @@
         var cls = entry.priority < 99 ? 'ask-source-chip primary' : 'ask-source-chip';
         var chip = el('button', cls, s.title);
         chip.addEventListener('click', function() {
-          closeSheet();
+          // Keep the chat sheet open; scroll to the article in the background
+          // if the caller hosts a matching card. User can dismiss sheet manually.
           if (window.scrollToArticle) window.scrollToArticle(s.title);
         });
         wrap.appendChild(chip);
