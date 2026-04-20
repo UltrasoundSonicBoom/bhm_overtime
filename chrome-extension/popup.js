@@ -68,8 +68,60 @@ async function handleLogin(user) {
   });
 }
 
+function renderUserBtn(user) {
+  var wrap = document.getElementById('user-btn');
+  if (!wrap || !user) return;
+
+  var btn = document.createElement('button');
+  btn.style.cssText = 'width:26px;height:26px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.4);cursor:pointer;padding:0;overflow:hidden;background:#3b82f6;font-size:11px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0';
+  btn.title = (user.name || '') + ' (' + (user.email || '') + ')';
+  if (user.picture) {
+    var img = document.createElement('img');
+    img.src = user.picture;
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover';
+    img.onerror = function() { btn.textContent = (user.name || '?')[0]; };
+    btn.appendChild(img);
+  } else {
+    btn.textContent = (user.name || '?')[0];
+  }
+
+  var dropdown = document.createElement('div');
+  dropdown.hidden = true;
+  dropdown.style.cssText = 'position:absolute;right:0;top:32px;background:#fff;border:1.5px solid #e5e7eb;border-radius:8px;padding:10px 12px;min-width:170px;z-index:200;box-shadow:0 4px 16px rgba(0,0,0,0.12)';
+  var nameEl = document.createElement('div');
+  nameEl.style.cssText = 'font-weight:700;font-size:12px;color:#111827;margin-bottom:2px';
+  nameEl.textContent = user.name || '';
+  var emailEl = document.createElement('div');
+  emailEl.style.cssText = 'font-size:10px;color:#6b7280;margin-bottom:10px;word-break:break-all';
+  emailEl.textContent = user.email || '';
+  var logoutBtn = document.createElement('button');
+  logoutBtn.style.cssText = 'width:100%;padding:5px 8px;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer';
+  logoutBtn.textContent = '로그아웃';
+  logoutBtn.onclick = function(e) {
+    e.stopPropagation();
+    if (confirm('로그아웃하면 로컬 데이터가 삭제됩니다. 계속하시겠습니까?')) {
+      BhmAuth.signOut(BhmStorage).then(function() { location.reload(); });
+    }
+  };
+  dropdown.appendChild(nameEl); dropdown.appendChild(emailEl); dropdown.appendChild(logoutBtn);
+
+  btn.onclick = function(e) {
+    e.stopPropagation();
+    dropdown.hidden = !dropdown.hidden;
+    if (!dropdown.hidden) {
+      function outside(ev) {
+        if (!wrap.contains(ev.target)) { dropdown.hidden = true; document.removeEventListener('click', outside); }
+      }
+      document.addEventListener('click', outside);
+    }
+  };
+
+  wrap.appendChild(btn); wrap.appendChild(dropdown);
+}
+
 function initMainApp(user, defaultTab) {
   defaultTab = defaultTab || 'overtime';
+  renderUserBtn(user);
   if (!initMainApp._listenersAdded) {
     document.getElementById('popup-tabs').addEventListener('click', function(e) {
       var btn = e.target.closest('.tab-btn');

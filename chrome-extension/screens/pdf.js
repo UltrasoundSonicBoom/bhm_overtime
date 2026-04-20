@@ -46,7 +46,7 @@ const PdfScreen = {
     async function importBase64(base64,fileName){
       var ps=container.querySelector('#ps'); ps.textContent='⏳ Drive에 저장 중...'; ps.className='status-msg';
       try {
-        var token=await BhmAuth.getToken(false);
+        var token=await BhmAuth.getToken(true);
         await BhmDrive.uploadPdf(fileName,base64,token);
         ps.textContent='✅ '+fileName+' 저장 완료'; ps.className='status-msg ok';
       } catch(e){
