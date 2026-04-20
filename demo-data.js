@@ -143,17 +143,21 @@
     // 실제 인증 정보 백업 (exitDemoMode에서 복원)
     if (settings.googleSub && settings.googleSub !== DEMO_UID) {
       localStorage.setItem('bhm_demo_saved_auth', JSON.stringify({
-        googleSub:     settings.googleSub,
-        googleEmail:   settings.googleEmail   || '',
-        googleName:    settings.googleName    || '',
-        googlePicture: settings.googlePicture || '',
+        googleSub:       settings.googleSub,
+        googleEmail:     settings.googleEmail   || '',
+        googleName:      settings.googleName    || '',
+        googlePicture:   settings.googlePicture || '',
+        driveEnabled:    !!settings.driveEnabled,
+        calendarEnabled: !!settings.calendarEnabled,
       }));
     }
 
-    settings.googleSub     = DEMO_UID;
-    settings.googleEmail   = '';
-    settings.googleName    = '';
-    settings.googlePicture = '';
+    settings.googleSub       = DEMO_UID;
+    settings.googleEmail     = '';
+    settings.googleName      = '';
+    settings.googlePicture   = '';
+    settings.driveEnabled    = false;
+    settings.calendarEnabled = false;
     localStorage.setItem('bhm_settings', JSON.stringify(settings));
 
     localStorage.setItem('bhm_hr_profile_' + DEMO_UID, JSON.stringify(_profile));
@@ -175,10 +179,12 @@
       var saved = null;
       try { saved = JSON.parse(localStorage.getItem('bhm_demo_saved_auth') || 'null'); } catch (e) {}
       if (saved && saved.googleSub) {
-        settings.googleSub     = saved.googleSub;
-        settings.googleEmail   = saved.googleEmail;
-        settings.googleName    = saved.googleName;
-        settings.googlePicture = saved.googlePicture;
+        settings.googleSub       = saved.googleSub;
+        settings.googleEmail     = saved.googleEmail;
+        settings.googleName      = saved.googleName;
+        settings.googlePicture   = saved.googlePicture;
+        settings.driveEnabled    = !!saved.driveEnabled;
+        settings.calendarEnabled = !!saved.calendarEnabled;
       } else {
         delete settings.googleSub;
         delete settings.googleEmail;
@@ -218,6 +224,7 @@
       var s = {};
       try { s = JSON.parse(localStorage.getItem('bhm_settings') || '{}'); } catch (e) {}
       if (s.googleSub === DEMO_UID) { delete s.googleSub; localStorage.setItem('bhm_settings', JSON.stringify(s)); }
+      localStorage.removeItem('bhm_demo_saved_auth');
       return;
     }
     var settings = {};

@@ -51,6 +51,7 @@ window.SyncManager = (function () {
   }
 
   function _pullAppLock() {
+    if (localStorage.getItem('bhm_demo_mode') === '1') return Promise.resolve(null);
     if (!window.GoogleAuth || !window.GoogleAuth.isSignedIn()) return Promise.resolve(null);
     if (!window.GoogleDriveStore) return Promise.resolve(null);
     return window.GoogleDriveStore.readJsonFile(APPLOCK_DRIVE_FILE).then(function (wrapped) {
@@ -261,7 +262,7 @@ window.SyncManager = (function () {
     var settings = window.loadSettings ? window.loadSettings() : {};
 
     // 로그인 직후 guest 데이터 이전 (driveEnabled 여부 무관)
-    if (settings.googleSub) {
+    if (settings.googleSub && settings.googleSub !== 'demo') {
       migrateGuestData(settings.googleSub);
     }
 
