@@ -80,6 +80,7 @@ Key routing rules:
 | 2026-04-12 | 초기 구성 | 3레이어 13개 에이전트 + 3개 스킬 | 하네스 엔지니어링 도입 |
 | 2026-04-17 | CCteam 개발팀 추가 | 5명 팀 (cc-*) | 프로덕션 배포 준비 + 지속 유지보수 |
 | 2026-04-20 | RAG v2 교체 (신규 rag_chunks_v2 + /api/rag/chat 스트리밍 + 조항 카드 AI 질문 버튼) | 사용자 챗봇 | 원문 기반 재구축, FAQ/card-news API 는 백엔드 유지 + UI 접점만 제거 |
+| 2026-04-20 | 규정 데이터 통합 (JSON 오브젝트 스키마 + 25 computation_refs + 127 chunks) | RAG + 계산 연계 기반 | Q3 호환 유지: data.js 직접 수정 없이 검증 스크립트로 일관성 보장. regulation_admin Phase 2 별도 플랜 |
 
 ---
 

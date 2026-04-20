@@ -9,11 +9,19 @@
 - 내용2
 -->
 
+## 2026.04.20 — 규정 데이터 통합 + RAG 품질 대폭 개선
+- `union_regulation_2026.json` 을 **단일 source of truth** 로 재구조화: `{ meta, articles, side_agreements, appendix, computation_refs }` 오브젝트 스키마
+- **25개 computation_refs** 추가 — 연차/초과근무/수당 등 주요 계산 상수를 조항 참조와 함께 구조화 (data.js 연계 기반 마련)
+- **RAG 청킹 대폭 확장**: 기존 79 → 127 chunks. 보수표(일반직/운영기능직/환경유지지원직), 청원휴가·경조금표, 휴직제도표, 별도합의 을 각 행 단위로 chunk 화
+- **RAG 답변 품질**: 골든셋 10 → 15 문항 확장, 13/15 (87%) 통과. "M3 1년차 기본급 54,482,400원", "본인 결혼 경조금 30만원" 같은 정확한 수치 답변 가능
+- PDF 재추출 (pdftotext) 후 검증용 `data/2026_nojo_clean.md` 추가
+- 레거시 `data/regulations_full_v2026.md` (152줄 축약본) 삭제 — ingest 소스에서 제외
+- `scripts/validate-regulation-vs-data-js.mjs` 추가 — JSON ↔ data.js 계산 상수 일관성 자동 검증
+
 ## 2026.04.20 — AI 규정 상담 챗봇 (RAG v2)
 - 조항 카드마다 "💬 AI 질문" 버튼 추가 — 클릭 시 바텀시트 채팅창이 올라와 규정 Q&A 진행
-- 단체협약 원문 2종(`union_regulation_2026.json` 68개 조항 + `regulations_full_v2026.md` 11개 섹션)을 신규 `rag_chunks_v2` 테이블에 적재, Neon pgvector HNSW 인덱스로 검색
+- 단체협약 원문을 신규 `rag_chunks_v2` 테이블에 적재, Neon pgvector HNSW 인덱스로 검색
 - `/api/rag/chat` 스트리밍 엔드포인트 (Vercel AI SDK + OpenAI gpt-4o-mini) — 조항 번호를 반드시 포함해 답변, 근거 없는 질문엔 "해당 규정을 확인하지 못했습니다"
-- 10개 대표 질문 골든셋 기준 품질 10/10 통과
 - 홈 화면에서 (미사용 상태였던) 카드뉴스/FAQ 타일 제거, `cardnews.html` 안내 페이지로 전환 (백엔드 라우트는 유지)
 
 ## 2026.04.13 — 구글 원클릭 동기화 + 사번 자동 채움 + 익명 통계
