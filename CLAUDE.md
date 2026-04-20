@@ -34,14 +34,15 @@
 
 ### 5. 인증/동기화 도돌이표 방지 규칙
 
-> 2026-04-02 ~ 2026-04-19 사이 Supabase 인증 통합으로 `redirect_uri_mismatch` + `Unacceptable audience` 도돌이표 3회. 결정: **일반 사용자 페이지는 Supabase 통합 완전 제거** (Drive 단독 저장 + Sentry 텔레메트리). 어드민 페이지 (admin/, nurse_admin/) 는 별도 시스템으로 Supabase 계속 사용.
+> 2026-04-02 ~ 2026-04-19: Supabase 인증 통합으로 `redirect_uri_mismatch` + `Unacceptable audience` 도돌이표 3회. 결정: **일반 사용자 페이지는 Supabase 통합 완전 제거** (Drive 단독 저장 + Sentry 텔레메트리).
+> 2026-04-20: 백엔드 DB 를 **Supabase → Neon 으로 전면 이관**. 어드민도 Neon 사용 (`server/src/db/client.ts` = 단일 Drizzle + postgres-js + `DATABASE_URL`). 규정/FAQ/수당/룰 마스터 모두 Neon 단일 소스.
 
 - **클라이언트 코드 수정 시 반드시 `?v=` 번프**: `googleAuth.js` / `syncManager.js` / `shared-layout.js` / `app.js` / `settings-ui.js` / `sentry.js` 를 수정하면 `index.html` 의 해당 `<script src="...?v=X">` 버전을 증가. 잊으면 브라우저 캐시로 변경사항 반영 안 됨.
-- **user-facing 번들에 Supabase 직접 사용 금지**: `signInWithOAuth`, `signInWithIdToken`, `SupabaseUserSync` 등. `tests/regression-no-user-oauth.js` 가 자동 검증. 어드민은 예외.
-- **데이터 저장**: Google Drive 단독. 다른 백엔드 (Supabase, Firebase 등) 추가 금지. 추가하려면 사용자/팀 합의 후 별도 PR.
+- **user-facing 번들에 Supabase 직접 사용 금지**: `signInWithOAuth`, `signInWithIdToken`, `SupabaseUserSync` 등. `tests/regression-no-user-oauth.js` 가 자동 검증.
+- **데이터 저장 (사용자)**: Google Drive 단독. 다른 백엔드 (Supabase, Firebase 등) 추가 금지. 추가하려면 사용자/팀 합의 후 별도 PR.
+- **데이터 저장 (서버)**: Neon (Drizzle). 스키마 변경은 `server/drizzle/*.sql` 단일 소스 오브 트루스 + `npx drizzle-kit generate`. `supabase/migrations/*.sql` 는 레거시 (drop 계열만 남음) — 신규 migration 추가 금지.
 - **텔레메트리/에러 추적**: Sentry (`window.Telemetry.track`, `window.Telemetry.error`). DSN은 `BHM_CONFIG.sentryDsn` 으로 주입. 미설정 시 조용히 no-op.
-- **어드민 Supabase 변경 시**: MCP `apply_migration` + 로컬 `supabase/migrations/*.sql` 파일 둘 다 갱신. 일반 사용자 페이지에 영향 가는지 (regression test) 확인.
-- **"설정만 하면 작동할 것" 가정 금지**: GCP/Supabase Dashboard 설정 변경은 반드시 실제 로그인 테스트로 검증 후 commit.
+- **"설정만 하면 작동할 것" 가정 금지**: GCP Dashboard 설정 변경은 반드시 실제 로그인 테스트로 검증 후 commit.
 - **OAuth `prompt` 값**: `signIn()` 에서 `prompt: 'consent'` 금지 → `'select_account'` 사용. `'consent'`는 이미 동의한 사용자에게도 매번 동의 화면 강제. 신규 scope 추가 시엔 Google이 자동으로 1회 동의 화면 표시.
 - **Drive scope 혼합 원칙**: 내부 JSON 데이터는 `drive.appdata` (숨김, 사용자 Drive UI에 안 보임), 사용자 가시 파일(PDF 원본 등)은 `drive.file` (내 드라이브 공개 폴더). 한 scope 로 통합하려 하지 말 것.
 - **신규 scope 추가 시 권한 다이얼로그 카피 동기화 필수**: `index.html` 의 `googlePermissionDialog` 설명 항목과 실제 요청 scope 가 어긋나면 사용자 신뢰 훼손. scope 추가 PR에서 다이얼로그도 같이 업데이트.
