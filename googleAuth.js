@@ -445,6 +445,24 @@ window.GoogleAuth = (function () {
     });
   }
 
+  // ── ensureTokenInteractive ──
+  // 사용자 액션(업로드 등) 직후 호출. 토큰이 유효하면 즉시, 아니면 interactive prompt 허용.
+  // silent refresh 실패 시 picker 를 띄워 사용자가 다시 consent 할 수 있게 한다.
+  // (refreshToken 은 strict silent. 업로드처럼 사용자가 방금 클릭한 액션에는 picker OK)
+  function ensureTokenInteractive() {
+    return new Promise(function (resolve, reject) {
+      if (!_tokenClient) { reject(new Error('not initialized')); return; }
+      if (_signingOut || !hasAccountLink()) { reject(new Error('not signed in')); return; }
+      if (_isTokenValid()) { resolve(_accessToken); return; }
+      _pendingTokenQueue.push({ resolve: resolve, reject: reject, type: 'refresh' });
+      if (!_tokenRequestInFlight) {
+        _tokenRequestInFlight = true;
+        // prompt: '' → silent 우선, 실패 시 picker fallback 허용
+        _tokenClient.requestAccessToken({ prompt: '' });
+      }
+    });
+  }
+
   // ── requestDriveScope ──
   function requestDriveScope() {
     return new Promise(function (resolve, reject) {
@@ -487,6 +505,7 @@ window.GoogleAuth = (function () {
     getUser: getUser,
     getAccessToken: getAccessToken,
     refreshToken: refreshToken,
+    ensureTokenInteractive: ensureTokenInteractive,
     requestDriveScope: requestDriveScope,
     requestCalendarScope: requestCalendarScope,
     hasScope: hasScope,

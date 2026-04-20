@@ -29,12 +29,25 @@ window.GoogleDriveStore = (function () {
   }
 
   // ── token 유효성 확인 후 1회 refresh 재시도 ──
+  // 백그라운드 sync 용 — silent refresh. 실패 시 조용히 reject (picker 안 뜸).
   function _withToken(fn) {
     var token = window.GoogleAuth && window.GoogleAuth.getAccessToken();
     if (token) return Promise.resolve().then(fn);
 
-    // access token 만료 → refresh 후 재시도
+    // access token 만료 → strict silent refresh 후 재시도
     return window.GoogleAuth.refreshToken().then(fn);
+  }
+
+  // 사용자 액션 경로 용 — silent refresh 우선, 실패 시 interactive picker 허용.
+  // uploadPdfToMyDrive 처럼 "사용자가 방금 버튼을 클릭" 한 경우에 사용한다.
+  function _withTokenInteractive(fn) {
+    var token = window.GoogleAuth && window.GoogleAuth.getAccessToken();
+    if (token) return Promise.resolve().then(fn);
+    var gauth = window.GoogleAuth;
+    var ensure = (gauth && typeof gauth.ensureTokenInteractive === 'function')
+      ? gauth.ensureTokenInteractive
+      : (gauth && gauth.refreshToken);
+    return ensure.call(gauth).then(fn);
   }
 
   // ── 파일 ID 조회 (캐시 우선) ──
@@ -226,7 +239,7 @@ window.GoogleDriveStore = (function () {
     return _withToken(function () {
       return fetch(BASE_URL + '/files?q=' + encodeURIComponent(q) + '&fields=files(id)', { headers: _headers() });
     }).then(function (r) {
-      if (!r.ok) throw new Error('Drive folder list ' + r.status);
+      if (!r.ok) return r.text().then(function (t) { throw new Error('folder list[' + name + '] ' + r.status + ': ' + t); });
       return r.json();
     }).then(function (data) {
       if (data.files && data.files.length > 0) {
@@ -242,7 +255,7 @@ window.GoogleDriveStore = (function () {
           body: JSON.stringify(meta)
         });
       }).then(function (r) {
-        if (!r.ok) throw new Error('Drive folder create ' + r.status);
+        if (!r.ok) return r.text().then(function (t) { throw new Error('folder create[' + name + '] ' + r.status + ': ' + t); });
         return r.json();
       }).then(function (folder) {
         _myDriveFolderCache[cacheKey] = folder.id;
@@ -266,25 +279,33 @@ window.GoogleDriveStore = (function () {
     var ymPrefix = yy + mm;
     var fileName = ymPrefix + '_' + title + '.pdf';
 
-    return _findOrCreateFolder('snuhmate', null)
-      .then(function (rootId) { return _findOrCreateFolder(ymPrefix, rootId); })
-      .then(function (folderId) {
-        var q = "name='" + fileName.replace(/'/g, "\\'") + "' and '" + folderId + "' in parents and trashed=false";
-        return _withToken(function () {
-          return fetch(BASE_URL + '/files?q=' + encodeURIComponent(q) + '&fields=files(id)', { headers: _headers() });
-        }).then(function (r) { return r.json(); })
-          .then(function (data) {
-            if (data.files && data.files.length > 0) {
-              return _updateFile(data.files[0].id, blob, 'application/pdf');
-            } else {
-              return _createFile(fileName, blob, 'application/pdf', folderId);
-            }
-          });
-      })
-      .catch(function (err) {
-        console.warn('[DriveStore] uploadPdfToMyDrive failed:', err);
-        _showToast('⚠️ PDF 저장 실패 (내 드라이브).');
-      });
+    // 사용자 클릭 직후 경로 → interactive token (만료 시 picker 허용)
+    // 폴더 조회/생성 + 파일 upload 까지 같은 세션 토큰으로 수행한다.
+    return _withTokenInteractive(function () {
+      return _findOrCreateFolder('snuhmate', null)
+        .then(function (rootId) { return _findOrCreateFolder(ymPrefix, rootId); })
+        .then(function (folderId) {
+          var q = "name='" + fileName.replace(/'/g, "\\'") + "' and '" + folderId + "' in parents and trashed=false";
+          return fetch(BASE_URL + '/files?q=' + encodeURIComponent(q) + '&fields=files(id)', { headers: _headers() })
+            .then(function (r) {
+              if (!r.ok) return r.text().then(function (t) { throw new Error('list ' + r.status + ': ' + t); });
+              return r.json();
+            })
+            .then(function (data) {
+              if (data.files && data.files.length > 0) {
+                return _updateFile(data.files[0].id, blob, 'application/pdf');
+              } else {
+                return _createFile(fileName, blob, 'application/pdf', folderId);
+              }
+            });
+        });
+    }).catch(function (err) {
+      var msg = (err && err.message) ? err.message : String(err);
+      console.error('[DriveStore] uploadPdfToMyDrive failed:', err);
+      // 원인을 사용자에게 보여준다 (토큰/권한/네트워크 중 어느 층에서 터졌는지 진단용).
+      _showToast('⚠️ PDF 저장 실패: ' + msg.slice(0, 140));
+      return null;
+    });
   }
 
   // ── uploadPdf (Phase 4: 급여명세서 원본 PDF 백업) ──
