@@ -1,0 +1,12 @@
+[
+  { "question": "연차 유급휴가는 며칠이야?", "expected_refs": ["제36조"] },
+  { "question": "본인 결혼하면 며칠 쉬어?", "expected_refs": ["제41조"] },
+  { "question": "배우자 출산 휴가 얼마나 줘?", "expected_refs": ["제41조"] },
+  { "question": "M3 상여금 연간 얼마야?", "expected_refs": ["제51조"] },
+  { "question": "퇴직금 지급률은 어떻게 계산해?", "expected_refs": ["제52조"] },
+  { "question": "맞춤형 복지 기본 포인트가 얼마야?", "expected_refs": ["제58조"] },
+  { "question": "정기 건강검진 얼마나 자주 받아?", "expected_refs": ["제65조"] },
+  { "question": "육아휴직 기간이 어떻게 돼?", "expected_refs": ["육아휴직"] },
+  { "question": "장애인 처우 개선수당 얼마 받아?", "expected_refs": ["장애인"] },
+  { "question": "환경유지지원직 가계지원비 인상액 얼마야?", "expected_refs": ["환경유지"] }
+]
