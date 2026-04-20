@@ -10,3 +10,9 @@ export {
 } from './store.js'
 export { retrieve, rerankByKeyword } from './retriever.js'
 export { streamRagAnswer, buildContext } from './generator.js'
+export {
+  getArticleById,
+  getArticleByDocId,
+  docIdToArticleId,
+  type RegulationArticle,
+} from './article-index.js'

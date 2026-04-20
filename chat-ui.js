@@ -42,6 +42,12 @@
     '.ask-sources{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}',
     '.ask-source-chip{padding:4px 10px;border:1px solid rgba(0,0,0,0.15);border-radius:12px;font-size:12px;background:#fff;cursor:pointer;font-family:inherit}',
     '.ask-source-chip.primary{background:#1a1a1a;color:#fff;border-color:#1a1a1a}',
+    '.ask-source-chip.open{background:#e8e8e8;border-color:#888}',
+    '.ask-source-panel{margin-top:8px;padding:10px 12px;background:#fff;border:1px solid rgba(0,0,0,0.12);border-radius:10px;font-size:13px;line-height:1.55}',
+    '.ask-source-panel h4{margin:0 0 6px 0;font-size:13px;font-weight:700}',
+    '.ask-source-panel .ask-src-chapter{font-size:11px;color:#888;margin-bottom:4px}',
+    '.ask-source-panel .ask-src-section{margin-top:8px;font-weight:700;font-size:12px;color:#444}',
+    '.ask-source-panel .ask-md-table th,.ask-source-panel .ask-md-table td{font-size:11px}',
     '.ask-input-row{display:flex;gap:8px;padding:12px 16px;border-top:1px solid rgba(0,0,0,0.08)}',
     '.ask-input{flex:1;padding:10px 12px;border:1px solid #ccc;border-radius:8px;font-family:inherit;font-size:14px}',
     '.ask-send{padding:10px 16px;background:#1a1a1a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-family:inherit}',
@@ -197,6 +203,10 @@
       scored.sort(function(a, b) { return a.priority - b.priority; });
 
       var wrap = el('div', 'ask-sources');
+      // Panel container appended AFTER the chip strip so expanded content
+      // shows below all chips rather than splitting the row.
+      var panelHost = el('div', 'ask-source-panel-host');
+      var openState = { chip: null, panel: null };
       var seen = {};
       var rendered = 0;
       scored.forEach(function(entry) {
@@ -207,14 +217,119 @@
         var cls = entry.priority < 99 ? 'ask-source-chip primary' : 'ask-source-chip';
         var chip = el('button', cls, s.title);
         chip.addEventListener('click', function() {
-          // Keep the chat sheet open; scroll to the article in the background
-          // if the caller hosts a matching card. User can dismiss sheet manually.
-          if (window.scrollToArticle) window.scrollToArticle(s.title);
+          // Toggle: if this chip is already open, collapse it.
+          if (openState.chip === chip) {
+            openState.chip.classList.remove('open');
+            if (openState.panel && openState.panel.parentNode) {
+              openState.panel.parentNode.removeChild(openState.panel);
+            }
+            openState.chip = null;
+            openState.panel = null;
+            return;
+          }
+          // Close previous open panel.
+          if (openState.chip) openState.chip.classList.remove('open');
+          if (openState.panel && openState.panel.parentNode) {
+            openState.panel.parentNode.removeChild(openState.panel);
+          }
+          // Build new panel with structured article content.
+          var panel = buildSourcePanel(s);
+          panelHost.appendChild(panel);
+          chip.classList.add('open');
+          openState.chip = chip;
+          openState.panel = panel;
+          msgs.scrollTop = msgs.scrollHeight;
         });
         wrap.appendChild(chip);
         rendered++;
       });
       assistantNode.appendChild(wrap);
+      assistantNode.appendChild(panelHost);
+    }
+
+    function buildSourcePanel(source) {
+      var panel = el('div', 'ask-source-panel');
+      var art = source.article;
+
+      // Header: chapter + title
+      if (art && art.chapter) {
+        panel.appendChild(el('div', 'ask-src-chapter', art.chapter));
+      }
+      var h = document.createElement('h4');
+      h.textContent = (art && art.title) || source.title || '';
+      panel.appendChild(h);
+
+      if (!art) {
+        // Fallback when server didn't return structured data.
+        panel.appendChild(el('div', 'ask-md-p', '원문 데이터를 불러올 수 없습니다.'));
+        return panel;
+      }
+
+      // content paragraph
+      if (art.content && art.content.trim()) {
+        panel.appendChild(el('div', 'ask-md-p', art.content));
+      }
+
+      // clauses as bullet list
+      if (Array.isArray(art.clauses) && art.clauses.length) {
+        var ul = document.createElement('ul');
+        ul.className = 'ask-md-list';
+        art.clauses.forEach(function(c) {
+          ul.appendChild(el('li', null, c));
+        });
+        panel.appendChild(ul);
+      }
+
+      // tables
+      if (Array.isArray(art.tables) && art.tables.length) {
+        art.tables.forEach(function(t) {
+          if (t.title) panel.appendChild(el('div', 'ask-src-section', t.title));
+          var tbl = document.createElement('table');
+          tbl.className = 'ask-md-table';
+          var thead = document.createElement('thead');
+          var trh = document.createElement('tr');
+          (t.headers || []).forEach(function(h) {
+            var th = document.createElement('th');
+            th.textContent = h;
+            trh.appendChild(th);
+          });
+          thead.appendChild(trh);
+          tbl.appendChild(thead);
+          var tbody = document.createElement('tbody');
+          (t.rows || []).forEach(function(row) {
+            var tr = document.createElement('tr');
+            row.forEach(function(cell) {
+              var td = document.createElement('td');
+              td.textContent = cell;
+              tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+          });
+          tbl.appendChild(tbody);
+          panel.appendChild(tbl);
+        });
+      }
+
+      // related_agreements (side_agreement 혹은 article 의 부속 합의)
+      if (Array.isArray(art.related_agreements) && art.related_agreements.length) {
+        panel.appendChild(el('div', 'ask-src-section', '관련 합의'));
+        var ragUl = document.createElement('ul');
+        ragUl.className = 'ask-md-list';
+        art.related_agreements.forEach(function(ra) {
+          var li = document.createElement('li');
+          var b = document.createElement('strong');
+          b.textContent = '[' + (ra.date || '') + '] ' + (ra.title || '');
+          li.appendChild(b);
+          if (ra.content) {
+            li.appendChild(document.createElement('br'));
+            li.appendChild(document.createTextNode(ra.content));
+          }
+          ragUl.appendChild(li);
+        });
+        panel.appendChild(ragUl);
+      }
+
+      return panel;
     }
 
     function handleSend(articleHint) {

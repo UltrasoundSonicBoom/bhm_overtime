@@ -3,12 +3,30 @@ import { stream } from 'hono/streaming'
 import postgres from 'postgres'
 import { randomUUID } from 'node:crypto'
 import 'dotenv/config'
-import { retrieve, streamRagAnswer } from '../services/rag/index.js'
+import {
+  retrieve,
+  streamRagAnswer,
+  getArticleByDocId,
+  type RegulationArticle,
+} from '../services/rag/index.js'
 
 let _sql: ReturnType<typeof postgres> | null = null
 function sql(): ReturnType<typeof postgres> {
   if (!_sql) _sql = postgres(process.env.DATABASE_URL!, { prepare: false })
   return _sql
+}
+
+// Strip implementation-internal fields from the article payload.
+function pickArticle(a: RegulationArticle) {
+  return {
+    id: a.id,
+    chapter: a.chapter,
+    title: a.title,
+    content: a.content,
+    clauses: a.clauses,
+    tables: a.tables,
+    related_agreements: a.related_agreements,
+  }
 }
 
 const route = new Hono()
@@ -55,11 +73,22 @@ route.post('/', async (c) => {
         fullAnswer += delta
         await writer.write(`data: ${JSON.stringify({ type: 'delta', text: delta })}\n\n`)
       }
-      const sources = results.map((r) => ({
-        title: r.articleTitle,
-        ref: r.docId,
-        score: r.score,
-      }))
+      // Enrich sources with structured article data so the frontend can
+      // inline-expand the original regulation text when the user clicks a chip.
+      const sources = await Promise.all(
+        results.map(async (r) => {
+          const art = await getArticleByDocId(r.docId)
+          return {
+            title: r.articleTitle,
+            ref: r.docId,
+            score: r.score,
+            kind: (r.metadata as { kind?: string } | null)?.kind ?? null,
+            // Include the full article so the client can render content + clauses + tables.
+            // Keep the payload small: omit embedding, metadata noise.
+            article: art ? pickArticle(art) : null,
+          }
+        }),
+      )
       await writer.write(`data: ${JSON.stringify({ type: 'done', sources })}\n\n`)
 
       void s`
