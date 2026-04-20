@@ -8,5 +8,11 @@
   { "question": "정기 건강검진 얼마나 자주 받아?", "expected_refs": ["제65조"] },
   { "question": "육아휴직 기간이 어떻게 돼?", "expected_refs": ["육아휴직"] },
   { "question": "장애인 처우 개선수당 얼마 받아?", "expected_refs": ["장애인"] },
-  { "question": "환경유지지원직 가계지원비 인상액 얼마야?", "expected_refs": ["환경유지"] }
+  { "question": "환경유지지원직 가계지원비 인상액 얼마야?", "expected_refs": ["환경유지"] },
+
+  { "question": "M3 직급 1년차 기준기본급 연봉이 얼마야?", "expected_refs": ["54,482,400", "M3"] },
+  { "question": "본인 결혼할 때 회사에서 경조금 얼마 나와?", "expected_refs": ["30만원", "결혼"] },
+  { "question": "육아휴직 쓰면 첫 6개월은 월급이 어떻게 지급되나?", "expected_refs": ["통상임금", "100%"] },
+  { "question": "리프레시지원비로 어떤 항목을 쓸 수 있어?", "expected_refs": ["건강관리", "능력계발"] },
+  { "question": "야간 근무할 때 가산금 얼마 더 줘?", "expected_refs": ["야간", "가산"] }
 ]
