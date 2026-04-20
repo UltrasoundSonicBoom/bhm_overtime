@@ -1,9 +1,142 @@
 # BHM Overtime — 작업 체크리스트
 
-> 상세 플랜: [tasks/plan-regulation-unification.md](plan-regulation-unification.md)  
+> 상세 플랜: [tasks/plan-regulation-unification.md](plan-regulation-unification.md)
+> **v1.5 업데이트 (2026-04-20)**: RAG v2 재구축 트랙 추가 (상세: [tasks/plan.md](plan.md)).
 > **v1.4 업데이트 (2026-04-14)**: App Lock 트랙 추가. 런칭 게이트(G3/G5) 병행 작업.
 
 ---
+
+## 🧠 RAG v2 재구축 트랙 — 2026-04-20
+
+> 상세 플랜: [tasks/plan.md](plan.md)
+> 원칙: FAQ/card-news API 는 옵션A(410 Gone) 로 중단, Chat RAG 만 원문 기반 재구축.
+> 소스: `data/regulations_full_v2026.md` + `data/union_regulation_2026.json` (이 둘만 사용).
+> 스택: Vercel (serverless) + Neon pgvector + Vercel AI SDK + OpenAI embeddings.
+
+### Track 1 — UI 접점 제거 (API 라우트는 유지)
+
+> **중요**: `/api/faq/*`, `/api/card-news/*` **백엔드 라우트는 변경하지 않음**.
+> 사용자 UI 에서 해당 기능으로의 진입만 모두 끊는다. 데이터/응답/cron 그대로.
+
+- [ ] **T1.1** 홈/네비에서 FAQ · 카드뉴스 진입점 숨김
+  - [ ] `index.html` 홈 그리드에서 "카드뉴스" · "FAQ" 타일 제거 또는 숨김
+  - [ ] `shared-layout.js` 네비/햄버거 메뉴에 해당 링크 제거
+  - [ ] `cardnews.html` 직접 접근 시 "서비스 일시 중단" 안내 (또는 홈으로 리다이렉트)
+  - [ ] `regulation.html` 의 잔여 "물어보기" 탭 흔적 완전 제거 (regulation.html:1162 주석 확인)
+  - [ ] `server/src/routes/faq.ts`, `cardNews.ts` **수정 금지** (백엔드 무변경)
+  - [ ] `?v=` 번프 규칙 준수 (수정한 번들의 `index.html` `<script src>` 버전 증가)
+
+#### ◆ Checkpoint C1 — UI 접점 제거 완료
+- [ ] `curl -i /api/faq` 및 `/api/card-news` → **여전히 200** (백엔드 무변경 확인)
+- [ ] 배포 후 홈/네비에서 카드뉴스·FAQ 타일 안 보임
+- [ ] `cardnews.html` 직접 접근 시 안내 확인
+- [ ] Sentry 에러 변화 없음 (24h)
+
+---
+
+### Track 2 — 신규 RAG 챗봇 (핵심)
+
+#### Phase A — 데이터 파이프라인
+
+- [ ] **T2.1** 소스 파일 정리
+  - [ ] `~/Downloads/regulations_full_v2026.md` → `data/regulations_full_v2026.md` 이동
+  - [ ] `data/union_regulation_2026.json` 그대로 사용
+  - [ ] MD `##`/`###` 섹션 수 vs JSON `id` 개수 비교 → 커버리지 갭 메모
+
+- [ ] **T2.2** 신규 DB 스키마 `rag_chunks_v2`
+  - [ ] `server/drizzle/0006_rag_chunks_v2.sql` 작성 (vector(1536), HNSW index)
+  - [ ] `server/src/db/schema.ts` 에 `ragChunksV2` 테이블 정의 추가
+  - [ ] `npm run db:generate` + `db:apply` 성공
+  - [ ] Neon 에서 `\d rag_chunks_v2` 로 확인
+
+- [ ] **T2.3** Ingest 스크립트 `ingest-rag-v2.ts`
+  - [ ] 의존성 추가: `@langchain/textsplitters`
+  - [ ] JSON 로더: 각 조항(title+content+clauses 합침) → 1 chunk (조항 단위 유지)
+  - [ ] MD 로더: `##`/`###` 분할 → 1200자 초과 시 RecursiveCharacterTextSplitter (chunkSize=800, overlap=120)
+  - [ ] OpenAI 배치 임베딩 (100개씩)
+  - [ ] `--dry-run` 플래그 지원 (chunk preview + token 추정)
+  - [ ] `--write` 실행 시 replay 가능 (같은 `doc_id` 는 DELETE → INSERT)
+  - [ ] `package.json` 스크립트 `rag:v2:ingest` 추가
+
+#### ◆ Checkpoint C2 — Ingest 검증
+- [ ] `npx tsx server/scripts/ingest-rag-v2.ts --dry-run` → chunk ≥ 50개 미리보기
+- [ ] `npx tsx server/scripts/ingest-rag-v2.ts --write` → `SELECT count(*)` ≥ 50
+- [ ] 수동 SQL: "연차 유급휴가" 임베딩 검색 top-3 에 `art_36_*` 또는 `제36조` 섹션 포함
+
+#### Phase B — API 레이어
+
+- [ ] **T2.4** `/api/rag/chat` 엔드포인트 (streaming)
+  - [ ] 의존성 추가: `ai`, `@ai-sdk/openai`
+  - [ ] RAG 모듈 생성: `server/src/services/rag/`
+    - [ ] `chunker.ts` — RecursiveCharacterTextSplitter 래퍼
+    - [ ] `embedder.ts` — OpenAI embedding
+    - [ ] `store.ts` — pgvector insert/search SQL
+    - [ ] `retriever.ts` — top-k + rerank
+    - [ ] `generator.ts` — `streamText` 호출
+    - [ ] `index.ts` — entry
+  - [ ] `server/src/routes/ragChat.ts` — POST 핸들러
+  - [ ] `api/rag/chat.ts` — Vercel 함수 진입점 (기존 `_shared.ts` 패턴)
+  - [ ] `chat_history` 에 질문/답변 저장 (또는 `rag_chat_history_v2` 신설)
+  - [ ] 시스템 프롬프트: "컨텍스트 외 정보 생성 금지, 조항 번호 필수 포함, 수치 원문 유지"
+  - [ ] 응답 마지막 frame 에 `sources[]` (doc_id, article_title, score) 포함
+  - [ ] Rate limit 재사용 (세션당 분당 20건)
+
+#### ◆ Checkpoint C3 — API 검증
+- [ ] `curl -N -X POST /api/rag/chat -d '{"question":"연차 며칠이야"}'` → 스트리밍 응답
+- [ ] 답변에 "제36조" 포함
+- [ ] "대표이사 전화번호?" → "확인되지 않습니다"
+- [ ] 응답 속도: 첫 토큰 < 2초 (Vercel 타임아웃 안전)
+
+#### Phase C — UI
+
+- [ ] **T2.5** 조항 카드 액션박스에 "AI 질문" 버튼 + 채팅 바텀시트
+  - **원칙**: 현재 `regulation.html` UIUX 그대로. 조항 카드의 PDF/전화/이메일 옆에 **네 번째 버튼만 추가**.
+  - [ ] `regulation.js:620-626` `reg-action-grid-3` 블록:
+    - [ ] 주석 처리된 `askAboutArticle` 버튼(L624-625) 해제 및 활성
+    - [ ] grid 클래스 `reg-action-grid-3` → `reg-action-grid-4` 로 변경
+    - [ ] 기존 PDF/전화/이메일 버튼 모양·동작·간격 **무변경**
+  - [ ] `regulation.html` CSS 에 `reg-action-grid-4` 대응 스타일 추가 (기존 `reg-action-grid-3` 유지)
+  - [ ] `askAboutArticle(title)` 함수 시그니처 확장 → `(title, articleRef, content)` — 조항 번호·요약 모달에 전달
+  - [ ] `regulation_v2.html` / `regulation_v2.md` 는 **예제이므로 손대지 않음**
+  - [ ] `chat-ui.js` 신규 모듈 (독립 / 재사용 가능)
+    - [ ] bottom-sheet modal (~80vh)
+    - [ ] 헤더: "📜 {articleRef} ({title}) 에 대해 질문하기"
+    - [ ] 첫 질문에 조항 컨텍스트 자동 포함 (`articleHint` 필드로 API 에 전달)
+    - [ ] 스트리밍 토큰 실시간 렌더 (`ReadableStream` 파싱)
+    - [ ] 출처 chip 클릭 시 sheet 닫고 해당 조항 카드로 스크롤
+    - [ ] 에러 상태 UI (429 / 500 / 네트워크)
+    - [ ] 모바일 375px 우선
+    - [ ] 외부에서 호출 가능한 `window.AskChatUI.open({title, articleRef, content})`
+  - [ ] `?v=` 번프 규칙 준수 + `index.html`/`regulation.html` 의 `<script src>` 버전 업데이트
+  - [ ] **홈 화면에 별도 AI 진입점 추가하지 않음** (조항 카드 버튼 경로만 사용)
+
+#### ◆ Checkpoint C4 — E2E 검증
+- [ ] Playwright 시나리오: 규정 탭 → 조항 카드 "AI 질문" 클릭 → 모달 열림 → 질문 입력 → 토큰 실시간 렌더 → 출처 chip 표시
+- [ ] 모바일 뷰포트(375px) 레이아웃 정상
+- [ ] 사용자 1명이 30초 안에 답변 받는 경험
+
+#### Phase D — 품질 / 문서화
+
+- [ ] **T2.6** 품질 평가
+  - [ ] `tests/rag-v2-golden.json` — 10개 대표 질문 + 기대 조항 번호
+    - 연차, 상여금, 청원휴가, 야간수당, 육아휴직, 퇴직금, 복지포인트, 건강검진, 장애인수당, 환경직 처우
+  - [ ] `server/scripts/verify-rag-v2.ts` — 자동 평가 + 점수 리포트
+  - [ ] `package.json` 스크립트 `rag:v2:verify` 추가
+  - [ ] 통과 기준: 10문제 중 8개 이상 기대 조항 번호 포함
+
+- [ ] **T2.7** 재사용 템플릿 문서화
+  - [ ] `docs/rag-starter-kit.md` — 5개 모듈 설명 + 환경변수 + 복사 가이드
+  - [ ] 비용 추정 섹션 (임베딩 1회 + 월 1000 쿼리)
+  - [ ] 다른 프로젝트로 복사하는 체크리스트 (≤ 6단계)
+
+#### ◆ Checkpoint C5 — 런칭 및 재사용성
+- [ ] `CHANGELOG.md` 에 "2026-04-20 RAG v2 교체" 추가
+- [ ] `CLAUDE.md` 변경 이력 테이블에 한 줄 추가
+- [ ] 문서 따라 빈 Vercel 프로젝트에서 30분 내 챗봇 기동 가능 확인
+
+---
+
+
 
 ## 🔒 App Lock 트랙 — PIN / 생체인증 (런칭 전 선택적)
 
