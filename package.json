@@ -18,7 +18,9 @@
     "postgres": "^3.4.9"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "reg:validate": "node scripts/validate-regulation-vs-data-js.mjs",
+    "reg:restructure": "node scripts/restructure-regulation-json.mjs"
   },
   "repository": {
     "type": "git",
