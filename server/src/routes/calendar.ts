@@ -74,6 +74,7 @@ calendarRoutes.get('/holidays', async (c) => {
     return c.json({ error: 'Invalid year' }, 400)
   }
 
+  c.header('Cache-Control', 'public, max-age=86400')
   try {
     const snapshot = await readSnapshot(year, 'holidays')
     if (snapshot) {

@@ -4,9 +4,13 @@
 // ============================================
 
 const HOLIDAYS = {
-    // API 설정 (공공데이터포털 특일 정보서비스)
-    API_BASE: 'https://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService',
-    API_KEY: '590ecdf5a2e2ea517c853271d834f47f0d0cef966ec408e467106f063aa49e2c',
+    // 서버 프록시 API (공공데이터 키는 서버 환경변수에서만 사용)
+    _getApiBase() {
+        if (location.protocol === 'file:') return 'http://localhost:3001/api';
+        const lh = { 'localhost': true, '127.0.0.1': true, '::1': true };
+        if (lh[location.hostname] && location.port !== '3001') return 'http://localhost:3001/api';
+        return '/api';
+    },
 
     // 캐시 (연도별)
     _cache: {},
@@ -186,99 +190,26 @@ const HOLIDAYS = {
     },
 
     // ══════════════════════════════════════════
-    // ── API 호출 ──
+    // ── API 호출 (서버 프록시) ──
     // ══════════════════════════════════════════
 
     /**
-     * 단일 오퍼레이션 API 호출
-     * @param {string} operation - API 오퍼레이션명
+     * 서버 /api/calendar/holidays 를 통해 공휴일 데이터 가져오기
+     * 공공데이터포털 키는 서버 환경변수에서만 사용 — 브라우저에 노출 없음
      * @param {number} year
-     * @returns {Promise<Array|null>}
-     */
-    async _fetchOperation(operation, year) {
-        if (this._disabledOperations[operation]) {
-            return null;
-        }
-
-        const url = `${this.API_BASE}/${operation}?ServiceKey=${this.API_KEY}&solYear=${year}&numOfRows=100&_type=json`;
-        try {
-            const resp = await fetch(url);
-            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-
-            const contentType = resp.headers.get('content-type') || '';
-
-            // JSON 응답
-            if (contentType.includes('json')) {
-                const data = await resp.json();
-                const items = data?.response?.body?.items?.item;
-                if (!items) return [];
-                const list = Array.isArray(items) ? items : [items];
-                return list.map(item => ({
-                    name: item.dateName,
-                    date: String(item.locdate),
-                    isHoliday: item.isHoliday === 'Y' || item.isHoliday === true,
-                    dateKind: item.dateKind
-                }));
-            }
-
-            // XML 응답 폴백
-            const text = await resp.text();
-            const parser = new DOMParser();
-            const xml = parser.parseFromString(text, 'text/xml');
-
-            // 에러 응답 체크
-            const errCode = xml.querySelector('resultCode');
-            if (errCode && errCode.textContent !== '00') {
-                throw new Error(`API Error: ${xml.querySelector('resultMsg')?.textContent}`);
-            }
-
-            const xmlItems = xml.querySelectorAll('item');
-            if (xmlItems.length === 0) return [];
-
-            return Array.from(xmlItems).map(item => ({
-                name: item.querySelector('dateName')?.textContent || '',
-                date: item.querySelector('locdate')?.textContent || '',
-                isHoliday: item.querySelector('isHoliday')?.textContent === 'Y',
-                dateKind: item.querySelector('dateKind')?.textContent || ''
-            }));
-        } catch (e) {
-            if ((e.message || '').includes('HTTP 403')) {
-                this._disabledOperations[operation] = true;
-            }
-            console.warn(`API ${operation} 실패 (${year}):`, e.message);
-            return null;
-        }
-    },
-
-    /**
-     * API에서 공휴일 데이터 가져오기
-     * getRestDeInfo (공휴일) + getHoliDeInfo (국경일) 병합
-     * @param {number} year 
-     * @returns {Promise<Array>} [{ name, date(YYYYMMDD), isHoliday }]
+     * @returns {Promise<Array|null>} [{ name, date(YYYYMMDD), isHoliday }]
      */
     async fetchFromAPI(year) {
-        // 공휴일 조회 (설날, 추석, 어린이날, 대체공휴일 등)
-        const restDays = await this._fetchOperation('getRestDeInfo', year);
-        if (!restDays) return null;
-
-        // 국경일 조회 (삼일절, 광복절, 개천절, 한글날 등 - 제헌절은 isHoliday=N)
-        const holiDays = await this._fetchOperation('getHoliDeInfo', year);
-
-        // 병합 + 중복 제거
-        const merged = new Map();
-        const addItems = (items) => {
-            if (!items) return;
-            items.forEach(item => {
-                if (item.isHoliday !== false) {
-                    merged.set(`${item.date}_${item.name}`, item);
-                }
-            });
-        };
-        addItems(restDays);
-        addItems(holiDays);
-
-        const result = Array.from(merged.values());
-        return result.length > 0 ? result : null;
+        try {
+            const resp = await fetch(`${this._getApiBase()}/calendar/holidays?year=${year}`);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const data = await resp.json();
+            const items = Array.isArray(data?.items) ? data.items : null;
+            return items && items.length > 0 ? items : null;
+        } catch (e) {
+            console.warn(`[HOLIDAYS] 서버 API 실패 (${year}):`, e.message);
+            return null;
+        }
     },
 
     /**
