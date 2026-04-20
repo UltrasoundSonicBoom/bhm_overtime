@@ -1,14 +1,15 @@
 (function() {
   'use strict';
 
-  var API_BASE = (function() {
-    // Explicit override for dev/staging (e.g., window.__RAG_API_BASE__ = 'http://localhost:3099/api')
+  // Resolved lazily on each call so `window.__RAG_API_BASE__` override works
+  // even when set after the page loads.
+  function apiBase() {
     if (typeof window !== 'undefined' && window.__RAG_API_BASE__) return window.__RAG_API_BASE__;
     if (location.protocol === 'file:') return 'http://localhost:3001/api';
     var localHosts = { 'localhost': true, '127.0.0.1': true, '::1': true };
     if (localHosts[location.hostname] && location.port !== '3001') return 'http://localhost:3001/api';
     return '/api';
-  })();
+  }
 
   var sessionId = 'ask-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
 
@@ -122,7 +123,7 @@
       input.value = '';
       var assistantNode = appendAssistant();
 
-      fetch(API_BASE + '/rag/chat', {
+      fetch(apiBase() + '/rag/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: q, sessionId: sessionId, articleHint: articleHint })
