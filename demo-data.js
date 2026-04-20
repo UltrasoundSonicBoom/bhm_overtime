@@ -139,7 +139,21 @@
 
     var settings = {};
     try { settings = JSON.parse(localStorage.getItem('bhm_settings') || '{}'); } catch (e) {}
-    settings.googleSub = DEMO_UID;
+
+    // 실제 인증 정보 백업 (exitDemoMode에서 복원)
+    if (settings.googleSub && settings.googleSub !== DEMO_UID) {
+      localStorage.setItem('bhm_demo_saved_auth', JSON.stringify({
+        googleSub:     settings.googleSub,
+        googleEmail:   settings.googleEmail   || '',
+        googleName:    settings.googleName    || '',
+        googlePicture: settings.googlePicture || '',
+      }));
+    }
+
+    settings.googleSub     = DEMO_UID;
+    settings.googleEmail   = '';
+    settings.googleName    = '';
+    settings.googlePicture = '';
     localStorage.setItem('bhm_settings', JSON.stringify(settings));
 
     localStorage.setItem('bhm_hr_profile_' + DEMO_UID, JSON.stringify(_profile));
@@ -157,9 +171,23 @@
     var settings = {};
     try { settings = JSON.parse(localStorage.getItem('bhm_settings') || '{}'); } catch (e) {}
     if (settings.googleSub === DEMO_UID) {
-      delete settings.googleSub;
+      // 저장된 실제 인증 정보 복원
+      var saved = null;
+      try { saved = JSON.parse(localStorage.getItem('bhm_demo_saved_auth') || 'null'); } catch (e) {}
+      if (saved && saved.googleSub) {
+        settings.googleSub     = saved.googleSub;
+        settings.googleEmail   = saved.googleEmail;
+        settings.googleName    = saved.googleName;
+        settings.googlePicture = saved.googlePicture;
+      } else {
+        delete settings.googleSub;
+        delete settings.googleEmail;
+        delete settings.googleName;
+        delete settings.googlePicture;
+      }
       localStorage.setItem('bhm_settings', JSON.stringify(settings));
     }
+    localStorage.removeItem('bhm_demo_saved_auth');
   }
 
   // 데모 모드: 급여 탭 진입 시 '이번 달 예상액' 서브탭 기본 선택 + 콘텐츠 렌더

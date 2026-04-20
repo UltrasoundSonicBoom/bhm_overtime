@@ -116,6 +116,7 @@ window.SyncManager = (function () {
 
   // ── 드라이브 사용 가능 여부 확인 ──
   function _driveReady() {
+    if (localStorage.getItem('bhm_demo_mode') === '1') return false;
     if (!window.GoogleAuth || !window.GoogleAuth.isSignedIn()) return false;
     if (!window.GoogleDriveStore) return false;
     var settings = window.loadSettings ? window.loadSettings() : {};
