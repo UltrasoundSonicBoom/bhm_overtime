@@ -24,10 +24,13 @@ async function handleLogin(user) {
 
 function initMainApp(user, defaultTab) {
   defaultTab = defaultTab || 'overtime';
-  document.getElementById('popup-tabs').addEventListener('click', function(e) {
-    var btn = e.target.closest('.tab-btn');
-    if (btn) switchTab(btn.dataset.tab);
-  });
+  if (!initMainApp._listenersAdded) {
+    document.getElementById('popup-tabs').addEventListener('click', function(e) {
+      var btn = e.target.closest('.tab-btn');
+      if (btn) switchTab(btn.dataset.tab);
+    });
+    initMainApp._listenersAdded = true;
+  }
   OvertimeScreen.render(document.getElementById('tab-overtime'), { user });
   LeaveScreen.render(document.getElementById('tab-leave'),       { user });
   PdfScreen.render(document.getElementById('tab-pdf'),           { user });
@@ -48,5 +51,6 @@ async function updateSyncBadge() {
   if (!at) { badge.textContent = '미동기화'; return; }
   var mins = Math.floor((Date.now() - new Date(at).getTime()) / 60000);
   badge.textContent = mins < 1 ? '방금 동기화' : mins + '분 전 동기화';
-  badge.className = 'sync-badge ok';
+  badge.classList.remove('fail');
+  badge.classList.add('ok');
 }
