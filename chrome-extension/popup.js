@@ -54,11 +54,13 @@ async function handleLogin(user) {
   });
 
   // 백그라운드 Drive 동기화: PIN 복원되면 설정 화면 자동 닫기
+  // _advance는 이 render() 호출에 대해서만 유효. 팝업은 session당 한 번만 handleLogin에 도달.
   chrome.runtime.sendMessage({ type: 'PULL_NOW' }, async function() {
     if (chrome.runtime.lastError) {
       console.warn('[BHM] PULL_NOW failed:', chrome.runtime.lastError.message);
       return;
     }
+    if (!PinSetupScreen._advance) return; // 팝업이 이미 닫힘
     const lock = await BhmAuth.checkLockState(BhmStorage);
     if (lock.status !== 'no_pin' && PinSetupScreen._advance) {
       PinSetupScreen._advance();
