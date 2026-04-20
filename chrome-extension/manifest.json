@@ -12,7 +12,6 @@
   "background": { "service_worker": "background.js" },
   "permissions": ["identity", "storage", "downloads", "contextMenus", "notifications"],
   "host_permissions": ["https://www.googleapis.com/*"],
-  "options_ui": { "page": "options.html", "open_in_tab": false },
   "oauth2": {
     "client_id": "__REPLACE_WITH_GCP_CLIENT_ID__",
     "scopes": [

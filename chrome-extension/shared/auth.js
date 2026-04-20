@@ -25,6 +25,11 @@ const BhmAuth = {
   },
 
   async verifyPin(pin, storage) {
+    // reset attempts counter if previous lockout has expired
+    const lockedUntil = (await storage.get([storage.KEYS.PIN_LOCKED_UNTIL]))[storage.KEYS.PIN_LOCKED_UNTIL];
+    if (lockedUntil && BhmAuth._isLockExpired(lockedUntil)) {
+      await storage.remove([storage.KEYS.PIN_LOCKED_UNTIL, storage.KEYS.PIN_ATTEMPTS]);
+    }
     const d = await storage.get([storage.KEYS.PIN_HASH, storage.KEYS.PIN_ATTEMPTS]);
     if (!d[storage.KEYS.PIN_HASH]) return { ok: false, error: 'no_pin' };
     const hash = await BhmAuth.hashPin(pin);
@@ -77,7 +82,7 @@ const BhmAuth = {
       await new Promise(r => chrome.identity.removeCachedAuthToken({ token }, r));
       await fetch('https://accounts.google.com/o/oauth2/revoke?token=' + token);
     } catch (_) {}
-    await storage.remove(Object.values(storage.KEYS));
+    await storage.remove([...Object.values(storage.KEYS), 'bhm_last_pdf']);
   },
 };
 if (typeof module !== 'undefined') {

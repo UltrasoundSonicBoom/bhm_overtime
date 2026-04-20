@@ -1,11 +1,12 @@
 // chrome-extension/shared/drive.js
 'use strict';
+function _driveEsc(s) { return s.replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
 const BhmDrive = {
   BASE:   'https://www.googleapis.com/drive/v3',
   UPLOAD: 'https://www.googleapis.com/upload/drive/v3',
 
   async _findFile(name, token) {
-    const q = encodeURIComponent("name='" + name + "' and trashed=false");
+    const q = encodeURIComponent("name='" + _driveEsc(name) + "' and trashed=false");
     const r = await fetch(
       BhmDrive.BASE + '/files?spaces=appDataFolder&q=' + q + '&fields=files(id)',
       { headers: { Authorization: 'Bearer ' + token } });
@@ -42,7 +43,7 @@ const BhmDrive = {
 
   async _ensureFolder(name, parentId, token) {
     const pq = parentId ? " and '" + parentId + "' in parents" : " and 'root' in parents";
-    const q  = encodeURIComponent("name='" + name + "' and mimeType='application/vnd.google-apps.folder'" + pq + " and trashed=false");
+    const q  = encodeURIComponent("name='" + _driveEsc(name) + "' and mimeType='application/vnd.google-apps.folder'" + pq + " and trashed=false");
     const r  = await fetch(BhmDrive.BASE + '/files?q=' + q + '&fields=files(id)',
       { headers: { Authorization: 'Bearer ' + token } });
     const d  = await r.json();
