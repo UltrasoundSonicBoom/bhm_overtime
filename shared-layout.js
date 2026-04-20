@@ -113,21 +113,6 @@
     name.textContent = user.googleName || user.name || user.googleEmail || '연결됨';
     info.appendChild(name);
 
-    var badges = document.createElement('div');
-    badges.className = 'auth-user-badges';
-    if (user.driveEnabled) {
-      var db = document.createElement('span');
-      db.className = 'auth-badge auth-badge-drive';
-      db.textContent = 'Drive';
-      badges.appendChild(db);
-    }
-    if (user.calendarEnabled) {
-      var cb = document.createElement('span');
-      cb.className = 'auth-badge auth-badge-cal';
-      cb.textContent = 'Cal';
-      badges.appendChild(cb);
-    }
-    if (badges.firstChild) info.appendChild(badges);
 
     var signout = document.createElement('button');
     signout.className = 'auth-signout-btn';
@@ -266,8 +251,11 @@
     // Settings button (헤더 ⚙️) — 채널톡 자리 대체
     var settingsBtn = el('button', { className: 'theme-toggle-btn', title: '설정', textContent: '⚙️' });
     settingsBtn.onclick = function () {
-      if (isIndex && window.switchTab) { switchTab('settings'); }
-      else { location.href = homeHref('settings'); }
+      if (isIndex && window.switchTab) {
+        var settingsContent = document.getElementById('tab-settings');
+        var isSettingsActive = settingsContent && settingsContent.classList.contains('active');
+        switchTab(isSettingsActive ? 'home' : 'settings');
+      } else { location.href = homeHref('settings'); }
     };
     right.appendChild(settingsBtn);
 

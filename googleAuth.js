@@ -56,6 +56,7 @@ window.GoogleAuth = (function () {
 
   var SCOPE_BASE = 'openid email profile';
   var SCOPE_DRIVE = 'https://www.googleapis.com/auth/drive.appdata';
+  var SCOPE_DRIVE_FILE = 'https://www.googleapis.com/auth/drive.file';
   var SCOPE_CALENDAR = CONFIG.googleCalendarScope || 'https://www.googleapis.com/auth/calendar.app.created';
 
   function _showToast(msg) {
@@ -144,7 +145,7 @@ window.GoogleAuth = (function () {
     // 트레이드오프: 동의 화면이 길어진다 (사용자가 거부할 가능성 ↑) — 그래도 명시적 통합 UX를 우선한다.
     _tokenClient = window.google.accounts.oauth2.initTokenClient({
       client_id: GOOGLE_CLIENT_ID,
-      scope: SCOPE_BASE + ' ' + SCOPE_DRIVE + ' ' + SCOPE_CALENDAR,
+      scope: SCOPE_BASE + ' ' + SCOPE_DRIVE + ' ' + SCOPE_DRIVE_FILE + ' ' + SCOPE_CALENDAR,
       callback: function (response) {
         _tokenRequestInFlight = false;
 
@@ -248,7 +249,7 @@ window.GoogleAuth = (function () {
       _showToast('잠시 후 다시 시도해주세요.');
       return;
     }
-    _tokenClient.requestAccessToken({ prompt: 'consent' });
+    _tokenClient.requestAccessToken({ prompt: 'select_account' });
   }
 
   // ── signOut ──

@@ -361,8 +361,8 @@
         headerEl.style.display = 'flex';
         headerEl.style.justifyContent = 'flex-end';
         headerEl.style.padding = '0';
-        headerEl.style.marginTop = '-40px';
-        headerEl.style.marginBottom = '6px';
+        headerEl.style.marginTop = '-20px';
+        headerEl.style.marginBottom = '10px';
         headerEl.appendChild(buildTextUploadBtn());
       } else {
         headerEl.style.display = 'none';
@@ -392,10 +392,13 @@
       }
       visualEl.textContent = '';
       if (archiveEl) archiveEl.textContent = '';
+      const _signedIn = _isSignedIn();
       const empty = buildEmptyState(
         '급여명세서',
         '아직 등록된 명세서가 없습니다.',
-        '급여명세서 PDF를 업로드하면 자동으로 정리됩니다.',
+        _signedIn
+          ? '업로드한 PDF는 내 드라이브 BHM Overtime/급여명세서/ 폴더에 저장돼요.'
+          : '현재 이 브라우저에만 저장됩니다. 다른 기기에서 보려면 Google 로그인이 필요해요.',
         function () {
           // 이미 열려 있는 picker가 있으면 제거 후 새로 생성 (iOS 취소 후 재시도 대응)
           const prev = document.querySelector('input[type="file"][data-pay-picker]');
@@ -441,7 +444,7 @@
           document.body.appendChild(input);
           input.click();
         },
-        '📄 급여명세서 업로드'
+        _signedIn ? '📁 Google Drive에 PDF 업로드' : '📄 급여명세서 업로드'
       );
       visualEl.appendChild(empty);
       return;
@@ -524,15 +527,20 @@
   }
 
   // ── 텍스트 업로드 버튼 (명세서 탭 상단 우측) ──
+  function _isSignedIn() {
+    return !!(window.GoogleAuth && window.GoogleAuth.hasAccountLink && window.GoogleAuth.hasAccountLink());
+  }
+
   function buildTextUploadBtn() {
     const fileInput = el('input', { type: 'file', accept: 'application/pdf,.pdf' });
     fileInput.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
 
+    const signedIn = _isSignedIn();
     const btn = el('button', {
       className: 'pay-text-upload-btn',
-      textContent: '급여 PDF 업로드',
+      textContent: signedIn ? '📁 Google Drive에 PDF 업로드' : '급여 PDF 업로드',
       onClick: function () {
-        fileInput.value = '';  // 같은 파일 재선택 허용 (iOS/Android 포함)
+        fileInput.value = '';
         fileInput.click();
       }
     });
@@ -543,10 +551,32 @@
       }
     });
 
-    const wrap = el('div', { style: { display: 'inline-flex' } });
-    wrap.appendChild(btn);
-    wrap.appendChild(fileInput);
+    const wrap = el('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' } });
+    const row = el('div', { style: { display: 'inline-flex', gap: '6px' } });
+    row.appendChild(btn);
+    if (signedIn) row.appendChild(buildDriveFolderBtn());
+    row.appendChild(fileInput);
+    wrap.appendChild(row);
+    const note = el('div', {
+      style: { fontSize: 'var(--text-body-small)', color: 'var(--text-muted)', textAlign: 'right', maxWidth: '280px' },
+      textContent: signedIn
+        ? '내 드라이브 BHM Overtime/급여명세서/ 폴더에 저장돼요.'
+        : '현재 이 브라우저에만 저장됩니다. 다른 기기에서 보려면 Google 로그인이 필요해요.'
+    });
+    wrap.appendChild(note);
     return wrap;
+  }
+
+  function buildDriveFolderBtn() {
+    return el('button', {
+      className: 'btn btn-outline',
+      style: { padding: '6px 10px', fontSize: 'var(--text-body-small)' },
+      textContent: '📂 내 드라이브 열기',
+      title: '내 드라이브의 BHM Overtime 폴더 열기',
+      onClick: function () {
+        window.open('https://drive.google.com/drive/search?q=BHM%20Overtime', '_blank', 'noopener');
+      }
+    });
   }
 
   async function handleInlineUpload(file) {
@@ -566,6 +596,17 @@
       const ym = SALARY_PARSER.parsePeriodYearMonth(result);
       if (ym) {
         SALARY_PARSER.saveMonthlyData(ym.year, ym.month, result, ym.type);
+
+        // PDF 원본을 내 드라이브에 보관 (drive.file scope + 로그인 시)
+        const isPdf = file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf';
+        if (isPdf && _isSignedIn() && window.GoogleDriveStore) {
+          const typeLabel = ym.type && ym.type !== '급여' ? `_${ym.type}` : '';
+          const pdfName = `${ym.year}년_${String(ym.month).padStart(2, '0')}월_급여명세서${typeLabel}.pdf`;
+          window.GoogleDriveStore.uploadPdfToMyDrive(pdfName, file).then(function (r) {
+            if (r && typeof showOtToast === 'function') showOtToast('📁 내 드라이브에 PDF 저장됨');
+          });
+        }
+
         currentPayslipIdx = 0;
         renderPayPayslip();
       } else {

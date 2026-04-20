@@ -3624,6 +3624,17 @@ async function handlePayslipUpload(file) {
     if (!ym) throw new Error('급여 기간을 인식하지 못했습니다. 파일을 확인해주세요.');
 
     SALARY_PARSER.saveMonthlyData(ym.year, ym.month, parsed, ym.type);
+
+    // PDF 원본을 내 드라이브에 보관 (drive.file scope 있을 때만)
+    const isPdf = file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf';
+    if (isPdf && window.GoogleAuth && window.GoogleAuth.isSignedIn() && window.GoogleDriveStore) {
+      const typeLabel = ym.type && ym.type !== '급여' ? `_${ym.type}` : '';
+      const pdfName = `${ym.year}년_${String(ym.month).padStart(2, '0')}월_급여명세서${typeLabel}.pdf`;
+      window.GoogleDriveStore.uploadPdfToMyDrive(pdfName, file).then(function (result) {
+        if (result) showOtToast('📁 내 드라이브에 PDF 저장됨');
+      });
+    }
+
     // employeeInfo (이름/직종/직급/호봉/부서/입사일/사번) merge 저장
     const infoPatch = _applyPayslipEmployeeInfo(parsed);
     const stableRes = SALARY_PARSER.applyStableItemsToProfile(parsed);

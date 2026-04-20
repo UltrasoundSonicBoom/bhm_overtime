@@ -59,8 +59,8 @@ window.GoogleDriveStore = (function () {
   }
 
   // ── 파일 생성 (신규) ──
-  function _createFile(name, body, mimeType) {
-    var metadata = JSON.stringify({ name: name, parents: ['appDataFolder'] });
+  function _createFile(name, body, mimeType, parentId) {
+    var metadata = JSON.stringify({ name: name, parents: [parentId || 'appDataFolder'] });
     var contentType = mimeType || 'application/json';
     var content = (contentType === 'application/json' && typeof body !== 'string')
       ? JSON.stringify(body) : body;
@@ -186,6 +186,69 @@ window.GoogleDriveStore = (function () {
     });
   }
 
+  // ── My Drive 폴더 찾기/생성 ──
+  var _myDriveFolderCache = {};
+
+  function _findOrCreateFolder(name, parentId) {
+    var cacheKey = (parentId || 'root') + '/' + name;
+    if (_myDriveFolderCache[cacheKey]) return Promise.resolve(_myDriveFolderCache[cacheKey]);
+
+    var q = "mimeType='application/vnd.google-apps.folder' and name='" + name.replace(/'/g, "\\'") + "' and trashed=false";
+    if (parentId) q += " and '" + parentId + "' in parents";
+
+    return _withToken(function () {
+      return fetch(BASE_URL + '/files?q=' + encodeURIComponent(q) + '&fields=files(id)', { headers: _headers() });
+    }).then(function (r) {
+      if (!r.ok) throw new Error('Drive folder list ' + r.status);
+      return r.json();
+    }).then(function (data) {
+      if (data.files && data.files.length > 0) {
+        _myDriveFolderCache[cacheKey] = data.files[0].id;
+        return data.files[0].id;
+      }
+      var meta = { name: name, mimeType: 'application/vnd.google-apps.folder' };
+      if (parentId) meta.parents = [parentId];
+      return _withToken(function () {
+        return fetch(BASE_URL + '/files', {
+          method: 'POST',
+          headers: Object.assign(_headers(), { 'Content-Type': 'application/json' }),
+          body: JSON.stringify(meta)
+        });
+      }).then(function (r) {
+        if (!r.ok) throw new Error('Drive folder create ' + r.status);
+        return r.json();
+      }).then(function (folder) {
+        _myDriveFolderCache[cacheKey] = folder.id;
+        return folder.id;
+      });
+    });
+  }
+
+  // ── uploadPdfToMyDrive ──
+  // PDF 원본을 사용자 My Drive에 저장 (drive.file scope 필요)
+  // 경로: 내 드라이브/BHM Overtime/급여명세서/{fileName}
+  function uploadPdfToMyDrive(fileName, blob) {
+    return _findOrCreateFolder('BHM Overtime', null)
+      .then(function (rootId) { return _findOrCreateFolder('급여명세서', rootId); })
+      .then(function (folderId) {
+        var q = "name='" + fileName.replace(/'/g, "\\'") + "' and '" + folderId + "' in parents and trashed=false";
+        return _withToken(function () {
+          return fetch(BASE_URL + '/files?q=' + encodeURIComponent(q) + '&fields=files(id)', { headers: _headers() });
+        }).then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (data.files && data.files.length > 0) {
+              return _updateFile(data.files[0].id, blob, 'application/pdf');
+            } else {
+              return _createFile(fileName, blob, 'application/pdf', folderId);
+            }
+          });
+      })
+      .catch(function (err) {
+        console.warn('[DriveStore] uploadPdfToMyDrive failed:', err);
+        _showToast('⚠️ PDF 저장 실패 (내 드라이브).');
+      });
+  }
+
   // ── uploadPdf (Phase 4: 급여명세서 원본 PDF 백업) ──
   function uploadPdf(name, blob) {
     return _getFileId(name).then(function (fileId) {
@@ -215,8 +278,9 @@ window.GoogleDriveStore = (function () {
     writeJsonFile: writeJsonFile,
     deleteFile: deleteFile,
     uploadPdf: uploadPdf,
+    uploadPdfToMyDrive: uploadPdfToMyDrive,
     // 테스트/디버그용
     _getFileId: _getFileId,
-    _clearCache: function () { _fileIdCache = {}; }
+    _clearCache: function () { _fileIdCache = {}; _myDriveFolderCache = {}; }
   };
 })();
