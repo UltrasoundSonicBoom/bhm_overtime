@@ -2273,16 +2273,8 @@
         window.loadDemoData && window.loadDemoData();
         sessionStorage.setItem('bhm_demo_session', '1');
       }
-      // ?signin=google: 미로그인 상태일 때만 구글 로그인 다이얼로그 자동 오픈
-      if (params.get('signin') === 'google' && localStorage.getItem('bhm_demo_mode') !== '1') {
-        var _alreadyLoggedIn = false;
-        try { _alreadyLoggedIn = !!(JSON.parse(localStorage.getItem('bhm_settings') || '{}').googleSub); } catch (e) {}
-        if (!_alreadyLoggedIn) {
-          var dlg = document.getElementById('googlePermissionDialog');
-          if (dlg && typeof dlg.showModal === 'function') { dlg.showModal(); }
-          else if (window.GoogleAuth) { setTimeout(function () { window.GoogleAuth.signIn(); }, 500); }
-        }
-      }
+      // Google 연결 다이얼로그는 헤더의 "Google로 연결" 버튼 클릭 시에만 열린다.
+      // ?signin=google URL 파라미터로 자동 오픈하지 않는다 (localStorage 사용자에게 강제감 주는 걸 방지).
     });
   </script>
 
