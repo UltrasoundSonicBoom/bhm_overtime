@@ -80,13 +80,31 @@ const BhmAuth = {
     return true;
   },
 
-  getToken(interactive) {
-    return new Promise((resolve, reject) => {
-      chrome.identity.getAuthToken({ interactive }, token => {
+  WEB_CLIENT_ID: '914163950802-vov9iusqqaj0139g06ccbo4q8pp6dcbl.apps.googleusercontent.com',
+
+  async getToken(interactive) {
+    const d = await new Promise(r => chrome.storage.local.get(['_web_token', '_web_token_exp'], r));
+    if (d['_web_token'] && d['_web_token_exp'] > Date.now() + 60000) return d['_web_token'];
+    const redirectUri = chrome.identity.getRedirectURL();
+    const scope = 'openid email profile https://www.googleapis.com/auth/drive.appdata';
+    const url = 'https://accounts.google.com/o/oauth2/v2/auth' +
+      '?client_id=' + encodeURIComponent(BhmAuth.WEB_CLIENT_ID) +
+      '&redirect_uri=' + encodeURIComponent(redirectUri) +
+      '&response_type=token' +
+      '&scope=' + encodeURIComponent(scope);
+    const redirectUrl = await new Promise((resolve, reject) => {
+      chrome.identity.launchWebAuthFlow({ url, interactive: !!interactive }, u => {
         if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
-        else resolve(token);
+        else resolve(u);
       });
     });
+    if (!redirectUrl) throw new Error('auth cancelled');
+    const params = new URLSearchParams(new URL(redirectUrl).hash.substring(1));
+    const token = params.get('access_token');
+    const expiresIn = parseInt(params.get('expires_in') || '3599') * 1000;
+    if (!token) throw new Error('no access_token');
+    await new Promise(r => chrome.storage.local.set({ '_web_token': token, '_web_token_exp': Date.now() + expiresIn }, r));
+    return token;
   },
 
   async fetchProfile(token) {
@@ -99,11 +117,11 @@ const BhmAuth = {
 
   async signOut(storage) {
     try {
-      const token = await BhmAuth.getToken(false);
-      await new Promise(r => chrome.identity.removeCachedAuthToken({ token }, r));
-      await fetch('https://accounts.google.com/o/oauth2/revoke?token=' + token);
+      const d = await new Promise(r => chrome.storage.local.get(['_web_token'], r));
+      if (d['_web_token']) await fetch('https://accounts.google.com/o/oauth2/revoke?token=' + d['_web_token']).catch(() => {});
     } catch (_) {}
     await storage.remove([...Object.values(storage.KEYS), 'bhm_last_pdf']);
+    await new Promise(r => chrome.storage.local.remove(['_web_token', '_web_token_exp'], r));
   },
 };
 if (typeof module !== 'undefined') {

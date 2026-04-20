@@ -40,10 +40,20 @@ const SettingsScreen = {
       si.textContent=at?'마지막: '+new Date(at).toLocaleString('ko-KR'):'아직 동기화 안됨';
     });
 
-    container.querySelector('#sn').onclick=function(){
-      chrome.runtime.sendMessage({type:'SYNC_NOW'},function(){
-        container.querySelector('#si').textContent='✅ 동기화 완료';
-      });
+    container.querySelector('#sn').onclick=async function(){
+      var btn=container.querySelector('#sn'), si=container.querySelector('#si');
+      btn.disabled=true; si.textContent='⏳ 동기화 중...';
+      try {
+        await new Promise(function(resolve,reject){
+          chrome.runtime.sendMessage({type:'SYNC_NOW'},function(resp){
+            if(chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
+            else if(!resp||!resp.ok) reject(new Error((resp&&resp.error)||'알 수 없는 오류'));
+            else resolve();
+          });
+        });
+        si.textContent='✅ 완료 '+new Date().toLocaleTimeString('ko-KR');
+      } catch(e){ si.textContent='❌ '+e.message; }
+      finally { btn.disabled=false; }
     };
 
     container.querySelector('#so').onclick=function(){
