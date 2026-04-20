@@ -1,6 +1,10 @@
 import postgres from 'postgres'
 
-const sql = postgres(process.env.DATABASE_URL!, { prepare: false })
+let _sql: ReturnType<typeof postgres> | null = null
+function sql(): ReturnType<typeof postgres> {
+  if (!_sql) _sql = postgres(process.env.DATABASE_URL!, { prepare: false })
+  return _sql
+}
 
 export interface ChunkRecord {
   source: 'regulations_md' | 'union_regulation_json'
@@ -15,12 +19,14 @@ export interface ChunkRecord {
 
 export async function deleteByDocIds(docIds: string[]): Promise<number> {
   if (!docIds.length) return 0
-  const rows = await sql`DELETE FROM rag_chunks_v2 WHERE doc_id IN ${sql(docIds)}`
+  const s = sql()
+  const rows = await s`DELETE FROM rag_chunks_v2 WHERE doc_id IN ${s(docIds)}`
   return rows.count
 }
 
 export async function insertChunks(chunks: ChunkRecord[]): Promise<number> {
   if (!chunks.length) return 0
+  const s = sql()
   const rows = chunks.map((c) => ({
     source: c.source,
     doc_id: c.docId,
@@ -29,9 +35,9 @@ export async function insertChunks(chunks: ChunkRecord[]): Promise<number> {
     content: c.content,
     embedding: `[${c.embedding.join(',')}]`,
     token_count: c.tokenCount,
-    metadata: sql.json(c.metadata as postgres.JSONValue),
+    metadata: s.json(c.metadata as postgres.JSONValue),
   }))
-  const result = await sql`INSERT INTO rag_chunks_v2 ${sql(rows)}`
+  const result = await s`INSERT INTO rag_chunks_v2 ${s(rows)}`
   return result.count
 }
 
@@ -51,7 +57,8 @@ export async function searchSimilar(
   limit = 6,
 ): Promise<SearchResult[]> {
   const vec = `[${queryEmbedding.join(',')}]`
-  const rows = await sql<SearchResult[]>`
+  const s = sql()
+  const rows = await s<SearchResult[]>`
     SELECT
       id,
       source,
@@ -70,6 +77,7 @@ export async function searchSimilar(
 }
 
 export async function countAll(): Promise<number> {
-  const [{ cnt }] = await sql<{ cnt: number }[]>`SELECT count(*)::int AS cnt FROM rag_chunks_v2`
+  const s = sql()
+  const [{ cnt }] = await s<{ cnt: number }[]>`SELECT count(*)::int AS cnt FROM rag_chunks_v2`
   return cnt
 }
