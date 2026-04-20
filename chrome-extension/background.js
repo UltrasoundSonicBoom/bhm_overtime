@@ -31,9 +31,14 @@ chrome.downloads.onChanged.addListener(async (delta) => {
   const [item] = await chrome.downloads.search({ id: delta.id });
   if (!item || !item.filename.toLowerCase().endsWith('.pdf')) return;
   try {
+    if (item.url.startsWith('blob:')) return;
     const resp = await fetch(item.url);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const buf  = await resp.arrayBuffer();
-    const b64  = btoa(String.fromCharCode(...new Uint8Array(buf)));
+    const bytes = new Uint8Array(buf);
+    let binary = '';
+    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+    const b64 = btoa(binary);
     await BhmStorage.set({
       bhm_last_pdf: {
         fileName:   item.filename.split(/[\\/]/).pop(),
