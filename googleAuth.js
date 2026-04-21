@@ -187,6 +187,12 @@ window.GoogleAuth = (function () {
 
   // ── signOut ──
   async function signOut() {
+    // 데모 모드에서는 exitDemoMode() 호출 후 리로드 (실제 인증 세션 없음)
+    if (localStorage.getItem('bhm_demo_mode') === '1') {
+      if (typeof window.exitDemoMode === 'function') window.exitDemoMode()
+      window.location.reload()
+      return
+    }
     if (window.SyncManager && typeof window.SyncManager.clearPendingPushes === 'function') {
       window.SyncManager.clearPendingPushes()
     }
