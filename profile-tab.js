@@ -303,35 +303,21 @@ document.addEventListener('DOMContentLoaded', () => {
       // 프로필: 클라우드에 없을 때만 이전
       if (!cloudData.profile && rawGuestProfile) {
         localStorage.setItem(PROFILE.STORAGE_KEY, rawGuestProfile);
-        try {
-          const pf = JSON.parse(rawGuestProfile);
-          pf.id = window.SupabaseUser.id;
-          window.SupabaseSync.pushCloudData('profiles', pf);
-        } catch (e) { console.warn('[migrate] profile push 실패', e); }
+        // Supabase sync 제거됨 (2026-04-20). Drive push는 SyncManager.enqueuePush()가 담당.
         migrated = true;
       }
 
       // 시간외: 클라우드 레코드가 없을 때만 이전
       if (!(cloudData.overtime && cloudData.overtime.length > 0) && rawGuestOt) {
         localStorage.setItem(OVERTIME.STORAGE_KEY, rawGuestOt);
-        try {
-          const otMap = JSON.parse(rawGuestOt);
-          Object.values(otMap).flat().forEach(r =>
-            window.SupabaseSync.pushCloudData('overtime_records', { ...r })
-          );
-        } catch (e) { console.warn('[migrate] overtime push 실패', e); }
+        // Supabase sync 제거됨 (2026-04-20). Drive push는 SyncManager.enqueuePush()가 담당.
         migrated = true;
       }
 
       // 휴가: 클라우드 레코드가 없을 때만 이전
       if (!(cloudData.leave && cloudData.leave.length > 0) && rawGuestLeave) {
         localStorage.setItem(LEAVE.STORAGE_KEY, rawGuestLeave);
-        try {
-          const lvMap = JSON.parse(rawGuestLeave);
-          Object.values(lvMap).flat().forEach(r =>
-            window.SupabaseSync.pushCloudData('leave_records', { ...r })
-          );
-        } catch (e) { console.warn('[migrate] leave push 실패', e); }
+        // Supabase sync 제거됨 (2026-04-20). Drive push는 SyncManager.enqueuePush()가 담당.
         migrated = true;
       }
 

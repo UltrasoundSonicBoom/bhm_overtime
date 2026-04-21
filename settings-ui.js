@@ -214,14 +214,12 @@ function showOtToast(message) {
 }
 
 async function getSupabaseAccessTokenForApi() {
-  if (!window.SupabaseClient) return null;
+  // Google Access Token으로 대체 (Supabase JWT 제거됨 2026-04-20)
+  if (!window.GoogleAuth || !window.GoogleAuth.isSignedIn()) return null;
   try {
-    var sessionResult = await window.SupabaseClient.auth.getSession();
-    return sessionResult && sessionResult.data && sessionResult.data.session
-      ? sessionResult.data.session.access_token
-      : null;
+    return window.GoogleAuth.getAccessToken() || null;
   } catch (e) {
-    console.warn('[TeamSchedule] Failed to read session:', e);
+    console.warn('[TeamSchedule] Failed to get Google token:', e);
     return null;
   }
 }
@@ -337,7 +335,7 @@ function updateTeamScheduleSyncUI() {
   var note = document.getElementById('teamScheduleSyncNote');
   if (!section) return;
 
-  var loggedIn = !!window.SupabaseUser;
+  var loggedIn = !!(window.GoogleAuth && window.GoogleAuth.isSignedIn());
   section.style.display = loggedIn ? 'block' : 'none';
   if (note) {
     note.textContent = loggedIn
@@ -347,7 +345,10 @@ function updateTeamScheduleSyncUI() {
 }
 
 async function downloadTeamScheduleIcs(btn) {
-  var token = await getSupabaseAccessTokenForApi();
+  // 팀 인증 방식 전환 작업 중. 현재 임시 비활성화 (2026-04-20).
+  showOtToast('팀 스케줄 다운로드는 잠시 준비 중입니다.');
+  return;
+  var token = await getSupabaseAccessTokenForApi(); // eslint-disable-line no-unreachable
   if (!token) {
     showOtToast('팀 로그인 후 다시 시도해 주세요.');
     return;
