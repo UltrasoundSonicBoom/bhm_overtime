@@ -1,11 +1,17 @@
-// Neon Auth client — initApp()에서 서버 config를 받아 초기화됩니다.
-let _neonNurseAuth = null;
+// Neon Auth REST — initApp()에서 서버 config를 받아 초기화됩니다.
+var _neonNurseBaseUrl = null;
 
-function _getNeonSession() {
-  if (!_neonNurseAuth) return Promise.resolve(null);
-  return _neonNurseAuth.getSession().then(function(s) { return s || null; }).catch(function() { return null; });
+async function _getNeonSession() {
+  if (!_neonNurseBaseUrl) return null;
+  try {
+    var res = await fetch(_neonNurseBaseUrl + '/get-session', { credentials: 'include' });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (_e) { return null; }
 }
-const _neonReady = () => Boolean(_neonNurseAuth);
+function _neonReady() {
+  return Boolean(_neonNurseBaseUrl);
+}
 const API_BASE = (() => {
   const hostname = window.location.hostname;
   const localHostMap = {
@@ -1438,11 +1444,9 @@ function queueLock() {
 
 els.loginBtn.addEventListener('click', async () => {
   try {
-    if (!_neonNurseAuth) { setResult('인증 서비스 초기화 중입니다. 잠시 후 다시 시도해주세요.'); return; }
-    _neonNurseAuth.signIn.social({
-      provider: 'google',
-      callbackURL: window.location.href,
-    });
+    if (!_neonNurseBaseUrl) { setResult('인증 서비스 초기화 중입니다. 잠시 후 다시 시도해주세요.'); return; }
+    var cb = encodeURIComponent(window.location.href);
+    window.location.href = _neonNurseBaseUrl + '/sign-in/social?provider=google&callbackURL=' + cb;
   } catch (error) {
     setResult(error instanceof Error ? error.message : String(error));
   }
@@ -1539,8 +1543,8 @@ async function initApp() {
     const configRes = await fetch(`${API_BASE}/config`);
     if (configRes.ok) {
       const config = await configRes.json();
-      if (window.__NeonAuthModule && config.neonAuthBaseUrl) {
-        _neonNurseAuth = new window.__NeonAuthModule.NeonAuthClient({ baseUrl: config.neonAuthBaseUrl });
+      if (config.neonAuthBaseUrl) {
+        _neonNurseBaseUrl = config.neonAuthBaseUrl;
       }
     }
   } catch (_) {

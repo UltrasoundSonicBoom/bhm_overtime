@@ -72,47 +72,47 @@ function _showToast(msg) {
 window.GoogleAuth = (function () {
   'use strict'
 
-  var _neonAuth = null
+  var _neonBaseUrl = null   // Neon Auth REST base URL
   var _session = null
   var _jwtToken = null
   var _knownSub = null
 
   function _initNeonAuth(config) {
-    if (!window.__NeonAuthModule) return
     if (!config || !config.neonAuthBaseUrl) return
-    _neonAuth = new window.__NeonAuthModule.NeonAuthClient({
-      baseUrl: config.neonAuthBaseUrl,
-    })
+    _neonBaseUrl = config.neonAuthBaseUrl
   }
 
   // ── signIn: Neon Auth Google 리다이렉트 로그인 ──
   function signIn() {
     var config = window.BHM_CONFIG || {}
-    if (!_neonAuth) _initNeonAuth(config)
-    if (!_neonAuth) {
-      console.error('[GoogleAuth] Neon Auth not ready — NEON_AUTH_BASE_URL 미설정?')
+    if (!_neonBaseUrl) _initNeonAuth(config)
+    if (!_neonBaseUrl) {
+      console.error('[GoogleAuth] Neon Auth not ready — neonAuthBaseUrl 미설정?')
       _showToast('인증 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.')
       return
     }
-    _neonAuth.signIn.social({
-      provider: 'google',
-      callbackURL: window.location.href,
-    })
-    // → 리다이렉트 (팝업 아님)
+    var callbackURL = encodeURIComponent(window.location.href)
+    window.location.href = _neonBaseUrl + '/sign-in/social?provider=google&callbackURL=' + callbackURL
+  }
+
+  async function _getNeonSession() {
+    if (!_neonBaseUrl) return null
+    try {
+      var res = await fetch(_neonBaseUrl + '/get-session', {
+        credentials: 'include',
+      })
+      if (!res.ok) return null
+      return await res.json()
+    } catch (e) { return null }
   }
 
   // ── getJwtToken: 백엔드 API 호출용 Neon JWT ──
   async function getJwtToken() {
     if (_jwtToken) return _jwtToken
-    if (!_neonAuth) return null
-    try {
-      var session = await _neonAuth.getSession()
-      _jwtToken = (session && session.session && session.session.token) ? session.session.token : null
-      return _jwtToken
-    } catch (e) {
-      console.warn('[GoogleAuth] getJwtToken failed:', e)
-      return null
-    }
+    if (!_neonBaseUrl) return null
+    var data = await _getNeonSession()
+    _jwtToken = (data && data.session && data.session.token) ? data.session.token : null
+    return _jwtToken
   }
 
   // ── getAccessToken: Drive/Calendar용 Google OAuth access_token ──
@@ -120,36 +120,23 @@ window.GoogleAuth = (function () {
   async function getAccessToken() {
     var jwt = await getJwtToken()
     if (!jwt) return null
-    var config = window.BHM_CONFIG || {}
-    if (!config.neonAuthBaseUrl) return null
+    if (!_neonBaseUrl) return null
     try {
-      var res = await fetch(config.neonAuthBaseUrl + '/get-access-token', {
+      var res = await fetch(_neonBaseUrl + '/get-access-token', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + jwt,
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt },
         body: JSON.stringify({ providerId: 'google' }),
         credentials: 'include',
       })
-      if (!res.ok) return null
       var data = await res.json()
-      return data.accessToken || data.access_token || null
-    } catch (e) {
-      console.warn('[GoogleAuth] getAccessToken failed:', e)
-      return null
-    }
+      return data.accessToken || null
+    } catch (e) { return null }
   }
 
   // ── hasAccountLink: 로그인 여부 ──
   async function hasAccountLinkAsync() {
-    if (!_neonAuth) return !!loadSettings().googleSub
-    try {
-      var session = await _neonAuth.getSession()
-      return !!(session && session.user)
-    } catch (e) {
-      return !!loadSettings().googleSub
-    }
+    var data = await _getNeonSession()
+    return Boolean(data && data.user)
   }
 
   // 동기 버전 (localStorage 기반 — UI 즉시 반영용)
@@ -162,7 +149,7 @@ window.GoogleAuth = (function () {
   }
 
   function isReady() {
-    return !!_neonAuth
+    return !!_neonBaseUrl
   }
 
   function hasValidToken() {
@@ -185,16 +172,16 @@ window.GoogleAuth = (function () {
     if (window.SyncManager && typeof window.SyncManager.clearPendingPushes === 'function') {
       window.SyncManager.clearPendingPushes()
     }
-    if (_neonAuth) {
-      try { await _neonAuth.signOut() } catch (e) { console.warn('[GoogleAuth] signOut error:', e) }
+    if (_neonBaseUrl) {
+      try {
+        await fetch(_neonBaseUrl + '/sign-out', {
+          method: 'POST',
+          credentials: 'include',
+        })
+      } catch (_e) {}
     }
-    _session = null
-    _jwtToken = null
-    saveSettings({
-      googleSub: null, googleEmail: null, googleName: null, googlePicture: null,
-      driveEnabled: false, calendarEnabled: false, _oldGoogleSub: null,
-    })
-    if (typeof updateAuthUI === 'function') updateAuthUI(null)
+    _session = null; _jwtToken = null
+    saveSettings({ googleSub: null, driveEnabled: false, calendarEnabled: false, _oldGoogleSub: null })
     window.location.reload()
   }
 
@@ -216,14 +203,14 @@ window.GoogleAuth = (function () {
       if (typeof updateAuthUI === 'function') updateAuthUI(null)
     }
 
-    if (!_neonAuth) return
+    if (!_neonBaseUrl) return
 
     try {
-      var session = await _neonAuth.getSession()
+      var session = await _getNeonSession()
       if (!session || !session.user) return
 
       _session = session
-      _jwtToken = (session.session && session.session.token) ? session.session.token : null
+      _jwtToken = (session && session.session && session.session.token) ? session.session.token : null
 
       // 이전 googleSub 보존 (Task 7 localStorage 키 이전 용도)
       if (settings.googleSub && settings.googleSub !== session.user.id) {

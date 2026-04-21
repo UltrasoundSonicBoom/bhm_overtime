@@ -20,7 +20,7 @@
     img-src 'self' data: blob: https://*.googleusercontent.com https://www.google-analytics.com https://www.googletagmanager.com https://cdn.channel.io https://snuhmate.com https://tally.so;
     font-src 'self' data: https://fonts.gstatic.com;
     media-src 'self' https://cdn.channel.io;
-    connect-src 'self' https://*.googleapis.com https://oauth2.googleapis.com https://accounts.google.com https://www.google-analytics.com https://www.google.com https://www.googletagmanager.com https://apis.data.go.kr https://api.rss2json.com https://api.openalex.org https://news.google.com https://*.channel.io wss://*.channel.io https://*.sentry.io https://tally.so https://cdn.jsdelivr.net;
+    connect-src 'self' https://*.googleapis.com https://oauth2.googleapis.com https://accounts.google.com https://www.google-analytics.com https://www.google.com https://www.googletagmanager.com https://apis.data.go.kr https://api.rss2json.com https://api.openalex.org https://news.google.com https://*.channel.io wss://*.channel.io https://*.sentry.io https://tally.so https://cdn.jsdelivr.net https://*.neon.tech;
     frame-src 'self' https://accounts.google.com https://content.googleapis.com https://tally.so;
     worker-src 'self' blob:;
     object-src 'none';
@@ -2285,14 +2285,9 @@
     });
   </script>
 
-  <!-- Neon Auth CDN (Managed Auth — GIS Token Client 대체) -->
-  <script type="module">
-    import { NeonAuthClient } from 'https://esm.sh/@neondatabase/auth@0.2.0-beta.1/dist/vanilla/index.mjs'
-    window.__NeonAuthModule = { NeonAuthClient }
-  </script>
   <script src="config.js?v=1.2" defer></script>
   <script src="appLock.js?v=1.0" defer></script>
-  <script src="googleAuth.js?v=3.0" defer></script>
+  <script src="googleAuth.js?v=3.1" defer></script>
   <script src="googleDriveStore.js?v=1.4" defer></script>
   <script src="syncManager.js?v=2.9" defer></script>
   <script src="googleCalendarSync.js?v=1.0" defer></script>

@@ -1,9 +1,13 @@
-// Neon Auth client — initApp()에서 서버 config를 받아 초기화됩니다.
-let _neonAdminAuth = null;
+// Neon Auth base URL — initApp()에서 서버 config를 받아 초기화됩니다.
+var _neonAdminBaseUrl = null;
 
-function _getNeonSession() {
-  if (!_neonAdminAuth) return Promise.resolve(null);
-  return _neonAdminAuth.getSession().then(function(s) { return s || null; }).catch(function() { return null; });
+async function _getNeonSession() {
+  if (!_neonAdminBaseUrl) return null
+  try {
+    var res = await fetch(_neonAdminBaseUrl + '/get-session', { credentials: 'include' })
+    if (!res.ok) return null
+    return await res.json()
+  } catch (_e) { return null }
 }
 
 const API_BASE = (() => {
@@ -1198,15 +1202,15 @@ els.loginBtn.addEventListener('click', async () => {
     const session = await _getNeonSession();
     if (session && session.user) {
       // 로그아웃
-      if (_neonAdminAuth) await _neonAdminAuth.signOut().catch(() => {});
+      if (_neonAdminBaseUrl) {
+        try { await fetch(_neonAdminBaseUrl + '/sign-out', { method: 'POST', credentials: 'include' }) } catch (_e) {}
+      }
       window.location.reload();
     } else {
       // 로그인
-      if (!_neonAdminAuth) { setResult('인증 서비스 초기화 중입니다. 잠시 후 다시 시도해주세요.'); return; }
-      _neonAdminAuth.signIn.social({
-        provider: 'google',
-        callbackURL: window.location.href,
-      });
+      if (!_neonAdminBaseUrl) { setResult('인증 서비스 초기화 중입니다. 잠시 후 다시 시도해주세요.'); return; }
+      var cb = encodeURIComponent(window.location.href)
+      window.location.href = _neonAdminBaseUrl + '/sign-in/social?provider=google&callbackURL=' + cb
     }
   } catch (error) {
     setResult(error instanceof Error ? error.message : String(error));
@@ -1314,8 +1318,8 @@ async function initApp() {
     const configRes = await fetch(`${API_BASE}/config`);
     if (configRes.ok) {
       const config = await configRes.json();
-      if (window.__NeonAuthModule && config.neonAuthBaseUrl) {
-        _neonAdminAuth = new window.__NeonAuthModule.NeonAuthClient({ baseUrl: config.neonAuthBaseUrl });
+      if (config.neonAuthBaseUrl) {
+        _neonAdminBaseUrl = config.neonAuthBaseUrl;
       }
     }
   } catch (_) {
