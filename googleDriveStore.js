@@ -21,44 +21,71 @@ window.GoogleDriveStore = (function () {
   var _fileIdCache = {};
 
   // ── 인증 헤더 ──
-  function _headers(extra) {
-    var token = window.GoogleAuth && window.GoogleAuth.getAccessToken();
+  // token 을 반드시 인자로 받는다. window.GoogleAuth.getAccessToken() 는 async 라
+  // 여기서 직접 호출하면 Promise 객체가 'Bearer ' 에 문자열화돼 401 을 유발한다.
+  function _headers(token, extra) {
     if (!token) throw new Error('Drive: access token 없음. 먼저 로그인하세요.');
     var h = { Authorization: 'Bearer ' + token };
     return Object.assign(h, extra || {});
   }
 
-  // ── token 유효성 확인 후 1회 refresh 재시도 ──
-  // 백그라운드 sync 용 — silent refresh. 실패 시 조용히 reject (picker 안 뜸).
-  function _withToken(fn) {
-    var token = window.GoogleAuth && window.GoogleAuth.getAccessToken();
-    if (token) return Promise.resolve().then(fn);
+  // 공통: Google 응답을 검사해 401/403 을 사용자/텔레메트리에 surface.
+  function _checkResponse(r, context) {
+    if (r.ok) return r;
+    if (r.status === 401 || r.status === 403) {
+      return r.clone().text().then(function (body) {
+        var reason = body;
+        try { var j = JSON.parse(body); reason = (j && j.error && (j.error.message || j.error.status)) || body; } catch (_) {}
+        console.warn('[DriveStore] ' + r.status + ' ' + context + ' reason=' + String(reason).slice(0, 300));
+        if (window.Telemetry && typeof window.Telemetry.error === 'function') {
+          try { window.Telemetry.error('drive_auth_error', { status: r.status, context: context, reason: String(reason).slice(0, 300) }); } catch (_) {}
+        }
+        return r;
+      });
+    }
+    return r;
+  }
 
-    // access token 만료 → strict silent refresh 후 재시도
-    return window.GoogleAuth.refreshToken().then(fn);
+  // ── token 확보 후 콜백 실행 (백그라운드 sync 용 — silent). ──
+  // GoogleAuth.getAccessToken() 은 async → 반드시 await.
+  // 토큰 없으면 refreshToken() 1회 재시도, 그래도 없으면 reject.
+  function _withToken(fn) {
+    var gauth = window.GoogleAuth;
+    if (!gauth) return Promise.reject(new Error('Drive: GoogleAuth 미초기화'));
+    return Promise.resolve(gauth.getAccessToken()).then(function (token) {
+      if (token) return fn(token);
+      return Promise.resolve(gauth.refreshToken && gauth.refreshToken()).then(function (t2) {
+        if (!t2) throw new Error('Drive: access token 없음 (로그인 필요)');
+        return fn(t2);
+      });
+    });
   }
 
   // 사용자 액션 경로 용 — silent refresh 우선, 실패 시 interactive picker 허용.
-  // uploadPdfToMyDrive 처럼 "사용자가 방금 버튼을 클릭" 한 경우에 사용한다.
   function _withTokenInteractive(fn) {
-    var token = window.GoogleAuth && window.GoogleAuth.getAccessToken();
-    if (token) return Promise.resolve().then(fn);
     var gauth = window.GoogleAuth;
-    var ensure = (gauth && typeof gauth.ensureTokenInteractive === 'function')
-      ? gauth.ensureTokenInteractive
-      : (gauth && gauth.refreshToken);
-    return ensure.call(gauth).then(fn);
+    if (!gauth) return Promise.reject(new Error('Drive: GoogleAuth 미초기화'));
+    return Promise.resolve(gauth.getAccessToken()).then(function (token) {
+      if (token) return fn(token);
+      var ensure = (typeof gauth.ensureTokenInteractive === 'function')
+        ? gauth.ensureTokenInteractive
+        : gauth.refreshToken;
+      return Promise.resolve(ensure.call(gauth)).then(function (t2) {
+        if (!t2) throw new Error('Drive: access token 없음 (로그인 필요)');
+        return fn(t2);
+      });
+    });
   }
 
   // ── 파일 ID 조회 (캐시 우선) ──
   function _getFileId(name) {
     if (_fileIdCache[name]) return Promise.resolve(_fileIdCache[name]);
 
-    return _withToken(function () {
+    return _withToken(function (token) {
       return fetch(
         BASE_URL + '/files?spaces=appDataFolder&fields=files(id,name)&q=' + encodeURIComponent("name='" + name + "'"),
-        { headers: _headers() }
-      );
+        { headers: _headers(token) }
+      ).then(function (r) { return _checkResponse(r, 'list(' + name + ')'); });
     }).then(function (r) {
       if (!r.ok) throw new Error('Drive list ' + r.status);
       return r.json();
@@ -101,12 +128,12 @@ window.GoogleDriveStore = (function () {
         merged.set(bodyArr, head.length);
         merged.set(tail, head.length + bodyArr.length);
 
-        _withToken(function () {
+        _withToken(function (token) {
           return fetch(UPLOAD_URL + '/files?uploadType=multipart', {
             method: 'POST',
-            headers: Object.assign(_headers(), { 'Content-Type': 'multipart/related; boundary=' + boundary }),
+            headers: Object.assign(_headers(token), { 'Content-Type': 'multipart/related; boundary=' + boundary }),
             body: merged
-          });
+          }).then(function (r) { return _checkResponse(r, 'create(' + name + ')'); });
         }).then(function (r) {
           if (!r.ok) { r.text().then(function (t) { reject(new Error('Drive create ' + r.status + ': ' + t)); }); return; }
           return r.json();
@@ -131,12 +158,12 @@ window.GoogleDriveStore = (function () {
       ? new Blob([JSON.stringify(body)], { type: contentType })
       : (body instanceof Blob ? body : new Blob([body], { type: contentType }));
 
-    return _withToken(function () {
+    return _withToken(function (token) {
       return fetch(UPLOAD_URL + '/files/' + fileId + '?uploadType=media', {
         method: 'PATCH',
-        headers: Object.assign(_headers(), { 'Content-Type': contentType }),
+        headers: Object.assign(_headers(token), { 'Content-Type': contentType }),
         body: content
-      });
+      }).then(function (r) { return _checkResponse(r, 'update(' + fileId + ')'); });
     }).then(function (r) {
       if (!r.ok) throw new Error('Drive update ' + r.status);
       return r.json();
@@ -150,11 +177,11 @@ window.GoogleDriveStore = (function () {
   function listAppDataFiles(prefix) {
     var q = "trashed=false";
     if (prefix) q += " and name contains '" + String(prefix).replace(/'/g, "\\'") + "'";
-    return _withToken(function () {
+    return _withToken(function (token) {
       return fetch(
         BASE_URL + '/files?spaces=appDataFolder&pageSize=1000&fields=files(id,name)&q=' + encodeURIComponent(q),
-        { headers: _headers() }
-      );
+        { headers: _headers(token) }
+      ).then(function (r) { return _checkResponse(r, 'list(' + (prefix || 'all') + ')'); });
     }).then(function (r) {
       if (!r.ok) throw new Error('Drive list ' + r.status);
       return r.json();
@@ -174,8 +201,9 @@ window.GoogleDriveStore = (function () {
   function readJsonFile(name) {
     return _getFileId(name).then(function (fileId) {
       if (!fileId) return null;
-      return _withToken(function () {
-        return fetch(BASE_URL + '/files/' + fileId + '?alt=media', { headers: _headers() });
+      return _withToken(function (token) {
+        return fetch(BASE_URL + '/files/' + fileId + '?alt=media', { headers: _headers(token) })
+          .then(function (r) { return _checkResponse(r, 'read(' + name + ')'); });
       }).then(function (r) {
         if (r.status === 404) {
           delete _fileIdCache[name];
@@ -209,11 +237,11 @@ window.GoogleDriveStore = (function () {
   function deleteFile(name) {
     return _getFileId(name).then(function (fileId) {
       if (!fileId) return;
-      return _withToken(function () {
+      return _withToken(function (token) {
         return fetch(BASE_URL + '/files/' + fileId, {
           method: 'DELETE',
-          headers: _headers()
-        });
+          headers: _headers(token)
+        }).then(function (r) { return _checkResponse(r, 'delete(' + name + ')'); });
       }).then(function (r) {
         if (r.ok || r.status === 404) {
           delete _fileIdCache[name];
@@ -236,8 +264,9 @@ window.GoogleDriveStore = (function () {
     var q = "mimeType='application/vnd.google-apps.folder' and name='" + name.replace(/'/g, "\\'") + "' and trashed=false";
     if (parentId) q += " and '" + parentId + "' in parents";
 
-    return _withToken(function () {
-      return fetch(BASE_URL + '/files?q=' + encodeURIComponent(q) + '&fields=files(id)', { headers: _headers() });
+    return _withToken(function (token) {
+      return fetch(BASE_URL + '/files?q=' + encodeURIComponent(q) + '&fields=files(id)', { headers: _headers(token) })
+        .then(function (r) { return _checkResponse(r, 'folderList(' + name + ')'); });
     }).then(function (r) {
       if (!r.ok) return r.text().then(function (t) { throw new Error('folder list[' + name + '] ' + r.status + ': ' + t); });
       return r.json();
@@ -248,12 +277,12 @@ window.GoogleDriveStore = (function () {
       }
       var meta = { name: name, mimeType: 'application/vnd.google-apps.folder' };
       if (parentId) meta.parents = [parentId];
-      return _withToken(function () {
+      return _withToken(function (token) {
         return fetch(BASE_URL + '/files', {
           method: 'POST',
-          headers: Object.assign(_headers(), { 'Content-Type': 'application/json' }),
+          headers: Object.assign(_headers(token), { 'Content-Type': 'application/json' }),
           body: JSON.stringify(meta)
-        });
+        }).then(function (r) { return _checkResponse(r, 'folderCreate(' + name + ')'); });
       }).then(function (r) {
         if (!r.ok) return r.text().then(function (t) { throw new Error('folder create[' + name + '] ' + r.status + ': ' + t); });
         return r.json();
@@ -281,12 +310,13 @@ window.GoogleDriveStore = (function () {
 
     // 사용자 클릭 직후 경로 → interactive token (만료 시 picker 허용)
     // 폴더 조회/생성 + 파일 upload 까지 같은 세션 토큰으로 수행한다.
-    return _withTokenInteractive(function () {
+    return _withTokenInteractive(function (token) {
       return _findOrCreateFolder('snuhmate', null)
         .then(function (rootId) { return _findOrCreateFolder(ymPrefix, rootId); })
         .then(function (folderId) {
           var q = "name='" + fileName.replace(/'/g, "\\'") + "' and '" + folderId + "' in parents and trashed=false";
-          return fetch(BASE_URL + '/files?q=' + encodeURIComponent(q) + '&fields=files(id)', { headers: _headers() })
+          return fetch(BASE_URL + '/files?q=' + encodeURIComponent(q) + '&fields=files(id)', { headers: _headers(token) })
+            .then(function (r) { return _checkResponse(r, 'myDriveList(' + fileName + ')'); })
             .then(function (r) {
               if (!r.ok) return r.text().then(function (t) { throw new Error('list ' + r.status + ': ' + t); });
               return r.json();

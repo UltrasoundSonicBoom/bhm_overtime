@@ -135,9 +135,13 @@ window.GoogleAuth = (function () {
 
   // ── getAccessToken: Drive/Calendar용 Google OAuth access_token ──
   // Neon Auth가 저장한 Google access_token을 반환. 없으면 null.
+  // 호출부는 반드시 await 할 것 — 이 함수는 async (Promise 반환).
   async function getAccessToken() {
     var jwt = await getJwtToken()
-    if (!jwt) return null
+    if (!jwt) {
+      console.warn('[GoogleAuth] getAccessToken: JWT 없음 (Neon 세션 미확보)')
+      return null
+    }
     if (!_neonBaseUrl) return null
     try {
       var res = await fetch(_neonBaseUrl + '/get-access-token', {
@@ -146,9 +150,29 @@ window.GoogleAuth = (function () {
         body: JSON.stringify({ providerId: 'google' }),
         credentials: 'include',
       })
-      var data = await res.json()
-      return data.accessToken || null
-    } catch (e) { return null }
+      if (!res.ok) {
+        var errBody = ''
+        try { errBody = await res.text() } catch (_) {}
+        console.warn('[GoogleAuth] /get-access-token status=' + res.status + ' body=' + String(errBody).slice(0, 300))
+        if (window.Telemetry && typeof window.Telemetry.error === 'function') {
+          try { window.Telemetry.error('neon_access_token_http_error', { status: res.status, body: String(errBody).slice(0, 300) }) } catch (_) {}
+        }
+        return null
+      }
+      var data = {}
+      try { data = await res.json() } catch (_) {}
+      var token = data.accessToken || data.access_token || null
+      if (!token) {
+        console.warn('[GoogleAuth] /get-access-token 200 but no token in body. keys=' + Object.keys(data || {}).join(','))
+        if (window.Telemetry && typeof window.Telemetry.error === 'function') {
+          try { window.Telemetry.error('neon_access_token_empty', { keys: Object.keys(data || {}).join(',') }) } catch (_) {}
+        }
+      }
+      return token
+    } catch (e) {
+      console.warn('[GoogleAuth] /get-access-token fetch 실패:', e)
+      return null
+    }
   }
 
   // ── hasAccountLink: 로그인 여부 ──
