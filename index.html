@@ -2285,13 +2285,16 @@
     });
   </script>
 
-  <!-- Google Identity Services (GIS) — config.js + googleAuth.js 보다 먼저 -->
+  <!-- Neon Auth CDN (Managed Auth — GIS Token Client 대체) -->
+  <script type="module">
+    import { NeonAuthClient } from 'https://cdn.jsdelivr.net/npm/@neondatabase/auth@0.2.0-beta.1/dist/vanilla/index.mjs'
+    window.__NeonAuthModule = { NeonAuthClient }
+  </script>
   <script src="config.js?v=1.1" defer></script>
   <script src="appLock.js?v=1.0" defer></script>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <script src="googleAuth.js?v=2.8" defer></script>
+  <script src="googleAuth.js?v=3.0" defer></script>
   <script src="googleDriveStore.js?v=1.4" defer></script>
-  <script src="syncManager.js?v=2.8" defer></script>
+  <script src="syncManager.js?v=2.9" defer></script>
   <script src="googleCalendarSync.js?v=1.0" defer></script>
   <script src="sentry.js?v=1.0" defer></script>
   <script src="data.js?v=2.8" defer></script>

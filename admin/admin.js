@@ -1,22 +1,10 @@
-function createFallbackSupabase() {
-  return {
-    auth: {
-      async getSession() {
-        return { data: { session: null } };
-      },
-      onAuthStateChange() {
-        return { data: { subscription: { unsubscribe() {} } } };
-      },
-      async signInWithOAuth() {
-        throw new Error('로그인 SDK를 불러오지 못했습니다. 페이지를 새로고침해 주세요.');
-      },
-    },
-  };
-}
+// Neon Auth client — initApp()에서 서버 config를 받아 초기화됩니다.
+let _neonAdminAuth = null;
 
-// supabaseClient는 initApp()에서 서버로부터 config를 받아 초기화됩니다.
-// 소스코드에 키를 하드코딩하지 않습니다.
-let supabaseClient = createFallbackSupabase();
+function _getNeonSession() {
+  if (!_neonAdminAuth) return Promise.resolve(null);
+  return _neonAdminAuth.getSession().then(function(s) { return s || null; }).catch(function() { return null; });
+}
 
 const API_BASE = (() => {
   const hostname = window.location.hostname;
@@ -123,8 +111,8 @@ function escapeHtml(value) {
 }
 
 async function getAccessToken() {
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  return session?.access_token || null;
+  const session = await _getNeonSession();
+  return (session && session.session && session.session.token) ? session.session.token : null;
 }
 
 async function apiJson(path, options = {}, requireAuth = false) {
@@ -177,13 +165,13 @@ function setResult(data) {
 }
 
 async function updateAuthState() {
-  const { data: { session } } = await supabaseClient.auth.getSession();
+  const session = await _getNeonSession();
   state.session = session || null;
-  const loggedIn = Boolean(session?.access_token);
+  const loggedIn = Boolean(session && session.user);
 
   // 새 셸 authStatusBadge
   if (els.authStatus) {
-    els.authStatus.textContent = loggedIn ? (session.user.email || '로그인됨') : '로그인 필요';
+    els.authStatus.textContent = loggedIn ? ((session.user && session.user.email) || '로그인됨') : '로그인 필요';
     els.authStatus.className = `inline-status ${loggedIn ? 'success' : ''}`;
   }
   if (els.loginBtn) {
@@ -1207,13 +1195,19 @@ async function saveFaq(event) {
 
 els.loginBtn.addEventListener('click', async () => {
   try {
-    await supabaseClient.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}${window.location.pathname}`,
-        queryParams: { prompt: 'select_account' },
-      },
-    });
+    const session = await _getNeonSession();
+    if (session && session.user) {
+      // 로그아웃
+      if (_neonAdminAuth) await _neonAdminAuth.signOut().catch(() => {});
+      window.location.reload();
+    } else {
+      // 로그인
+      if (!_neonAdminAuth) { setResult('인증 서비스 초기화 중입니다. 잠시 후 다시 시도해주세요.'); return; }
+      _neonAdminAuth.signIn.social({
+        provider: 'google',
+        callbackURL: window.location.href,
+      });
+    }
   } catch (error) {
     setResult(error instanceof Error ? error.message : String(error));
   }
@@ -1317,22 +1311,16 @@ if (els.contentList) {
 
 async function initApp() {
   try {
-    // 서버에서 publishable 클라이언트 설정을 가져와 Supabase 초기화
     const configRes = await fetch(`${API_BASE}/config`);
     if (configRes.ok) {
       const config = await configRes.json();
-      if (window.supabase?.createClient && config.supabaseUrl && config.supabaseAnonKey) {
-        supabaseClient = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
+      if (window.__NeonAuthModule && config.neonAuthBaseUrl) {
+        _neonAdminAuth = new window.__NeonAuthModule.NeonAuthClient({ baseUrl: config.neonAuthBaseUrl });
       }
     }
   } catch (_) {
-    // config 로드 실패 시 fallback(비로그인) 모드로 동작
+    // config 로드 실패 시 비로그인 모드로 동작
   }
-
-  supabaseClient.auth.onAuthStateChange(async () => {
-    await updateAuthState();
-    await loadAdminData();
-  });
 
   await updateAuthState();
   await loadWorkspace();

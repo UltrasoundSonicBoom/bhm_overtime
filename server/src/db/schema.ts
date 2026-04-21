@@ -11,6 +11,7 @@ import {
   uuid,
   pgEnum,
   timestamp,
+  primaryKey,
 } from 'drizzle-orm/pg-core'
 // pgvector 커스텀 타입
 import { customType } from 'drizzle-orm/pg-core'
@@ -1167,6 +1168,22 @@ export const yearlyArchives = pgTable(
   (table) => [
     index('yearly_archives_user_year_idx').on(table.userId, table.year),
     uniqueIndex('yearly_archives_user_year_unique').on(table.userId, table.year),
+  ],
+)
+
+// ── user_sync_items: 멀티디바이스 동기화 (blob-first) ──
+export const userSyncItems = pgTable(
+  'user_sync_items',
+  {
+    userId: uuid('user_id').notNull(),
+    itemKey: text('item_key').notNull(),
+    payload: jsonb('payload').notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    sourceDeviceId: text('source_device_id'),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.itemKey] }),
+    index('user_sync_items_user_idx').on(t.userId),
   ],
 )
 

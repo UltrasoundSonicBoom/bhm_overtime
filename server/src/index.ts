@@ -34,12 +34,12 @@ app.get('/health', (c) => {
   return c.json({ status: 'ok', timestamp: new Date().toISOString() })
 })
 
-// Public client config — serves non-secret publishable keys to browser clients
-// Only SUPABASE_URL and SUPABASE_ANON_KEY are safe to expose (publishable by design)
+// Public client config
 app.get('/config', (c) => {
   return c.json({
-    supabaseUrl: process.env.SUPABASE_URL || '',
-    supabaseAnonKey: process.env.SUPABASE_ANON_KEY || '',
+    neonAuthBaseUrl: process.env.NEON_AUTH_BASE_URL ?? null,
+    googleClientId: process.env.GOOGLE_CLIENT_ID ?? null,
+    googleCalendarScope: 'https://www.googleapis.com/auth/calendar.app.created',
   })
 })
 

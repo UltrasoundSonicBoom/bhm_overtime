@@ -137,8 +137,72 @@ window.SyncManager = (function () {
     toast._t = setTimeout(function () { toast.style.display = 'none'; }, duration || 3000);
   }
 
-  // 데이터는 Google Drive 단독 저장 (개인정보보호 정책).
-  // 이전에는 Supabase 병렬 백업이 있었지만 2026-04-19에 제거.
+  // ── Neon DB 동기화 헬퍼 ──
+  var API_BASE = (window.BHM_CONFIG && window.BHM_CONFIG.apiBase) || ''
+
+  async function _getAuthHeader() {
+    var token = null
+    try {
+      token = window.GoogleAuth && window.GoogleAuth.getJwtToken
+        ? await window.GoogleAuth.getJwtToken()
+        : null
+    } catch (e) { token = null }
+    return token ? { 'Authorization': 'Bearer ' + token } : {}
+  }
+
+  // Neon DB에 아이템 업서트 (비동기, 실패 시 조용히 스킵)
+  async function _syncToNeon(items) {
+    var authHeader = await _getAuthHeader()
+    if (!authHeader['Authorization']) return
+    var deviceId = localStorage.getItem('bhm_deviceId')
+    try {
+      await fetch(API_BASE + '/api/me/sync', {
+        method: 'PUT',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeader),
+        body: JSON.stringify({ items: items, deviceId: deviceId }),
+      })
+    } catch (e) {
+      console.warn('[SyncManager] Neon sync failed:', e)
+    }
+  }
+
+  // Neon DB에서 데이터 pull. 비어있으면 false 반환 (Drive import 필요).
+  async function pullFromNeon() {
+    var authHeader = await _getAuthHeader()
+    if (!authHeader['Authorization']) return false
+    try {
+      var res = await fetch(API_BASE + '/api/me/sync', { headers: authHeader })
+      if (!res.ok) return false
+      var data = await res.json()
+      if (data.drive_import_needed) return false
+      ;(data.items || []).forEach(function (item) {
+        var key = item.item_key
+        if (key && item.payload != null) {
+          localStorage.setItem(key, JSON.stringify(item.payload))
+        }
+      })
+      return (data.items || []).length > 0
+    } catch (e) {
+      console.warn('[SyncManager] pullFromNeon failed:', e)
+      return false
+    }
+  }
+
+  // Drive 데이터를 Neon DB에 1회 업로드 (첫 로그인 시)
+  async function _uploadDriveDataToNeon() {
+    var settings = window.loadSettings ? window.loadSettings() : {}
+    var uid = settings.googleSub || 'guest'
+    var items = []
+    var DATA_KEYS = ['leaveRecords', 'overtimeRecords', 'bhm_hr_profile',
+                     'overtimePayslipData', 'bhm_work_history']
+    DATA_KEYS.forEach(function (key) {
+      var val = localStorage.getItem(key + '_' + uid)
+      if (val) {
+        try { items.push({ itemKey: key + '_' + uid, payload: JSON.parse(val) }) } catch (e) {}
+      }
+    })
+    if (items.length > 0) await _syncToNeon(items)
+  }
 
   // ── enqueuePush ──
   // 3초 디바운스. dataType = 'leave'|'overtime'|'profile'|'payslip'
@@ -180,6 +244,8 @@ window.SyncManager = (function () {
     return window.GoogleDriveStore.writeJsonFile(map.driveFile, _wrap(data, editedAt)).then(function () {
       _lastSync = new Date();
       _updateSyncLabel();
+      // Neon DB에도 병렬 저장 (비동기, 실패해도 Drive 결과에 영향 없음)
+      _syncToNeon([{ itemKey: localKey, payload: data }]).catch(function () {})
     });
   }
 
@@ -311,44 +377,56 @@ window.SyncManager = (function () {
   }
 
   // ── fullSync ──
-  // 로그인 직후 호출. guest 마이그레이션 → Drive pull → UI 갱신.
-  function fullSync() {
-    if (!window.GoogleAuth || !window.GoogleAuth.isSignedIn()) return Promise.resolve();
-    if (!window.GoogleDriveStore) return Promise.resolve();
+  // 로그인 직후 호출. 1순위: Neon DB pull, 2순위: Drive pull.
+  async function fullSync() {
+    if (!window.GoogleAuth || !window.GoogleAuth.isSignedIn()) return
 
-    var settings = window.loadSettings ? window.loadSettings() : {};
+    var settings = window.loadSettings ? window.loadSettings() : {}
 
-    // 로그인 직후 guest 데이터 이전 (driveEnabled 여부 무관)
     if (settings.googleSub && settings.googleSub !== 'demo') {
-      migrateGuestData(settings.googleSub);
+      migrateGuestData(settings.googleSub)
     }
 
+    // 1순위: Neon DB
+    var neonLoaded = await pullFromNeon().catch(function () { return false })
+    if (neonLoaded) {
+      _refreshUI()
+      _lastSync = new Date()
+      _updateSyncLabel()
+      if (typeof updateDriveBackupUI === 'function') updateDriveBackupUI()
+      return
+    }
+
+    // 2순위: Drive (첫 로그인 or Neon 비어있음)
+    if (!window.GoogleDriveStore) return
     if (!settings.driveEnabled) {
-      if (typeof updateDriveBackupUI === 'function') updateDriveBackupUI();
-      return Promise.resolve();
+      if (typeof updateDriveBackupUI === 'function') updateDriveBackupUI()
+      return
     }
 
     return Promise.all([
       pullFromDrive(),
       _pullAppLock()
     ]).then(function (allResults) {
-      var results = allResults[0] || [];
-      var applockResult = allResults[1];
-      var restored = results.filter(function (r) { return r.result === 'restored' || r.result === 'remote_wins'; });
+      var results = allResults[0] || []
+      var applockResult = allResults[1]
+      var restored = results.filter(function (r) { return r.result === 'restored' || r.result === 'remote_wins' })
       if (restored.length > 0 || applockResult === 'restored') {
-        _showToast('☁️ Drive에서 데이터를 복원했어요.', 4000);
-        _refreshUI();
+        _showToast('☁️ Drive에서 데이터를 복원했어요.', 4000)
+        _refreshUI()
         if (applockResult === 'restored' && typeof updateAppLockUI === 'function') {
-          updateAppLockUI();
+          updateAppLockUI()
         }
       }
-      _lastSync = new Date();
-      _updateSyncLabel();
-      if (typeof updateDriveBackupUI === 'function') updateDriveBackupUI();
+      _lastSync = new Date()
+      _updateSyncLabel()
+      if (typeof updateDriveBackupUI === 'function') updateDriveBackupUI()
+      // Drive 데이터를 Neon DB에 1회 업로드
+      _uploadDriveDataToNeon().catch(function () {})
     }).catch(function (err) {
-      console.warn('[SyncManager] Drive fullSync failed:', err);
-      _showToast('⚠️ Drive 동기화 실패. 로컬 데이터로 계속합니다.', 4000);
-    });
+      console.warn('[SyncManager] Drive fullSync failed:', err)
+      _showToast('⚠️ Drive 동기화 실패. 로컬 데이터로 계속합니다.', 4000)
+    })
   }
 
   // ── migrateGuestData ──
@@ -423,6 +501,25 @@ window.SyncManager = (function () {
     if (orphaned.length > 0) {
       console.warn('[SyncManager] guest/login conflicts archived as _orphan:', orphaned);
       _showToast('⚠️ 비로그인 편집분 중 일부를 _orphan 백업으로 보관했어요. 관리자에게 문의해 주세요.', 6000);
+    }
+
+    // 구버전 googleSub(숫자) → Neon UUID 키 이전 (Task 7)
+    var settings2 = window.loadSettings ? window.loadSettings() : {};
+    var oldSub = settings2._oldGoogleSub;
+    if (oldSub && oldSub !== googleSub) {
+      var SUFFIX_KEYS = ['overtimeRecords', 'leaveRecords', 'bhm_hr_profile',
+                         'bhm_work_history', 'overtimePayslipData'];
+      SUFFIX_KEYS.forEach(function (base) {
+        var fromKey = base + '_' + oldSub;
+        var toKey = base + '_' + googleSub;
+        var val = localStorage.getItem(fromKey);
+        if (val && !localStorage.getItem(toKey)) {
+          localStorage.setItem(toKey, val);
+          localStorage.removeItem(fromKey);
+        }
+      });
+      if (window.saveSettings) window.saveSettings({ _oldGoogleSub: null });
+      console.log('[SyncManager] migrated old googleSub (' + oldSub + ') keys → Neon UUID (' + googleSub + ')');
     }
 
     // payslip 구 키 (payslip_YYYY_MM) → 신규 키 (payslip_<googleSub>_YYYY_MM) 마이그레이션
@@ -536,6 +633,7 @@ window.SyncManager = (function () {
     enqueuePush: enqueuePush,
     pushToDrive: pushToDrive,
     pullFromDrive: pullFromDrive,
+    pullFromNeon: pullFromNeon,
     pullOnResume: pullOnResume,
     fullSync: fullSync,
     migrateGuestData: migrateGuestData,

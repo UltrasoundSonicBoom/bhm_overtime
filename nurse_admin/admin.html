@@ -343,7 +343,10 @@
     <a href="../admin/index.html">규정</a>
   </nav>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script type="module">
+    import { NeonAuthClient } from 'https://cdn.jsdelivr.net/npm/@neondatabase/auth@0.2.0-beta.1/dist/vanilla/index.mjs'
+    window.__NeonAuthModule = { NeonAuthClient }
+  </script>
   <script>
     window.addEventListener('error', function (event) {
       var status = document.getElementById('workspaceStatus');

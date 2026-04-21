@@ -1,22 +1,11 @@
-function createFallbackSupabase() {
-  return {
-    auth: {
-      async getSession() {
-        return { data: { session: null } };
-      },
-      onAuthStateChange() {
-        return { data: { subscription: { unsubscribe() {} } } };
-      },
-      async signInWithOAuth() {
-        throw new Error('로그인 SDK를 불러오지 못했습니다. 페이지를 새로고침해 주세요.');
-      },
-    },
-  };
-}
+// Neon Auth client — initApp()에서 서버 config를 받아 초기화됩니다.
+let _neonNurseAuth = null;
 
-// supabaseClient는 initApp()에서 서버 config를 받아 초기화됩니다.
-let supabaseClient = createFallbackSupabase();
-let supabaseSdkReady = Boolean(window.supabase?.createClient);
+function _getNeonSession() {
+  if (!_neonNurseAuth) return Promise.resolve(null);
+  return _neonNurseAuth.getSession().then(function(s) { return s || null; }).catch(function() { return null; });
+}
+const _neonReady = () => Boolean(_neonNurseAuth);
 const API_BASE = (() => {
   const hostname = window.location.hostname;
   const localHostMap = {
@@ -261,8 +250,8 @@ function renderReviewLane() {
 }
 
 async function getAccessToken() {
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  return session?.access_token || null;
+  const session = await _getNeonSession();
+  return (session && session.session && session.session.token) ? session.session.token : null;
 }
 
 async function apiJson(path, options = {}, requireAuth = false, allow404 = false) {
@@ -283,17 +272,17 @@ async function apiJson(path, options = {}, requireAuth = false, allow404 = false
 }
 
 async function updateAuthState() {
-  const { data: { session } } = await supabaseClient.auth.getSession();
+  const session = await _getNeonSession();
   state.session = session || null;
-  const loggedIn = Boolean(session?.access_token);
-  if (!supabaseSdkReady) {
-    els.authStatus.textContent = '로그인 SDK 지연';
-    els.loginBtn.textContent = 'SDK 재시도';
+  const loggedIn = Boolean(session && session.user);
+  if (!_neonReady()) {
+    els.authStatus.textContent = '로그인 SDK 초기화 중';
+    els.loginBtn.textContent = '잠시 후 다시 시도';
     els.loginBtn.disabled = false;
     els.claimBtn.disabled = true;
     return;
   }
-  els.authStatus.textContent = loggedIn ? `${session.user.email || '로그인됨'}` : '로그인 필요';
+  els.authStatus.textContent = loggedIn ? `${(session.user && session.user.email) || '로그인됨'}` : '로그인 필요';
   els.loginBtn.textContent = loggedIn ? '로그인 완료' : '구글 로그인';
   els.loginBtn.disabled = loggedIn;
   els.claimBtn.disabled = !loggedIn;
@@ -1449,12 +1438,10 @@ function queueLock() {
 
 els.loginBtn.addEventListener('click', async () => {
   try {
-    await supabaseClient.auth.signInWithOAuth({
+    if (!_neonNurseAuth) { setResult('인증 서비스 초기화 중입니다. 잠시 후 다시 시도해주세요.'); return; }
+    _neonNurseAuth.signIn.social({
       provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}${window.location.pathname}`,
-        queryParams: { prompt: 'select_account' },
-      },
+      callbackURL: window.location.href,
     });
   } catch (error) {
     setResult(error instanceof Error ? error.message : String(error));
@@ -1552,22 +1539,13 @@ async function initApp() {
     const configRes = await fetch(`${API_BASE}/config`);
     if (configRes.ok) {
       const config = await configRes.json();
-      if (window.supabase?.createClient && config.supabaseUrl && config.supabaseAnonKey) {
-        supabaseClient = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
-        supabaseSdkReady = true;
+      if (window.__NeonAuthModule && config.neonAuthBaseUrl) {
+        _neonNurseAuth = new window.__NeonAuthModule.NeonAuthClient({ baseUrl: config.neonAuthBaseUrl });
       }
     }
   } catch (_) {
     // config 로드 실패 시 read-only 모드
   }
-
-  if (!supabaseSdkReady) {
-    console.warn('Supabase SDK did not load. Nurse admin will continue in read-only mode.');
-  }
-
-  supabaseClient.auth.onAuthStateChange(() => {
-    updateAuthState();
-  });
 
   updateAuthState();
   resetEventForm();

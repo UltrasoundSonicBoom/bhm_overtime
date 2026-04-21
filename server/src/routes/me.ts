@@ -1,5 +1,8 @@
 import { Hono } from 'hono'
 import postgres from 'postgres'
+import { sql as drizzleSql, eq } from 'drizzle-orm'
+import { db } from '../db/client'
+import { userSyncItems } from '../db/schema'
 import { optionalAuth } from '../middleware/auth'
 import {
   buildPersonalScheduleView,
@@ -303,6 +306,46 @@ meRoutes.get('/schedule.ics', async (c) => {
   c.header('Content-Type', 'text/calendar; charset=utf-8')
   c.header('Content-Disposition', `attachment; filename="snuhmate-schedule-${start}-${end}.ics"`)
   return c.body(calendar)
+})
+
+// GET /me/sync — 사용자의 모든 sync 아이템 조회
+meRoutes.get('/sync', async (c) => {
+  const userId = getUserId(c)
+  if (!userId) return c.json({ error: 'Unauthorized' }, 401)
+
+  const rows = await db.select().from(userSyncItems)
+    .where(eq(userSyncItems.userId, userId as any))
+
+  if (rows.length === 0) return c.json({ items: [], drive_import_needed: true })
+  return c.json({ items: rows })
+})
+
+// PUT /me/sync — bulk upsert
+meRoutes.put('/sync', async (c) => {
+  const userId = getUserId(c)
+  if (!userId) return c.json({ error: 'Unauthorized' }, 401)
+
+  const { items, deviceId } = await c.req.json()
+  if (!Array.isArray(items) || items.length === 0) return c.json({ ok: true })
+
+  await db.insert(userSyncItems)
+    .values(items.map((it: { itemKey: string; payload: unknown }) => ({
+      userId: userId as any,
+      itemKey: it.itemKey,
+      payload: it.payload,
+      updatedAt: new Date(),
+      sourceDeviceId: deviceId ?? null,
+    })))
+    .onConflictDoUpdate({
+      target: [userSyncItems.userId, userSyncItems.itemKey],
+      set: {
+        payload: drizzleSql`excluded.payload`,
+        updatedAt: drizzleSql`excluded.updated_at`,
+        sourceDeviceId: drizzleSql`excluded.source_device_id`,
+      },
+    })
+
+  return c.json({ ok: true })
 })
 
 export default meRoutes

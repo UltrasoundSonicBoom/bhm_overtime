@@ -43,6 +43,13 @@
       "when": 1776350400000,
       "tag": "0005_yearly_archives_resume_hnsw",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1776741692634,
+      "tag": "0006_unknown_retro_girl",
+      "breakpoints": true
     }
   ]
 }
