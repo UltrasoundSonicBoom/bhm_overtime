@@ -8,6 +8,9 @@ window.BHM_CONFIG = {
   // 운영용 OAuth Client ID
   googleClientId: '914163950802-vov9iusqqaj0139g06ccbo4q8pp6dcbl.apps.googleusercontent.com',
 
+  // Neon Auth (Managed) — Neon Auth 클라이언트 초기화에 필요
+  neonAuthBaseUrl: 'https://ep-twilight-wave-ao9wmtec.neonauth.c-2.ap-southeast-1.aws.neon.tech/neondb/auth',
+
   // 기능 플래그
   googleAuthEnabled: true,
   googleDriveEnabled: true,
