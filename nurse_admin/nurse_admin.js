@@ -1445,8 +1445,15 @@ function queueLock() {
 els.loginBtn.addEventListener('click', async () => {
   try {
     if (!_neonNurseBaseUrl) { setResult('인증 서비스 초기화 중입니다. 잠시 후 다시 시도해주세요.'); return; }
-    var cb = encodeURIComponent(window.location.href);
-    window.location.href = _neonNurseBaseUrl + '/sign-in/social?provider=google&callbackURL=' + cb;
+    var res = await fetch(_neonNurseBaseUrl + '/sign-in/social', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ provider: 'google', callbackURL: window.location.origin + '/nurse_admin/admin.html' }),
+      credentials: 'include',
+    })
+    var data = await res.json()
+    if (data && data.url) { window.location.href = data.url }
+    else { setResult('로그인 준비 중 오류가 발생했습니다.') }
   } catch (error) {
     setResult(error instanceof Error ? error.message : String(error));
   }

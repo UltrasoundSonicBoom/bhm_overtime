@@ -83,7 +83,8 @@ window.GoogleAuth = (function () {
   }
 
   // ── signIn: Neon Auth Google 리다이렉트 로그인 ──
-  function signIn() {
+  // Better Auth /sign-in/social은 POST → {url} 응답 → 브라우저 리다이렉트
+  async function signIn() {
     var config = window.BHM_CONFIG || {}
     if (!_neonBaseUrl) _initNeonAuth(config)
     if (!_neonBaseUrl) {
@@ -91,8 +92,25 @@ window.GoogleAuth = (function () {
       _showToast('인증 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.')
       return
     }
-    var callbackURL = encodeURIComponent(window.location.href)
-    window.location.href = _neonBaseUrl + '/sign-in/social?provider=google&callbackURL=' + callbackURL
+    var callbackURL = window.location.origin + '/index.html?app=1'
+    try {
+      var res = await fetch(_neonBaseUrl + '/sign-in/social', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider: 'google', callbackURL: callbackURL }),
+        credentials: 'include',
+      })
+      var data = await res.json()
+      if (data && data.url) {
+        window.location.href = data.url
+      } else {
+        console.error('[GoogleAuth] sign-in/social 응답에 url 없음:', data)
+        _showToast('로그인 준비 중 오류가 발생했습니다.')
+      }
+    } catch (e) {
+      console.error('[GoogleAuth] sign-in/social 실패:', e)
+      _showToast('로그인 준비 중 오류가 발생했습니다.')
+    }
   }
 
   async function _getNeonSession() {
