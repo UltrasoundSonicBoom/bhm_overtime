@@ -113,12 +113,16 @@ window.GoogleAuth = (function () {
     }
   }
 
-  async function _getNeonSession() {
+  async function _getNeonSession(verifier) {
     if (!_neonBaseUrl) return null
     try {
-      var res = await fetch(_neonBaseUrl + '/get-session', {
-        credentials: 'include',
-      })
+      var opts = { credentials: 'include' }
+      if (verifier) {
+        // Better Auth secondary storage: send verifier as custom header so
+        // server can look up the session without a cross-domain cookie
+        opts.headers = { 'neon_auth_session_verifier': verifier }
+      }
+      var res = await fetch(_neonBaseUrl + '/get-session', opts)
       if (!res.ok) return null
       return await res.json()
     } catch (e) { return null }
@@ -229,8 +233,20 @@ window.GoogleAuth = (function () {
 
     if (!_neonBaseUrl) return
 
+    // Extract OAuth callback verifier from URL (Better Auth cross-domain session mechanism)
+    var _cbVerifier = null
     try {
-      var session = await _getNeonSession()
+      var _sp = new URLSearchParams(window.location.search)
+      _cbVerifier = _sp.get('neon_auth_session_verifier')
+      if (_cbVerifier) {
+        _sp.delete('neon_auth_session_verifier')
+        var _qs = _sp.toString()
+        window.history.replaceState({}, '', window.location.pathname + (_qs ? '?' + _qs : ''))
+      }
+    } catch (_e) {}
+
+    try {
+      var session = await _getNeonSession(_cbVerifier)
       if (!session || !session.user) return
 
       _session = session
