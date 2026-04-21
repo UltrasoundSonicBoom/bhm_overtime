@@ -1169,3 +1169,19 @@ export const yearlyArchives = pgTable(
     uniqueIndex('yearly_archives_user_year_unique').on(table.userId, table.year),
   ],
 )
+
+export const leaveRecords = pgTable(
+  'leave_records',
+  {
+    id: serial('id').primaryKey(),
+    userId: uuid('user_id').notNull(),
+    type: text('type').notNull(),
+    startDate: text('startDate').notNull(),
+    endDate: text('endDate').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('leave_records_user_idx').on(table.userId),
+    index('leave_records_date_idx').on(table.startDate, table.endDate),
+  ],
+)
