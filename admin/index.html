@@ -6,11 +6,11 @@
   <meta name="robots" content="noindex, nofollow">
   <meta http-equiv="Content-Security-Policy" content="
     default-src 'self';
-    script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com https://cdn.jsdelivr.net;
+    script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com https://esm.sh;
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
     img-src 'self' data: https://*.googleusercontent.com;
     font-src 'self' https://fonts.gstatic.com;
-    connect-src 'self' https://*.googleapis.com https://oauth2.googleapis.com https://accounts.google.com https://*.neon.tech https://cdn.jsdelivr.net;
+    connect-src 'self' https://*.googleapis.com https://oauth2.googleapis.com https://accounts.google.com https://*.neon.tech https://esm.sh;
     frame-src 'self' https://accounts.google.com;
     object-src 'none';
     base-uri 'self';
@@ -472,7 +472,7 @@
 </div><!-- /admin-shell -->
 
 <script type="module">
-  import { NeonAuthClient } from 'https://cdn.jsdelivr.net/npm/@neondatabase/auth@0.2.0-beta.1/dist/vanilla/index.mjs'
+  import { NeonAuthClient } from 'https://esm.sh/@neondatabase/auth@0.2.0-beta.1/dist/vanilla/index.mjs'
   window.__NeonAuthModule = { NeonAuthClient }
 </script>
 <script src="./health-monitor.js"></script>
