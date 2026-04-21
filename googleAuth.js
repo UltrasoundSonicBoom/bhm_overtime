@@ -116,13 +116,9 @@ window.GoogleAuth = (function () {
   async function _getNeonSession(verifier) {
     if (!_neonBaseUrl) return null
     try {
-      var opts = { credentials: 'include' }
-      if (verifier) {
-        // Better Auth secondary storage: send verifier as custom header so
-        // server can look up the session without a cross-domain cookie
-        opts.headers = { 'neon_auth_session_verifier': verifier }
-      }
-      var res = await fetch(_neonBaseUrl + '/get-session', opts)
+      var url = _neonBaseUrl + '/get-session'
+      if (verifier) url += '?neon_auth_session_verifier=' + encodeURIComponent(verifier)
+      var res = await fetch(url, { credentials: 'include' })
       if (!res.ok) return null
       return await res.json()
     } catch (e) { return null }
@@ -191,10 +187,15 @@ window.GoogleAuth = (function () {
 
   // ── signOut ──
   async function signOut() {
-    // 데모 모드에서는 exitDemoMode() 호출 후 리로드 (실제 인증 세션 없음)
     if (localStorage.getItem('bhm_demo_mode') === '1') {
       if (typeof window.exitDemoMode === 'function') window.exitDemoMode()
-      window.location.reload()
+      // exitDemoMode may restore a prior real user — clear it too so disconnect actually disconnects
+      saveSettings({ googleSub: null, driveEnabled: false, calendarEnabled: false, _oldGoogleSub: null })
+      // Navigate away from ?demo=1 URL or reload would re-trigger demo mode
+      var _sp = new URLSearchParams(window.location.search)
+      _sp.delete('demo')
+      _sp.set('app', '1')
+      window.location.replace(window.location.pathname + '?' + _sp.toString())
       return
     }
     if (window.SyncManager && typeof window.SyncManager.clearPendingPushes === 'function') {
