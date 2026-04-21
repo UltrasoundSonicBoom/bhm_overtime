@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "SNUH Mate Companion",
-  "version": "0.1.0",
-  "description": "SNUH Mate 빠른 초과근무 기록 + 급여명세서 PDF 가져오기",
+  "name": "SNUH Mate",
+  "version": "1.0.0",
+  "description": "시간외·휴가·급여명세서 기록 — snuhmate.com 없이 바로 사용",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
@@ -10,7 +10,7 @@
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "SNUH Mate 빠른 기록",
+    "default_title": "SNUH Mate",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png"
@@ -20,30 +20,23 @@
     "service_worker": "background.js"
   },
   "permissions": [
-    "tabs",
-    "scripting",
+    "identity",
     "storage",
     "downloads",
     "contextMenus",
     "notifications"
   ],
   "host_permissions": [
-    "https://snuhmate.com/*",
-    "https://www.snuhmate.com/*",
-    "<all_urls>"
+    "https://www.googleapis.com/*"
   ],
-  "content_scripts": [
-    {
-      "matches": [
-        "https://snuhmate.com/*",
-        "https://www.snuhmate.com/*"
-      ],
-      "js": ["content-script.js"],
-      "run_at": "document_idle"
-    }
-  ],
-  "options_ui": {
-    "page": "options.html",
-    "open_in_tab": false
+  "oauth2": {
+    "client_id": "914163950802-eim57mnvrb223ia7r2ob9udb9m1jucru.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/drive.appdata",
+      "https://www.googleapis.com/auth/drive.file",
+      "openid",
+      "email",
+      "profile"
+    ]
   }
 }

@@ -1,0 +1,135 @@
+// chrome-extension/shared/auth.js
+'use strict';
+const BhmAuth = {
+  AUTO_LOCK_MS:  30 * 60 * 1000,
+  LOCK_DURATION: 60 * 60 * 1000,
+  MAX_ATTEMPTS:  5,
+
+  async hashPin(pin, salt) {
+    const input = salt ? pin + salt : pin;
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  },
+
+  _isLockExpired(ms)    { return ms == null || Date.now() > ms; },
+  _isAutoLocked(ms)     { return ms == null || Date.now() - ms > BhmAuth.AUTO_LOCK_MS; },
+
+  async checkLockState(storage) {
+    const d = await storage.get([
+      storage.KEYS.PIN_HASH, storage.KEYS.PIN_LOCKED_UNTIL, storage.KEYS.PIN_UNLOCKED_AT,
+    ]);
+    if (!d[storage.KEYS.PIN_HASH]) return { status: 'no_pin' };
+    const lu = d[storage.KEYS.PIN_LOCKED_UNTIL] || null;
+    if (!BhmAuth._isLockExpired(lu)) return { status: 'locked', lockedUntil: lu };
+    if (BhmAuth._isAutoLocked(d[storage.KEYS.PIN_UNLOCKED_AT] || null)) return { status: 'requires_pin' };
+    return { status: 'unlocked' };
+  },
+
+  async verifyPin(pin, storage) {
+    const lockedUntil = (await storage.get([storage.KEYS.PIN_LOCKED_UNTIL]))[storage.KEYS.PIN_LOCKED_UNTIL];
+    if (lockedUntil && BhmAuth._isLockExpired(lockedUntil)) {
+      await storage.remove([storage.KEYS.PIN_LOCKED_UNTIL, storage.KEYS.PIN_ATTEMPTS]);
+    }
+    const d = await storage.get([storage.KEYS.PIN_HASH, storage.KEYS.PIN_SALT, storage.KEYS.PIN_ATTEMPTS]);
+    if (!d[storage.KEYS.PIN_HASH]) return { ok: false, error: 'no_pin' };
+    const salt = d[storage.KEYS.PIN_SALT] || undefined;
+    const hash = await BhmAuth.hashPin(pin, salt);
+    if (hash !== d[storage.KEYS.PIN_HASH]) {
+      const attempts = (d[storage.KEYS.PIN_ATTEMPTS] || 0) + 1;
+      const update = { [storage.KEYS.PIN_ATTEMPTS]: attempts };
+      if (attempts >= BhmAuth.MAX_ATTEMPTS)
+        update[storage.KEYS.PIN_LOCKED_UNTIL] = Date.now() + BhmAuth.LOCK_DURATION;
+      await storage.set(update);
+      return { ok: false, attempts, locked: attempts >= BhmAuth.MAX_ATTEMPTS };
+    }
+    await storage.set({
+      [storage.KEYS.PIN_ATTEMPTS]:     0,
+      [storage.KEYS.PIN_LOCKED_UNTIL]: null,
+      [storage.KEYS.PIN_UNLOCKED_AT]:  Date.now(),
+    });
+    return { ok: true };
+  },
+
+  async setPin(pin, storage) {
+    const saltArr = new Uint8Array(16);
+    crypto.getRandomValues(saltArr);
+    const salt = Array.from(saltArr).map(b => b.toString(16).padStart(2, '0')).join('');
+    const hash = await BhmAuth.hashPin(pin, salt);
+    await storage.set({
+      [storage.KEYS.PIN_HASH]:         hash,
+      [storage.KEYS.PIN_SALT]:         salt,
+      [storage.KEYS.PIN_LENGTH]:       pin.length,
+      [storage.KEYS.PIN_ATTEMPTS]:     0,
+      [storage.KEYS.PIN_LOCKED_UNTIL]: null,
+      [storage.KEYS.PIN_UNLOCKED_AT]:  Date.now(),
+    });
+  },
+
+  async applyApplockData(data, storage) {
+    if (!data || !data.pinEnabled || typeof data.pinHash !== 'string' || data.pinHash.length !== 64) return false;
+    const local = await storage.get([storage.KEYS.PIN_HASH]);
+    if (local[storage.KEYS.PIN_HASH]) return false;
+    await storage.set({
+      [storage.KEYS.PIN_HASH]:         data.pinHash,
+      [storage.KEYS.PIN_SALT]:         data.pinSalt || null,
+      [storage.KEYS.PIN_LENGTH]:       data.pinLength || 4,
+      [storage.KEYS.PIN_ATTEMPTS]:     0,
+      [storage.KEYS.PIN_LOCKED_UNTIL]: null,
+      [storage.KEYS.PIN_UNLOCKED_AT]:  null,
+    });
+    return true;
+  },
+
+  WEB_CLIENT_ID: '914163950802-vov9iusqqaj0139g06ccbo4q8pp6dcbl.apps.googleusercontent.com',
+
+  async getToken(interactive) {
+    const d = await new Promise(r => chrome.storage.local.get(['_web_token', '_web_token_exp'], r));
+    if (d['_web_token'] && d['_web_token_exp'] > Date.now() + 60000) return d['_web_token'];
+    const redirectUri = chrome.identity.getRedirectURL();
+    const scope = 'openid email profile https://www.googleapis.com/auth/drive.appdata';
+    const url = 'https://accounts.google.com/o/oauth2/v2/auth' +
+      '?client_id=' + encodeURIComponent(BhmAuth.WEB_CLIENT_ID) +
+      '&redirect_uri=' + encodeURIComponent(redirectUri) +
+      '&response_type=token' +
+      '&scope=' + encodeURIComponent(scope);
+    const redirectUrl = await new Promise((resolve, reject) => {
+      chrome.identity.launchWebAuthFlow({ url, interactive: !!interactive }, u => {
+        if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
+        else resolve(u);
+      });
+    });
+    if (!redirectUrl) throw new Error('auth cancelled');
+    const params = new URLSearchParams(new URL(redirectUrl).hash.substring(1));
+    const token = params.get('access_token');
+    const expiresIn = parseInt(params.get('expires_in') || '3599') * 1000;
+    if (!token) throw new Error('no access_token');
+    await new Promise(r => chrome.storage.local.set({ '_web_token': token, '_web_token_exp': Date.now() + expiresIn }, r));
+    return token;
+  },
+
+  async fetchProfile(token) {
+    const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo',
+      { headers: { Authorization: 'Bearer ' + token } });
+    if (!res.ok) throw new Error('userinfo ' + res.status);
+    const d = await res.json();
+    return { sub: d.sub, email: d.email, name: d.name, picture: d.picture };
+  },
+
+  async signOut(storage) {
+    try {
+      const d = await new Promise(r => chrome.storage.local.get(['_web_token'], r));
+      if (d['_web_token']) await fetch('https://accounts.google.com/o/oauth2/revoke?token=' + d['_web_token']).catch(() => {});
+    } catch (_) {}
+    await new Promise(resolve => {
+      chrome.storage.local.get(null, function(all) {
+        const keys = Object.keys(all).filter(k => k.startsWith('bhm_') || k.startsWith('_web_'));
+        if (keys.length === 0) { resolve(); return; }
+        chrome.storage.local.remove(keys, resolve);
+      });
+    });
+  },
+};
+if (typeof module !== 'undefined') {
+  if (typeof crypto === 'undefined') global.crypto = require('crypto').webcrypto;
+  module.exports = { BhmAuth };
+}

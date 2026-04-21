@@ -1,259 +1,157 @@
-/**
- * SNUH Mate Companion — Popup Logic
- * 미니 캘린더 + Quick Capture + PDF 가져오기
- */
-(function () {
-  'use strict';
-
-  var selectedDate = null;
-  var currentYear, currentMonth; // 0-indexed month
-
-  // ── Mini Calendar ──
-  function renderMiniCalendar(year, month) {
-    currentYear = year;
-    currentMonth = month;
-
-    var root = document.getElementById('quickCaptureCalendar');
-    // Clear children safely
-    while (root.firstChild) root.removeChild(root.firstChild);
-
-    var today = new Date();
-    var todayStr = formatDate(today.getFullYear(), today.getMonth(), today.getDate());
-
-    // Header
-    var header = document.createElement('div');
-    header.className = 'cal-header';
-
-    var prevBtn = document.createElement('button');
-    prevBtn.textContent = '\u25C0';
-    prevBtn.onclick = function () { renderMiniCalendar(month === 0 ? year - 1 : year, month === 0 ? 11 : month - 1); };
-
-    var title = document.createElement('span');
-    title.className = 'cal-title';
-    title.textContent = year + '.' + String(month + 1).padStart(2, '0');
-
-    var nextBtn = document.createElement('button');
-    nextBtn.textContent = '\u25B6';
-    nextBtn.onclick = function () { renderMiniCalendar(month === 11 ? year + 1 : year, month === 11 ? 0 : month + 1); };
-
-    header.appendChild(prevBtn);
-    header.appendChild(title);
-    header.appendChild(nextBtn);
-    root.appendChild(header);
-
-    // Day labels
-    var grid = document.createElement('div');
-    grid.className = 'cal-grid';
-    var dayLabels = ['일', '월', '화', '수', '목', '금', '토'];
-    dayLabels.forEach(function (d) {
-      var label = document.createElement('span');
-      label.className = 'cal-day-label';
-      label.textContent = d;
-      grid.appendChild(label);
-    });
-
-    // Days
-    var firstDay = new Date(year, month, 1).getDay();
-    var daysInMonth = new Date(year, month + 1, 0).getDate();
-    var prevDays = new Date(year, month, 0).getDate();
-
-    // Previous month filler
-    for (var i = firstDay - 1; i >= 0; i--) {
-      var btn = document.createElement('button');
-      btn.className = 'cal-day other-month';
-      btn.textContent = prevDays - i;
-      grid.appendChild(btn);
-    }
-
-    // Current month
-    for (var d = 1; d <= daysInMonth; d++) {
-      var dayBtn = document.createElement('button');
-      dayBtn.className = 'cal-day';
-      dayBtn.textContent = d;
-
-      var dateStr = formatDate(year, month, d);
-      dayBtn.dataset.date = dateStr;
-
-      if (dateStr === todayStr) dayBtn.classList.add('today');
-      if (dateStr === selectedDate) dayBtn.classList.add('selected');
-      if (new Date(year, month, d).getDay() === 0) dayBtn.classList.add('sunday');
-
-      dayBtn.onclick = function () {
-        selectedDate = this.dataset.date;
-        root.dataset.selectedDate = selectedDate;
-        renderMiniCalendar(currentYear, currentMonth);
-      };
-      grid.appendChild(dayBtn);
-    }
-
-    // Next month filler
-    var remaining = 7 - ((firstDay + daysInMonth) % 7);
-    if (remaining < 7) {
-      for (var n = 1; n <= remaining; n++) {
-        var nextBtn2 = document.createElement('button');
-        nextBtn2.className = 'cal-day other-month';
-        nextBtn2.textContent = n;
-        grid.appendChild(nextBtn2);
-      }
-    }
-
-    root.appendChild(grid);
-
-    if (selectedDate) root.dataset.selectedDate = selectedDate;
-  }
-
-  function formatDate(y, m, d) {
-    return y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
-  }
-
-  // ── Capture Type Toggle ──
-  function initTypeButtons() {
-    var container = document.getElementById('captureType');
-    var timeInputs = document.getElementById('timeInputs');
-
-    container.addEventListener('click', function (e) {
-      var btn = e.target.closest('.type-btn');
-      if (!btn) return;
-
-      container.querySelectorAll('.type-btn').forEach(function (b) {
-        b.classList.remove('active');
-        b.removeAttribute('data-active');
-      });
-      btn.classList.add('active');
-      btn.setAttribute('data-active', '1');
-
-      if (btn.dataset.kind === 'oncall_standby') {
-        timeInputs.style.display = 'none';
-      } else {
-        timeInputs.style.display = '';
-      }
-    });
-  }
-
-  // ── Quick Capture Submit ──
-  async function submitQuickCapture() {
-    var statusEl = document.getElementById('captureStatus');
-    var saveBtn = document.getElementById('saveQuickCapture');
-
-    if (!selectedDate) {
-      statusEl.textContent = '날짜를 선택해주세요';
-      statusEl.className = 'status-msg error';
+'use strict';
+(async function init() {
+  try {
+    const d    = await BhmStorage.get([BhmStorage.KEYS.USER]);
+    const user = d[BhmStorage.KEYS.USER];
+    if (!user) {
+      showView('login');
+      LoginScreen.render(document.getElementById('view-login'), { onLogin: handleLogin });
       return;
     }
-
-    var activeBtn = document.querySelector('#captureType [data-active="1"]');
-    var kind = activeBtn ? activeBtn.dataset.kind : 'overtime';
-
-    var payload = {
-      kind: kind,
-      date: selectedDate,
-      startTime: document.getElementById('startTime').value,
-      endTime: document.getElementById('endTime').value,
-      memo: document.getElementById('memo').value,
-      isHoliday: document.getElementById('isHoliday').checked
-    };
-
-    saveBtn.disabled = true;
-    statusEl.textContent = '저장 중...';
-    statusEl.className = 'status-msg';
-
-    try {
-      var response = await chrome.runtime.sendMessage({
-        type: 'QUICK_CAPTURE',
-        payload: payload
+    const lock = await BhmAuth.checkLockState(BhmStorage);
+    if (lock.status === 'no_pin') {
+      showView('pin-setup');
+      PinSetupScreen.render(document.getElementById('view-pin-setup'), {
+        user,
+        onComplete: function() { showView('main'); initMainApp(user); },
       });
-
-      if (response && response.ok) {
-        statusEl.textContent = '저장 완료!';
-        statusEl.className = 'status-msg success';
-        setTimeout(function () { window.close(); }, 1200);
-      } else {
-        statusEl.textContent = (response && response.error) || '저장 실패';
-        statusEl.className = 'status-msg error';
-      }
-    } catch (err) {
-      statusEl.textContent = err.message || '오류 발생';
-      statusEl.className = 'status-msg error';
-    } finally {
-      saveBtn.disabled = false;
+      return;
     }
-  }
-
-  // ── PDF Import ──
-  async function importPdfFromUrl(url, fileName) {
-    var statusEl = document.getElementById('captureStatus');
-    statusEl.textContent = 'PDF 가져오는 중...';
-    statusEl.className = 'status-msg';
-
-    try {
-      await chrome.runtime.sendMessage({
-        type: 'IMPORT_PAYSLIP_FROM_URL',
-        payload: { url: url, fileName: fileName || 'payslip.pdf' }
+    if (lock.status === 'locked') {
+      showView('pin');
+      PinScreen.render(document.getElementById('view-pin'), {
+        user, locked: true, lockedUntil: lock.lockedUntil,
+        onUnlock: function() { showView('main'); initMainApp(user); },
       });
-      statusEl.textContent = 'PDF 전달 완료!';
-      statusEl.className = 'status-msg success';
-    } catch (err) {
-      statusEl.textContent = err.message || 'PDF 가져오기 실패';
-      statusEl.className = 'status-msg error';
+      return;
     }
-  }
-
-  async function importCurrentTabPdf() {
-    try {
-      var tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-      var tab = tabs && tabs[0];
-      if (!tab || !tab.url) return;
-
-      if (/\.pdf($|\?)/i.test(tab.url) || (tab.url.indexOf('content-type=application/pdf') !== -1)) {
-        await importPdfFromUrl(tab.url, tab.title || 'payslip.pdf');
-      } else {
-        var statusEl = document.getElementById('captureStatus');
-        statusEl.textContent = '현재 탭이 PDF가 아닙니다';
-        statusEl.className = 'status-msg error';
-      }
-    } catch (err) {
-      // ignore
+    if (lock.status === 'requires_pin') {
+      showView('pin');
+      PinScreen.render(document.getElementById('view-pin'), {
+        user,
+        onUnlock: function() { showView('main'); initMainApp(user); },
+      });
+      return;
     }
-  }
-
-  async function loadRecentPdf() {
-    try {
-      var data = await chrome.storage.local.get('lastPdfCandidate');
-      var candidate = data.lastPdfCandidate;
-      var listEl = document.getElementById('recentPdfList');
-
-      if (!candidate || !candidate.url || (Date.now() - candidate.at > 24 * 60 * 60 * 1000)) {
-        return;
-      }
-
-      // Clear and rebuild safely
-      while (listEl.firstChild) listEl.removeChild(listEl.firstChild);
-      var item = document.createElement('div');
-      item.className = 'recent-pdf-item';
-      var displayName = candidate.filename
-        ? candidate.filename.split('/').pop().split('\\').pop()
-        : 'PDF 파일';
-      item.textContent = displayName;
-      item.onclick = function () {
-        importPdfFromUrl(candidate.url, candidate.filename || 'payslip.pdf');
-      };
-      listEl.appendChild(item);
-    } catch (e) {
-      // ignore
-    }
-  }
-
-  // ── Init ──
-  document.addEventListener('DOMContentLoaded', function () {
-    var now = new Date();
-    selectedDate = formatDate(now.getFullYear(), now.getMonth(), now.getDate());
-    renderMiniCalendar(now.getFullYear(), now.getMonth());
-
-    initTypeButtons();
-
-    document.getElementById('saveQuickCapture').addEventListener('click', submitQuickCapture);
-    document.getElementById('importCurrentPdf').addEventListener('click', importCurrentTabPdf);
-
-    loadRecentPdf();
-  });
+    showView('main');
+    initMainApp(user);
+  } catch (e) { console.error('[BHM] init', e); }
 })();
+
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => { v.hidden = true; });
+  document.getElementById('view-' + name).hidden = false;
+}
+
+async function handleLogin(user) {
+  await BhmStorage.set({ [BhmStorage.KEYS.USER]: user });
+
+  // 즉시 PIN 설정 화면 표시 (서비스워커 응답 대기 없음 — 이중로그인 버튼 버그 수정)
+  showView('pin-setup');
+  PinSetupScreen.render(document.getElementById('view-pin-setup'), {
+    user,
+    onComplete: function() { showView('main'); initMainApp(user); },
+  });
+
+  // 백그라운드 Drive 동기화: PIN 복원되면 설정 화면 자동 닫기
+  // _advance는 이 render() 호출에 대해서만 유효. 팝업은 session당 한 번만 handleLogin에 도달.
+  chrome.runtime.sendMessage({ type: 'PULL_NOW' }, async function() {
+    if (chrome.runtime.lastError) {
+      console.warn('[BHM] PULL_NOW failed:', chrome.runtime.lastError.message);
+      return;
+    }
+    if (!PinSetupScreen._advance) return; // 팝업이 이미 닫힘
+    const lock = await BhmAuth.checkLockState(BhmStorage);
+    if (lock.status !== 'no_pin' && PinSetupScreen._advance) {
+      PinSetupScreen._advance();
+    }
+  });
+}
+
+function renderUserBtn(user) {
+  var wrap = document.getElementById('user-btn');
+  if (!wrap || !user) return;
+
+  var btn = document.createElement('button');
+  btn.style.cssText = 'width:26px;height:26px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.4);cursor:pointer;padding:0;overflow:hidden;background:#3b82f6;font-size:11px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0';
+  btn.title = (user.name || '') + ' (' + (user.email || '') + ')';
+  if (user.picture) {
+    var img = document.createElement('img');
+    img.src = user.picture;
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover';
+    img.onerror = function() { btn.textContent = (user.name || '?')[0]; };
+    btn.appendChild(img);
+  } else {
+    btn.textContent = (user.name || '?')[0];
+  }
+
+  var dropdown = document.createElement('div');
+  dropdown.hidden = true;
+  dropdown.style.cssText = 'position:absolute;right:0;top:32px;background:#fff;border:1.5px solid #e5e7eb;border-radius:8px;padding:10px 12px;min-width:170px;z-index:200;box-shadow:0 4px 16px rgba(0,0,0,0.12)';
+  var nameEl = document.createElement('div');
+  nameEl.style.cssText = 'font-weight:700;font-size:12px;color:#111827;margin-bottom:2px';
+  nameEl.textContent = user.name || '';
+  var emailEl = document.createElement('div');
+  emailEl.style.cssText = 'font-size:10px;color:#6b7280;margin-bottom:10px;word-break:break-all';
+  emailEl.textContent = user.email || '';
+  var logoutBtn = document.createElement('button');
+  logoutBtn.style.cssText = 'width:100%;padding:5px 8px;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer';
+  logoutBtn.textContent = '로그아웃';
+  logoutBtn.onclick = function(e) {
+    e.stopPropagation();
+    if (confirm('로그아웃하면 로컬 데이터가 삭제됩니다. 계속하시겠습니까?')) {
+      BhmAuth.signOut(BhmStorage).then(function() { location.reload(); });
+    }
+  };
+  dropdown.appendChild(nameEl); dropdown.appendChild(emailEl); dropdown.appendChild(logoutBtn);
+
+  btn.onclick = function(e) {
+    e.stopPropagation();
+    dropdown.hidden = !dropdown.hidden;
+    if (!dropdown.hidden) {
+      function outside(ev) {
+        if (!wrap.contains(ev.target)) { dropdown.hidden = true; document.removeEventListener('click', outside); }
+      }
+      document.addEventListener('click', outside);
+    }
+  };
+
+  wrap.appendChild(btn); wrap.appendChild(dropdown);
+}
+
+function initMainApp(user, defaultTab) {
+  defaultTab = defaultTab || 'overtime';
+  renderUserBtn(user);
+  if (!initMainApp._listenersAdded) {
+    document.getElementById('popup-tabs').addEventListener('click', function(e) {
+      var btn = e.target.closest('.tab-btn');
+      if (btn) switchTab(btn.dataset.tab);
+    });
+    initMainApp._listenersAdded = true;
+  }
+  OvertimeScreen.render(document.getElementById('tab-overtime'), { user });
+  LeaveScreen.render(document.getElementById('tab-leave'),       { user });
+  PdfScreen.render(document.getElementById('tab-pdf'),           { user });
+  SettingsScreen.render(document.getElementById('tab-settings'), {
+    user,
+    onSignOut: function() { BhmAuth.signOut(BhmStorage).then(function() { location.reload(); }); },
+  });
+  switchTab(defaultTab);
+  updateSyncBadge();
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.toggle('active', b.dataset.tab === name); });
+  document.querySelectorAll('.tab-content').forEach(function(c) { c.hidden = c.id !== 'tab-' + name; });
+}
+
+async function updateSyncBadge() {
+  var badge = document.getElementById('sync-badge');
+  var d     = await BhmStorage.get([BhmStorage.KEYS.DRIVE_SYNC_AT]);
+  var at    = d[BhmStorage.KEYS.DRIVE_SYNC_AT];
+  if (!at) { badge.textContent = '미동기화'; return; }
+  var mins = Math.floor((Date.now() - new Date(at).getTime()) / 60000);
+  badge.textContent = mins < 1 ? '방금 동기화' : mins + '분 전 동기화';
+  badge.classList.remove('fail');
+  badge.classList.add('ok');
+}
