@@ -637,7 +637,8 @@ async function loadDataFromAPI() {
   const monthKey = getCurrentMonthKey();
   const cached = readStorageJSON(DATA_BUNDLE_CACHE_KEY);
   if (cached?.monthKey === monthKey && cached?.data) {
-    DATA = { ...DATA_STATIC, ...cached.data };
+    const safeCache = Object.fromEntries(Object.entries(cached.data).filter(([, v]) => v !== undefined));
+    DATA = { ...DATA_STATIC, ...safeCache };
     console.log('[DATA] 월간 캐시 사용');
     return;
   }
@@ -663,7 +664,8 @@ async function loadDataFromAPI() {
       throw new Error(`Expected JSON but received ${contentType || 'unknown content-type'}`);
     }
     const apiData = await res.json();
-    DATA = { ...DATA_STATIC, ...apiData };
+    const safeApiData = Object.fromEntries(Object.entries(apiData).filter(([, v]) => v !== undefined));
+    DATA = { ...DATA_STATIC, ...safeApiData };
     writeStorageJSON(DATA_BUNDLE_CACHE_KEY, { monthKey, data: apiData, fetchedAt: Date.now() });
     writeStorageJSON(DATA_BUNDLE_STATUS_KEY, { monthKey, state: 'ok', checkedAt: Date.now() });
     console.log('[DATA] API 데이터 로드 완료');
