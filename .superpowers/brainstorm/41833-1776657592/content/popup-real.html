@@ -1,0 +1,426 @@
+<h2>이렇게 동작합니다 — 아이콘 클릭 → 팝업 아래로 열림</h2>
+<p class="subtitle">노션처럼 툴바 아이콘 클릭 시 팝업이 바로 열립니다. snuhmate.com을 열 필요 없음.</p>
+
+<style>
+* { box-sizing: border-box; }
+body { font-family: -apple-system, 'Noto Sans KR', sans-serif; }
+
+/* ── 크롬 브라우저 실제 느낌 ── */
+.browser-mockup {
+  border-radius: 10px;
+  overflow: visible;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.15);
+  border: 1.5px solid #d1d5db;
+  width: 680px;
+  background: #f1f3f4;
+  position: relative;
+  margin: 0 auto 32px;
+}
+.browser-titlebar {
+  background: #dee1e6;
+  padding: 8px 10px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 10px 10px 0 0;
+}
+.browser-dots { display:flex; gap:5px; padding: 4px 0; }
+.browser-dot { width:12px; height:12px; border-radius:50%; }
+.browser-tabs {
+  display: flex;
+  gap: 2px;
+  flex: 1;
+  padding-left: 8px;
+}
+.browser-tab {
+  background: #f1f3f4;
+  border-radius: 8px 8px 0 0;
+  padding: 6px 14px;
+  font-size: 12px;
+  color: #5f6368;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.browser-tab.active {
+  background: #fff;
+  color: #202124;
+  font-weight: 500;
+}
+.browser-omnibox-row {
+  background: #fff;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid #e0e0e0;
+}
+.browser-omnibox {
+  flex: 1;
+  background: #f1f3f4;
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 13px;
+  color: #5f6368;
+}
+.browser-ext-icons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.ext-icon {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+  position: relative;
+}
+.ext-icon.active {
+  background: #e8f0fe;
+  box-shadow: 0 0 0 2px #1a56db;
+}
+.browser-content {
+  background: #fff;
+  height: 240px;
+  padding: 20px;
+  color: #9ca3af;
+  font-size: 13px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  border-radius: 0 0 10px 10px;
+  position: relative;
+}
+
+/* ── 팝업 (아이콘 바로 아래 드롭다운) ── */
+.ext-popup {
+  position: absolute;
+  top: 0px;
+  right: 6px;
+  width: 360px;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.20), 0 2px 8px rgba(0,0,0,0.10);
+  border: 1px solid #e0e0e0;
+  overflow: hidden;
+  background: #fff;
+  z-index: 10;
+  font-size: 13px;
+  color: #111;
+}
+.popup-header {
+  background: #1a56db;
+  color: #fff;
+  padding: 11px 14px;
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.popup-tabs {
+  display: flex;
+  background: #f9fafb;
+  border-bottom: 1.5px solid #e5e7eb;
+}
+.popup-tab {
+  flex: 1;
+  padding: 8px 4px;
+  text-align: center;
+  font-size: 12px;
+  color: #9ca3af;
+  border-bottom: 2.5px solid transparent;
+  font-weight: 500;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.popup-tab .tab-icon { font-size: 15px; }
+.popup-tab.active { color: #1a56db; border-bottom-color: #1a56db; background: #fff; font-weight: 700; }
+.popup-tab.green.active { color: #059669; border-bottom-color: #059669; }
+.popup-body { padding: 12px 14px; }
+
+/* 폼 */
+.field-row { display:flex; flex-direction:column; gap:3px; margin-bottom:10px; }
+.field-label { font-size:10px; color:#6b7280; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+.field-input { border:1.5px solid #d1d5db; border-radius:7px; padding:6px 10px; font-size:12px; color:#111; background:#f9fafb; }
+.type-row { display:flex; gap:5px; margin-bottom:10px; }
+.type-btn { flex:1; border:1.5px solid #d1d5db; border-radius:7px; padding:5px 2px; text-align:center; font-size:11px; color:#374151; background:#f9fafb; }
+.type-btn.active { border-color:#1a56db; color:#1a56db; background:#eff6ff; font-weight:700; }
+.time-row { display:flex; gap:6px; align-items:center; margin-bottom:10px; }
+.time-input { flex:1; border:1.5px solid #d1d5db; border-radius:7px; padding:6px 8px; font-size:13px; background:#f9fafb; text-align:center; }
+.btn-primary { width:100%; background:#1a56db; color:#fff; border-radius:8px; padding:8px; text-align:center; font-weight:700; font-size:13px; }
+.btn-green { background:#059669; }
+
+/* 캘린더 */
+.cal-nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:5px; font-size:11px; font-weight:600; color:#374151; }
+.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:1px; margin-bottom:8px; }
+.cal-day { text-align:center; padding:3px 1px; font-size:10px; border-radius:4px; color:#374151; }
+.cal-day.hd { color:#9ca3af; font-weight:700; font-size:9px; }
+.cal-day.today { background:#1a56db; color:#fff; font-weight:700; }
+.cal-day.dim { color:#d1d5db; }
+
+/* PIN */
+.pin-wrap { padding:16px 14px; text-align:center; }
+.pin-dots { display:flex; gap:10px; justify-content:center; margin:8px 0 12px; }
+.pin-dot { width:13px; height:13px; border-radius:50%; border:2px solid #1a56db; }
+.pin-dot.on { background:#1a56db; }
+.pin-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+.pin-key { border:1.5px solid #e5e7eb; border-radius:9px; padding:9px; text-align:center; font-size:16px; font-weight:600; color:#111; background:#f9fafb; }
+.pin-key.sm { font-size:11px; color:#9ca3af; font-weight:500; }
+
+/* 로그인 */
+.login-wrap { padding:20px 14px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:10px; }
+.google-btn { width:100%; border:1.5px solid #d1d5db; border-radius:8px; padding:8px 14px; display:flex; align-items:center; justify-content:center; gap:8px; font-size:13px; font-weight:600; color:#374151; background:#fff; }
+
+/* 배지 */
+.sync-badge { background:#dcfce7; color:#166534; border-radius:5px; padding:2px 7px; font-size:10px; font-weight:600; }
+.info-bar { background:#eff6ff; border-radius:6px; padding:5px 8px; font-size:11px; color:#1d4ed8; margin-bottom:8px; }
+
+/* 휴가 */
+.leave-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:5px; margin-bottom:10px; }
+.leave-item { border:1.5px solid #d1d5db; border-radius:7px; padding:5px 4px; text-align:center; font-size:11px; color:#374151; background:#f9fafb; }
+.leave-item.active { border-color:#059669; color:#059669; background:#f0fdf4; font-weight:700; }
+
+/* PDF */
+.pdf-drop { border:2px dashed #d1d5db; border-radius:10px; padding:16px; text-align:center; color:#9ca3af; font-size:12px; margin-bottom:8px; }
+.recent-item { display:flex; align-items:center; gap:8px; background:#f9fafb; border:1.5px solid #e5e7eb; border-radius:8px; padding:7px 10px; font-size:12px; margin-bottom:5px; }
+
+/* 흐름 설명 */
+.step-row { display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap; justify-content:center; }
+.step-box { background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:10px; padding:8px 12px; text-align:center; font-size:12px; font-weight:600; color:#374151; display:flex; flex-direction:column; align-items:center; gap:3px; min-width:80px; }
+.step-icon { font-size:20px; }
+.step-arrow { font-size:18px; color:#9ca3af; }
+.step-label { font-size:10px; color:#9ca3af; font-weight:400; }
+
+.section { margin-bottom: 24px; }
+</style>
+
+<!-- ── 한 줄 요약 ── -->
+<div style="background:#eff6ff;border-radius:10px;padding:12px 16px;margin-bottom:20px;font-size:13px;color:#1d4ed8;border:1.5px solid #93c5fd;">
+  ✅ <strong>정확히 노션·이미지처럼</strong> — 아이콘 클릭 시 팝업이 아래로 내려옵니다. 새 탭으로 이동하지 않습니다.<br>
+  "독립형"이란 뜻은 <em>snuhmate.com 탭 없이도 작동</em>한다는 의미고, 팝업 모양은 동일합니다.
+</div>
+
+<!-- ── 흐름 ── -->
+<div class="section">
+<h3>전체 흐름 (5단계)</h3>
+<div class="step-row">
+  <div class="step-box" style="border-color:#93c5fd;background:#eff6ff">
+    <div class="step-icon">🖱️</div>
+    <div>아이콘 클릭</div>
+    <div class="step-label">툴바 우측</div>
+  </div>
+  <div class="step-arrow">→</div>
+  <div class="step-box" style="border-color:#fca5a5;background:#fef2f2">
+    <div class="step-icon">👤</div>
+    <div>로그인 확인</div>
+    <div class="step-label">미로그인 시만</div>
+  </div>
+  <div class="step-arrow">→</div>
+  <div class="step-box" style="border-color:#fcd34d;background:#fffbeb">
+    <div class="step-icon">🔒</div>
+    <div>PIN 입력</div>
+    <div class="step-label">30분 잠금</div>
+  </div>
+  <div class="step-arrow">→</div>
+  <div class="step-box" style="border-color:#86efac;background:#f0fdf4">
+    <div class="step-icon">✏️</div>
+    <div>기록 입력</div>
+    <div class="step-label">시간외/휴가/PDF</div>
+  </div>
+  <div class="step-arrow">→</div>
+  <div class="step-box" style="border-color:#c4b5fd;background:#f5f3ff">
+    <div class="step-icon">☁️</div>
+    <div>Drive 저장</div>
+    <div class="step-label">3초 자동 동기화</div>
+  </div>
+</div>
+</div>
+
+<!-- ── 실제 팝업 목업 3종 ── -->
+<div class="section">
+<h3>팝업 안 화면 — 탭으로 전환</h3>
+
+<div style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center">
+
+  <!-- 팝업 1: 로그인 -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+    <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase">① 로그인</div>
+    <div class="ext-popup" style="position:static;width:320px">
+      <div class="popup-header">🏥 SNUH Mate</div>
+      <div class="login-wrap">
+        <div style="font-size:36px">🏥</div>
+        <div style="font-weight:700;font-size:14px">SNUH Mate</div>
+        <div style="font-size:12px;color:#6b7280">시간외·휴가·급여명세서 기록</div>
+        <div class="google-btn">
+          <span style="font-weight:900;color:#4285f4;font-size:15px">G</span>
+          Google 계정으로 로그인
+        </div>
+        <div style="font-size:11px;color:#9ca3af">snuhmate.com 없이 바로 사용 가능</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 팝업 2: PIN -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+    <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase">② PIN 잠금 해제</div>
+    <div class="ext-popup" style="position:static;width:320px">
+      <div class="popup-header">🔒 잠금 해제 — 홍길동</div>
+      <div class="pin-wrap">
+        <div style="font-size:12px;color:#6b7280;margin-bottom:4px">4자리 PIN 입력</div>
+        <div class="pin-dots">
+          <div class="pin-dot on"></div><div class="pin-dot on"></div>
+          <div class="pin-dot on"></div><div class="pin-dot"></div>
+        </div>
+        <div class="pin-grid">
+          <div class="pin-key">1</div><div class="pin-key">2</div><div class="pin-key">3</div>
+          <div class="pin-key">4</div><div class="pin-key">5</div><div class="pin-key">6</div>
+          <div class="pin-key">7</div><div class="pin-key">8</div><div class="pin-key">9</div>
+          <div class="pin-key sm">취소</div><div class="pin-key">0</div><div class="pin-key sm">←</div>
+        </div>
+        <div style="font-size:11px;color:#9ca3af;margin-top:8px">오류 5회 시 1시간 잠금</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 팝업 3: 시간외 -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+    <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase">③ 시간외 기록</div>
+    <div class="ext-popup" style="position:static;width:320px">
+      <div class="popup-header">
+        🏥 SNUH Mate
+        <span class="sync-badge">✅ 동기화됨</span>
+      </div>
+      <div class="popup-tabs">
+        <div class="popup-tab active"><div class="tab-icon">⏱️</div>시간외</div>
+        <div class="popup-tab"><div class="tab-icon">🌴</div>휴가</div>
+        <div class="popup-tab"><div class="tab-icon">📄</div>PDF</div>
+        <div class="popup-tab"><div class="tab-icon">⚙️</div>설정</div>
+      </div>
+      <div class="popup-body">
+        <div class="cal-nav"><span>◀</span><span>2026년 4월</span><span>▶</span></div>
+        <div class="cal-grid">
+          <div class="cal-day hd">일</div><div class="cal-day hd">월</div><div class="cal-day hd">화</div><div class="cal-day hd">수</div><div class="cal-day hd">목</div><div class="cal-day hd">금</div><div class="cal-day hd">토</div>
+          <div class="cal-day dim">30</div><div class="cal-day dim">31</div><div class="cal-day">1</div><div class="cal-day">2</div><div class="cal-day">3</div><div class="cal-day">4</div><div class="cal-day">5</div>
+          <div class="cal-day">13</div><div class="cal-day">14</div><div class="cal-day">15</div><div class="cal-day">16</div><div class="cal-day">17</div><div class="cal-day">18</div><div class="cal-day">19</div>
+          <div class="cal-day">20</div><div class="cal-day">21</div><div class="cal-day today">22</div><div class="cal-day">23</div><div class="cal-day">24</div><div class="cal-day">25</div><div class="cal-day">26</div>
+        </div>
+        <div class="type-row">
+          <div class="type-btn active">시간외</div>
+          <div class="type-btn">온콜대기</div>
+          <div class="type-btn">온콜출근</div>
+        </div>
+        <div class="time-row">
+          <div class="time-input">18:00</div>
+          <div style="color:#9ca3af;font-weight:600">~</div>
+          <div class="time-input">21:00</div>
+        </div>
+        <div class="info-bar">📊 연장 3h · 야간 0h · 휴일 0h</div>
+        <div class="btn-primary">💾 저장</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 팝업 4: 휴가 -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+    <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase">④ 휴가 탭</div>
+    <div class="ext-popup" style="position:static;width:320px">
+      <div class="popup-header">🏥 SNUH Mate <span class="sync-badge">✅ 동기화됨</span></div>
+      <div class="popup-tabs">
+        <div class="popup-tab"><div class="tab-icon">⏱️</div>시간외</div>
+        <div class="popup-tab active green"><div class="tab-icon">🌴</div>휴가</div>
+        <div class="popup-tab"><div class="tab-icon">📄</div>PDF</div>
+        <div class="popup-tab"><div class="tab-icon">⚙️</div>설정</div>
+      </div>
+      <div class="popup-body">
+        <div class="leave-grid">
+          <div class="leave-item active">연차</div>
+          <div class="leave-item">반차</div>
+          <div class="leave-item">병가</div>
+          <div class="leave-item">경조사</div>
+          <div class="leave-item">무급</div>
+          <div class="leave-item">기타</div>
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:10px">
+          <div style="flex:1"><div class="field-label">시작일</div><div class="field-input">04/21 (화)</div></div>
+          <div style="flex:1"><div class="field-label">종료일</div><div class="field-input">04/23 (목)</div></div>
+        </div>
+        <div style="background:#f0fdf4;border-radius:6px;padding:5px 8px;font-size:11px;color:#15803d;margin-bottom:8px">
+          📊 영업일 3일 · 잔여 연차 12일 → 9일
+        </div>
+        <div class="btn-primary btn-green">🌴 3일 연차 신청</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 팝업 5: PDF -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+    <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase">⑤ PDF 탭</div>
+    <div class="ext-popup" style="position:static;width:320px">
+      <div class="popup-header">🏥 SNUH Mate</div>
+      <div class="popup-tabs">
+        <div class="popup-tab"><div class="tab-icon">⏱️</div>시간외</div>
+        <div class="popup-tab"><div class="tab-icon">🌴</div>휴가</div>
+        <div class="popup-tab active"><div class="tab-icon">📄</div>PDF</div>
+        <div class="popup-tab"><div class="tab-icon">⚙️</div>설정</div>
+      </div>
+      <div class="popup-body">
+        <div class="pdf-drop">📥 PDF를 여기 드래그<br>또는 클릭해서 선택</div>
+        <div style="font-size:11px;color:#9ca3af;text-align:center;margin-bottom:8px">— 최근 다운로드 —</div>
+        <div class="recent-item">
+          <span style="font-size:18px">📄</span>
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:12px">payslip_2026_03.pdf</div>
+            <div style="font-size:11px;color:#9ca3af">2분 전 다운로드 감지됨</div>
+          </div>
+          <div style="background:#1a56db;color:#fff;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600;white-space:nowrap">가져오기</div>
+        </div>
+        <div style="background:#f0fdf4;border-radius:6px;padding:6px 8px;font-size:11px;color:#15803d;">
+          ✅ 3월 명세서 파싱 완료<br>기본급 3,200,000 · 시간외수당 245,000
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ── 핵심 차이 정리 ── -->
+<div style="background:#f8fafc;border-radius:10px;padding:14px 16px;border:1.5px solid #e2e8f0;font-size:13px">
+  <strong>기존 vs 새로운 방식 차이</strong>
+  <table style="width:100%;margin-top:8px;font-size:12px;border-collapse:collapse">
+    <tr style="background:#e2e8f0">
+      <th style="padding:6px 10px;text-align:left">항목</th>
+      <th style="padding:6px 10px;text-align:center">기존 (companion)</th>
+      <th style="padding:6px 10px;text-align:center;color:#1a56db">새 방식 (독립형)</th>
+    </tr>
+    <tr style="border-bottom:1px solid #e5e7eb">
+      <td style="padding:6px 10px">팝업 UI</td>
+      <td style="padding:6px 10px;text-align:center">동일 (팝업)</td>
+      <td style="padding:6px 10px;text-align:center;color:#1a56db">동일 (팝업) ← 같습니다!</td>
+    </tr>
+    <tr style="border-bottom:1px solid #e5e7eb">
+      <td style="padding:6px 10px">snuhmate.com</td>
+      <td style="padding:6px 10px;text-align:center;color:#dc2626">열려있어야 함</td>
+      <td style="padding:6px 10px;text-align:center;color:#059669">불필요</td>
+    </tr>
+    <tr style="border-bottom:1px solid #e5e7eb">
+      <td style="padding:6px 10px">데이터 저장</td>
+      <td style="padding:6px 10px;text-align:center">사이트 localStorage</td>
+      <td style="padding:6px 10px;text-align:center;color:#1a56db">chrome.storage</td>
+    </tr>
+    <tr style="border-bottom:1px solid #e5e7eb">
+      <td style="padding:6px 10px">휴가 기능</td>
+      <td style="padding:6px 10px;text-align:center;color:#dc2626">없음</td>
+      <td style="padding:6px 10px;text-align:center;color:#059669">추가됨 ✅</td>
+    </tr>
+    <tr>
+      <td style="padding:6px 10px">PIN 보안</td>
+      <td style="padding:6px 10px;text-align:center;color:#dc2626">없음</td>
+      <td style="padding:6px 10px;text-align:center;color:#059669">추가됨 ✅</td>
+    </tr>
+  </table>
+</div>

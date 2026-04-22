@@ -44,8 +44,8 @@
   function getAllMonthData() {
     const months = SALARY_PARSER.listSavedMonths();
     return months.map(m => {
-      const d = SALARY_PARSER.loadMonthlyData(m.year, m.month);
-      return { year: m.year, month: m.month, data: d };
+      const d = SALARY_PARSER.loadMonthlyData(m.year, m.month, m.type);
+      return { year: m.year, month: m.month, type: m.type || '급여', data: d };
     }).filter(m => {
       if (!m.data) return false;
       // 실제 급여 데이터가 있는 월만 (시뮬레이터 빈 저장 제외)
@@ -53,6 +53,42 @@
       if (!s) return false;
       return (s.netPay > 0 || s.grossPay > 0);
     });
+  }
+
+  // 같은 달의 모든 명세서를 합산한 집계 객체 반환
+  function getMonthAggregate(allData, year, month) {
+    const entries = allData.filter(m => m.year === year && m.month === month);
+    if (entries.length === 0) return null;
+    if (entries.length === 1) return entries[0];
+
+    // 항목별 합산 (같은 이름이면 금액 누적)
+    const salMap = {}, dedMap = {};
+    entries.forEach(function (m) {
+      (m.data.salaryItems || []).forEach(function (i) {
+        salMap[i.name] = (salMap[i.name] || 0) + (i.amount || 0);
+      });
+      (m.data.deductionItems || []).forEach(function (i) {
+        dedMap[i.name] = (dedMap[i.name] || 0) + (i.amount || 0);
+      });
+    });
+    const salaryItems = Object.keys(salMap).map(name => ({ name, amount: salMap[name] }));
+    const deductionItems = Object.keys(dedMap).map(name => ({ name, amount: dedMap[name] }));
+    const grossPay = salaryItems.reduce((s, i) => s + i.amount, 0);
+    const totalDeduction = deductionItems.reduce((s, i) => s + i.amount, 0);
+
+    return {
+      year, month, type: '합계',
+      data: {
+        salaryItems, deductionItems,
+        summary: { grossPay, totalDeduction, netPay: grossPay - totalDeduction },
+        metadata: entries[0].data.metadata,
+      }
+    };
+  }
+
+  // 이전 달 year/month 계산
+  function prevCalendarMonth(year, month) {
+    return month === 1 ? { year: year - 1, month: 12 } : { year, month: month - 1 };
   }
 
   // ── initPayrollTab ──
@@ -70,6 +106,7 @@
   window.renderPayHistory = function () {
     const container = document.getElementById('payHistoryView');
     if (!container) return;
+    try {
     container.textContent = '';
 
     const allData = getAllMonthData();
@@ -113,6 +150,14 @@
 
     // 5) 아카이브 배너
     container.appendChild(buildArchiveBanner(allData.length));
+    } catch (err) {
+      console.error('[renderPayHistory]', err);
+      container.textContent = '';
+      const errCard = el('div', { className: 'card', style: { textAlign: 'center', padding: '24px' } });
+      errCard.appendChild(el('div', { style: { color: 'var(--accent-rose)', fontWeight: '700', marginBottom: '8px' }, textContent: '⚠️ 히스토리 표시 오류' }));
+      errCard.appendChild(el('div', { style: { color: 'var(--text-muted)', fontSize: 'var(--text-body-small)' }, textContent: err.message || String(err) }));
+      container.appendChild(errCard);
+    }
   };
 
   // ── 실지급액 큰 숫자 카드 ──
@@ -306,18 +351,23 @@
     const archiveEl = document.getElementById('payArchiveList');
     if (!visualEl) return;
 
-    // 헤더 영역 (슬라이더 바로 아래, 우측 정렬)
+    try {
+    const allData = getAllMonthData();
+
+    // 헤더 영역 (슬라이더 바로 아래, 우측 정렬) — 데이터 있을 때만 표시
     if (headerEl) {
       headerEl.textContent = '';
-      headerEl.style.display = 'flex';
-      headerEl.style.justifyContent = 'flex-end';
-      headerEl.style.padding = '0';
-      headerEl.style.marginTop = '-40px';
-      headerEl.style.marginBottom = '6px';
-      headerEl.appendChild(buildTextUploadBtn());
+      if (allData.length > 0) {
+        headerEl.style.display = 'flex';
+        headerEl.style.justifyContent = 'flex-end';
+        headerEl.style.padding = '0';
+        headerEl.style.marginTop = '-20px';
+        headerEl.style.marginBottom = '10px';
+        headerEl.appendChild(buildTextUploadBtn());
+      } else {
+        headerEl.style.display = 'none';
+      }
     }
-
-    const allData = getAllMonthData();
 
     if (allData.length === 0) {
       // 월 슬라이더: 현재 월 표시 (업로드 버튼은 헤더에 이미 있으므로 중복 안 함)
@@ -345,8 +395,53 @@
       const empty = buildEmptyState(
         '급여명세서',
         '아직 등록된 명세서가 없습니다.',
-        '우측 상단 버튼으로 급여명세서를 업로드해주세요.',
-        null, null
+        'PDF 는 이 브라우저에만 저장됩니다.',
+        function () {
+          // 이미 열려 있는 picker가 있으면 제거 후 새로 생성 (iOS 취소 후 재시도 대응)
+          const prev = document.querySelector('input[type="file"][data-pay-picker]');
+          if (prev && prev.parentNode) prev.parentNode.removeChild(prev);
+
+          const input = document.createElement('input');
+          input.type = 'file';
+          input.accept = '.pdf,.xlsx,.xls,.csv,.png,.jpg,.jpeg,.gif,.bmp,.webp';
+          input.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+          input.dataset.payPicker = '1';
+
+          let cleaned = false;
+          function cleanup() {
+            if (cleaned) return;
+            cleaned = true;
+            window.removeEventListener('focus', onFocus);
+            document.removeEventListener('visibilitychange', onVisibility);
+            clearTimeout(safetyTimer);
+            if (input.parentNode) input.parentNode.removeChild(input);
+          }
+
+          input.addEventListener('change', function () {
+            if (input.files && input.files.length > 0) handleInlineUpload(input.files[0]);
+            cleanup();
+          });
+
+          // cancel 이벤트 (Chrome 113+, Safari 17.4+)
+          input.addEventListener('cancel', cleanup);
+
+          // Desktop: window focus 복귀 시 (파일 선택 없이 닫기)
+          function onFocus() { setTimeout(cleanup, 300); }
+          window.addEventListener('focus', onFocus, { once: true });
+
+          // Mobile(iOS/Android): 앱이 foreground로 돌아올 때
+          function onVisibility() {
+            if (document.visibilityState === 'visible') setTimeout(cleanup, 500);
+          }
+          document.addEventListener('visibilitychange', onVisibility);
+
+          // 안전 타임아웃: 30초 후 강제 정리
+          var safetyTimer = setTimeout(cleanup, 30000);
+
+          document.body.appendChild(input);
+          input.click();
+        },
+        '📄 급여명세서 업로드'
       );
       visualEl.appendChild(empty);
       return;
@@ -358,13 +453,24 @@
     // 월 슬라이더 + 업로드 버튼
     if (sliderEl) buildMonthSlider(sliderEl, allData, currentPayslipIdx);
 
-    // 현재 월 시각적 렌더
+    // 현재 월 시각적 렌더 (개별 명세서)
     const current = allData[currentPayslipIdx];
-    const prev = currentPayslipIdx < allData.length - 1 ? allData[currentPayslipIdx + 1] : null;
-    buildPayslipVisual(visualEl, current, prev);
+    // 전월 비교: 이전 달력월 전체 합산 vs 현재 달력월 전체 합산
+    const curAgg = getMonthAggregate(allData, current.year, current.month);
+    const pm = prevCalendarMonth(current.year, current.month);
+    const prevAgg = getMonthAggregate(allData, pm.year, pm.month);
+    buildPayslipVisual(visualEl, current, curAgg, prevAgg);
 
     // 아카이브 목록
     if (archiveEl) buildArchiveList(archiveEl, allData);
+    } catch (err) {
+      console.error('[renderPayPayslip]', err);
+      visualEl.textContent = '';
+      const errCard = el('div', { className: 'card', style: { textAlign: 'center', padding: '24px' } });
+      errCard.appendChild(el('div', { style: { color: 'var(--accent-rose)', fontWeight: '700', marginBottom: '8px' }, textContent: '⚠️ 명세서 표시 오류' }));
+      errCard.appendChild(el('div', { style: { color: 'var(--text-muted)', fontSize: 'var(--text-body-small)' }, textContent: err.message || String(err) }));
+      visualEl.appendChild(errCard);
+    }
   };
 
   // ── 월 슬라이더 + 업로드 버튼 ──
@@ -389,9 +495,11 @@
     });
     if (idx >= allData.length - 1) prevBtn.disabled = true;
 
+    const cur = allData[idx];
+    const typeTag = cur.type && cur.type !== '급여' ? ' (' + cur.type + ')' : '';
     const label = el('span', {
       style: { fontWeight: '700', fontSize: 'var(--text-title-medium)' },
-      textContent: allData[idx].year + '년 ' + allData[idx].month + '월'
+      textContent: cur.year + '년 ' + cur.month + '월' + typeTag
     });
 
     const nextBtn = el('button', {
@@ -416,25 +524,37 @@
   }
 
   // ── 텍스트 업로드 버튼 (명세서 탭 상단 우측) ──
+  // REMOVED auth: drive sign-in helpers — 로컬 전용 앱
+
   function buildTextUploadBtn() {
-    const fileInput = el('input', { type: 'file', accept: '.pdf,.xlsx,.xls,.csv,.png,.jpg,.jpeg,.gif,.bmp,.webp' });
-    fileInput.style.display = 'none';
+    const fileInput = el('input', { type: 'file', accept: 'application/pdf,.pdf' });
+    fileInput.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
 
     const btn = el('button', {
       className: 'pay-text-upload-btn',
       textContent: '급여 PDF 업로드',
-      onClick: function () { fileInput.click(); }
+      onClick: function () {
+        fileInput.value = '';
+        fileInput.click();
+      }
     });
 
     fileInput.addEventListener('change', function () {
-      if (fileInput.files.length > 0) {
+      if (fileInput.files && fileInput.files.length > 0) {
         handleInlineUpload(fileInput.files[0]);
       }
     });
 
-    const wrap = el('div', { style: { display: 'inline-flex' } });
-    wrap.appendChild(btn);
-    wrap.appendChild(fileInput);
+    const wrap = el('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' } });
+    const row = el('div', { style: { display: 'inline-flex', gap: '6px' } });
+    row.appendChild(btn);
+    row.appendChild(fileInput);
+    wrap.appendChild(row);
+    const note = el('div', {
+      style: { fontSize: 'var(--text-body-small)', color: 'var(--text-muted)', textAlign: 'right', maxWidth: '280px' },
+      textContent: 'PDF 는 이 브라우저에만 저장됩니다.'
+    });
+    wrap.appendChild(note);
     return wrap;
   }
 
@@ -454,7 +574,20 @@
       const result = await SALARY_PARSER.parseFile(file);
       const ym = SALARY_PARSER.parsePeriodYearMonth(result);
       if (ym) {
-        SALARY_PARSER.saveMonthlyData(ym.year, ym.month, result);
+        SALARY_PARSER.saveMonthlyData(ym.year, ym.month, result, ym.type);
+
+        // 프로필 자동 반영 (grade/year/부서/입사일/직종 등) — const SALARY_PARSER 는 top-level 이라 직접 참조 가능
+        if (typeof SALARY_PARSER !== 'undefined' && typeof SALARY_PARSER.applyStableItemsToProfile === 'function') {
+          SALARY_PARSER.applyStableItemsToProfile(result);
+        }
+
+        // 근무정보 자동 배치 이력 생성
+        if (typeof window._propagatePayslipToWorkHistory === 'function') {
+          window._propagatePayslipToWorkHistory(result, ym);
+        }
+
+        // REMOVED auth: PDF 내 드라이브 업로드 — 로컬 전용 앱 (브라우저에만 저장)
+
         currentPayslipIdx = 0;
         renderPayPayslip();
       } else {
@@ -468,7 +601,10 @@
   }
 
   // ── 명세서 시각적 렌더 ──
-  function buildPayslipVisual(container, current, prev) {
+  // current: 현재 선택된 개별 명세서
+  // curAgg: 현재 달력월 전체 합산 (전월 비교용)
+  // prevAgg: 이전 달력월 전체 합산 (전월 비교용)
+  function buildPayslipVisual(container, current, curAgg, prevAgg) {
     container.textContent = '';
     const data = current.data;
     const gross = data.summary?.grossPay || 0;
@@ -476,25 +612,22 @@
     const net = data.summary?.netPay || 0;
     const total = gross + deduction;
 
-    // 도넛 차트 (지급 vs 공제 비율)
+    // 도넛 차트 (지급 vs 공제 비율) — 개별 명세서 기준
     container.appendChild(buildDonutChart(gross, deduction, net, total));
 
-    // 지급 항목 수평 바
+    // 지급 항목 수평 바 — 개별 명세서 기준
     if (data.salaryItems && data.salaryItems.length > 0) {
-      container.appendChild(buildHBarSection('지급 내역', data.salaryItems, gross, 'var(--accent-emerald)',
-        prev ? prev.data.salaryItems : null));
+      container.appendChild(buildHBarSection('지급 내역', data.salaryItems, gross, 'var(--accent-emerald)', null));
     }
 
-    // 공제 항목 수평 바
+    // 공제 항목 수평 바 — 개별 명세서 기준
     if (data.deductionItems && data.deductionItems.length > 0) {
-      container.appendChild(buildHBarSection('공제 내역', data.deductionItems, deduction, 'var(--accent-rose)',
-        prev ? prev.data.deductionItems : null));
+      container.appendChild(buildHBarSection('공제 내역', data.deductionItems, deduction, 'var(--accent-rose)', null));
     }
 
-
-    // 전월 비교 그리드
-    if (prev) {
-      container.appendChild(buildCompareGrid(current, prev));
+    // 전월 비교 그리드 — 달력월 합산 기준
+    if (prevAgg) {
+      container.appendChild(buildCompareGrid(curAgg, prevAgg));
     }
   }
 
@@ -650,35 +783,187 @@
     container.textContent = '';
     if (allData.length <= 1) return;
 
-    const card = el('div', { className: 'card' });
-    card.appendChild(el('div', { className: 'card-title', textContent: '저장된 명세서 (' + allData.length + '개월)' }));
+    // 위임 핸들러: 컨테이너에 한 번만 부착 — 리렌더 후 data-* 속성이 바뀌어도 핸들러는 유지
+    if (!container._archiveDelegated) {
+      container._archiveDelegated = true;
+      container.addEventListener('click', function (e) {
+        const btn = e.target.closest('[data-action]');
+        const row = e.target.closest('.pay-archive-row');
+        if (!row) return;
 
-    allData.forEach(function (m, idx) {
-      const row = el('div', {
-        className: 'pay-hbar-row',
-        style: { cursor: 'pointer', padding: '8px 4px', borderRadius: '6px' },
-        onClick: function () {
+        const idx   = parseInt(row.dataset.idx, 10);
+        const year  = parseInt(row.dataset.year, 10);
+        const month = parseInt(row.dataset.month, 10);
+        const type  = row.dataset.type || '급여';
+        const typeTag = type !== '급여' ? ' (' + type + ')' : '';
+
+        if (btn && btn.dataset.action === 'edit') {
+          e.stopPropagation();
+          openEditModal(year, month, type);
+        } else if (btn && btn.dataset.action === 'delete') {
+          e.stopPropagation();
+          if (!confirm(year + '년 ' + month + '월' + typeTag + ' 명세서를 삭제할까요?')) return;
+          SALARY_PARSER.deleteMonthlyData(year, month, type);
+          const remaining = getAllMonthData();
+          if (currentPayslipIdx >= remaining.length) currentPayslipIdx = Math.max(0, remaining.length - 1);
+          renderPayPayslip();
+        } else if (!btn) {
           currentPayslipIdx = idx;
           renderPayPayslip();
         }
       });
+    }
+
+    const card = el('div', { className: 'card' });
+    card.appendChild(el('div', { className: 'card-title', textContent: '저장된 명세서 (' + allData.length + '건)' }));
+
+    allData.forEach(function (m, idx) {
+      const row = el('div', {
+        className: 'pay-archive-row pay-hbar-row',
+        style: { cursor: 'pointer', padding: '8px 4px', borderRadius: '6px' }
+      });
+      row.dataset.idx   = idx;
+      row.dataset.year  = m.year;
+      row.dataset.month = m.month;
+      row.dataset.type  = m.type || '급여';
+
       if (idx === currentPayslipIdx) {
         row.style.background = 'var(--bg-hover)';
       }
 
+      const typeTag = m.type && m.type !== '급여' ? ' (' + m.type + ')' : '';
       row.appendChild(el('span', {
         className: 'pay-hbar-name',
         style: { fontWeight: idx === currentPayslipIdx ? '700' : '400' },
-        textContent: m.year + '년 ' + m.month + '월'
+        textContent: m.year + '년 ' + m.month + '월' + typeTag
       }));
       row.appendChild(el('span', {
         className: 'pay-hbar-amount',
         textContent: fmt(m.data.summary?.netPay || 0)
       }));
+
+      // 수정 버튼 (data-action으로 위임 처리)
+      const editBtn = el('button', {
+        className: 'pay-edit-btn',
+        textContent: '✎',
+        title: '수정'
+      });
+      editBtn.dataset.action = 'edit';
+      row.appendChild(editBtn);
+
+      // 삭제 버튼 (data-action으로 위임 처리)
+      const delBtn = el('button', {
+        style: { background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '14px', padding: '0 4px', flexShrink: '0' },
+        textContent: '×',
+        title: '삭제'
+      });
+      delBtn.dataset.action = 'delete';
+      row.appendChild(delBtn);
       card.appendChild(row);
     });
 
     container.appendChild(card);
+  }
+
+  // ── 명세서 수정 모달 ──
+  function openEditModal(year, month, type) {
+    const data = SALARY_PARSER.loadMonthlyData(year, month, type);
+    if (!data) return;
+
+    // 항목 deep copy (원본 불변)
+    var salaryItems    = (data.salaryItems    || []).map(function (i) { return { name: i.name, amount: i.amount }; });
+    var deductionItems = (data.deductionItems || []).map(function (i) { return { name: i.name, amount: i.amount }; });
+    var typeTag = type && type !== '급여' ? ' (' + type + ')' : '';
+
+    // 오버레이
+    var overlay = el('div', { className: 'pay-edit-modal-overlay' });
+    var modal   = el('div', { className: 'pay-edit-modal' });
+
+    // 헤더
+    var header = el('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' } });
+    header.appendChild(el('div', { style: { fontWeight: '700', fontSize: 'var(--text-body-large)' }, textContent: year + '년 ' + month + '월' + typeTag + ' 명세서 수정' }));
+    var closeBtn = el('button', { style: { background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: 'var(--text-muted)' }, textContent: '×' });
+    closeBtn.addEventListener('click', function () { overlay.remove(); });
+    header.appendChild(closeBtn);
+    modal.appendChild(header);
+
+    // 실지급액 요약 (동적 갱신용)
+    var totalDiv = el('div', { className: 'pay-edit-total-row' });
+    function updateTotal() {
+      var gross = salaryItems.reduce(function (s, i) { return s + (parseFloat(i.amount) || 0); }, 0);
+      var deduct = deductionItems.reduce(function (s, i) { return s + (parseFloat(i.amount) || 0); }, 0);
+      totalDiv.textContent = '';
+      totalDiv.appendChild(el('span', { textContent: '실지급액' }));
+      totalDiv.appendChild(el('span', { textContent: fmt(gross - deduct) }));
+    }
+
+    // 항목 섹션 빌더
+    function buildSection(title, items) {
+      modal.appendChild(el('div', { className: 'pay-edit-section-title', textContent: title }));
+      var list = el('div');
+
+      function addRow(item) {
+        var row = el('div', { className: 'pay-edit-item-row' });
+        var nameInput = el('input', { type: 'text', className: 'ret-input', placeholder: '항목명', value: item.name });
+        var amtInput  = el('input', { type: 'number', className: 'ret-input', placeholder: '금액', value: item.amount });
+        nameInput.addEventListener('input', function () { item.name   = nameInput.value; });
+        amtInput.addEventListener('input',  function () { item.amount = parseFloat(amtInput.value) || 0; updateTotal(); });
+        var rowDel = el('button', { style: { background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '16px', flexShrink: '0', padding: '0 4px' }, textContent: '×' });
+        rowDel.addEventListener('click', function () {
+          var idx = items.indexOf(item);
+          if (idx !== -1) items.splice(idx, 1);
+          row.remove();
+          updateTotal();
+        });
+        row.appendChild(nameInput);
+        row.appendChild(amtInput);
+        row.appendChild(rowDel);
+        list.appendChild(row);
+      }
+
+      items.forEach(addRow);
+      modal.appendChild(list);
+
+      var addBtn = el('button', { className: 'pay-edit-add-btn btn', textContent: '+ 항목 추가' });
+      addBtn.addEventListener('click', function () {
+        var newItem = { name: '', amount: 0 };
+        items.push(newItem);
+        addRow(newItem);
+      });
+      modal.appendChild(addBtn);
+    }
+
+    buildSection('지급 항목', salaryItems);
+    buildSection('공제 항목', deductionItems);
+
+    updateTotal();
+    modal.appendChild(totalDiv);
+
+    // 저장 / 취소 버튼
+    var actions = el('div', { className: 'pay-edit-actions' });
+    var saveBtn   = el('button', { className: 'btn pay-edit-save-btn',   textContent: '저장' });
+    var cancelBtn = el('button', { className: 'btn pay-edit-cancel-btn', textContent: '취소' });
+    saveBtn.addEventListener('click', function () {
+      var gross   = salaryItems.reduce(function (s, i) { return s + (parseFloat(i.amount) || 0); }, 0);
+      var deduct  = deductionItems.reduce(function (s, i) { return s + (parseFloat(i.amount) || 0); }, 0);
+      var updated = Object.assign({}, data, {
+        salaryItems:    salaryItems,
+        deductionItems: deductionItems,
+        summary: { grossPay: gross, totalDeduction: deduct, netPay: gross - deduct },
+        editedAt: new Date().toISOString()
+      });
+      SALARY_PARSER.saveMonthlyData(year, month, updated, type, true);
+      overlay.remove();
+      renderPayPayslip();
+    });
+    cancelBtn.addEventListener('click', function () { overlay.remove(); });
+    actions.appendChild(saveBtn);
+    actions.appendChild(cancelBtn);
+    modal.appendChild(actions);
+
+    overlay.appendChild(modal);
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) overlay.remove(); });
+    document.body.appendChild(overlay);
   }
 
   // ── 빈 상태 ──

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SNUH Mate Companion — 개인정보처리방침</title>
+  <style>
+    body { font-family: -apple-system, 'Noto Sans KR', sans-serif; max-width: 700px; margin: 40px auto; padding: 0 20px; line-height: 1.7; color: #333; }
+    h1 { font-size: 22px; border-bottom: 2px solid #4285f4; padding-bottom: 8px; }
+    h2 { font-size: 17px; margin-top: 28px; color: #1a73e8; }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+    th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; font-size: 14px; }
+    th { background: #f5f5f5; }
+    .date { color: #888; font-size: 13px; margin-top: 32px; }
+  </style>
+</head>
+<body>
+  <h1>SNUH Mate Companion 개인정보처리방침</h1>
+  <p><strong>SNUH Mate Companion</strong>(이하 "확장프로그램")은 사용자의 개인정보를 소중히 여기며, 최소한의 데이터만 처리합니다.</p>
+
+  <h2>1. 수집하는 정보</h2>
+  <table>
+    <tr><th>항목</th><th>수집 여부</th><th>설명</th></tr>
+    <tr><td>개인 식별 정보 (이름, 이메일 등)</td><td>수집하지 않음</td><td>확장프로그램은 사용자의 개인정보를 직접 수집하지 않습니다.</td></tr>
+    <tr><td>브라우징 히스토리</td><td>수집하지 않음</td><td>방문한 웹사이트 기록을 추적하지 않습니다.</td></tr>
+    <tr><td>최근 다운로드 PDF 정보</td><td>로컬 저장만</td><td>PDF 다운로드 완료 시 파일명과 URL을 <code>chrome.storage.local</code>에 임시 저장합니다. 24시간 후 자동 만료되며, 외부로 전송되지 않습니다.</td></tr>
+    <tr><td>확장프로그램 설정</td><td>로컬 저장만</td><td>사용자가 설정한 도메인, 디버그 모드 값을 <code>chrome.storage.local</code>에 저장합니다.</td></tr>
+  </table>
+
+  <h2>2. 데이터 사용 목적</h2>
+  <ul>
+    <li><strong>빠른 기록 (Quick Capture):</strong> 사용자가 팝업에서 입력한 초과근무/온콜 정보를 SNUH Mate 웹사이트로 전달하여 기록합니다.</li>
+    <li><strong>PDF 가져오기:</strong> 사용자가 선택한 PDF URL의 내용을 가져와 SNUH Mate 급여명세서 파서로 전달합니다.</li>
+  </ul>
+
+  <h2>3. 데이터 공유</h2>
+  <p>확장프로그램은 수집한 데이터를 <strong>제3자에게 판매, 공유, 전송하지 않습니다.</strong></p>
+  <p>모든 데이터는 사용자의 브라우저 내에서만 처리되며, SNUH Mate 웹사이트(snuhmate.com)와의 통신만 수행합니다.</p>
+
+  <h2>4. 데이터 보안</h2>
+  <ul>
+    <li>확장프로그램은 SNUH Mate에 Google 계정으로 로그인된 상태에서만 동작합니다.</li>
+    <li>모든 통신은 HTTPS를 통해 암호화됩니다.</li>
+    <li>비즈니스 로직(급여 계산, 초과근무 산정)은 확장프로그램 내에서 실행되지 않으며, SNUH Mate 페이지에 위임됩니다.</li>
+  </ul>
+
+  <h2>5. 권한 사용 사유</h2>
+  <table>
+    <tr><th>권한</th><th>사유</th></tr>
+    <tr><td><code>tabs</code></td><td>SNUH Mate 탭을 찾거나 새로 열기 위해 필요</td></tr>
+    <tr><td><code>scripting</code></td><td>SNUH Mate 페이지에 content script를 주입하여 확장프로그램 메시지를 중계하기 위해 필요</td></tr>
+    <tr><td><code>storage</code></td><td>확장프로그램 설정과 최근 PDF 정보를 로컬에 저장하기 위해 필요</td></tr>
+    <tr><td><code>downloads</code></td><td>PDF 파일 다운로드 완료를 감지하여 급여명세서 가져오기를 제안하기 위해 필요</td></tr>
+    <tr><td><code>contextMenus</code></td><td>PDF 링크를 우클릭했을 때 "SNUH Mate로 PDF 가져오기" 메뉴를 표시하기 위해 필요</td></tr>
+    <tr><td><code>notifications</code></td><td>작업 실패 시 사용자에게 알림을 표시하기 위해 필요</td></tr>
+    <tr><td><code>host_permissions (snuhmate.com)</code></td><td>SNUH Mate 페이지에 content script를 실행하고 메시지를 교환하기 위해 필요</td></tr>
+  </table>
+
+  <h2>6. 사용자 권리</h2>
+  <ul>
+    <li>확장프로그램을 언제든 제거할 수 있으며, 제거 시 <code>chrome.storage.local</code>에 저장된 모든 데이터가 자동으로 삭제됩니다.</li>
+    <li>옵션 페이지에서 설정을 변경하거나 초기화할 수 있습니다.</li>
+  </ul>
+
+  <h2>7. 변경 사항</h2>
+  <p>본 개인정보처리방침이 변경될 경우, 확장프로그램 업데이트를 통해 고지합니다.</p>
+
+  <h2>8. 문의</h2>
+  <p>개인정보 관련 문의: <strong>kgh1379@gmail.com</strong></p>
+
+  <p class="date">시행일: 2026년 4월 18일</p>
+</body>
+</html>

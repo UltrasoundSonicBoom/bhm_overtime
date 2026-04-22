@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>연도별 규정 버전 관리 — SNUH Mate Admin</title>
+  <link rel="stylesheet" href="./admin.css">
+  <style>
+    body { font-family: 'IBM Plex Sans KR', -apple-system, sans-serif; max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+    h1 { font-size: 1.4rem; margin-bottom: 0.25rem; }
+    .subtitle { color: #666; font-size: 0.875rem; margin-bottom: 1.5rem; }
+    nav.top-links { margin-bottom: 1.5rem; }
+    nav.top-links a { margin-right: 1rem; color: #2a4acc; text-decoration: none; font-size: 0.875rem; }
+    nav.top-links a:hover { text-decoration: underline; }
+    .section { margin-bottom: 2.5rem; }
+    h2 { font-size: 1.1rem; margin-bottom: 0.75rem; }
+    .action-bar { display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; }
+    .btn { padding: 8px 14px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.875rem; }
+    .btn-primary { background: #2a4acc; color: white; }
+    .btn-primary:hover { background: #1e3aaa; }
+    .btn-secondary { background: #f0f0f0; color: #333; border: 1px solid #ddd; }
+    .btn-secondary:hover { background: #e8e8e8; }
+    .btn-success { background: #2a8c4a; color: white; }
+    .btn-success:hover { background: #1f6e3a; }
+    .btn-danger { background: #c44; color: white; }
+    .btn-danger:hover { background: #a33; }
+    .btn-sm { padding: 4px 10px; font-size: 0.8rem; }
+    .version-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    .version-table th { text-align: left; padding: 8px 12px; background: #f5f5f5; border-bottom: 2px solid #ddd; font-weight: 600; }
+    .version-table td { padding: 8px 12px; border-bottom: 1px solid #eee; vertical-align: middle; }
+    .version-table tr:hover td { background: #fafafa; }
+    .badge-active { background: #d4f7dc; color: #1a6632; font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; font-weight: 600; }
+    .badge-inactive { background: #f0f0f0; color: #666; font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; }
+    .entries-panel { display: none; margin-top: 1.5rem; }
+    .entries-panel.open { display: block; }
+    .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+    .entry-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    .entry-table th { text-align: left; padding: 6px 10px; background: #f8f8f8; border-bottom: 2px solid #ddd; }
+    .entry-table td { padding: 6px 10px; border-bottom: 1px solid #eee; vertical-align: top; }
+    .entry-table tr:hover td { background: #fafafa; }
+    .entry-key { font-family: monospace; font-size: 0.78rem; color: #2a4acc; word-break: break-all; }
+    .entry-val { font-family: monospace; max-width: 320px; word-break: break-all; color: #333; }
+    .entry-val input { width: 100%; font-family: monospace; font-size: 0.8rem; padding: 3px 6px; border: 1px solid #ccc; border-radius: 3px; }
+    .cat-filter { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+    .cat-tag { padding: 3px 10px; border-radius: 12px; font-size: 0.78rem; cursor: pointer; border: 1px solid #ddd; background: #f8f8f8; }
+    .cat-tag.active { background: #2a4acc; color: white; border-color: #2a4acc; }
+    .diff-panel { display: none; margin-top: 1.5rem; }
+    .diff-panel.open { display: block; }
+    .diff-added { background: #f0fff4; }
+    .diff-removed { background: #fff0f0; }
+    .diff-changed { background: #fffde7; }
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: white; border-radius: 8px; padding: 1.5rem; min-width: 400px; max-width: 560px; width: 90%; }
+    .modal h3 { margin: 0 0 1rem; font-size: 1rem; }
+    .form-row { margin-bottom: 0.75rem; }
+    .form-row label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; }
+    .form-row input, .form-row select, .form-row textarea { width: 100%; padding: 7px 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 0.875rem; box-sizing: border-box; }
+    .modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1rem; }
+    .info-box { background: #f0f6ff; border: 1px solid #c0d4f5; padding: 10px 14px; border-radius: 6px; font-size: 0.83rem; color: #334; margin-bottom: 1rem; }
+    .toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 6px; font-size: 0.875rem; z-index: 200; display: none; }
+    .empty-msg { color: #999; padding: 1.5rem; text-align: center; font-size: 0.875rem; }
+  </style>
+</head>
+<body>
+  <nav class="top-links">
+    <a href="./index.html">← Admin 홈</a>
+    <a href="./union_regulation_admin.html">규정 상수 관리</a>
+    <a href="./review-queue.html">검토 큐</a>
+  </nav>
+
+  <h1>연도별 규정 버전 관리</h1>
+  <p class="subtitle">hospital_rule_master 기반 규정 데이터를 연도/버전 단위로 관리합니다. 활성화된 버전이 계산 엔진에 사용됩니다.</p>
+
+  <!-- 버전 목록 -->
+  <div class="section">
+    <div class="action-bar">
+      <h2 style="margin:0;">버전 목록</h2>
+      <button class="btn btn-primary" id="btn-new-version">+ 새 버전 만들기</button>
+      <button class="btn btn-secondary" id="btn-show-diff">버전 비교 (Diff)</button>
+      <button class="btn btn-secondary" id="btn-show-sim">급여 시뮬레이션</button>
+      <span id="list-status" style="font-size:0.8rem;color:#999;"></span>
+    </div>
+    <table class="version-table" id="version-table">
+      <thead>
+        <tr>
+          <th>버전</th>
+          <th>적용 시작일</th>
+          <th>적용 종료일</th>
+          <th>상태</th>
+          <th>변경 메모</th>
+          <th>생성일</th>
+          <th>작업</th>
+        </tr>
+      </thead>
+      <tbody id="version-tbody">
+        <tr><td colspan="7" class="empty-msg">불러오는 중...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 항목 편집 패널 -->
+  <div class="entries-panel" id="entries-panel">
+    <div class="panel-header">
+      <h2 id="entries-title">버전 항목</h2>
+      <button class="btn btn-secondary btn-sm" id="btn-close-entries">닫기</button>
+    </div>
+    <div class="info-box" id="entries-info"></div>
+    <div class="cat-filter" id="cat-filter"></div>
+    <table class="entry-table" id="entry-table">
+      <thead>
+        <tr>
+          <th style="width:35%">키</th>
+          <th>현재 값</th>
+          <th style="width:90px">저장</th>
+        </tr>
+      </thead>
+      <tbody id="entry-tbody">
+        <tr><td colspan="3" class="empty-msg">카테고리를 선택하세요</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Diff 패널 -->
+  <div class="diff-panel" id="diff-panel">
+    <div class="panel-header">
+      <h2>버전 비교 (Diff)</h2>
+      <button class="btn btn-secondary btn-sm" id="btn-close-diff">닫기</button>
+    </div>
+    <div class="action-bar" style="margin-bottom:0.75rem;">
+      <label style="font-size:0.85rem;">기준 버전</label>
+      <select id="diff-from" style="padding:6px;border:1px solid #ccc;border-radius:4px;"></select>
+      <label style="font-size:0.85rem;">비교 버전</label>
+      <select id="diff-to" style="padding:6px;border:1px solid #ccc;border-radius:4px;"></select>
+      <button class="btn btn-primary btn-sm" id="btn-run-diff">비교하기</button>
+    </div>
+    <div id="diff-result" style="margin-top:0.75rem;"></div>
+  </div>
+
+  <!-- 급여 시뮬레이션 패널 -->
+  <div class="diff-panel" id="sim-panel">
+    <div class="panel-header">
+      <h2>활성화 전 급여 시뮬레이션</h2>
+      <button class="btn btn-secondary btn-sm" id="btn-close-sim">닫기</button>
+    </div>
+    <div class="info-box">두 버전의 규정으로 직원 급여를 계산해 비교합니다. ruleSet이 없는 항목은 내장 기본값으로 계산됩니다.</div>
+    <div class="action-bar" style="flex-wrap:wrap;gap:0.75rem;align-items:flex-end;margin-bottom:1rem;">
+      <div>
+        <label style="font-size:0.85rem;display:block;margin-bottom:3px;">기준 버전</label>
+        <select id="sim-from" style="padding:6px;border:1px solid #ccc;border-radius:4px;"></select>
+      </div>
+      <div>
+        <label style="font-size:0.85rem;display:block;margin-bottom:3px;">비교 버전</label>
+        <select id="sim-to" style="padding:6px;border:1px solid #ccc;border-radius:4px;"></select>
+      </div>
+      <div>
+        <label style="font-size:0.85rem;display:block;margin-bottom:3px;">직종</label>
+        <select id="sim-jobtype" style="padding:6px;border:1px solid #ccc;border-radius:4px;">
+          <option value="간호직">간호직</option>
+          <option value="사무직">사무직</option>
+          <option value="보건직">보건직</option>
+          <option value="기능직">기능직</option>
+          <option value="환경미화직">환경미화직</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:0.85rem;display:block;margin-bottom:3px;">등급</label>
+        <select id="sim-grade" style="padding:6px;border:1px solid #ccc;border-radius:4px;">
+          <option value="J1">주니어1 (J1)</option>
+          <option value="J2">주니어2 (J2)</option>
+          <option value="J3">주니어3 (J3)</option>
+          <option value="S1" selected>시니어1 (S1)</option>
+          <option value="S2">시니어2 (S2)</option>
+          <option value="S3">시니어3 (S3)</option>
+          <option value="M1">매니저1 (M1)</option>
+          <option value="M2">매니저2 (M2)</option>
+          <option value="M3">매니저3 (M3)</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:0.85rem;display:block;margin-bottom:3px;">호봉</label>
+        <select id="sim-year" style="padding:6px;border:1px solid #ccc;border-radius:4px;">
+          <option value="1">1호봉</option><option value="2">2호봉</option><option value="3" selected>3호봉</option>
+          <option value="4">4호봉</option><option value="5">5호봉</option><option value="6">6호봉</option>
+          <option value="7">7호봉</option><option value="8">8호봉</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:0.85rem;display:block;margin-bottom:3px;">시간외근무(h)</label>
+        <input id="sim-ot" type="number" min="0" max="40" value="10" style="width:70px;padding:6px;border:1px solid #ccc;border-radius:4px;">
+      </div>
+      <div>
+        <label style="font-size:0.85rem;display:block;margin-bottom:3px;">야간근무(h)</label>
+        <input id="sim-night" type="number" min="0" max="40" value="8" style="width:70px;padding:6px;border:1px solid #ccc;border-radius:4px;">
+      </div>
+      <button class="btn btn-primary btn-sm" id="btn-run-sim" style="align-self:flex-end;">시뮬레이션 실행</button>
+    </div>
+    <div id="sim-result" style="margin-top:0.5rem;"></div>
+  </div>
+
+  <!-- 신규 버전 생성 모달 -->
+  <div class="modal-overlay" id="modal-new-version">
+    <div class="modal">
+      <h3>새 버전 만들기</h3>
+      <div class="form-row">
+        <label>버전 (예: 2027.1.0)</label>
+        <input type="text" id="nv-version" placeholder="2027.1.0">
+      </div>
+      <div class="form-row">
+        <label>적용 시작일</label>
+        <input type="date" id="nv-effective-from">
+      </div>
+      <div class="form-row">
+        <label>적용 종료일 (선택)</label>
+        <input type="date" id="nv-effective-to">
+      </div>
+      <div class="form-row">
+        <label>복사할 기존 버전 (선택)</label>
+        <select id="nv-copy-from">
+          <option value="">-- 빈 버전으로 생성 --</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>변경 메모</label>
+        <textarea id="nv-change-note" rows="3" placeholder="개정 사유 / 주요 변경 사항"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="btn-cancel-new-version">취소</button>
+        <button class="btn btn-primary" id="btn-confirm-new-version">생성</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="../data.js"></script>
+  <script src="../calculators.js"></script>
+  <script src="./rule-versions.js"></script>
+</body>
+</html>

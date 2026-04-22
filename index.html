@@ -2,10 +2,29 @@
 <html lang="ko" data-theme="neo">
 
 <head>
-  <script>(function(){var h=location.hostname,p=location.pathname,q=location.search;if((h==='snuhmate.com'||h==='www.snuhmate.com')&&(p==='/'||p==='/index.html')&&q.indexOf('app=1')===-1)location.replace('onboarding.html');})();</script>
+  <script>(function () { var h = location.hostname, p = location.pathname, q = location.search; if (h === 'angio.snuhmate.com' && (p === '/' || p === '/index.html')) { location.replace('/angio/index.html' + q); return; } if ((h === 'snuhmate.com' || h === 'www.snuhmate.com') && (p === '/' || p === '/index.html') && q.indexOf('app=1') === -1) location.replace('onboarding.html'); })();</script>
+  <!-- AppLock FOUC Guard: pinEnabled 확인 후 body를 즉시 숨겨서 잠금 전 콘텐츠 노출 방지 -->
+  <script>(function () { try { var s = JSON.parse(localStorage.getItem('bhm_settings') || '{}'); if (s.pinEnabled) { document.documentElement.style.visibility = 'hidden'; } } catch (e) { } })();</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="SNUH 메이트: 서울대학교병원, 보라매병원 등 급여 및 휴가 관리 어시스턴트">
+  <!--
+    I5: Content Security Policy — 로컬 전용 앱 (auth 제거). Drive/OAuth 도메인 모두 삭제.
+    'unsafe-inline' 은 기존 인라인 스크립트/스타일 유지 목적 (점진적 하드닝).
+  -->
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://cdn.sheetjs.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://cdn.channel.io https://tally.so https://browser.sentry-cdn.com;
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net;
+    img-src 'self' data: blob: https://*.googleusercontent.com https://www.google-analytics.com https://www.googletagmanager.com https://cdn.channel.io https://snuhmate.com https://tally.so;
+    font-src 'self' data: https://fonts.gstatic.com;
+    media-src 'self' https://cdn.channel.io;
+    connect-src 'self' https://*.googleapis.com https://www.google-analytics.com https://www.google.com https://www.googletagmanager.com https://apis.data.go.kr https://api.rss2json.com https://api.openalex.org https://news.google.com https://*.channel.io wss://*.channel.io https://*.sentry.io https://tally.so https://cdn.jsdelivr.net;
+    frame-src 'self' https://tally.so;
+    worker-src 'self' blob:;
+    object-src 'none';
+    base-uri 'self';
+  ">
   <title> SNUH 메이트 (SNUH Mate) </title>
   <link rel="manifest" href="manifest.json?v=1.3">
   <meta name="mobile-web-app-capable" content="yes">
@@ -15,7 +34,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="snuhmaterect.png?v=1.3">
   <link rel="icon" type="image/png" sizes="16x16" href="snuhmaterect.png?v=1.3">
   <link rel="shortcut icon" href="snuhmaterect.png?v=1.3">
-  <link rel="stylesheet" href="style.css?v=2.5">
+  <link rel="stylesheet" href="style.css?v=2.6">
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-Q4QYNTQHQ8"></script>
   <script>
@@ -24,42 +43,8 @@
     gtag('js', new Date());
     gtag('config', 'G-Q4QYNTQHQ8');
   </script>
-  <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
   <style>
-    /* ── Onboarding Modal ── */
-    .onboarding-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      z-index: 9999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-    }
-
-    .onboarding-card {
-      background: var(--bg-card);
-      border: 1.5px solid var(--border-active);
-      border-radius: 20px;
-      padding: 32px 24px 24px;
-      max-width: 380px;
-      width: 100%;
-      text-align: center;
-      animation: modalSlideIn 0.3s ease;
-    }
-
-    html[data-theme="neo"] .onboarding-card {
-      border: 3px solid #1a1a1a;
-      box-shadow: 6px 6px 0px #1a1a1a;
-      border-radius: 16px;
-    }
-
+    /* ── Shared Modal Styles (used by migrationOverlay) ── */
     .onboarding-icon {
       font-size: 52px;
       margin-bottom: -4px;
@@ -76,63 +61,6 @@
       font-size: var(--text-body-normal);
       color: var(--text-muted);
       margin-bottom: 20px;
-    }
-
-    .onboarding-steps {
-      text-align: left;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      margin-bottom: 24px;
-    }
-
-    .onboarding-step {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-    }
-
-    .step-num {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: var(--accent-indigo);
-      color: white;
-      font-weight: 700;
-      font-size: 13px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      margin-top: 2px;
-    }
-
-    html[data-theme="neo"] .step-num {
-      border: 2px solid #1a1a1a;
-      background: var(--accent-violet);
-    }
-
-    .step-text strong {
-      display: block;
-      font-size: var(--text-body-large);
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-
-    .step-text small {
-      font-size: var(--text-body-normal);
-      color: var(--text-muted);
-      line-height: 1.4;
-    }
-
-    .onboarding-link {
-      display: block;
-      text-align: center;
-      color: var(--accent-indigo);
-      font-size: var(--text-body-normal);
-      cursor: pointer;
-      text-decoration: underline;
-      margin-top: 12px;
     }
 
     /* ── Hourly Warning Banner ── */
@@ -311,283 +239,6 @@
       background: #ffffff;
       color: #1a1a1a;
     }
-
-    /* ── Interactive Tutorial ── */
-    .tutorial-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 20000;
-      pointer-events: none;
-      transition: opacity 0.3s ease;
-    }
-
-    .tutorial-overlay.active {
-      pointer-events: auto;
-    }
-
-    .tutorial-backdrop {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 20000;
-    }
-
-    .tutorial-spotlight {
-      position: absolute;
-      z-index: 20001;
-      border-radius: 12px;
-      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.72);
-      transition: all 0.4s cubic-bezier(.4, 0, .2, 1);
-      pointer-events: none;
-    }
-
-    .tutorial-tooltip {
-      position: absolute;
-      z-index: 20002;
-      background: var(--bg-card);
-      border: 2.5px solid var(--border-active);
-      border-radius: 16px;
-      padding: 20px 18px 16px;
-      max-width: 320px;
-      width: calc(100vw - 48px);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
-      animation: tutTooltipIn 0.35s cubic-bezier(.34, 1.56, .64, 1);
-      pointer-events: auto;
-    }
-
-    html[data-theme="neo"] .tutorial-tooltip {
-      border: 3px solid #1a1a1a;
-      box-shadow: 5px 5px 0 #1a1a1a;
-    }
-
-    @keyframes tutTooltipIn {
-      from {
-        opacity: 0;
-        transform: translateY(12px) scale(0.95);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
-    }
-
-    .tutorial-tooltip-arrow {
-      position: absolute;
-      width: 14px;
-      height: 14px;
-      background: var(--bg-card);
-      border: 2.5px solid var(--border-active);
-      transform: rotate(45deg);
-      z-index: -1;
-    }
-
-    html[data-theme="neo"] .tutorial-tooltip-arrow {
-      border: 3px solid #1a1a1a;
-    }
-
-    .tutorial-tooltip-arrow.top {
-      top: -8px;
-      left: 50%;
-      margin-left: -7px;
-      border-bottom: none;
-      border-right: none;
-    }
-
-    .tutorial-tooltip-arrow.bottom {
-      bottom: -8px;
-      left: 50%;
-      margin-left: -7px;
-      border-top: none;
-      border-left: none;
-    }
-
-    .tutorial-tooltip-title {
-      font-size: var(--text-title-large);
-      font-weight: 700;
-      color: var(--text-primary);
-      margin-bottom: 6px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .tutorial-tooltip-body {
-      font-size: var(--text-body-large);
-      color: var(--text-secondary);
-      line-height: 1.6;
-      margin-bottom: 16px;
-    }
-
-    .tutorial-tooltip-body .tut-highlight {
-      color: var(--accent-indigo);
-      font-weight: 600;
-    }
-
-    .tutorial-tooltip-body .tut-warn {
-      color: var(--accent-rose);
-      font-weight: 600;
-    }
-
-    .tutorial-tooltip-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .tutorial-progress {
-      font-size: var(--text-body-normal);
-      color: var(--text-muted);
-      font-weight: 600;
-    }
-
-    .tutorial-btn-group {
-      display: flex;
-      gap: 8px;
-    }
-
-    .tutorial-btn {
-      padding: 8px 16px;
-      border-radius: 10px;
-      font-weight: 700;
-      font-size: var(--text-body-large);
-      cursor: pointer;
-      border: 1.5px solid var(--border-glass);
-      background: var(--bg-glass);
-      color: var(--text-secondary);
-      transition: all 0.15s;
-    }
-
-    .tutorial-btn:active {
-      transform: scale(0.96);
-    }
-
-    .tutorial-btn.primary {
-      background: var(--accent-indigo);
-      color: #fff;
-      border-color: var(--accent-indigo);
-    }
-
-    html[data-theme="neo"] .tutorial-btn {
-      border: 2px solid #1a1a1a;
-      box-shadow: 3px 3px 0 #1a1a1a;
-    }
-
-    html[data-theme="neo"] .tutorial-btn:active {
-      transform: translate(2px, 2px);
-      box-shadow: 1px 1px 0 #1a1a1a;
-    }
-
-    html[data-theme="neo"] .tutorial-btn.primary {
-      background: var(--accent-violet);
-      border-color: #1a1a1a;
-    }
-
-    .tutorial-spotlight-pulse {
-      animation: spotPulse 1.8s ease-in-out infinite;
-    }
-
-    @keyframes spotPulse {
-
-      0%,
-      100% {
-        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.72), 0 0 0 4px rgba(99, 102, 241, 0.4);
-      }
-
-      50% {
-        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.72), 0 0 0 8px rgba(99, 102, 241, 0.25);
-      }
-    }
-
-    .tutorial-mock-sheet {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      max-height: 88vh;
-      display: flex;
-      flex-direction: column;
-      background: var(--bg-card);
-      border-top: 2px solid var(--border-active);
-      border-radius: 20px 20px 0 0;
-      padding: 24px 20px 32px;
-      z-index: 20003;
-      animation: tutSheetUp 0.35s cubic-bezier(.34, 1.56, .64, 1);
-      pointer-events: auto;
-    }
-
-    html[data-theme="neo"] .tutorial-mock-sheet {
-      border: 3px solid #1a1a1a;
-      border-bottom: none;
-      box-shadow: 0 -4px 0 #1a1a1a;
-    }
-
-    @keyframes tutSheetUp {
-      from {
-        transform: translateY(100%);
-      }
-
-      to {
-        transform: translateY(0);
-      }
-    }
-
-    .tut-mock-field {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 14px;
-      margin-bottom: 8px;
-      background: var(--bg-glass);
-      border: 1.5px solid var(--border-glass);
-      border-radius: 10px;
-      font-size: var(--text-body-large);
-      color: var(--text-primary);
-    }
-
-    .tut-mock-field .label {
-      color: var(--text-muted);
-      font-size: var(--text-body-normal);
-      min-width: 60px;
-    }
-
-    .tut-mock-field.active-field {
-      border-color: var(--accent-indigo);
-      background: rgba(99, 102, 241, 0.06);
-    }
-
-    .tut-mock-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 12px;
-      border-radius: 12px;
-      font-weight: 700;
-      font-size: var(--text-title-large);
-      width: 100%;
-      cursor: default;
-    }
-
-    .tut-mock-btn.save {
-      background: var(--accent-indigo);
-      color: #fff;
-    }
-
-    .tut-mock-btn.delete {
-      background: rgba(244, 63, 94, 0.1);
-      color: var(--accent-rose);
-    }
-
-    html[data-theme="neo"] .tut-mock-btn {
-      border: 2px solid #1a1a1a;
-      box-shadow: 3px 3px 0 #1a1a1a;
-    }
   </style>
 </head>
 
@@ -637,8 +288,13 @@
       </div>
 
       <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 24px;">
-        <button class="migration-btn primary" onclick="downloadBackup()" style="width: 100%;">📦 데이터 백업하기 (필수)</button>
-        <a href="https://snuhmate.com" class="migration-btn secondary" style="width: 100%;">🔗 snuhmate.com으로 이동</a>
+        <button class="migration-btn primary" onclick="downloadBackupAndStay()" style="width: 100%;">📦 데이터 백업하기 (자동 이동
+          멈춤)</button>
+        <a href="https://snuhmate.com" class="migration-btn secondary" style="width: 100%;">🔗 snuhmate.com으로 바로 이동</a>
+        <div id="migrationCountdownText"
+          style="font-size: 0.95em; color: var(--text-secondary); background: rgba(99,102,241,0.08); border-radius: 10px; padding: 12px 14px; line-height: 1.5;">
+          <strong>3초 뒤</strong> snuhmate.com으로 자동 이동합니다.
+        </div>
         <button onclick="closeMigrationModal()"
           style="border: none; background: none; color: var(--text-muted); text-decoration: underline; cursor: pointer; font-size: 0.95em; margin-top: 8px;">그냥
           시작하기 (기존 데이터 무시)</button>
@@ -649,23 +305,40 @@
   <!-- ═══════════ Header & Footer (shared-layout.js에서 렌더) ═══════════ -->
   <header id="sharedHeader"></header>
   <nav id="sharedFooter"></nav>
-  <script src="shared-layout.js?v=1.0"></script>
+  <script src="shared-layout.js?v=1.6" defer></script>
 
   <main class="main">
+
+    <!-- 데모 모드 배너 (모든 탭 공통) -->
+    <div id="demoBanner"
+      style="display:none; align-items:center; gap:10px; background:var(--amber,#F5A623); color:var(--ink,#1a1a1a); padding:10px 16px; border-radius:10px; margin-bottom:8px; font-size:14px; font-weight:600;">
+      <span>🎮 데모 모드</span>
+      <span style="font-weight:400; flex:1;">샘플 데이터로 체험 중이에요. 실제 데이터는 저장되지 않아요.</span>
+      <button onclick="window.exitDemoMode && window.exitDemoMode(); (function(){ var sp=new URLSearchParams(window.location.search); sp.delete('demo'); sp.set('app','1'); window.location.replace(window.location.pathname+'?'+sp.toString()); })();"
+        style="background:var(--ink,#1a1a1a); color:#fff; border:none; border-radius:6px; padding:4px 10px; font-size:13px; font-weight:600; cursor:pointer; flex-shrink:0;">나가기</button>
+    </div>
 
     <!-- ═══════════ 🏠 홈 ═══════════ -->
     <div class="tab-content" id="tab-home">
 
+      <!-- 프로필 미저장 힌트 배너 -->
+      <div id="homeProfileNudge" class="info-note-banner" style="display:none;">
+        <span>📌</span>
+        <span>아직 개인정보가 없어요 — <a onclick="switchTab('profile')">직종·호봉</a>을 입력하면 시간외 수당이 자동 계산됩니다.</span>
+      </div>
+
       <!-- 내 현황 요약 카드 -->
       <div class="home-summary-grid">
-        <div class="home-summary-card" onclick="switchTab('overtime')">
-          <img src="./overtime.png" alt="시간외" class="home-card-img" id="homeOtImg">
+        <div class="home-summary-card">
+          <img src="./overtime.png" alt="시간외" class="home-card-img home-card-img-toggle" id="homeOtImg"
+            onclick="switchHomePeriod(_homePeriod === 'month' ? 'year' : 'month')">
           <div class="home-card-body" id="homeOtBody" style="display:none;">
             <div class="home-card-stats" id="homeOtStats"></div>
           </div>
         </div>
-        <div class="home-summary-card" onclick="switchTab('leave')">
-          <img src="./vacation.png" alt="휴가" class="home-card-img" id="homeLeaveImg">
+        <div class="home-summary-card">
+          <img src="./vacation.png" alt="휴가" class="home-card-img home-card-img-toggle" id="homeLeaveImg"
+            onclick="switchHomePeriod(_homePeriod === 'month' ? 'year' : 'month')">
           <div class="home-card-body" id="homeLeaveBody" style="display:none;">
             <div class="home-card-stats" id="homeLeaveStats"></div>
           </div>
@@ -742,18 +415,18 @@
         <span>모든 데이터는 내 브라우저에만 저장됩니다.<br> 개발자도, 서버도 절대 볼 수 없어요.</span>
       </div>
 
-      <!-- 시작 가이드 & 튜토리얼 -->
-      <div style="display:flex; gap:8px;">
-        <button onclick="startTutorial()" class="btn btn-outline"
-          style="flex:1; font-size:var(--text-body-normal); padding:10px; color:var(--accent-indigo); border-color:var(--accent-indigo);">
-          🎓 사용법 튜토리얼
-        </button>
-        <button onclick="location.href='onboarding.html'" class="btn btn-outline"
-          style="flex:1; font-size:var(--text-body-normal); padding:10px; color:var(--text-muted); border-color:var(--border-glass);">
-          📖 시작 가이드
-        </button>
-      </div>
+      <!-- 튜토리얼 -->
+      <a href="./tutorial.html" class="btn btn-outline"
+        style="display:block; font-size:var(--text-body-normal); padding:10px; color:var(--accent-indigo); border-color:var(--accent-indigo); text-decoration:none; text-align:center;">
+        🎓 사용법 튜토리얼
+      </a>
 
+      <!-- G8: 공유하기 버튼 -->
+      <button id="shareAppBtn" onclick="shareApp()" style="display:block; width:100%; margin-top:10px; padding:10px; background:none;
+               border:1px solid var(--border-glass,rgba(0,0,0,0.15)); border-radius:10px;
+               font-size:var(--text-body-normal); color:var(--text-muted); cursor:pointer;">
+        🔗 동료에게 공유하기
+      </button>
 
     </div>
 
@@ -762,8 +435,9 @@
       <!-- 책갈피 서브탭 -->
       <nav class="pay-bookmark-tabs" id="payrollSubTabs">
         <button class="pay-bookmark-tab active" data-subtab="pay-payslip">급여명세서 관리</button>
-        <button class="pay-bookmark-tab" data-subtab="pay-calc">급여 예상</button>
-        <button class="pay-bookmark-tab" data-subtab="pay-qa">급여 계산</button>
+        <button class="pay-bookmark-tab" data-subtab="pay-calc">이번 달 예상액</button>
+        <button class="pay-bookmark-tab" data-subtab="pay-qa">수당 계산기</button>
+        <button class="pay-bookmark-tab" data-subtab="pay-retirement">퇴직금</button>
       </nav>
       <div class="pay-tab-accent" id="payTabAccent"></div>
 
@@ -791,154 +465,158 @@
 
         <!-- ③ 상세 시뮬레이션 (숨김 — 급여예상 카드뷰로 대체) -->
         <div style="display:none;">
-        <div class="collapsible-header" onclick="toggleCollapsible('payEstDetailForm')" style="margin-top:12px;">
-          <span style="display:flex; align-items:center; gap:8px;"><span class="toggle-icon">▸</span> 상세 시뮬레이션 설정</span>
-        </div>
-        <div class="collapsible-body" id="payEstDetailForm" style="display:none;">
-        <div class="card" style="border-color:var(--accent-indigo); border-width:2px; margin-top:8px;">
-          <div class="card-title"><span class="icon" style="color:var(--accent-indigo);">🧾</span> 전체 급여 시뮬레이션</div>
-          <p style="font-size:var(--text-body-normal); color:var(--text-muted); margin-bottom:12px;">📌 내 정보가 저장되어 있으면
-            자동 반영됩니다. 월별 변동사항만 입력하세요.</p>
+          <div class="collapsible-header" onclick="toggleCollapsible('payEstDetailForm')" style="margin-top:12px;">
+            <span style="display:flex; align-items:center; gap:8px;"><span class="toggle-icon">▸</span> 상세 시뮬레이션
+              설정</span>
+          </div>
+          <div class="collapsible-body" id="payEstDetailForm" style="display:none;">
+            <div class="card" style="border-color:var(--accent-indigo); border-width:2px; margin-top:8px;">
+              <div class="card-title"><span class="icon" style="color:var(--accent-indigo);">🧾</span> 전체 급여 시뮬레이션</div>
+              <p style="font-size:var(--text-body-normal); color:var(--text-muted); margin-bottom:12px;">📌 내 정보가 저장되어
+                있으면
+                자동 반영됩니다. 월별 변동사항만 입력하세요.</p>
 
-          <div id="psProfileBanner" class="warning-box" style="display:none;"></div>
+              <div id="psProfileBanner" class="warning-box" style="display:none;"></div>
 
-          <p style="font-size:var(--text-body-normal); color:var(--text-primary); margin:8px 0 4px; font-weight:600;">
-            ▸ 시뮬레이션 월</p>
-          <div class="form-row">
-            <div class="form-group">
-              <label>연도</label>
-              <select id="psSimYear" onchange="autoFillMonth()">
-                <option value="2025">2025년</option>
-                <option value="2026" selected>2026년</option>
-                <option value="2027">2027년</option>
-                <option value="2028">2028년</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>월</label>
-              <select id="psSimMonth" onchange="autoFillMonth()">
-                <option value="1">1월</option>
-                <option value="2">2월</option>
-                <option value="3" selected>3월</option>
-                <option value="4">4월</option>
-                <option value="5">5월</option>
-                <option value="6">6월</option>
-                <option value="7">7월</option>
-                <option value="8">8월</option>
-                <option value="9">9월</option>
-                <option value="10">10월</option>
-                <option value="11">11월</option>
-                <option value="12">12월</option>
-              </select>
-            </div>
-          </div>
-          <div id="psHolidayInfo"
-            style="font-size:var(--text-body-normal); color:var(--text-muted); margin-bottom:12px;"></div>
-
-          <p style="font-size:var(--text-body-normal); color:var(--text-primary); margin:8px 0 4px; font-weight:600;">
-            ▸ 이번달 변동사항</p>
-          <div class="form-row">
-            <div class="form-group">
-              <label>근무일수</label>
-              <input type="number" id="psWorkDays" value="22" min="0" max="31">
-            </div>
-            <div class="form-group">
-              <label>야간근무가산 (횟수)</label>
-              <input type="number" id="psNightShiftCount" value="0" min="0" max="31">
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>연장근무 (시간)</label>
-              <input type="number" id="psOvertime" value="0" min="0" step="0.25">
-            </div>
-            <div class="form-group">
-              <label>야간근무 (시간)</label>
-              <input type="number" id="psNight" value="0" min="0" step="0.25">
-            </div>
-          </div>
-          <div class="form-group">
-            <label>휴일근무 (시간)</label>
-            <input type="number" id="psHoliday" value="0" min="0" step="0.25">
-          </div>
-
-          <!-- 캘린더 (접이식 참조용) -->
-          <div class="collapsible-header" onclick="toggleCollapsible('psMiniCalContainer')">
-            <span style="display:flex; align-items:center; gap:8px;"><span class="toggle-icon">▸</span> 달력 보기</span>
-          </div>
-          <div class="collapsible-body" id="psMiniCalContainer" style="display:none;">
-            <div id="psMiniCalendar" style="margin-bottom:8px;"></div>
-          </div>
-
-          <div class="toggle-group">
-            <input type="checkbox" id="psHolidayMonth">
-            <label for="psHolidayMonth">명절지원비 해당월 (설·추석·5월·7월)</label>
-          </div>
-
-          <!-- 내 정보 없는 경우 직접 입력 영역 -->
-          <div id="psManualSection">
-            <div class="collapsible-header" onclick="toggleCollapsible('psManualFields')">
-              <span style="display:flex; align-items:center; gap:8px;"><span class="toggle-icon">▸</span> 내 정보 미저장 시
-                직접 입력</span>
-            </div>
-            <div class="collapsible-body" id="psManualFields" style="display:none;">
-              <div class="form-group">
-                <label>직종</label>
-                <select id="psJobType" onchange="updatePayrollGrades()">
-                </select>
-              </div>
+              <p
+                style="font-size:var(--text-body-normal); color:var(--text-primary); margin:8px 0 4px; font-weight:600;">
+                ▸ 시뮬레이션 월</p>
               <div class="form-row">
                 <div class="form-group">
-                  <label>직급</label>
-                  <select id="psGrade"></select>
+                  <label>연도</label>
+                  <select id="psSimYear" onchange="autoFillMonth()">
+                    <option value="2025">2025년</option>
+                    <option value="2026" selected>2026년</option>
+                    <option value="2027">2027년</option>
+                    <option value="2028">2028년</option>
+                  </select>
                 </div>
                 <div class="form-group">
-                  <label>호봉</label>
-                  <select id="psYear">
-                    <option value="1">1년차</option>
-                    <option value="2">2년차</option>
-                    <option value="3">3년차</option>
-                    <option value="4">4년차</option>
-                    <option value="5">5년차</option>
-                    <option value="6">6년차</option>
-                    <option value="7">7년차</option>
-                    <option value="8">8년차</option>
+                  <label>월</label>
+                  <select id="psSimMonth" onchange="autoFillMonth()">
+                    <option value="1">1월</option>
+                    <option value="2">2월</option>
+                    <option value="3" selected>3월</option>
+                    <option value="4">4월</option>
+                    <option value="5">5월</option>
+                    <option value="6">6월</option>
+                    <option value="7">7월</option>
+                    <option value="8">8월</option>
+                    <option value="9">9월</option>
+                    <option value="10">10월</option>
+                    <option value="11">11월</option>
+                    <option value="12">12월</option>
                   </select>
                 </div>
               </div>
+              <div id="psHolidayInfo"
+                style="font-size:var(--text-body-normal); color:var(--text-muted); margin-bottom:12px;"></div>
+
+              <p
+                style="font-size:var(--text-body-normal); color:var(--text-primary); margin:8px 0 4px; font-weight:600;">
+                ▸ 이번달 변동사항</p>
               <div class="form-row">
                 <div class="form-group">
-                  <label>근속연수</label>
-                  <input type="number" id="psServiceYears" value="1" min="0" max="40">
+                  <label>근무일수</label>
+                  <input type="number" id="psWorkDays" value="22" min="0" max="31">
                 </div>
                 <div class="form-group">
-                  <label>조정급 (원/월)</label>
-                  <input type="number" id="psAdjust" value="0" min="0">
+                  <label>야간근무가산 (횟수)</label>
+                  <input type="number" id="psNightShiftCount" value="0" min="0" max="31">
                 </div>
               </div>
-              <div class="toggle-group">
-                <input type="checkbox" id="psMilitary">
-                <label for="psMilitary">군복무수당</label>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>연장근무 (시간)</label>
+                  <input type="number" id="psOvertime" value="0" min="0" step="0.25">
+                </div>
+                <div class="form-group">
+                  <label>야간근무 (시간)</label>
+                  <input type="number" id="psNight" value="0" min="0" step="0.25">
+                </div>
               </div>
-              <div class="toggle-group">
-                <input type="checkbox" id="psSeniority">
-                <label for="psSeniority">근속가산기본급</label>
+              <div class="form-group">
+                <label>휴일근무 (시간)</label>
+                <input type="number" id="psHoliday" value="0" min="0" step="0.25">
               </div>
+
+              <!-- 캘린더 (접이식 참조용) -->
+              <div class="collapsible-header" onclick="toggleCollapsible('psMiniCalContainer')">
+                <span style="display:flex; align-items:center; gap:8px;"><span class="toggle-icon">▸</span> 달력 보기</span>
+              </div>
+              <div class="collapsible-body" id="psMiniCalContainer" style="display:none;">
+                <div id="psMiniCalendar" style="margin-bottom:8px;"></div>
+              </div>
+
               <div class="toggle-group">
-                <input type="checkbox" id="psSpouse">
-                <label for="psSpouse">배우자 (40,000원)</label>
+                <input type="checkbox" id="psHolidayMonth">
+                <label for="psHolidayMonth">명절지원비 해당월 (설·추석·5월·7월)</label>
+              </div>
+
+              <!-- 내 정보 없는 경우 직접 입력 영역 -->
+              <div id="psManualSection">
+                <div class="collapsible-header" onclick="toggleCollapsible('psManualFields')">
+                  <span style="display:flex; align-items:center; gap:8px;"><span class="toggle-icon">▸</span> 내 정보 미저장 시
+                    직접 입력</span>
+                </div>
+                <div class="collapsible-body" id="psManualFields" style="display:none;">
+                  <div class="form-group">
+                    <label>직종</label>
+                    <select id="psJobType" onchange="updatePayrollGrades()">
+                    </select>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label>직급</label>
+                      <select id="psGrade"></select>
+                    </div>
+                    <div class="form-group">
+                      <label>호봉</label>
+                      <select id="psYear">
+                        <option value="1">1년차</option>
+                        <option value="2">2년차</option>
+                        <option value="3">3년차</option>
+                        <option value="4">4년차</option>
+                        <option value="5">5년차</option>
+                        <option value="6">6년차</option>
+                        <option value="7">7년차</option>
+                        <option value="8">8년차</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label>근속연수</label>
+                      <input type="number" id="psServiceYears" value="1" min="0" max="40">
+                    </div>
+                    <div class="form-group">
+                      <label>조정급 (원/월)</label>
+                      <input type="number" id="psAdjust" value="0" min="0">
+                    </div>
+                  </div>
+                  <div class="toggle-group">
+                    <input type="checkbox" id="psMilitary">
+                    <label for="psMilitary">군복무수당</label>
+                  </div>
+                  <div class="toggle-group">
+                    <input type="checkbox" id="psSeniority">
+                    <label for="psSeniority">근속가산기본급</label>
+                  </div>
+                  <div class="toggle-group">
+                    <input type="checkbox" id="psSpouse">
+                    <label for="psSpouse">배우자 (40,000원)</label>
+                  </div>
+                </div>
+              </div>
+
+              <button class="btn btn-primary btn-full" onclick="calculatePayroll()" style="margin-top:12px;">급여
+                시뮬레이션</button>
+
+              <div id="payrollResult" style="margin-top:16px;">
+                <p style="color:var(--text-muted)">위에서 정보를 입력하고 [급여 시뮬레이션]을 눌러주세요.</p>
               </div>
             </div>
           </div>
-
-          <button class="btn btn-primary btn-full" onclick="calculatePayroll()" style="margin-top:12px;">급여
-            시뮬레이션</button>
-
-          <div id="payrollResult" style="margin-top:16px;">
-            <p style="color:var(--text-muted)">위에서 정보를 입력하고 [급여 시뮬레이션]을 눌러주세요.</p>
-          </div>
-        </div>
-        </div>
         </div><!-- /상세 시뮬레이션 숨김 wrapper -->
 
         <!-- 급여 검증 (숨김, 명세서 업로드 후 활성화) -->
@@ -953,6 +631,631 @@
       <div class="sub-content" id="sub-pay-qa">
         <div id="qaCardsContainer"></div>
       </div><!-- /sub-pay-qa -->
+
+      <!-- ── 서브탭 5: 퇴직금 ── -->
+      <div class="sub-content" id="sub-pay-retirement">
+
+        <!-- 퇴직금 내부 탭 네비게이션 -->
+        <nav class="ret-bookmark-tabs" id="retTabs">
+          <button class="ret-bookmark-tab active" data-tab="calc">💰 퇴직금</button>
+          <button class="ret-bookmark-tab" data-tab="peak">📊 시뮬레이션</button>
+          <button class="ret-bookmark-tab" data-tab="pension">📖 종합가이드</button>
+          <button class="ret-bookmark-tab" data-tab="checklist">✅ 퇴직준비</button>
+        </nav>
+        <div class="ret-tab-accent calc" id="retTabAccent"></div>
+
+        <div class="ret-panel active" id="ret-panel-calc">
+          <div id="retAutoLoadBanner"
+            style="display:none; margin-bottom:12px; padding:12px 14px; font-size:var(--text-body-normal); line-height:1.6; background:#e0e7ff; border:2.5px solid #4338ca; border-radius:8px; box-shadow:3px 3px 0px #1a1a1a;">
+            <div style="font-weight:700; margin-bottom:4px; color:#1e1b4b;">⚡ 내 정보 자동 반영</div>
+            <div id="retAutoLoadDetail" style="color:#312e81;"></div>
+          </div>
+          <div class="ret-card">
+            <div class="ret-card-title">📋 기본 정보 입력</div>
+            <div class="ret-form-row">
+              <label class="ret-label">월 평균임금 (원) <span
+                  style="font-size:11px; color:var(--text-muted); font-weight:400; margin-left:4px;"
+                  id="retWageSourceLabel"></span></label>
+              <input class="ret-input" type="number" id="retAvgWage"
+                placeholder="급여명세서가 저장되어 있으면 퇴직 예정일 기준 3개월 평균임금으로 자동계산, 없을 시 수동 입력해주세요" min="0" step="10000">
+              <div style="font-size:11px; color:var(--text-muted); line-height:1.7; margin-top:4px;">
+                • 근로자퇴직급여보장법 제8조: 퇴직금 = 1일 평균임금 × 30 × 계속근로연수<br>
+                • 근로기준법 제2조 제1항 6호: 평균임금 = 퇴직 전 3개월간 지급된 임금 총액 ÷ 역일수<br>
+                • 근로기준법 제2조 제2항: 평균임금이 통상임금보다 낮으면 → 통상임금으로 계산 (보호 조항)
+              </div>
+            </div>
+            <div class="ret-form-row">
+              <label class="ret-label">생년월일 <span
+                  style="font-size:11px; color:var(--text-muted); font-weight:400;">(D-day · 빠른 날짜 계산용)</span></label>
+              <input class="ret-input" type="date" id="retBirthDate"
+                oninput="retUpdateQuickDates(); syncBirthDateToProfile(this.value)">
+            </div>
+            <!-- D-day 카드 -->
+            <div class="ret-dday-grid" id="retDdayGrid" style="display:none; margin-bottom:10px;">
+              <div class="ret-dday-card">
+                <div class="ret-dday-label">법정 정년까지</div>
+                <div class="ret-dday-val" id="retDdayPeak">—</div>
+              </div>
+              <div class="ret-dday-card">
+                <div class="ret-dday-label">임금피크 연장 만료</div>
+                <div class="ret-dday-val" id="retDdayRetire">—</div>
+              </div>
+            </div>
+            <div class="ret-form-row">
+              <label class="ret-label">입사일</label>
+              <input class="ret-input" type="date" id="retHireDate" oninput="retUpdateQuickDates()">
+            </div>
+            <div class="ret-form-row">
+              <label class="ret-label">퇴직(예정)일</label>
+              <div class="ret-quick-dates" id="retQuickDates" style="display:none;">
+                <button class="ret-quick-btn" id="retBtnNow" onclick="retSetRetireDate('now')">지금 바로</button>
+                <button class="ret-quick-btn" id="retBtnPeakDate" onclick="retSetRetireDate('peak')">법정 정년 (만
+                  60세)</button>
+                <button class="ret-quick-btn" id="retBtnPeakEndDate" onclick="retSetRetireDate('peakEnd')">임금피크 연장 만료 (만
+                  61세)</button>
+              </div>
+              <input class="ret-input" type="date" id="retRetireDate">
+            </div>
+            <!-- 임금피크 옵션 (만 60세 임박 시 자동 표시) -->
+            <div id="retPeakOptSection" style="display:none; margin-bottom:4px;">
+              <label class="ret-label" style="display:block; margin-bottom:7px;">임금피크 선택 (만 60세 해당자)</label>
+              <div class="ret-peak-opts">
+                <label class="ret-peak-opt selected" id="retPeakOpt_none" onclick="retSelectPeakOpt(this)">
+                  <input type="radio" name="retPeakOpt" value="none" checked>
+                  <div class="ret-peak-opt-body">
+                    <div class="ret-peak-opt-title">해당없음 — 법정 정년(만 60세)에 퇴직</div>
+                    <div class="ret-peak-opt-desc">임금피크 미신청. 입력한 월 평균임금 그대로 퇴직금 산정</div>
+                  </div>
+                </label>
+                <label class="ret-peak-opt" id="retPeakOpt_A" onclick="retSelectPeakOpt(this)">
+                  <input type="radio" name="retPeakOpt" value="A">
+                  <div class="ret-peak-opt-body">
+                    <div class="ret-peak-opt-title">옵션 A — 공로연수 (기준임금 × 60%)</div>
+                    <div class="ret-peak-opt-desc">만 60세~61세: 근무 없이 60% 수령. 퇴직금 기준임금도 60% 적용 → 감소</div>
+                  </div>
+                </label>
+                <label class="ret-peak-opt" id="retPeakOpt_B" onclick="retSelectPeakOpt(this)">
+                  <input type="radio" name="retPeakOpt" value="B">
+                  <div class="ret-peak-opt-body">
+                    <div class="ret-peak-opt-title">옵션 B — 계속근무 (기준임금 × 100%)</div>
+                    <div class="ret-peak-opt-desc">만 60세~61세: 계속 근무 + 100% 수령. 근속 1년 추가 → 퇴직금 기준임금 유지</div>
+                  </div>
+                </label>
+              </div>
+            </div>
+            <label class="ret-checkbox-row" id="retSeveranceCheckRow" style="display:none;">
+              <input type="checkbox" id="retSeveranceCheck" checked>
+              <span class="ret-checkbox-label">퇴직수당 포함 계산 (2015.6.30 이전 입사자)</span>
+            </label>
+            <button class="ret-calc-btn" onclick="calcRetirementEmbedded()">퇴직금 계산하기</button>
+          </div>
+          <div class="ret-warning" id="retPre2001Warning">
+            ⚠️ 2001.8.31 이전 근속분이 포함되어 있습니다. 해당 부분의 퇴직금은 인사과에 직접 문의해 주세요.
+          </div>
+          <div class="ret-result" id="retCalcResult" style="display:none;">
+            <div class="ret-result-label" id="retCalcResultLabel">예상 퇴직금</div>
+            <div class="ret-result-amount" id="retCalcResultTotal">0원</div>
+            <div class="ret-result-breakdown" id="retCalcResultBreakdown"></div>
+          </div>
+          <div id="retAiSuggestion" style="display:none;"></div>
+          <p class="ret-notice">※ 실제 금액은 개인별 수당, 급여 조정, 세금 공제에 따라 달라집니다. 최종 확인은 인사과에 문의하세요.</p>
+          <div class="ret-card ret-rate-card" id="retRateCard" style="margin-top:4px;">
+            <div class="ret-card-title ret-rate-toggle" onclick="retToggleRateCard()"
+              style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none;">
+              <span>📊 근속연수별 퇴직금 지급률</span>
+              <span class="ret-rate-chevron" id="retRateChevron"
+                style="font-size:12px; color:var(--text-muted); transition:transform 0.2s;">▲</span>
+            </div>
+            <div id="retRateCardBody">
+              <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:var(--text-body-normal);">
+                  <thead>
+                    <tr style="border-bottom:2px solid #1a1a1a; background:rgba(129,140,248,0.12);">
+                      <th style="padding:8px; text-align:center;">근속</th>
+                      <th style="padding:8px; text-align:center;">지급률(월)</th>
+                      <th style="padding:8px; text-align:center;">근속</th>
+                      <th style="padding:8px; text-align:center;">지급률(월)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="retRateTableBody"></tbody>
+                </table>
+              </div>
+              <div style="font-size:11px; color:var(--text-muted); margin-top:10px; line-height:1.8;">
+                <div>📌 <strong>위 표는 2001.8.31 이전 입사자에게 적용되는 누진배수</strong>입니다.</div>
+                <div style="margin-top:2px;">• <strong>2001.9.1 이후 입사자</strong>: 법정 퇴직금 = 월 평균임금 × 근속연수 (1개월/년)</div>
+                <div>• <strong>2015.6.30 이전 입사자</strong>: 위 기본 퇴직금에 퇴직수당(제53조) 별도 가산</div>
+                <div style="margin-top:2px; padding-left:12px;">퇴직수당 = 월 평균임금 × 근속연수 × 비율 (1~5년:10% / 5~10년:35% /
+                  10~15년:45% / 15~20년:50% / 20년+:60%)</div>
+                <div style="margin-top:2px;">• <strong>만 60세 이후 퇴직자</strong>: 만 60세 직전의 평균임금 기준 적용 (제53조 2항)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 탭 2: 시뮬레이션 (임금피크 시나리오 비교) -->
+        <div class="ret-panel" id="ret-panel-peak">
+          <div class="ret-info-box">🤖 <strong>AI 시나리오 분석</strong> — 지금 퇴직 vs 임금피크 옵션 A(공로연수) vs B(계속근무). 퇴직금 포함 총 패키지를
+            비교합니다.</div>
+          <!-- 숨김 입력 (JS 계산용) -->
+          <div style="display:none;">
+            <input type="number" id="retScWage">
+            <input type="date" id="retScHireDate">
+            <input type="date" id="retScBirthDate">
+          </div>
+          <!-- 타임라인 시각화 -->
+          <div id="retSimTimeline" class="ret-card ret-tl-card" style="display:none; margin-bottom:12px;"></div>
+          <!-- 옵션 A vs B 비교표 (AI 카드 위 고정) -->
+          <div class="ret-compare-top-card">
+            <div class="ret-compare-top-title">⚖️ 옵션 A vs B 한눈에 비교</div>
+            <table class="ret-guide-table">
+              <tr>
+                <th>항목</th>
+                <th>옵션 A 공로연수</th>
+                <th>옵션 B 계속근무</th>
+              </tr>
+              <tr>
+                <td>근무 여부</td>
+                <td>불필요 (쉬는 1년)</td>
+                <td class="pos">1년 계속 근무</td>
+              </tr>
+              <tr>
+                <td>급여 수령</td>
+                <td class="neg">기준임금 × 60%</td>
+                <td class="pos">기준임금 × 100%</td>
+              </tr>
+              <tr>
+                <td>퇴직금 기준임금</td>
+                <td class="neg">60% 적용 → 감소</td>
+                <td class="pos">100% 유지 + 근속 +1년</td>
+              </tr>
+              <tr>
+                <td>패키지 총액</td>
+                <td class="neg">낮음</td>
+                <td class="pos">대부분 최고 ★</td>
+              </tr>
+              <tr>
+                <td>사학연금 기여금</td>
+                <td class="neg">60% 기준 → 연금 감소</td>
+                <td class="pos">100% 기준 유지</td>
+              </tr>
+              <tr>
+                <td>유리한 상황</td>
+                <td>건강 우려·돌봄 필요 시</td>
+                <td>건강하고 근무 가능 시</td>
+              </tr>
+            </table>
+            <div class="ret-guide-note" style="margin-top:8px;">※ 금전 기준으로는 옵션 B가 유리하지만, 건강·업무 여건·개인 계획이 최종 결정 변수입니다. 자세한
+              분석은 <strong>종합가이드</strong> 탭에서 확인하세요.</div>
+          </div>
+          <!-- 시나리오 결과 (AI 카드 + 상세) -->
+          <div id="retScenarioResult" style="display:none;"></div>
+          <!-- [종합 가이드는 📖 종합가이드 탭으로 이동] -->
+          <div class="ret-card ret-sim-guide" style="display:none; margin-top:4px;">
+            <div class="ret-card-title">📚 퇴직 설계 종합 가이드</div>
+            <div style="font-size:11px; color:var(--text-muted); margin-bottom:12px;">시나리오 1·2·3 외에 놓치기 쉬운 변수와 전략을
+              정리했습니다.</div>
+
+            <!-- 1. 옵션 A vs B -->
+            <div class="ret-guide-item">
+              <div class="ret-guide-hdr" onclick="this.parentNode.classList.toggle('open')">
+                <span>⚖️ 옵션 A vs B 장단점 비교</span><span class="ret-guide-chev">▸</span>
+              </div>
+              <div class="ret-guide-body">
+                <table class="ret-guide-table">
+                  <tr>
+                    <th>항목</th>
+                    <th>옵션 A (공로연수)</th>
+                    <th>옵션 B (계속근무)</th>
+                  </tr>
+                  <tr>
+                    <td>근무 여부</td>
+                    <td>불필요 (쉬는 1년)</td>
+                    <td class="pos">1년 계속 근무</td>
+                  </tr>
+                  <tr>
+                    <td>급여 수령액</td>
+                    <td class="neg">기준임금 × 60%</td>
+                    <td class="pos">기준임금 × 100%</td>
+                  </tr>
+                  <tr>
+                    <td>퇴직금 기준임금</td>
+                    <td class="neg">60% 적용 → 감소</td>
+                    <td class="pos">100% 유지 + 근속 +1년</td>
+                  </tr>
+                  <tr>
+                    <td>패키지 총액</td>
+                    <td class="neg">낮음</td>
+                    <td class="pos">대부분 최고 ★</td>
+                  </tr>
+                  <tr>
+                    <td>사학연금 기여금</td>
+                    <td class="neg">60% 기준 납부 → 연금 소폭 감소</td>
+                    <td class="pos">100% 기준 유지</td>
+                  </tr>
+                  <tr>
+                    <td>유리한 상황</td>
+                    <td>건강 우려 · 돌봄 · 여행 계획 시</td>
+                    <td>건강하고 근무 지속 가능 시</td>
+                  </tr>
+                </table>
+                <div class="ret-guide-note">※ 금전 기준으로는 옵션 B가 유리하지만, 건강·업무 여건·개인 계획이 최종 결정 변수입니다.</div>
+              </div>
+            </div>
+
+            <!-- 2. 중간정산 -->
+            <div class="ret-guide-item">
+              <div class="ret-guide-hdr" onclick="this.parentNode.classList.toggle('open')">
+                <span>💰 퇴직금 중간정산 — 신중히!</span><span class="ret-guide-chev">▸</span>
+              </div>
+              <div class="ret-guide-body">
+                <div class="ret-guide-warn">⚠️ 중간정산 시 퇴직금 기산일이 리셋됩니다. 누진배수(2001.8.31 이전 입사) 대상자는 큰 손해!</div>
+                <div class="ret-guide-row"><strong>원칙:</strong> 2012년 이후 원칙적으로 불가 (근로자퇴직급여보장법 제8조)</div>
+                <div class="ret-guide-row" style="margin-top:6px;"><strong>예외적 허용 사유:</strong></div>
+                <ul class="ret-guide-ul">
+                  <li>무주택자의 본인 명의 주택 구입·전세 보증금</li>
+                  <li>본인·배우자·부양가족 6개월 이상 요양비</li>
+                  <li>개인회생·파산 신청</li>
+                  <li>DC형 퇴직연금으로 전환 시</li>
+                  <li>재난·재해로 인한 피해 복구</li>
+                </ul>
+                <div class="ret-guide-note">→ 중간정산 전 반드시 인사과 상담. 장기 근속자일수록 절대 경솔히 하지 마세요.</div>
+              </div>
+            </div>
+
+            <!-- 3. 퇴직연금 DB/IRP -->
+            <div class="ret-guide-item">
+              <div class="ret-guide-hdr" onclick="this.parentNode.classList.toggle('open')">
+                <span>🏦 퇴직연금 DB · IRP · 세금</span><span class="ret-guide-chev">▸</span>
+              </div>
+              <div class="ret-guide-body">
+                <div class="ret-guide-row"><strong>서울대병원: DB형 (확정급여형)</strong></div>
+                <div class="ret-guide-subrow">최종 3개월 평균임금 × 근속연수로 사용자가 지급 책임. 임금이 꾸준히 오를수록 DB가 유리.</div>
+                <div class="ret-guide-row" style="margin-top:8px;"><strong>IRP (개인형 퇴직연금) 절세 전략</strong></div>
+                <div class="ret-guide-subrow">퇴직금은 IRP 계좌로 의무 이전 → 55세 이후 연금으로 분할 수령 시 퇴직소득세 30~40% 감면. 일시금 수령보다 절세 효과
+                  큼.</div>
+                <div class="ret-guide-row" style="margin-top:8px;"><strong>퇴직소득세</strong></div>
+                <div class="ret-guide-subrow">장기 근속일수록 근속연수 공제가 커서 실효세율 낮아짐. IRP 이전 후 연금 수령이 일시금 수령 대비 유리한지 계산 필요.</div>
+                <table class="ret-guide-table" style="margin-top:8px;">
+                  <tr>
+                    <th>수령 방식</th>
+                    <th>세율</th>
+                    <th>비고</th>
+                  </tr>
+                  <tr>
+                    <td>일시금 수령</td>
+                    <td class="neg">퇴직소득세 전액</td>
+                    <td>즉시 과세</td>
+                  </tr>
+                  <tr>
+                    <td>IRP → 연금 수령</td>
+                    <td class="pos">30~40% 감면</td>
+                    <td>55세 이후, 10년+ 분할</td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+
+            <!-- 4. 사학연금 -->
+            <div class="ret-guide-item">
+              <div class="ret-guide-hdr" onclick="this.parentNode.classList.toggle('open')">
+                <span>🏫 사학연금 — 몇 살부터?</span><span class="ret-guide-chev">▸</span>
+              </div>
+              <div class="ret-guide-body">
+                <table class="ret-guide-table">
+                  <tr>
+                    <th>수령 유형</th>
+                    <th>가능 연령</th>
+                    <th>비고</th>
+                  </tr>
+                  <tr>
+                    <td><strong>기본 수령</strong></td>
+                    <td class="pos">만 65세</td>
+                    <td>기준 수령 연령</td>
+                  </tr>
+                  <tr>
+                    <td>조기 수령 (1년 일찍)</td>
+                    <td>만 64세</td>
+                    <td>6% 감액</td>
+                  </tr>
+                  <tr>
+                    <td>조기 수령 (3년 일찍)</td>
+                    <td>만 62세</td>
+                    <td>18% 감액</td>
+                  </tr>
+                  <tr>
+                    <td>최대 조기 수령</td>
+                    <td>만 60세</td>
+                    <td class="neg">30% 감액 (최대)</td>
+                  </tr>
+                  <tr>
+                    <td>유족연금</td>
+                    <td>재직 중 사망 시</td>
+                    <td>즉시 지급</td>
+                  </tr>
+                </table>
+                <div class="ret-guide-warn" style="margin-top:8px;">💡 임금피크 옵션 A 선택 시 기여금이 60%로 줄어 연금 수령액도 소폭 감소합니다.
+                </div>
+                <div class="ret-guide-note">정확한 예상 수령액은 사학연금공단(tp.or.kr)에서 개인별 시뮬레이션 가능.</div>
+              </div>
+            </div>
+
+            <!-- 5. 기타 변수 -->
+            <div class="ret-guide-item" style="border-bottom:none;">
+              <div class="ret-guide-hdr" onclick="this.parentNode.classList.toggle('open')">
+                <span>🔍 놓치기 쉬운 변수들</span><span class="ret-guide-chev">▸</span>
+              </div>
+              <div class="ret-guide-body">
+                <div class="ret-guide-row">📅 <strong>미사용 연차수당</strong> — 잔여 연차는 연차수당으로 보상 (통상임금 × 잔여 일수). 퇴직 전 반드시 확인.
+                </div>
+                <div class="ret-guide-row">🩺 <strong>건강보험 임의계속가입</strong> — 퇴직 후 최대 36개월 직장 보험료 수준 유지 가능. 지역가입자보다 저렴할 수
+                  있음.</div>
+                <div class="ret-guide-row">💼 <strong>실업급여</strong> — 정년퇴직도 수급 가능 (비자발적). 피보험 기간·연령에 따라 최대 270일. 퇴직 전
+                  고용센터 확인.</div>
+                <div class="ret-guide-row">🧾 <strong>IRP 세액공제</strong> — 재직 중 IRP 추가 납입 시 연간 최대 900만 원 세액공제 (16.5%). 퇴직
+                  전 마지막 해 활용.</div>
+              </div>
+            </div>
+
+          </div><!-- /ret-sim-guide -->
+        </div>
+
+        <!-- 탭 3: 종합가이드 -->
+        <div class="ret-panel" id="ret-panel-pension">
+
+          <!-- ① 사학연금 -->
+          <div class="ret-gs-card">
+            <div class="ret-gs-head">
+              <div class="ret-gs-icon-wrap" style="background:#e0e7ff;">🏫</div>
+              <div>
+                <div class="ret-gs-title">사학연금 — 몇 살부터?</div>
+                <div class="ret-gs-sub">서울대병원 직원은 국민연금 대신 사학연금 적용</div>
+              </div>
+            </div>
+            <table class="ret-gs-table">
+              <thead>
+                <tr>
+                  <th>수령 유형</th>
+                  <th>가능 연령</th>
+                  <th>비고</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>기본 수령</strong></td>
+                  <td><span class="ret-gs-chip green">만 65세</span></td>
+                  <td>기준 수령 연령</td>
+                </tr>
+                <tr>
+                  <td>조기 수령 (1년 일찍)</td>
+                  <td>만 64세</td>
+                  <td>6% 감액</td>
+                </tr>
+                <tr>
+                  <td>조기 수령 (3년 일찍)</td>
+                  <td>만 62세</td>
+                  <td>18% 감액</td>
+                </tr>
+                <tr>
+                  <td>최대 조기 수령 (5년)</td>
+                  <td><span class="ret-gs-chip red">만 60세</span></td>
+                  <td>30% 감액 — 신중히!</td>
+                </tr>
+                <tr>
+                  <td>유족·장해연금</td>
+                  <td>재직 중 발생 시</td>
+                  <td>즉시 지급</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="ret-gs-callout amber">💡 임금피크 옵션 A 선택 시 기여금이 60%로 줄어 장래 연금 수령액도 소폭 감소합니다. 옵션 선택 전 고려하세요.</div>
+            <div class="ret-gs-callout blue" style="margin-top:8px;">📌 조기 수령 시 기대 수명까지 총 수령액이 기준 수령보다 적을 수 있습니다. 수명 75세
+              기준 손익분기: 약 만 70세.</div>
+            <a class="ret-gs-link-btn" href="https://www.tp.or.kr" target="_blank" rel="noopener noreferrer">🔗 사학연금공단 내
+              연금 시뮬레이션</a>
+          </div>
+
+          <!-- ② 퇴직연금 DB · IRP -->
+          <div class="ret-gs-card">
+            <div class="ret-gs-head">
+              <div class="ret-gs-icon-wrap" style="background:#d1fae5;">🏦</div>
+              <div>
+                <div class="ret-gs-title">퇴직연금 DB · IRP · 절세</div>
+                <div class="ret-gs-sub">IRP 이전 후 연금 수령 시 퇴직소득세 30~40% 절감</div>
+              </div>
+            </div>
+            <div class="ret-gs-row-group">
+              <div class="ret-gs-row-item">
+                <div class="ret-gs-row-title">서울대병원 — DB형 (확정급여형)</div>
+                <div class="ret-gs-row-desc">사용자 책임으로 최종 3개월 평균임금 × 근속연수 지급. 임금이 꾸준히 오를수록 유리. 투자 위험 없음.</div>
+              </div>
+              <div class="ret-gs-row-item">
+                <div class="ret-gs-row-title">IRP (개인형 퇴직연금) 절세 전략</div>
+                <div class="ret-gs-row-desc">퇴직금은 IRP 계좌로 의무 이전 → 55세 이후 연금으로 분할 수령하면 퇴직소득세 <strong
+                    style="color:#059669;">30~40% 감면</strong>.</div>
+              </div>
+              <div class="ret-gs-row-item">
+                <div class="ret-gs-row-title">재직 중 IRP 추가 납입</div>
+                <div class="ret-gs-row-desc">연간 최대 900만 원 세액공제 (16.5%). 퇴직 전 마지막 해에 납입하면 절세 효과가 가장 큼.</div>
+              </div>
+            </div>
+            <table class="ret-gs-table" style="margin-top:12px;">
+              <thead>
+                <tr>
+                  <th>수령 방식</th>
+                  <th>세율 효과</th>
+                  <th>조건</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>일시금 수령</td>
+                  <td><span class="ret-gs-chip red">퇴직소득세 전액</span></td>
+                  <td>즉시 과세</td>
+                </tr>
+                <tr>
+                  <td>IRP → 연금 수령</td>
+                  <td><span class="ret-gs-chip green">30~40% 감면</span></td>
+                  <td>55세 이후, 10년+ 분할</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- ③ 퇴직금 중간정산 -->
+          <div class="ret-gs-card">
+            <div class="ret-gs-head">
+              <div class="ret-gs-icon-wrap" style="background:#fee2e2;">⚠️</div>
+              <div>
+                <div class="ret-gs-title">퇴직금 중간정산</div>
+                <div class="ret-gs-sub">2012년 이후 원칙적 불가 — 예외 사유 확인 필수</div>
+              </div>
+            </div>
+            <div class="ret-gs-callout red">🚫 중간정산 시 퇴직금 기산일이 리셋됩니다. 누진배수 적용 대상자(2001.8.31 이전 입사)는 수천만 원 손해 가능!</div>
+            <div class="ret-gs-row-item" style="margin-top:10px;">
+              <div class="ret-gs-row-title">예외적 허용 사유 (근로자퇴직급여보장법 제8조)</div>
+              <ul class="ret-gs-list">
+                <li>무주택자 본인 명의 주택 구입·전세 보증금</li>
+                <li>본인·배우자·부양가족 6개월 이상 요양비</li>
+                <li>개인회생·파산 신청</li>
+                <li>DC형 퇴직연금으로 전환</li>
+                <li>재난·재해 피해 복구</li>
+              </ul>
+            </div>
+            <div class="ret-gs-callout amber" style="margin-top:8px;">💡 중간정산 전 반드시 인사과 상담. 장기 근속자일수록 절대 경솔히 결정하지 마세요.
+            </div>
+          </div>
+
+          <!-- ④ 기타 놓치기 쉬운 변수 -->
+          <div class="ret-gs-card" style="margin-bottom:0;">
+            <div class="ret-gs-head">
+              <div class="ret-gs-icon-wrap" style="background:#f3f4f6;">🔍</div>
+              <div>
+                <div class="ret-gs-title">놓치기 쉬운 변수들</div>
+                <div class="ret-gs-sub">퇴직금 외에 챙겨야 할 항목들</div>
+              </div>
+            </div>
+            <div class="ret-gs-checklist">
+              <div class="ret-gs-check-item">
+                <div class="ret-gs-check-icon">📅</div>
+                <div>
+                  <div class="ret-gs-check-title">미사용 연차수당</div>
+                  <div class="ret-gs-check-desc">잔여 연차는 통상임금 × 잔여 일수로 보상. 소멸 전 확인 필수.</div>
+                </div>
+              </div>
+              <div class="ret-gs-check-item">
+                <div class="ret-gs-check-icon">🩺</div>
+                <div>
+                  <div class="ret-gs-check-title">건강보험 임의계속가입</div>
+                  <div class="ret-gs-check-desc">퇴직 후 최대 36개월 직장 보험료 수준 유지. 지역가입자보다 저렴할 수 있음.</div>
+                </div>
+              </div>
+              <div class="ret-gs-check-item">
+                <div class="ret-gs-check-icon">💼</div>
+                <div>
+                  <div class="ret-gs-check-title">고용보험 실업급여</div>
+                  <div class="ret-gs-check-desc">정년퇴직도 수급 가능 (비자발적 퇴직). 피보험 기간·연령에 따라 최대 270일.</div>
+                </div>
+              </div>
+              <div class="ret-gs-check-item" style="border-bottom:none;">
+                <div class="ret-gs-check-icon">📋</div>
+                <div>
+                  <div class="ret-gs-check-title">국민연금 이력 확인</div>
+                  <div class="ret-gs-check-desc">사학연금 전환 이전 납부 이력은 국민연금공단에서 별도 확인 가능.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ret-notice" style="margin-top:12px;">※ 사학연금 관련 세부 사항은 사학연금공단 (1588-4321) 또는 원내 인사과에 문의하세요.</div>
+        </div>
+
+        <!-- 탭 4: 퇴직 준비 체크리스트 -->
+        <div class="ret-panel" id="ret-panel-checklist">
+          <div class="ret-card">
+            <div class="ret-checklist-section">
+              <div class="ret-checklist-header">📅 퇴직 D-90 (3개월 전)</div>
+              <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
+                <div class="ret-checklist-text"><strong>퇴직 의사 통보</strong> — 직속 상급자 및 부서장에게 퇴직 예정일 사전 통보</div>
+              </div>
+              <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
+                <div class="ret-checklist-text"><strong>임금피크 시뮬레이션 확인</strong> — 만 60세 도달 예정자는 [시뮬레이션] 탭에서 옵션 A/B 비교 후
+                  인사과 상담</div>
+              </div>
+              <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
+                <div class="ret-checklist-text"><strong>사학연금 수령 방식 확인</strong> — 연금 vs 일시금 비교 검토 (사학연금공단 상담)</div>
+              </div>
+              <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
+                <div class="ret-checklist-text"><strong>미사용 연차 확인</strong> — 잔여 연차 일수 및 연차수당 지급 여부 확인</div>
+              </div>
+            </div>
+            <div class="ret-checklist-section">
+              <div class="ret-checklist-header">📋 퇴직 D-30 (1개월 전)</div>
+              <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
+                <div class="ret-checklist-text"><strong>인사과 퇴직 서류 수령</strong> — 퇴직원, 퇴직금 신청서 등 서식 확인</div>
+              </div>
+              <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
+                <div class="ret-checklist-text"><strong>퇴직금 계산 확인</strong> — 예상 퇴직금 사전 문의 (2001.8.31 이전 근속분 포함 시 필수)
+                </div>
+              </div>
+              <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
+                <div class="ret-checklist-text"><strong>업무 인수인계 계획 수립</strong> — 담당 업무 인수자 확정 및 인수인계서 작성 시작</div>
+              </div>
+              <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
+                <div class="ret-checklist-text"><strong>건강보험 전환 준비</strong> — 퇴직 후 지역가입자 전환 또는 임의계속가입 확인</div>
+              </div>
+            </div>
+            <div class="ret-checklist-section">
+              <div class="ret-checklist-header">✅ 퇴직 D-7 (1주일 전)</div>
+              <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
+                <div class="ret-checklist-text"><strong>퇴직 서류 제출</strong> — 퇴직원, 개인정보 말소 동의서 등 인사과 제출</div>
+              </div>
+              <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
+                <div class="ret-checklist-text"><strong>사원증 · 의료기기 · 열쇠 반납 목록 확인</strong></div>
+              </div>
+              <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
+                <div class="ret-checklist-text"><strong>퇴직금 입금 계좌 확인</strong> — 인사과에 퇴직금 수령 계좌 신고</div>
+              </div>
+              <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
+                <div class="ret-checklist-text"><strong>개인 물품 정리</strong> — 사무용품, 개인 파일 백업 (병원 시스템 접근 제한됨)</div>
+              </div>
+            </div>
+            <div class="ret-checklist-section">
+              <div class="ret-checklist-header">🏁 퇴직 후</div>
+              <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
+                <div class="ret-checklist-text"><strong>퇴직금 수령 확인</strong> — 퇴직일로부터 14일 이내 지급 (근로기준법 제36조)</div>
+              </div>
+              <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
+                <div class="ret-checklist-text"><strong>고용보험 실업급여 신청</strong> — 고용센터 방문 또는 워크넷 온라인 신청 (비자발적 퇴직 시)</div>
+              </div>
+              <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
+                <div class="ret-checklist-text"><strong>건강보험 전환 처리</strong> — 퇴직 후 14일 이내 지역가입자 전환 자동 처리</div>
+              </div>
+              <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
+                <div class="ret-checklist-text"><strong>경력증명서 발급</strong> — 필요 시 인사과에 경력증명서 발급 신청</div>
+              </div>
+            </div>
+          </div>
+          <div class="ret-notice">※ 세부 절차 및 서식은 인사과(내선 확인)에 문의하세요.</div>
+        </div>
+
+        <!-- E4: 퇴직 타임라인 시뮬레이터 -->
+        <div class="card" id="retirementTimelineCard" style="margin-top:16px;">
+          <div class="card-title"
+            style="font-size:var(--text-body-large);font-family:'Space Grotesk',sans-serif;font-weight:700;">
+            퇴직 최적 시기 시뮬레이션
+          </div>
+          <p style="font-size:var(--text-body-small);color:var(--text-muted);margin-bottom:12px;">
+            앞으로 12개월, 각 달 퇴직 시 예상 퇴직금을 비교합니다. 연금·세금 제외.
+          </p>
+          <div id="retirementTimelineContent">
+            <div class="empty-state" style="padding:24px 0;">
+              <p style="color:var(--text-muted);font-size:var(--text-body-normal);">입사일과 급여 정보를 먼저 입력해주세요.</p>
+              <button class="btn btn-primary" style="margin-top:10px;" onclick="switchTab('info')">개인정보 탭으로 →</button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /sub-pay-retirement -->
     </div><!-- /tab-payroll -->
 
     <!-- ═══════════ ⏰ 시간외·온콜 관리 ═══════════ -->
@@ -1048,8 +1351,16 @@
 
         <!-- 시급 0원 경고 배너 -->
         <div id="otHourlyWarning" class="hourly-warning-banner">
-          <span>⚠️</span>
-          <span>시급이 0원이에요. <a onclick="switchTab('profile')">개인정보 탭</a>에서 내 정보를 저장하면 자동으로 계산됩니다. 또는 직접 입력하세요.</span>
+          <span style="flex-shrink:0; margin-top:2px;">⚠️</span>
+          <div style="flex:1; display:flex; flex-direction:column; gap:6px;">
+            <strong>개인정보를 먼저 입력해주세요</strong>
+            <span style="font-size:var(--text-body-small);">직종·호봉을 입력해야 시간외 수당이 자동 계산됩니다.</span>
+            <button onclick="switchTab('profile')" class="btn btn-primary"
+              style="align-self:flex-start; font-size:var(--text-body-small); margin-top:2px;">👤 개인정보 입력하기 →</button>
+          </div>
+          <button onclick="dismissHwBanner()"
+            style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:16px;padding:0 2px;line-height:1;flex-shrink:0;align-self:flex-start;"
+            title="닫기">✕</button>
         </div>
 
         <!-- 캘린더 -->
@@ -1058,6 +1369,18 @@
 
       <!-- Zone B: 대시보드 (수당 금액 중심) -->
       <div id="otDashboard" class="ot-dashboard"></div>
+
+      <!-- Zone V: 명세서 자동 보충 카드 -->
+      <div id="otVerifyCard" class="card" style="margin-bottom:12px; display:none;">
+        <div class="card-title" style="cursor:pointer;" onclick="toggleOtVerifyDetail()">
+          <span class="icon" style="font-size:18px;">💡</span>
+          <span id="otVerifyTitle">명세서 자동 보충</span>
+          <span id="otVerifyBadge" class="badge emerald" style="margin-left:auto;"></span>
+          <span id="otVerifyArrow"
+            style="font-size:12px; color:var(--text-muted); transition:transform 0.3s; margin-left:8px;">▼</span>
+        </div>
+        <div id="otVerifyContent"></div>
+      </div>
 
       <!-- Zone D: 바텀 시트 오버레이 및 패널 -->
       <div id="otInputOverlay" class="ot-bottom-sheet-overlay" onclick="closeOtBottomSheet()"></div>
@@ -1305,212 +1628,485 @@
 
     <!-- ═══════════ 👤 개인정보 ═══════════ -->
     <div class="tab-content" id="tab-profile">
-      <div class="card" style="max-width:600px; margin:0 auto;">
-        <div class="card-title"><span class="icon indigo">👤</span> <span id="pfTitleName">내 정보</span>
-          <span class="badge emerald" id="profileStatus">미저장</span>
-        </div>
-        <div class="collapsible-header" onclick="toggleCollapsible('pfInputFields')">
-          <span style="display:flex; align-items:center; gap:8px;" id="pfInputToggleLabel"><span
-              class="toggle-icon">▸</span> 내 정보 입력/수정</span>
-        </div>
-        <div class="collapsible-body" id="pfInputFields" style="display:block;">
-          <p style="font-size:var(--text-body-normal); color:var(--text-muted); margin-bottom:12px;">개인정보를 입력해주세요. (통상임금
-            항목) <br>데이터는 이 브라우저에만 저장됩니다.</p>
+      <!-- 책갈피 (개인 정보 / 근무 정보) -->
+      <nav class="pay-bookmark-tabs" id="profileBookmarkBar" role="tablist" aria-label="정보 구분">
+        <button id="bmPersonal" class="pay-bookmark-tab active" data-subtab="profile-personal" role="tab"
+          aria-selected="true" onclick="switchProfileSection('personal')">👤 개인 정보</button>
+        <button id="bmWork" class="pay-bookmark-tab" data-subtab="profile-work" role="tab" aria-selected="false"
+          onclick="switchProfileSection('work')">💼 근무 정보</button>
+      </nav>
+      <div class="pay-tab-accent" id="profileTabAccent" style="background:#4f46e5;"></div>
 
-          <!-- 급여명세서로 자동 입력 (테스트 중) -->
-          <button class="btn btn-outline"
-            style="width:100%; margin-bottom:12px; font-size:var(--text-body-small); padding:6px; color:var(--text-muted); border-color:var(--border-glass);"
-            onclick="var el=document.getElementById('pfPayslipArea'); el.style.display=el.style.display==='none'?'block':'none';">
-            🧪 급여명세서(PDF)로 자동 입력해주세요
+      <div id="profileSectionPersonal">
+        <div class="card" style="max-width:600px; margin:0 auto;">
+          <div class="card-title"><span class="icon indigo">👤</span> <span id="pfTitleName">내 정보</span>
+            <span class="badge emerald" id="profileStatus">미저장</span>
+          </div>
+
+          <!-- 급여탭 안내 링크 (PDF 배너 대체) -->
+          <div id="pfPayslipLink" onclick="if(window.switchTab)switchTab('payroll');"
+            style="display:flex; align-items:center; gap:10px; padding:10px 14px; margin-bottom:14px; background:rgba(99,102,241,0.08); border:2px solid var(--accent-indigo); border-radius:8px; cursor:pointer; font-size:var(--text-body-normal); font-weight:600; color:var(--accent-indigo);">
+            <span style="font-size:1.2rem;">💰</span>
+            <span>급여 탭에서 명세서를 등록하면 자동으로 채워집니다</span>
+            <span style="margin-left:auto;">→</span>
+          </div>
+          <!-- 자동갱신 상태 배너 (JS에서 표시) -->
+          <div id="pfAutoSyncBanner"
+            style="display:none; align-items:center; gap:8px; padding:8px 14px; margin-bottom:10px; background:rgba(16,185,129,0.08); border:1px solid var(--accent-emerald); border-radius:8px; font-size:var(--text-body-small); font-weight:600; color:var(--accent-emerald);">
+            <span>✅</span> <span id="pfAutoSyncText">명세서 기준 자동 갱신됨</span>
+          </div>
+
+          <!-- pfInputFields 래퍼 유지 (CSS 셀렉터 호환) -->
+          <div id="pfInputFields">
+            <span id="pfInputToggleLabel" style="display:none;">내 정보 입력/수정</span>
+
+            <!-- ▸ 기본 정보 (토글 아코디언) -->
+            <div class="collapsible-header" onclick="toggleCollapsible('pfBasicFields')" id="pfBasicHeader">
+              <span style="display:flex; align-items:center; gap:8px;">
+                <span class="toggle-icon">▸</span> 기본 정보
+                <span id="pfBasicBadge" class="badge emerald" style="display:none; font-size:10px;">저장됨</span>
+              </span>
+            </div>
+            <div id="pfBasicPreview"
+              style="display:none; padding:6px 14px; font-size:var(--text-body-small); color:var(--text-muted); font-weight:600; background:var(--bg-hover); border-radius:0 0 8px 8px; margin-top:-2px; cursor:pointer;"
+              onclick="toggleCollapsible('pfBasicFields')"></div>
+            <div class="collapsible-body" id="pfBasicFields" style="display:none;">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>이름 (별칭)</label>
+                  <input type="text" id="pfName" placeholder="예: 홍길동" autocomplete="off">
+                </div>
+                <div class="form-group">
+                  <label style="white-space:nowrap;">성별 <small style="color:var(--text-muted)">(생휴 여부)</small></label>
+                  <select id="pfGender">
+                    <option value="">미설정</option>
+                    <option value="M">남성</option>
+                    <option value="F">여성</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label style="white-space:nowrap;">생년월일 <small style="color:var(--text-muted)">(정년 산정)</small></label>
+                  <input type="date" id="pfBirthDate" oninput="syncBirthDateToRetirement(this.value)">
+                </div>
+                <div class="form-group">
+                  <label>부서</label>
+                  <input type="text" id="pfDepartment" placeholder="예: 핵의학과, 중환자실" autocomplete="off">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>직종</label>
+                  <select id="pfJobType" onchange="updateProfileGrades()"></select>
+                </div>
+                <div class="form-group">
+                  <label>직급·등급</label>
+                  <select id="pfGrade" onchange="_suggestYear(document.getElementById('pfHireDate').value)"></select>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>입사일</label>
+                  <input type="text" id="pfHireDate" placeholder="예: 2021-01-01">
+                  <small id="pfServiceDisplay" style="color:var(--text-muted)"></small>
+                </div>
+                <div class="form-group">
+                  <label>호봉 (연차)</label>
+                  <select id="pfYear">
+                    <option value="1">1년차</option>
+                    <option value="2">2년차</option>
+                    <option value="3">3년차</option>
+                    <option value="4">4년차</option>
+                    <option value="5">5년차</option>
+                    <option value="6">6년차</option>
+                    <option value="7">7년차</option>
+                    <option value="8">8년차</option>
+                  </select>
+                  <small id="pfYearHint" style="color:var(--text-muted)"></small>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>사번</label>
+                  <input type="text" id="pfEmployeeNumber" placeholder="예: 20842" autocomplete="off"
+                    inputmode="numeric">
+                </div>
+                <div class="form-group">
+                  <label>조정급 (필수!!)</label>
+                  <input type="number" id="pfAdjust" value="0" placeholder="급여명세서 확인">
+                </div>
+              </div>
+            </div><!-- /pfBasicFields -->
+
+            <!-- ▸ 가족 수당 (아코디언) -->
+            <div class="collapsible-header" onclick="toggleCollapsible('pfFamilyFields')" style="margin-top:8px;">
+              <span style="display:flex; align-items:center; gap:8px;">
+                <span class="toggle-icon">▸</span> 가족 수당 <small
+                  style="font-weight:400; color:var(--text-muted); margin-left:4px;">통상임금 미포함 · 별도 지급</small>
+              </span>
+            </div>
+            <div class="collapsible-body" id="pfFamilyFields" style="display:none;">
+              <div class="form-row profile-row-solo">
+                <div class="form-group">
+                  <label>가족 수 <small style="color:var(--text-muted)">(자녀 제외·최대 5인)</small></label>
+                  <input type="number" id="pfFamily" value="0" min="0" max="5" onchange="updateFamilyUI()"
+                    oninput="updateFamilyUI()">
+                  <small style="color:var(--text-muted)">배우자 4만원 / 추가 1인당 2만원</small>
+                </div>
+              </div>
+              <div id="pfChildrenRow" class="form-row" style="display:none;">
+                <div class="form-group">
+                  <label>자녀 수</label>
+                  <input type="number" id="pfChildren" value="0" min="0" max="10" onchange="updateFamilyUI()"
+                    oninput="updateFamilyUI()">
+                  <small style="color:var(--text-muted)">첫째 3만 / 둘째 7만 / 셋째이상 11만</small>
+                </div>
+              </div>
+              <div id="childExtraRow" class="form-row" style="display:none;">
+                <div class="form-group">
+                  <label>6세이하 자녀수당 <small style="color:var(--text-muted)">(월액 직접 입력)</small></label>
+                  <input type="number" id="pfChildrenUnder6Pay" value="0" min="0" step="10000" placeholder="급여명세서 확인"
+                    onchange="updateFamilyUI()" oninput="updateFamilyUI()">
+                  <small style="color:var(--text-muted)">급여명세서의 6세이하자녀수당 금액 그대로 입력</small>
+                </div>
+              </div>
+              <div id="pfFamilySummary"
+                style="display:none; margin-top:4px; padding:8px 12px; background:var(--bg-hover); border-radius:8px; font-size:var(--text-body-small);">
+              </div>
+            </div>
+
+            <!-- ▸ 개인 수당 (아코디언) -->
+            <div class="collapsible-header" onclick="toggleCollapsible('pfAllowanceFields')" style="margin-top:16px;">
+              <span style="display:flex; align-items:center; gap:8px;">
+                <span class="toggle-icon">▸</span> 개인 수당 <small
+                  style="font-weight:400; color:var(--text-muted); margin-left:4px;">5개</small>
+              </span>
+            </div>
+            <div class="collapsible-body" id="pfAllowanceFields" style="display:none;">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>승급조정급</label>
+                  <input type="number" id="pfUpgradeAdjust" value="0">
+                </div>
+                <div class="form-group">
+                  <label>별정수당</label>
+                  <input type="number" id="pfSpecial" value="0" min="0">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>직책급</label>
+                  <input type="number" id="pfPosition" value="0" min="0">
+                </div>
+                <div class="form-group">
+                  <label>업무보조비</label>
+                  <input type="number" id="pfWorkSupport" value="0" min="0">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>군복무수당</label>
+                  <div class="toggle-group" style="margin-top:6px;">
+                    <input type="checkbox" id="pfMilitary">
+                    <label for="pfMilitary">해당 있음</label>
+                  </div>
+                  <div id="pfMilitaryMonthsGroup" style="display:none; margin-top:6px;">
+                    <input type="number" id="pfMilitaryMonths" value="24" min="1" max="36" placeholder="복무기간(개월)">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ▸ 고급 설정 (아코디언) -->
+            <div class="collapsible-header" onclick="toggleCollapsible('pfAdvancedFields')" style="margin-top:8px;">
+              <span style="display:flex; align-items:center; gap:8px;">
+                <span class="toggle-icon">▸</span> 고급 설정 <small
+                  style="font-weight:400; color:var(--text-muted); margin-left:4px;">승진일·호봉보정·근로시간</small>
+              </span>
+            </div>
+            <div class="collapsible-body" id="pfAdvancedFields" style="display:none;">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>최근 승진일 <small style="font-weight:400; color:var(--text-muted)">선택</small></label>
+                  <input type="text" id="pfPromotionDate" placeholder="예: 2024-03-01">
+                  <small id="pfPromotionHint" style="color:var(--text-muted)"></small>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>노조협의 호봉 보정 <small style="font-weight:400; color:var(--text-muted)">선택</small></label>
+                  <select id="pfUnionStepAdjust">
+                    <option value="">자동 (직급 기준 자동 적용)</option>
+                    <option value="0">0 — 해당 없음</option>
+                    <option value="1">+1호봉 (수동 지정)</option>
+                    <option value="2">+2호봉 (수동 지정)</option>
+                  </select>
+                  <small style="color:var(--text-muted)">2026.02 노조협의: J1~S1 +1호봉 자동 적용</small>
+                </div>
+              </div>
+              <div class="form-row profile-row-solo">
+                <div class="form-group">
+                  <label>월 소정근로시간 <small style="font-weight:400; color:var(--text-muted)">기본 209h</small></label>
+                  <input type="number" id="pfWeeklyHours" value="209" min="1" max="300" placeholder="209">
+                  <small style="color:var(--text-muted)">시급 계산 기준 · 일반 전일제 근무자는 209h 그대로</small>
+                </div>
+                <div class="form-group"></div>
+              </div>
+            </div>
+
+            <input type="checkbox" id="pfSeniority" style="display:none;">
+
+            <!-- 공용 기기 개인정보 주의 안내 -->
+            <div
+              style="display:flex; align-items:flex-start; gap:10px; padding:10px 12px; background:rgba(245,158,11,0.09); border:1px solid rgba(245,158,11,0.35); border-radius:8px; font-size:var(--text-body-normal); margin-top:20px; line-height:1.5;">
+              <span style="font-size:1.1rem; flex-shrink:0; margin-top:1px;">⚠️</span>
+              <div>
+                <strong style="color:#F080A0; font-weight: bold; display:block; margin-bottom:2px;">공용 기기에서는 개인정보를 저장하지
+                  마세요</strong>
+                <span style="color:var(--text-secondary);">학교·도서관·직장 공용 컴퓨터에서는 개인정보를 입력하지 마세요. 데이터는 이 브라우저에만 저장되어
+                  <strong>다음 사용자가 동일 브라우저를 열면 볼 수 있습니다.</strong></span>
+              </div>
+            </div>
+
+            <div class="form-row profile-action-row" style="margin-top:16px;">
+              <button class="btn btn-primary" onclick="saveProfile()" style="flex:2">💾 저장하기</button>
+              <button class="btn btn-outline" onclick="clearProfile()" style="flex:1">🗑 초기화</button>
+            </div>
+            <div id="profileSavedCTA"
+              style="display:none; margin-top:14px; padding:12px 16px; background:rgba(52,211,153,0.1); border:1px solid rgba(52,211,153,0.3); border-radius:8px; text-align:center;">
+              <p id="profileSavedCTADesc"
+                style="font-size:var(--text-body-small); color:var(--text-muted); margin:0 0 8px;">정보가 저장됐어요. 이번 달 시간외
+                수당을 계산해볼까요?</p>
+              <button id="profileSavedCTABtn" onclick="switchTab('overtime')" class="btn btn-primary"
+                style="width:100%;">⏰ 시간외 계산하러 가기 →</button>
+            </div>
+
+          </div><!-- /pfInputFields -->
+        </div><!-- End of Profile Form Card -->
+
+        <!-- 프로필 요약 -->
+        <div id="profileSummary" class="card" style="max-width:600px; margin:20px auto 0;">
+          <div class="card-title" style="font-size:var(--text-body-large);"><span class="icon indigo">📝</span> 통상임금 내역
+          </div>
+          <p style="color:var(--text-muted)">정보를 입력하고 [저장하기]를 눌러주세요.</p>
+        </div>
+
+      </div><!-- /profileSectionPersonal -->
+
+      <div id="profileSectionWork" style="display:none;">
+        <!-- E1: 근무이력 섹션 -->
+        <div class="card" id="workHistoryCard" style="max-width:600px; margin:0 auto;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+            <div class="card-title" style="font-size:var(--text-body-large); margin:0;">
+              <span class="icon indigo">💼</span> 근무이력
+            </div>
+            <button id="addWorkHistoryBtn" class="btn btn-primary"
+              style="padding:6px 14px; font-size:var(--text-body-small);"
+              onclick="openWorkHistorySheet({__newPost:true})">+ 근무지 추가</button>
+          </div>
+          <div id="workHistoryList"></div>
+        </div>
+
+        <!-- 근무이력 입력 바텀시트 -->
+        <div id="workHistorySheet" style="display:none; position:fixed; inset:0; z-index:9000;
+           background:rgba(0,0,0,0.5);" onclick="if(event.target===this)closeWorkHistorySheet()">
+          <div style="position:absolute; bottom:0; left:0; right:0; background:var(--bg-card,#fff);
+             border-radius:16px 16px 0 0; padding:20px 16px 32px; max-height:85vh; overflow-y:auto;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+              <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
+                <span style="font-size:var(--text-body-large); font-weight:600;" id="workHistorySheetTitle">근무이력
+                  추가</span>
+                <span id="workHistorySheetBadge"
+                  style="display:none; font-size:0.68rem; font-weight:700; padding:3px 8px; border-radius:10px; background:rgba(245,158,11,.15); color:#d97706;"></span>
+              </div>
+              <button onclick="closeWorkHistorySheet()"
+                style="background:none; border:none; font-size:1.4rem; cursor:pointer; line-height:1; padding:4px 8px;">×</button>
+            </div>
+            <input type="hidden" id="whEditId" value="">
+            <div style="display:flex; flex-direction:column; gap:12px;">
+              <div>
+                <label style="font-size:var(--text-body-small); font-weight:600; display:block; margin-bottom:4px;">직장명
+                  *</label>
+                <input id="whWorkplace" type="text" placeholder="예: 서울대학교병원" class="form-input"
+                  style="width:100%; padding:10px 12px; border:1px solid var(--border-glass); border-radius:8px; font-size:var(--text-body-normal);">
+              </div>
+              <div>
+                <label style="font-size:var(--text-body-small); font-weight:600; display:block; margin-bottom:4px;">부서명
+                  *</label>
+                <input id="whDept" type="text" placeholder="예: 핵의학과, 중환자실, 101병동" class="form-input"
+                  style="width:100%; padding:10px 12px; border:1px solid var(--border-glass); border-radius:8px; font-size:var(--text-body-normal);">
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                <div>
+                  <label style="font-size:var(--text-body-small); font-weight:600; display:block; margin-bottom:4px;">시작
+                    (년-월)</label>
+                  <input id="whFrom" type="month" class="form-input"
+                    style="width:100%; padding:10px 12px; border:1px solid var(--border-glass); border-radius:8px; font-size:var(--text-body-normal);">
+                  <small id="whFromHint"
+                    style="display:none; margin-top:4px; color:var(--accent-amber,#d97706); font-size:0.7rem;"></small>
+                </div>
+                <div>
+                  <label style="font-size:var(--text-body-small); font-weight:600; display:block; margin-bottom:4px;">종료
+                    (년-월)</label>
+                  <input id="whTo" type="month" class="form-input" placeholder="재직 중이면 빈칸"
+                    style="width:100%; padding:10px 12px; border:1px solid var(--border-glass); border-radius:8px; font-size:var(--text-body-normal);">
+                </div>
+              </div>
+              <div>
+                <label
+                  style="font-size:var(--text-body-small); font-weight:600; display:block; margin-bottom:4px;">직무</label>
+                <input id="whRole" type="text" list="whRoleSuggestions" placeholder="직종에 따라 자동 추천됩니다" class="form-input"
+                  style="width:100%; padding:10px 12px; border:1px solid var(--border-glass); border-radius:8px; font-size:var(--text-body-normal);">
+                <datalist id="whRoleSuggestions"></datalist>
+                <small id="whRoleHint"
+                  style="display:block; margin-top:4px; color:var(--text-muted); font-size:0.72rem;"></small>
+              </div>
+              <div>
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+                  <label style="font-size:var(--text-body-small); font-weight:600;">주요 역할 (선택)</label>
+                  <button type="button" onclick="autofillJobDesc()" id="whAutofillBtn" style="font-size:0.7rem; padding:3px 8px; border:1px solid var(--accent-indigo,#6366f1);
+                         background:rgba(99,102,241,.08); color:var(--accent-indigo,#6366f1);
+                         border-radius:6px; cursor:pointer;">✨ 표준 업무 자동 채움</button>
+                </div>
+                <textarea id="whDesc" rows="4" placeholder="간략한 업무 내용..."
+                  style="width:100%; padding:10px 12px; border:1px solid var(--border-glass); border-radius:8px; font-size:var(--text-body-normal); resize:none;"></textarea>
+              </div>
+              <button class="btn btn-primary" style="width:100%; padding:12px;"
+                onclick="saveWorkHistoryEntry()">저장</button>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- 이력서 섹션 입력 바텀시트 (학력/자격/논문 공용) -->
+        <div id="resumeItemSheet" style="display:none; position:fixed; inset:0; z-index:9100;
+           background:rgba(0,0,0,0.5);" onclick="if(event.target===this)closeResumeItemSheet()">
+          <div style="position:absolute; bottom:0; left:0; right:0; background:var(--bg-card,#fff);
+             border-radius:16px 16px 0 0; padding:20px 16px 32px; max-height:85vh; overflow-y:auto;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+              <span style="font-size:var(--text-body-large); font-weight:600;" id="resumeItemSheetTitle">항목 추가</span>
+              <button onclick="closeResumeItemSheet()"
+                style="background:none; border:none; font-size:1.4rem; cursor:pointer; line-height:1; padding:4px 8px;">×</button>
+            </div>
+            <div id="resumeItemFields" style="display:flex; flex-direction:column; gap:12px;"></div>
+            <button class="btn btn-primary" style="width:100%; padding:12px; margin-top:12px;"
+              onclick="saveResumeItem()">저장</button>
+          </div>
+        </div>
+
+        <!-- 로테이션 입력 바텀시트 -->
+        <div id="rotationSheet" style="display:none; position:fixed; inset:0; z-index:9100;
+           background:rgba(0,0,0,0.5);" onclick="if(event.target===this)closeRotationSheet()">
+          <div style="position:absolute; bottom:0; left:0; right:0; background:var(--bg-card,#fff);
+             border-radius:16px 16px 0 0; padding:20px 16px 32px; max-height:85vh; overflow-y:auto;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+              <span style="font-size:var(--text-body-large); font-weight:600;" id="rotationSheetTitle">로테이션 추가</span>
+              <button onclick="closeRotationSheet()"
+                style="background:none; border:none; font-size:1.4rem; cursor:pointer; line-height:1; padding:4px 8px;">×</button>
+            </div>
+            <p id="rotationParentHint" style="font-size:0.72rem; color:var(--text-muted); margin:0 0 14px;"></p>
+            <div style="display:flex; flex-direction:column; gap:12px;">
+              <div>
+                <label style="font-size:var(--text-body-small); font-weight:600; display:block; margin-bottom:4px;">근무방
+                  / 파트 *</label>
+                <input id="rotRoom" type="text" placeholder="예: PET실, 감마실, 갑상선치료실" class="form-input"
+                  style="width:100%; padding:10px 12px; border:1px solid var(--border-glass); border-radius:8px; font-size:var(--text-body-normal);">
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                <div>
+                  <label style="font-size:var(--text-body-small); font-weight:600; display:block; margin-bottom:4px;">시작
+                    (년-월)</label>
+                  <input id="rotFrom" type="month" class="form-input"
+                    style="width:100%; padding:10px 12px; border:1px solid var(--border-glass); border-radius:8px; font-size:var(--text-body-normal);">
+                </div>
+                <div>
+                  <label style="font-size:var(--text-body-small); font-weight:600; display:block; margin-bottom:4px;">종료
+                    (년-월)</label>
+                  <input id="rotTo" type="month" class="form-input" placeholder="진행 중이면 빈칸"
+                    style="width:100%; padding:10px 12px; border:1px solid var(--border-glass); border-radius:8px; font-size:var(--text-body-normal);">
+                </div>
+              </div>
+              <div>
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+                  <label style="font-size:var(--text-body-small); font-weight:600;">수행 업무 (선택)</label>
+                  <button type="button" onclick="autofillRotationTasks()" style="font-size:0.7rem; padding:3px 8px; border:1px solid var(--accent-indigo,#6366f1);
+                         background:rgba(99,102,241,.08); color:var(--accent-indigo,#6366f1);
+                         border-radius:6px; cursor:pointer;">✨ 표준 업무 자동 채움</button>
+                </div>
+                <textarea id="rotTasks" rows="4"
+                  placeholder="줄바꿈으로 항목 구분&#10;예: PET-CT 검사 진행&#10;FDG 합성 보조&#10;환자 안내 및 교육"
+                  style="width:100%; padding:10px 12px; border:1px solid var(--border-glass); border-radius:8px; font-size:var(--text-body-normal); resize:vertical;"></textarea>
+              </div>
+              <div id="rotActions" style="display:grid; grid-template-columns:1fr; gap:8px;">
+                <button id="rotDeleteBtn" type="button"
+                  style="display:none; width:100%; padding:12px; border:1px solid var(--accent-rose,#f43f5e); color:var(--accent-rose,#f43f5e); background:transparent; border-radius:8px; font-weight:600; cursor:pointer;"
+                  onclick="deleteRotationEntry()">삭제</button>
+                <button id="rotSaveBtn" class="btn btn-primary" style="width:100%; padding:12px;"
+                  onclick="saveRotationEntry()">저장</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /profileSectionWork -->
+
+    </div>
+
+    <!-- ═══════════ ⚙️ 설정 ═══════════ -->
+    <div class="tab-content" id="tab-settings">
+
+      <!-- 🔒 앱 잠금 -->
+      <div class="card" id="appLockSettingsCard" style="max-width:600px; margin:0 auto;">
+        <div class="card-title" style="font-size:var(--text-body-large);">
+          <span class="icon indigo">🔒</span> 앱 잠금
+          <span id="appLockStatusBadge" class="badge"
+            style="display:none; margin-left:8px; background:var(--accent-emerald,#10B981); color:#fff;">켜짐</span>
+        </div>
+        <p style="font-size:var(--text-body-normal); color:var(--text-muted); margin-bottom:12px;">
+          앱을 열 때 PIN 또는 생체인증(Face ID·지문)으로 잠금을 설정해 내 정보를 보호하세요.<br>
+          <span style="font-size:0.75rem;">잠금은 이 기기에서만 적용됩니다.</span>
+        </p>
+        <div id="appLockOff" style="display:block;">
+          <button class="btn btn-primary" onclick="onAppLockSetupPin()" style="width:100%;">
+            🔒 PIN 설정하기
           </button>
-          <div id="pfPayslipArea"
-            style="display:none; border:2px dashed var(--accent-indigo); border-radius:12px; padding:16px; text-align:center; margin-bottom:16px; background:var(--bg-hover);">
-            <div style="font-size:1.8rem; margin-bottom:4px;">📄</div>
-            <p style="font-weight:600; color:var(--text-primary); margin-bottom:4px;">급여명세서(PDF)로 자동 입력</p>
-            <p style="font-size:var(--text-body-small); color:var(--text-muted); margin-bottom:10px;">
-              급여명세서 PDF 파일을 넣으면<br>이름·직종·입사일·수당이 자동으로 채워집니다<br>
-              <span style="font-size:var(--text-body-small); opacity:0.7;">🔒 파일은 저장되지 않으며, 브라우저에서만 처리됩니다.</span>
-            </p>
-            <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
-              <label for="pfPayslipFileInput" class="btn btn-primary" style="cursor:pointer; margin:0;">
-                📂 PDF 파일 선택
-              </label>
-            </div>
-            <input type="file" id="pfPayslipFileInput" accept=".pdf" style="display:none"
-              onchange="handleProfilePayslipUpload(this.files[0]); this.value='';">
-
-            <div id="pfPayslipProgress" style="display:none; margin-top:10px;"></div>
+        </div>
+        <div id="appLockOn" style="display:none;">
+          <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+            <button class="btn btn-outline" onclick="onAppLockChangePin()"
+              style="font-size:var(--text-body-normal); padding:6px 14px;">
+              🔑 PIN 변경
+            </button>
+            <button class="btn btn-outline" onclick="onAppLockDisable()"
+              style="font-size:var(--text-body-normal); padding:6px 14px; color:var(--accent-rose,#EF4444); border-color:var(--accent-rose,#EF4444);">
+              🔓 잠금 해제
+            </button>
           </div>
-
-          <!-- ▸ 기본 정보 -->
-          <p style="font-size:var(--text-body-normal); color:var(--accent-indigo); margin:0 0 8px; font-weight:600;">▸
-            기본 정보</p>
-          <div class="form-row">
-            <div class="form-group">
-              <label>이름</label>
-              <input type="text" id="pfName" placeholder="예: 홍길동" autocomplete="off">
+          <div id="biometricSettingRow"
+            style="display:none; margin-top:8px; padding-top:10px; border-top:1px solid var(--border-glass);">
+            <p
+              style="font-size:var(--text-body-normal); color:var(--text-primary); font-weight:600; margin-bottom:6px;">
+              생체인증 (Face ID / 지문)</p>
+            <div id="biometricOff">
+              <button class="btn btn-outline" onclick="onBiometricRegister()"
+                style="font-size:var(--text-body-normal); padding:6px 14px;">
+                🪪 생체인증 추가
+              </button>
             </div>
-            <div class="form-group">
-              <label>성별 <small style="color:var(--text-muted)">(생휴 여부 확인)</small></label>
-              <select id="pfGender">
-                <option value="">미설정</option>
-                <option value="M">남성</option>
-                <option value="F">여성</option>
-              </select>
+            <div id="biometricOn" style="display:none;">
+              <span class="badge"
+                style="background:var(--accent-emerald,#10B981);color:#fff;margin-right:8px;">등록됨</span>
+              <button class="btn btn-outline" onclick="onBiometricDisable()"
+                style="font-size:var(--text-body-normal); padding:4px 10px; color:var(--accent-rose,#EF4444); border-color:var(--accent-rose,#EF4444);">
+                제거
+              </button>
             </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>직종</label>
-              <select id="pfJobType" onchange="updateProfileGrades()"></select>
-            </div>
-            <div class="form-group">
-              <label>직급·등급</label>
-              <select id="pfGrade" onchange="_suggestYear(document.getElementById('pfHireDate').value)"></select>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>호봉 (연차)</label>
-              <select id="pfYear">
-                <option value="1">1년차</option>
-                <option value="2">2년차</option>
-                <option value="3">3년차</option>
-                <option value="4">4년차</option>
-                <option value="5">5년차</option>
-                <option value="6">6년차</option>
-                <option value="7">7년차</option>
-                <option value="8">8년차</option>
-              </select>
-              <small id="pfYearHint" style="color:var(--text-muted)"></small>
-            </div>
-            <div class="form-group">
-              <label>입사일</label>
-              <input type="text" id="pfHireDate" placeholder="예: 2021-01-01">
-              <small id="pfServiceDisplay" style="color:var(--text-muted)"></small>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>최근 승진일 <small style="font-weight:400; color:var(--text-muted)">선택</small></label>
-              <input type="text" id="pfPromotionDate" placeholder="예: 2024-03-01">
-              <small id="pfPromotionHint" style="color:var(--text-muted)"></small>
-            </div>
-            <div class="form-group"></div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>월 소정근로시간 <small style="font-weight:400; color:var(--text-muted)">기본 209h</small></label>
-              <input type="number" id="pfWeeklyHours" value="209" min="1" max="300" placeholder="209">
-              <small style="color:var(--text-muted)">시급 계산 기준 · 일반 전일제 근무자는 209h 그대로</small>
-            </div>
-            <div class="form-group"></div>
-          </div>
-
-          <!-- ▸ 개인 수당 (급여명세서 확인 후 입력) -->
-          <p style="font-size:var(--text-body-normal); color:#000000; margin:16px 0 4px; font-weight:600;">▸
-            개인 수당 <small style="font-weight:400; color:var(--text-muted)">급여명세서 확인 후 입력</small></p>
-          <div class="form-row">
-            <div class="form-group">
-              <label>조정급 <small style="color:#e53e3e; font-weight:600;">★필수</small></label>
-              <input type="number" id="pfAdjust" value="0" placeholder="급여명세서 확인">
-            </div>
-            <div class="form-group">
-              <label>승급조정급</label>
-              <input type="number" id="pfUpgradeAdjust" value="0">
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>별정수당</label>
-              <input type="number" id="pfSpecial" value="0" min="0">
-            </div>
-            <div class="form-group">
-              <label>직책급</label>
-              <input type="number" id="pfPosition" value="0" min="0">
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>업무보조비</label>
-              <input type="number" id="pfWorkSupport" value="0" min="0">
-            </div>
-            <div class="form-group">
-              <label>군복무수당</label>
-              <div class="toggle-group" style="margin-top:6px;">
-                <input type="checkbox" id="pfMilitary">
-                <label for="pfMilitary">해당 있음</label>
-              </div>
-              <div id="pfMilitaryMonthsGroup" style="display:none; margin-top:6px;">
-                <input type="number" id="pfMilitaryMonths" value="24" min="1" max="36" placeholder="복무기간(개월)">
-              </div>
-            </div>
-          </div>
-
-          <!-- ▸ 가족수당 (통상임금 미포함 — 별도 지급) -->
-          <p style="font-size:var(--text-body-normal); color:#000000; margin:16px 0 4px; font-weight:600;">▸
-            가족수당 <small style="font-weight:400; color:var(--text-muted)">통상임금 미포함 — 별도 지급 (제49조)</small></p>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>가족 수 <small style="color:var(--text-muted)">(자녀 제외·최대 5인)</small></label>
-              <input type="number" id="pfFamily" value="0" min="0" max="5" onchange="updateFamilyUI()"
-                oninput="updateFamilyUI()">
-              <small style="color:var(--text-muted)">배우자 4만원 / 추가 1인당 2만원</small>
-            </div>
-          </div>
-
-          <div id="pfChildrenRow" class="form-row" style="display:none;">
-            <div class="form-group">
-              <label>자녀 수</label>
-              <input type="number" id="pfChildren" value="0" min="0" max="10" onchange="updateFamilyUI()"
-                oninput="updateFamilyUI()">
-              <small style="color:var(--text-muted)">첫째 3만 / 둘째 7만 / 셋째이상 11만</small>
-            </div>
-          </div>
-
-          <div id="childExtraRow" class="form-row" style="display:none;">
-            <div class="form-group">
-              <label>6세이하 자녀수당 <small style="color:var(--text-muted)">(월액 직접 입력)</small></label>
-              <input type="number" id="pfChildrenUnder6Pay" value="0" min="0" step="10000" placeholder="급여명세서 확인"
-                onchange="updateFamilyUI()" oninput="updateFamilyUI()">
-              <small style="color:var(--text-muted)">급여명세서의 6세이하자녀수당 금액 그대로 입력</small>
-            </div>
-          </div>
-
-          <div id="pfFamilySummary"
-            style="display:none; margin-top:4px; padding:8px 12px; background:var(--bg-hover); border-radius:8px; font-size:var(--text-body-small);">
-          </div>
-          <!-- 근속가산기본급: 입사일로 자동 계산, 별도 입력 불필요 -->
-          <input type="checkbox" id="pfSeniority" style="display:none;">
-
-          <!-- 공용 기기 개인정보 주의 안내 -->
-          <div
-            style="display:flex; align-items:flex-start; gap:10px; padding:10px 12px; background:rgba(245,158,11,0.09); border:1px solid rgba(245,158,11,0.35); border-radius:8px; font-size:var(--text-body-normal); margin-top:20px; line-height:1.5;">
-            <span style="font-size:1.1rem; flex-shrink:0; margin-top:1px;">⚠️</span>
-            <div>
-              <strong style="color:#F080A0; font-weight: bold; display:block; margin-bottom:2px;">공용 기기에서는 개인정보를 저장하지
-                마세요</strong>
-              <span style="color:var(--text-secondary);">학교·도서관·직장 공용 컴퓨터에서는 개인정보를 입력하지 마세요. 데이터는 이 브라우저에만 저장되어
-                <strong>다음 사용자가 동일 브라우저를 열면 볼 수 있습니다.</strong></span>
-            </div>
-          </div>
-
-          <div class="form-row" style="margin-top:16px;">
-            <button class="btn btn-primary" onclick="saveProfile()" style="flex:2">💾 저장하기</button>
-            <button class="btn btn-outline" onclick="clearProfile()" style="flex:1">🗑 초기화</button>
           </div>
         </div>
-      </div><!-- End of Profile Form Card -->
-
-      <!-- 프로필 요약 -->
-      <div id="profileSummary" class="card" style="max-width:600px; margin:20px auto 0;">
-        <div class="card-title" style="font-size:var(--text-body-large);"><span class="icon indigo">📝</span> 통상임금 내역
-        </div>
-        <p style="color:var(--text-muted)">정보를 입력하고 [저장하기]를 눌러주세요.</p>
       </div>
 
-      <!-- 파일 백업/복구 (일반 모드 전용) -->
+      <!-- 💾 데이터 백업 및 복구 -->
       <div id="localBackupSection" class="card" style="max-width:600px; margin:20px auto 0;">
         <div class="card-title" style="font-size:var(--text-body-large);"><span class="icon indigo">💾</span> 데이터 백업 및
           복구</div>
@@ -1523,9 +2119,8 @@
             style="flex:1; font-weight:600; text-align:center; cursor:pointer; font-size:var(--text-body-normal); padding:8px 4px;">
             📤 불러오기 (복원)
           </label>
-          <input type="file" id="backupFileInput" style="display:none"
-            accept=".json,.txt,application/json,text/plain,*/*" onclick="this.value = null;"
-            onchange="uploadBackup(event)">
+          <input type="file" id="backupFileInput" style="display:none" accept="application/json,.json"
+            onclick="this.value = null;" onchange="uploadBackup(event)">
         </div>
         <p style="font-size:0.7rem; color:var(--text-muted); margin-top:6px; line-height:1.4;">
           💡 복원 시 <strong>snuh_backup_*.json</strong> 파일을 선택하세요.<br>
@@ -1533,6 +2128,52 @@
         </p>
       </div>
 
+      <!-- 🗓️ 팀 근무표 캘린더 -->
+      <div id="teamScheduleSyncSection" class="card" style="max-width:600px; margin:20px auto 0; display:none;">
+        <div class="card-title" style="font-size:var(--text-body-large);">
+          <span class="icon indigo">🗓️</span> 팀 근무표 캘린더
+        </div>
+        <p style="font-size:var(--text-body-normal); color:var(--text-muted); margin-bottom:12px;">
+          배포된 팀 근무표가 있으면 이번 달 <strong>D/E/N 근무와 승인 휴가만</strong> `.ics` 파일로 내려받아 일반 캘린더에 가져올 수 있어요.
+          Google Calendar 심사 중에는 이 방식으로 테스트합니다.
+        </p>
+        <div class="info-note-banner" style="margin-bottom:12px;">
+          <span>ℹ️</span>
+          <span>OFF는 기본 동기화하지 않고, 팀 검토/배포는 팀 워크스페이스에서 진행합니다.</span>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button id="teamScheduleIcsBtn" class="btn btn-outline" onclick="downloadTeamScheduleIcs(this)"
+            style="font-size:var(--text-body-normal); padding:6px 12px;">📥 이번 달 근무표 .ics 받기</button>
+          <a class="btn btn-outline" href="./nurse_admin/index.html"
+            style="font-size:var(--text-body-normal); padding:6px 12px; text-decoration:none;">배포 근무표 열기</a>
+          <a class="btn btn-outline" href="./nurse_admin/admin.html"
+            style="font-size:var(--text-body-normal); padding:6px 12px; text-decoration:none;">관리자판 열기</a>
+          <a class="btn btn-outline" href="./dashboard.html"
+            style="font-size:var(--text-body-normal); padding:6px 12px; text-decoration:none;">검증 대시보드</a>
+        </div>
+        <p id="teamScheduleSyncNote" style="font-size:0.75rem; color:var(--text-muted); margin-top:8px;">
+          팀 로그인 후 사용할 수 있어요.
+        </p>
+      </div>
+
+      <!-- ⚠️ 데이터 충돌 복구 -->
+      <div id="orphanRecoverySection" class="card" style="max-width:600px; margin:20px auto 0; display:none;">
+        <div class="collapsible-header" onclick="toggleCollapsible('orphanRecoveryBody')" style="margin-bottom:0;">
+          <span style="display:flex;align-items:center;gap:8px;" id="orphanRecoveryToggleLabel">
+            <span class="toggle-icon">▸</span>
+            <span class="icon" style="color:var(--accent-amber);">⚠️</span>
+            <span style="font-size:var(--text-body-large);font-weight:600;">충돌 백업 복구</span>
+            <span id="orphanCountBadge" class="badge" style="background:var(--accent-amber);color:#fff;"></span>
+          </span>
+        </div>
+        <div class="collapsible-body" id="orphanRecoveryBody" style="display:none;">
+          <p style="font-size:var(--text-body-normal);color:var(--text-muted);margin:8px 0 12px;line-height:1.5;">
+            기기 전환 또는 동기화 충돌 때 자동 보관된 이전 데이터 사본입니다.<br>
+            현재 데이터 대신 복구하거나, 확인 후 삭제할 수 있어요.
+          </p>
+          <div id="orphanList" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+      </div>
 
     </div>
 
@@ -1567,51 +2208,53 @@
 
   </main>
 
-  <!-- ═══════════ 🎓 인터랙티브 튜토리얼 ═══════════ -->
-  <div id="tutorialOverlay" class="tutorial-overlay" style="display:none;">
-    <div id="tutorialBackdrop" class="tutorial-backdrop"></div>
-    <div id="tutorialSpotlight" class="tutorial-spotlight" style="display:none;"></div>
-    <div id="tutorialTooltip" class="tutorial-tooltip" style="display:none;">
-      <div id="tutorialArrow" class="tutorial-tooltip-arrow top"></div>
-      <div id="tutorialTitle" class="tutorial-tooltip-title"></div>
-      <div id="tutorialBody" class="tutorial-tooltip-body"></div>
-      <div class="tutorial-tooltip-footer">
-        <span id="tutorialProgress" class="tutorial-progress"></span>
-        <div class="tutorial-btn-group">
-          <button id="tutorialSkip" class="tutorial-btn" onclick="endTutorial()">건너뛰기</button>
-          <button id="tutorialNext" class="tutorial-btn primary" onclick="nextTutorialStep()">다음</button>
-        </div>
-      </div>
-    </div>
-    <!-- 모의 바텀시트 (특정 스텝에서만 표시) -->
-    <div id="tutorialMockSheet" class="tutorial-mock-sheet" style="display:none;"></div>
-  </div>
 
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabaseClient.js?v=1.4"></script>
-  <script src="data.js?v=1.3"></script>
-  <script src="calculators.js?v=1.4"></script>
-  <script src="holidays.js?v=1.2"></script>
-  <script src="profile.js?v=1.3"></script>
-  <script src="overtime.js?v=1.1"></script>
-  <script src="leave.js?v=1.1"></script>
-  <script src="payroll.js?v=1.4"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-  <script src="salary-parser.js?v=2.3"></script>
-  <script src="salary-parser-test.js?v=1.0"></script>
-  <script src="payroll-views.js?v=1.0"></script>
-  <script src="app.js?v=1.8"></script>
+  <!-- xlsx.js / pdf.js는 utils-lazy.js를 통해 필요 시점에만 로드 (홈 진입 시 1.1MB 다운로드 회피) -->
+  <script src="utils-lazy.js?v=1.0" defer></script>
+
+  <script src="config.js?v=1.2" defer></script>
+  <script src="appLock.js?v=1.0" defer></script>
+  <script src="sentry.js?v=1.0" defer></script>
+  <script src="data.js?v=2.8" defer></script>
+  <script src="calculators.js?v=2.5" defer></script>
+  <script src="holidays.js?v=1.2" defer></script>
+  <script src="profile.js?v=2.5" defer></script>
+  <script src="overtime.js?v=1.3" defer></script>
+  <script src="leave.js?v=1.2" defer></script>
+  <script src="payroll.js?v=1.4" defer></script>
+
+  <script src="salary-parser.js?v=2.6" defer></script>
+
+  <script src="payroll-views.js?v=1.8" defer></script>
+  <script src="resume.js?v=1.1" defer></script>
+  <script src="job-templates.js?v=1.0" defer></script>
+  <script src="profile-tab.js?v=1.0" defer></script>
+  <script src="work-history.js?v=1.2" defer></script>
+  <script src="pay-estimation.js?v=1.0" defer></script>
+  <script src="payslip-tab.js?v=1.1" defer></script>
+  <script src="leave-tab.js?v=1.0" defer></script>
+  <script src="app.js?v=2.7" defer></script>
   <script>
-    // ── 테마 전환 시스템 ──
-    (function initTheme() {
-      const saved = localStorage.getItem('theme');
-      if (saved === 'linear') {
-        document.documentElement.removeAttribute('data-theme');
-        document.getElementById('themeToggle').textContent = '🌙';
-      }
+    // 테마 속성은 DOM 생성 전에 즉시 반영 (flicker 방지)
+    (function () {
+      var saved = localStorage.getItem('theme');
+      if (saved === 'linear') document.documentElement.removeAttribute('data-theme');
     })();
+
+    // themeToggle / demoBanner 엘리먼트 접근은 shared-layout.js(defer)가 렌더한 이후여야 함
+    document.addEventListener('DOMContentLoaded', function () {
+      var saved = localStorage.getItem('theme');
+      if (saved === 'linear') {
+        var tgl = document.getElementById('themeToggle');
+        if (tgl) tgl.textContent = '🌙';
+      }
+      var isDemoUrl = new URLSearchParams(window.location.search).get('demo') === '1';
+      var isDemoFlag = localStorage.getItem('bhm_demo_mode') === '1';
+      if (isDemoUrl || isDemoFlag) {
+        var banner = document.getElementById('demoBanner');
+        if (banner) banner.style.display = 'flex';
+      }
+    });
 
     function toggleTheme() {
       const html = document.documentElement;
@@ -1619,105 +2262,20 @@
       const isNeo = html.getAttribute('data-theme') === 'neo';
       if (isNeo) {
         html.removeAttribute('data-theme');
-        btn.textContent = '🌙';
+        if (btn) btn.textContent = '🌙';
         localStorage.setItem('theme', 'linear');
       } else {
         html.setAttribute('data-theme', 'neo');
-        btn.textContent = '🎨';
+        if (btn) btn.textContent = '🎨';
         localStorage.setItem('theme', 'neo');
       }
     }
   </script>
 
-  <script>
-    // ── 구글 로그인 UI 업데이트 함수 ──
-    function updateAuthUI(user) {
-      const authContainer = document.getElementById('authContainer');
-      if (!authContainer) return;
-      if (user) {
-        const name = user.user_metadata?.full_name || user.email;
-        const avatar = user.user_metadata?.avatar_url || '';
-        authContainer.innerHTML = `
-              <div style="font-size:var(--text-body-normal); color:var(--text-muted); text-align:right;">
-                <div style="font-weight:600; color:var(--text-primary)">${name}</div>
-                <button onclick="SupabaseSync.signOut()" style="background:transparent; border:none; color:var(--accent-rose); font-size:var(--text-body-normal); cursor:pointer; padding:0; margin-top:2px; text-decoration:underline;">로그아웃</button>
-              </div>
-              <img src="${avatar}" style="width:32px; height:32px; border-radius:50%; background:var(--bg-glass); display:${avatar ? 'block' : 'none'}; border:1px solid var(--border-glass);">
-            `;
-      } else {
-        authContainer.innerHTML = `
-              <button onclick="SupabaseSync.signInWithGoogle()" class="btn btn-primary" style="padding:6px 14px; font-size:var(--text-body-large); font-weight:600; display:flex; align-items:center; gap:6px; background:#4285F4; border-color:#4285F4;">
-                <span style="background:white; border-radius:50%; width:16px; height:16px; display:inline-flex; align-items:center; justify-content:center; color:#4285F4; font-weight:bold; font-size:var(--text-label-small);">G</span> 로그인
-              </button>
-            `;
-      }
-    }
-  </script>
+  <script src="settings-ui.js?v=1.1" defer></script>
   <!-- Toast notification -->
   <div id="otToast" class="ot-toast" style="display:none;"></div>
 
-  <!-- ═══════════ 🎉 온보딩 모달 ═══════════ -->
-  <div id="onboardingModal" class="onboarding-overlay" style="display:none;">
-    <div class="onboarding-card">
-      <div class="onboarding-icon">
-        <img src="./snuhmatecircle.png"
-          style="width: 144px; height: 144px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-active);">
-      </div>
-      <div class="onboarding-title">처음 오셨나요?</div>
-      <div class="onboarding-sub">
-        '휴가'와 '시간외 근무' 등을 얼마나 했는지<br>기록하고 관리하기 위해 만들었어요.<br>기기 자체에 데이터가 저장되니 <br>PC보다 핸드폰에 기록해서 관리하세요!
-      </div>
-      <div class="onboarding-steps">
-        <div class="onboarding-step">
-          <div class="step-num" style="background:var(--accent-emerald);">1</div>
-          <div class="step-text">
-            <strong>🔐 내 데이터는 철저히 내 것</strong>
-            <small>개발자도,서버도 절대 내 데이터를 볼 수 없어요.</small>
-            <br><span style="color:var(--text-muted); font-size:0.85em;">※ 기기를 바꾸실 땐 꼭 ‘백업’ 하세요!</span></small>
-          </div>
-        </div>
-        <div class="onboarding-step">
-          <div class="step-num">2</div>
-          <div class="step-text">
-            <strong>👤 내 정보 등록</strong>
-            <small>직종·호봉·입사일을 저장하면<br>시급·연차가 자동 계산됩니다</small>
-          </div>
-        </div>
-        <div class="onboarding-step">
-          <div class="step-num">3</div>
-          <div class="step-text">
-            <strong>⏰ 시간외·온콜 기록</strong>
-            <small>캘린더 날짜를 탭 → 유형·시간 입력<br>수당이 즉시 계산됩니다.(참고용)
-              <br><span style="color:var(--text-muted); font-size:0.85em;">※ 개인차로 실제금액과 차이 발생 가능</span></small>
-          </div>
-        </div>
-        <div class="onboarding-step">
-          <div class="step-num">4</div>
-          <div class="step-text">
-            <strong>📅 휴가 관리</strong>
-            <small>연차·병가 등록 → 잔여 휴가를<br>자동으로 추적합니다</small>
-          </div>
-        </div>
-      </div>
-
-      <button onclick="startTutorial()" class="btn btn-primary btn-full"
-        style="font-size:var(--text-body-large); padding:12px;">
-        🎓 사용법 보기 (튜토리얼)
-      </button>
-      <div style="display:flex; gap:10px; margin-top:10px;">
-        <a onclick="dismissOnboarding(false)" class="onboarding-link" style="flex:1;">
-          🚀 바로 시작하기
-        </a>
-        <a onclick="dismissOnboarding(true)" class="onboarding-link" style="flex:1;">
-          👤 개인정보 먼저 입력
-        </a>
-      </div>
-      <p
-        style="margin-top:14px; font-size:var(--text-body-normal); color:var(--text-muted); text-align:center; border-top:1px solid var(--border-glass); padding-top:12px;">
-        만든 사람: 김계환 (핵의학과)
-      </p>
-    </div>
-  </div>
 
   <script>
     function getCaptureParams() {
@@ -1734,10 +2292,6 @@
         feedback: 'SNUH 메이트 - 피드백'
       };
       const requestedTab = params.get('tab');
-      if (params.get('showOnboarding') === '1') {
-        document.title = 'SNUH 메이트 - 온보딩';
-        return;
-      }
       if (requestedTab && titleMap[requestedTab]) {
         document.title = titleMap[requestedTab];
       }
@@ -1745,42 +2299,11 @@
 
     applyCaptureTitle();
 
-    // ── 온보딩 로직 (최대 3회, 프로필 없을 때만) ──
-    (function checkOnboarding() {
-      const params = getCaptureParams();
-      if (params.get('hideOnboarding') === '1' || params.get('capture') === '1') return;
-      const profile = localStorage.getItem('profile');
-      if (profile) return; // 프로필 저장된 경우 표시 안 함
-      const count = parseInt(localStorage.getItem('onboarding_count') || '0');
-      if (count < 3) {
-        setTimeout(() => {
-          const modal = document.getElementById('onboardingModal');
-          if (modal) modal.style.display = 'flex';
-          localStorage.setItem('onboarding_count', String(count + 1));
-        }, 600);
-      }
-    })();
-
-    function showOnboarding() {
-      const modal = document.getElementById('onboardingModal');
-      if (modal) modal.style.display = 'flex';
-    }
-
-    function dismissOnboarding(goProfile) {
-      const modal = document.getElementById('onboardingModal');
-      if (modal) modal.style.display = 'none';
-      if (goProfile) switchTab('profile');
-    }
-
     document.addEventListener('DOMContentLoaded', () => {
       const params = getCaptureParams();
-      if (params.get('showOnboarding') === '1') {
-        const modal = document.getElementById('onboardingModal');
-        if (modal) modal.style.display = 'flex';
-      }
-      // URL ?tutorial=1 로 진입 시 바로 튜토리얼 시작
+      // URL ?tutorial=1 로 진입 시 tutorial.html 로 리다이렉트
       if (params.get('tutorial') === '1') {
-        setTimeout(() => { if (typeof startTutorial === 'function') startTutorial(); }, 800);
+        window.location.href = './tutorial.html';
       }
     });
 
@@ -1788,29 +2311,21 @@
     function updateHourlyWarning() {
       const val = parseInt(document.getElementById('otHourly')?.value) || 0;
       const warning = document.getElementById('otHourlyWarning');
-      if (warning) warning.style.display = val === 0 ? 'flex' : 'none';
+      if (!warning) return;
+      if (localStorage.getItem('hwBannerDismissed')) { warning.style.display = 'none'; return; }
+      warning.style.display = val === 0 ? 'flex' : 'none';
+    }
+    function dismissHwBanner() {
+      localStorage.setItem('hwBannerDismissed', '1');
+      const w = document.getElementById('otHourlyWarning');
+      if (w) w.style.display = 'none';
     }
 
-    // 도메인 이전 팝업 노출 및 닫기 로직
-    function closeMigrationModal() {
-      document.getElementById('migrationOverlay').style.display = 'none';
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const host = window.location.hostname;
-      if (host.includes('vercel.app')) {
-        document.getElementById('migrationOverlay').style.display = 'flex';
-      }
-      // 새 도메인 접속 시 온보딩 자동 노출보장 (기존 로직이 있지만 명시적으로 추가)
-      if (host === 'snuhmate.com' || host === 'www.snuhmate.com') {
-        const hasSeen = localStorage.getItem('onboarding_seen_v2');
-        if (!hasSeen) {
-          showOnboarding();
-          localStorage.setItem('onboarding_seen_v2', 'true');
-        }
-      }
-    });
-
+  </script>
+  <script src="share-utils.js?v=1.0" defer></script>
+  <script src="migration-overlay.js?v=1.0" defer></script>
+  <script src="orphan-recovery.js?v=1.0" defer></script>
+  <script>
     // 시간외 탭 전환 시 경고 확인
     document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('otHourly')?.addEventListener('input', updateHourlyWarning);

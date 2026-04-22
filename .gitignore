@@ -27,3 +27,12 @@ credentials.md
 
 node_modules/
 .gstack/
+.worktrees/
+.playwright-mcp/
+tmp/
+.superpowers/
+.gstack-designs/
+.context/
+.env.local
+.env.vercel.tmp
+.env*

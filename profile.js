@@ -10,10 +10,14 @@ const PROFILE = {
     // ── 기본 프로필 템플릿 ──
     defaults: {
         name: '',
+        employeeNumber: '', // 사번 (payslip 업로드 시 자동 채움)
         gender: '',        // 'M' / 'F' / '' (미설정)
+        hospital: '서울대학교병원',  // SNUH 내부 앱 — 기본값 고정
+        department: '',    // 부서 (예: 핵의학과, 중환자실)
         jobType: '간호직',
         grade: 'J3',
         year: 1,
+        birthDate: '',
         hireDate: '',
         adjustPay: 0,
         upgradeAdjustPay: 0,
@@ -27,7 +31,14 @@ const PROFILE = {
         positionPay: 0,
         workSupportPay: 0,
         nightShiftsUnrewarded: 0,  // 누적 미지급 야간근무 횟수 (리커버리 데이 이월용)
-        weeklyHours: 209           // 월 소정근로시간 (기본 209시간, 비정규직 등 다를 경우 수정)
+        weeklyHours: 209,          // 월 소정근로시간 (기본 209시간, 비정규직 등 다를 경우 수정)
+        unionStepAdjust: '',       // 노조협의 호봉 보정 (''=자동, '0'=해당없음, '1'=+1호봉 수동지정)
+        // 이력서 섹션 (Phase 3)
+        education: [],   // [{id, period, degree, school, major, grade}]
+        licenses: [],    // [{id, date, type, name, issuer}]
+        papers: [],      // [{id, year, title, venue}]
+        military: {},    // {period, branch, rank, mos, status, veteran}
+        coverLetter: '' // 자기소개서 자유 텍스트
     },
 
     /**
@@ -35,14 +46,14 @@ const PROFILE = {
      * @param {object} data
      */
     save(data) {
-        const profile = { ...this.defaults, ...data, savedAt: new Date().toISOString() };
+        // 기존 저장본을 defaults와 신규 data 사이에 끼워넣어,
+        // data에 없는 키는 기존 저장값을 우선 유지 (생년월일·성별 등 수동입력 필드 보존)
+        const existing = this.load() || {};
+        const profile = { ...this.defaults, ...existing, ...data, savedAt: new Date().toISOString() };
         localStorage.setItem(this.STORAGE_KEY, JSON.stringify(profile));
-        
-        // Sync to Supabase async (로그인 상태일 때만)
-        if (window.isFamilyMode && window.SupabaseSync && window.SupabaseUser) {
-            profile.id = window.SupabaseUser.id;
-            window.SupabaseSync.pushCloudData('profiles', profile);
-        }
+        if (window.recordLocalEdit) window.recordLocalEdit('bhm_hr_profile');
+
+        // REMOVED auth: Drive sync push — 로컬 전용 앱
 
         return profile;
     },

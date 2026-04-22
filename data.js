@@ -170,15 +170,18 @@ const DATA_STATIC = {
     }
   },
 
-  // ── 장기근속수당 ──
+  // ── 장기근속수당 (제50조 — ADDITIVE 구조) ──
+  // 규정: 5~9년 5만 / 10~14년 6만 / 15~19년 8만 / 20년+ 10만
+  //       21년 이상 +1만 가산 / 25년 이상 +3만 가산 (누적 ADDITIVE)
+  // 수정: BUG-02 (25년+ 130,000→140,000원) + BUG-03 (TIER→ADDITIVE 금액 반영)
   longServicePay: [
-    { min: 0, max: 5, amount: 0 },
-    { min: 5, max: 10, amount: 50000 },
-    { min: 10, max: 15, amount: 60000 },
-    { min: 15, max: 20, amount: 80000 },
-    { min: 20, max: 21, amount: 100000 },
-    { min: 21, max: 25, amount: 110000 },
-    { min: 25, max: 99, amount: 130000 }
+    { min:  0, max:  5, amount:       0 }, // 5년 미만: 미지급
+    { min:  5, max: 10, amount:   50000 }, // 5~9년
+    { min: 10, max: 15, amount:   60000 }, // 10~14년
+    { min: 15, max: 20, amount:   80000 }, // 15~19년
+    { min: 20, max: 21, amount:  100000 }, // 20년 (기준액)
+    { min: 21, max: 25, amount:  110000 }, // 21~24년 (+10,000 가산)
+    { min: 25, max: 99, amount:  140000 }  // 25년+ (+30,000 추가 가산, BUG-02 수정)
   ],
 
   // ── 가족수당 ──
@@ -390,7 +393,7 @@ const DATA_STATIC = {
     { category: '근로시간', q: '통상 근무시간은?', a: '• 주 40시간, 1일 8시간\n• 09:00~18:00 (휴게 12:00~13:00)', ref: '제32조' },
     { category: '근로시간', q: '교대근무 시간표는?', a: '• 낮번(D) 07:00~15:30\n• 초번(E) 15:00~23:00\n• 밤번(N) 22:30~익일 07:30\n각 근무 30분 휴게시간 포함', ref: '제32조' },
     { category: '근로시간', q: '주 최대 근무시간은?', a: '주 최대 52시간\n• 소정근로 40시간 + 연장근로 12시간', ref: '제34조' },
-    { category: '근로시간', q: '시간외근무는 어떻게 계산하나요?', a: '15분 단위로 계산 (2020년~)\n\n• 연장근무: 통상임금 × 1/209 × 150%\n• 야간가산(22~06시): 통상임금 × 1/209 × 200%\n• 휴일근무(8시간 이내): 통상임금 × 1/209 × 150%\n• 휴일근무(8시간 초과): 통상임금 × 1/209 × 200%', ref: '제47조' },
+    { category: '근로시간', q: '시간외근무는 어떻게 계산하나요?', a: '15분 단위로 계산 (2020년~)\n\n• 연장근무: 통상임금 × 1/209 × 150%\n• 야간가산(22~06시): 통상임금 × 1/209 × 200%\n• 휴일근무(8시간 이내): 통상임금 × 1/209 × 150%\n• 휴일근무(8시간 초과): 통상임금 × 1/209 × 200%', ref: '제34조, 제47조' },
 
     // ── 온콜 ──
     { category: '온콜', q: '온콜 대기만 하면 수당이 나오나요?', a: '네, 대기만 해도 지급됩니다.\n• 온콜대기수당: 1일당 10,000원\n• 실 근무 여부와 무관', ref: '별도합의 (2021.11)' },
@@ -461,8 +464,20 @@ const DATA_STATIC = {
     { category: '복지', q: '복지포인트는 얼마?', a: '• 기본: 700P\n• 근속 가산: 10P/년 (최대 300P)\n• 가족포인트: 별도\n• 자녀학자금: 1,200P\n\n1P = 1,000원', ref: '복리후생 안내서' }
   ],
 
-  // ── 규정 핸드북 (위키용) ──
-  handbook: [
+  // ── 부서 연락망 (규정 찾아보기 탭 연락처 버튼용) ──
+  contacts: {
+    '노동조합 (서울대병원분회)': { roles: '조합 가입/탈퇴, 단체협약 해석, 조합 행사 문의', phone: '02-2072-3440', email: 'snuh.branch@kptu.net' },
+    '노사협력과': { roles: '경조금, 화환, 장례용 물품 신청, 단체교섭 관련', phone: '02-2072-2831', email: 'hr_coop@snuh.org' },
+    '인사팀 (일반/휴가)': { roles: '휴직, 복직, 연차, 청원휴가 관련', phone: '02-2072-4862', email: 'hr@snuh.org' },
+    '인사팀 (급여계)': { roles: '기본급·수당, 퇴직금, 사학연금 지원금', phone: '02-2072-2716', email: 'payroll@snuh.org' },
+    '총무과': { roles: '맞춤형 복지포인트, 제복 지급, 휴양소(콘도)', phone: '02-2072-2714', email: 'general@snuh.org' },
+    '외래/입원 원무과': { roles: '직원 및 가족 진료비 감면, 업무상 재해(산재) 접수', phone: '02-2072-0231', email: 'admin@snuh.org' },
+    '건강증진센터': { roles: '정기/특수 건강검진, 장기근속자 종합검진', phone: '02-2072-3333', email: 'health@snuh.org' },
+  },
+
+  // ── 규정 핸드북 (주제별 — 물어보기 탭 로컬 검색 fallback용) ──
+  // 찾아보기 탭은 union_regulation_2026.json 기반 장(Chapter) 구조를 runtime에 로드하여 DATA.handbook에 넣음
+  handbookTopics: [
     {
       category: '근로시간', icon: '⏰', articles: [
         { title: '근무시간', ref: '제32조', body: '일반직: 주 40시간, 1일 8시간 (09:00~18:00, 휴게 12:00~13:00).\n교대근무: 낮번(D) 07:00~15:30, 초번(E) 15:00~23:00, 밤번(N) 22:30~익일 07:30.\n각 근무 30분 휴게시간 포함.' },
@@ -538,6 +553,11 @@ const DATA_STATIC = {
     }
   ],
 
+  // ── 규정 핸드북 (장(Chapter) 기반 — 찾아보기 탭용) ──
+  // 초기에는 빈 배열. regulation.js에서 union_regulation_2026.json 로드 후 동적으로 채워짐.
+  // API (/regulations/browse) 또는 JSON fallback으로 교체됨.
+  handbook: [],
+
   // ── 퇴직금 2001.08.31 이전 입사자 누진배수 (hospital_rule_master_2026.json 기준) ──
   severanceMultipliersPre2001: [
     { min: 30, multiplier: 52.5 },
@@ -558,6 +578,18 @@ const DATA_STATIC = {
     { min:  3, multiplier:  3.5 },
     { min:  2, multiplier:  2.0 },
     { min:  1, multiplier:  1.0 }
+  ],
+
+  // ── 노조협의 특별 호봉 이벤트 ──
+  // 자동승격과 무관한 일회성 호봉 상향 (역산 보정에 사용)
+  unionStepEvents: [
+    {
+      id: '2026-02-union',
+      date: '2026-02',           // YYYY-MM 형식
+      reason: '2026년 노조협의',
+      stepDelta: 1,
+      grades: ['J1', 'J2', 'J3', 'S1']   // 적용 대상 직급
+    }
   ],
 
   // ── 가계지원비 고정 지급 월 (1·9월 미지급, 설·추석 해당 월은 isHolidayMonth로 별도 처리) ──
@@ -605,7 +637,8 @@ async function loadDataFromAPI() {
   const monthKey = getCurrentMonthKey();
   const cached = readStorageJSON(DATA_BUNDLE_CACHE_KEY);
   if (cached?.monthKey === monthKey && cached?.data) {
-    DATA = { ...DATA_STATIC, ...cached.data };
+    const safeCache = Object.fromEntries(Object.entries(cached.data).filter(([, v]) => v !== undefined));
+    DATA = { ...DATA_STATIC, ...safeCache };
     console.log('[DATA] 월간 캐시 사용');
     return;
   }
@@ -618,14 +651,21 @@ async function loadDataFromAPI() {
 
   dataLoadPromise = (async () => {
   try {
-    const res = await fetch('/api/data/bundle');
+    const _apiBase = (function() {
+      if (location.protocol === 'file:') return 'http://localhost:3001/api';
+      var _lh = { 'localhost': true, '127.0.0.1': true, '::1': true };
+      if (_lh[location.hostname] && location.port !== '3001') return 'http://localhost:3001/api';
+      return '/api';
+    })();
+    const res = await fetch(_apiBase + '/data/bundle');
     if (!res.ok) throw new Error(`API ${res.status}`);
     const contentType = res.headers.get('content-type') || '';
     if (!contentType.includes('application/json')) {
       throw new Error(`Expected JSON but received ${contentType || 'unknown content-type'}`);
     }
     const apiData = await res.json();
-    DATA = { ...DATA_STATIC, ...apiData };
+    const safeApiData = Object.fromEntries(Object.entries(apiData).filter(([, v]) => v !== undefined));
+    DATA = { ...DATA_STATIC, ...safeApiData };
     writeStorageJSON(DATA_BUNDLE_CACHE_KEY, { monthKey, data: apiData, fetchedAt: Date.now() });
     writeStorageJSON(DATA_BUNDLE_STATUS_KEY, { monthKey, state: 'ok', checkedAt: Date.now() });
     console.log('[DATA] API 데이터 로드 완료');
@@ -644,4 +684,6 @@ async function loadDataFromAPI() {
 
   return dataLoadPromise;
 }
-loadDataFromAPI();
+// 초기 로드를 10초 지연: 앱 렌더에 필요한 데이터는 DATA_STATIC로 즉시 충족.
+// API 데이터는 월간 업데이트용이라 지연해도 사용자 체감 영향 없음.
+setTimeout(loadDataFromAPI, 10000);

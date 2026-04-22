@@ -1,0 +1,533 @@
+<h2>Chrome 확장프로그램 팝업 구조 — 어느 방식이 좋으세요?</h2>
+<p class="subtitle">PIN 잠금 · 로그인 검사 · 시간외 / 휴가 / PDF 3가지 기능을 어떻게 배치할지 선택해주세요</p>
+
+<style>
+.popup-shell {
+  width: 320px;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+  font-family: -apple-system, 'Noto Sans KR', sans-serif;
+  font-size: 13px;
+  background: #fff;
+  color: #111;
+  display: flex;
+  flex-direction: column;
+}
+.popup-header {
+  background: #1a56db;
+  color: #fff;
+  padding: 10px 14px;
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.popup-header .badge {
+  background: rgba(255,255,255,0.22);
+  border-radius: 6px;
+  padding: 1px 7px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.popup-body {
+  padding: 14px;
+  flex: 1;
+}
+.popup-tabs {
+  display: flex;
+  border-bottom: 1.5px solid #e5e7eb;
+  background: #f9fafb;
+}
+.popup-tab {
+  flex: 1;
+  padding: 8px 4px;
+  text-align: center;
+  font-size: 12px;
+  color: #6b7280;
+  border-bottom: 2.5px solid transparent;
+  font-weight: 500;
+}
+.popup-tab.active {
+  color: #1a56db;
+  border-bottom-color: #1a56db;
+  background: #fff;
+}
+.field-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+.field-label {
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.field-input {
+  border: 1.5px solid #d1d5db;
+  border-radius: 7px;
+  padding: 7px 10px;
+  font-size: 13px;
+  color: #111;
+  background: #f9fafb;
+}
+.type-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.type-btn {
+  flex: 1;
+  border: 1.5px solid #d1d5db;
+  border-radius: 7px;
+  padding: 6px 4px;
+  text-align: center;
+  font-size: 12px;
+  color: #374151;
+  background: #f9fafb;
+}
+.type-btn.active {
+  border-color: #1a56db;
+  color: #1a56db;
+  background: #eff6ff;
+  font-weight: 600;
+}
+.time-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.time-input {
+  flex: 1;
+  border: 1.5px solid #d1d5db;
+  border-radius: 7px;
+  padding: 7px 8px;
+  font-size: 13px;
+  background: #f9fafb;
+  text-align: center;
+}
+.time-sep { color: #9ca3af; font-weight: 600; }
+.btn-primary {
+  width: 100%;
+  background: #1a56db;
+  color: #fff;
+  border-radius: 8px;
+  padding: 9px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 13px;
+  margin-top: 4px;
+}
+/* PIN screen */
+.pin-screen {
+  padding: 20px 14px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.pin-icon { font-size: 32px; }
+.pin-title { font-weight: 700; font-size: 15px; color: #111; }
+.pin-sub { font-size: 12px; color: #6b7280; }
+.pin-dots { display: flex; gap: 10px; justify-content: center; margin: 4px 0; }
+.pin-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #1a56db; background: #1a56db; }
+.pin-dot.empty { background: transparent; }
+.pin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; }
+.pin-key {
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111;
+  background: #f9fafb;
+}
+.pin-key.action { font-size: 13px; color: #6b7280; font-weight: 500; }
+/* Login screen */
+.login-screen {
+  padding: 20px 14px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.login-icon { font-size: 36px; }
+.google-btn {
+  width: 100%;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  padding: 9px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  background: #fff;
+}
+/* Home menu */
+.menu-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 4px 0 10px;
+}
+.menu-item {
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 14px 8px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: #f9fafb;
+}
+.menu-item.wide {
+  grid-column: 1 / -1;
+}
+.menu-item-icon { font-size: 24px; }
+.menu-item-label { font-size: 12px; font-weight: 600; color: #374151; }
+.menu-item-sub { font-size: 11px; color: #9ca3af; }
+/* Full tab */
+.full-tab {
+  width: 100%;
+  min-height: 280px;
+  border-radius: 0;
+  box-shadow: none;
+  border: 1.5px solid #e5e7eb;
+}
+.full-tab-header {
+  background: #1a56db;
+  color: #fff;
+  padding: 12px 20px;
+  font-weight: 700;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.full-tab-nav {
+  display: flex;
+  border-bottom: 1.5px solid #e5e7eb;
+  background: #f9fafb;
+  padding: 0 12px;
+}
+.full-tab-nav-item {
+  padding: 10px 16px;
+  font-size: 13px;
+  color: #6b7280;
+  border-bottom: 2.5px solid transparent;
+  font-weight: 500;
+}
+.full-tab-nav-item.active {
+  color: #1a56db;
+  border-bottom-color: #1a56db;
+  background: #fff;
+  font-weight: 600;
+}
+.full-tab-body { padding: 16px 20px; }
+.full-row { display: flex; gap: 12px; margin-bottom: 12px; }
+.full-field { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.leave-type-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px; }
+.leave-type-item {
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  padding: 8px 4px;
+  text-align: center;
+  font-size: 12px;
+  color: #374151;
+  background: #f9fafb;
+}
+.leave-type-item.active {
+  border-color: #059669;
+  color: #059669;
+  background: #ecfdf5;
+  font-weight: 600;
+}
+.cards-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.card { width: 320px; }
+.card-image { position: relative; }
+/* Option C note */
+.note-box {
+  background: #fffbeb;
+  border: 1.5px solid #fbbf24;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: #92400e;
+  margin-top: 8px;
+}
+.sync-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #dcfce7;
+  color: #166534;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.mini-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 10px;
+}
+.cal-day {
+  text-align: center;
+  padding: 4px 2px;
+  font-size: 11px;
+  border-radius: 5px;
+  color: #374151;
+}
+.cal-day.header { color: #9ca3af; font-weight: 600; font-size: 10px; }
+.cal-day.today { background: #1a56db; color: #fff; font-weight: 700; }
+.cal-day.selected { background: #dbeafe; color: #1a56db; font-weight: 600; }
+.cal-day.other { color: #d1d5db; }
+</style>
+
+<div class="cards">
+
+  <!-- Option A: Tab popup -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="popup-shell">
+        <div class="popup-header">
+          🏥 SNUH Mate <span class="badge">⚙️</span>
+        </div>
+        <!-- PIN screen overlay (첫 진입) -->
+        <div class="popup-body" style="padding:0">
+          <div style="background:#f0f9ff;padding:6px 14px;font-size:11px;color:#0369a1;border-bottom:1px solid #bae6fd;display:flex;align-items:center;gap:6px;">
+            🔒 <strong>잠금 해제 필요</strong> — 4자리 PIN 입력
+          </div>
+          <div class="pin-screen" style="padding:16px 14px">
+            <div class="pin-dots">
+              <div class="pin-dot"></div>
+              <div class="pin-dot"></div>
+              <div class="pin-dot empty"></div>
+              <div class="pin-dot empty"></div>
+            </div>
+            <div class="pin-grid">
+              <div class="pin-key">1</div><div class="pin-key">2</div><div class="pin-key">3</div>
+              <div class="pin-key">4</div><div class="pin-key">5</div><div class="pin-key">6</div>
+              <div class="pin-key">7</div><div class="pin-key">8</div><div class="pin-key">9</div>
+              <div class="pin-key action">취소</div><div class="pin-key">0</div><div class="pin-key action">←</div>
+            </div>
+          </div>
+          <div class="popup-tabs">
+            <div class="popup-tab active">시간외</div>
+            <div class="popup-tab">휴가</div>
+            <div class="popup-tab">PDF</div>
+          </div>
+          <div class="popup-body" style="padding:12px 14px">
+            <div class="mini-calendar-grid">
+              <div class="cal-day header">일</div><div class="cal-day header">월</div><div class="cal-day header">화</div><div class="cal-day header">수</div><div class="cal-day header">목</div><div class="cal-day header">금</div><div class="cal-day header">토</div>
+              <div class="cal-day other">28</div><div class="cal-day">29</div><div class="cal-day">30</div><div class="cal-day">31</div><div class="cal-day">1</div><div class="cal-day">2</div><div class="cal-day">3</div>
+              <div class="cal-day">4</div><div class="cal-day">5</div><div class="cal-day">6</div><div class="cal-day">7</div><div class="cal-day">8</div><div class="cal-day">9</div><div class="cal-day">10</div>
+              <div class="cal-day">11</div><div class="cal-day">12</div><div class="cal-day">13</div><div class="cal-day">14</div><div class="cal-day">15</div><div class="cal-day">16</div><div class="cal-day">17</div>
+              <div class="cal-day">18</div><div class="cal-day">19</div><div class="cal-day today">20</div><div class="cal-day">21</div><div class="cal-day">22</div><div class="cal-day">23</div><div class="cal-day">24</div>
+            </div>
+            <div class="type-row">
+              <div class="type-btn active">시간외</div>
+              <div class="type-btn">온콜대기</div>
+              <div class="type-btn">온콜출근</div>
+            </div>
+            <div class="time-row">
+              <div class="time-input">18:00</div>
+              <div class="time-sep">→</div>
+              <div class="time-input">20:00</div>
+            </div>
+            <div class="btn-primary">💾 저장 <span class="sync-badge">⚡ 3초 내 동기화</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A. 팝업 탭형 (320px)</h3>
+      <p>기존 팝업 확장 — 하단에 시간외 / 휴가 / PDF 탭 추가. PIN 잠금 화면이 팝업 내에 표시됨. 작고 빠른 진입.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>장점</h4><ul><li>클릭 한 번으로 열림</li><li>현재 구조 재활용</li><li>빠른 기록에 최적화</li></ul></div>
+        <div class="cons"><h4>단점</h4><ul><li>휴가 입력 칸이 좁음</li><li>팝업 닫히면 작업 중단</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option B: 홈 메뉴 → 전체 탭 -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <!-- 팝업 (홈 선택) -->
+      <div class="popup-shell" style="margin-bottom:8px">
+        <div class="popup-header">🏥 SNUH Mate</div>
+        <div class="popup-body">
+          <div style="font-size:12px;color:#6b7280;margin-bottom:10px;">
+            👤 홍길동 · 간호사 <span class="sync-badge" style="float:right">✅ 동기화됨</span>
+          </div>
+          <div class="menu-grid">
+            <div class="menu-item">
+              <div class="menu-item-icon">⏱️</div>
+              <div class="menu-item-label">시간외 기록</div>
+              <div class="menu-item-sub">빠른 입력</div>
+            </div>
+            <div class="menu-item">
+              <div class="menu-item-icon">🌴</div>
+              <div class="menu-item-label">휴가 신청</div>
+              <div class="menu-item-sub">연차·병가 등</div>
+            </div>
+            <div class="menu-item wide">
+              <div class="menu-item-icon">📄</div>
+              <div class="menu-item-label">급여명세서 가져오기</div>
+              <div class="menu-item-sub">PDF 자동 인식 또는 직접 열기</div>
+            </div>
+          </div>
+          <div style="font-size:11px;color:#9ca3af;text-align:center;">🔒 PIN 설정됨 · snuhmate.com 연결됨</div>
+        </div>
+      </div>
+      <!-- 확장된 전체 탭 (휴가 선택 시) -->
+      <div class="popup-shell full-tab">
+        <div class="full-tab-header">
+          🌴 휴가 신청
+          <span style="font-size:12px;font-weight:400;opacity:0.8;">← 돌아가기</span>
+        </div>
+        <div class="full-tab-nav">
+          <div class="full-tab-nav-item">시간외</div>
+          <div class="full-tab-nav-item active">휴가</div>
+          <div class="full-tab-nav-item">PDF</div>
+        </div>
+        <div class="full-tab-body">
+          <div class="leave-type-grid">
+            <div class="leave-type-item active">연차</div>
+            <div class="leave-type-item">반차</div>
+            <div class="leave-type-item">병가</div>
+            <div class="leave-type-item">경조사</div>
+            <div class="leave-type-item">무급</div>
+            <div class="leave-type-item">기타</div>
+          </div>
+          <div class="full-row">
+            <div class="full-field">
+              <div class="field-label">시작일</div>
+              <div class="field-input">2026-04-21</div>
+            </div>
+            <div class="full-field">
+              <div class="field-label">종료일</div>
+              <div class="field-input">2026-04-22</div>
+            </div>
+          </div>
+          <div class="full-row">
+            <div class="full-field">
+              <div class="field-label">사유 (선택)</div>
+              <div class="field-input" style="color:#9ca3af">입력하세요</div>
+            </div>
+          </div>
+          <div class="btn-primary" style="background:#059669;">🌴 2일 연차 신청 <span class="sync-badge" style="background:#bbf7d0;color:#14532d;">⚡ 3초</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B. 홈 메뉴 → 기능별 전체탭</h3>
+      <p>팝업 홈에서 기능 선택 → snuhmate.com 탭을 열어 기록. 또는 팝업을 300px→500px로 확장.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>장점</h4><ul><li>휴가 입력 공간 충분</li><li>직관적 메뉴 구조</li><li>동기화 상태 한눈에 확인</li></ul></div>
+        <div class="cons"><h4>단점</h4><ul><li>2단계 진입 (홈→기능)</li><li>팝업 크기 변동</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option C: 전용 크롬 탭 -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="popup-shell full-tab" style="border-radius:10px">
+        <div class="full-tab-header">
+          🏥 SNUH Mate Extension
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:400">
+            <span class="sync-badge">✅ 동기화됨</span>
+            🔒
+          </div>
+        </div>
+        <div class="full-tab-nav">
+          <div class="full-tab-nav-item active">⏱️ 시간외</div>
+          <div class="full-tab-nav-item">🌴 휴가</div>
+          <div class="full-tab-nav-item">📄 PDF</div>
+          <div class="full-tab-nav-item" style="margin-left:auto">⚙️ 설정</div>
+        </div>
+        <div class="full-tab-body">
+          <div style="display:flex;gap:16px;">
+            <div style="flex:1">
+              <div class="field-label" style="margin-bottom:8px">날짜 선택</div>
+              <div class="mini-calendar-grid">
+                <div class="cal-day header">일</div><div class="cal-day header">월</div><div class="cal-day header">화</div><div class="cal-day header">수</div><div class="cal-day header">목</div><div class="cal-day header">금</div><div class="cal-day header">토</div>
+                <div class="cal-day other">28</div><div class="cal-day">29</div><div class="cal-day">30</div><div class="cal-day">31</div><div class="cal-day">1</div><div class="cal-day">2</div><div class="cal-day">3</div>
+                <div class="cal-day">11</div><div class="cal-day">12</div><div class="cal-day">13</div><div class="cal-day">14</div><div class="cal-day">15</div><div class="cal-day">16</div><div class="cal-day">17</div>
+                <div class="cal-day">18</div><div class="cal-day">19</div><div class="cal-day today">20</div><div class="cal-day selected">21</div><div class="cal-day">22</div><div class="cal-day">23</div><div class="cal-day">24</div>
+              </div>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:8px">
+              <div class="type-row" style="flex-direction:column;gap:5px">
+                <div class="type-btn active" style="text-align:center">⏱️ 시간외근무</div>
+                <div class="type-btn" style="text-align:center">📞 온콜대기</div>
+                <div class="type-btn" style="text-align:center">🚨 온콜출근</div>
+              </div>
+              <div class="time-row" style="margin-bottom:0">
+                <div class="time-input">18:00</div>
+                <div class="time-sep">~</div>
+                <div class="time-input">21:00</div>
+              </div>
+            </div>
+          </div>
+          <div class="btn-primary" style="margin-top:8px">💾 저장 · 연장 3h / 야간 0h <span class="sync-badge">⚡ 3초</span></div>
+        </div>
+      </div>
+      <div class="note-box">💡 팝업 아이콘 클릭 → chrome://extensions 대신 <strong>전용 탭</strong>이 열림. snuhmate.com 없이 독립 작동.</div>
+    </div>
+    <div class="card-body">
+      <h3>C. 전용 크롬 탭 (독립형)</h3>
+      <p>팝업 대신 전용 Chrome 탭(extension page)으로 동작. snuhmate.com 없이 chrome.storage에 직접 저장 → Drive 동기화.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>장점</h4><ul><li>공간 제한 없음</li><li>snuhmate.com 불필요</li><li>캘린더·히스토리 풍부하게 표시</li></ul></div>
+        <div class="cons"><h4>단점</h4><ul><li>개발량 가장 많음</li><li>데이터 모델 재구현 필요</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="section" style="margin-top:16px;padding:14px;background:#f8fafc;border-radius:10px;border:1.5px solid #e2e8f0;">
+  <h3>⚡ 동기화 지연시간 (모든 옵션 공통)</h3>
+  <table style="width:100%;font-size:13px;border-collapse:collapse">
+    <tr style="background:#e2e8f0">
+      <th style="padding:7px 10px;text-align:left;border-radius:6px 0 0 6px">구간</th>
+      <th style="padding:7px 10px;text-align:center">지연</th>
+      <th style="padding:7px 10px;text-align:left;border-radius:0 6px 6px 0">설명</th>
+    </tr>
+    <tr style="border-bottom:1px solid #e2e8f0">
+      <td style="padding:7px 10px">확장 → 로컬 저장</td>
+      <td style="padding:7px 10px;text-align:center;color:#059669;font-weight:700">&lt;50ms</td>
+      <td style="padding:7px 10px;color:#6b7280">chrome.storage.local 즉시 저장</td>
+    </tr>
+    <tr style="border-bottom:1px solid #e2e8f0">
+      <td style="padding:7px 10px">로컬 → Drive 동기화</td>
+      <td style="padding:7px 10px;text-align:center;color:#d97706;font-weight:700">3초 (디바운스)</td>
+      <td style="padding:7px 10px;color:#6b7280">SyncManager 3초 디바운스 후 Drive API 호출</td>
+    </tr>
+    <tr style="border-bottom:1px solid #e2e8f0">
+      <td style="padding:7px 10px">Drive → 다른 기기 반영</td>
+      <td style="padding:7px 10px;text-align:center;color:#d97706;font-weight:700">탭 포커스 시</td>
+      <td style="padding:7px 10px;color:#6b7280">pullOnResume() — 탭 복귀 20초 쿨다운</td>
+    </tr>
+    <tr>
+      <td style="padding:7px 10px">최악의 경우</td>
+      <td style="padding:7px 10px;text-align:center;color:#dc2626;font-weight:700">~25초</td>
+      <td style="padding:7px 10px;color:#6b7280">3초 디바운스 + Drive API 지연 + 다음 탭 복귀까지</td>
+    </tr>
+  </table>
+</div>

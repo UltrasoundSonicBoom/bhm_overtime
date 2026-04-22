@@ -17,10 +17,13 @@ function escapeHtml(str) {
 // ── 프로필 필드 매핑 ──
 const PROFILE_FIELDS = {
   name: 'pfName',
+  employeeNumber: 'pfEmployeeNumber',
   gender: 'pfGender',
   jobType: 'pfJobType',
+  department: 'pfDepartment',
   grade: 'pfGrade',
   year: 'pfYear',
+  birthDate: 'pfBirthDate',
   hireDate: 'pfHireDate',
   adjustPay: 'pfAdjust',
   upgradeAdjustPay: 'pfUpgradeAdjust',
@@ -34,12 +37,25 @@ const PROFILE_FIELDS = {
   positionPay: 'pfPosition',
   workSupportPay: 'pfWorkSupport',
   weeklyHours: 'pfWeeklyHours',
-  promotionDate: 'pfPromotionDate'
+  promotionDate: 'pfPromotionDate',
+  unionStepAdjust: 'pfUnionStepAdjust'
 };
 
 function getCaptureParams() {
   return new URLSearchParams(window.location.search);
 }
+
+// ── 홈 탭 기간 상태 ──
+var _homePeriod = 'month'; // 'month' | 'year'
+
+function switchHomePeriod(period) {
+  _homePeriod = period;
+  document.querySelectorAll('.home-period-btn').forEach(function(btn) {
+    btn.classList.toggle('active', btn.dataset.period === period);
+  });
+  initHomeTab();
+}
+window.switchHomePeriod = switchHomePeriod;
 
 // ── 홈 탭 ──
 function initHomeTab() {
@@ -47,36 +63,8 @@ function initHomeTab() {
   const year = now.getFullYear();
   const month = now.getMonth() + 1;
 
-  // ── 시간외/온콜 요약 ──
-  const otStats = OVERTIME.calcMonthlyStats(year, month);
-  const otBody = document.getElementById('homeOtBody');
-  const otStatsEl = document.getElementById('homeOtStats');
-
-  if (otStats.recordCount > 0) {
-    const lines = [];
-    if (otStats.byType.overtime.count > 0) {
-      lines.push(`<div class="home-stat-row"><span class="home-stat-label">시간외</span><span class="home-stat-value">${otStats.byType.overtime.hours}시간</span></div>`);
-    }
-    if (otStats.byType.oncall_standby.count > 0) {
-      lines.push(`<div class="home-stat-row"><span class="home-stat-label">온콜 대기</span><span class="home-stat-value">${otStats.byType.oncall_standby.count}일</span></div>`);
-    }
-    if (otStats.byType.oncall_callout.count > 0) {
-      lines.push(`<div class="home-stat-row"><span class="home-stat-label">온콜 출동</span><span class="home-stat-value">${otStats.byType.oncall_callout.count}회</span></div>`);
-    }
-    if (otStats.totalPay > 0) {
-      lines.push(`<div class="home-stat-row"><span class="home-stat-label">예상 수당</span><span class="home-stat-value amber">₩${otStats.totalPay.toLocaleString()}</span></div>`);
-    }
-    otStatsEl.innerHTML = lines.join('');
-    otBody.style.display = '';
-  } else {
-    otBody.style.display = 'none';
-  }
-
-  // ── 휴가 요약 ──
+  // 프로필에서 totalAnnual 계산 (leave 뷰 공통)
   const profile = PROFILE.load();
-  const leaveBody = document.getElementById('homeLeaveBody');
-  const leaveStatsEl = document.getElementById('homeLeaveStats');
-
   let totalAnnual = 0;
   if (profile && profile.hireDate) {
     const parsed = PROFILE.parseDate(profile.hireDate);
@@ -86,26 +74,128 @@ function initHomeTab() {
     }
   }
 
+  if (_homePeriod === 'month') {
+    _renderHomeOtMonth(year, month);
+    _renderHomeLeaveMonth(year, month, totalAnnual);
+  } else {
+    _renderHomeOtYear(year);
+    _renderHomeLeaveYear(year, totalAnnual);
+  }
+
+  loadNotice();
+  loadChangelog();
+  // 프로필 미저장 힌트 배너
+  const homeNudge = document.getElementById('homeProfileNudge');
+  if (homeNudge) homeNudge.style.display = (!profile || !profile.jobType) ? 'block' : 'none';
+}
+window.initHomeTab = initHomeTab;
+
+// 월 시간외 렌더
+function _renderHomeOtMonth(year, month) {
+  const otStats = OVERTIME.calcMonthlyStats(year, month);
+  const supp = otStats.payslipSupplement;
+  const otBody = document.getElementById('homeOtBody');
+  const otStatsEl = document.getElementById('homeOtStats');
+
+  const effectiveOtHours = otStats.byType.overtime.hours + (supp ? supp.totalHours : 0);
+  const effectivePay = otStats.totalPay + (supp ? supp.pay : 0);
+  const hasData = otStats.recordCount > 0 || supp;
+
+  if (hasData) {
+    while (otStatsEl.firstChild) otStatsEl.removeChild(otStatsEl.firstChild);
+
+    const period = document.createElement('div');
+    period.className = 'home-stat-period';
+    period.textContent = month + '월 현황';
+    otStatsEl.appendChild(period);
+
+    const addRow = (label, value, cls) => {
+      const row = document.createElement('div');
+      row.className = 'home-stat-row';
+      const lbl = document.createElement('span');
+      lbl.className = 'home-stat-label';
+      lbl.textContent = label;
+      const val = document.createElement('span');
+      val.className = 'home-stat-value' + (cls ? ' ' + cls : '');
+      val.textContent = value;
+      row.appendChild(lbl);
+      row.appendChild(val);
+      otStatsEl.appendChild(row);
+    };
+
+    if (effectiveOtHours > 0) addRow('시간외', effectiveOtHours + '시간');
+    if (otStats.byType.oncall_standby.count > 0) addRow('온콜 대기', otStats.byType.oncall_standby.count + '일');
+    if (otStats.byType.oncall_callout.count > 0) addRow('온콜 출동', otStats.byType.oncall_callout.count + '회');
+    if (effectivePay > 0) addRow('예상 수당', '\u20A9' + effectivePay.toLocaleString(), 'amber');
+
+    otBody.style.display = '';
+  } else {
+    otBody.style.display = 'none';
+  }
+}
+
+// 연간 시간외 렌더
+function _renderHomeOtYear(year) {
+  const s = OVERTIME.calcYearlyStats(year);
+  const otBody = document.getElementById('homeOtBody');
+  const otStatsEl = document.getElementById('homeOtStats');
+
+  if (s.recordCount > 0) {
+    const oncallCount = s.totalOncallStandbyCount + s.totalOncallCalloutCount;
+    const lines = ['<div class="home-stat-period">' + year + '년 합계</div>'];
+    if (s.totalOvertimeHours > 0) {
+      lines.push('<div class="home-stat-row"><span class="home-stat-label">시간외</span><span class="home-stat-value">' + s.totalOvertimeHours + '시간</span></div>');
+    }
+    if (oncallCount > 0) {
+      lines.push('<div class="home-stat-row"><span class="home-stat-label">온콜</span><span class="home-stat-value">' + oncallCount + '회 / ' + s.totalOncallHours + '시간</span></div>');
+    }
+    if (s.totalPay > 0) {
+      lines.push('<div class="home-stat-row"><span class="home-stat-label">예상 수당</span><span class="home-stat-value amber">₩' + s.totalPay.toLocaleString() + '</span></div>');
+    }
+    otStatsEl.innerHTML = lines.join('');
+    otBody.style.display = '';
+  } else {
+    otBody.style.display = 'none';
+  }
+}
+
+// 월 연차 렌더
+function _renderHomeLeaveMonth(year, month, totalAnnual) {
+  const leaveBody = document.getElementById('homeLeaveBody');
+  const leaveStatsEl = document.getElementById('homeLeaveStats');
+
   if (totalAnnual > 0) {
-    const summary = LEAVE.calcAnnualSummary(year, totalAnnual);
-    const pct = summary.usagePercent;
-    leaveStatsEl.innerHTML = `
-      <div class="home-stat-row"><span class="home-stat-label">연차</span><span class="home-stat-value emerald">${summary.usedAnnual} / ${summary.totalAnnual}일</span></div>
-      <div class="home-progress-wrap"><div class="home-progress-bar" style="width:${pct}%"></div></div>
-    `;
+    const summary = LEAVE.calcMonthlySummary(year, month);
+    const pct = totalAnnual > 0 ? Math.round((summary.annualUsed / totalAnnual) * 100) : 0;
+    leaveStatsEl.innerHTML =
+      '<div class="home-stat-period">' + month + '월 현황</div>' +
+      '<div class="home-stat-row"><span class="home-stat-label">연차</span><span class="home-stat-value emerald">' + summary.annualUsed + ' / ' + totalAnnual + '일</span></div>' +
+      '<div class="home-progress-wrap"><div class="home-progress-bar" style="width:' + pct + '%"></div></div>';
     leaveBody.style.display = '';
   } else {
     leaveBody.style.display = 'none';
   }
-
-
-  // ── 공지사항 (notice.md에서 로드) ──
-  loadNotice();
-
-  // ── 업데이트 내역 (CHANGELOG.md에서 로드) ──
-  loadChangelog();
 }
-window.initHomeTab = initHomeTab;
+
+// 연간 연차 렌더
+function _renderHomeLeaveYear(year, totalAnnual) {
+  const leaveBody = document.getElementById('homeLeaveBody');
+  const leaveStatsEl = document.getElementById('homeLeaveStats');
+
+  if (totalAnnual > 0) {
+    const summary = LEAVE.calcAnnualSummary(year, totalAnnual);
+    const pct = summary.usagePercent;
+    const remaining = totalAnnual - summary.usedAnnual;
+    leaveStatsEl.innerHTML =
+      '<div class="home-stat-period">' + year + '년 합계</div>' +
+      '<div class="home-stat-row"><span class="home-stat-label">연차</span><span class="home-stat-value emerald">' + summary.usedAnnual + ' / ' + summary.totalAnnual + '일</span></div>' +
+      '<div class="home-stat-row"><span class="home-stat-label">잔여</span><span class="home-stat-value">' + remaining + '일</span></div>' +
+      '<div class="home-progress-wrap"><div class="home-progress-bar" style="width:' + pct + '%"></div></div>';
+    leaveBody.style.display = '';
+  } else {
+    leaveBody.style.display = 'none';
+  }
+}
 
 // ── Newsboard 탭 전환 ──
 function switchNewsTab(tab) {
@@ -118,6 +208,17 @@ function switchNewsTab(tab) {
     body.style.borderTopColor = tab === 'changelog'
       ? 'rgba(16, 185, 129, 0.25)' : 'rgba(99, 102, 241, 0.25)';
   }
+}
+
+// ── HTML sanitize helper ──
+function _esc(str) {
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+// Only <br> is allowed through; every other tag is escaped
+function _escWithBr(str) {
+  return _esc(str).replace(/&lt;br\s*\/?&gt;/gi, '<br>');
 }
 
 // ── Notice: fetch & parse notice.md (pager 형식) ──
@@ -144,7 +245,8 @@ function renderNoticePager(items) {
   if (!content) return;
 
   _noticeIdx = Math.max(0, Math.min(_noticeIdx, items.length - 1));
-  content.innerHTML = `<div style="font-size:var(--text-body-normal); color:var(--text-secondary); line-height:1.5;">${items[_noticeIdx]}</div>`;
+  const safe = _escWithBr(items[_noticeIdx]); // H-2: same-origin static file; _esc escapes all tags except <br>
+  content.innerHTML = `<div style="font-size:var(--text-body-normal); color:var(--text-secondary); line-height:1.5;">${safe}</div>`;
 
   if (items.length > 1 && nav && indicator) {
     nav.style.display = 'flex';
@@ -208,9 +310,9 @@ function renderChangelogPage() {
 
   const e = _changelogEntries[_changelogIdx];
   el.innerHTML = `
-    <div class="home-changelog-date">${e.date}</div>
-    <div class="home-changelog-title">${e.title}</div>
-    <ul class="home-changelog-list">${e.items.map(i => `<li>${i}</li>`).join('')}</ul>
+    <div class="home-changelog-date">${_esc(e.date)}</div>
+    <div class="home-changelog-title">${_esc(e.title)}</div>
+    <ul class="home-changelog-list">${e.items.map(i => `<li>${_esc(i)}</li>`).join('')}</ul>
   `;
   indicator.textContent = `${_changelogIdx + 1} / ${_changelogEntries.length}`;
   prevBtn.disabled = _changelogIdx === 0;
@@ -256,10 +358,15 @@ function switchTab(tabName) {
 
   if (tabName === 'home') initHomeTab();
   if (tabName === 'payroll') { applyProfileToPayroll(); initPayrollTab(); }
-  if (tabName === 'overtime') { applyProfileToOvertime(); initOvertimeTab(); }
+  if (tabName === 'overtime') {
+    const savedCTA = document.getElementById('profileSavedCTA');
+    if (savedCTA) savedCTA.style.display = 'none';
+    applyProfileToOvertime(); initOvertimeTab();
+  }
   if (tabName === 'leave') { applyProfileToLeave(); initLeaveTab(); }
   if (tabName === 'reference') renderWikiToc();
   if (tabName === 'profile') initProfileTab();
+  if (tabName === 'settings') { if (typeof updateAppLockUI === 'function') updateAppLockUI(); }
 
   return true;
 }
@@ -280,758 +387,16 @@ document.querySelectorAll('#tab-payroll .pay-bookmark-tab').forEach(tab => {
     tab.classList.add('active');
     document.getElementById('sub-' + tab.dataset.subtab).classList.add('active');
     const name = tab.dataset.subtab;
+    // 퇴직금 탭이면 상단 급여 탭을 접힘 처리
+    const payrollSubTabs = document.getElementById('payrollSubTabs');
+    if (name === 'pay-retirement') payrollSubTabs.classList.add('retracted');
+    else payrollSubTabs.classList.remove('retracted');
     if (name === 'pay-payslip') renderPayPayslip();
     if (name === 'pay-calc') { initPayEstimate(); if (typeof PAYROLL !== 'undefined') PAYROLL.init(); }
     if (name === 'pay-qa') { if (typeof PAYROLL !== 'undefined') PAYROLL.init(); }
+    if (name === 'pay-retirement') initRetirementTab();
   });
 });
-
-// ── 개인정보 탭 초기화 ──
-function initProfileTab() {
-  const saved = PROFILE.load();
-  if (saved) {
-    updateProfileSummary(saved);
-    updateProfileTitle(saved.name);
-  } else {
-    updateProfileTitle('');
-  }
-}
-
-function updateProfileTitle(name) {
-  const titleEl = document.getElementById('pfTitleName');
-  if (!titleEl) return;
-  if (name && name.trim()) {
-    titleEl.textContent = `${name.trim()}님 정보`;
-  } else {
-    titleEl.textContent = '내 정보';
-  }
-}
-
-// ── 개인정보 탭으로 전환 ──
-function switchToProfileTab() {
-  switchTab('profile');
-}
-
-// ── 접이식(collapsible) 토글 ──
-function toggleCollapsible(id) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  const isOpen = el.style.display !== 'none';
-  el.style.display = isOpen ? 'none' : 'block';
-  // 토글 헤더 아이콘 업데이트
-  const header = el.previousElementSibling;
-  if (header && header.classList.contains('collapsible-header')) {
-    const span = header.querySelector('span');
-    if (span) span.textContent = span.textContent.replace(/[▸▼]/, isOpen ? '▸' : '▼');
-  }
-}
-
-// ── 직종 드롭다운 동적 생성 ──
-function populateJobTypeDropdowns() {
-  const selectIds = ['pfJobType', 'psJobType', 'wJobType'];
-  selectIds.forEach(id => {
-    const sel = document.getElementById(id);
-    if (!sel) return;
-    sel.innerHTML = '';
-    Object.entries(DATA.jobTypes).forEach(([key, info]) => {
-      const opt = document.createElement('option');
-      opt.value = key;
-      opt.textContent = key;
-      sel.appendChild(opt);
-    });
-    // 기본값 설정 (간호직)
-    sel.value = '간호직';
-  });
-}
-
-// ── 초기화 ──
-document.addEventListener('DOMContentLoaded', () => {
-  populateJobTypeDropdowns();
-  updateProfileGrades();
-  updateGrades();
-  updatePayrollGrades();
-  renderCeremonyTable();
-  renderLeaveTable();
-  renderQuickTags();
-
-  // 현재 날짜로 시뮬레이션 연도/월 설정
-  const now = new Date();
-  const yearSel = document.getElementById('psSimYear');
-  const monthSel = document.getElementById('psSimMonth');
-  const curYear = String(now.getFullYear());
-  const curMonth = String(now.getMonth() + 1);
-  if ([...yearSel.options].some(o => o.value === curYear)) yearSel.value = curYear;
-  if ([...monthSel.options].some(o => o.value === curMonth)) monthSel.value = curMonth;
-
-  // 군복무수당 토글
-  document.getElementById('pfMilitary').addEventListener('change', (e) => {
-    document.getElementById('pfMilitaryMonthsGroup').style.display = e.target.checked ? 'block' : 'none';
-  });
-
-  // 입사일 → 근속연수 표시 + 근속가산기본급 자동 감지 (2016.2 이전 입사자) + 호봉 자동 제안
-  document.getElementById('pfHireDate').addEventListener('input', (e) => {
-    const parsed = PROFILE.parseDate(e.target.value);
-    if (parsed) {
-      const years = PROFILE.calcServiceYears(parsed);
-      document.getElementById('pfServiceDisplay').textContent = `→ ${parsed} (근속 ${years}년)`;
-      const hireDate = new Date(parsed);
-      const seniorityThreshold = new Date('2016-02-01');
-      document.getElementById('pfSeniority').checked = hireDate < seniorityThreshold;
-      // 호봉 자동 제안
-      _suggestYear(parsed);
-    } else if (e.target.value.length > 0) {
-      document.getElementById('pfServiceDisplay').textContent = '※ YYYY-MM-DD, YYYYMMDD, YYYY.MM.DD 형식';
-    } else {
-      document.getElementById('pfServiceDisplay').textContent = '';
-      document.getElementById('pfSeniority').checked = false;
-      const hint = document.getElementById('pfYearHint');
-      if (hint) hint.textContent = '';
-    }
-  });
-
-  // 직급 변경 시 호봉 재제안
-  document.getElementById('pfGrade').addEventListener('change', () => {
-    const hireDate = PROFILE.parseDate(document.getElementById('pfHireDate').value);
-    if (hireDate) _suggestYear(hireDate);
-  });
-
-  // 저장된 프로필 불러오기
-  const saved = PROFILE.load();
-  if (saved) {
-    PROFILE.applyToForm(saved, PROFILE_FIELDS);
-    updateFamilyUI(); // 가족/자녀 수 기반 UI 표시
-    updateProfileSummary(saved);
-    updateProfileTitle(saved.name);
-    const profileStatusEl = document.getElementById('profileStatus');
-    if (profileStatusEl) {
-      profileStatusEl.textContent = '저장됨 ✓';
-      profileStatusEl.className = 'badge emerald';
-    }
-    // 데이터가 있으면 입력 폼 접기
-    const pfInput = document.getElementById('pfInputFields');
-    if (pfInput) {
-      pfInput.style.display = 'none';
-      const label = document.getElementById('pfInputToggleLabel');
-      if (label) label.textContent = '▸ 내 정보 입력/수정';
-    }
-  } else {
-    // 데이터 없으면 열어두기
-    const pfInput = document.getElementById('pfInputFields');
-    if (pfInput) {
-      pfInput.style.display = 'block';
-      const label = document.getElementById('pfInputToggleLabel');
-      if (label) label.textContent = '▼ 내 정보 입력/수정';
-    }
-  }
-
-  // 급여 시뮬레이터: 연도/월 변경 시 자동 업데이트
-  document.getElementById('psSimYear').addEventListener('change', () => autoFillMonth());
-  document.getElementById('psSimMonth').addEventListener('change', () => autoFillMonth());
-
-  // 초기 로드 시 현재 선택된 연도/월로 자동설정
-  autoFillMonth();
-
-  // 초기 기본 탭 (휴가 탭 우선)
-  function activateV1DefaultTab() {
-    applyProfileToOvertime();
-    initOvertimeTab();
-    initLeaveTab();
-
-    const params = getCaptureParams();
-    const requestedTab = params.get('tab');
-    if (!switchTab(requestedTab || 'home')) {
-      switchTab('home');
-    }
-  }
-  activateV1DefaultTab();
-
-  // ── [URL 파라미터 듀얼 모드 감지] ──
-  const urlParams = new URLSearchParams(window.location.search);
-  window.isFamilyMode = urlParams.get('mode') === 'family';
-
-  const authContainer = document.getElementById('authContainer');
-  const backupSection = document.getElementById('localBackupSection');
-
-  if (!window.isFamilyMode) {
-    if (authContainer) authContainer.style.display = 'none';
-    if (backupSection) backupSection.style.display = 'block';
-  } else {
-    if (authContainer) authContainer.style.display = 'flex';
-    if (backupSection) backupSection.style.display = 'none'; // 가족 모드에서는 백업 UI 숨김 (원하면 유지 가능하지만 클라우드가 있으므로 숨김)
-  }
-
-  // ── [Supabase Cloud Sync Callback] ──
-  window.syncCloudData = function (cloudData) {
-    if (!cloudData) return;
-
-    // ✅ 수정: 클라우드 조회 실패 시 로컬 데이터를 건드리지 않고 경고만 표시
-    if (cloudData._fetchFailed) {
-      console.warn('[syncCloudData] 클라우드 조회 실패 — 로컬 데이터 보존');
-      const toast = document.getElementById('otToast');
-      if (toast) {
-        toast.textContent = '⚠️ 클라우드 연결 실패 — 로컬 데이터로 계속합니다.';
-        toast.style.display = 'block';
-        setTimeout(() => toast.style.display = 'none', 4000);
-      }
-      return;
-    }
-
-    // ── [Guest → 로그인 유저 마이그레이션] ──
-    // 로컬 모드(비로그인)에서 입력한 _guest 키 데이터를 로그인 직후 사용자 키로 이전.
-    // 클라우드에 이미 데이터가 있으면 클라우드 우선, guest 데이터는 폐기.
-    // 어느 쪽이든 로그인 후에는 _guest 키를 삭제해 공용 기기 개인정보 방치를 방지.
-    const GUEST_KEYS = {
-      profile: 'bhm_hr_profile_guest',
-      overtime: 'overtimeRecords_guest',
-      leave: 'leaveRecords_guest',
-      manual: 'otManualHourly_guest'
-    };
-    const rawGuestProfile = localStorage.getItem(GUEST_KEYS.profile);
-    const rawGuestOt = localStorage.getItem(GUEST_KEYS.overtime);
-    const rawGuestLeave = localStorage.getItem(GUEST_KEYS.leave);
-    const rawGuestManual = localStorage.getItem(GUEST_KEYS.manual);
-    let migrated = false;
-
-    if (rawGuestProfile || rawGuestOt || rawGuestLeave) {
-      console.log('[syncCloudData] Guest 데이터 감지 → 마이그레이션 시작');
-
-      // 프로필: 클라우드에 없을 때만 이전
-      if (!cloudData.profile && rawGuestProfile) {
-        localStorage.setItem(PROFILE.STORAGE_KEY, rawGuestProfile);
-        try {
-          const pf = JSON.parse(rawGuestProfile);
-          pf.id = window.SupabaseUser.id;
-          window.SupabaseSync.pushCloudData('profiles', pf);
-        } catch (e) { console.warn('[migrate] profile push 실패', e); }
-        migrated = true;
-      }
-
-      // 시간외: 클라우드 레코드가 없을 때만 이전
-      if (!(cloudData.overtime && cloudData.overtime.length > 0) && rawGuestOt) {
-        localStorage.setItem(OVERTIME.STORAGE_KEY, rawGuestOt);
-        try {
-          const otMap = JSON.parse(rawGuestOt);
-          Object.values(otMap).flat().forEach(r =>
-            window.SupabaseSync.pushCloudData('overtime_records', { ...r })
-          );
-        } catch (e) { console.warn('[migrate] overtime push 실패', e); }
-        migrated = true;
-      }
-
-      // 휴가: 클라우드 레코드가 없을 때만 이전
-      if (!(cloudData.leave && cloudData.leave.length > 0) && rawGuestLeave) {
-        localStorage.setItem(LEAVE.STORAGE_KEY, rawGuestLeave);
-        try {
-          const lvMap = JSON.parse(rawGuestLeave);
-          Object.values(lvMap).flat().forEach(r =>
-            window.SupabaseSync.pushCloudData('leave_records', { ...r })
-          );
-        } catch (e) { console.warn('[migrate] leave push 실패', e); }
-        migrated = true;
-      }
-
-      // otManualHourly: 사용자 키에 값 없을 때만 이전
-      if (rawGuestManual) {
-        const userManualKey = window.getUserStorageKey('otManualHourly');
-        if (!localStorage.getItem(userManualKey)) {
-          localStorage.setItem(userManualKey, rawGuestManual);
-        }
-      }
-
-      // _guest 키 전부 삭제 — 공용 기기에서 타인이 볼 수 없도록
-      Object.values(GUEST_KEYS).forEach(k => localStorage.removeItem(k));
-      console.log('[syncCloudData] Guest 마이그레이션 완료, guest 키 삭제됨');
-    }
-
-    // ── [클라우드 → 로컬 동기화] ──
-    let changed = migrated; // 마이그레이션만 있어도 UI 갱신 필요
-    if (cloudData.profile) {
-      localStorage.setItem(PROFILE.STORAGE_KEY, JSON.stringify(cloudData.profile));
-      changed = true;
-    }
-    if (cloudData.overtime && cloudData.overtime.length > 0) {
-      const otMap = {};
-      cloudData.overtime.forEach(r => {
-        const d = new Date(r.date);
-        const y = d.getFullYear();
-        const m = d.getMonth() + 1;
-        const key = `${y}-${String(m).padStart(2, '0')}`;
-        if (!otMap[key]) otMap[key] = [];
-        otMap[key].push(r);
-      });
-      localStorage.setItem(OVERTIME.STORAGE_KEY, JSON.stringify(otMap));
-      changed = true;
-    }
-
-    // 휴가 데이터 동기화
-    if (cloudData.leave && cloudData.leave.length > 0) {
-      const lvMap = {};
-      cloudData.leave.forEach(r => {
-        // 시간차 데이터 복구: hours가 있으면 type을 time_leave로 강제 설정
-        if (r.hours && r.hours > 0 && r.type !== 'time_leave') {
-          console.warn('[syncCloudData] 시간차 type 복구:', r.id, r.type, '→ time_leave');
-          r.type = 'time_leave';
-        }
-        const year = r.startDate.split('-')[0];
-        if (!lvMap[year]) lvMap[year] = [];
-        lvMap[year].push(r);
-      });
-      localStorage.setItem(LEAVE.STORAGE_KEY, JSON.stringify(lvMap));
-      changed = true;
-    }
-
-    if (changed) {
-      console.log("Cloud data synced, refreshing UI...");
-      const profile = PROFILE.load();
-      if (profile) {
-        PROFILE.applyToForm(profile, PROFILE_FIELDS);
-        updateProfileSummary(profile);
-        updateProfileTitle(profile.name);
-        const profileStatusEl = document.getElementById('profileStatus');
-        if (profileStatusEl) {
-          profileStatusEl.textContent = '저장됨 ✓';
-          profileStatusEl.className = 'badge emerald';
-        }
-      }
-      if (typeof applyProfileToOvertime === 'function') applyProfileToOvertime();
-      if (typeof initOvertimeTab === 'function') initOvertimeTab();
-
-      const toast = document.getElementById('otToast');
-      if (toast) {
-        toast.textContent = migrated
-          ? "로컬 데이터를 클라우드에 저장했습니다. ✅"
-          : "클라우드 데이터와 동기화되었습니다. ✅";
-        toast.style.display = 'block';
-        setTimeout(() => toast.style.display = 'none', 3000);
-      }
-    }
-  };
-});
-
-// ═══════════ 📌 프로필 관리 ═══════════
-function updateProfileGrades() {
-  const jobType = document.getElementById('pfJobType').value;
-  const gradeSelect = document.getElementById('pfGrade');
-  const table = DATA.payTables[CALC.resolvePayTable(jobType)];
-  if (!gradeSelect || !table) return;
-
-  const prevValue = gradeSelect.value;
-  gradeSelect.innerHTML = '';
-
-  table.grades.forEach(g => {
-    const label = table.gradeLabels?.[g] || g;
-    const opt = document.createElement('option');
-    opt.value = g;
-    opt.textContent = `${label} (${g})`;
-    gradeSelect.appendChild(opt);
-  });
-
-  // 이전 선택값이 새 목록에 있으면 유지, 없으면 기본값 선택
-  if (table.grades.includes(prevValue)) {
-    gradeSelect.value = prevValue;
-  } else {
-    gradeSelect.value = table.grades[table.grades.length - 1];
-  }
-
-  // 호봉 자동 제안 갱신
-  const hireDateStr = document.getElementById('pfHireDate')?.value;
-  if (hireDateStr) _suggestYear(hireDateStr);
-}
-// 자녀 수가 1 이상일 때 6세이하 자녀수당 행 표시
-function toggleChildFields() { updateFamilyUI(); }
-function toggleUnder6Field() { updateFamilyUI(); }
-
-function updateFamilyUI() {
-  const numFamily = parseInt(document.getElementById('pfFamily')?.value) || 0;
-  const numChildren = parseInt(document.getElementById('pfChildren')?.value) || 0;
-  const under6Pay = parseInt(document.getElementById('pfChildrenUnder6Pay')?.value) || 0;
-
-  // 순차 표시: 가족수 > 0 → 자녀수 / 자녀수 > 0 → 6세이하
-  const childrenRow = document.getElementById('pfChildrenRow');
-  const childExtraRow = document.getElementById('childExtraRow');
-  if (childrenRow) childrenRow.style.display = numFamily >= 1 ? 'grid' : 'none';
-  if (childExtraRow) childExtraRow.style.display = numChildren >= 1 ? 'grid' : 'none';
-
-  // 가족 0이면 하위 리셋
-  if (numFamily === 0) {
-    const el = document.getElementById('pfChildren');
-    if (el && parseInt(el.value) > 0) el.value = 0;
-  }
-  if (numChildren === 0) {
-    const el = document.getElementById('pfChildrenUnder6Pay');
-    if (el && parseInt(el.value) > 0) el.value = 0;
-  }
-
-  // 총액 요약
-  const summaryEl = document.getElementById('pfFamilySummary');
-  if (!summaryEl) return;
-
-  const result = CALC.calcFamilyAllowance(numFamily, numChildren);
-  const total = result.월수당 + under6Pay;
-
-  if (total === 0) { summaryEl.style.display = 'none'; return; }
-
-  summaryEl.style.display = 'block';
-  summaryEl.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center;">
-    <span style="color:var(--text-muted);">가족수당 합계</span>
-    <span style="font-weight:700; color:var(--accent-indigo);">월 ${total.toLocaleString()}원</span>
-  </div>`;
-}
-
-function saveProfile() {
-  // 승진일 입력 시 자동 직급/호봉 반영
-  const promoDateStr = document.getElementById('pfPromotionDate')?.value;
-  const promoParsed = PROFILE.parseDate(promoDateStr);
-  if (promoParsed) {
-    const jobType = document.getElementById('pfJobType')?.value;
-    const currentGrade = document.getElementById('pfGrade')?.value;
-    const payTableName = CALC.resolvePayTable(jobType);
-    const table = DATA.payTables[payTableName];
-    if (table && currentGrade && table.autoPromotion[currentGrade]) {
-      const promo = table.autoPromotion[currentGrade];
-      const promoDate = new Date(promoParsed);
-      const yearsAfterPromo = Math.floor((new Date() - promoDate) / (1000 * 60 * 60 * 24 * 365.25));
-      const newYear = Math.min(8, Math.max(1, yearsAfterPromo + 1));
-      document.getElementById('pfGrade').value = promo.next;
-      document.getElementById('pfYear').value = String(newYear);
-      const hint = document.getElementById('pfPromotionHint');
-      const curLabel = table.gradeLabels?.[currentGrade] || currentGrade;
-      const nextLabel = table.gradeLabels?.[promo.next] || promo.next;
-      if (hint) hint.textContent = `✅ ${curLabel} → ${nextLabel} ${newYear}년차 적용됨`;
-    }
-  }
-
-  const data = PROFILE.collectFromForm(PROFILE_FIELDS);
-  const profile = PROFILE.save(data);
-  updateProfileSummary(profile);
-  updateProfileTitle(profile.name);
-  document.getElementById('profileStatus').textContent = '저장됨 ✓';
-  document.getElementById('profileStatus').className = 'badge emerald';
-  // 저장 후 입력 폼 접기
-  const pfInput = document.getElementById('pfInputFields');
-  if (pfInput) pfInput.style.display = 'none';
-  const label = document.getElementById('pfInputToggleLabel');
-  if (label) label.textContent = '▸ 내 정보 입력/수정';
-  // Q&A 카드 갱신
-  if (typeof PAYROLL !== 'undefined') PAYROLL.init();
-  // 휴가 연차 한도 갱신 및 UI 리렌더링
-  if (typeof applyProfileToLeave === 'function') {
-    applyProfileToLeave();
-    if (typeof populateLvTypeSelect === 'function') populateLvTypeSelect();
-    if (typeof refreshLvCalendar === 'function' && typeof lvInitialized !== 'undefined' && lvInitialized) refreshLvCalendar();
-  }
-}
-
-function clearProfile() {
-  PROFILE.clear();
-  // 폼 초기화
-  Object.values(PROFILE_FIELDS).forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    if (el.type === 'checkbox') el.checked = false;
-    else if (el.type === 'number') el.value = 0;
-    else if (el.tagName === 'SELECT') el.selectedIndex = 0;
-    else el.value = '';
-  });
-  document.getElementById('pfMilitaryMonthsGroup').style.display = 'none';
-  document.getElementById('pfServiceDisplay').textContent = '';
-  document.getElementById('profileStatus').textContent = '미저장';
-  document.getElementById('profileStatus').className = 'badge amber';
-  // 초기화 후 타이틀 초기화
-  updateProfileTitle('');
-  // 초기화 후 입력 폼 열기
-  const pfInput = document.getElementById('pfInputFields');
-  if (pfInput) pfInput.style.display = 'block';
-  const label = document.getElementById('pfInputToggleLabel');
-  if (label) label.textContent = '▼ 내 정보 입력/수정';
-  document.getElementById('profileSummary').innerHTML = `
-        <div class="card-title" style="font-size:var(--text-body-large);"><span class="icon indigo">📝</span> 통상임금 내역</div>
-        <p style="color:var(--text-muted)">정보를 입력하고 [저장하기]를 눌러주세요.</p>
-    `;
-  // Q&A 카드 갱신
-  if (typeof PAYROLL !== 'undefined') PAYROLL.init();
-}
-
-// ═══════════ 호봉 자동 제안 ═══════════
-/**
- * 입사일 + 현재 직급 기준으로 호봉을 자동 제안하여 pfYear 셀렉트에 반영
- * 자동 승진 체인(autoPromotion)에 있는 등급만 계산 가능하며,
- * S1 이상 등급은 개인차가 있으므로 제안하지 않음.
- * @param {string} hireDateStr - 'YYYY-MM-DD' 형식
- */
-function _suggestYear(hireDateStr) {
-  const hint = document.getElementById('pfYearHint');
-  if (!hint) return;
-
-  const jobType = document.getElementById('pfJobType')?.value;
-  const grade = document.getElementById('pfGrade')?.value;
-  if (!jobType || !grade || !hireDateStr) { hint.textContent = ''; return; }
-
-  const payTableName = CALC.resolvePayTable(jobType);
-  const table = DATA.payTables[payTableName];
-  if (!table) { hint.textContent = ''; return; }
-
-  // 자동 승진 체인에서 시작 등급 찾기
-  // 조건: 승진 체인의 출발점 = canPromoteFrom에 있고 다른 등급의 next 목표가 아닌 것
-  const canPromoteFrom = new Set(Object.keys(table.autoPromotion || {}));
-  const promotedTo = new Set(Object.values(table.autoPromotion || {}).map(p => p.next));
-  const startGrade = table.grades.find(g => canPromoteFrom.has(g) && !promotedTo.has(g));
-  if (!startGrade) { hint.textContent = ''; return; }
-
-  // 시작 등급부터 현재 등급까지 누적 연수 계산
-  let cumYears = 0;
-  let cur = startGrade;
-  while (cur && cur !== grade) {
-    const promo = table.autoPromotion[cur];
-    if (!promo) { hint.textContent = '⚠️ 승진 이력이 있어 자동 계산 불가 — 직접 입력하세요'; return; }
-    cumYears += promo.years;
-    cur = promo.next;
-  }
-  if (cur !== grade) { hint.textContent = ''; return; }
-
-  const totalYears = PROFILE.calcServiceYears(hireDateStr);
-  const yearsInGrade = totalYears - cumYears;
-  if (yearsInGrade < 0) { hint.textContent = '⚠️ 입사일과 직급이 맞지 않습니다'; return; }
-
-  const suggested = Math.min(8, Math.max(1, Math.floor(yearsInGrade) + 1));
-  const sel = document.getElementById('pfYear');
-  if (sel) sel.value = String(suggested);
-  hint.textContent = `→ 입사일 기준 자동 계산: ${suggested}년차`;
-}
-
-// ═══════════ 승진일 적용 ═══════════
-function applyPromotionDate() {
-  const hint = document.getElementById('pfPromotionHint');
-  const promoDateStr = document.getElementById('pfPromotionDate')?.value;
-  const parsed = PROFILE.parseDate(promoDateStr);
-  if (!parsed) {
-    if (hint) hint.textContent = '⚠️ 날짜 형식을 확인하세요 (예: 2024-03-01)';
-    return;
-  }
-
-  const jobType = document.getElementById('pfJobType')?.value;
-  const currentGrade = document.getElementById('pfGrade')?.value;
-  if (!jobType || !currentGrade) {
-    if (hint) hint.textContent = '⚠️ 직종과 현재 직급을 먼저 입력하세요';
-    return;
-  }
-
-  const payTableName = CALC.resolvePayTable(jobType);
-  const table = DATA.payTables[payTableName];
-  if (!table || !table.autoPromotion[currentGrade]) {
-    if (hint) hint.textContent = '⚠️ 해당 직급의 승진 정보가 없습니다';
-    return;
-  }
-
-  const promo = table.autoPromotion[currentGrade];
-  const nextGrade = promo.next;
-  const nextLabel = table.gradeLabels?.[nextGrade] || nextGrade;
-  const currentLabel = table.gradeLabels?.[currentGrade] || currentGrade;
-
-  // 승진일 기준으로 호봉 재계산 (승진 후 1년차부터)
-  const promoDate = new Date(parsed);
-  const now = new Date();
-  const yearsAfterPromo = Math.floor((now - promoDate) / (1000 * 60 * 60 * 24 * 365.25));
-  const newYear = Math.min(8, Math.max(1, yearsAfterPromo + 1));
-
-  // 직급과 호봉 업데이트
-  document.getElementById('pfGrade').value = nextGrade;
-  document.getElementById('pfYear').value = String(newYear);
-
-  if (hint) hint.textContent = `✅ ${currentLabel} → ${nextLabel} ${newYear}년차 적용됨`;
-}
-
-// ═══════════ 데이터 백업 및 복구 ═══════════
-function downloadBackup() {
-  const data = {
-    version: "1.0",
-    exportDate: new Date().toISOString(),
-    profile: localStorage.getItem(PROFILE.STORAGE_KEY),
-    overtime: localStorage.getItem(OVERTIME.STORAGE_KEY),
-    leave: localStorage.getItem(LEAVE.STORAGE_KEY)
-  };
-  const jsonStr = JSON.stringify(data, null, 2);
-  const blob = new Blob([jsonStr], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  const yyyymmdd = new Date().toISOString().split('T')[0];
-  a.download = `snuh_backup_${yyyymmdd}.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-
-  const toast = document.getElementById('otToast');
-  if (toast) {
-    toast.textContent = "백업 파일이 안전하게 다운로드되었습니다. 📥";
-    toast.style.display = 'block';
-    setTimeout(() => toast.style.display = 'none', 3000);
-  } else {
-    alert("백업 파일이 다운로드되었습니다.");
-  }
-}
-
-async function uploadBackup(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  // 이미지 파일 선택 방지 (안드로이드에서 사진을 선택하는 경우)
-  if (file.type.startsWith('image/') || /\.(jpg|jpeg|png|gif|bmp|webp|heic|heif|svg)$/i.test(file.name)) {
-    alert("⚠️ 사진 파일은 백업 파일이 아닙니다.\n\n'snuh_backup_날짜.json' 파일을 선택해주세요.\n(보통 '다운로드' 폴더에 있습니다)");
-    event.target.value = '';
-    return;
-  }
-
-  // PDF/Excel 등 다른 형식 선택 방지
-  if (/\.(pdf|xls|xlsx|csv|doc|docx|hwp)$/i.test(file.name)) {
-    alert("⚠️ 이 파일은 백업 파일이 아닙니다.\n\n'snuh_backup_날짜.json' 파일을 선택해주세요.");
-    event.target.value = '';
-    return;
-  }
-
-  try {
-    const text = await file.text();
-    const data = JSON.parse(text);
-
-    // 백업 파일 구조 검증
-    if (!data.version && !data.profile && !data.overtime && !data.leave) {
-      throw new Error('invalid_structure');
-    }
-
-    // 백업 파일 내 각 필드는 localStorage 저장용 JSON 문자열이어야 함.
-    // 수동 편집 등으로 객체로 들어온 경우 다시 직렬화하고,
-    // 최종적으로 JSON.parse 검증을 통과해야만 저장 — 무음 손상 방지.
-    const toStorable = v => {
-      if (!v) return null;
-      const s = typeof v === 'string' ? v : JSON.stringify(v);
-      JSON.parse(s); // 유효하지 않으면 여기서 throw → catch로 이동
-      return s;
-    };
-
-    const profileStr = toStorable(data.profile);
-    const overtimeStr = toStorable(data.overtime);
-    const leaveStr = toStorable(data.leave);
-
-    if (profileStr) localStorage.setItem(PROFILE.STORAGE_KEY, profileStr);
-    if (overtimeStr) localStorage.setItem(OVERTIME.STORAGE_KEY, overtimeStr);
-    if (leaveStr) localStorage.setItem(LEAVE.STORAGE_KEY, leaveStr);
-
-    alert("데이터가 성공적으로 복원되었습니다! 앱을 새로고침합니다.");
-    window.location.reload();
-  } catch (e) {
-    if (e.message === 'invalid_structure') {
-      alert("⚠️ 올바른 백업 파일이 아닙니다.\n\n'snuh_backup_날짜.json' 파일을 선택해주세요.");
-    } else {
-      alert("복원 실패: 올바른 백업 파일(JSON)이 아닙니다.\n\n사진이나 다른 파일이 아닌, 'snuh_backup_날짜.json' 파일을 선택해주세요.");
-    }
-  } finally {
-    event.target.value = '';
-  }
-}
-
-function updateProfileSummary(profile) {
-  const wage = PROFILE.calcWage(profile);
-  if (!wage) return;
-
-  const serviceYears = profile.hireDate ? PROFILE.calcServiceYears(profile.hireDate) : 0;
-  const table = DATA.payTables[CALC.resolvePayTable(profile.jobType)];
-  const gradeLabel = table ? (table.gradeLabels[profile.grade] || profile.grade) : profile.grade;
-
-  const gradeDisplay = `${profile.jobType} ${gradeLabel}(${profile.grade}) ${profile.year}년차${serviceYears > 0 ? ` · 근속 ${serviceYears}년` : ''}`;
-
-  // ── 상단: 핵심 요약 (항상 표시) ──
-  let html = `
-    <div class="result-row" style="font-weight:600;">
-      <span class="key">현재 직급/호봉</span><span class="val" style="color:var(--text-muted); font-size:var(--text-body-normal);">${gradeDisplay}</span>
-    </div>
-    <div class="result-row" style="font-weight:700;">
-      <span class="key">월 통상임금</span><span class="val" style="color:var(--accent-indigo);">${CALC.formatCurrency(wage.monthlyWage)}</span>
-    </div>
-    <div class="result-row" style="font-weight:700;">
-      <span class="key">시급 (÷${profile.weeklyHours || 209}시간)</span><span class="val" style="color:var(--accent-emerald);">${CALC.formatCurrency(wage.hourlyRate)}</span>
-    </div>
-    ${!profile.adjustPay ? '<div class="warning-box" style="margin-top:8px; border-color:var(--accent-amber);">⚠️ 조정급 미입력 시 근속가산기본급·명절지원비가 과소 계산됩니다. 내 정보에서 조정급을 입력해주세요.</div>' : ''}
-    <div class="warning-box" style="margin-top:8px;">💡 이 시급이 시간외·온콜 탭에 자동 반영됩니다.</div>`;
-
-  // ── 하단: 통상임금 내역 (토글, 기본 접힘) ──
-  let detailHtml = '';
-  Object.entries(wage.breakdown).forEach(([key, val]) => {
-    if (val > 0) {
-      detailHtml += `<div class="result-row"><span class="key">${key}</span><span class="val">${CALC.formatCurrency(val)}</span></div>`;
-    }
-  });
-
-  html += `
-    <div style="margin-top:10px; border-top:1px solid var(--border-glass); padding-top:8px;">
-      <div id="pfWageDetailToggle" style="display:flex; align-items:center; gap:6px; cursor:pointer; padding:6px 0; user-select:none;"
-           onclick="var b=document.getElementById('pfWageDetailBody'); var ic=document.getElementById('pfWageDetailIcon'); if(b.style.display==='none'){b.style.display='block';ic.textContent='▼';}else{b.style.display='none';ic.textContent='▸';}">
-        <span id="pfWageDetailIcon" style="font-size:0.8rem; color:var(--text-muted);">▸</span>
-        <span style="font-size:var(--text-body-normal); font-weight:600; color:var(--text-muted);">통상임금 내역</span>
-      </div>
-      <div id="pfWageDetailBody" style="display:none;">
-        ${detailHtml}
-      </div>
-    </div>`;
-
-  document.getElementById('profileSummary').innerHTML = html;
-}
-
-// ═══════════ 프로필 → 각 탭 자동 반영 ═══════════
-function applyProfileToOvertime() {
-  const profile = PROFILE.load();
-  if (!profile) return;
-  const wage = PROFILE.calcWage(profile);
-  if (!wage) return;
-  document.getElementById('otHourly').value = wage.hourlyRate;
-  const hint = document.getElementById('otHourlyHint');
-  if (hint) hint.textContent = `📌 내 정보 자동반영 (통상임금: ${CALC.formatCurrency(wage.monthlyWage)})`;
-}
-
-function applyProfileToPayroll() {
-  const profile = PROFILE.load();
-  const banner = document.getElementById('psProfileBanner');
-  const manualSection = document.getElementById('psManualSection');
-
-  if (profile) {
-    banner.style.display = 'block';
-    banner.innerHTML = `📌 <strong>${escapeHtml(profile.name) || '내 정보'}</strong> 프로필이 적용됩니다. (${escapeHtml(profile.jobType)} ${escapeHtml(profile.grade)} ${escapeHtml(String(profile.year))}년차)`;
-    manualSection.style.display = 'none';
-  } else {
-    banner.style.display = 'none';
-    manualSection.style.display = 'block';
-  }
-}
-
-function applyProfileToLeave() {
-  const profile = PROFILE.load();
-  if (!profile) return;
-  if (profile.hireDate) {
-    const hireDateEl = document.getElementById('lvHireDate');
-    if (hireDateEl) hireDateEl.value = profile.hireDate;
-
-    // 입사일이 있으면 배너 숨김
-    const infoNote = document.getElementById('lvAnnualInfoNote');
-    if (infoNote) infoNote.style.display = 'none';
-
-    // 연차 자동 산정
-    const parsed = PROFILE.parseDate(profile.hireDate);
-    if (parsed) {
-      const result = CALC.calcAnnualLeave(new Date(parsed));
-      if (result) lvTotalAnnual = result.totalLeave;
-    }
-  } else {
-    const infoNote = document.getElementById('lvAnnualInfoNote');
-    if (infoNote) infoNote.style.display = 'flex';
-  }
-  const wage = PROFILE.calcWage(profile);
-  if (wage) {
-    const plWageEl = document.getElementById('plWage');
-    if (plWageEl) plWageEl.value = wage.monthlyWage;
-  }
-}
-
-// applyProfileToCareer — 제거됨 (승진·퇴직은 Q&A 카드로 이동)
 
 // ═══════════ 직급 목록 업데이트 ═══════════
 function updateGrades() {
@@ -1236,7 +601,11 @@ async function autoFillMonth() {
     await renderMiniCalendar(year, month, workInfo);
 
   } catch (e) {
-    infoEl.innerHTML = `<span style="color:var(--accent-rose)">❌ 로드 실패: ${e.message}</span>`;
+    infoEl.textContent = '';
+    const errSpan = document.createElement('span');
+    errSpan.style.color = 'var(--accent-rose)';
+    errSpan.textContent = '\u274C \ub85c\ub4dc \uc2e4\ud328: ' + (e.message || 'Unknown error');
+    infoEl.appendChild(errSpan);
   }
 }
 
@@ -1336,535 +705,699 @@ async function renderMiniCalendar(year, month, workInfo) {
   `;
 }
 
-// ═══════════ 🧾 급여 시뮬레이터 ═══════════
-function calculatePayroll() {
-  const profile = PROFILE.load();
-  let params;
 
-  if (profile) {
-    const serviceYears = profile.hireDate ? PROFILE.calcServiceYears(profile.hireDate) : 0;
-    params = {
-      jobType: profile.jobType,
-      grade: profile.grade,
-      year: parseInt(profile.year),
-      adjustPay: parseInt(profile.adjustPay) || 0,
-      upgradeAdjustPay: parseInt(profile.upgradeAdjustPay) || 0,
-      hasMilitary: profile.hasMilitary,
-      militaryMonths: parseInt(profile.militaryMonths) || 24,
-      hasSeniority: profile.hasSeniority,
-      seniorityYears: profile.hasSeniority ? serviceYears : 0,
-      longServiceYears: serviceYears,
-      numFamily: parseInt(profile.numFamily) || 0,
-      numChildren: parseInt(profile.numChildren) || 0,
-      childrenUnder6Pay: parseInt(profile.childrenUnder6Pay) || 0,
-      specialPay: parseInt(profile.specialPay) || 0,
-      positionPay: parseInt(profile.positionPay) || 0,
-      workSupportPay: parseInt(profile.workSupportPay) || 0,
-    };
+// ═══════════ 💼 퇴직금 계산기 (임베드) ═══════════
+
+// data.js severanceMultipliersPre2001 과 동기화 (2001.08.31 이전 입사자 누진배수)
+// 16~19, 21~24, 26~29년은 5년 마일스톤 사이를 선형 보간
+var RET_RATES = [
+  [1,1.0],[2,2.0],[3,3.5],[4,5.5],[5,7.5],[6,9.1],[7,10.7],[8,12.3],[9,13.9],
+  [10,15.5],[11,17.2],[12,18.9],[13,20.6],[14,22.3],[15,24.0],[16,25.8],[17,27.6],
+  [18,29.4],[19,31.2],[20,33.0],[21,34.9],[22,36.8],[23,38.7],[24,40.6],[25,42.5],
+  [26,44.5],[27,46.5],[28,48.5],[29,50.5],[30,52.5]
+];
+var RET_SEVERANCE_RATES = [
+  [1,5,0.10],[5,10,0.35],[10,15,0.45],[15,20,0.50],[20,999,0.60]
+];
+
+function retGetRateForYears(years) {
+  var floored = Math.floor(years);
+  if (floored < 1) return 0;
+  for (var i = 0; i < RET_RATES.length; i++) {
+    if (RET_RATES[i][0] === floored) return RET_RATES[i][1];
+  }
+  return RET_RATES[RET_RATES.length - 1][1] + (floored - 30) * 2.5;
+}
+
+function retGetSeveranceRate(years) {
+  var floored = Math.floor(years);
+  for (var i = 0; i < RET_SEVERANCE_RATES.length; i++) {
+    var r = RET_SEVERANCE_RATES[i];
+    if (floored >= r[0] && floored < r[1]) return r[2];
+  }
+  return 0;
+}
+
+function retFmt(n) { return Math.round(n).toLocaleString('ko-KR') + '원'; }
+
+// ── 퇴직금 D-day / 빠른 날짜 헬퍼 ──
+var _retPeakDate = null, _retPeakEndDate = null, _retLegalRetireDate = null;
+
+function retFmtDate(d) {
+  return d.getFullYear() + '.' + String(d.getMonth()+1).padStart(2,'0') + '.' + String(d.getDate()).padStart(2,'0');
+}
+function retToInputDate(d) {
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function retUpdateQuickDates() {
+  var birthVal = document.getElementById('retBirthDate').value;
+  var hireVal  = document.getElementById('retHireDate') ? document.getElementById('retHireDate').value : '';
+  var now = new Date();
+  _retPeakDate = null; _retPeakEndDate = null; _retLegalRetireDate = null;
+
+  if (birthVal) {
+    var birth = new Date(birthVal);
+    _retPeakDate = new Date(birth); _retPeakDate.setFullYear(birth.getFullYear() + 60);
+    _retPeakEndDate = new Date(birth); _retPeakEndDate.setFullYear(birth.getFullYear() + 61);
+    _retLegalRetireDate = _retPeakDate;
+
+    var ddayGrid = document.getElementById('retDdayGrid');
+    ddayGrid.style.display = 'grid';
+    var dPeak   = Math.ceil((_retPeakDate - now) / 86400000);
+    var dRetire = Math.ceil((_retPeakEndDate - now) / 86400000);
+    document.getElementById('retDdayPeak').textContent   = dPeak > 0   ? 'D-' + dPeak.toLocaleString('ko-KR')   + ' (' + _retPeakDate.getFullYear()    + ')' : '도달';
+    document.getElementById('retDdayRetire').textContent = dRetire > 0 ? 'D-' + dRetire.toLocaleString('ko-KR') + ' (' + _retPeakEndDate.getFullYear() + ')' : '도달';
+
+    document.getElementById('retQuickDates').style.display = 'grid';
+    document.getElementById('retBtnPeakDate').textContent    = '법정 정년 · 임금피크 시작 (' + retFmtDate(_retPeakDate) + ')';
+    document.getElementById('retBtnPeakEndDate').textContent = '임금피크 연장 만료 (' + retFmtDate(_retPeakEndDate) + ')';
+
+    var yearsUntilPeak = (_retPeakDate - now) / (365.25 * 86400000);
+    document.getElementById('retPeakOptSection').style.display = yearsUntilPeak < 6 ? 'block' : 'none';
   } else {
-    // 수동 입력
-    const serviceYears = parseInt(document.getElementById('psServiceYears')?.value) || 0;
-    params = {
-      jobType: document.getElementById('psJobType').value,
-      grade: document.getElementById('psGrade').value,
-      year: parseInt(document.getElementById('psYear').value),
-      adjustPay: parseInt(document.getElementById('psAdjust')?.value) || 0,
-      hasMilitary: document.getElementById('psMilitary')?.checked || false,
-      militaryMonths: 24,
-      hasSeniority: document.getElementById('psSeniority')?.checked || false,
-      seniorityYears: document.getElementById('psSeniority')?.checked ? serviceYears : 0,
-      longServiceYears: serviceYears,
-      numFamily: 0, numChildren: 0, childrenUnder6Pay: 0,
-    };
+    document.getElementById('retDdayGrid').style.display = 'none';
+    document.getElementById('retQuickDates').style.display = hireVal ? 'grid' : 'none';
+    document.getElementById('retPeakOptSection').style.display = 'none';
+  }
+}
+function retSetRetireDate(type) {
+  var d;
+  if (type === 'now') d = new Date();
+  else if (type === 'peak')    d = _retPeakDate;
+  else if (type === 'peakEnd') d = _retPeakEndDate;
+  if (!d) return;
+  document.getElementById('retRetireDate').value = retToInputDate(d);
+  // active 상태 표시
+  var idMap = { now: 'retBtnNow', peak: 'retBtnPeakDate', peakEnd: 'retBtnPeakEndDate' };
+  document.querySelectorAll('.ret-quick-btn').forEach(function(b) { b.classList.remove('active'); });
+  var activeId = idMap[type];
+  if (activeId) { var el = document.getElementById(activeId); if (el) el.classList.add('active'); }
+}
+function retToggleRateCard() {
+  var card = document.getElementById('retRateCard');
+  var chev = document.getElementById('retRateChevron');
+  if (!card) return;
+  var collapsed = card.classList.toggle('collapsed');
+  if (chev) chev.style.transform = collapsed ? 'rotate(180deg)' : 'rotate(0deg)';
+}
+function retSelectPeakOpt(label) {
+  document.querySelectorAll('.ret-peak-opt').forEach(function(el){ el.classList.remove('selected'); });
+  label.classList.add('selected');
+  var radio = label.querySelector('input[type=radio]');
+  if (radio) radio.checked = true;
+}
+
+// ── 퇴직금 계산 (CALC 위임 + 임금피크 통합) ──
+function _retComputeSeverance(effectiveWage, preciseYears, hireDateVal) {
+  if (typeof CALC !== 'undefined' && CALC.calcSeveranceFullPay) {
+    return CALC.calcSeveranceFullPay(effectiveWage, Math.floor(preciseYears), hireDateVal);
+  }
+  // 로컬 fallback
+  var rate = retGetRateForYears(preciseYears);
+  var base = Math.round(effectiveWage * rate);
+  var addon = 0;
+  if (hireDateVal && new Date(hireDateVal) <= new Date('2015-06-30')) {
+    addon = Math.round(effectiveWage * Math.floor(preciseYears) * retGetSeveranceRate(preciseYears));
+  }
+  return {
+    퇴직금: base + addon, 기본퇴직금: base, 퇴직수당: addon,
+    산정방법: rate + '개월',
+    근속기간: Math.floor(preciseYears) + '년 ' + Math.floor((preciseYears % 1) * 12) + '개월'
+  };
+}
+
+function calcRetirementEmbedded() {
+  var wage = parseFloat(document.getElementById('retAvgWage').value) || 0;
+  var hireDateVal   = document.getElementById('retHireDate').value;
+  var retireDateVal = document.getElementById('retRetireDate').value;
+  if (!wage || !hireDateVal || !retireDateVal) {
+    alert('월 평균임금, 입사일, 퇴직일을 모두 입력해 주세요.'); return;
+  }
+  var hire = new Date(hireDateVal), retire = new Date(retireDateVal);
+  if (retire <= hire) { alert('퇴직일이 입사일보다 늦어야 합니다.'); return; }
+
+  var totalYears = (retire - hire) / (1000 * 60 * 60 * 24 * 365.25);
+  var peakOpt = (document.querySelector('input[name="retPeakOpt"]:checked') || {}).value || 'none';
+
+  document.getElementById('retPre2001Warning').style.display =
+    hire < new Date('2001-08-31') ? 'block' : 'none';
+  document.getElementById('retSeveranceCheckRow').style.display =
+    hire <= new Date('2015-06-30') ? 'flex' : 'none';
+
+  var effectiveWage = wage;
+  var peakLabel = '';
+  if (peakOpt === 'A') { effectiveWage = Math.round(wage * 0.6); peakLabel = '옵션 A (60% 적용)'; }
+  if (peakOpt === 'B') { peakLabel = '옵션 B (100% 유지)'; }
+
+  var r = _retComputeSeverance(effectiveWage, totalYears, hireDateVal);
+  var peakIncome = peakOpt === 'A' ? Math.round(wage * 0.6 * 12) : (peakOpt === 'B' ? Math.round(wage * 12) : 0);
+  var totalPackage = r.퇴직금 + peakIncome;
+
+  // 결과 표시 시 근속연수표 자동 접기
+  var rateCard = document.getElementById('retRateCard');
+  if (rateCard && !rateCard.classList.contains('collapsed')) {
+    rateCard.classList.add('collapsed');
+    var chev = document.getElementById('retRateChevron');
+    if (chev) chev.style.transform = 'rotate(180deg)';
   }
 
-  // 월별 변동사항
-  params.workDays = parseInt(document.getElementById('psWorkDays').value) || 22;
-  params.isHolidayMonth = document.getElementById('psHolidayMonth').checked;
-  // 가계지원비 미지급월 여부 (autoFillMonth에서 설정한 값 사용)
-  const familySkipData = document.getElementById('psHolidayMonth').dataset.familySkip;
-  params.isFamilySupportMonth = familySkipData !== '1';  // '1'이면 skip, 그 외는 지급
-  params.overtimeHours = parseFloat(document.getElementById('psOvertime').value) || 0;
-  params.nightHours = parseFloat(document.getElementById('psNight').value) || 0;
-  params.holidayWorkHours = parseFloat(document.getElementById('psHoliday').value) || 0;
-  params.nightShiftCount = parseInt(document.getElementById('psNightShiftCount').value) || 0;
+  var resultDiv = document.getElementById('retCalcResult');
+  resultDiv.style.display = 'block';
+  document.getElementById('retCalcResultLabel').textContent =
+    peakOpt !== 'none' ? '퇴직 패키지 총액 (임금피크 수령 포함)' : '예상 퇴직금';
+  document.getElementById('retCalcResultTotal').textContent = retFmt(peakOpt !== 'none' ? totalPackage : r.퇴직금);
 
-  const r = CALC.calcPayrollSimulation(params);
-  if (!r) {
-    document.getElementById('payrollResult').innerHTML = '<div class="warning-box">⚠️ 계산 오류: 직종/등급을 확인해주세요.</div>';
+  var breakdown = document.getElementById('retCalcResultBreakdown');
+  while (breakdown.firstChild) breakdown.removeChild(breakdown.firstChild);
+  function addRow(label, value, isTotal) {
+    var div = document.createElement('div');
+    div.className = 'ret-result-row' + (isTotal ? ' total' : '');
+    var s1 = document.createElement('span'); s1.textContent = label;
+    var s2 = document.createElement('span'); s2.style.fontWeight = '600'; s2.textContent = value;
+    div.appendChild(s1); div.appendChild(s2); breakdown.appendChild(div);
+  }
+  addRow('근속연수', r.근속기간 || (Math.floor(totalYears) + '년'), false);
+  addRow('월 평균임금 (입력)', retFmt(wage), false);
+  if (peakOpt !== 'none') addRow('임금피크 옵션', peakLabel, false);
+  if (peakOpt === 'A')    addRow('퇴직 기준 평균임금 (60%)', retFmt(effectiveWage), false);
+  addRow('산정방법', r.산정방법 || '-', false);
+  addRow('기본 퇴직금', retFmt(r.기본퇴직금 || 0), false);
+  if (r.퇴직수당 > 0) addRow('퇴직수당', retFmt(r.퇴직수당), false);
+  addRow('퇴직금 소계', retFmt(r.퇴직금), false);
+  if (peakOpt !== 'none') {
+    addRow('임금피크 기간 수령 (1년)', retFmt(peakIncome), false);
+    addRow('퇴직 패키지 합계', retFmt(totalPackage), true);
+  } else {
+    addRow('합계', retFmt(r.퇴직금), true);
+  }
+
+  // ── AI 제안: 퇴직수당 요율 상향 구간 임박 알림 ──
+  var aiBox = document.getElementById('retAiSuggestion');
+  if (aiBox) {
+    aiBox.style.display = 'none';
+    aiBox.innerHTML = '';
+    var SEV_THRESHOLDS = [
+      { years: 20, rate: 0.60 }, { years: 15, rate: 0.50 },
+      { years: 10, rate: 0.45 }, { years:  5, rate: 0.35 }
+    ];
+    var isPre2015 = hire <= new Date('2015-06-30');
+    if (isPre2015) {
+      var curFloor = Math.floor(totalYears);
+      var next = SEV_THRESHOLDS.find(function(t) { return t.years > curFloor; });
+      if (next) {
+        // 다음 임계일: 입사일 + next.years년 (역일수 기준)
+        var nextDate = new Date(hire.getFullYear() + next.years, hire.getMonth(), hire.getDate());
+        var daysToNext = Math.ceil((nextDate - retire) / 86400000);
+        var monthsToNext = Math.round(daysToNext / 30.5);
+        if (daysToNext > 0 && monthsToNext <= 12) {
+          // 다음 임계 시점 퇴직금 계산
+          var nextPrecise = (nextDate - hire) / (365.25 * 86400000);
+          var nextBase    = Math.round(wage * nextPrecise);
+          var nextAddon   = Math.round(wage * nextPrecise * next.rate);
+          var nextTotal   = nextBase + nextAddon;
+          var curTotal    = r.퇴직금;
+          var diff        = nextTotal - curTotal;
+          var prevRate    = SEV_THRESHOLDS.find(function(t) { return t.years <= curFloor; });
+          var prevRatePct = prevRate ? Math.round(prevRate.rate * 100) : 0;
+          var nextRatePct = Math.round(next.rate * 100);
+          var timeLabel   = monthsToNext <= 1 ? '약 1개월' : '약 ' + monthsToNext + '개월';
+          var dateLabel   = nextDate.getFullYear() + '년 ' + (nextDate.getMonth()+1) + '월 ' + nextDate.getDate() + '일';
+
+          var card = document.createElement('div');
+          card.className = 'ret-ai-card';
+          card.innerHTML =
+            '<div class="ret-ai-badge">🤖 AI 제안 &nbsp;⚡ 퇴직수당 요율 상향 구간 임박</div>' +
+            '<div class="ret-ai-headline">' + timeLabel + '만 더 근무하면<br>' +
+              '퇴직수당 요율 <span style="opacity:.7;text-decoration:line-through;">' + prevRatePct + '%</span> → <span style="color:#86efac;">' + nextRatePct + '%</span> 상향됩니다</div>' +
+            '<div class="ret-ai-sub">근속 ' + next.years + '년 도달 시점 (' + dateLabel + ') 이후 퇴직 시 적용</div>' +
+            '<div class="ret-ai-compare">' +
+              '<div class="ret-ai-compare-row"><span>현재 퇴직금 (' + retFmt(wage) + ' × ' + totalYears.toFixed(2) + '년)</span><span>' + retFmt(curTotal) + '</span></div>' +
+              '<div class="ret-ai-compare-row highlight"><span>' + timeLabel + ' 후 퇴직 시</span><span class="ret-ai-gain">+' + retFmt(diff) + ' 추가</span></div>' +
+              '<div class="ret-ai-compare-row" style="font-weight:600;opacity:.85;"><span>예상 퇴직금 합계</span><span>' + retFmt(nextTotal) + '</span></div>' +
+            '</div>' +
+            '<div class="ret-ai-target-date">📅 근속 ' + next.years + '년 도달일: <strong>' + dateLabel + '</strong></div>';
+          aiBox.appendChild(card);
+          aiBox.style.display = 'block';
+        }
+      }
+    }
+  }
+}
+
+// ── 임금피크 타임라인 시각화 ──
+function renderRetSimTimeline(hire, peakDate, peakEndDate) {
+  var el = document.getElementById('retSimTimeline');
+  if (!el) return;
+  if (!hire || !peakDate || !peakEndDate) { el.style.display = 'none'; return; }
+
+  var hireStr    = hire.getFullYear() + '.' + String(hire.getMonth()+1).padStart(2,'0');
+  var peakStr    = retFmtDate(peakDate);
+  var peakEndStr = retFmtDate(peakEndDate);
+  var normalYrs  = Math.floor((peakDate - hire) / (365.25 * 86400000));
+
+  // 비율: 시각적으로 임금피크 구간이 최소 18% 확보되도록
+  var totalMs  = peakEndDate - hire;
+  var normalMs = peakDate   - hire;
+  var rawPct   = normalMs / totalMs * 100;
+  var normalPct = Math.min(rawPct, 82);   // 임금피크 최소 18%
+  var peakPct   = 100 - normalPct;
+
+  el.innerHTML =
+    '<div class="ret-card-title" style="margin-bottom:10px;">📅 임금피크 타임라인</div>' +
+
+    // ── 1. 전체 경력 바 ──
+    '<div class="ret-tl-section">' +
+      '<div class="ret-tl-section-label">전체 경력 · 입사 후 ' + normalYrs + '년</div>' +
+      '<div class="ret-tl-macro-bar">' +
+        '<div class="ret-tl-seg ret-tl-seg-normal" style="width:' + normalPct + '%">' +
+          '<span class="ret-tl-seg-text">정상 근무 (' + normalYrs + '년)</span>' +
+        '</div>' +
+        '<div class="ret-tl-seg ret-tl-seg-peak" style="width:' + peakPct + '%">' +
+          '<span class="ret-tl-seg-text">임금피크</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="ret-tl-macro-labels">' +
+        '<span>입사 ' + hireStr + '</span>' +
+        '<span>법정 정년 ' + peakStr + '</span>' +
+        '<span>' + peakEndStr + '</span>' +
+      '</div>' +
+    '</div>' +
+
+    // ── 2. 임금피크 기간 시나리오 ──
+    '<div class="ret-tl-divider"></div>' +
+    '<div class="ret-tl-section-label" style="margin-bottom:8px;">임금피크 기간 선택 — 만 60세(법정 정년) 이후 1년</div>' +
+
+    '<div class="ret-tl-sc-wrap">' +
+      // 날짜 헤더
+      '<div class="ret-tl-sc-header">' +
+        '<div class="ret-tl-sc-label-col"></div>' +
+        '<div class="ret-tl-sc-bar-col">' +
+          '<span class="ret-tl-sc-date" style="left:0">만 60세<br>' + peakStr + '</span>' +
+          '<span class="ret-tl-sc-date" style="right:0; text-align:right;">만 61세<br>' + peakEndStr + '</span>' +
+        '</div>' +
+      '</div>' +
+
+      // 법정 퇴직 (해당없음)
+      '<div class="ret-tl-sc-row">' +
+        '<div class="ret-tl-sc-label-col">' +
+          '<div class="ret-tl-sc-badge">법정퇴직</div>' +
+          '<div class="ret-tl-sc-sublabel">해당없음</div>' +
+        '</div>' +
+        '<div class="ret-tl-sc-bar-col">' +
+          '<div class="ret-tl-bar-none">' +
+            '<span class="ret-tl-bar-marker">⬆ 즉시 퇴직</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+
+      // 옵션 A — 공로연수
+      '<div class="ret-tl-sc-row">' +
+        '<div class="ret-tl-sc-label-col">' +
+          '<div class="ret-tl-sc-badge sc-a">옵션 A</div>' +
+          '<div class="ret-tl-sc-sublabel">공로연수</div>' +
+        '</div>' +
+        '<div class="ret-tl-sc-bar-col">' +
+          '<div class="ret-tl-bar-a">' +
+            '<span class="ret-tl-bar-inner">미근무 · 급여 60% 수령</span>' +
+          '</div>' +
+          '<span class="ret-tl-bar-exit">⬆ 만 61세 퇴직</span>' +
+        '</div>' +
+      '</div>' +
+
+      // 옵션 B — 계속근무
+      '<div class="ret-tl-sc-row">' +
+        '<div class="ret-tl-sc-label-col">' +
+          '<div class="ret-tl-sc-badge sc-b">옵션 B ★</div>' +
+          '<div class="ret-tl-sc-sublabel">계속근무</div>' +
+        '</div>' +
+        '<div class="ret-tl-sc-bar-col">' +
+          '<div class="ret-tl-bar-b">' +
+            '<span class="ret-tl-bar-inner">계속 근무 · 급여 100% 유지</span>' +
+          '</div>' +
+          '<span class="ret-tl-bar-exit winner">⬆ 만 61세 퇴직</span>' +
+        '</div>' +
+      '</div>' +
+
+    '</div>' +
+
+    // ── 3. 용어 설명 ──
+    '<div class="ret-tl-legend">' +
+      '<div class="ret-tl-legend-row"><span class="ret-tl-dot-a"></span><strong>공로연수 (옵션 A)</strong> — 근로 제공 없이 기준임금의 60%를 1년간 수령. 이 기간이 퇴직 직전 평균임금 계산에 포함되어 <em>퇴직금이 줄어듭니다</em>.</div>' +
+      '<div class="ret-tl-legend-row"><span class="ret-tl-dot-b"></span><strong>계속근무 (옵션 B)</strong> — 1년 추가 근무 + 기준임금 100% 유지. 근속연수 1년 추가 적용 → <em>퇴직금 기준 최고</em>.</div>' +
+      '<div class="ret-tl-legend-row"><span class="ret-tl-dot-n"></span><strong>법정퇴직 (해당없음)</strong> — 임금피크 미신청. 만 60세에 즉시 퇴직. 임금피크 기간 수령 없음.</div>' +
+    '</div>';
+
+  el.style.display = 'block';
+}
+
+// ── 3-시나리오 비교 (Tab 2) ──
+function calcScenarioEmbedded(silent) {
+  var wage     = parseFloat(document.getElementById('retScWage').value) || 0;
+  var hireVal  = document.getElementById('retScHireDate').value;
+  var birthVal = document.getElementById('retScBirthDate').value;
+  if (!wage || !hireVal) {
+    if (!silent) alert('퇴직금 탭에서 월 평균임금과 입사일을 먼저 입력해 주세요.');
     return;
   }
 
-  let html = `
-    <div class="card-title"><span class="icon emerald">📊</span> 시뮬레이션 결과</div>
-    <div class="stat-grid" style="margin-bottom:16px;">
-      <div class="stat-card">
-        <div class="stat-value" style="color:var(--accent-indigo)">${CALC.formatCurrency(r.급여총액)}</div>
-        <div class="stat-label">급여총액</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value" style="color:var(--accent-rose)">${CALC.formatCurrency(r.공제총액)}</div>
-        <div class="stat-label">공제총액</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value" style="color:var(--accent-emerald)">${CALC.formatCurrency(r.실지급액)}</div>
-        <div class="stat-label">실지급액</div>
-      </div>
-    </div>
+  var hire  = new Date(hireVal);
+  var now   = new Date();
+  var birth = birthVal ? new Date(birthVal) : null;
+  var peakDate = birth ? new Date(birth.getFullYear()+60, birth.getMonth(), birth.getDate()) : null;
+  var peakEnd  = birth ? new Date(birth.getFullYear()+61, birth.getMonth(), birth.getDate()) : null;
+  var oneYearLater = new Date(now.getFullYear()+1, now.getMonth(), now.getDate());
 
-    <div class="result-box">
-      <div class="result-label">통상임금 (시급 ${CALC.formatCurrency(r.시급)})</div>
-      <div class="result-total">${CALC.formatCurrency(r.통상임금)}</div>
-    </div>
+  // 타임라인 렌더
+  renderRetSimTimeline(hire, peakDate, peakEnd);
 
-    <hr class="divider">
-    <div class="card-title" style="font-size:var(--text-body-large);"><span class="icon indigo">💰</span> 지급내역</div>
-    `;
+  var scenarios = [
+    { label:'지금 바로 퇴직', badge:'시나리오 1', retireDate: now,     wageMulti:1.0, peakIncome:0,
+      desc:'임금피크 전 퇴직. 기준임금 그대로 퇴직금 산정.' },
+    { label:'옵션 A — 공로연수 후 퇴직', badge:'시나리오 2', retireDate: peakEnd||oneYearLater, wageMulti:0.6, peakIncome: wage*0.6*12,
+      desc:'1년 공로연수(60%) 후 퇴직. 퇴직금 기준임금도 60% 적용.' },
+    { label:'옵션 B — 계속근무 후 퇴직', badge:'시나리오 3', retireDate: peakEnd||oneYearLater, wageMulti:1.0, peakIncome: wage*1.0*12,
+      desc:'1년 계속근무(100%) 후 퇴직. 퇴직금 기준임금 유지.' }
+  ];
 
-  Object.entries(r.지급내역).forEach(([key, val]) => {
-    if (val > 0) {
-      html += `<div class="result-row"><span class="key">${key}</span><span class="val accent">${CALC.formatCurrency(val)}</span></div>`;
-    }
+  var results = scenarios.map(function(sc) {
+    var years = Math.max(0, (sc.retireDate - hire) / (365.25 * 86400000));
+    var eff   = Math.round(wage * sc.wageMulti);
+    var r     = _retComputeSeverance(eff, years, hireVal);
+    return { sc: sc, r: r, years: years, eff: eff, total: r.퇴직금 + sc.peakIncome };
   });
 
-  html += `
-    <div class="result-row" style="font-weight:700; border-top:2px solid var(--border); padding-top:8px; margin-top:8px;">
-      <span class="key">지급 합계</span>
-      <span class="val">${CALC.formatCurrency(r.급여총액)}</span>
-    </div>
+  var bestIdx = 0;
+  results.forEach(function(res, i){ if (res.total > results[bestIdx].total) bestIdx = i; });
 
-    <hr class="divider">
-    <div class="card-title" style="font-size:var(--text-body-large);"><span class="icon rose">📝</span> 공제내역</div>
-    `;
+  var container = document.getElementById('retScenarioResult');
+  container.style.display = 'block';
+  while (container.firstChild) container.removeChild(container.firstChild);
 
-  Object.entries(r.공제내역).forEach(([key, val]) => {
-    if (val > 0) {
-      html += `<div class="result-row"><span class="key">${key}</span><span class="val" style="color:var(--accent-rose)">${CALC.formatCurrency(val)}</span></div>`;
+  var maxTotal = Math.max.apply(null, results.map(function(r){ return r.total; }));
+  var bestResult = results[bestIdx];
+  var diffFromBest0 = bestResult.total - results[0].total;
+
+  // ── AI 분석 요약 카드 (상단 큰 카드) ──
+  var summaryCard = document.createElement('div');
+  summaryCard.className = 'ret-ai-card ret-sc-summary';
+  var scenarioLabels = ['지금 퇴직', '옵션 A (공로연수)', '옵션 B (계속근무)'];
+  var gainText = diffFromBest0 > 0
+    ? '지금 퇴직보다 <span style="color:#86efac;font-weight:800;">' + retFmt(diffFromBest0) + ' 더</span> 받을 수 있습니다'
+    : '현재 시점이 최적입니다';
+  summaryCard.innerHTML =
+    '<div class="ret-ai-badge">🤖 AI 시나리오 분석 &nbsp;·&nbsp; 3가지 비교</div>' +
+    '<div class="ret-ai-headline">최적 선택: <span style="color:#86efac;">' + bestResult.sc.label + '</span><br>' + gainText + '</div>' +
+    '<div class="ret-ai-sub">' + bestResult.sc.desc + '</div>' +
+    // 막대 차트
+    '<div class="ret-sc-bars">' +
+    results.map(function(res, i) {
+      var pct = maxTotal > 0 ? Math.round(res.total / maxTotal * 100) : 0;
+      var isWinner = i === bestIdx;
+      return '<div class="ret-sc-bar-row">' +
+        '<div class="ret-sc-bar-label">' + scenarioLabels[i] + '</div>' +
+        '<div class="ret-sc-bar-track">' +
+          '<div class="ret-sc-bar-fill' + (isWinner ? ' winner' : '') + '" style="width:' + pct + '%"></div>' +
+        '</div>' +
+        '<div class="ret-sc-bar-val' + (isWinner ? ' winner' : '') + '">' + retFmt(res.total) + (isWinner ? ' ✓' : '') + '</div>' +
+      '</div>';
+    }).join('') +
+    '</div>' +
+    '<div class="ret-ai-target-date">📅 퇴직 예정일: <strong>' +
+      (peakEnd ? retFmtDate(peakEnd) + ' (만 61세 기준)' : '입력된 날짜 기준') +
+    '</strong></div>';
+  container.appendChild(summaryCard);
+
+  // ── 시나리오별 세부 카드 ──
+  results.forEach(function(res, i) {
+    var card = document.createElement('div');
+    var isWinner = i === bestIdx;
+    card.className = 'ret-card ret-sc-detail' + (isWinner ? ' ret-sc-winner' : '');
+
+    var header = document.createElement('div');
+    header.style.cssText = 'display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;';
+    var badgeColors = ['#e0e7ff', '#fef3c7', '#d1fae5'];
+    header.innerHTML =
+      '<div>' +
+        '<span style="font-size:11px; font-weight:700; padding:2px 7px; border-radius:4px; margin-right:6px; background:' + badgeColors[i] + '; color:#1a1a1a;">' + res.sc.badge + '</span>' +
+        '<span style="font-weight:700; font-size:var(--text-body-large);">' + res.sc.label + '</span>' +
+      '</div>' +
+      (isWinner ? '<span style="font-size:11px; font-weight:700; color:#059669; border:1.5px solid #059669; border-radius:4px; padding:2px 6px;">✓ 최고 총액</span>' : '');
+    card.appendChild(header);
+
+    var desc = document.createElement('div');
+    desc.style.cssText = 'font-size:11px; color:var(--text-muted); margin-bottom:8px;';
+    desc.textContent = res.sc.desc;
+    card.appendChild(desc);
+
+    function scRow(label, val, hi) {
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid rgba(26,26,26,0.07); font-size:var(--text-body-normal);';
+      var l = document.createElement('span'); l.style.color = 'var(--text-secondary)'; l.textContent = label;
+      var v = document.createElement('span'); v.style.cssText = 'font-weight:' + (hi?'700':'600') + '; color:' + (hi?'#059669':'inherit') + ';'; v.textContent = val;
+      row.appendChild(l); row.appendChild(v); card.appendChild(row);
     }
+    scRow('근속', Math.floor(res.years) + '년', false);
+    scRow('기준 평균임금', retFmt(res.eff), false);
+    scRow('퇴직금', retFmt(res.r.퇴직금), false);
+    if (res.sc.peakIncome > 0) scRow('임금피크 1년 수령', retFmt(res.sc.peakIncome), false);
+    scRow('패키지 합계', retFmt(res.total), isWinner);
+
+    container.appendChild(card);
   });
-
-  html += `
-    <div class="result-row" style="font-weight:700; border-top:2px solid var(--border); padding-top:8px; margin-top:8px;">
-      <span class="key">공제 합계</span>
-      <span class="val" style="color:var(--accent-rose)">${CALC.formatCurrency(r.공제총액)}</span>
-    </div>
-
-    <div class="warning-box">💡 소득세·주민세는 간이세액표 기반 <strong>근사치</strong>입니다.<br>
-    사학연금부담금, 노동조합비 등 개인별 공제는 미반영.</div>
-    `;
-
-  document.getElementById('payrollResult').innerHTML = html;
 }
 
-// ═══════════ 💰 급여 예상 (명세서 스타일 카드뷰) ═══════════
-
-// 현재 선택된 예상 월 (전역)
-let payEstYear = new Date().getFullYear();
-let payEstMonth = new Date().getMonth() + 1;
-
-// 월별 특이사항 판별
-function getMonthFlags(year, month) {
-  const flags = {
-    isFamilySupportMonth: true,
-    isHolidayBonus: false,
-    isPerformanceBonus: false,
-    isYearEndAdj: false,
-    isResidentTaxExtra: false,
-    tags: []
-  };
-
-  const familySkipMonths = [1, 2, 9];
-  if (familySkipMonths.includes(month)) {
-    flags.isFamilySupportMonth = false;
-    flags.tags.push('가계지원비 미지급월');
-  }
-
-  if (month === 1 || month === 2) { flags.isHolidayBonus = true; flags.isFamilySupportMonth = true; flags.tags.push('설 명절지원비'); }
-  if (month === 9) { flags.isHolidayBonus = true; flags.isFamilySupportMonth = true; flags.tags.push('추석 명절지원비'); }
-  if (month === 5) { flags.isHolidayBonus = true; flags.tags.push('5월 명절지원비'); }
-  if (month === 8) { flags.isPerformanceBonus = true; flags.tags.push('성과급 50%'); }
-  if (month === 11) { flags.isPerformanceBonus = true; flags.tags.push('성과급 50%'); }
-  if (month === 2) { flags.isYearEndAdj = true; flags.tags.push('연말정산'); }
-  if (month === 6) { flags.isResidentTaxExtra = true; flags.tags.push('주민세 정기분'); }
-
-  return flags;
-}
-
-// 단월 시뮬레이션 (시간외·휴가 실시간 반영)
-function calcMonthEstimate(year, month) {
-  const profile = PROFILE.load();
-  if (!profile) return null;
-
-  const serviceYears = profile.hireDate ? PROFILE.calcServiceYears(profile.hireDate) : 0;
-  const flags = getMonthFlags(year, month);
-  const otStats = OVERTIME.calcMonthlyStats(year, month);
-
-  // 시간외 기록에서 연장/야간/휴일 시간 분리
-  const otRecords = OVERTIME.getMonthRecords(year, month);
-  let extHours = 0, nightHours = 0, holHours = 0;
-  otRecords.forEach(r => {
-    if (r.type === 'overtime' || r.type === 'oncall_callout') {
-      extHours += r.breakdown?.extended || 0;
-      nightHours += r.breakdown?.night || 0;
-      holHours += (r.breakdown?.holiday || 0) + (r.breakdown?.holidayNight || 0);
+// 퇴직금 탭 초기화 (자동 프로필 로드 + 지급률표 빌드)
+var _retInitDone = false;
+function initRetirementTab() {
+  // 지급률 테이블은 한 번만 빌드
+  var tbody = document.getElementById('retRateTableBody');
+  if (tbody && !tbody.hasChildNodes()) {
+    var half = Math.ceil(RET_RATES.length / 2);
+    function makeCell(text, bold) {
+      var td = document.createElement('td');
+      td.style.padding = '7px 8px'; td.style.textAlign = 'center';
+      if (bold) td.style.fontWeight = '700';
+      td.textContent = text; return td;
     }
-  });
-
-  const params = {
-    jobType: profile.jobType,
-    grade: profile.grade,
-    year: parseInt(profile.year),
-    adjustPay: parseInt(profile.adjustPay) || 0,
-    upgradeAdjustPay: parseInt(profile.upgradeAdjustPay) || 0,
-    hasMilitary: profile.hasMilitary,
-    militaryMonths: parseInt(profile.militaryMonths) || 24,
-    hasSeniority: profile.hasSeniority,
-    seniorityYears: profile.hasSeniority ? serviceYears : 0,
-    longServiceYears: serviceYears,
-    numFamily: parseInt(profile.numFamily) || 0,
-    numChildren: parseInt(profile.numChildren) || 0,
-    childrenUnder6Pay: parseInt(profile.childrenUnder6Pay) || 0,
-    specialPay: parseInt(profile.specialPay) || 0,
-    positionPay: parseInt(profile.positionPay) || 0,
-    workSupportPay: parseInt(profile.workSupportPay) || 0,
-    workDays: 22,
-    isHolidayMonth: flags.isHolidayBonus,
-    isFamilySupportMonth: flags.isFamilySupportMonth,
-    overtimeHours: extHours,
-    nightHours: nightHours,
-    holidayWorkHours: holHours,
-    nightShiftCount: otStats.nightShiftCount || 0,
-  };
-
-  const r = CALC.calcPayrollSimulation(params);
-  if (!r) return null;
-
-  const oncallPay = otStats.byType.oncall_standby.pay + otStats.byType.oncall_callout.pay;
-
-  // 온콜 수당을 지급내역에 추가
-  if (otStats.byType.oncall_standby.pay > 0) {
-    r.지급내역['온콜대기수당'] = otStats.byType.oncall_standby.pay;
-  }
-  if (otStats.byType.oncall_callout.pay > 0) {
-    r.지급내역['온콜출근수당'] = otStats.byType.oncall_callout.pay;
+    for (var i = 0; i < half; i++) {
+      var tr = document.createElement('tr');
+      tr.style.borderBottom = '1px solid rgba(26,26,26,0.08)';
+      var left = RET_RATES[i], right = RET_RATES[i + half] || null;
+      tr.appendChild(makeCell(left[0] + '년', false));
+      tr.appendChild(makeCell(left[1] + '월', true));
+      tr.appendChild(makeCell(right ? right[0] + '년' : '', false));
+      tr.appendChild(makeCell(right ? right[1] + '월' : '', right != null));
+      tbody.appendChild(tr);
+    }
   }
 
-  r.급여총액 += oncallPay;
-  r.실지급액 += oncallPay;
-
-  return { result: r, flags, otStats };
-}
-
-// 12개월 시뮬레이션 (연간 요약용)
-function calcYearlyEstimate(year) {
-  const results = [];
-  for (let m = 1; m <= 12; m++) {
-    const est = calcMonthEstimate(year, m);
-    if (!est) continue;
-    results.push({
-      month: m,
-      gross: est.result.급여총액,
-      deductions: est.result.공제총액,
-      net: est.result.실지급액,
-      flags: est.flags,
-      otPay: est.otStats.totalPay
-    });
-  }
-  return results;
-}
-
-// 금액 포맷
-function fmtW(n) { return '₩' + Math.round(n).toLocaleString(); }
-
-// 히어로 카드 + 월 선택 슬라이더 렌더링
-function renderPayEstHero() {
-  const el = document.getElementById('payEstHero');
-  if (!el) return;
-
-  const profile = PROFILE.load();
-  if (!profile) {
-    el.innerHTML = `<div class="card" style="text-align:center; padding:28px;">
-      <div style="font-size:var(--text-title-large); margin-bottom:8px; font-weight:800;">급여 예상</div>
-      <p style="color:var(--text-muted);">내 정보를 저장하면 월별 예상 급여가 자동 계산됩니다.</p>
-      <button class="btn btn-primary" onclick="switchToProfileTab()" style="margin-top:12px;">내 정보 입력하기</button>
-    </div>`;
-    return;
-  }
-
-  const est = calcMonthEstimate(payEstYear, payEstMonth);
-  if (!est) { el.innerHTML = ''; return; }
-  const r = est.result;
-  const flags = est.flags;
-  const otStats = est.otStats;
-
-  // 특이사항 태그
-  let tagsHtml = '';
-  if (flags.tags.length > 0) {
-    tagsHtml = flags.tags.map(t => `<span class="pe-tag">${escapeHtml(t)}</span>`).join('');
-  }
-  if (otStats.totalPay > 0) {
-    tagsHtml += `<span class="pe-tag ot">시간외·온콜 ${fmtW(otStats.totalPay)} 반영</span>`;
-  }
-
-  el.innerHTML = `
-    <div class="pe-month-slider">
-      <button class="pe-nav-btn" onclick="changePayEstMonth(-1)">◀</button>
-      <span class="pe-month-label">${payEstYear}년 ${payEstMonth}월 예상</span>
-      <button class="pe-nav-btn" onclick="changePayEstMonth(1)">▶</button>
-    </div>
-    <div class="pe-hero-card">
-      <div class="pe-hero-net-label">예상 실수령액</div>
-      <div class="pe-hero-net">${fmtW(r.실지급액)}</div>
-      <div class="pe-hero-summary">
-        <span class="pe-hero-gross">지급 ${fmtW(r.급여총액)}</span>
-        <span class="pe-hero-sep">—</span>
-        <span class="pe-hero-ded">공제 ${fmtW(r.공제총액)}</span>
-      </div>
-      ${tagsHtml ? `<div class="pe-tags">${tagsHtml}</div>` : ''}
-    </div>`;
-}
-
-// 월 변경
-function changePayEstMonth(delta) {
-  payEstMonth += delta;
-  if (payEstMonth > 12) { payEstMonth = 1; payEstYear++; }
-  if (payEstMonth < 1) { payEstMonth = 12; payEstYear--; }
-  renderPayEstHero();
-  renderPayEstDetail();
-}
-
-// 상세 명세서 스타일 카드 렌더링
-function renderPayEstDetail() {
-  const el = document.getElementById('payEstTimeline');
-  if (!el) return;
-
-  const profile = PROFILE.load();
-  if (!profile) { el.innerHTML = ''; return; }
-
-  const est = calcMonthEstimate(payEstYear, payEstMonth);
-  if (!est) { el.innerHTML = ''; return; }
-  const r = est.result;
-  const otStats = est.otStats;
-
-  // ── 지급내역 테이블 (설명 없이 항목+금액만) ──
-  let payRows = '';
-  for (const [name, amount] of Object.entries(r.지급내역)) {
-    if (amount <= 0) continue;
-    payRows += `
-      <div class="pe-item-row">
-        <div class="pe-item-name">${escapeHtml(name)}</div>
-        <div class="pe-item-amount">${fmtW(amount)}</div>
-      </div>`;
-  }
-
-  // ── 공제내역 테이블 ──
-  let dedRows = '';
-  for (const [name, amount] of Object.entries(r.공제내역)) {
-    if (amount <= 0) continue;
-    dedRows += `
-      <div class="pe-item-row">
-        <div class="pe-item-name">${escapeHtml(name)}</div>
-        <div class="pe-item-amount ded">${fmtW(amount)}</div>
-      </div>`;
-  }
-
-  // ── 시간외·온콜 상세 내역 (기록이 있을 때) ──
-  let otSummary = '';
-  if (otStats.recordCount > 0) {
-    const records = OVERTIME.getMonthRecords(payEstYear, payEstMonth);
-    const profile = PROFILE.load();
-    const hourlyRate = r.시급 || 0;
-    const rates = DATA.allowances.overtimeRates;
-
-    // 시간외 기록별 breakdown 합산
-    let totalExt = 0, totalNgt = 0, totalHol = 0, totalHolNgt = 0;
-    records.forEach(rec => {
-      if (rec.type === 'overtime' || rec.type === 'oncall_callout') {
-        totalExt += rec.breakdown?.extended || 0;
-        totalNgt += rec.breakdown?.night || 0;
-        totalHol += rec.breakdown?.holiday || 0;
-        totalHolNgt += rec.breakdown?.holidayNight || 0;
+  // 내부 탭 스위칭
+  var retTabs = document.getElementById('retTabs');
+  if (retTabs && !retTabs.dataset.wired) {
+    retTabs.dataset.wired = '1';
+    var accent = document.getElementById('retTabAccent');
+    retTabs.addEventListener('click', function(e) {
+      var btn = e.target.closest('.ret-bookmark-tab');
+      if (!btn) return;
+      var tab = btn.dataset.tab;
+      document.querySelectorAll('#retTabs .ret-bookmark-tab').forEach(function(b) { b.classList.remove('active'); });
+      document.querySelectorAll('#sub-pay-retirement .ret-panel').forEach(function(p) { p.classList.remove('active'); });
+      btn.classList.add('active');
+      document.getElementById('ret-panel-' + tab).classList.add('active');
+      if (accent) accent.className = 'ret-tab-accent ' + tab;
+      // Tab 2로 전환 시 Tab 1 입력값 자동 복사
+      if (tab === 'peak') {
+        var w = document.getElementById('retAvgWage').value;
+        var h = document.getElementById('retHireDate').value;
+        var b = document.getElementById('retBirthDate').value;
+        var scW = document.getElementById('retScWage');
+        var scH = document.getElementById('retScHireDate');
+        var scB = document.getElementById('retScBirthDate');
+        if (w && !scW.value) scW.value = w;
+        if (h && !scH.value) scH.value = h;
+        if (b && !scB.value) scB.value = b;
+        // 타임라인 즉시 표시
+        if (scH.value && scB.value) {
+          var _hire  = new Date(scH.value);
+          var _birth = new Date(scB.value);
+          var _peak  = new Date(_birth.getFullYear()+60, _birth.getMonth(), _birth.getDate());
+          var _peakE = new Date(_birth.getFullYear()+61, _birth.getMonth(), _birth.getDate());
+          renderRetSimTimeline(_hire, _peak, _peakE);
+        }
+        // 자동 계산 or 안내 메시지
+        if (scW.value && scH.value) {
+          calcScenarioEmbedded(true);
+        } else {
+          var r = document.getElementById('retScenarioResult');
+          r.style.display = 'block';
+          r.innerHTML = '<div class="ret-info-box" style="margin:0 0 4px;">💡 <strong>퇴직금</strong> 탭에서 월 평균임금·입사일·생년월일을 입력하면 시나리오가 자동으로 표시됩니다.</div>';
+        }
       }
     });
-
-    const extPay = Math.round(totalExt * hourlyRate * rates.extended);
-    const ngtPay = Math.round(totalNgt * hourlyRate * rates.night);
-    const holBasePay = Math.round(Math.min(totalHol, 8) * hourlyRate * rates.holiday);
-    const holOverPay = Math.round(Math.max(totalHol - 8, 0) * hourlyRate * rates.holidayOver8);
-    const holPay = holBasePay + holOverPay;
-    const holNgtPay = Math.round(totalHolNgt * hourlyRate * rates.holidayNight);
-    const standbyPay = otStats.byType.oncall_standby.pay;
-    const transportPay = otStats.byType.oncall_callout.count * DATA.allowances.onCallTransport;
-
-    let otRows = '';
-
-    // 시간외 근무
-    if (otStats.byType.overtime.count > 0) {
-      otRows += `<div class="pe-ot-category-title">시간외근무 ${otStats.byType.overtime.count}건</div>`;
-    }
-
-    // 연장
-    if (totalExt > 0) {
-      otRows += `<div class="pe-item-row"><div class="pe-item-name">연장 ${totalExt.toFixed(1)}h × ${fmtW(hourlyRate)} × 150%</div><div class="pe-item-amount">${fmtW(extPay)}</div></div>`;
-    }
-    // 야간
-    if (totalNgt > 0) {
-      otRows += `<div class="pe-item-row"><div class="pe-item-name">야간 ${totalNgt.toFixed(1)}h × ${fmtW(hourlyRate)} × 200%</div><div class="pe-item-amount">${fmtW(ngtPay)}</div></div>`;
-    }
-    // 휴일
-    if (totalHol > 0) {
-      otRows += `<div class="pe-item-row"><div class="pe-item-name">휴일 ${totalHol.toFixed(1)}h × ${fmtW(hourlyRate)} × 150~200%</div><div class="pe-item-amount">${fmtW(holPay)}</div></div>`;
-    }
-    // 휴일야간
-    if (totalHolNgt > 0) {
-      otRows += `<div class="pe-item-row"><div class="pe-item-name">휴일야간 ${totalHolNgt.toFixed(1)}h × ${fmtW(hourlyRate)} × 200%</div><div class="pe-item-amount">${fmtW(holNgtPay)}</div></div>`;
-    }
-
-    // 온콜대기
-    if (otStats.byType.oncall_standby.count > 0) {
-      otRows += `<div class="pe-ot-category-title">온콜대기 ${otStats.byType.oncall_standby.count}일</div>`;
-      otRows += `<div class="pe-item-row"><div class="pe-item-name">대기수당 ${otStats.byType.oncall_standby.count}일 × ${fmtW(DATA.allowances.onCallStandby)}</div><div class="pe-item-amount">${fmtW(standbyPay)}</div></div>`;
-    }
-
-    // 온콜출근
-    if (otStats.byType.oncall_callout.count > 0) {
-      otRows += `<div class="pe-ot-category-title">온콜출근 ${otStats.byType.oncall_callout.count}건</div>`;
-      otRows += `<div class="pe-item-row"><div class="pe-item-name">교통비 ${otStats.byType.oncall_callout.count}건 × ${fmtW(DATA.allowances.onCallTransport)}</div><div class="pe-item-amount">${fmtW(transportPay)}</div></div>`;
-    }
-
-    otSummary = `
-      <div class="pe-section-card pe-ot-summary">
-        <div class="pe-section-title">시간외·온콜 반영 내역</div>
-        ${otRows}
-        <div class="pe-item-row pe-total-row">
-          <div class="pe-item-name">시간외·온콜 합계</div>
-          <div class="pe-item-amount">${fmtW(otStats.totalPay)}</div>
-        </div>
-      </div>`;
   }
 
-  // ── 연간 미니 요약 ──
-  const yearly = calcYearlyEstimate(payEstYear);
-  let yearSummary = '';
-  if (yearly && yearly.length > 0) {
-    const totalNet = yearly.reduce((a, r) => a + r.net, 0);
-    const avgNet = Math.round(totalNet / yearly.length);
-    const maxR = yearly.reduce((a, b) => a.net > b.net ? a : b);
-    const minR = yearly.reduce((a, b) => a.net < b.net ? a : b);
+  // 프로필 자동 로드
+  if (_retInitDone) return;
+  _retInitDone = true;
+  if (typeof PROFILE === 'undefined') return;
+  var profile = PROFILE.load();
+  if (!profile) return;
+  if (profile.hireDate) {
+    var hireDateInput = document.getElementById('retHireDate');
+    if (hireDateInput && !hireDateInput.value) {
+      var parsed = profile.hireDate.replace(/\./g, '-').replace(/(\d{4})-(\d{1,2})-(\d{1,2})/, function(_, y, m, d) {
+        return y + '-' + m.padStart(2, '0') + '-' + d.padStart(2, '0');
+      });
+      hireDateInput.value = parsed;
+    }
+  }
+  if (typeof CALC === 'undefined') return;
+  var wageResult = PROFILE.calcWage ? PROFILE.calcWage(profile) : null;
+  if (!wageResult) return;
+  var monthlyWage = wageResult.monthlyWage;
+  var avg = null;
+  try { avg = CALC.calcAverageWage(monthlyWage, 3); } catch(e) {}
+  var avgWageToUse = avg ? avg.monthlyAvgWage : monthlyWage;
+  var wageInput = document.getElementById('retAvgWage');
+  if (wageInput && !wageInput.value) wageInput.value = avgWageToUse;
+  var banner = document.getElementById('retAutoLoadBanner');
+  var detail = document.getElementById('retAutoLoadDetail');
+  var srcLabel = document.getElementById('retWageSourceLabel');
+  if (banner && detail) {
+    banner.style.display = 'block';
+    var lines = ['통상임금: ' + monthlyWage.toLocaleString('ko-KR') + '원'];
+    if (avg && avg.totalOtPay > 0) {
+      lines.push('시간외 수당 (최근 3개월): +' + avg.totalOtPay.toLocaleString('ko-KR') + '원');
+      lines.push('월 평균임금 (↑OT 반영): ' + avgWageToUse.toLocaleString('ko-KR') + '원');
+    } else {
+      lines.push('월 평균임금: ' + avgWageToUse.toLocaleString('ko-KR') + '원');
+    }
+    if (profile.hireDate) lines.push('입사일: ' + profile.hireDate);
+    detail.textContent = lines.join(' | ');
+    if (srcLabel) srcLabel.textContent = avg && avg.totalOtPay > 0 ? '✓ 자동계산 (통상임금 + OT 반영)' : '✓ 자동계산 (통상임금 기준)';
+  }
+  // 입사일 채워졌으니 빠른 날짜 버튼 업데이트
+  retUpdateQuickDates();
 
-    yearSummary = `
-      <div class="pe-section-card pe-year-summary">
-        <div class="pe-section-title">${payEstYear}년 연간 요약</div>
-        <div class="pe-year-grid">
-          <div class="pe-year-item">
-            <div class="pe-year-label">연간 합계</div>
-            <div class="pe-year-value">${fmtW(totalNet)}</div>
-          </div>
-          <div class="pe-year-item">
-            <div class="pe-year-label">월평균</div>
-            <div class="pe-year-value">${fmtW(avgNet)}</div>
-          </div>
-          <div class="pe-year-item">
-            <div class="pe-year-label">최고 (${maxR.month}월)</div>
-            <div class="pe-year-value">${fmtW(maxR.net)}</div>
-          </div>
-          <div class="pe-year-item">
-            <div class="pe-year-label">최저 (${minR.month}월)</div>
-            <div class="pe-year-value">${fmtW(minR.net)}</div>
-          </div>
-        </div>
-        <div class="pe-year-bars">
-          ${yearly.map(yr => {
-            const pct = Math.round((yr.net / maxR.net) * 100);
-            const isCur = yr.month === payEstMonth;
-            return `<div class="pe-bar-col ${isCur ? 'cur' : ''}" onclick="payEstMonth=${yr.month};initPayEstimate();" title="${yr.month}월: ${fmtW(yr.net)}">
-              <div class="pe-bar" style="height:${pct}%"></div>
-              <span class="pe-bar-label">${yr.month}</span>
-            </div>`;
-          }).join('')}
-        </div>
-      </div>`;
+  // E4: 퇴직 타임라인 렌더
+  _renderRetirementTimeline(profile, avgWageToUse);
+}
+
+function _renderRetirementTimeline(profile, avgWage) {
+  var container = document.getElementById('retirementTimelineContent');
+  if (!container) return;
+
+  var hasProfile = profile && profile.hireDate && avgWage > 0;
+  while (container.firstChild) container.removeChild(container.firstChild);
+
+  if (!hasProfile) {
+    var empty = document.createElement('div');
+    empty.className = 'empty-state';
+    empty.style.padding = '24px 0';
+    var emptyMsg = document.createElement('p');
+    emptyMsg.textContent = '입사일과 급여 정보를 먼저 입력해주세요.';
+    emptyMsg.style.cssText = 'color:var(--text-muted);font-size:var(--text-body-normal);';
+    var emptyBtn = document.createElement('button');
+    emptyBtn.textContent = '개인정보 탭으로 →';
+    emptyBtn.className = 'btn btn-primary';
+    emptyBtn.style.marginTop = '10px';
+    emptyBtn.onclick = function() { switchTab('info'); };
+    empty.appendChild(emptyMsg);
+    empty.appendChild(emptyBtn);
+    container.appendChild(empty);
+    return;
   }
 
-  // ── 지급/공제 책갈피 토글 현재 상태 유지 ──
-  const curToggle = el.querySelector('.pe-detail-toggle .active');
-  const activeView = curToggle ? curToggle.dataset.view : 'pay';
-
-  el.innerHTML = `
-    <div class="pe-section-card">
-      <nav class="pe-detail-toggle">
-        <button class="pe-toggle-btn ${activeView === 'pay' ? 'active' : ''}" data-view="pay">예상 지급 내역</button>
-        <button class="pe-toggle-btn ${activeView === 'ded' ? 'active' : ''}" data-view="ded">예상 공제 내역</button>
-      </nav>
-      <div class="pe-detail-pane ${activeView === 'pay' ? 'active' : ''}" id="peDetailPay">
-        ${payRows}
-        <div class="pe-item-row pe-total-row">
-          <div class="pe-item-name">지급 합계</div>
-          <div class="pe-item-amount">${fmtW(r.급여총액)}</div>
-        </div>
-      </div>
-      <div class="pe-detail-pane ${activeView === 'ded' ? 'active' : ''}" id="peDetailDed">
-        ${dedRows}
-        <div class="pe-item-row pe-total-row">
-          <div class="pe-item-name">공제 합계</div>
-          <div class="pe-item-amount ded">${fmtW(r.공제총액)}</div>
-        </div>
-        <div class="pe-ded-note">소득세·주민세는 간이세액표 기반 근사치입니다.<br>사학연금부담금, 노동조합비 등 개인별 공제는 미반영.</div>
-      </div>
-    </div>
-    ${otSummary}
-    ${yearSummary}`;
-
-  // ── 토글 이벤트 바인딩 ──
-  el.querySelectorAll('.pe-toggle-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      el.querySelectorAll('.pe-toggle-btn').forEach(b => b.classList.remove('active'));
-      el.querySelectorAll('.pe-detail-pane').forEach(p => p.classList.remove('active'));
-      btn.classList.add('active');
-      el.querySelector('#peDetail' + (btn.dataset.view === 'pay' ? 'Pay' : 'Ded')).classList.add('active');
-    });
+  var hireDateStr = profile.hireDate.replace(/\./g, '-').replace(/(\d{4})-(\d{1,2})-(\d{1,2})/, function(_, y, m, d) {
+    return y + '-' + m.padStart(2,'0') + '-' + d.padStart(2,'0');
   });
-}
+  var now = new Date();
+  var results = [];
 
-// 지급 항목별 계산 근거 설명
-function getItemDesc(name, year, month, est) {
-  const flags = est.flags;
-  if (name === '가계지원비') return '연간 11개월 균등 지급 (1·2·9월 미지급, 단 설/추석월은 지급)';
-  if (name === '명절지원비') {
-    if (month === 1 || month === 2) return '설 명절지원비 — 기준기본급 기준';
-    if (month === 9) return '추석 명절지원비 — 기준기본급 기준';
-    if (month === 5) return '5월 명절지원비';
-    return '';
+  for (var i = 0; i < 12; i++) {
+    var retYear = now.getFullYear();
+    var retMonth = now.getMonth() + i;
+    if (retMonth >= 12) { retYear += Math.floor(retMonth / 12); retMonth = retMonth % 12; }
+    var retDate = new Date(retYear, retMonth + 1, 0); // last day of month
+
+    var retDateStr = retDate.getFullYear() + '-' +
+      String(retDate.getMonth() + 1).padStart(2,'0') + '-' +
+      String(retDate.getDate()).padStart(2,'0');
+
+    var ret = null;
+    try {
+      ret = typeof CALC !== 'undefined' ? CALC.calcRetirement({
+        avgWage: avgWage,
+        hireDate: hireDateStr,
+        retireDate: retDateStr
+      }) : null;
+    } catch(e) {}
+
+    results.push({
+      year: retYear,
+      month: retMonth + 1,
+      label: (retMonth + 1) + '월',
+      amount: ret ? (ret.total || ret.severancePay || 0) : 0,
+      isCurrentMonth: i === 0
+    });
   }
-  if (name === '시간외수당') return `연장근무 시간 × 통상시급 × 1.5`;
-  if (name === '야간수당') return `야간근무(22~06시) × 통상시급 × 2.0`;
-  if (name === '휴일수당') return `휴일근무 시간 × 통상시급 × 1.5~2.0`;
-  if (name === '온콜대기수당') return `온콜대기 ${est.otStats.byType.oncall_standby.count}일 × 대기수당`;
-  if (name === '온콜출근수당') return `온콜출근 ${est.otStats.byType.oncall_callout.count}건 (실근무+출퇴근 인정)`;
-  if (name === '야간근무가산금') return `야간근무 ${est.otStats.nightShiftCount}회 × 가산금`;
-  if (name === '급식보조비') return '비과세 한도 내 지급';
-  if (name === '교통보조비') return '비과세 한도 내 지급';
-  if (name === '장기근속수당') return '근속연수 기준 정액';
-  if (name === '군복무수당') return '군복무 개월수 기준 산정';
-  return '';
-}
 
-// 공제 항목별 설명
-function getDeductionDesc(name, r) {
-  if (name === '국민건강보험') return `급여총액 × 3.545%`;
-  if (name === '장기요양보험') return `건강보험료 × 12.95%`;
-  if (name === '국민연금') return `급여총액 × 4.5%`;
-  if (name === '고용보험') return `급여총액 × 0.9%`;
-  if (name === '식대공제') return `근무일수 × 3,000원`;
-  if (name.includes('소득세')) return `간이세액표 기준 근사치`;
-  if (name.includes('주민세')) return `소득세 × 10%`;
-  return '';
-}
+  var validAmounts = results.map(function(r) { return r.amount; }).filter(function(a) { return a > 0; });
+  if (validAmounts.length === 0) {
+    var errMsg = document.createElement('p');
+    errMsg.textContent = '퇴직금 계산 정보가 부족합니다.';
+    errMsg.style.cssText = 'color:var(--text-muted);padding:16px 0;text-align:center;';
+    container.appendChild(errMsg);
+    return;
+  }
+  var maxAmt = Math.max.apply(null, validAmounts);
+  var minAmt = Math.min.apply(null, validAmounts);
+  var maxIdx = results.findIndex(function(r) { return r.amount === maxAmt; });
+  var minIdx = results.findIndex(function(r) { return r.amount === minAmt; });
 
-// 급여 예상 탭 초기화
-function initPayEstimate() {
-  renderPayEstHero();
-  renderPayEstDetail();
+  // Summary chips
+  var chipRow = document.createElement('div');
+  chipRow.style.cssText = 'display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;';
+  function makeChip(text, bg, color) {
+    var chip = document.createElement('span');
+    chip.textContent = text;
+    chip.style.cssText = 'padding:4px 12px;border-radius:20px;font-size:var(--text-body-small);font-weight:600;background:' + bg + ';color:' + color + ';';
+    return chip;
+  }
+  chipRow.appendChild(makeChip('★ 최고 ' + results[maxIdx].label + ': ' + Math.round(maxAmt / 10000) + '만원', 'rgba(245,158,11,0.12)', 'var(--accent-amber,#f59e0b)'));
+  chipRow.appendChild(makeChip('▼ 최저 ' + results[minIdx].label + ': ' + Math.round(minAmt / 10000) + '만원', 'rgba(244,63,94,0.08)', 'var(--accent-rose,#f43f5e)'));
+  container.appendChild(chipRow);
+
+  // 12-month grid
+  var grid = document.createElement('div');
+  grid.style.cssText = 'display:grid;grid-template-columns:repeat(2,1fr);gap:8px;';
+
+  results.forEach(function(r, idx) {
+    var cell = document.createElement('div');
+    var isMax = idx === maxIdx, isMin = idx === minIdx, isCur = r.isCurrentMonth;
+    var borderColor = isMax ? 'var(--accent-amber,#f59e0b)' : isMin ? 'var(--accent-rose,#f43f5e)' : isCur ? 'var(--accent-indigo,#6366f1)' : 'var(--border-glass,rgba(0,0,0,0.1))';
+    cell.style.cssText = 'padding:10px;border-radius:10px;border:2px solid ' + borderColor + ';text-align:center;' +
+      (isMax ? 'background:rgba(245,158,11,0.06);' : isMin ? 'background:rgba(244,63,94,0.04);' : '');
+
+    var monthLabel = document.createElement('div');
+    monthLabel.textContent = (isMax ? '★ ' : '') + r.year + '년 ' + r.label;
+    monthLabel.style.cssText = 'font-size:0.75rem;color:var(--text-muted);margin-bottom:4px;' + (isMax ? 'font-weight:600;' : '');
+
+    var amtLabel = document.createElement('div');
+    amtLabel.textContent = r.amount > 0 ? Math.round(r.amount / 10000) + '만원' : '—';
+    amtLabel.style.cssText = 'font-size:var(--text-body-normal);font-weight:' + (isMax ? '700' : '500') + ';' +
+      'color:' + (isMax ? 'var(--accent-amber,#f59e0b)' : isMin ? 'var(--accent-rose,#f43f5e)' : 'var(--text-primary)') + ';';
+
+    cell.appendChild(monthLabel);
+    cell.appendChild(amtLabel);
+    grid.appendChild(cell);
+  });
+  container.appendChild(grid);
+
+  var note = document.createElement('p');
+  note.textContent = '연금·세금 제외 계산 (v2에서 추가 예정)';
+  note.style.cssText = 'font-size:0.72rem;color:var(--text-muted);margin-top:10px;text-align:center;';
+  container.appendChild(note);
 }
 
 // ═══════════ 📅 연차 계산 ═══════════
@@ -1999,7 +1532,12 @@ function calculatePromotion() {
   const r = CALC.calcPromotionDate(jobType, grade, new Date(parsed));
 
   if (r.message) {
-    document.getElementById('promoResult').innerHTML = `<div class="warning-box">${r.message}</div>`;
+    const warnBox = document.createElement('div');
+    warnBox.className = 'warning-box';
+    warnBox.textContent = r.message;
+    const promoEl = document.getElementById('promoResult');
+    promoEl.textContent = '';
+    promoEl.appendChild(warnBox);
     return;
   }
 
@@ -2246,9 +1784,16 @@ function addChatMessage(text, type, ref = null) {
   const container = document.getElementById('chatMessages');
   const msg = document.createElement('div');
   msg.className = `chat-msg ${type}`;
-  msg.innerHTML = text;
+  if (type === 'user') {
+    msg.textContent = text;
+  } else {
+    msg.insertAdjacentHTML('beforeend', text);
+  }
   if (ref) {
-    msg.innerHTML += `<span class="ref">📌 ${ref}</span>`;
+    const refSpan = document.createElement('span');
+    refSpan.className = 'ref';
+    refSpan.textContent = '\uD83D\uDCCC ' + ref;
+    msg.appendChild(refSpan);
   }
   container.appendChild(msg);
   container.scrollTop = container.scrollHeight;
@@ -2521,6 +2066,72 @@ function initOvertimeTab() {
   }
 
   refreshOtCalendar();
+  _renderOvertimeAlertBanner(otCurrentYear, otCurrentMonth);
+}
+
+function _renderOvertimeAlertBanner(year, month) {
+  var containerId = 'otAlertBannerWrap';
+  var existing = document.getElementById(containerId);
+  if (existing) existing.parentNode.removeChild(existing);
+
+  var stats = OVERTIME.calcMonthlyStats(year, month);
+  var supp = stats.payslipSupplement;
+  var extHours = (stats.overtimeHours || 0) + (supp ? supp.totalHours : 0);
+
+  var WARNING_H = 40, CRITICAL_H = 48, LIMIT_H = 52;
+  var level = extHours >= CRITICAL_H ? 'critical' : extHours >= WARNING_H ? 'warning' : null;
+  if (!level) return;
+
+  var today = new Date().toISOString().slice(0, 10);
+  var dismissKey = 'overtimeAlertDismissed_' + year + '-' + String(month).padStart(2, '0');
+  if (localStorage.getItem(dismissKey) === today) return;
+
+  var remaining = LIMIT_H - extHours;
+  var pct = Math.round((extHours / LIMIT_H) * 100);
+
+  var wrap = document.createElement('div');
+  wrap.id = containerId;
+  wrap.style.cssText = 'margin-bottom:12px;';
+
+  var banner = document.createElement('div');
+  var isWarning = level === 'warning';
+  banner.style.cssText = [
+    'display:flex;align-items:center;justify-content:space-between;gap:8px;',
+    'padding:12px 14px;border-radius:10px;',
+    isWarning
+      ? 'background:rgba(245,158,11,0.08);border:2px solid var(--accent-amber,#f59e0b);'
+      : 'background:rgba(244,63,94,0.08);border:2px solid var(--accent-rose,#f43f5e);font-weight:600;',
+  ].join('');
+
+  var msg = document.createElement('span');
+  msg.style.cssText = 'font-size:var(--text-body-small,0.8rem);flex:1;line-height:1.4;';
+  msg.textContent = isWarning
+    ? '⚠️ 연장근로 ' + extHours + '시간 / 월 ' + LIMIT_H + '시간 한도까지 ' + remaining + '시간 남았습니다'
+    : '🔴 연장근로 한도 근접! ' + extHours + '시간 / ' + LIMIT_H + '시간 (' + pct + '%) — 추가 시간외 신청 전 팀장 확인 필요';
+
+  var closeBtn = document.createElement('button');
+  closeBtn.textContent = '×';
+  closeBtn.setAttribute('aria-label', '알림 닫기');
+  closeBtn.style.cssText = [
+    'min-width:44px;min-height:44px;padding:0;border:none;background:none;cursor:pointer;',
+    'font-size:1.2rem;line-height:1;',
+    isWarning ? 'color:var(--accent-amber,#f59e0b);' : 'color:var(--accent-rose,#f43f5e);',
+  ].join('');
+  closeBtn.onclick = function () {
+    localStorage.setItem(dismissKey, today);
+    if (wrap.parentNode) wrap.parentNode.removeChild(wrap);
+  };
+
+  banner.appendChild(msg);
+  banner.appendChild(closeBtn);
+  wrap.appendChild(banner);
+
+  var tabEl = document.getElementById('tab-overtime');
+  if (tabEl && tabEl.firstChild) {
+    tabEl.insertBefore(wrap, tabEl.firstChild);
+  } else if (tabEl) {
+    tabEl.appendChild(wrap);
+  }
 }
 
 // 오늘 날짜 자동 선택 (사용자 요청: 초기 로드 시 입력창 자동 팝업 방지를 위해 기능 비활성화)
@@ -2824,6 +2435,7 @@ async function refreshOtCalendar() {
   renderOtCalendar(year, month, recordsByDay);
   renderOtRecordList(records);
   renderOtDashboard(year, month);
+  renderOtVerification(year, month);
   resetOtPanel();
 
   // 2. 공휴일 데이터 (휴가 캘린더와 동일 패턴) 백그라운드 로드
@@ -2837,6 +2449,7 @@ async function refreshOtCalendar() {
   // 3. 공휴일 데이터가 준비되면 다시 렌더링 (깜빡임 없이 속성만 추가됨)
   renderOtCalendar(year, month, recordsByDay);
   renderOtDashboard(year, month); // 대시보드도 공휴일 영향을 받을 수 있으므로 재렌더링
+  renderOtVerification(year, month);
   autoSelectToday();
 }
 
@@ -3430,25 +3043,61 @@ function deleteOtRecord(id) {
 // 월간 대시보드 렌더링 (수당 금액 중심)
 function renderOtDashboard(year, month) {
   const stats = OVERTIME.calcMonthlyStats(year, month);
+  const supp = stats.payslipSupplement;
+
+  const effectiveOtHours = stats.overtimeHours + (supp ? supp.totalHours : 0);
+  const effectivePay = stats.totalPay + (supp ? supp.pay : 0);
 
   const container = document.getElementById('otDashboard');
   if (container) {
+    while (container.firstChild) container.removeChild(container.firstChild);
+
+    // 메인 수당
+    const mainDiv = document.createElement('div');
+    mainDiv.className = 'ot-dash-main';
+    const labelDiv = document.createElement('div');
+    labelDiv.className = 'ot-dash-label';
+    labelDiv.textContent = '\uD83D\uDCB0 ' + month + '월 예상 수당';
+    const payDiv = document.createElement('div');
+    payDiv.className = 'ot-dash-pay';
+    payDiv.textContent = '\u20A9' + effectivePay.toLocaleString();
+    mainDiv.appendChild(labelDiv);
+    mainDiv.appendChild(payDiv);
+    if (supp) {
+      const suppNote = document.createElement('div');
+      suppNote.style.cssText = 'font-size:var(--text-body-small); color:var(--accent-indigo); margin-top:4px;';
+      suppNote.textContent = '명세서 보충 +' + supp.totalHours.toFixed(1) + 'h 포함';
+      mainDiv.appendChild(suppNote);
+    }
+    container.appendChild(mainDiv);
+
+    // 상세 항목
+    const detailsDiv = document.createElement('div');
+    detailsDiv.className = 'ot-dash-details';
     const detailItems = [
-      { label: '시간외', value: stats.overtimeHours.toFixed(1) + 'h', cls: 'rose' },
+      { label: '시간외', value: effectiveOtHours.toFixed(1) + 'h', cls: 'rose' },
       { label: '온콜출근', value: stats.byType.oncall_callout.hours.toFixed(1) + 'h', cls: 'indigo' },
       { label: '온콜대기', value: stats.oncallStandbyDays + '일', cls: 'cyan' },
     ];
-    const detailsHtml = detailItems
-      .filter(i => parseFloat(i.value) > 0)
-      .map(item => `<div class="ot-dash-item">${item.label} <span class="ot-dash-value ${item.cls}">${item.value}</span></div>`)
-      .join('');
-
-    container.innerHTML = `
-      <div class="ot-dash-main">
-        <div class="ot-dash-label">💰 ${month}월 예상 수당</div>
-        <div class="ot-dash-pay">₩${stats.totalPay.toLocaleString()}</div>
-      </div>
-      <div class="ot-dash-details">${detailsHtml || '<span style="color:var(--text-muted); font-size:var(--text-body-normal);">기록 없음</span>'}</div>`;
+    const visibleItems = detailItems.filter(i => parseFloat(i.value) > 0);
+    if (visibleItems.length > 0) {
+      visibleItems.forEach(item => {
+        const el = document.createElement('div');
+        el.className = 'ot-dash-item';
+        el.textContent = item.label + ' ';
+        const valSpan = document.createElement('span');
+        valSpan.className = 'ot-dash-value ' + item.cls;
+        valSpan.textContent = item.value;
+        el.appendChild(valSpan);
+        detailsDiv.appendChild(el);
+      });
+    } else {
+      const emptySpan = document.createElement('span');
+      emptySpan.style.cssText = 'color:var(--text-muted); font-size:var(--text-body-normal);';
+      emptySpan.textContent = '기록 없음';
+      detailsDiv.appendChild(emptySpan);
+    }
+    container.appendChild(detailsDiv);
   }
 
   const countEl = document.getElementById('otRecordCount');
@@ -3456,6 +3105,183 @@ function renderOtDashboard(year, month) {
 
   const monthEl = document.getElementById('otRecordMonth');
   if (monthEl) monthEl.textContent = month;
+}
+
+// ── 명세서 자동 보충 카드 렌더링 ──
+function renderOtVerification(year, month) {
+  const card = document.getElementById('otVerifyCard');
+  const content = document.getElementById('otVerifyContent');
+  const titleEl = document.getElementById('otVerifyTitle');
+  const badge = document.getElementById('otVerifyBadge');
+  if (!card || !content) return;
+
+  const result = OVERTIME.crossVerify(year, month);
+
+  if (!result) {
+    card.style.display = 'none';
+    return;
+  }
+
+  card.style.display = '';
+  const fmt = n => n != null ? n.toLocaleString() + '원' : '-';
+
+  // 보충 항목: 명세서 > 내 기록 (diff < -0.25 → 내가 덜 기록)
+  const supplements = result.items.filter(i => i.diffHours < -0.25);
+  const hasSupplement = supplements.length > 0;
+
+  titleEl.textContent = month + '월 명세서 자동 보충';
+  if (hasSupplement) {
+    badge.textContent = supplements.length + '건 보충';
+    badge.className = 'badge indigo';
+  } else if (result.hasManualRecords) {
+    badge.textContent = '✅ 일치';
+    badge.className = 'badge emerald';
+  } else {
+    badge.textContent = '';
+    badge.className = 'badge';
+  }
+
+  content.textContent = '';
+
+  // ── 보충 안내 메시지 ──
+  if (hasSupplement) {
+    const msgBox = document.createElement('div');
+    msgBox.style.cssText = 'margin-bottom:14px; padding:14px 16px; background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.18); border-radius:10px; line-height:1.7;';
+    const headline = document.createElement('div');
+    headline.style.cssText = 'font-weight:600; font-size:var(--text-body-normal); color:var(--text-primary);';
+    headline.textContent = '직접 입력 못하신 부분을 명세서에서 확인했어요';
+    msgBox.appendChild(headline);
+    const detail = document.createElement('div');
+    detail.style.cssText = 'margin-top:6px; font-size:var(--text-body-small); color:var(--text-secondary);';
+    const parts = supplements.map(s => s.label + ' ' + Math.abs(s.diffHours).toFixed(1) + '시간');
+    detail.textContent = parts.join(', ') + ' 보충';
+    msgBox.appendChild(detail);
+    content.appendChild(msgBox);
+  } else if (result.hasManualRecords) {
+    const okBox = document.createElement('div');
+    okBox.style.cssText = 'margin-bottom:14px; padding:14px 16px; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.18); border-radius:10px; font-size:var(--text-body-normal); color:var(--text-primary);';
+    okBox.textContent = '직접 기록하신 내용과 명세서가 일치해요.';
+    content.appendChild(okBox);
+  }
+
+  // ── 비교 테이블 ──
+  const table = document.createElement('table');
+  table.style.cssText = 'width:100%; border-collapse:collapse; font-size:var(--text-body-normal);';
+
+  const thead = document.createElement('thead');
+  const headRow = document.createElement('tr');
+  headRow.style.cssText = 'background:var(--bg-hover); color:var(--text-muted);';
+  ['항목', '직접 기록', '명세서', '보충'].forEach((t, i) => {
+    const th = document.createElement('th');
+    th.style.cssText = 'padding:8px 6px;' + (i > 0 ? ' text-align:right;' : ' text-align:left;');
+    th.textContent = t;
+    headRow.appendChild(th);
+  });
+  thead.appendChild(headRow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+
+  result.items.forEach(item => {
+    if (item.manualHours === 0 && item.payslipHours === 0) return;
+    const diff = item.diffHours; // manual - payslip
+
+    let statusText, statusColor;
+    if (Math.abs(diff) < 0.25) {
+      statusText = '✅';
+      statusColor = 'var(--accent-emerald)';
+    } else if (diff < 0) {
+      // 명세서가 더 많음 → 보충
+      statusText = '+' + Math.abs(diff).toFixed(1) + 'h';
+      statusColor = 'var(--accent-indigo)';
+    } else {
+      // 내가 더 많이 기록 → 추가 기록 (중립)
+      statusText = '+' + diff.toFixed(1) + 'h 직접';
+      statusColor = 'var(--text-muted)';
+    }
+
+    const tr = document.createElement('tr');
+    const td1 = document.createElement('td'); td1.style.padding = '7px 6px'; td1.textContent = item.label;
+    const td2 = document.createElement('td'); td2.style.cssText = 'padding:7px 6px; text-align:right;'; td2.textContent = item.manualHours.toFixed(1) + 'h';
+    const td3 = document.createElement('td'); td3.style.cssText = 'padding:7px 6px; text-align:right;'; td3.textContent = item.payslipHours.toFixed(1) + 'h';
+    const td4 = document.createElement('td'); td4.style.cssText = 'padding:7px 6px; text-align:right; font-weight:600; color:' + statusColor + ';'; td4.textContent = statusText;
+    tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3); tr.appendChild(td4);
+    tbody.appendChild(tr);
+  });
+
+  // 온콜 행
+  const addOncallRow = (label, count, unit) => {
+    if (count <= 0) return;
+    const tr = document.createElement('tr');
+    tr.style.color = 'var(--text-muted)';
+    const td1 = document.createElement('td'); td1.style.padding = '7px 6px'; td1.textContent = label;
+    const td2 = document.createElement('td'); td2.style.cssText = 'padding:7px 6px; text-align:right;'; td2.textContent = count + unit;
+    const td3 = document.createElement('td'); td3.style.cssText = 'padding:7px 6px; text-align:right; font-size:var(--text-body-small);'; td3.textContent = '-';
+    const td4 = document.createElement('td'); td4.style.cssText = 'padding:7px 6px; text-align:right; font-size:var(--text-body-small);'; td4.textContent = '';
+    tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3); tr.appendChild(td4);
+    tbody.appendChild(tr);
+  };
+  addOncallRow('온콜출근', result.oncall.callout, '회');
+  addOncallRow('온콜대기', result.oncall.standby, '일');
+
+  // 수당 합계 행
+  if (result.summary.totalManualPay > 0 || result.summary.totalPayslipPay > 0) {
+    const payDiff = result.summary.diff; // manual - payslip
+    let payStatusText, payStatusColor;
+    if (Math.abs(payDiff) < 1000) {
+      payStatusText = '✅';
+      payStatusColor = 'var(--accent-emerald)';
+    } else if (payDiff < 0) {
+      // 명세서가 더 많음 → 보충분
+      payStatusText = '+' + Math.abs(payDiff).toLocaleString() + '원';
+      payStatusColor = 'var(--accent-indigo)';
+    } else {
+      payStatusText = '+' + payDiff.toLocaleString() + '원 직접';
+      payStatusColor = 'var(--text-muted)';
+    }
+    const tr = document.createElement('tr');
+    tr.style.cssText = 'border-top:2px solid var(--border-glass); font-weight:700;';
+    const td1 = document.createElement('td'); td1.style.padding = '8px 6px'; td1.textContent = '수당 합계';
+    const td2 = document.createElement('td'); td2.style.cssText = 'padding:8px 6px; text-align:right;'; td2.textContent = fmt(result.summary.totalManualPay);
+    const td3 = document.createElement('td'); td3.style.cssText = 'padding:8px 6px; text-align:right;'; td3.textContent = fmt(result.summary.totalPayslipPay);
+    const td4 = document.createElement('td'); td4.style.cssText = 'padding:8px 6px; text-align:right; color:' + payStatusColor + ';'; td4.textContent = payStatusText;
+    tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3); tr.appendChild(td4);
+    tbody.appendChild(tr);
+  }
+
+  table.appendChild(tbody);
+  content.appendChild(table);
+
+  // 수동 기록 없을 때 안내
+  if (!result.hasManualRecords) {
+    const guide = document.createElement('div');
+    guide.style.cssText = 'margin-top:12px; padding:14px 16px; background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.18); border-radius:10px; font-size:var(--text-body-normal); color:var(--text-secondary); text-align:center; line-height:1.6;';
+    const p1 = document.createElement('p');
+    p1.textContent = '명세서 기준으로 이번 달 수당 내역을 정리했어요.';
+    guide.appendChild(p1);
+    const p2 = document.createElement('p');
+    p2.style.cssText = 'font-size:var(--text-body-small); margin-top:4px; color:var(--text-muted);';
+    p2.textContent = '직접 기록을 추가하면 더 정확하게 비교할 수 있어요.';
+    guide.appendChild(p2);
+    content.appendChild(guide);
+  }
+
+  // 시급 정보
+  if (result.hourlyRate > 0) {
+    const rateEl = document.createElement('div');
+    rateEl.style.cssText = 'margin-top:8px; font-size:var(--text-body-small); color:var(--text-muted); text-align:right;';
+    rateEl.textContent = '기준 시급: ' + fmt(result.hourlyRate);
+    content.appendChild(rateEl);
+  }
+}
+
+function toggleOtVerifyDetail() {
+  const content = document.getElementById('otVerifyContent');
+  const arrow = document.getElementById('otVerifyArrow');
+  if (!content) return;
+  const isHidden = content.style.display === 'none';
+  content.style.display = isHidden ? '' : 'none';
+  if (arrow) arrow.style.transform = isHidden ? 'rotate(180deg)' : '';
 }
 
 // 하위 호환
@@ -3533,7 +3359,8 @@ function renderOtRecordList(records) {
     const label = OVERTIME.typeLabel(type);
     const groupId = 'otGroup_' + type;
 
-    html += `<div class="ot-group" onclick="this.classList.toggle('open')">
+    const defaultOpen = type === 'overtime' ? ' open' : '';
+    html += `<div class="ot-group${defaultOpen}" onclick="this.classList.toggle('open')">
       <div class="ot-group-header" style="--group-color:${typeColors[type]}">
         <span class="ot-group-chevron">▸</span>
         <span class="ot-group-label">${label}</span>
@@ -3660,6 +3487,118 @@ function _isImageFile(file) {
   return /\.(jpg|jpeg|png|bmp|webp|heic|heif)$/i.test(file.name) || file.type.startsWith('image/');
 }
 
+// (_applyPayslipEmployeeInfo 는 salary-parser.js:applyStableItemsToProfile 로 일원화됨 — 2026-04-20)
+
+/// ── 명세서 → 근무정보 (work_history) 자동 배치 이력 생성 ──
+// 같은 부서가 해당 월 구간에 이미 존재하면 skip. 신규 부서면 월 단위로 entry 추가.
+function _propagatePayslipToWorkHistory(parsed, ym) {
+  if (!parsed || !parsed.employeeInfo || !ym) return;
+  var ei = parsed.employeeInfo;
+  if (!ei.department) return;
+
+  var whKey = window.getUserStorageKey ? window.getUserStorageKey('bhm_work_history') : 'bhm_work_history_guest';
+  var list = [];
+  try { list = JSON.parse(localStorage.getItem(whKey) || '[]') || []; } catch (e) { list = []; }
+  if (!Array.isArray(list)) list = [];
+
+  var yy = ym.year;
+  var mm = ym.month;
+  var monthStart = yy + '-' + String(mm).padStart(2, '0') + '-01';
+  var lastDay = new Date(yy, mm, 0).getDate();
+  var monthEnd = yy + '-' + String(mm).padStart(2, '0') + '-' + String(lastDay).padStart(2, '0');
+
+  // 같은 부서가 이번 월을 포함하는 기간으로 이미 존재하면 skip
+  var hasOverlap = list.some(function (w) {
+    if (!w || !w.from) return false;
+    if (w.dept !== ei.department) return false;
+    var from = w.from;
+    var to = w.to || '9999-12-31';
+    return from <= monthEnd && to >= monthStart;
+  });
+  if (hasOverlap) return;
+
+  var entry = {
+    id: 'wh_ps_' + yy + String(mm).padStart(2, '0') + '_' + Date.now().toString(36),
+    workplace: '서울대학교병원',
+    dept: ei.department,
+    from: monthStart,
+    to: monthEnd,
+    rotations: [],
+    source: 'payslip_auto',
+    createdAt: new Date().toISOString(),
+  };
+  list.push(entry);
+  list.sort(function (a, b) { return (a.from || '') < (b.from || '') ? -1 : 1; });
+  localStorage.setItem(whKey, JSON.stringify(list));
+
+  // REMOVED auth: Drive sync push — 로컬 전용 앱
+}
+// payroll-views.js 에서도 호출 가능하도록 노출
+window._propagatePayslipToWorkHistory = _propagatePayslipToWorkHistory;
+
+/// ── 명세서 → 시간외 탭 교차 검증 데이터 전파 ──
+function _propagatePayslipToOvertime(parsed, ym) {
+  if (typeof OVERTIME === 'undefined') return;
+
+  const ymKey = `${ym.year}-${String(ym.month).padStart(2, '0')}`;
+
+  // workStats 추출
+  const workStats = (parsed.workStats || []).map(s => ({ name: s.name, value: s.value }));
+
+  // 시간외 관련 수당 금액 추출
+  const otPatterns = [
+    /시간외수당|시간외근무수당/, /야간수당|야간근무수당|야간근무가산/,
+    /휴일수당|휴일근무수당/, /당직비|숙직비/, /야간근무가산금/,
+    /대체근무가산금/, /통상야간/,
+  ];
+  const overtimeItems = [];
+  (parsed.salaryItems || []).forEach(item => {
+    if (otPatterns.some(p => p.test(item.name)) && item.amount > 0) {
+      overtimeItems.push({ name: item.name, amount: item.amount });
+    }
+  });
+
+  // 시급 계산 (프로필 기반)
+  let hourlyRate = 0;
+  if (typeof PROFILE !== 'undefined' && typeof CALC !== 'undefined') {
+    const profile = PROFILE.load();
+    if (profile && profile.jobType && profile.grade) {
+      const serviceYears = profile.hireDate ? PROFILE.calcServiceYears(profile.hireDate) : 0;
+      const wage = CALC.calcOrdinaryWage(
+        profile.jobType, profile.grade, parseInt(profile.year) || 1,
+        {
+          hasMilitary: profile.hasMilitary, hasSeniority: profile.hasSeniority,
+          seniorityYears: profile.hasSeniority ? serviceYears : 0,
+          longServiceYears: serviceYears,
+          adjustPay: parseInt(profile.adjustPay) || 0,
+          upgradeAdjustPay: parseInt(profile.upgradeAdjustPay) || 0,
+          specialPayAmount: parseInt(profile.specialPay) || 0,
+          positionPay: parseInt(profile.positionPay) || 0,
+          workSupportPay: parseInt(profile.workSupportPay) || 0,
+        }
+      );
+      if (wage) hourlyRate = wage.hourlyRate;
+    }
+  }
+
+  OVERTIME.savePayslipData(ymKey, { workStats, overtimeItems, hourlyRate });
+  console.log(`[Overtime] 명세서 데이터 전파 완료: ${ymKey}, workStats ${workStats.length}건, 수당항목 ${overtimeItems.length}건`);
+}
+
+// ── 공통 헬퍼: info 탭의 자동갱신 배너 표시 + 급여탭 링크 숨김 ──
+function _showAutoSyncBanner(ym) {
+  const banner = document.getElementById('pfAutoSyncBanner');
+  const text = document.getElementById('pfAutoSyncText');
+  const link = document.getElementById('pfPayslipLink');
+  if (!banner) return;
+  if (text && ym && ym.year && ym.month) {
+    const typeStr = ym.type && ym.type !== '급여' ? ` (${ym.type})` : '';
+    text.textContent = `${ym.year}년 ${ym.month}월${typeStr} 명세서 기준 자동 갱신됨`;
+  }
+  banner.style.display = 'flex';
+  if (link) link.style.display = 'none';
+}
+
 async function handlePayslipUpload(file) {
   if (!file) return;
   const resultEl = document.getElementById('payslipResult');
@@ -3706,8 +3645,21 @@ async function handlePayslipUpload(file) {
     if (!ym) throw new Error('급여 기간을 인식하지 못했습니다. 파일을 확인해주세요.');
 
     SALARY_PARSER.saveMonthlyData(ym.year, ym.month, parsed, ym.type);
+
+    // REMOVED auth: PDF 내 드라이브 업로드 — 로컬 전용 앱 (브라우저에만 저장)
+
+    // employeeInfo (이름/직종/직급/호봉/부서/입사일/사번) + 수당 항목 일괄 반영
+    // (이전에 분산되어 있던 _applyPayslipEmployeeInfo 로직은 applyStableItemsToProfile 로 일원화)
     const stableRes = SALARY_PARSER.applyStableItemsToProfile(parsed);
-    const profileUpdated = stableRes && stableRes.changed;
+    const profileUpdated = !!(stableRes && stableRes.changed);
+
+    // grade/year 자동 설정 실패 시 사용자에게 안내 — 시급 계산 전제 조건
+    const profileAfterPayslip = PROFILE.load() || {};
+    if (!profileAfterPayslip.grade || !profileAfterPayslip.year) {
+      if (typeof showOtToast === 'function') {
+        showOtToast('⚠️ 직급/호봉이 자동 설정되지 않았습니다. 내 정보에서 확인해주세요.', 4500);
+      }
+    }
 
     // 자동 검증 (콘솔에 결과 출력)
     if (typeof SALARY_TEST !== 'undefined') {
@@ -3716,8 +3668,31 @@ async function handlePayslipUpload(file) {
       SALARY_TEST.validateProfileApply(parsed, stableRes);
     }
 
+    // info 탭 폼/토글 상태 동기화 (사용자가 info 탭으로 돌아오면 즉시 최신 상태)
+    const updated = PROFILE.load();
+    if (updated) {
+      if (typeof PROFILE_FIELDS !== 'undefined') PROFILE.applyToForm(updated, PROFILE_FIELDS);
+      if (typeof updateProfileGrades === 'function') updateProfileGrades();
+      _collapseBasicFieldsWithPreview(updated);
+      const statusBadge = document.getElementById('profileStatus');
+      if (statusBadge) {
+        statusBadge.textContent = '저장됨 ✓';
+        statusBadge.className = 'badge emerald';
+      }
+      const titleName = document.getElementById('pfTitleName');
+      if (titleName && updated.name) titleName.textContent = `${updated.name}님 정보`;
+    }
+    _showAutoSyncBanner(ym);
+
     renderPayslip(parsed, ym, profileUpdated, stableRes);
     renderVerification(parsed);
+
+    // ── 시간외 탭 교차 검증용 데이터 전파 ──
+    _propagatePayslipToOvertime(parsed, ym);
+
+    // ── 근무정보 (work_history) 자동 배치 이력 생성 ──
+    _propagatePayslipToWorkHistory(parsed, ym);
+
     // 급여명세서 관리 뷰 갱신 (업로드한 월 선택)
     const mgmtContainer = document.getElementById('payslipMgmtView');
     if (mgmtContainer) mgmtContainer.dataset.activeMonth = `${ym.year}_${ym.month}_${ym.type || '급여'}`;
@@ -3774,20 +3749,29 @@ async function handleProfilePayslipUpload(file) {
       if (t) t.textContent = pct + '%';
     } : undefined;
 
+    // [1단계] 업로드 직전에 현재 폼 값을 localStorage에 선저장
+    //  — 생년월일/성별 등 "폼에 입력만 하고 저장 버튼 안 누른" 값 보존용
+    //  — PROFILE.save는 이제 기존값 merge 방식이므로 안전
+    if (typeof PROFILE.collectFromForm === 'function') {
+      try { PROFILE.save(PROFILE.collectFromForm(PROFILE_FIELDS)); } catch (e) { console.warn('form 선저장 실패', e); }
+    }
+
     const parsed = await SALARY_PARSER.parseFile(file, onProgress);
     const info = parsed.employeeInfo || {};
 
-    // 프로필에 반영
-    const profile = PROFILE.load() || {};
-
-    if (info.name) profile.name = info.name;
-    if (info.hireDate) profile.hireDate = info.hireDate;
+    // [2단계] 파싱된 개인정보 부분만 merge 저장
+    //  — PROFILE.save의 기존값 보존 덕에 department/hireDate/jobType 등만 선택적으로 업데이트
+    const patch = {};
+    if (info.name) patch.name = info.name;
+    if (info.hireDate) patch.hireDate = info.hireDate;
+    if (info.department) patch.department = info.department;
+    if (info.employeeNumber) patch.employeeNumber = String(info.employeeNumber).trim();
 
     // 직종 매핑
     if (info.jobType) {
       const jobTypeMap = { '간호': '간호직', '보건': '보건직', '약무': '약무직', '의료기사': '의료기사직', '의사': '의사직', '사무': '사무직', '기능': '기능직', '시설': '시설직', '환경미화': '환경미화직', '지원': '지원직' };
       for (const [keyword, jt] of Object.entries(jobTypeMap)) {
-        if (info.jobType.includes(keyword)) { profile.jobType = jt; break; }
+        if (info.jobType.includes(keyword)) { patch.jobType = jt; break; }
       }
     }
 
@@ -3795,13 +3779,13 @@ async function handleProfilePayslipUpload(file) {
     if (info.payGrade) {
       const gm = info.payGrade.match(/([A-Za-z]\d+)\s*-\s*(\d+)/);
       if (gm) {
-        profile.grade = gm[1].toUpperCase();
-        profile.year = parseInt(gm[2]) || 1;
+        patch.grade = gm[1].toUpperCase();
+        patch.year = parseInt(gm[2]) || 1;
       }
     }
 
-    // 먼저 기본 정보 저장
-    PROFILE.save(profile);
+    // 개인정보 patch 저장 (기존 생년월일 등은 save 내부 merge로 유지)
+    PROFILE.save(patch);
 
     // 안정적 급여 항목 (조정급, 직책수당 등) + 가족수당도 반영
     // ※ applyStableItemsToProfile이 내부적으로 PROFILE.load() → 수정 → save()하므로
@@ -3819,7 +3803,8 @@ async function handleProfilePayslipUpload(file) {
 
     // 개별 필드 직접 세팅
     const fieldSets = [
-      ['pfName', updatedProfile.name], ['pfHireDate', updatedProfile.hireDate],
+      ['pfName', updatedProfile.name], ['pfEmployeeNumber', updatedProfile.employeeNumber],
+      ['pfHireDate', updatedProfile.hireDate],
       ['pfJobType', updatedProfile.jobType], ['pfGrade', updatedProfile.grade],
       ['pfYear', updatedProfile.year],
       ['pfAdjustPay', updatedProfile.adjustPay],
@@ -3896,6 +3881,16 @@ async function handleProfilePayslipUpload(file) {
     }
     SALARY_PARSER.saveMonthlyData(ym.year, ym.month, parsed, ym.type);
 
+    // 업로드로 부서/입사일이 새로 들어왔으면 근무이력 자동 시드 다시 시도
+    // (이전에 시드 조건 불충족으로 비어 있던 상태면 플래그 해제해서 재시드 허용)
+    try {
+      var _whK = window.getUserStorageKey ? window.getUserStorageKey('bhm_work_history') : 'bhm_work_history_guest';
+      var _wh = JSON.parse(localStorage.getItem(_whK) || '[]');
+      var _whSK = window.getUserStorageKey ? window.getUserStorageKey('bhm_work_history_seeded') : 'bhm_work_history_seeded_guest';
+      if (!Array.isArray(_wh) || _wh.length === 0) localStorage.removeItem(_whSK);
+      if (typeof renderWorkHistory === 'function') renderWorkHistory();
+    } catch (e) {}
+
   } catch (e) {
     progressEl.textContent = '';
     const errBox = document.createElement('div');
@@ -3907,2211 +3902,3 @@ async function handleProfilePayslipUpload(file) {
   }
 }
 
-function renderPayslip(data, ym, profileUpdated, stableRes) {
-  const resultEl = document.getElementById('payslipResult');
-  const fmt = n => n != null && n !== 0 ? n.toLocaleString() + '원' : '-';
-  const info = data.employeeInfo;
-  const meta = data.metadata;
-  const typeLabel = ym.type && ym.type !== '급여' ? ` (${ym.type})` : '';
-
-  let html = `
-    <div style="margin-bottom:12px; padding:10px 12px; background:var(--bg-hover); border-radius:8px; font-size:var(--text-body-normal); color:var(--text-muted);">
-      <strong style="color:var(--text-primary);">${ym.year}년 ${ym.month}월 급여명세서${typeLabel}</strong>
-      ${info.name ? `· ${info.name}` : ''}
-      ${info.jobType ? `· ${info.jobType}` : ''}
-      ${info.payGrade ? `· ${info.payGrade}` : ''}
-      ${meta.payDate ? `<br>지급일: ${meta.payDate}` : ''}
-    </div>`;
-
-  if (profileUpdated && stableRes && stableRes.applied && stableRes.applied.length > 0) {
-    const warnings = stableRes.applied.filter(a => a.note && a.note.startsWith('⚠️'));
-    const normals = stableRes.applied.filter(a => !a.note || !a.note.startsWith('⚠️'));
-    if (normals.length > 0) {
-      const details = normals.map(a => `${a.name}${a.note ? ` (${a.note})` : ''}`).join(', ');
-      html += `<div class="warning-box" style="border-color:var(--accent-emerald); margin-bottom:8px;">✅ 자동 반영: ${details}</div>`;
-    }
-    warnings.forEach(w => {
-      html += `<div class="warning-box" style="border-color:var(--accent-amber); margin-bottom:8px;">${w.note}</div>`;
-    });
-  } else if (profileUpdated) {
-    html += `<div class="warning-box" style="border-color:var(--accent-emerald); margin-bottom:8px;">✅ 조정급 등 변경되지 않는 항목을 내 정보에 자동 반영했습니다.</div>`;
-  }
-
-  // 파싱 신뢰도 경고
-  if (data._parseInfo) {
-    const pi = data._parseInfo;
-    if (pi.confidence < 70) {
-      html += `<div class="warning-box" style="border-color:var(--accent-amber); margin-bottom:8px;">⚠️ 파싱 정확도가 낮습니다 (${pi.confidence}/100). 항목과 금액을 직접 확인해주세요.${pi.method === 'textFallback' ? ' (텍스트 폴백 모드)' : ''}</div>`;
-    }
-    if (Math.abs(pi.grossDiff || 0) > 1 || Math.abs(pi.deductionDiff || 0) > 1) {
-      const details = [];
-      if (Math.abs(pi.grossDiff || 0) > 1) details.push('지급 ' + (pi.grossDiff > 0 ? '+' : '') + pi.grossDiff.toLocaleString() + '원');
-      if (Math.abs(pi.deductionDiff || 0) > 1) details.push('공제 ' + (pi.deductionDiff > 0 ? '+' : '') + pi.deductionDiff.toLocaleString() + '원');
-      html += `<div class="warning-box" style="border-color:var(--accent-rose); margin-bottom:8px;">❌ 항목 합산과 총액이 불일치합니다 (${details.join(', ')})</div>`;
-    }
-  }
-
-  // 지급 내역 테이블
-  html += `<p style="font-size:var(--text-body-normal); color:var(--accent-indigo); font-weight:600; margin:12px 0 6px;">▸ 지급 내역</p>`;
-  html += `<div style="display:flex; flex-direction:column; gap:4px;">`;
-  data.salaryItems.forEach(item => {
-    html += `<div class="result-row"><span class="key">${item.name}</span><span class="val">${fmt(item.amount)}</span></div>`;
-  });
-  html += `</div>`;
-
-  // 공제 내역
-  if (data.deductionItems.length > 0) {
-    html += `<p style="font-size:var(--text-body-normal); color:var(--accent-rose); font-weight:600; margin:12px 0 6px;">▸ 공제 내역</p>`;
-    html += `<div style="display:flex; flex-direction:column; gap:4px;">`;
-    data.deductionItems.forEach(item => {
-      html += `<div class="result-row"><span class="key">${item.name}</span><span class="val" style="color:var(--accent-rose);">${fmt(item.amount)}</span></div>`;
-    });
-    html += `</div>`;
-  }
-
-  // 합계
-  html += `
-    <div class="result-box" style="margin-top:12px;">
-      <div class="result-row"><span class="key">급여총액</span><span class="val green">${fmt(data.summary.grossPay)}</span></div>
-      <div class="result-row"><span class="key">공제총액</span><span class="val" style="color:var(--accent-rose);">${fmt(data.summary.totalDeduction)}</span></div>
-      <div class="result-row" style="border-top:1px solid var(--border-glass); padding-top:8px; margin-top:4px;">
-        <span class="key" style="font-weight:700;">실지급액</span>
-        <span class="val" style="font-size:var(--text-body-large); font-weight:700;">${fmt(data.summary.netPay)}</span>
-      </div>
-    </div>
-    <button class="btn btn-secondary btn-full" style="margin-top:12px;" onclick="showVerifyInQna()">✅ 앱 계산값과 비교하기</button>
-  `;
-  resultEl.innerHTML = html;
-}
-
-function showVerifyInQna() {
-  switchPayrollSubTab('salary-qna');
-  const verifyCard = document.getElementById('verifyCard');
-  if (verifyCard) verifyCard.style.display = '';
-}
-
-function renderVerification(data) {
-  const verifyEl = document.getElementById('verifyResult');
-  if (!verifyEl) return;
-  // 검증 데이터가 있으면 카드 표시
-  const verifyCard = document.getElementById('verifyCard');
-  if (verifyCard) verifyCard.style.display = '';
-  const comparison = SALARY_PARSER.compareWithApp(data);
-
-  if (!comparison) {
-    verifyEl.innerHTML = `<div class="warning-box">⚠️ 비교하려면 먼저 <strong>개인정보 탭</strong>에서 내 정보를 저장해주세요.</div>`;
-    return;
-  }
-
-  const fmt = n => n != null ? n.toLocaleString() + '원' : '-';
-  let html = `<div style="overflow-x:auto;"><table style="width:100%; border-collapse:collapse; font-size:var(--text-body-normal);">
-    <thead>
-      <tr style="background:var(--bg-hover); color:var(--text-muted);">
-        <th style="padding:8px 6px; text-align:left;">항목</th>
-        <th style="padding:8px 6px; text-align:right;">명세서</th>
-        <th style="padding:8px 6px; text-align:right;">앱 계산</th>
-        <th style="padding:8px 6px; text-align:right;">차이</th>
-      </tr>
-    </thead><tbody>`;
-
-  comparison.comparison.forEach(row => {
-    const diff = row.diff;
-    const diffStr = diff !== null ? (diff === 0 ? '✅ 일치' : `${diff > 0 ? '+' : ''}${diff.toLocaleString()}`) : '-';
-    const diffColor = diff === null ? 'var(--text-muted)' : diff === 0 ? 'var(--accent-emerald)' : 'var(--accent-amber)';
-    const rowStyle = row.isTotal ? 'border-top:2px solid var(--border-glass); font-weight:700;' : '';
-    html += `<tr style="${rowStyle}">
-      <td style="padding:7px 6px; color:var(--text-primary);">${row.name}</td>
-      <td style="padding:7px 6px; text-align:right; color:var(--text-primary);">${fmt(row.payslip)}</td>
-      <td style="padding:7px 6px; text-align:right; color:var(--text-muted);">${fmt(row.app)}</td>
-      <td style="padding:7px 6px; text-align:right; color:${diffColor}; font-weight:600;">${diffStr}</td>
-    </tr>`;
-  });
-
-  html += `</tbody></table></div>`;
-
-  // 차이 있는 항목 안내
-  const mismatches = comparison.comparison.filter(r => r.diff !== null && r.diff !== 0 && !r.isTotal);
-  if (mismatches.length > 0) {
-    html += `<div class="warning-box" style="margin-top:12px;">
-      ⚠️ <strong>차이가 발생한 항목 ${mismatches.length}개:</strong><br>
-      ${mismatches.map(r => `${r.name}: ${(r.diff > 0 ? '+' : '')}${r.diff.toLocaleString()}원`).join('<br>')}
-      <br><br>💡 <strong>개인정보</strong> 탭에서 조정급·직책급 등을 실제 명세서 금액으로 수정하면 오차가 줄어듭니다.
-    </div>`;
-  }
-  verifyEl.innerHTML = html;
-}
-
-// renderSavedMonths — legacy 호환
-function renderSavedMonths() { renderPayslipMgmt(); }
-
-// ── 급여명세서 조회 뷰: 통계 + 월별 카드 ──
-function renderPayslipMgmt() {
-  const statsEl = document.getElementById('payslipStats');
-  const listEl = document.getElementById('payslipMgmtView');
-  if (!statsEl || !listEl) return;
-
-  const months = SALARY_PARSER.listSavedMonths(); // newest first
-
-  // ── 데이터 없음 ──
-  if (months.length === 0) {
-    statsEl.textContent = '';
-    listEl.textContent = '';
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.style.cssText = 'text-align:center; padding:32px 16px;';
-    const icon = document.createElement('p');
-    icon.style.cssText = 'font-size:1.5rem; margin-bottom:8px;';
-    icon.textContent = '📭';
-    card.appendChild(icon);
-    const p1 = document.createElement('p');
-    p1.style.cssText = 'color:var(--text-muted); font-size:var(--text-body-normal);';
-    p1.textContent = '저장된 급여명세서가 없습니다.';
-    card.appendChild(p1);
-    const p2 = document.createElement('p');
-    p2.style.cssText = 'color:var(--text-muted); font-size:var(--text-body-small); margin-top:4px;';
-    p2.textContent = 'info 탭에서 급여명세서를 등록해주세요.';
-    card.appendChild(p2);
-    const goBtn = document.createElement('button');
-    goBtn.className = 'btn btn-primary';
-    goBtn.style.cssText = 'margin-top:12px;';
-    goBtn.textContent = '👤 info 탭으로 이동';
-    goBtn.addEventListener('click', () => switchTab('profile'));
-    card.appendChild(goBtn);
-    listEl.appendChild(card);
-    return;
-  }
-
-  // ── 모든 월 데이터 로드 ──
-  const allData = months.map(m => {
-    const d = SALARY_PARSER.loadMonthlyData(m.year, m.month, m.type);
-    return { year: m.year, month: m.month, type: m.type || '급여', data: d };
-  }).filter(m => m.data);
-
-  const fmt = n => n != null && n !== 0 ? n.toLocaleString() + '원' : '-';
-  const fmtSign = n => {
-    if (n == null || n === 0) return '-';
-    const prefix = n > 0 ? '+' : '';
-    return prefix + n.toLocaleString() + '원';
-  };
-
-  // ── 통계 카드 렌더 ──
-  renderPayslipStats(statsEl, allData, fmt, fmtSign);
-
-  // ── 월별 카드 목록 (접이식) ──
-  listEl.textContent = '';
-  allData.forEach(({ year, month, type, data }, idx) => {
-    const cardId = `payslipCard_${year}_${month}_${type}`;
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.style.marginBottom = '12px';
-
-    // 카드 헤더 (항상 보임 — 월, 실지급액 요약)
-    const header = document.createElement('div');
-    header.style.cssText = 'display:flex; justify-content:space-between; align-items:center; cursor:pointer; padding:4px 0;';
-    header.addEventListener('click', () => {
-      const body = document.getElementById(cardId);
-      if (body) body.style.display = body.style.display === 'none' ? 'block' : 'none';
-      const icon = header.querySelector('.toggle-icon');
-      if (icon) icon.textContent = body.style.display === 'none' ? '▸' : '▾';
-    });
-
-    const left = document.createElement('div');
-    left.style.cssText = 'display:flex; align-items:center; gap:8px;';
-    const toggle = document.createElement('span');
-    toggle.className = 'toggle-icon';
-    toggle.style.cssText = 'font-size:var(--text-body-normal); color:var(--text-muted);';
-    toggle.textContent = '▸';
-    left.appendChild(toggle);
-    const monthLabel = document.createElement('span');
-    monthLabel.style.cssText = 'font-weight:700; font-size:var(--text-body-large);';
-    const typeLabel = type !== '급여' ? ` (${type})` : '';
-    monthLabel.textContent = `${year}년 ${month}월${typeLabel}`;
-    left.appendChild(monthLabel);
-    header.appendChild(left);
-
-    const right = document.createElement('div');
-    right.style.cssText = 'text-align:right; display:flex; flex-direction:column; gap:2px;';
-    // 지급 합계
-    const grossRow = document.createElement('div');
-    grossRow.style.cssText = 'font-size:var(--text-body-small); color:var(--text-muted);';
-    const grossLabel = document.createTextNode('지급 ');
-    const grossVal = document.createElement('b');
-    grossVal.style.color = 'var(--accent-indigo)';
-    grossVal.textContent = fmt(data.summary?.grossPay || 0);
-    grossRow.appendChild(grossLabel);
-    grossRow.appendChild(grossVal);
-    right.appendChild(grossRow);
-    // 공제 합계
-    const dedRow = document.createElement('div');
-    dedRow.style.cssText = 'font-size:var(--text-body-small); color:var(--text-muted);';
-    const dedLabel = document.createTextNode('공제 ');
-    const dedVal = document.createElement('b');
-    dedVal.style.color = 'var(--accent-rose)';
-    dedVal.textContent = '-' + fmt(data.summary?.totalDeduction || 0);
-    dedRow.appendChild(dedLabel);
-    dedRow.appendChild(dedVal);
-    right.appendChild(dedRow);
-    // 실지급액
-    const netRow2 = document.createElement('div');
-    netRow2.style.cssText = 'font-weight:700; font-size:var(--text-body-large); color:var(--text-primary); border-top:1px solid var(--border-glass); padding-top:2px; margin-top:1px;';
-    netRow2.textContent = fmt(data.summary?.netPay || 0);
-    right.appendChild(netRow2);
-    header.appendChild(right);
-    card.appendChild(header);
-
-    // 카드 바디 (접이식 — 첫 번째만 펼침)
-    const body = document.createElement('div');
-    body.id = cardId;
-    body.style.display = 'none';
-    body.style.cssText += ';margin-top:12px; border-top:1px solid var(--border-glass); padding-top:12px;';
-
-    // 지급 내역
-    if (data.salaryItems && data.salaryItems.length > 0) {
-      const salLabel = document.createElement('p');
-      salLabel.style.cssText = 'font-size:var(--text-body-normal); color:var(--accent-indigo); font-weight:600; margin:0 0 6px;';
-      salLabel.textContent = '▸ 지급 내역';
-      body.appendChild(salLabel);
-      data.salaryItems.forEach(item => {
-        const row = document.createElement('div');
-        row.className = 'result-row';
-        const k = document.createElement('span');
-        k.className = 'key';
-        k.textContent = item.name;
-        const v = document.createElement('span');
-        v.className = 'val';
-        v.textContent = fmt(item.amount);
-        row.appendChild(k);
-        row.appendChild(v);
-        body.appendChild(row);
-      });
-      const totalRow = document.createElement('div');
-      totalRow.className = 'result-row';
-      totalRow.style.cssText = 'border-top:1px solid var(--border); margin-top:6px; padding-top:6px; font-weight:700;';
-      const tk = document.createElement('span');
-      tk.className = 'key';
-      tk.textContent = '급여총액';
-      const tv = document.createElement('span');
-      tv.className = 'val';
-      tv.style.color = 'var(--accent-indigo)';
-      tv.textContent = fmt(data.summary?.grossPay || 0);
-      totalRow.appendChild(tk);
-      totalRow.appendChild(tv);
-      body.appendChild(totalRow);
-    }
-
-    // 공제 내역
-    if (data.deductionItems && data.deductionItems.length > 0) {
-      const dedLabel = document.createElement('p');
-      dedLabel.style.cssText = 'font-size:var(--text-body-normal); color:var(--accent-rose); font-weight:600; margin:12px 0 6px;';
-      dedLabel.textContent = '▸ 공제 내역';
-      body.appendChild(dedLabel);
-      data.deductionItems.forEach(item => {
-        const row = document.createElement('div');
-        row.className = 'result-row';
-        const k = document.createElement('span');
-        k.className = 'key';
-        k.textContent = item.name;
-        const v = document.createElement('span');
-        v.className = 'val';
-        v.style.color = 'var(--accent-rose)';
-        v.textContent = fmt(item.amount);
-        row.appendChild(k);
-        row.appendChild(v);
-        body.appendChild(row);
-      });
-      const dedTotal = document.createElement('div');
-      dedTotal.className = 'result-row';
-      dedTotal.style.cssText = 'border-top:1px solid var(--border); margin-top:6px; padding-top:6px; font-weight:700;';
-      const dk = document.createElement('span');
-      dk.className = 'key';
-      dk.textContent = '공제총액';
-      const dv = document.createElement('span');
-      dv.className = 'val';
-      dv.style.color = 'var(--accent-rose)';
-      dv.textContent = fmt(data.summary?.totalDeduction || 0);
-      dedTotal.appendChild(dk);
-      dedTotal.appendChild(dv);
-      body.appendChild(dedTotal);
-    }
-
-    // ── 실지급액 요약 ──
-    if (data.summary?.netPay) {
-      const netRow = document.createElement('div');
-      netRow.className = 'result-row';
-      netRow.style.cssText = 'border-top:2px solid var(--border); margin-top:10px; padding-top:10px; font-weight:700; font-size:var(--text-body-large);';
-      const nk = document.createElement('span');
-      nk.className = 'key';
-      nk.textContent = '실지급액';
-      const nv = document.createElement('span');
-      nv.className = 'val';
-      nv.style.color = 'var(--text-primary)';
-      nv.textContent = fmt(data.summary.netPay);
-      netRow.appendChild(nk);
-      netRow.appendChild(nv);
-      body.appendChild(netRow);
-    }
-
-    // ── 통상임금 검증 섹션 ──
-    renderPayslipVerification(body, data);
-
-    // ── 수당 분석 (리버스엔지니어링) 섹션 ──
-    renderOvertimeAnalysis(body, data);
-
-    // 삭제 버튼
-    const delWrap = document.createElement('div');
-    delWrap.style.cssText = 'margin-top:12px; text-align:right;';
-    const delBtn = document.createElement('button');
-    delBtn.className = 'btn btn-outline';
-    delBtn.style.cssText = 'font-size:var(--text-body-small); padding:4px 10px; color:var(--accent-rose); border-color:var(--accent-rose);';
-    delBtn.textContent = '🗑 삭제';
-    delBtn.addEventListener('click', () => deletePayslipMonth(year, month, type));
-    delWrap.appendChild(delBtn);
-    body.appendChild(delWrap);
-
-    card.appendChild(body);
-    listEl.appendChild(card);
-  });
-}
-
-// ── 통계 카드 ──
-function renderPayslipStats(el, allData, fmt, fmtSign) {
-  el.textContent = '';
-  if (allData.length === 0) return;
-
-  const card = document.createElement('div');
-  card.className = 'card';
-
-  const title = document.createElement('div');
-  title.className = 'card-title';
-  title.style.fontSize = 'var(--text-body-large)';
-  const titleIcon = document.createElement('span');
-  titleIcon.className = 'icon';
-  titleIcon.style.color = 'var(--accent-violet)';
-  titleIcon.textContent = '📊';
-  title.appendChild(titleIcon);
-  title.appendChild(document.createTextNode(' 급여 통계'));
-  card.appendChild(title);
-
-  const nets = allData.map(d => d.data.summary?.netPay || 0);
-  const grosses = allData.map(d => d.data.summary?.grossPay || 0);
-  const deductions = allData.map(d => d.data.summary?.totalDeduction || 0);
-  const latestNet = nets[0];
-  const avgNet = Math.round(nets.reduce((a, b) => a + b, 0) / nets.length);
-  const maxNet = Math.max(...nets);
-  const minNet = Math.min(...nets);
-  const avgGross = Math.round(grosses.reduce((a, b) => a + b, 0) / grosses.length);
-  const avgDed = Math.round(deductions.reduce((a, b) => a + b, 0) / deductions.length);
-
-  // 전월 대비
-  const prevNet = nets.length > 1 ? nets[1] : null;
-  const diff = prevNet != null ? latestNet - prevNet : null;
-
-  // 기간 표시
-  const oldest = allData[allData.length - 1];
-  const newest = allData[0];
-  const periodText = allData.length === 1
-    ? `${newest.year}년 ${newest.month}월`
-    : `${oldest.year}년 ${oldest.month}월 ~ ${newest.year}년 ${newest.month}월 (${allData.length}개월)`;
-  const periodEl = document.createElement('p');
-  periodEl.style.cssText = 'font-size:var(--text-body-small); color:var(--text-muted); margin-bottom:12px;';
-  periodEl.textContent = periodText;
-  card.appendChild(periodEl);
-
-  // 주요 지표 그리드
-  const grid = document.createElement('div');
-  grid.style.cssText = 'display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;';
-
-  const addStat = (label, value, color, sub) => {
-    const box = document.createElement('div');
-    box.style.cssText = 'background:var(--bg-hover); border-radius:10px; padding:12px;';
-    const lbl = document.createElement('div');
-    lbl.style.cssText = 'font-size:var(--text-body-small); color:var(--text-muted); margin-bottom:4px;';
-    lbl.textContent = label;
-    box.appendChild(lbl);
-    const val = document.createElement('div');
-    val.style.cssText = `font-weight:700; font-size:var(--text-body-large); color:${color || 'var(--text-primary)'};`;
-    val.textContent = value;
-    box.appendChild(val);
-    if (sub) {
-      const s = document.createElement('div');
-      s.style.cssText = 'font-size:var(--text-body-small); color:var(--text-muted); margin-top:2px;';
-      s.textContent = sub;
-      box.appendChild(s);
-    }
-    grid.appendChild(box);
-  };
-
-  addStat('최근 실지급액', fmt(latestNet), 'var(--text-primary)',
-    diff != null ? `전월 대비 ${fmtSign(diff)}` : null);
-  addStat('평균 실지급액', fmt(avgNet), 'var(--accent-indigo)');
-  addStat('평균 급여총액', fmt(avgGross), 'var(--accent-emerald)');
-  addStat('평균 공제총액', fmt(avgDed), 'var(--accent-rose)');
-
-  if (allData.length > 1) {
-    addStat('최고 실지급액', fmt(maxNet), 'var(--accent-amber)',
-      `${allData.find((_, i) => nets[i] === maxNet).year}년 ${allData.find((_, i) => nets[i] === maxNet).month}월`);
-    addStat('최저 실지급액', fmt(minNet), 'var(--text-muted)',
-      `${allData.find((_, i) => nets[i] === minNet).year}년 ${allData.find((_, i) => nets[i] === minNet).month}월`);
-  }
-  card.appendChild(grid);
-
-  // 월별 실지급액 추이 (바 차트 — 최근 12개월)
-  if (allData.length > 1) {
-    const chartLabel = document.createElement('p');
-    chartLabel.style.cssText = 'font-size:var(--text-body-normal); font-weight:600; margin:8px 0 8px; color:var(--text-primary);';
-    chartLabel.textContent = '▸ 월별 실지급액 추이';
-    card.appendChild(chartLabel);
-
-    const chartData = allData.slice(0, 12).reverse(); // oldest first for chart
-    const chartMax = Math.max(...chartData.map(d => d.data.summary?.netPay || 0));
-
-    const chart = document.createElement('div');
-    chart.style.cssText = 'display:flex; align-items:flex-end; gap:4px; height:120px; padding:0 4px;';
-
-    chartData.forEach(d => {
-      const net = d.data.summary?.netPay || 0;
-      const pct = chartMax > 0 ? (net / chartMax * 100) : 0;
-
-      const col = document.createElement('div');
-      col.style.cssText = 'flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; min-width:0;';
-
-      const bar = document.createElement('div');
-      bar.style.cssText = `width:100%; max-width:32px; height:${Math.max(4, pct)}%; background:var(--accent-indigo); border-radius:4px 4px 0 0; transition:height 0.3s; min-height:4px;`;
-      bar.title = `${d.year}년 ${d.month}월: ${fmt(net)}`;
-      col.appendChild(bar);
-
-      const label = document.createElement('div');
-      label.style.cssText = 'font-size:0.6rem; color:var(--text-muted); white-space:nowrap;';
-      label.textContent = `${d.month}월`;
-      col.appendChild(label);
-
-      chart.appendChild(col);
-    });
-    card.appendChild(chart);
-
-    // 공제율 표시
-    const dedRate = avgGross > 0 ? ((avgDed / avgGross) * 100).toFixed(1) : 0;
-    const rateRow = document.createElement('div');
-    rateRow.style.cssText = 'margin-top:12px; padding:8px 12px; background:var(--bg-hover); border-radius:8px; font-size:var(--text-body-normal); color:var(--text-muted);';
-    rateRow.textContent = `평균 공제율: ${dedRate}% (급여총액 대비 공제총액)`;
-    card.appendChild(rateRow);
-  }
-
-  el.appendChild(card);
-}
-
-// ── 통상임금 검증 섹션 ──
-function renderPayslipVerification(container, data) {
-  const profile = PROFILE.load();
-  if (!profile || !profile.jobType || !profile.grade) return;
-  if (!data.salaryItems || data.salaryItems.length === 0) return;
-
-  const serviceYears = profile.hireDate ? PROFILE.calcServiceYears(profile.hireDate) : 0;
-  const appWage = CALC.calcOrdinaryWage(
-    profile.jobType, profile.grade, parseInt(profile.year) || 1,
-    {
-      hasMilitary: profile.hasMilitary,
-      hasSeniority: profile.hasSeniority,
-      seniorityYears: profile.hasSeniority ? serviceYears : 0,
-      longServiceYears: serviceYears,
-      adjustPay: parseInt(profile.adjustPay) || 0,
-      upgradeAdjustPay: parseInt(profile.upgradeAdjustPay) || 0,
-      specialPayAmount: parseInt(profile.specialPay) || 0,
-      positionPay: parseInt(profile.positionPay) || 0,
-      workSupportPay: parseInt(profile.workSupportPay) || 0,
-      weeklyHours: parseInt(profile.weeklyHours) || 209,
-    }
-  );
-  if (!appWage) return;
-
-  const fmt = n => n != null ? n.toLocaleString() + '원' : '-';
-
-  // 명세서 항목을 이름→금액 맵으로
-  const payslipMap = {};
-  data.salaryItems.forEach(item => { payslipMap[item.name] = item.amount; });
-
-  // 비교 대상: breakdown 항목 중 0이 아닌 것 + 명세서에만 있는 것
-  const rows = [];
-  let hasAlert = false;
-
-  Object.entries(appWage.breakdown).forEach(([name, appVal]) => {
-    const payVal = payslipMap[name] ?? null;
-    const diff = payVal !== null ? payVal - appVal : null;
-    const alert = diff !== null && Math.abs(diff) >= 10;
-    if (alert) hasAlert = true;
-    rows.push({ name, app: appVal, payslip: payVal, diff, alert });
-  });
-
-  // 통상임금 합계: 명세서 항목 중 통상임금(breakdown)에 해당하는 것만 합산
-  const ordinaryNames = new Set(Object.keys(appWage.breakdown));
-  let payslipOrdinarySum = 0;
-  data.salaryItems.forEach(item => {
-    if (ordinaryNames.has(item.name)) payslipOrdinarySum += item.amount;
-  });
-  const totalDiff = payslipOrdinarySum - appWage.monthlyWage;
-  const totalAlert = Math.abs(totalDiff) >= 10;
-  if (totalAlert) hasAlert = true;
-
-  // 섹션 헤더
-  const section = document.createElement('div');
-  section.style.cssText = 'margin-top:16px; border-top:1px solid var(--border-glass); padding-top:12px;';
-
-  const label = document.createElement('p');
-  label.style.cssText = 'font-size:var(--text-body-normal); color:var(--accent-violet); font-weight:600; margin:0 0 8px; cursor:pointer;';
-  label.textContent = hasAlert
-    ? '⚠️ 통상임금 검증 (차이 발견)'
-    : '✅ 통상임금 검증';
-  label.style.color = 'var(--accent-emerald)';
-
-  const detail = document.createElement('div');
-  detail.style.display = 'none';
-  label.addEventListener('click', () => {
-    detail.style.display = detail.style.display === 'none' ? 'block' : 'none';
-  });
-  section.appendChild(label);
-
-  // 테이블 헤더
-  const hdr = document.createElement('div');
-  hdr.style.cssText = 'display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:4px; font-size:0.7rem; color:var(--text-muted); padding:4px 0; border-bottom:1px solid var(--border-glass);';
-  ['항목', '앱 계산', '명세서', '차이'].forEach(t => {
-    const c = document.createElement('span');
-    c.textContent = t;
-    if (t !== '항목') c.style.textAlign = 'right';
-    hdr.appendChild(c);
-  });
-  detail.appendChild(hdr);
-
-  rows.forEach(r => {
-    if (r.app === 0 && r.payslip === null) return; // 둘다 없으면 스킵
-    const row = document.createElement('div');
-    row.style.cssText = 'display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:4px; font-size:var(--text-body-small); padding:3px 0;';
-    if (r.alert) row.style.background = 'rgba(255,180,50,0.1)';
-
-    const c1 = document.createElement('span');
-    c1.textContent = r.name;
-    c1.style.cssText = 'overflow:hidden; text-overflow:ellipsis; white-space:nowrap;';
-    const c2 = document.createElement('span');
-    c2.style.textAlign = 'right';
-    c2.textContent = r.app > 0 ? r.app.toLocaleString() : '-';
-    const c3 = document.createElement('span');
-    c3.style.textAlign = 'right';
-    c3.textContent = r.payslip !== null ? r.payslip.toLocaleString() : '-';
-    const c4 = document.createElement('span');
-    c4.style.textAlign = 'right';
-    if (r.diff !== null && Math.abs(r.diff) >= 10) {
-      c4.textContent = (r.diff > 0 ? '+' : '') + r.diff.toLocaleString();
-      c4.style.color = 'var(--accent-rose)';
-      c4.style.fontWeight = '600';
-    } else if (r.diff !== null) {
-      c4.textContent = '일치';
-      c4.style.color = 'var(--accent-emerald)';
-    } else {
-      c4.textContent = '-';
-    }
-
-    row.appendChild(c1);
-    row.appendChild(c2);
-    row.appendChild(c3);
-    row.appendChild(c4);
-    detail.appendChild(row);
-  });
-
-  // 합계 행
-  const totalRow = document.createElement('div');
-  totalRow.style.cssText = 'display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:4px; font-size:var(--text-body-small); padding:6px 0; border-top:1px solid var(--border); margin-top:4px; font-weight:700;';
-  if (totalAlert) totalRow.style.background = 'rgba(255,180,50,0.15)';
-  const t1 = document.createElement('span'); t1.textContent = '통상임금 합계';
-  const t2 = document.createElement('span'); t2.style.textAlign = 'right'; t2.textContent = appWage.monthlyWage.toLocaleString();
-  const t3 = document.createElement('span'); t3.style.textAlign = 'right'; t3.textContent = payslipOrdinarySum.toLocaleString();
-  const t4 = document.createElement('span'); t4.style.textAlign = 'right';
-  if (totalAlert) {
-    t4.textContent = (totalDiff > 0 ? '+' : '') + totalDiff.toLocaleString();
-    t4.style.color = 'var(--accent-rose)';
-  } else {
-    t4.textContent = '일치';
-    t4.style.color = 'var(--accent-emerald)';
-  }
-  totalRow.appendChild(t1); totalRow.appendChild(t2); totalRow.appendChild(t3); totalRow.appendChild(t4);
-  detail.appendChild(totalRow);
-
-  // 시급 정보
-  const rateInfo = document.createElement('div');
-  rateInfo.style.cssText = 'margin-top:8px; font-size:var(--text-body-small); color:var(--text-muted); padding:6px 8px; background:var(--bg-hover); border-radius:6px;';
-  rateInfo.textContent = `앱 기준 시급: ${fmt(appWage.hourlyRate)} (÷${parseInt(profile.weeklyHours) || 209}시간)`;
-  detail.appendChild(rateInfo);
-
-  section.appendChild(detail);
-  container.appendChild(section);
-}
-
-// ── 수당 분석 (리버스엔지니어링) 섹션 ──
-function renderOvertimeAnalysis(container, data) {
-  const profile = PROFILE.load();
-  if (!profile || !profile.jobType || !profile.grade) return;
-  if (!data.salaryItems || data.salaryItems.length === 0) return;
-
-  const serviceYears = profile.hireDate ? PROFILE.calcServiceYears(profile.hireDate) : 0;
-  const appWage = CALC.calcOrdinaryWage(
-    profile.jobType, profile.grade, parseInt(profile.year) || 1,
-    {
-      hasMilitary: profile.hasMilitary,
-      hasSeniority: profile.hasSeniority,
-      seniorityYears: profile.hasSeniority ? serviceYears : 0,
-      longServiceYears: serviceYears,
-      adjustPay: parseInt(profile.adjustPay) || 0,
-      upgradeAdjustPay: parseInt(profile.upgradeAdjustPay) || 0,
-      specialPayAmount: parseInt(profile.specialPay) || 0,
-      positionPay: parseInt(profile.positionPay) || 0,
-      workSupportPay: parseInt(profile.workSupportPay) || 0,
-      weeklyHours: parseInt(profile.weeklyHours) || 209,
-    }
-  );
-  if (!appWage || !appWage.hourlyRate) return;
-
-  const hourlyRate = appWage.hourlyRate;
-  const rates = DATA.allowances.overtimeRates;
-
-  // 명세서에서 수당 항목 찾기
-  const payslipMap = {};
-  data.salaryItems.forEach(item => { payslipMap[item.name] = item.amount; });
-
-  // 역산 대상 매핑: { 명세서항목명: { rate, label } }
-  const overtimeItems = [
-    { names: ['시간외수당', '시간외근무수당', '연장근무수당', '연장수당'], rate: rates.extended, label: '연장근무', unit: '시간' },
-    { names: ['야간수당', '야간근무수당'], rate: rates.night, label: '야간근무', unit: '시간' },
-    { names: ['휴일수당', '휴일근무수당'], rate: rates.holiday, label: '휴일근무', unit: '시간' },
-    { names: ['야간근무가산금', '야간가산금'], rate: null, label: '야간근무가산', unit: '회', perUnit: DATA.allowances.nightShiftBonus },
-    { names: ['당직비', '일직비', '숙직비'], rate: null, label: '당직', unit: '일', perUnit: DATA.allowances.dutyAllowance },
-  ];
-
-  const results = [];
-  overtimeItems.forEach(ot => {
-    for (const name of ot.names) {
-      if (payslipMap[name] && payslipMap[name] > 0) {
-        const amount = payslipMap[name];
-        let estimated;
-        if (ot.perUnit) {
-          estimated = amount / ot.perUnit;
-        } else {
-          estimated = amount / (hourlyRate * ot.rate);
-        }
-        // 15분 단위 반올림 (0.25 단위)
-        const rounded = Math.round(estimated * 4) / 4;
-        results.push({
-          label: ot.label,
-          name: name,
-          amount: amount,
-          estimated: rounded,
-          unit: ot.unit,
-          rate: ot.rate,
-          perUnit: ot.perUnit,
-        });
-        break; // 첫 매칭만
-      }
-    }
-  });
-
-  if (results.length === 0) return;
-
-  const fmt = n => n > 0 ? n.toLocaleString() + '원' : '-';
-
-  const section = document.createElement('div');
-  section.style.cssText = 'margin-top:16px; border-top:1px solid var(--border-glass); padding-top:12px;';
-
-  const label = document.createElement('p');
-  label.style.cssText = 'font-size:var(--text-body-normal); color:var(--accent-indigo); font-weight:600; margin:0 0 8px; cursor:pointer;';
-  label.textContent = '🔍 수당 분석 (역산)';
-  const detail = document.createElement('div');
-  detail.style.display = 'none';
-  label.addEventListener('click', () => {
-    detail.style.display = detail.style.display === 'none' ? 'block' : 'none';
-  });
-  section.appendChild(label);
-
-  // 시급 기준 안내
-  const rateNote = document.createElement('div');
-  rateNote.style.cssText = 'font-size:0.7rem; color:var(--text-muted); margin-bottom:8px; padding:4px 8px; background:var(--bg-hover); border-radius:6px;';
-  rateNote.textContent = `기준 시급: ${fmt(hourlyRate)} | 연장/야간/휴일: ×${rates.extended} | 야간가산금: ${DATA.allowances.nightShiftBonus.toLocaleString()}원/회 | 당직비: ${DATA.allowances.dutyAllowance.toLocaleString()}원/일`;
-  detail.appendChild(rateNote);
-
-  results.forEach(r => {
-    const row = document.createElement('div');
-    row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:8px; margin-bottom:6px; background:var(--bg-hover); border-radius:8px;';
-
-    const left = document.createElement('div');
-    const nameEl = document.createElement('div');
-    nameEl.style.cssText = 'font-size:var(--text-body-normal); font-weight:600; color:var(--text-primary);';
-    nameEl.textContent = r.label;
-    left.appendChild(nameEl);
-    const subEl = document.createElement('div');
-    subEl.style.cssText = 'font-size:0.7rem; color:var(--text-muted);';
-    if (r.perUnit) {
-      subEl.textContent = `${r.name} ${fmt(r.amount)} ÷ ${r.perUnit.toLocaleString()}원`;
-    } else {
-      subEl.textContent = `${r.name} ${fmt(r.amount)} ÷ (${hourlyRate.toLocaleString()} × ${r.rate})`;
-    }
-    left.appendChild(subEl);
-    row.appendChild(left);
-
-    const right = document.createElement('div');
-    right.style.cssText = 'text-align:right;';
-    const estEl = document.createElement('div');
-    estEl.style.cssText = 'font-size:var(--text-body-large); font-weight:700; color:var(--accent-indigo);';
-    estEl.textContent = `≈ ${r.estimated}${r.unit}`;
-    right.appendChild(estEl);
-    row.appendChild(right);
-
-    detail.appendChild(row);
-  });
-
-  // 총 시간외 합산
-  const timeResults = results.filter(r => r.unit === '시간');
-  if (timeResults.length > 0) {
-    const totalHours = timeResults.reduce((s, r) => s + r.estimated, 0);
-    const totalPay = timeResults.reduce((s, r) => s + r.amount, 0);
-    const summaryEl = document.createElement('div');
-    summaryEl.style.cssText = 'margin-top:8px; padding:8px 10px; background:var(--accent-indigo); color:white; border-radius:8px; display:flex; justify-content:space-between; font-size:var(--text-body-normal);';
-    const sl = document.createElement('span');
-    sl.style.fontWeight = '600';
-    sl.textContent = `총 시간외 근무: ≈ ${totalHours}시간`;
-    const sr = document.createElement('span');
-    sr.textContent = `수당 합계: ${fmt(totalPay)}`;
-    summaryEl.appendChild(sl);
-    summaryEl.appendChild(sr);
-    detail.appendChild(summaryEl);
-  }
-
-  section.appendChild(detail);
-  container.appendChild(section);
-}
-
-function deletePayslipMonth(year, month, type) {
-  const typeLabel = type && type !== '급여' ? ` (${type})` : '';
-  if (!confirm(`${year}년 ${month}월${typeLabel} 급여명세서를 삭제하시겠습니까?`)) return;
-  const base = `payslip_${year}_${String(month).padStart(2, '0')}`;
-  const key = (type && type !== '급여') ? `${base}_${type}` : base;
-  localStorage.removeItem(key);
-  renderPayslipMgmt();
-}
-
-// ═══════════ 📅 휴가 관리 ═══════════
-
-
-let lvSelectedDate = null;
-let lvHolidayMap = {};
-let lvTotalAnnual = 0;
-let lvCurrentYear = new Date().getFullYear();
-let lvCurrentMonth = new Date().getMonth() + 1;
-let lvInitialized = false;
-
-// 월 이동
-function lvNavMonth(delta) {
-  lvCurrentMonth += delta;
-  if (lvCurrentMonth > 12) { lvCurrentMonth = 1; lvCurrentYear++; }
-  if (lvCurrentMonth < 1) { lvCurrentMonth = 12; lvCurrentYear--; }
-  refreshLvCalendar();
-}
-
-function lvGoToday() {
-  const now = new Date();
-  lvCurrentYear = now.getFullYear();
-  lvCurrentMonth = now.getMonth() + 1;
-  refreshLvCalendar();
-}
-
-function initLeaveTab() {
-  const now = new Date();
-  lvCurrentYear = now.getFullYear();
-  lvCurrentMonth = now.getMonth() + 1;
-
-  // 프로필에서 연차 자동 산정
-  const profile = PROFILE.load();
-  if (profile && profile.hireDate) {
-    const parsed = PROFILE.parseDate(profile.hireDate);
-    if (parsed) {
-      const result = CALC.calcAnnualLeave(new Date(parsed));
-      if (result) lvTotalAnnual = result.totalLeave;
-    }
-  }
-
-  // 유형 select 동적 생성
-  populateLvTypeSelect();
-
-  // 날짜 변경 이벤트 (최초 1회만)
-  if (!lvInitialized) {
-    document.getElementById('lvStartDate').addEventListener('change', previewLvCalc);
-    document.getElementById('lvEndDate').addEventListener('change', previewLvCalc);
-    lvInitialized = true;
-  }
-
-  // 기존 기록 마이그레이션 (유형 규정 변경 감지 → 재계산)
-  LEAVE.migrateRecords();
-
-  refreshLvCalendar();
-}
-
-// ── 대시보드 렌더링 ──
-function renderLvDashboard(year) {
-  const container = document.getElementById('lvDashboard');
-  if (!container) return;
-
-  const records = LEAVE.getYearRecords(year);
-  const usage = {};
-  records.forEach(r => {
-    if (!usage[r.type]) usage[r.type] = 0;
-    usage[r.type] += (r.days || 0);
-  });
-
-  // 시간차 시간 합산
-  let timeLeaveHours = 0;
-  records.forEach(r => { if (r.type === 'time_leave') timeLeaveHours += (r.hours || 0); });
-
-  const annualUsed = (usage['annual'] || 0) + (usage['time_leave'] || 0);
-  const eduTraining = usage['edu_training'] || 0;
-  const eduMandatory = usage['edu_mandatory'] || 0;
-  const checkup = usage['checkup'] || 0;
-  const blood = usage['blood_donation'] || 0;
-
-  const items = [
-    { label: '연차', used: annualUsed, total: lvTotalAnnual || '?', key: true },
-    { label: '시간차', used: timeLeaveHours, total: null, suffix: 'h', show: timeLeaveHours > 0, annualDays: Math.round(timeLeaveHours / 8 * 10) / 10 },
-    { label: '교육연수', used: eduTraining, total: 3 },
-    { label: '필수교육', used: eduMandatory, total: 3 },
-    { label: '검진휴가', used: checkup, total: 1 },
-    { label: '헌혈휴가', used: blood, total: 1 },
-  ];
-
-  let html = '';
-  items.forEach(item => {
-    if (item.show === false) return;
-    if (item.suffix) {
-      const annualNote = item.annualDays ? ` (=${item.annualDays}일)` : '';
-      html += `<div class="lv-dash-item">${item.label} <span class="lv-dash-value">${item.used}${item.suffix}${annualNote}</span></div>`;
-      return;
-    }
-    const remain = typeof item.total === 'number' ? item.total - item.used : null;
-    let cls = 'lv-dash-value';
-    if (remain !== null && remain <= 0) cls += ' over';
-    else if (remain !== null && remain <= Math.ceil((typeof item.total === 'number' ? item.total : 0) * 0.2)) cls += ' warning';
-    html += `<div class="lv-dash-item">${item.label}(<span class="${cls}">${item.used}/${item.total}</span>)</div>`;
-  });
-
-  container.innerHTML = html;
-}
-
-// 카테고리별 아이콘 매핑
-const LV_CAT_ICONS = {
-  legal: '🏖️', health: '🏥', education: '📚',
-  family: '👪', ceremony: '🎗️', maternity: '🤱',
-  special: '🔷', other: '⬜'
-};
-
-// 카테고리별 색상 (캘린더 뷰와 동일)
-const LV_CAT_COLORS = {
-  legal:     { bg: 'rgba(16,185,129,0.15)',  accent: 'rgba(16,185,129,0.25)',  header: 'rgba(16,185,129,0.10)' },
-  health:    { bg: 'rgba(244,63,94,0.12)',    accent: 'rgba(244,63,94,0.22)',   header: 'rgba(244,63,94,0.08)' },
-  education: { bg: 'rgba(139,92,246,0.12)',   accent: 'rgba(139,92,246,0.22)',  header: 'rgba(139,92,246,0.08)' },
-  family:    { bg: 'rgba(99,102,241,0.12)',   accent: 'rgba(99,102,241,0.22)',  header: 'rgba(99,102,241,0.08)' },
-  ceremony:  { bg: 'rgba(245,158,11,0.12)',   accent: 'rgba(245,158,11,0.22)',  header: 'rgba(245,158,11,0.08)' },
-  maternity: { bg: 'rgba(6,182,212,0.12)',    accent: 'rgba(6,182,212,0.22)',   header: 'rgba(6,182,212,0.08)' },
-  special:   { bg: 'rgba(99,102,241,0.12)',   accent: 'rgba(99,102,241,0.22)',  header: 'rgba(99,102,241,0.08)' },
-};
-const LV_CAT_DEFAULT_COLOR = { bg: 'rgba(99,102,241,0.10)', accent: 'rgba(99,102,241,0.20)', header: 'rgba(99,102,241,0.06)' };
-
-// 유형 select 동적 생성 (성별 필터 + optgroup)
-function populateLvTypeSelect() {
-  const container = document.getElementById('lvTypeSelectContainer');
-  if (!container) return;
-  container.innerHTML = '';
-
-  const profile = PROFILE.load();
-  const gender = profile ? profile.gender : '';
-  const groups = LEAVE.getGroupedTypes(gender);
-
-  // 현재 선택된 유형
-  const lvTypeInput = document.getElementById('lvType');
-  const selectedType = lvTypeInput ? lvTypeInput.value : '';
-
-  // 기본적으로 토글이 펼쳐진 그룹들
-  const defaultOpenGroups = ['legal', 'education', 'health', 'family'];
-
-  // 사용 현황 데이터 가져오기
-  const year = typeof lvCurrentYear !== 'undefined' ? lvCurrentYear : new Date().getFullYear();
-  const records = LEAVE.getYearRecords(year);
-  const usage = {};
-  let timeLeaveHours = 0;
-  records.forEach(r => {
-    if (!usage[r.type]) usage[r.type] = 0;
-    usage[r.type] += (r.days || 0);
-    if (r.type === 'time_leave') timeLeaveHours += (r.hours || 0);
-  });
-
-  groups.forEach(group => {
-    const colors = LV_CAT_COLORS[group.id] || LV_CAT_DEFAULT_COLOR;
-
-    const groupDiv = document.createElement('div');
-    groupDiv.style.marginBottom = '6px';
-    groupDiv.style.background = 'var(--bg-card)';
-    groupDiv.style.borderRadius = 'var(--radius-sm)';
-    groupDiv.style.overflow = 'hidden';
-    groupDiv.style.border = '1px solid var(--border-glass)';
-    groupDiv.style.flexShrink = '0';
-
-    // 제목 (토글 버튼)
-    const titleDiv = document.createElement('div');
-    titleDiv.style.fontSize = 'var(--text-body-normal)';
-    titleDiv.style.fontWeight = '700';
-    titleDiv.style.color = 'var(--text-primary)';
-    titleDiv.style.padding = '10px 14px';
-    titleDiv.style.cursor = 'pointer';
-    titleDiv.style.display = 'flex';
-    titleDiv.style.alignItems = 'center';
-    titleDiv.style.justifyContent = 'space-between';
-    titleDiv.style.background = colors.header;
-
-    const isOpenByDefault = defaultOpenGroups.includes(group.id);
-
-    titleDiv.innerHTML = `<span>${group.label}</span><span class="toggle-icon" style="color:var(--text-muted); transition:transform 0.2s;">${isOpenByDefault ? '▲' : '▼'}</span>`;
-    groupDiv.appendChild(titleDiv);
-
-    const itemsContainer = document.createElement('div');
-    itemsContainer.style.padding = '8px 12px';
-    itemsContainer.style.borderTop = '1px solid var(--border-glass)';
-    itemsContainer.style.display = isOpenByDefault ? 'block' : 'none';
-
-    // 2컬럼 레이아웃 적용
-    if (group.id !== 'other') {
-      itemsContainer.style.display = isOpenByDefault ? 'grid' : 'none';
-      if (itemsContainer.style.display === 'grid') {
-        itemsContainer.style.gridTemplateColumns = '1fr 1fr';
-        itemsContainer.style.gap = '6px';
-      }
-    }
-
-    titleDiv.onclick = () => {
-      const icon = titleDiv.querySelector('.toggle-icon');
-      if (itemsContainer.style.display === 'none') {
-        if (group.id !== 'other') {
-          itemsContainer.style.display = 'grid';
-          itemsContainer.style.gridTemplateColumns = '1fr 1fr';
-          itemsContainer.style.gap = '6px';
-        } else {
-          itemsContainer.style.display = 'block';
-        }
-        icon.textContent = '▲';
-      } else {
-        itemsContainer.style.display = 'none';
-        icon.textContent = '▼';
-      }
-    };
-
-    group.items.forEach(t => {
-      let label = t.label;
-      if (t.isTimeBased && t.id !== 'time_leave') label += ' (시간단위)';
-
-      const usedRaw = usage[t.id] || 0;
-      const usedDays = Math.round(usedRaw * 10) / 10;
-      let statusHtml = '';
-
-      if (t.id === 'annual' || t.usesAnnual) {
-        const annualData = LEAVE.calcAnnualSummary(year, typeof lvTotalAnnual !== 'undefined' ? lvTotalAnnual : 15);
-        if (t.id === 'time_leave') {
-          statusHtml = `<span style="color: var(--accent-emerald); font-size: var(--text-body-normal); font-weight: 700; margin-left: auto;">${timeLeaveHours}h 사용</span>`;
-        } else {
-          statusHtml = `<span style="color: var(--accent-emerald); font-size: var(--text-body-normal); font-weight: 700; margin-left: auto;">${annualData.usedAnnual}/${annualData.totalAnnual}</span>`;
-        }
-      } else if (t.quota !== null) {
-        statusHtml = `<span style="color: var(--accent-emerald); font-size: var(--text-body-normal); font-weight: 700; margin-left: auto;">${usedDays}/${t.quota}</span>`;
-      } else {
-        statusHtml = `<span style="color: var(--accent-emerald); font-size: var(--text-body-normal); font-weight: 700; margin-left: auto;">${usedDays}일 사용</span>`;
-      }
-
-      const isSelected = t.id === selectedType;
-
-      const btn = document.createElement('button');
-      btn.className = 'btn';
-      btn.style.width = '100%';
-      btn.style.display = 'flex';
-      btn.style.alignItems = 'center';
-      btn.style.justifyContent = 'space-between';
-      btn.style.marginBottom = group.id !== 'other' ? '0' : '4px';
-      btn.style.padding = '10px 12px';
-      btn.style.background = isSelected ? colors.accent : colors.bg;
-      btn.style.border = isSelected ? '2px solid var(--accent-emerald)' : '1px solid var(--border-glass)';
-      btn.style.borderRadius = 'var(--radius-sm)';
-      btn.style.color = 'var(--text-primary)';
-      btn.style.fontSize = 'var(--text-body-normal)';
-      btn.style.fontWeight = '600';
-      btn.onclick = () => selectLvType(t.id, t.label);
-      btn.innerHTML = `<span>${isSelected ? '✓ ' : ''}${label}</span>${statusHtml}`;
-
-      const baseBg = colors.bg;
-      const hoverBg = colors.accent;
-      if (!isSelected) {
-        btn.onmouseover = () => btn.style.background = hoverBg;
-        btn.onmouseout = () => btn.style.background = baseBg;
-      }
-
-      itemsContainer.appendChild(btn);
-    });
-
-    groupDiv.appendChild(itemsContainer);
-    container.appendChild(groupDiv);
-  });
-}
-
-function openLvTypeBottomSheet() {
-  document.getElementById('lvTypeSelectOverlay').classList.add('show');
-  document.getElementById('lvTypeSelectSheet').classList.add('show');
-}
-
-function closeLvTypeBottomSheet() {
-  document.getElementById('lvTypeSelectOverlay').classList.remove('show');
-  document.getElementById('lvTypeSelectSheet').classList.remove('show');
-}
-
-function selectLvType(id, label) {
-  const lvTypeInput = document.getElementById('lvType');
-  const btnText = document.getElementById('lvTypeBtnText');
-  if (lvTypeInput && btnText) {
-    lvTypeInput.value = id;
-    btnText.textContent = label;
-    onLvTypeChange();
-  }
-  closeLvTypeBottomSheet();
-  populateLvTypeSelect(); // 선택 상태 갱신
-}
-
-function updateLvTypeBtnText(id) {
-  const typeInfo = LEAVE.getTypeById(id);
-  if (!typeInfo) return;
-
-  let label = typeInfo.label; // 아이콘, [무급] 태그 제거
-  if (typeInfo.isTimeBased && id !== 'time_leave') label += ' (시간단위)'; // (시간단위) 제거
-  const btnText = document.getElementById('lvTypeBtnText');
-  if (btnText) btnText.textContent = label;
-}
-
-// recordsByDay 빌더 - 주말/공휴일 제외 (병가는 역일 기준이므로 포함)
-function buildLvRecordsByDay(year, month, monthRecords, holidayMap) {
-  const recordsByDay = {};
-  monthRecords.forEach(r => {
-    const useCalendarDays = (r.type === 'sick'); // 병가만 역일 기준
-    const start = new Date(r.startDate);
-    const end = new Date(r.endDate);
-    const cur = new Date(start);
-    while (cur <= end) {
-      if (cur.getMonth() + 1 === month && cur.getFullYear() === year) {
-        const d = cur.getDate();
-        const dow = cur.getDay();
-        const isWeekend = (dow === 0 || dow === 6);
-        const isHoliday = !!(holidayMap && holidayMap[d]);
-        // 병가가 아닌 경우 주말·공휴일은 연차 소진 없으므로 표시 제외
-        if (!useCalendarDays && (isWeekend || isHoliday)) {
-          cur.setDate(cur.getDate() + 1);
-          continue;
-        }
-        if (!recordsByDay[d]) recordsByDay[d] = [];
-        recordsByDay[d].push(r);
-      }
-      cur.setDate(cur.getDate() + 1);
-    }
-  });
-  return recordsByDay;
-}
-
-async function refreshLvCalendar() {
-  const year = lvCurrentYear;
-  const month = lvCurrentMonth;
-
-  // 1. 빠른 렌더링 (공휴일 미적용, 주말만 제외)
-  const monthRecords = LEAVE.getMonthRecords(year, month);
-  const recordsByDayFast = buildLvRecordsByDay(year, month, monthRecords, lvHolidayMap);
-
-  renderLvCalendar(year, month, recordsByDayFast);
-  renderLvRecordList(year);
-  renderLvStats(year);
-  renderLvQuotaTable(year);
-  resetLvPanel();
-
-  // 2. 공휴일 데이터 백그라운드 로드
-  let workInfo;
-  try { workInfo = await HOLIDAYS.calcWorkDays(year, month); }
-  catch { workInfo = { holidays: [], anniversaries: [] }; }
-
-  lvHolidayMap = {};
-  (workInfo.holidays || []).forEach(h => { lvHolidayMap[h.day] = h.name; });
-
-  // 3. 공휴일 포함해서 재빌드 후 재렌더링
-  const recordsByDay = buildLvRecordsByDay(year, month, monthRecords, lvHolidayMap);
-  renderLvCalendar(year, month, recordsByDay);
-}
-
-function renderLvCalendar(year, month, recordsByDay) {
-  const container = document.getElementById('lvCalendar');
-  if (!container) return;
-
-  const daysInMonth = new Date(year, month, 0).getDate();
-  const firstDow = new Date(year, month - 1, 1).getDay();
-  const today = new Date();
-  const isCurrentMonth = (today.getFullYear() === year && (today.getMonth() + 1) === month);
-  const todayDay = isCurrentMonth ? today.getDate() : -1;
-
-  const dowLabels = ['일', '월', '화', '수', '목', '금', '토'];
-  let html = '<div class="ot-cal"><div class="ot-cal-header" style="background:rgba(16,185,129,0.08); color:var(--accent-emerald)">'
-    + '<button class="cal-nav-btn" onclick="lvNavMonth(-1)">◀</button>'
-    + '<span class="cal-nav-title" onclick="lvGoToday()">' + year + '년 ' + month + '월</span>'
-    + '<button class="cal-nav-btn" onclick="lvNavMonth(1)">▶</button>'
-    + '</div>';
-  html += '<div class="ot-cal-grid">';
-
-  dowLabels.forEach((d, i) => {
-    const cls = i === 0 ? 'sun' : (i === 6 ? 'sat' : '');
-    html += `<div class="ot-cal-dow ${cls}">${d}</div>`;
-  });
-
-  for (let i = 0; i < firstDow; i++) html += '<div class="ot-cal-day empty"></div>';
-
-  let hasHolidayInMonth = false;
-  const presentCategories = new Set();
-
-  for (let d = 1; d <= daysInMonth; d++) {
-    const dow = new Date(year, month - 1, d).getDay();
-    const isWknd = (dow === 0 || dow === 6);
-    const isHoliday = !!lvHolidayMap[d];
-    const isToday = (d === todayDay);
-    const isSelected = lvSelectedDate && lvSelectedDate.day === d;
-    const dayRecords = recordsByDay[d] || [];
-
-    let cls = 'ot-cal-day';
-    if (isHoliday) {
-      cls += ' holiday';
-      hasHolidayInMonth = true;
-    } else if (isWknd) {
-      cls += ' weekend';
-    }
-    if (isToday) cls += ' today';
-    if (isSelected) cls += ' selected';
-
-    // 휴가 유형 텍스트 표시 (점 대신 유형명) + 공휴일 이름
-    let dotsHtml = '<div style="display:flex; flex-direction:column; gap:1px; margin-top:1px;">';
-    if (isHoliday) {
-      const hName = lvHolidayMap[d];
-      const hShort = hName.length > 3 ? hName.substring(0, 3) : hName;
-      dotsHtml += `<span class="cal-badge" style="background:rgba(244,63,94,0.15); color:var(--accent-rose); font-weight:600;">${hShort}</span>`;
-    }
-    const uniqueTypes = [...new Set(dayRecords.map(r => r.type))];
-    uniqueTypes.forEach(t => {
-      const typeInfo = LEAVE.getTypeById(t);
-      if (typeInfo && typeInfo.category) presentCategories.add(typeInfo.category);
-      const label = typeInfo ? typeInfo.label : t;
-      // 3글자까지만 표시 (모바일 공간 절약)
-      const shortLabel = label.length > 3 ? label.substring(0, 3) : label;
-      const catColors = {
-        legal: 'rgba(16,185,129,0.15)',
-        health: 'rgba(244,63,94,0.12)',
-        education: 'rgba(139,92,246,0.12)',
-        family: 'rgba(99,102,241,0.12)',
-        ceremony: 'rgba(245,158,11,0.12)',
-        maternity: 'rgba(6,182,212,0.12)',
-        special: 'rgba(99,102,241,0.12)',
-      };
-      const bg = catColors[typeInfo?.category] || 'rgba(99,102,241,0.1)';
-      dotsHtml += `<span class="cal-badge" style="background:${bg}; color:#1a1a1a;">${shortLabel}</span>`;
-    });
-    dotsHtml += '</div>';
-
-    html += `<div class="${cls}" data-day="${d}" onclick="onLvDateClick(${year},${month},${d})">${d}${dotsHtml}</div>`;
-  }
-
-  html += '</div>';
-
-  let legendHtml = '';
-
-  if (hasHolidayInMonth) {
-    legendHtml += `<span style="display:flex; align-items:center; gap:4px;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--accent-rose);"></span> <span style="font-size:12px; color:var(--text-secondary);">공휴일</span></span>`;
-  }
-
-  const catNames = {
-    legal: '법정',
-    health: '건강',
-    education: '교육',
-    family: '가족',
-    ceremony: '청원',
-    maternity: '출산',
-    special: '특별'
-  };
-  const catColors = {
-    legal: 'rgba(16,185,129,0.15)',
-    health: 'rgba(244,63,94,0.12)',
-    education: 'rgba(139,92,246,0.12)',
-    family: 'rgba(99,102,241,0.12)',
-    ceremony: 'rgba(245,158,11,0.12)',
-    maternity: 'rgba(6,182,212,0.12)',
-    special: 'rgba(99,102,241,0.12)',
-  };
-
-  ['legal', 'health', 'education', 'family', 'ceremony', 'maternity', 'special'].forEach(cat => {
-    if (presentCategories.has(cat)) {
-      legendHtml += `<span><span class="cal-badge" style="background:${catColors[cat]}; color:#1a1a1a; padding:2px 6px;">${catNames[cat]}</span></span>`;
-    }
-  });
-
-  if (legendHtml !== '') {
-    html += `<div class="ot-cal-legend" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:flex-start; padding:10px 12px 16px;">
-      ${legendHtml}
-    </div>`;
-  }
-
-  html += '</div>';
-  container.innerHTML = html;
-}
-
-function onLvDateClick(year, month, day) {
-  lvSelectedDate = { year, month, day };
-  document.querySelectorAll('#lvCalendar .ot-cal-day').forEach(el => el.classList.remove('selected'));
-  const targetCell = document.querySelector(`#lvCalendar .ot-cal-day[data-day="${day}"]`);
-  if (targetCell) targetCell.classList.add('selected');
-
-  const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-
-  // 기존 기록이 있으면 자동으로 수정 모드로 열기
-  const existing = LEAVE.getDateRecords(dateStr);
-  if (existing.length > 0) {
-    editLvRecord(existing[0].id);
-    return;
-  }
-
-  // 새 기록 입력 모드
-  const dow = new Date(year, month - 1, day).getDay();
-  const dowNames = ['일', '월', '화', '수', '목', '금', '토'];
-
-  let dateLabel = `${month}월 ${day}일 (${dowNames[dow]})`;
-  if (lvHolidayMap[day]) dateLabel += ` 🔴 ${lvHolidayMap[day]}`;
-
-  document.getElementById('lvPanelDate').textContent = dateLabel;
-  document.getElementById('lvStartDate').value = dateStr;
-  document.getElementById('lvEndDate').value = dateStr;
-  document.getElementById('lvEditId').value = '';
-  document.getElementById('lvDeleteBtn').style.display = 'none';
-  document.getElementById('lvSaveBtn').textContent = '저장';
-  document.getElementById('lvMemo').value = '';
-  document.getElementById('lvType').value = 'annual';
-  updateLvTypeBtnText('annual');
-
-  onLvTypeChange();
-  previewLvCalc();
-
-  // 바텀시트 열기
-  openLvBottomSheet();
-}
-
-// ── 휴가 바텀시트 컨트롤 ──
-function openLvBottomSheet() {
-  const overlay = document.getElementById('lvInputOverlay');
-  const sheet = document.getElementById('lvInputSheet');
-  if (overlay && sheet) {
-    overlay.classList.add('show');
-    sheet.classList.add('show');
-  }
-}
-
-function closeLvBottomSheet() {
-  const overlay = document.getElementById('lvInputOverlay');
-  const sheet = document.getElementById('lvInputSheet');
-  if (overlay && sheet) {
-    overlay.classList.remove('show');
-    sheet.classList.remove('show');
-  }
-}
-
-function resetLvPanel() {
-  lvSelectedDate = null;
-  document.querySelectorAll('#lvCalendar .ot-cal-day').forEach(el => el.classList.remove('selected'));
-  document.getElementById('lvPanelDate').textContent = '날짜를 선택하세요';
-  document.getElementById('lvEditId').value = '';
-  document.getElementById('lvDeleteBtn').style.display = 'none';
-  document.getElementById('lvSaveBtn').textContent = '저장';
-  document.getElementById('lvMemo').value = '';
-  document.getElementById('lvPreview').innerHTML = '';
-
-  // 오늘 날짜 기본 설정
-  const now = new Date();
-  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-  document.getElementById('lvStartDate').value = todayStr;
-  document.getElementById('lvEndDate').value = todayStr;
-  document.getElementById('lvType').value = 'annual';
-  updateLvTypeBtnText('annual');
-  onLvTypeChange();
-
-  // 바텀시트 닫기
-  closeLvBottomSheet();
-}
-
-// 하위 호환
-function closeLvPanel() { resetLvPanel(); }
-
-function onLvTypeChange() {
-  const type = document.getElementById('lvType').value;
-  const typeInfo = LEAVE.getTypeById(type);
-
-  // 청원/경조 상세정보 표시
-  const ceremonyPanel = document.getElementById('lvCeremonyInfo');
-  if (typeInfo && typeInfo.ceremonyDays !== undefined) {
-    document.getElementById('lvCeremonyDays').innerHTML = `<strong>휴가일수:</strong> ${typeInfo.ceremonyDays}일`;
-    document.getElementById('lvCeremonyPay').innerHTML = typeInfo.ceremonyPay > 0
-      ? `<strong>경조비:</strong> ₩${typeInfo.ceremonyPay.toLocaleString()}`
-      : `<strong>경조비:</strong> 없음`;
-    document.getElementById('lvCeremonyDocs').innerHTML = typeInfo.docs
-      ? `<strong>구비서류:</strong> ${typeInfo.docs}`
-      : '';
-    document.getElementById('lvCeremonyExtra').innerHTML = typeInfo.extra
-      ? `💡 ${typeInfo.extra}`
-      : '';
-    ceremonyPanel.style.display = 'block';
-  } else {
-    ceremonyPanel.style.display = 'none';
-  }
-
-  // 한도 현황 뱃지
-  const quotaBadge = document.getElementById('lvQuotaBadge');
-  const year = lvCurrentYear;
-  if (typeInfo && typeInfo.quota !== null && !typeInfo.usesAnnual) {
-    let effectiveQuota = typeInfo.quota;
-    // 가족돌봄(유급): 자녀 2명 이상 → 3일 (제42조, 2021.11 단협)
-    if (typeInfo.id === 'family_care_paid') {
-      const _pf = typeof PROFILE !== 'undefined' ? PROFILE.load() : null;
-      if (_pf && (parseInt(_pf.numChildren) || 0) >= 2) effectiveQuota = 3;
-    }
-    const records = LEAVE.getYearRecords(year);
-    const usedRaw = records.filter(r => r.type === type).reduce((sum, r) => sum + (r.days || 0), 0);
-    const used = Math.round(usedRaw * 10) / 10;
-    const remain = Math.round((effectiveQuota - usedRaw) * 10) / 10;
-    const color = remain <= 0 ? 'var(--accent-rose)' : 'var(--accent-emerald)';
-    const refNote = typeInfo.ref ? `<br><span style="color:var(--text-muted); font-size:var(--text-body-normal);">📖 ${typeInfo.ref}</span>` : '';
-    quotaBadge.innerHTML = `<div style="padding:6px 10px; border-radius:6px; background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.15); font-size:var(--text-body-normal);">
-      📊 <strong>${typeInfo.label}</strong> 한도: ${effectiveQuota}일 | 사용: ${used}일 | <span style="color:${color}; font-weight:700;">잔여: ${remain}일</span>
-      ${remain <= 0 ? '<br><span style="color:var(--accent-rose)">⚠️ 한도 초과!</span>' : ''}${refNote}
-    </div>`;
-    quotaBadge.style.display = 'block';
-  } else if (typeInfo && typeInfo.usesAnnual) {
-    if (lvTotalAnnual > 0) {
-      const summary = LEAVE.calcAnnualSummary(year, lvTotalAnnual);
-      quotaBadge.innerHTML = `<div style="padding:6px 10px; border-radius:6px; background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.15); font-size:var(--text-body-normal);">
-        📅 연차 한도: ${lvTotalAnnual}일 | 사용: ${summary.usedAnnual}일 | <span style="color:var(--accent-emerald); font-weight:700;">잔여: ${summary.remainingAnnual}일</span>
-      </div>`;
-    } else {
-      quotaBadge.innerHTML = `<div style="padding:6px 10px; border-radius:6px; background:rgba(251,191,36,0.06); border:1px solid rgba(251,191,36,0.2); font-size:var(--text-body-normal); color:var(--text-primary); font-weight:600;">
-        ⚠️ 프로필에서 입사일을 설정하면 연차 한도가 자동 계산됩니다.
-      </div>`;
-    }
-    quotaBadge.style.display = 'block';
-  } else {
-    quotaBadge.style.display = 'none';
-  }
-
-  // 시간차 선택 시 시간 입력 표시 및 날짜 필드 숨김
-  const timeArea = document.getElementById('lvTimeInputArea');
-  const dateArea = document.getElementById('lvDateFields');
-  if (typeInfo && typeInfo.isTimeBased) {
-    timeArea.style.display = 'block';
-    if (dateArea) dateArea.style.display = 'none';
-    calcLvTimeHours();
-  } else {
-    timeArea.style.display = 'none';
-    if (dateArea) dateArea.style.display = '';
-    document.getElementById('lvTimeCalcResult').textContent = '';
-  }
-
-  previewLvCalc();
-}
-
-// 시간차 시간 계산
-function calcLvTimeHours() {
-  const startTime = document.getElementById('lvStartTime').value;
-  const endTime = document.getElementById('lvEndTime').value;
-  if (!startTime || !endTime) return;
-
-  const [sh, sm] = startTime.split(':').map(Number);
-  const [eh, em] = endTime.split(':').map(Number);
-  let hours = (eh + em / 60) - (sh + sm / 60);
-  if (hours < 0) hours += 24;
-  // 점심시간 1시간 제외 (4시간 이상일 때)
-  if (hours >= 4) hours -= 1;
-  hours = Math.max(0, hours);
-
-  const days = Math.round(hours / 8 * 10) / 10;
-  const resultEl = document.getElementById('lvTimeCalcResult');
-  resultEl.innerHTML = `${hours.toFixed(1)}시간 = <strong>${days.toFixed(1)}일</strong> 차감 (8시간 = 1일)`;
-
-  previewLvCalc();
-}
-
-// 시간차 타입일 때 시간/일수 반환
-function getLvTimeInfo() {
-  const type = document.getElementById('lvType').value;
-  const typeInfo = LEAVE.getTypeById(type);
-  if (!typeInfo || !typeInfo.isTimeBased) return null;
-
-  const startTime = document.getElementById('lvStartTime').value;
-  const endTime = document.getElementById('lvEndTime').value;
-  if (!startTime || !endTime) return null;
-
-  const [sh, sm] = startTime.split(':').map(Number);
-  const [eh, em] = endTime.split(':').map(Number);
-  let hours = (eh + em / 60) - (sh + sm / 60);
-  if (hours < 0) hours += 24;
-  if (hours >= 4) hours -= 1;
-  hours = Math.max(0, hours);
-  const days = Math.round(hours / 8 * 10) / 10;
-
-  return { hours: Math.round(hours * 10) / 10, days, startTime, endTime };
-}
-
-function previewLvCalc() {
-  const preview = document.getElementById('lvPreview');
-  const type = document.getElementById('lvType').value;
-  const typeInfo = LEAVE.getTypeById(type);
-  if (!typeInfo) { preview.innerHTML = ''; return; }
-
-  const startStr = document.getElementById('lvStartDate').value;
-  const endStr = document.getElementById('lvEndDate').value;
-  if (!startStr || !endStr) { preview.innerHTML = ''; return; }
-
-  let days;
-  const timeInfo = getLvTimeInfo();
-  if (timeInfo !== null) {
-    days = timeInfo.days;
-  } else if (typeInfo.ceremonyDays) {
-    days = typeInfo.ceremonyDays;
-  } else {
-    days = LEAVE._calcBusinessDays(startStr, endStr, { calendarDays: type === 'sick' });
-  }
-
-  // 소수점 1자리로 반올림
-  const daysRound = Math.round(days * 10) / 10;
-  let html = `<div class="preview-row"><span>일수</span><span class="val">${daysRound}일</span></div>`;
-
-  if (typeInfo.usesAnnual) {
-    if (lvTotalAnnual > 0) {
-      const summary = LEAVE.calcAnnualSummary(parseInt(startStr.split('-')[0]), lvTotalAnnual);
-      const remain = summary.remainingAnnual;
-      const newRemain = Math.round((remain - daysRound) * 10) / 10;
-      html += `<div class="preview-row"><span>연차 차감</span><span class="val" style="color:var(--accent-amber)">-${daysRound}일</span></div>`;
-      html += `<div class="preview-row"><span>잔여 연차</span><span class="val">${remain}일 → ${newRemain}일</span></div>`;
-    } else {
-      html += `<div class="preview-row"><span>연차 차감</span><span class="val" style="color:var(--accent-amber)">-${daysRound}일</span></div>`;
-      html += `<div class="preview-row"><span>잔여 연차</span><span class="val" style="color:var(--text-muted)">프로필 입사일 설정 필요</span></div>`;
-    }
-  }
-
-  // 급여 공제 미리보기
-  if (typeInfo.deductType === 'basePay' || typeInfo.deductType === 'ordinary') {
-    const profile = PROFILE.load();
-    const wage = profile ? PROFILE.calcWage(profile) : null;
-    let deduction = 0;
-    let basisLabel = '';
-    let dailyAmount = 0;
-
-    if (typeInfo.deductType === 'basePay') {
-      // 생리휴가: 기본급 월액 / 30 × 일수
-      const monthlyBasePay = wage && wage.breakdown ? (wage.breakdown['기준기본급'] || 0) : 0;
-      dailyAmount = Math.round(monthlyBasePay / 30);
-      deduction = dailyAmount * days;
-      basisLabel = `기본급 일액 ${CALC.formatCurrency(dailyAmount)} (보수규정 제7조)`;
-    } else {
-      // 무급: 통상임금 월액 / 30 × 일수
-      const monthlyWage = wage ? wage.monthlyWage : 0;
-      dailyAmount = Math.round(monthlyWage / 30);
-      deduction = dailyAmount * days;
-      basisLabel = `통상임금 일액 ${CALC.formatCurrency(dailyAmount)} (보수규정 제7조②)`;
-    }
-
-    if (deduction > 0) {
-      html += `<div class="preview-row"><span>급여 차감</span><span class="val" style="color:var(--accent-rose)">-₩${Math.round(deduction).toLocaleString()}</span></div>`;
-      html += `<div class="preview-row"><span>공제기준</span><span class="val" style="font-size:var(--text-label-small); color:var(--text-muted)">${basisLabel}</span></div>`;
-    } else {
-      html += `<div class="preview-row"><span>급여 차감</span><span class="val" style="color:var(--accent-amber)">⚠️ 프로필 저장 후 자동 계산</span></div>`;
-    }
-  } else {
-    html += `<div class="preview-row"><span>급여 차감</span><span class="val" style="color:var(--accent-emerald)">₩0 (유급)</span></div>`;
-  }
-
-  preview.innerHTML = html;
-}
-
-function saveLvRecord() {
-  const type = document.getElementById('lvType').value;
-  const startDate = document.getElementById('lvStartDate').value;
-  const endDate = document.getElementById('lvEndDate').value;
-  const memo = document.getElementById('lvMemo').value;
-  const editId = document.getElementById('lvEditId').value;
-
-  if (!startDate || !endDate) { alert('시작일/종료일을 선택하세요.'); return; }
-  if (new Date(endDate) < new Date(startDate)) { alert('종료일이 시작일보다 이전입니다.'); return; }
-
-  // 새 기록 추가 시 날짜 중복 검사 (수정 모드 제외)
-  if (!editId) {
-    const year = startDate.split('-')[0];
-    const yearRecords = LEAVE.getYearRecords(parseInt(year));
-    const overlap = yearRecords.find(r => {
-      return new Date(r.startDate) <= new Date(endDate) && new Date(r.endDate) >= new Date(startDate);
-    });
-    if (overlap) {
-      const typeInfo2 = LEAVE.getTypeById(overlap.type);
-      alert(`해당 기간에 이미 저장된 휴가가 있습니다.\n(${typeInfo2 ? typeInfo2.label : overlap.type}: ${overlap.startDate} ~ ${overlap.endDate})\n\n날짜를 클릭하면 기존 기록을 수정할 수 있습니다.`);
-      return;
-    }
-  }
-
-  const typeInfo = LEAVE.getTypeById(type);
-  const profile = PROFILE.load();
-  const wage = profile ? PROFILE.calcWage(profile) : null;
-  const hourlyRate = wage ? wage.hourlyRate : 0;
-  const monthlyBasePay = wage && wage.breakdown ? (wage.breakdown['기준기본급'] || 0) : 0;
-
-  let days;
-  let hours = null;
-  let startTimeVal = null;
-  let endTimeVal = null;
-  const timeInfo = getLvTimeInfo();
-  if (timeInfo !== null) {
-    days = timeInfo.days;
-    hours = timeInfo.hours;
-    startTimeVal = timeInfo.startTime;
-    endTimeVal = timeInfo.endTime;
-  } else if (typeInfo && typeInfo.ceremonyDays) {
-    days = typeInfo.ceremonyDays;
-  } else {
-    days = LEAVE._calcBusinessDays(startDate, endDate, { calendarDays: type === 'sick' });
-  }
-
-  const record = { type, startDate, endDate, days, memo, hourlyRate, monthlyBasePay };
-  if (hours !== null) {
-    record.hours = hours;
-    record.startTime = startTimeVal;
-    record.endTime = endTimeVal;
-  }
-
-  if (editId) {
-    LEAVE.updateRecord(editId, record);
-  } else {
-    LEAVE.addRecord(record);
-  }
-
-  refreshLvCalendar();
-  closeLvBottomSheet();
-}
-
-function editLvRecord(id) {
-  const all = LEAVE._loadAll();
-  let record = null;
-  for (const records of Object.values(all)) {
-    record = records.find(r => r.id === id);
-    if (record) break;
-  }
-  if (!record) return;
-
-  document.getElementById('lvType').value = record.type;
-  updateLvTypeBtnText(record.type);
-  document.getElementById('lvStartDate').value = record.startDate;
-  document.getElementById('lvEndDate').value = record.endDate;
-  document.getElementById('lvMemo').value = record.memo || '';
-  document.getElementById('lvEditId').value = id;
-  document.getElementById('lvDeleteBtn').style.display = 'block';
-  document.getElementById('lvSaveBtn').textContent = '수정';
-
-  // 시간차 편집 시 시간 복원
-  if (record.type === 'time_leave' && record.startTime && record.endTime) {
-    document.getElementById('lvStartTime').value = record.startTime;
-    document.getElementById('lvEndTime').value = record.endTime;
-  }
-
-  const [y, m, d] = record.startDate.split('-').map(Number);
-  const dowNames = ['일', '월', '화', '수', '목', '금', '토'];
-  const dow = new Date(y, m - 1, d).getDay();
-  document.getElementById('lvPanelDate').textContent = `${m}월 ${d}일 (${dowNames[dow]})`;
-
-  onLvTypeChange();
-  previewLvCalc();
-
-  // 바텀시트 열기
-  openLvBottomSheet();
-}
-
-function deleteLvRecord() {
-  const id = document.getElementById('lvEditId').value;
-  if (!id) return;
-  // confirm 없이 즉시 삭제 (confirm이 환경에 따라 블록될 수 있음 — 초과근무 삭제와 동일 패턴)
-  LEAVE.deleteRecord(id);
-  closeLvBottomSheet();
-  refreshLvCalendar();
-}
-
-function renderLvStats(year) {
-  const summary = LEAVE.calcAnnualSummary(year, lvTotalAnnual);
-  const el = document.getElementById('lvRecordCount');
-  if (el) el.textContent = summary.recordCount + '건';
-}
-
-function renderLvQuotaTable(year) {
-  const container = document.getElementById('lvQuotaTable');
-  if (!container) return;
-
-  const quotas = LEAVE.calcQuotaSummary(year, lvTotalAnnual);
-  if (quotas.length === 0) {
-    container.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:12px;">프로필 저장 후 확인 가능</p>';
-    return;
-  }
-
-  // 컴팩트 2열 그리드 (미니 프로그레스 바 포함)
-  let html = '<div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">';
-  quotas.forEach(q => {
-    let pct = 0;
-    let remainText = '-';
-    let quotaText = '-';
-
-    if (q.quota !== null) {
-      pct = q.quota > 0 ? Math.min(100, Math.round((q.used / q.quota) * 100)) : 0;
-      remainText = `${q.remaining}일`;
-      quotaText = `${q.quota}일`;
-    } else {
-      pct = 100; // 한도 없는 경우 막대를 꽉 채우거나 마음대로
-      remainText = `제한없음`;
-    }
-
-    const barColor = q.overQuota ? 'var(--accent-rose)' : 'var(--accent-emerald)';
-    const remainColor = q.overQuota ? 'var(--accent-rose)' : (q.quota !== null ? 'var(--accent-emerald)' : 'var(--text-muted)');
-
-    html += `<div style="padding:8px 10px; border-radius:8px; background:var(--bg-glass); border:1px solid var(--border-glass);">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-        <span style="font-weight:600; font-size:var(--text-body-large);">${q.label}</span>
-        <span style="font-size:var(--text-body-normal); font-weight:700; color:${remainColor};">${remainText}</span>
-      </div>
-      <div class="lv-progress-bar" style="margin-bottom:3px; display:${q.quota !== null ? 'block' : 'none'};">
-        <div class="lv-progress-fill" style="width:${pct}%; height:100%; background:${barColor}"></div>
-      </div>
-      <div style="font-size:var(--text-body-normal); color:var(--text-muted);">${q.used}${q.quota !== null ? '/' + quotaText : '일'} 사용 ${q.overQuota ? '⚠️' : ''}</div>
-    </div>`;
-  });
-  html += '</div>';
-  container.innerHTML = html;
-}
-
-function renderLvRecordList(year) {
-  const container = document.getElementById('lvRecordList');
-  if (!container) return;
-
-  // 연도 표시 업데이트
-  const yearEl = document.getElementById('lvRecordYear');
-  if (yearEl) yearEl.textContent = year;
-
-  const records = LEAVE.getYearRecords(year);
-  if (records.length === 0) {
-    container.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:24px;">캘린더에서 날짜를 클릭하여 휴가를 등록하세요.</p>';
-    const extra = document.getElementById('lvQuotaExtra');
-    if (extra) extra.innerHTML = '';
-    return;
-  }
-
-  const sorted = [...records].sort((a, b) => a.startDate.localeCompare(b.startDate));
-
-  // ── 통계 계산 ──
-  let totalDays = 0, paidDays = 0, unpaidDays = 0, totalDeduction = 0;
-  const byCategory = {};
-  const byMonth = {};
-
-  sorted.forEach(r => {
-    const days = r.days || 0;
-    totalDays += days;
-    if (r.isPaid) paidDays += days; else unpaidDays += days;
-    if (r.salaryImpact) totalDeduction += Math.abs(r.salaryImpact);
-
-    const typeInfo = LEAVE.getTypeById(r.type);
-    const cat = typeInfo ? typeInfo.label : r.type;
-    byCategory[cat] = (byCategory[cat] || 0) + days;
-
-    const m = parseInt(r.startDate.split('-')[1]);
-    byMonth[m] = (byMonth[m] || 0) + days;
-  });
-
-  let html = '';
-
-  // ── 요약 카드 ──
-  const round1 = v => Math.round(v);
-  html += `<div class="lv-stats-grid">
-    <div class="lv-stat-card">
-      <div class="lv-stat-num">${round1(totalDays)}</div>
-      <div class="lv-stat-label">총 사용일</div>
-    </div>
-    <div class="lv-stat-card">
-      <div class="lv-stat-num" style="color:var(--accent-emerald)">${round1(paidDays)}</div>
-      <div class="lv-stat-label">유급</div>
-    </div>
-    <div class="lv-stat-card">
-      <div class="lv-stat-num" style="color:var(--accent-rose)">${round1(unpaidDays)}</div>
-      <div class="lv-stat-label">무급</div>
-    </div>
-    <div class="lv-stat-card">
-      <div class="lv-stat-num" style="color:var(--accent-rose)">${totalDeduction > 0 ? '-₩' + totalDeduction.toLocaleString() : '₩0'}</div>
-      <div class="lv-stat-label">급여 차감</div>
-    </div>
-  </div>`;
-
-  container.innerHTML = html;
-
-  // ── 월별사용 + 상세기록 → lvQuotaExtra로 이동 ──
-  const extraContainer = document.getElementById('lvQuotaExtra');
-  if (!extraContainer) return;
-  let extraHtml = '';
-
-  // ── 월별 바 차트 (반기 2줄) ──
-  const maxMonthDays = Math.max(...Object.values(byMonth), 1);
-  extraHtml += '<div style="margin:12px 0 8px; font-size:var(--text-body-normal); font-weight:600; color:var(--text-muted);">월별 사용</div>';
-  extraHtml += '<div class="lv-month-bars">';
-  for (let m = 1; m <= 12; m++) {
-    const d = byMonth[m] || 0;
-    const pct = Math.round((d / maxMonthDays) * 100);
-    const isCurrentMonth = (m === lvCurrentMonth && year === lvCurrentYear);
-    const valInside = pct >= 25 && d > 0;
-    extraHtml += `<div class="lv-month-bar${isCurrentMonth ? ' current' : ''}">
-      ${d > 0 && !valInside ? `<span class="lv-month-bar-val above">${round1(d)}</span>` : ''}
-      <div class="lv-month-bar-fill" style="height:${Math.max(pct, d > 0 ? 10 : 0)}%">
-        ${valInside ? `<span class="lv-month-bar-val">${round1(d)}</span>` : ''}
-      </div>
-      <span class="lv-month-bar-label">${m}월</span>
-    </div>`;
-  }
-  extraHtml += '</div>';
-
-  // ── 상세 기록 (유형별 그룹, 접이식) ──
-  // 유형별로 그룹핑
-  const grouped = {};
-  sorted.forEach(r => {
-    if (!grouped[r.type]) grouped[r.type] = [];
-    grouped[r.type].push(r);
-  });
-
-  extraHtml += `<div style="margin-top:12px;">
-    <div class="collapsible-header" onclick="toggleCollapsible('lvRecordDetail')">
-      <span style="display:flex; align-items:center; gap:8px;"><span class="toggle-icon">▸</span> 상세 기록 (${sorted.length}건)</span>
-    </div>
-    <div class="collapsible-body" id="lvRecordDetail" style="display:none; max-height:400px; overflow-y:auto;">
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">`;
-
-  Object.entries(grouped).forEach(([type, records]) => {
-    const typeInfo = LEAVE.getTypeById(type);
-    const label = typeInfo ? typeInfo.label : type;
-    const isPaid = records[0].isPaid;
-    const totalDaysGroup = records.reduce((s, r) => s + (r.days || 0), 0);
-    const totalHoursGroup = type === 'time_leave' ? records.reduce((s, r) => s + (r.hours || 0), 0) : 0;
-    const totalImpact = records.reduce((s, r) => s + (r.salaryImpact ? Math.abs(r.salaryImpact) : 0), 0);
-
-    // 시간차: 총 시간 + 연차 환산일 표시
-    const daysDisplay = type === 'time_leave'
-      ? `${totalHoursGroup}h = 연차 ${Math.round(totalDaysGroup * 10) / 10}일`
-      : `${Math.round(totalDaysGroup)}일`;
-
-    extraHtml += `<div class="lv-record-item" style="flex-direction:column; align-items:stretch; gap:4px; cursor:default; padding:6px 10px;">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span class="lv-record-type ${isPaid ? 'paid' : 'unpaid'}">${label}</span>
-        <span style="font-size:var(--text-body-normal); font-weight:700; color:${totalImpact ? 'var(--accent-rose)' : 'var(--accent-emerald)'}">
-          ${totalImpact ? '-₩' + totalImpact.toLocaleString() : '유급'} · ${daysDisplay}
-        </span>
-      </div>
-      <div style="display:flex; flex-direction:column; gap:1px; padding-left:4px; max-height:calc(var(--text-body-normal, 14px) * 4.8); overflow-y:auto;">`;
-
-    records.forEach(r => {
-      const dateDisplay = r.startDate === r.endDate
-        ? r.startDate.substring(5)
-        : r.startDate.substring(5) + ' ~ ' + r.endDate.substring(5);
-      let detail = `${dateDisplay} ${Math.round(r.days || 0)}일`;
-      if (r.type === 'time_leave' && r.hours) {
-        const tlDays = Math.round((r.hours / 8) * 10) / 10;
-        detail = `${dateDisplay} ${r.startTime || ''}~${r.endTime || ''} (${r.hours}h = ${tlDays}일)`;
-      }
-      extraHtml += `<div style="display:flex; justify-content:space-between; align-items:center; font-size:var(--text-body-normal); color:var(--text-secondary); cursor:pointer; padding:1px 0;" onclick="editLvRecord('${r.id}')">
-        <span>${detail}${r.memo ? ' <span style="color:var(--text-muted)">' + escapeHtml(r.memo) + '</span>' : ''}</span>
-      </div>`;
-    });
-
-    extraHtml += `</div></div>`;
-  });
-
-  extraHtml += '</div></div></div>';
-
-  extraContainer.innerHTML = extraHtml;
-}
-
-function exportLvData() {
-  const json = LEAVE.exportData();
-  const blob = new Blob([json], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `leave_records_${new Date().toISOString().split('T')[0]}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-  const _msg = document.getElementById('lvExportMsg'); if (_msg) _msg.textContent = '✅ 내보내기 완료';
-}
-
-function importLvData(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const result = LEAVE.importData(e.target.result);
-    const _msg = document.getElementById('lvExportMsg'); if (_msg) _msg.textContent = result.message;
-    if (result.success) refreshLvCalendar();
-  };
-  reader.readAsText(file);
-  event.target.value = '';
-}
-
-// ============================================
-// 🎓 인터랙티브 튜토리얼 시스템
-// ============================================
-
-let tutCurrentStep = 0;
-let tutSteps = [];
-
-const TUTORIAL_STEPS = [
-  // ── 0: 시작 인사 (화면 중앙, 스포트라이트 없음) ──
-  {
-    target: null,
-    title: '🎓 사용법을 알려드릴게요!',
-    body: '실제 화면을 보면서 사용법을 안내해 드릴게요.<br>언제든 <span class="tut-highlight">건너뛰기</span>를 누르면 종료됩니다.',
-    position: 'center',
-  },
-  // ── 1: 개인정보 탭 ──
-  {
-    target: '.nav-tab[data-tab="profile"]',
-    title: '👤 먼저, 개인정보 등록',
-    body: '여기서 <span class="tut-highlight">직종·호봉·입사일</span>을 등록하면<br>시급과 연차가 <span class="tut-highlight">자동 계산</span>됩니다.',
-    position: 'auto',
-  },
-  // ── 2: 휴가 탭으로 이동 ──
-  {
-    target: '.nav-tab[data-tab="leave"]',
-    title: '📅 휴가 탭으로 이동',
-    body: '휴가를 기록하고 관리하는 곳이에요.<br>탭을 눌러볼게요!',
-    position: 'auto',
-    autoAction: () => switchTab('leave'),
-  },
-  // ── 3: 캘린더에서 날짜 선택 ──
-  {
-    target: '#lvCalendar',
-    title: '📆 캘린더에서 날짜 선택',
-    body: '기록하고 싶은 <span class="tut-highlight">날짜를 탭</span>하면<br>아래에서 입력 창이 올라와요.',
-    position: 'below',
-  },
-  // ── 4: 실제 연차 저장 ──
-  {
-    target: null,
-    title: '🏖️ 연차 등록 — 직접 저장해보세요!',
-    body: '',
-    position: 'mock-save',
-    mockSheet: () => {
-      const now = new Date();
-      const y = now.getFullYear(), m = now.getMonth() + 1, d = now.getDate();
-      const dow = ['일','월','화','수','목','금','토'][now.getDay()];
-      const dateStr = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      return `
-        <div style="text-align:center; margin-bottom:12px;">
-          <span style="font-weight:700; font-size:var(--text-title-large); color:var(--text-primary);">${m}월 ${d}일 (${dow})</span>
-        </div>
-        <div class="tut-mock-field active-field">
-          <span class="label">유형</span>
-          <span style="font-weight:600;">🏖️ 연차</span>
-        </div>
-        <div class="tut-mock-field">
-          <span class="label">종료일</span>
-          <span>${dateStr}</span>
-        </div>
-        <div class="tut-mock-field">
-          <span class="label">메모</span>
-          <span style="color:var(--text-muted);">튜토리얼 연습</span>
-        </div>
-        <div style="margin-top:14px;">
-          <button class="tut-mock-btn save" style="border:none; cursor:pointer; width:100%;" onclick="tutSaveDemoLeave()">💾 저장하기</button>
-        </div>
-        <p id="tutSaveResult" style="text-align:center; margin-top:10px; font-size:var(--text-body-normal); color:var(--text-muted);">
-          ↑ 버튼을 눌러 실제로 저장해보세요!
-        </p>
-      `;
-    },
-  },
-  // ── 5: 수정·삭제 방법 (모의 화면) ──
-  {
-    target: null,
-    title: '✏️ 수정 & 삭제 방법',
-    body: '',
-    position: 'mock-edit',
-    mockSheet: () => {
-      const now = new Date();
-      const m = now.getMonth() + 1, d = now.getDate();
-      const dow = ['일','월','화','수','목','금','토'][now.getDay()];
-      return `
-        <div style="text-align:center; margin-bottom:12px;">
-          <span style="font-weight:700; font-size:var(--text-title-large); color:var(--text-primary);">${m}월 ${d}일 (${dow})</span>
-          <span style="font-size:var(--text-body-normal); color:var(--accent-indigo); font-weight:600; display:block; margin-top:2px;">✏️ 수정 모드</span>
-        </div>
-        <div class="tut-mock-field active-field">
-          <span class="label">유형</span>
-          <span style="font-weight:600;">🏖️ 연차 → 🩺 병가</span>
-          <span style="margin-left:auto; color:var(--accent-indigo); font-size:12px; font-weight:700;">변경!</span>
-        </div>
-        <div style="display:flex; gap:10px; margin-top:14px;">
-          <button class="tut-mock-btn delete" style="flex:1; border:none; cursor:pointer;" onclick="tutDeleteDemoLeave()">🗑 삭제</button>
-          <div class="tut-mock-btn save" style="flex:1; opacity:0.5;">💾 수정</div>
-        </div>
-        <p id="tutDeleteResult" style="text-align:center; margin-top:10px; font-size:var(--text-body-normal); color:var(--text-secondary); line-height:1.6;">
-          같은 날짜를 다시 탭하면 <span style="color:var(--accent-indigo); font-weight:600;">수정 모드</span>로 열려요.<br>
-          유형을 바꿔서 저장하거나, <span style="color:var(--accent-rose); font-weight:600;">삭제</span>를 눌러 방금 저장한 기록을 지워보세요!
-        </p>
-      `;
-    },
-  },
-  // ── 6: 시간외 탭 안내 ──
-  {
-    target: '.nav-tab[data-tab="overtime"]',
-    title: '⏰ 시간외·온콜도 동일!',
-    body: '시간외·온콜 기록도 <span class="tut-highlight">같은 방식</span>이에요.<br><br>📆 날짜 탭 → 유형·시간 입력 → 저장<br>✏️ 같은 날짜 다시 탭 → 수정 또는 삭제<br><br><span style="font-size:0.9em; color:var(--text-muted);">캘린더 사용법이 휴가와 동일합니다!</span>',
-    position: 'auto',
-    autoAction: () => switchTab('overtime'),
-  },
-  // ── 7: 완료 ──
-  {
-    target: null,
-    title: '🎉 튜토리얼 완료!',
-    body: '이제 직접 사용해보세요!<br><br>💡 <span class="tut-highlight">개인정보 먼저 등록</span>하면<br>시급·연차가 자동으로 계산됩니다.<br><br><span style="font-size:0.85em; color:var(--text-muted);">홈 탭 하단에서 튜토리얼을 다시 볼 수 있어요.</span>',
-    position: 'center',
-    isLast: true,
-  },
-];
-
-function startTutorial() {
-  // 온보딩 모달 닫기
-  const onb = document.getElementById('onboardingModal');
-  if (onb) onb.style.display = 'none';
-
-  tutCurrentStep = 0;
-  tutSteps = TUTORIAL_STEPS;
-
-  const overlay = document.getElementById('tutorialOverlay');
-  overlay.classList.add('active');
-  overlay.style.display = '';
-
-  // backdrop 클릭 시 아무 동작 안 하게
-  document.getElementById('tutorialBackdrop').onclick = (e) => e.stopPropagation();
-
-  showTutorialStep(0);
-  localStorage.setItem('tutorial_completed', 'true');
-}
-
-function showTutorialStep(idx) {
-  tutCurrentStep = idx;
-  const step = tutSteps[idx];
-  if (!step) { endTutorial(); return; }
-
-  const spotlight = document.getElementById('tutorialSpotlight');
-  const tooltip = document.getElementById('tutorialTooltip');
-  const arrow = document.getElementById('tutorialArrow');
-  const mockSheet = document.getElementById('tutorialMockSheet');
-  const progress = document.getElementById('tutorialProgress');
-  const nextBtn = document.getElementById('tutorialNext');
-  const skipBtn = document.getElementById('tutorialSkip');
-
-  // 모의 시트 숨기기
-  mockSheet.style.display = 'none';
-
-  // autoAction 실행
-  if (step.autoAction) step.autoAction();
-  if (step.beforeShow) step.beforeShow();
-
-  // 진행률
-  progress.textContent = `${idx + 1} / ${tutSteps.length}`;
-
-  // 마지막 스텝
-  if (step.isLast) {
-    nextBtn.textContent = '완료! 🚀';
-    nextBtn.onclick = () => endTutorial();
-    skipBtn.style.display = 'none';
-  } else {
-    nextBtn.textContent = '다음 →';
-    nextBtn.onclick = () => nextTutorialStep();
-    skipBtn.style.display = '';
-  }
-
-  // 제목/본문
-  document.getElementById('tutorialTitle').innerHTML = step.title;
-  document.getElementById('tutorialBody').innerHTML = step.body;
-
-  // 모의 바텀시트 스텝 — 제목/버튼을 시트 안에 통합
-  if (step.position === 'mock-save' || step.position === 'mock-edit') {
-    spotlight.style.display = 'none';
-    arrow.style.display = 'none';
-    tooltip.style.display = 'none'; // 별도 툴팁 숨김
-
-    const stepTotal = tutSteps.length;
-    const isLast = !!step.isLast;
-    const nextLabel = isLast ? '완료! 🚀' : '다음 →';
-    const skipHtml = isLast ? '' : `<button class="tutorial-btn" onclick="endTutorial()" style="font-size:var(--text-body-normal);">건너뛰기</button>`;
-
-    mockSheet.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-        <div class="tutorial-tooltip-title" style="margin:0;">${step.title}</div>
-        <span class="tutorial-progress">${idx + 1} / ${stepTotal}</span>
-      </div>
-      ${step.mockSheet()}
-      <div style="display:flex; justify-content:flex-end; align-items:center; gap:8px; margin-top:16px; padding-top:12px; border-top:1px solid var(--border-glass);">
-        ${skipHtml}
-        <button class="tutorial-btn primary" onclick="nextTutorialStep()">${nextLabel}</button>
-      </div>
-    `;
-    mockSheet.style.display = 'block';
-    return;
-  }
-
-  // 센터 모드 (타겟 없음)
-  if (step.position === 'center' || !step.target) {
-    spotlight.style.display = 'none';
-    arrow.style.display = 'none';
-
-    tooltip.style.display = 'block';
-    tooltip.style.left = '50%';
-    tooltip.style.top = '50%';
-    tooltip.style.transform = 'translate(-50%, -50%)';
-    tooltip.style.bottom = '';
-    return;
-  }
-
-  // 타겟 요소 하이라이트
-  const el = document.querySelector(step.target);
-  if (!el) { nextTutorialStep(); return; }
-
-  // 스크롤하여 보이게
-  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-  setTimeout(() => {
-    const rect = el.getBoundingClientRect();
-    const pad = 6;
-
-    spotlight.style.display = 'block';
-    spotlight.style.left = (rect.left - pad) + 'px';
-    spotlight.style.top = (rect.top - pad) + 'px';
-    spotlight.style.width = (rect.width + pad * 2) + 'px';
-    spotlight.style.height = (rect.height + pad * 2) + 'px';
-    spotlight.classList.add('tutorial-spotlight-pulse');
-
-    // 툴팁 위치
-    tooltip.style.display = 'block';
-    tooltip.style.transform = '';
-
-    const tooltipW = Math.min(320, window.innerWidth - 48);
-    let tooltipLeft = rect.left + rect.width / 2 - tooltipW / 2;
-    tooltipLeft = Math.max(16, Math.min(tooltipLeft, window.innerWidth - tooltipW - 16));
-
-    tooltip.style.left = tooltipLeft + 'px';
-    tooltip.style.width = tooltipW + 'px';
-
-    // 위치 결정: 'auto'면 요소가 화면 하단 절반에 있으면 위에, 아니면 아래에 배치
-    let pos = step.position;
-    if (pos === 'auto') {
-      const midY = window.innerHeight / 2;
-      pos = (rect.top > midY) ? 'above' : 'below';
-    }
-
-    if (pos === 'below') {
-      tooltip.style.top = (rect.bottom + pad + 16) + 'px';
-      tooltip.style.bottom = '';
-      arrow.style.display = 'block';
-      arrow.className = 'tutorial-tooltip-arrow top';
-    } else if (pos === 'above') {
-      tooltip.style.top = '';
-      tooltip.style.bottom = (window.innerHeight - rect.top + pad + 16) + 'px';
-      arrow.style.display = 'block';
-      arrow.className = 'tutorial-tooltip-arrow bottom';
-    }
-  }, 350);
-}
-
-function nextTutorialStep() {
-  tutCurrentStep++;
-  if (tutCurrentStep >= tutSteps.length) {
-    endTutorial();
-    return;
-  }
-  // 리셋: 모든 요소 숨기고 애니메이션 초기화
-  document.getElementById('tutorialTooltip').style.display = 'none';
-  document.getElementById('tutorialMockSheet').style.display = 'none';
-  const sl = document.getElementById('tutorialSpotlight');
-  sl.classList.remove('tutorial-spotlight-pulse');
-  sl.style.display = 'none';
-
-  setTimeout(() => showTutorialStep(tutCurrentStep), 250);
-}
-
-// ── 튜토리얼 실제 저장/삭제 헬퍼 ──
-let tutDemoRecordId = null;
-
-function tutSaveDemoLeave() {
-  const now = new Date();
-  const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-  const record = LEAVE.addRecord({
-    type: 'annual',
-    startDate: dateStr,
-    endDate: dateStr,
-    memo: '튜토리얼 연습',
-  });
-  tutDemoRecordId = record.id;
-
-  const resultEl = document.getElementById('tutSaveResult');
-  if (resultEl) {
-    resultEl.innerHTML = '✅ <span style="color:var(--accent-emerald); font-weight:700;">저장 완료!</span> 다음 단계에서 삭제할 수 있어요.';
-  }
-  // 저장 버튼 비활성화
-  const btn = document.querySelector('#tutorialMockSheet .tut-mock-btn.save');
-  if (btn) {
-    btn.style.opacity = '0.5';
-    btn.style.pointerEvents = 'none';
-    btn.textContent = '✅ 저장됨';
-  }
-}
-
-function tutDeleteDemoLeave() {
-  if (tutDemoRecordId) {
-    LEAVE.deleteRecord(tutDemoRecordId);
-    tutDemoRecordId = null;
-  }
-  const resultEl = document.getElementById('tutDeleteResult');
-  if (resultEl) {
-    resultEl.innerHTML = '🗑 <span style="color:var(--accent-rose); font-weight:700;">삭제 완료!</span> 깔끔하게 지워졌어요.';
-  }
-  const btn = document.querySelector('#tutorialMockSheet .tut-mock-btn.delete');
-  if (btn) {
-    btn.style.opacity = '0.5';
-    btn.style.pointerEvents = 'none';
-    btn.textContent = '✅ 삭제됨';
-  }
-}
-
-function endTutorial() {
-  // 튜토리얼 중 저장한 데모 기록이 남아있으면 자동 삭제
-  if (tutDemoRecordId) {
-    LEAVE.deleteRecord(tutDemoRecordId);
-    tutDemoRecordId = null;
-  }
-
-  const overlay = document.getElementById('tutorialOverlay');
-  overlay.classList.remove('active');
-  overlay.style.display = 'none';
-
-  document.getElementById('tutorialTooltip').style.display = 'none';
-  document.getElementById('tutorialMockSheet').style.display = 'none';
-  document.getElementById('tutorialSpotlight').style.display = 'none';
-  document.getElementById('tutorialSpotlight').classList.remove('tutorial-spotlight-pulse');
-
-  // 홈 탭으로 이동
-  switchTab('home');
-}

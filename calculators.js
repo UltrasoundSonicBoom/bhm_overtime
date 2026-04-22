@@ -18,16 +18,41 @@ const CALC = {
         return mapping ? mapping.payTable : jobType;
     },
 
-    calcOrdinaryWage(jobType, grade, year, extras = {}) {
+    /**
+     * ruleSet 객체에서 특정 dot-path 값을 꺼낸다.
+     * ruleSet이 없으면 undefined를 반환하여 호출자가 DATA fallback을 사용하게 한다.
+     * @param {object|null} ruleSet - { category: { key: value } } 형식 (DB resolve 결과)
+     * @param {string} category - 최상위 카테고리 (e.g. "wage_tables_2025")
+     * @param {string} dotPath - 하위 경로 (e.g. "general_J_grade.J3.base_salary_by_year")
+     */
+    _getRuleValue(ruleSet, category, dotPath) {
+        if (!ruleSet || !ruleSet[category]) return undefined;
+        const parts = dotPath.split('.');
+        let cur = ruleSet[category];
+        for (const p of parts) {
+            if (cur == null || typeof cur !== 'object') return undefined;
+            cur = cur[p];
+        }
+        return cur;
+    },
+
+    calcOrdinaryWage(jobType, grade, year, extras = {}, ruleSet = null) {
         const payTableName = this.resolvePayTable(jobType);
+        // ruleSet이 있으면 ruleSet에서 보수표 데이터를 우선 조회하고, 없으면 DATA fallback
         const table = DATA.payTables[payTableName];
         if (!table) return null;
 
         const yearIdx = Math.max(0, Math.min(7, year - 1));
-        const annualBase = table.basePay[grade]?.[yearIdx] || 0;
-        const annualAbility = table.abilityPay[grade] || 0;
-        const annualBonus = table.bonus[grade] || 0;
-        const annualFamily = table.familySupport[grade] || 0;
+
+        // ruleSet 주입: wage_tables_2025 카테고리에서 grade별 기본급 배열 조회
+        // ruleSet 구조: { wage_tables_2025: { [payTableKey]: { [grade]: { base_salary_by_year: [...] } } } }
+        const rsWageTable = this._getRuleValue(ruleSet, 'wage_tables_2025', payTableName);
+        const rsGrade = rsWageTable ? rsWageTable[grade] : null;
+
+        const annualBase = (rsGrade?.base_salary_by_year?.[yearIdx]) ?? table.basePay[grade]?.[yearIdx] ?? 0;
+        const annualAbility = (rsGrade?.ability_pay) ?? table.abilityPay[grade] ?? 0;
+        const annualBonus = (rsGrade?.bonus) ?? table.bonus[grade] ?? 0;
+        const annualFamily = (rsGrade?.family_support) ?? table.familySupport[grade] ?? 0;
 
         const monthlyBase = Math.round(annualBase / 12);
         const monthlyAbility = Math.round(annualAbility / 12);
@@ -37,18 +62,22 @@ const CALC = {
         // 조정급 (통상임금 계산 순서상 먼저 설정)
         const adjustPay = extras.adjustPay || 0;
 
-        // 근속가산기본급: (기준기본급 + 조정급/2) × 근속가산율
+        // 근속가산기본급: (기준기본급 + 조정급/2) × 근속가산율 (제46조: 2016.02.29 이전 입사자 한정)
         let seniorityBasePay = 0;
         if (extras.hasSeniority && extras.seniorityYears) {
             const rate = DATA.seniorityRates.find(r => extras.seniorityYears >= r.min && extras.seniorityYears < r.max);
             seniorityBasePay = rate ? Math.floor((monthlyBase + adjustPay / 2) * rate.rate) : 0;
         }
 
+        // ruleSet에서 고정수당 값 조회 (없으면 DATA fallback)
+        const rsAllowances = this._getRuleValue(ruleSet, 'wage_structure_and_allowances', 'fixed_allowances') || {};
+
         // 군복무수당: 월할 계산 지원 (기본 24개월, 개인별 복무기간에 따라 조정)
         let militaryPay = 0;
         if (extras.hasMilitary) {
             const militaryMonths = extras.militaryMonths || 24;
-            militaryPay = Math.round(DATA.allowances.militaryService * Math.floor(militaryMonths) / 24);
+            const militaryBase = rsAllowances.military_service?.amount ?? DATA.allowances.militaryService;
+            militaryPay = Math.round(militaryBase * Math.floor(militaryMonths) / 24);
         }
 
         let longServicePay = 0;
@@ -63,7 +92,14 @@ const CALC = {
         const workSupportPay = extras.workSupportPay || 0;
         // 가족수당은 통상임금 산정 제외 (보수규정 제44조 2항 미포함)
 
-        // 명절지원비 (연 4회): (기준기본급 + 조정급/2) × 50% (보수규정 — 근속가산기본급 미포함)
+        const mealSubsidy = rsAllowances.meal_subsidy ?? DATA.allowances.mealSubsidy;
+        const transportSubsidy = rsAllowances.transportation_subsidy ?? DATA.allowances.transportSubsidy;
+        const trainingAllowance = rsAllowances.training_monthly ?? DATA.allowances.selfDevAllowance;
+        const refreshBenefit = rsAllowances.refresh_support_yearly != null
+            ? Math.round(rsAllowances.refresh_support_yearly / 12)
+            : DATA.allowances.refreshBenefit;
+
+        // 명절지원비 (연 4회): (기준기본급 + 조정급/2) × 50% (제48조: 설·추석·5월·7월)
         const holidayBonusPerTime = Math.round((monthlyBase + adjustPay / 2) * 0.5);
         const monthlyHolidayBonus = Math.round((holidayBonusPerTime * 4) / 12);
 
@@ -80,13 +116,13 @@ const CALC = {
             '별정수당': specialPay,
             '직책급': positionPay,
             '업무보조비': workSupportPay,
-            '급식보조비': DATA.allowances.mealSubsidy,
-            '교통보조비': DATA.allowances.transportSubsidy,
+            '급식보조비': mealSubsidy,
+            '교통보조비': transportSubsidy,
             // ※ 가족수당은 통상임금에 포함되지 않음 (보수규정 제44조 2항)
             '명절지원비(월할)': monthlyHolidayBonus,
-            '자기계발별정수당': DATA.allowances.selfDevAllowance,
-            '별정수당5': DATA.allowances.specialPay5
-            // '리프레시지원비': DATA.allowances.refreshBenefit // 통상임금 제외 확인
+            '교육훈련비': trainingAllowance,      // 제43조 (구: 자기계발별정수당)
+            '별정수당5': DATA.allowances.specialPay5,
+            '리프레시지원비': refreshBenefit      // 별도합의 2024.11: 2026.01~통상임금 산입
         };
 
         const monthlyWage = Object.values(breakdown).reduce((a, b) => a + b, 0);
@@ -179,7 +215,11 @@ const CALC = {
     calcAnnualLeave(hireDate, calcDate = new Date()) {
         const diffMs = calcDate - hireDate;
         const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-        const diffYears = Math.floor(diffDays / 365);
+        // BUG-04 수정: 윤년 보정 — 날짜 기반 정확한 연수 계산 (제36조)
+        // Math.floor(diffDays/365) 대신 실제 연도 차이 기반 계산
+        let diffYears = calcDate.getFullYear() - hireDate.getFullYear();
+        const m = calcDate.getMonth() - hireDate.getMonth();
+        if (m < 0 || (m === 0 && calcDate.getDate() < hireDate.getDate())) diffYears--;
         const diffMonths = Math.floor(diffDays / 30);
 
         let totalLeave = 0;
@@ -341,6 +381,26 @@ const CALC = {
     },
 
     /**
+     * 노조협의 특별 호봉 보정값 계산
+     * profile.unionStepAdjust 가 '' / null / undefined 일 때 자동 계산 값으로 사용.
+     * @param {string} grade - 현재 직급 코드 ('J1', 'S1' 등)
+     * @param {Date} [refDate] - 기준일 (기본: 오늘). 이 날짜 이전 이벤트만 포함.
+     * @returns {number} 해당 직급에 적용된 누적 노조협의 호봉 합계
+     */
+    calcUnionStepAdjust(grade, refDate) {
+        var ref = refDate || new Date();
+        var total = 0;
+        var events = (typeof DATA !== 'undefined' && DATA.unionStepEvents) ? DATA.unionStepEvents : [];
+        events.forEach(function(e) {
+            if (!e.grades || e.grades.indexOf(grade) === -1) return;
+            var parts = (e.date || '').split('-');
+            var eventDate = new Date(parseInt(parts[0]), parseInt(parts[1] || 1) - 1, 1);
+            if (eventDate <= ref) total += (e.stepDelta || 0);
+        });
+        return total;
+    },
+
+    /**
      * 승진 시뮬레이터
      * @param {string} jobType
      * @param {string} currentGrade
@@ -464,7 +524,8 @@ const CALC = {
             const daysInMonth = new Date(y, m, 0).getDate();
 
             const stats = OVERTIME.calcMonthlyStats(y, m);
-            const otPay = stats.totalPay || 0;
+            const suppPay = stats.payslipSupplement ? stats.payslipSupplement.pay : 0;
+            const otPay = (stats.totalPay || 0) + suppPay;
             totalOtPay += otPay;
             totalCalendarDays += daysInMonth;
 
@@ -626,5 +687,114 @@ const CALC = {
             가족수당상세: familyResult.breakdown,
             통상임금상세: wage.breakdown
         };
+    },
+
+    /**
+     * 명세서 파싱값 vs CALC 계산값 역계산 검증
+     * @param {object} parsedData  - { items:[{name,amount}], totalGross }
+     * @param {object} calcResult  - { items:[{name,amount}], totalGross }
+     * @param {object} options     - { tolerance:0.01, absThreshold:500 }
+     * @returns {{ matched:boolean, discrepancies:[{item,expected,actual,diffPct}] }}
+     */
+    verifyPayslip(parsedData, calcResult, options) {
+        const tolerance = (options && options.tolerance) !== undefined ? options.tolerance : 0.01;
+        const absThreshold = (options && options.absThreshold) !== undefined ? options.absThreshold : 500;
+        const discrepancies = [];
+
+        // 항목별 비교
+        const parsedItems = (parsedData && parsedData.items) || [];
+        const calcItems = (calcResult && calcResult.items) || [];
+
+        for (const parsedItem of parsedItems) {
+            const calcItem = calcItems.find(c => c.name === parsedItem.name);
+            if (!calcItem) {
+                discrepancies.push({
+                    item: parsedItem.name,
+                    expected: null,
+                    actual: parsedItem.amount,
+                    diffPct: 1
+                });
+                continue;
+            }
+            const diff = Math.abs(parsedItem.amount - calcItem.amount);
+            const diffPct = calcItem.amount > 0 ? diff / calcItem.amount : (diff > 0 ? 1 : 0);
+            if (diffPct > tolerance && diff > absThreshold) {
+                discrepancies.push({
+                    item: parsedItem.name,
+                    expected: calcItem.amount,
+                    actual: parsedItem.amount,
+                    diffPct
+                });
+            }
+        }
+
+        // 총액 비교
+        const parsedGross = parsedData && parsedData.totalGross;
+        const calcGross = calcResult && calcResult.totalGross;
+        if (parsedGross !== undefined && calcGross !== undefined) {
+            const diff = Math.abs(parsedGross - calcGross);
+            const diffPct = calcGross > 0 ? diff / calcGross : (diff > 0 ? 1 : 0);
+            if (diffPct > tolerance && diff > absThreshold) {
+                discrepancies.push({
+                    item: '총액(totalGross)',
+                    expected: calcGross,
+                    actual: parsedGross,
+                    diffPct
+                });
+            }
+        }
+
+        return { matched: discrepancies.length === 0, discrepancies };
+    },
+
+    /**
+     * 간호사 전용 수당 계산
+     * @param {object} profile - { preceptorWeeks, primeTeamDays }
+     *   preceptorWeeks: 프리셉터 담당 주수 (2주 단위로 200,000원)
+     *   primeTeamDays:  프라임팀(예비인력) 대체근무 일수 (20,000원/일)
+     * @returns {{ preceptorPay, primeTeamPay, total }}
+     * 근거: 제63조의2 (프리셉터), 제32조 부속합의 (프라임팀)
+     */
+    calcNursePay({ preceptorWeeks = 0, primeTeamDays = 0 } = {}) {
+        const PRECEPTOR_PER_2WEEKS = 200000; // 제63조의2
+        const PRIME_TEAM_DAILY = 20000;      // 제32조 부속합의
+        const preceptorPay = Math.floor(preceptorWeeks / 2) * PRECEPTOR_PER_2WEEKS;
+        const primeTeamPay = primeTeamDays * PRIME_TEAM_DAILY;
+        return { preceptorPay, primeTeamPay, total: preceptorPay + primeTeamPay };
+    },
+
+    /**
+     * 간호사 스케줄 규정 준수 검사
+     * @param {object} schedule - { nightShifts, age, pattern:string[] }
+     *   nightShifts: 월간 야간근무 횟수
+     *   age:         간호사 나이
+     *   pattern:     근무 패턴 배열 (예: ['N','OFF','D'])
+     * @returns {{ recoveryDays, warnings:[{type, message}] }}
+     * 근거: 제32조 부속합의 (리커버리데이), 제32조 (40세 야간 제외)
+     */
+    checkNurseScheduleRules({ nightShifts = 0, age = 0, pattern = [] } = {}) {
+        const warnings = [];
+
+        // 리커버리데이: 야간 7회 초과 시 초과분만큼 발생 (제32조 부속합의)
+        const recoveryDays = nightShifts > 7 ? nightShifts - 7 : 0;
+
+        // 40세 이상 야간근무 제외 원칙 (제32조 부속합의 — 간호부 교대근무자)
+        if (age >= 40 && nightShifts > 0) {
+            warnings.push({
+                type: 'age_night_exclusion',
+                message: '40세 이상 야간근무 제외 원칙 적용 대상 (제32조 부속합의)'
+            });
+        }
+
+        // N-OFF-D 금지 패턴 탐지 (야간 직후 비번 없이 주간 출근 금지)
+        const patternStr = pattern.join('-');
+        if (/N-OFF-D/.test(patternStr)) {
+            warnings.push({
+                type: 'forbidden_pattern',
+                message: 'N-OFF-D 금지 패턴: 야간 후 비번 없이 주간 출근 불가'
+            });
+        }
+
+        return { recoveryDays, warnings };
     }
 };

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SNUH Mate My Day">
+  <title>SNUH Mate 내 일정</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./publish.css">
+</head>
+<body>
+  <header class="publish-top">
+    <div class="brand-block">
+      <img class="brand-mark" src="../snuhmatecircle.png" alt="SNUH Mate 로고">
+      <div>
+        <p class="eyebrow">Viewer</p>
+        <h1>내 일정</h1>
+        <p class="subtitle">오늘 해야 할 일과 이번 주 일정을 한 번에 확인합니다.</p>
+      </div>
+    </div>
+  </header>
+
+  <section class="utility-strip">
+    <nav class="viewer-tabs" aria-label="viewer pages">
+      <a class="viewer-tab" id="boardLink" href="./index.html">팀 보드</a>
+      <a class="viewer-tab active" href="./my-day.html">내 일정</a>
+    </nav>
+    <details class="utility-menu">
+      <summary>운영 도구</summary>
+      <div class="utility-menu-panel">
+        <a href="./admin.html">운영 콘솔</a>
+        <a href="../admin/index.html">규정</a>
+      </div>
+    </details>
+  </section>
+
+  <main class="publish-shell">
+    <section class="control-bar">
+      <label class="field">
+        <span>팀</span>
+        <select id="teamSelect"></select>
+      </label>
+      <label class="field">
+        <span>기간</span>
+        <input id="periodInput" type="month">
+      </label>
+      <label class="field grow">
+        <span>이름 검색</span>
+        <input id="memberSearchInput" type="search" placeholder="이름, 역할, 태그">
+      </label>
+      <label class="field">
+        <span>개인 보기</span>
+        <select id="memberSelect"></select>
+      </label>
+      <button id="downloadIcsBtn" class="action-btn" type="button">개인 .ics</button>
+    </section>
+
+    <section id="todayHero" class="focus-banner">오늘 근무 정보를 준비하는 중입니다.</section>
+    <section class="status-grid" id="statusGrid"></section>
+
+    <section class="detail-grid">
+      <article class="detail-card">
+        <div class="section-heading compact">
+          <div>
+            <p class="eyebrow">Today</p>
+            <h3>오늘 해야 할 일</h3>
+          </div>
+        </div>
+        <div id="todayChecklist" class="detail-list">체크리스트를 준비하는 중입니다.</div>
+      </article>
+
+      <article class="detail-card">
+        <div class="section-heading compact">
+          <div>
+            <p class="eyebrow">Crew</p>
+            <h3>같이 일하는 사람</h3>
+          </div>
+        </div>
+        <div id="coworkerPanel" class="detail-list">같이 일하는 사람을 준비하는 중입니다.</div>
+      </article>
+    </section>
+
+    <section class="detail-grid">
+      <article class="detail-card">
+        <div class="section-heading compact">
+          <div>
+            <p class="eyebrow">Calendar</p>
+            <h3 id="personalHeadline">이번 달 일정</h3>
+          </div>
+        </div>
+        <div id="personalPanel" class="detail-list">개인 일정을 준비하는 중입니다.</div>
+      </article>
+
+      <article class="detail-card">
+        <div class="section-heading compact">
+          <div>
+            <p class="eyebrow">Rules</p>
+            <h3>근무 기준</h3>
+          </div>
+        </div>
+        <div id="policyPanel" class="detail-list">근무 기준을 준비하는 중입니다.</div>
+      </article>
+    </section>
+  </main>
+
+  <script src="./demo-data.js"></script>
+  <script src="./my-day.js"></script>
+</body>
+</html>

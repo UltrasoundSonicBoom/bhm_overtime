@@ -1,0 +1,6 @@
+{"type":"server-started","port":56102,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:56102","screen_dir":"/Users/momo/Documents/GitHub/bhm_overtime/.superpowers/brainstorm/41833-1776657592/content","state_dir":"/Users/momo/Documents/GitHub/bhm_overtime/.superpowers/brainstorm/41833-1776657592/state"}
+{"type":"screen-added","file":"/Users/momo/Documents/GitHub/bhm_overtime/.superpowers/brainstorm/41833-1776657592/content/popup-layout.html"}
+{"type":"screen-added","file":"/Users/momo/Documents/GitHub/bhm_overtime/.superpowers/brainstorm/41833-1776657592/content/waiting-1.html"}
+{"type":"screen-added","file":"/Users/momo/Documents/GitHub/bhm_overtime/.superpowers/brainstorm/41833-1776657592/content/flow-ux.html"}
+{"type":"screen-added","file":"/Users/momo/Documents/GitHub/bhm_overtime/.superpowers/brainstorm/41833-1776657592/content/popup-real.html"}
+{"type":"server-stopped","reason":"idle timeout"}

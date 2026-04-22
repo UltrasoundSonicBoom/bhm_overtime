@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SNUH Mate Nurse Scheduler Admin">
+  <title>SNUH Mate Nurse Scheduler Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./nurse_admin.css">
+</head>
+<body>
+  <header class="shell-top">
+    <div class="brand-cluster">
+      <img class="brand-mark" src="../snuhmatecircle.png" alt="SNUH Mate 로고">
+      <div class="brand-copy">
+        <p class="eyebrow">Head Nurse Console</p>
+        <h1>운영 콘솔</h1>
+        <p class="brand-sub">AI 초안을 만들고, 수정하고, 검토한 뒤 팀 전체에 배포하는 화면입니다.</p>
+      </div>
+    </div>
+
+    <div class="top-actions">
+      <a class="top-link" href="./index.html">팀 보드</a>
+      <a class="top-link" href="./my-day.html">내 일정</a>
+      <a class="top-link" href="../admin/index.html">규정</a>
+      <!-- 로그인 UI 제거됨 (2026-04-21). 향후 재도입 시 원복. -->
+    </div>
+  </header>
+
+  <section class="workflow-band">
+    <div class="workflow-copy">
+      <p class="eyebrow">Head Nurse Workflow</p>
+      <h2>준비 → 생성 → 수정 → 배포</h2>
+      <p>왼쪽은 준비, 가운데는 후보안과 보드, 오른쪽은 수정과 검토입니다. 지금 필요한 일만 골라서 움직일 수 있게 정리했습니다.</p>
+    </div>
+    <ol class="workflow-steps" aria-label="관리자 작업 단계">
+      <li class="workflow-step">1. 팀과 기간을 고르고 데이터셋 상태를 확인합니다.</li>
+      <li class="workflow-step">2. AI 초안을 만들고 후보안을 나란히 비교합니다.</li>
+      <li class="workflow-step">3. 셀 고정, 이벤트 수정, 규정 위반을 정리합니다.</li>
+      <li class="workflow-step">4. 검증을 통과하면 배포하고 팀 보드에서 확인합니다.</li>
+    </ol>
+    <div class="workflow-summary-list">
+      <div class="workflow-summary-item">
+        <strong>AI와 만드는 영역</strong>
+        <span>왼쪽 제어 영역에서 팀과 기간을 고른 뒤 초안을 생성합니다.</span>
+      </div>
+      <div class="workflow-summary-item">
+        <strong>직접 손보는 영역</strong>
+        <span>가운데 보드와 오른쪽 인스펙터에서 셀, 이벤트, 핀을 수정합니다.</span>
+      </div>
+      <div class="workflow-summary-item">
+        <strong>배포 전 기준</strong>
+        <span>검증 큐와 규정 위반이 정리된 뒤에만 배포 버튼을 누릅니다.</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="mobile-workflow-nav" id="mobileWorkflowNav" aria-label="모바일 관리자 목차">
+    <button class="workflow-tab active" type="button" data-admin-panel="overview">준비</button>
+    <button class="workflow-tab" type="button" data-admin-panel="board">보드</button>
+    <button class="workflow-tab" type="button" data-admin-panel="review">수정</button>
+    <button class="workflow-tab" type="button" data-admin-panel="events">이벤트</button>
+    <button class="workflow-tab" type="button" data-admin-panel="rules">규정</button>
+  </section>
+
+  <main class="workspace-grid">
+    <aside class="panel left-rail" data-mobile-panel="overview">
+      <section class="rail-section workflow-summary">
+        <p class="eyebrow">Start Here</p>
+        <div class="workflow-summary-list">
+          <div class="workflow-summary-item">
+            <strong>먼저 볼 것</strong>
+            <span>Dataset Health와 Pilot 지표에서 경고를 확인합니다.</span>
+          </div>
+          <div class="workflow-summary-item">
+            <strong>다음 행동</strong>
+            <span>AI 초안 생성 후 보드 탭에서 후보안을 비교합니다.</span>
+          </div>
+          <div class="workflow-summary-item">
+            <strong>배포 직전</strong>
+            <span>검토와 규정 탭에서 충돌, 수당, 위반을 확인합니다.</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="rail-section">
+        <div class="section-title-row">
+          <p class="eyebrow">Control</p>
+          <div id="workspaceStatus" class="mini-status">대기 중</div>
+        </div>
+
+        <label class="field">
+          <span>팀</span>
+          <select id="teamSelect"></select>
+        </label>
+
+        <label class="field">
+          <span>기간</span>
+          <input id="periodInput" type="month">
+        </label>
+
+        <div class="button-grid">
+          <button id="refreshWorkspaceBtn" class="btn btn-secondary" type="button">새로고침</button>
+          <button id="claimBtn" class="btn btn-secondary" type="button">파일럿 연결</button>
+          <button id="generateBtn" class="btn btn-primary" type="button">AI 초안 생성</button>
+          <button id="repairBtn" class="btn btn-accent" type="button">Repair Solve</button>
+          <button id="publishBtn" class="btn btn-primary" type="button">배포</button>
+        </div>
+      </section>
+
+      <section class="rail-section">
+        <div class="section-title-row">
+          <p class="eyebrow">Dataset Health</p>
+          <strong id="datasetBlockingBadge" class="section-count">-</strong>
+        </div>
+        <div id="datasetPulse" class="metric-stack"></div>
+      </section>
+
+      <section class="rail-section">
+        <p class="eyebrow">Pilot</p>
+        <div id="metricsGrid" class="metric-stack"></div>
+      </section>
+
+      <section class="rail-section">
+        <div class="section-title-row">
+          <p class="eyebrow">Roster</p>
+          <strong id="rosterCount" class="section-count">0명</strong>
+        </div>
+        <label class="field compact">
+          <span>빠른 찾기</span>
+          <input id="rosterSearchInput" type="search" placeholder="이름, 역할, 태그">
+        </label>
+        <div id="rosterFilterChips" class="chip-row">
+          <button class="filter-chip active" type="button" data-roster-filter="all">전체</button>
+          <button class="filter-chip" type="button" data-roster-filter="attention">주의</button>
+          <button class="filter-chip" type="button" data-roster-filter="leave">휴가</button>
+          <button class="filter-chip" type="button" data-roster-filter="new-grad">신규</button>
+        </div>
+        <div id="rosterList" class="roster-list"></div>
+      </section>
+
+      <section class="rail-section">
+        <p class="eyebrow">Calendar</p>
+        <label class="field">
+          <span>개인 캘린더 대상</span>
+          <select id="memberSelect"></select>
+        </label>
+        <div class="button-grid single">
+          <button id="downloadMemberIcsBtn" class="btn btn-secondary" type="button">배포본 .ics 받기</button>
+        </div>
+      </section>
+    </aside>
+
+    <section class="panel stage-panel" data-mobile-panel="board">
+      <div class="stage-header">
+        <div class="stage-title">
+          <p class="eyebrow">Scheduler Flow</p>
+          <h2 id="stageHeadline">팀 전체 근무표</h2>
+        </div>
+        <div class="view-tabs">
+          <button id="publishedViewBtn" class="view-tab" type="button">Published</button>
+          <button id="candidateViewBtn" class="view-tab active" type="button">Candidate</button>
+        </div>
+      </div>
+
+      <div id="stageDecision" class="stage-decision">운영 가이드를 계산하는 중입니다.</div>
+      <div id="reviewLane" class="review-lane">검토 단계 요약을 준비하는 중입니다.</div>
+      <div id="opsPulse" class="ops-pulse">운영 요약을 계산하는 중입니다.</div>
+      <div id="eventTimeline" class="event-timeline">팀 이벤트를 불러오는 중입니다.</div>
+      <div id="candidateRail" class="candidate-rail"></div>
+
+      <div class="legend-strip" aria-label="Shift legend">
+        <span class="legend-chip shift-D">D</span>
+        <span class="legend-chip shift-E">E</span>
+        <span class="legend-chip shift-N">N</span>
+        <span class="legend-chip shift-OFF">OFF</span>
+        <span class="legend-chip shift-LEAVE">LEAVE</span>
+        <span class="legend-chip shift-EDU">EDU</span>
+        <span class="legend-note">상단 3줄은 팀 coverage, 그 아래는 개인 근무표입니다.</span>
+      </div>
+
+      <div id="scheduleViewport" class="schedule-viewport">근무표를 불러오는 중입니다.</div>
+    </section>
+
+    <aside class="panel inspector-panel">
+      <div class="inspector-group" data-mobile-panel="review">
+        <section class="inspector-block">
+          <p class="eyebrow">Selection</p>
+          <div id="selectedCellCard" class="selection-box">셀을 선택하면 여기서 고정 shift를 지정합니다.</div>
+          <div id="selectedInspector" class="mini-list">선택한 간호사의 휴가, 교육, 최근 야간, 보호 규칙을 보여줍니다.</div>
+          <div id="shiftPicker" class="shift-picker"></div>
+          <label class="field">
+            <span>고정 사유</span>
+            <textarea id="lockReasonInput" rows="3" placeholder="예: 병동 교육, 회의, 업무 연속성"></textarea>
+          </label>
+          <div class="button-grid single">
+            <button id="queueLockBtn" class="btn btn-accent" type="button">고정 큐에 추가</button>
+            <button id="clearSelectionBtn" class="btn btn-secondary" type="button">선택 해제</button>
+          </div>
+        </section>
+
+        <section class="inspector-block">
+          <div class="section-title-row">
+            <p class="eyebrow">Pending Pins</p>
+            <strong id="pendingCount" class="section-count">0</strong>
+          </div>
+          <div id="pendingLocksList" class="mini-list">아직 대기 중인 고정이 없습니다.</div>
+        </section>
+
+        <section class="inspector-block">
+          <div class="section-title-row">
+            <p class="eyebrow">Validation Queue</p>
+            <strong id="validationCount" class="section-count">0</strong>
+          </div>
+          <div id="validationQueue" class="mini-list">검증 결과를 불러오는 중입니다.</div>
+        </section>
+      </div>
+
+      <div class="inspector-group" data-mobile-panel="events">
+        <section class="inspector-block">
+          <div class="section-title-row">
+            <p class="eyebrow">Event Editor</p>
+            <strong id="eventCount" class="section-count">0</strong>
+          </div>
+          <form id="eventEditorForm" class="event-form">
+            <input id="eventIdInput" type="hidden">
+            <label class="field compact">
+              <span>scope</span>
+              <select id="eventScopeInput">
+                <option value="member">member</option>
+                <option value="team">team</option>
+              </select>
+            </label>
+            <label class="field compact">
+              <span>대상 간호사</span>
+              <select id="eventMemberSelect"></select>
+            </label>
+            <label class="field compact">
+              <span>event_type</span>
+              <select id="eventTypeInput">
+                <option value="education">education</option>
+                <option value="meeting">meeting</option>
+                <option value="dinner">dinner</option>
+                <option value="conference">conference</option>
+                <option value="orientation">orientation</option>
+                <option value="ward_event">ward_event</option>
+                <option value="restriction">restriction</option>
+                <option value="fixed_shift">fixed_shift</option>
+              </select>
+            </label>
+            <label class="field compact">
+              <span>제목</span>
+              <input id="eventTitleInput" type="text" placeholder="예: 신규간호사 오리엔테이션">
+            </label>
+            <div class="event-form-grid">
+              <label class="field compact">
+                <span>시작일</span>
+                <input id="eventStartInput" type="date">
+              </label>
+              <label class="field compact">
+                <span>종료일</span>
+                <input id="eventEndInput" type="date">
+              </label>
+            </div>
+            <div class="event-form-grid">
+              <label class="field compact checkbox-field">
+                <span>all_day</span>
+                <input id="eventAllDayInput" type="checkbox" checked>
+              </label>
+              <label class="field compact checkbox-field">
+                <span>blocks_work</span>
+                <input id="eventBlocksWorkInput" type="checkbox">
+              </label>
+            </div>
+            <label class="field compact">
+              <span>preferred_shift_code</span>
+              <input id="eventShiftInput" type="text" placeholder="예: EDU">
+            </label>
+            <label class="field compact">
+              <span>coverage_delta</span>
+              <input id="eventCoverageDeltaInput" type="text" placeholder='예: {"D":1}'>
+            </label>
+            <label class="field compact">
+              <span>notes</span>
+              <textarea id="eventNotesInput" rows="3" placeholder="검증 메모, 운영 주의사항"></textarea>
+            </label>
+            <div class="button-grid">
+              <button id="eventSaveBtn" class="btn btn-primary" type="submit">이벤트 저장</button>
+              <button id="eventResetBtn" class="btn btn-secondary" type="button">폼 초기화</button>
+            </div>
+          </form>
+          <div id="eventTable" class="mini-list">이벤트 목록을 불러오는 중입니다.</div>
+        </section>
+      </div>
+
+      <div class="inspector-group" data-mobile-panel="rules">
+        <section class="inspector-block">
+          <div class="section-title-row">
+            <p class="eyebrow">Regulation</p>
+            <strong id="regulationVersion" class="section-count">-</strong>
+          </div>
+          <div id="policySnapshot" class="mini-list">규정 요약을 불러오는 중입니다.</div>
+        </section>
+
+        <section class="inspector-block">
+          <p class="eyebrow">Allowance Lens</p>
+          <div id="allowanceLens" class="mini-list">셀을 선택하면 수당, 보호장치, 복지 기준을 계산합니다.</div>
+        </section>
+
+        <section class="inspector-block">
+          <p class="eyebrow">Rules</p>
+          <div id="ruleSummary" class="mini-list">팀을 선택하면 규칙이 표시됩니다.</div>
+        </section>
+
+        <section class="inspector-block">
+          <p class="eyebrow">Violations</p>
+          <div id="violationSummary" class="mini-list">후보를 선택하면 위반이 표시됩니다.</div>
+        </section>
+
+        <section class="inspector-block">
+          <div class="section-title-row">
+            <p class="eyebrow">Scenario Lab</p>
+            <strong id="scenarioScore" class="section-count">-</strong>
+          </div>
+          <div id="scenarioLab" class="mini-list">시나리오 검증 결과를 불러오는 중입니다.</div>
+        </section>
+
+        <section class="inspector-block">
+          <p class="eyebrow">Log</p>
+          <pre id="resultBox" class="result-box">대기 중</pre>
+        </section>
+      </div>
+    </aside>
+  </main>
+
+  <nav class="mobile-role-nav" aria-label="주요 화면 이동">
+    <a href="./index.html">배포</a>
+    <a class="active" href="./admin.html">관리</a>
+    <a href="../dashboard.html">검증</a>
+    <a href="../admin/index.html">규정</a>
+  </nav>
+
+  <script>
+    window.addEventListener('error', function (event) {
+      var status = document.getElementById('workspaceStatus');
+      var box = document.getElementById('resultBox');
+      if (status) status.textContent = '화면 오류';
+      if (box) box.textContent = (event.error && event.error.stack) || event.message || '알 수 없는 화면 오류';
+    });
+
+    window.addEventListener('unhandledrejection', function (event) {
+      var status = document.getElementById('workspaceStatus');
+      var box = document.getElementById('resultBox');
+      if (status) status.textContent = '요청 실패';
+      if (box) box.textContent = event.reason && event.reason.stack
+        ? event.reason.stack
+        : String(event.reason || '알 수 없는 요청 오류');
+    });
+  </script>
+  <script src="./nurse_admin.js"></script>
+</body>
+</html>

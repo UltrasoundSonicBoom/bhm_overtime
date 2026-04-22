@@ -84,6 +84,16 @@ const SALARY_PARSER = (() => {
     return 0;
   }
 
+  // 근무시간 통계용 소수점 파싱 (시간외=4.50, 발생연차=15 등)
+  function parseStatValue(val) {
+    if (typeof val === 'number') return val;
+    if (typeof val === 'string') {
+      const n = parseFloat(val.replace(/,/g, ''));
+      return isNaN(n) ? 0 : n;
+    }
+    return 0;
+  }
+
   function isAmount(val) {
     if (val === null || val === undefined) return false;
     const s = String(val).trim();
@@ -184,9 +194,18 @@ const SALARY_PARSER = (() => {
         const cell = String(row[c] || '').trim();
         LABEL_MAP.forEach(([regex, key]) => {
           if (regex.test(cell) && !info[key]) {
-            const v1 = row[c + 1], v2 = row[c + 2];
-            const v = (v1 != null && String(v1).trim()) ? v1 : v2;
-            if (v != null && String(v).trim()) info[key] = String(v).trim();
+            // 라벨 다음 셀부터 최대 5칸까지 훑어서 첫 비어있지 않은 값 사용
+            // (SNUH 급여명세서 CSV는 라벨~값 사이에 빈 셀 2~3개 있음: 예 "소 속" @ c → "핵의학과" @ c+3)
+            for (let k = 1; k <= 5 && (c + k) < row.length; k++) {
+              const v = row[c + k];
+              if (v != null && String(v).trim()) {
+                const s = String(v).trim();
+                // 다른 라벨을 값으로 집지 않도록 가드
+                if (LABEL_MAP.some(([re]) => re.test(s))) break;
+                info[key] = s;
+                break;
+              }
+            }
           }
         });
       }
@@ -263,6 +282,7 @@ const SALARY_PARSER = (() => {
 
   // ── Excel/CSV 파싱 ──
   async function parseExcel(file) {
+    if (typeof window.loadXLSX === 'function') await window.loadXLSX();
     if (typeof XLSX === 'undefined') throw new Error('xlsx.js가 로드되지 않았습니다.');
     const buf = await file.arrayBuffer();
     const wb = XLSX.read(buf, { type: 'array', cellDates: true });
@@ -280,6 +300,7 @@ const SALARY_PARSER = (() => {
 
   // ── PDF 파싱 (pdf.js 기반, 좌표→행 그룹핑→x좌표 직접 매칭) ──
   async function parsePDF(file) {
+    if (typeof window.loadPDFJS === 'function') await window.loadPDFJS();
     if (typeof pdfjsLib === 'undefined') {
       throw new Error('pdf.js가 로드되지 않았습니다.');
     }
@@ -356,8 +377,36 @@ const SALARY_PARSER = (() => {
     let fullText = '';
     rows.forEach(r => { fullText += r.map(it => it.str).join(' ') + '\n'; });
 
-    // ── 개인정보 추출 (텍스트 기반) ──
+    // ── 개인정보 추출 ──
+    // 1차: 행 단위 라벨-값 스캔 (CSV 로직과 일관, 여러 토큰 건너뛰기 대응)
     const employeeInfo = {};
+    const LABEL_MAP = [
+      [/개인번호|사원번호/, 'employeeNumber'],
+      [/^성\s*명$|^이름$/, 'name'],
+      [/^직\s*종$|^직책$/, 'jobType'],
+      [/^소\s*속$|^부서$/, 'department'],
+      [/급여연차|^호봉$/, 'payGrade'],
+      [/입사년월|입사일/, 'hireDate'],
+    ];
+    rows.forEach(row => {
+      row.forEach((cell, c) => {
+        const s = (cell.str || '').trim();
+        if (!s) return;
+        LABEL_MAP.forEach(([re, key]) => {
+          if (!employeeInfo[key] && re.test(s)) {
+            for (let k = 1; k <= 6 && (c + k) < row.length; k++) {
+              const v = (row[c + k].str || '').trim();
+              if (!v) continue;
+              // 다음 라벨을 값으로 오인하지 않도록
+              if (LABEL_MAP.some(([r2]) => r2.test(v))) break;
+              employeeInfo[key] = v;
+              break;
+            }
+          }
+        });
+      });
+    });
+    // 2차 fallback: fullText 정규식 (이미 채워진 키는 유지)
     const infoPatterns = [
       [/개인번호\s+(\d+)/, 'employeeNumber'],
       [/성\s*명\s+(\S+)/, 'name'],
@@ -366,6 +415,7 @@ const SALARY_PARSER = (() => {
       [/입사(?:년월|일)\s+([\d][\d./-]+[\d])/, 'hireDate'],
     ];
     infoPatterns.forEach(([re, key]) => {
+      if (employeeInfo[key]) return;
       const m = fullText.match(re);
       if (m) employeeInfo[key] = m[1];
     });
@@ -486,6 +536,42 @@ const SALARY_PARSER = (() => {
       return items;
     }
 
+    // 근무시간 통계 항목 추출 — 공제 섹션 col7-10에서 GRID_STATS_NAMES 이름만 수집
+    function extractWorkStats(grid, nameRows, amtRows) {
+      const items = [];
+      const seen = new Set();
+      const limit = Math.min(nameRows.length, amtRows.length);
+      for (let r = 0; r < limit; r++) {
+        const names = nameRows[r];
+        const amts = amtRows[r];
+
+        // 근무통계 항목명만 → 글로벌 열 매핑
+        const nameByCol = new Map();
+        names.forEach(it => {
+          const name = it.str.trim();
+          if (!GRID_STATS_NAMES.has(name)) return;
+          const col = findGlobalCol(grid, it.x + it.w / 2);
+          nameByCol.set(col, name);
+        });
+
+        // 수치 → 글로벌 열 매핑 (소수점 포함 허용: 0.00, 4.50 등)
+        const valByCol = new Map();
+        amts.forEach(it => {
+          if (!/^-?[\d,.]+$/.test(it.str)) return;
+          const col = findGlobalCol(grid, it.x + it.w / 2);
+          valByCol.set(col, parseStatValue(it.str));
+        });
+
+        for (const [col, name] of nameByCol) {
+          if (seen.has(name)) continue;
+          seen.add(name);
+          const value = valByCol.has(col) ? valByCol.get(col) : 0;
+          items.push({ name, value, col, row: r });
+        }
+      }
+      return items;
+    }
+
     // 이름행/금액행 분리 + 소규모 행 병합
     function separateAndMerge(startRow, endRow) {
       const nameRows = [];
@@ -509,6 +595,49 @@ const SALARY_PARSER = (() => {
         merged.forEach(r => nameRows.push(r));
       }
       return { nameRows, amtRows };
+    }
+
+    // ── SNUH 고정 그리드: PDF 폰트 인코딩 문제로 이름행 누락 시 보완 ──
+    // 실측 열 중심값 (pdfminer 3개 PDF 분석 기반, 단위: pt)
+    const SNUH_COL_CENTERS = [95, 157, 219, 281, 343, 412, 474, 536, 598, 660, 725];
+    function findNearestSNUHCol(x) {
+      let best = 0, bestD = Infinity;
+      SNUH_COL_CENTERS.forEach((c, i) => { const d = Math.abs(x - c); if (d < bestD) { bestD = d; best = i; } });
+      return best;
+    }
+    // 6행×11열 고정 맵 — null은 알 수 없는 위치 또는 총액(행3-5 col10)
+    const SNUH_GRID_MAP = [
+      ['기준기본급',null,null,null,null,'급식보조비',null,null,null,null,null],        // row0
+      ['근속가산기본급','명절지원비',null,null,null,'교통보조비',null,null,null,null,null], // row1
+      ['능력급',null,null,null,'경력인정수당',null,null,null,null,null,'가족수당'],      // row2 (이름행 누락多)
+      ['상여금',null,null,null,null,null,null,null,null,null,null],                    // row3
+      [null,null,null,null,null,'업무보조비',null,null,'무급가족돌봄휴가',null,null],   // row4 (이름행 누락多)
+      ['진료기여수당',null,null,null,null,null,null,'명절수당',null,null,null],          // row5
+    ];
+
+    // 고정 그리드로 급여 항목 추출 (이름행 없이 x좌표만으로)
+    function extractBySNUHFixedGrid(startRow, endRow) {
+      const allAmtRows = [];
+      for (let i = startRow; i < endRow && i < rows.length; i++) {
+        if (!isGarbageRow(rows[i]) && isAmountRow(rows[i])) allAmtRows.push(rows[i]);
+      }
+      allAmtRows.sort((a, b) => (a[0]?.y || 0) - (b[0]?.y || 0));
+      const items = [], seen = new Set();
+      allAmtRows.forEach((amtRow, gridRowIdx) => {
+        if (gridRowIdx >= SNUH_GRID_MAP.length) return;
+        const rowMap = SNUH_GRID_MAP[gridRowIdx];
+        amtRow.forEach(it => {
+          if (!/^-?[\d,.]+$/.test(it.str)) return;
+          const col = findNearestSNUHCol(it.x + it.w / 2);
+          const name = rowMap[col];
+          if (!name || GRID_STATS_NAMES.has(name) || seen.has(name)) return;
+          const amount = parseAmount(it.str);
+          if (amount === 0) return;
+          items.push({ name, amount, col, row: gridRowIdx });
+          seen.add(name);
+        });
+      });
+      return items;
     }
 
     const salaryAnchorRow = findAnchorRow(/기본기준급|기준기본급/);
@@ -621,6 +750,7 @@ const SALARY_PARSER = (() => {
     }
 
     let deductionItems = [];
+    let workStats = [];
     if (deductionAnchorRow >= 0 && globalGrid) {
       let deductionEnd = rows.length;
       let nonAmtCount = 0, foundFirstAmt = false;
@@ -632,11 +762,44 @@ const SALARY_PARSER = (() => {
       console.log('[PayslipParser] 공제 분리: 이름행 ' + separated.nameRows.length + ', 금액행 ' + separated.amtRows.length);
       deductionItems = extractByGlobalGrid(globalGrid, separated.nameRows, separated.amtRows);
       console.table(deductionItems.map(i => ({ 이름: i.name, 금액: i.amount, 열: i.col, 행: i.row })));
+      // 근무시간 통계: 공제 섹션 col7-10에서 GRID_STATS_NAMES 항목 추출
+      workStats = extractWorkStats(globalGrid, separated.nameRows, separated.amtRows);
+      if (workStats.length > 0) {
+        console.log('[PayslipParser] 근무통계 추출: ' + workStats.length + '건');
+        console.table(workStats.map(i => ({ 항목: i.name, 값: i.value, 열: i.col, 행: i.row })));
+      }
     }
 
     // 0원 항목 제거 (음수는 유지: 무급가족돌봄휴가 등)
     salaryItems = salaryItems.filter(i => i.amount !== 0);
     deductionItems = deductionItems.filter(i => i.amount !== 0);
+
+    // ── SNUH 고정 그리드 이름 보정 ──
+    // amtRow[4]: 업무보조비(col5), 무급가족돌봄휴가(col8)는 이름행과 열이 어긋남
+    // amtRow[5]: 진료기여수당(col0), 명절수당(col7)는 이름행과 열이 어긋남
+    // → globalGrid가 잘못된 이름(같은 열의 다른 행 항목명)을 배정한 경우 SNUH_GRID_MAP으로 보정
+    if (salAmtRows.length >= SNUH_GRID_MAP.length) {
+      for (const r of [4, 5]) {
+        if (r >= salAmtRows.length) continue;
+        const rowMap = SNUH_GRID_MAP[r];
+        const amtByCol = new Map();
+        salAmtRows[r].forEach(it => {
+          if (!/^-?[\d,.]+$/.test(it.str)) return;
+          amtByCol.set(findNearestSNUHCol(it.x + it.w / 2), parseAmount(it.str));
+        });
+        for (let c = 0; c < rowMap.length; c++) {
+          const canonicalName = rowMap[c];
+          if (!canonicalName || GRID_STATS_NAMES.has(canonicalName) || GRID_SUMMARY_RE.test(canonicalName)) continue;
+          const amount = amtByCol.get(c);
+          if (!amount) continue;
+          const idx = salaryItems.findIndex(i => i.row === r && i.col === c);
+          if (idx >= 0 && salaryItems[idx].name !== canonicalName) {
+            console.log('[PayslipParser] SNUH이름보정: "' + salaryItems[idx].name + '" → "' + canonicalName + '" (행' + r + ',열' + c + ')');
+            salaryItems[idx] = { name: canonicalName, amount, col: c, row: r };
+          }
+        }
+      }
+    }
 
     // ── 총액 추출: 글로벌 그리드로 급여총액/공제총액/실지급액 정확 매핑 ──
     let grossPay = 0, totalDeduction = 0, netPay = 0;
@@ -721,12 +884,12 @@ const SALARY_PARSER = (() => {
       return fallback;
     }
 
-    // 총액 불일치 시에도 parsePDFText fallback 시도
+    // 총액 불일치 시 parsePDFText fallback
     if (grossPay > 0 && Math.abs(calcGross - grossPay) > 50000) {
       console.warn('[PayslipParser] 총액 불일치(차이 ' + (calcGross - grossPay) + ') → parsePDFText fallback');
       const fallback = parsePDFText(fullText);
       const fbGross = fallback.salaryItems.reduce((s, i) => s + i.amount, 0);
-      if (grossPay > 0 && Math.abs(fbGross - grossPay) < Math.abs(calcGross - grossPay)) {
+      if (Math.abs(fbGross - grossPay) < Math.abs(calcGross - grossPay)) {
         fallback.employeeInfo = Object.keys(employeeInfo).length > 0 ? employeeInfo : fallback.employeeInfo;
         fallback.metadata = Object.keys(metadata).length > 0 ? metadata : fallback.metadata;
         fallback._parseInfo = buildParseInfo('textFallback', Math.min(confidence, 50));
@@ -739,6 +902,7 @@ const SALARY_PARSER = (() => {
       metadata,
       salaryItems,
       deductionItems,
+      workStats,
       summary: { grossPay, totalDeduction, netPay },
       _parseInfo: buildParseInfo('globalGrid', confidence),
     };
@@ -856,14 +1020,23 @@ const SALARY_PARSER = (() => {
     if (totalDeduction === 0) totalDeduction = deductionItems.reduce(function(s, i) { return s + i.amount; }, 0);
     if (netPay === 0) netPay = grossPay - totalDeduction;
 
-    return { employeeInfo: info, metadata, salaryItems, deductionItems, summary: { grossPay, totalDeduction, netPay } };
+    return { employeeInfo: info, metadata, salaryItems, deductionItems, workStats: [], summary: { grossPay, totalDeduction, netPay } };
   }
 
-  // ── 이미지 OCR 파싱 (Tesseract.js) ──
+  // ── 이미지 OCR 파싱 (Tesseract.js — lazy load) ──
+  async function _loadTesseract() {
+    if (typeof Tesseract !== 'undefined') return;
+    return new Promise(function (resolve, reject) {
+      var s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+      s.onload = resolve;
+      s.onerror = function () { reject(new Error('OCR 라이브러리 로드 실패. 네트워크를 확인해주세요.')); };
+      document.head.appendChild(s);
+    });
+  }
+
   async function parseImage(file, onProgress) {
-    if (typeof Tesseract === 'undefined') {
-      throw new Error('OCR 라이브러리가 로드되지 않았습니다. 페이지를 새로고침해주세요.');
-    }
+    await _loadTesseract();
     const imageUrl = URL.createObjectURL(file);
     try {
       const result = await Tesseract.recognize(imageUrl, 'kor+eng', {
@@ -899,14 +1072,87 @@ const SALARY_PARSER = (() => {
   }
 
   // ── localStorage 월별 저장/불러오기 ──
-  function storageKey(year, month, type) {
-    const base = `payslip_${year}_${String(month).padStart(2, '0')}`;
-    return (type && type !== '급여') ? `${base}_${type}` : base;
+  function _payslipUid() {
+    var settings = {};
+    try { settings = JSON.parse(localStorage.getItem('bhm_settings') || '{}'); } catch (e) {}
+    return settings.googleSub || 'guest';
   }
 
-  function saveMonthlyData(year, month, data, type) {
+  function storageKey(year, month, type) {
+    var uid = _payslipUid();
+    var base = 'payslip_' + uid + '_' + year + '_' + String(month).padStart(2, '0');
+    return (type && type !== '급여') ? base + '_' + type : base;
+  }
+
+  function saveMonthlyData(year, month, data, type, overwrite = false) {
     const key = storageKey(year, month, type);
-    localStorage.setItem(key, JSON.stringify({ ...data, savedAt: new Date().toISOString() }));
+
+    // 같은 월·같은 타입 데이터가 이미 있으면 항목 병합 (덮어쓰기 방지)
+    // overwrite=true (수동 편집 저장) 이면 병합 없이 전체 교체
+    const existing = overwrite ? null : loadMonthlyData(year, month, type);
+    const merged = existing ? mergePayslipData(existing, data) : data;
+
+    localStorage.setItem(key, JSON.stringify({ ...merged, savedAt: new Date().toISOString() }));
+    // REMOVED auth: Drive sync push — 로컬 전용 앱
+
+    // 사번 자동 채움: 프로필에 사번이 비어 있고 payslip에서 추출된 사번이 있으면 저장
+    var empNum = merged && merged.employeeInfo && merged.employeeInfo.employeeNumber;
+    if (empNum && typeof PROFILE !== 'undefined') {
+      var current = PROFILE.load() || {};
+      if (!current.employeeNumber) {
+        PROFILE.save({ ...current, employeeNumber: String(empNum).trim() });
+      }
+    }
+
+    // 급여 유형 저장 완료 시 ImprovementAgent 자동 실행
+    if (!type || type === '급여') {
+      if (typeof PayrollImprovementAgent !== 'undefined') {
+        setTimeout(() => PayrollImprovementAgent.runOnActualUpload(year, month), 0);
+      }
+    }
+  }
+
+  // 같은 월 두 번째 PDF 업로드 시 항목 병합
+  // next 항목이 prev 동명 항목을 덮어쓰고, prev 전용 항목도 보존
+  // summary는 병합 결과로 재계산
+  function mergePayslipData(prev, next) {
+    const salaryMap = {};
+    (prev.salaryItems || []).forEach(i => { salaryMap[i.name] = { ...i }; });
+    (next.salaryItems || []).forEach(i => { salaryMap[i.name] = { ...i }; });
+
+    const dedMap = {};
+    (prev.deductionItems || []).forEach(i => { dedMap[i.name] = { ...i }; });
+    (next.deductionItems || []).forEach(i => { dedMap[i.name] = { ...i }; });
+
+    // 근무통계: next가 더 최신이므로 next 우선 (없으면 prev 유지)
+    const statsMap = {};
+    (prev.workStats || []).forEach(i => { statsMap[i.name] = { ...i }; });
+    (next.workStats || []).forEach(i => { statsMap[i.name] = { ...i }; });
+
+    const salaryItems = Object.values(salaryMap);
+    const deductionItems = Object.values(dedMap);
+    const workStats = Object.values(statsMap);
+    const grossPay = salaryItems.reduce((s, i) => s + (i.amount || 0), 0);
+    const totalDeduction = deductionItems.reduce((s, i) => s + (i.amount || 0), 0);
+
+    // employeeInfo: 2회차 PDF가 일부 필드를 놓쳐도 1회차 값이 살아남도록 필드별 fallback
+    const prevInfo = prev.employeeInfo || {};
+    const nextInfo = next.employeeInfo || {};
+    const employeeInfo = { ...prevInfo };
+    Object.keys(nextInfo).forEach(k => {
+      if (nextInfo[k]) employeeInfo[k] = nextInfo[k];
+    });
+
+    return {
+      ...prev,
+      ...next,
+      employeeInfo,
+      salaryItems,
+      deductionItems,
+      workStats,
+      summary: { grossPay, totalDeduction, netPay: grossPay - totalDeduction },
+      mergedAt: new Date().toISOString(),
+    };
   }
 
   function loadMonthlyData(year, month, type) {
@@ -915,15 +1161,32 @@ const SALARY_PARSER = (() => {
   }
 
   function listSavedMonths() {
-    const months = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (k && k.startsWith('payslip_')) {
-        const m = k.match(/payslip_(\d{4})_(\d{2})(?:_(.+))?$/);
-        if (m) months.push({ year: parseInt(m[1]), month: parseInt(m[2]), type: m[3] || '급여', key: k });
-      }
+    var uid = _payslipUid();
+    var prefix = 'payslip_' + uid + '_';
+    var months = [];
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (!k || !k.startsWith(prefix)) continue;
+      var rest = k.slice(prefix.length);
+      var m = rest.match(/^(\d{4})_(\d{2})(?:_(.+))?$/);
+      if (m) months.push({ year: parseInt(m[1]), month: parseInt(m[2]), type: m[3] || '급여', key: k });
     }
-    return months.sort((a, b) => b.year - a.year || b.month - a.month);
+    return months.sort(function(a, b) {
+      return b.year - a.year || b.month - a.month ||
+        (a.type === '급여' ? -1 : b.type === '급여' ? 1 : 0);
+    });
+  }
+
+  // 편집 저장 전용: merge 없이 전체 교체
+  function replaceMonthlyData(year, month, data, type) {
+    const key = storageKey(year, month, type);
+    localStorage.setItem(key, JSON.stringify({ ...data, savedAt: new Date().toISOString() }));
+    // REMOVED auth: Drive sync push — 로컬 전용 앱
+  }
+
+  function deleteMonthlyData(year, month, type) {
+    const key = storageKey(year, month, type);
+    localStorage.removeItem(key);
   }
 
   // ── 기간 문자열에서 연/월 파싱 ──
@@ -957,10 +1220,32 @@ const SALARY_PARSER = (() => {
       }
     });
 
-    // 입사일도 반영
-    if (data.employeeInfo?.hireDate && !profile.hireDate) {
-      profile.hireDate = data.employeeInfo.hireDate;
-      changed = true;
+    // 직원 정보 반영 (입사일/부서/직종/사번/직급/호봉) — 명세서가 source of truth.
+    // 명세서 값이 있으면 항상 최신화 (부서 이동, 승급 등 반영). 이름/사번은 신규 생성 시만 — 오탈자 보호.
+    const ei = data.employeeInfo || {};
+    if (ei.hireDate && profile.hireDate !== ei.hireDate) { profile.hireDate = ei.hireDate; changed = true; applied.push({ name: '입사일', amount: 0, note: ei.hireDate }); }
+    if (ei.department && profile.department !== ei.department) { profile.department = ei.department; changed = true; applied.push({ name: '부서', amount: 0, note: ei.department }); }
+    if (ei.jobType) {
+      // 명세서의 raw jobType (예: '간호', '보건') 을 앱 내부 표준 ('간호직', '보건직') 으로 매핑
+      const jobTypeMap = { '간호': '간호직', '보건': '보건직', '약무': '약무직', '의료기사': '의료기사직', '의사': '의사직', '사무': '사무직', '기능': '기능직', '시설': '시설직', '환경미화': '환경미화직', '지원': '지원직' };
+      let mappedJobType = ei.jobType;
+      for (const [keyword, jt] of Object.entries(jobTypeMap)) {
+        if (ei.jobType.includes(keyword)) { mappedJobType = jt; break; }
+      }
+      if (profile.jobType !== mappedJobType) { profile.jobType = mappedJobType; changed = true; applied.push({ name: '직종', amount: 0, note: mappedJobType }); }
+    }
+    if (ei.employeeNumber && !profile.employeeNumber) { profile.employeeNumber = String(ei.employeeNumber).trim(); changed = true; }
+    if (ei.name && !profile.name) { profile.name = ei.name; changed = true; }
+
+    // payGrade → grade/year 파싱 (예: "J3-5" → grade='J3', year=5)
+    if (ei.payGrade) {
+      const gm = String(ei.payGrade).match(/([A-Za-z]+\d*)\s*-\s*(\d+)/);
+      if (gm) {
+        const newGrade = gm[1].toUpperCase();
+        const newYear = parseInt(gm[2], 10) || 1;
+        if (profile.grade !== newGrade) { profile.grade = newGrade; changed = true; applied.push({ name: '직급', amount: 0, note: newGrade }); }
+        if (profile.year !== newYear) { profile.year = newYear; changed = true; applied.push({ name: '호봉', amount: 0, note: String(newYear) }); }
+      }
     }
 
     // 가족수당 관련 항목 자동 반영
@@ -1105,7 +1390,9 @@ const SALARY_PARSER = (() => {
   return {
     parseFile,
     saveMonthlyData,
+    replaceMonthlyData,
     loadMonthlyData,
+    deleteMonthlyData,
     listSavedMonths,
     parsePeriodYearMonth,
     applyStableItemsToProfile,

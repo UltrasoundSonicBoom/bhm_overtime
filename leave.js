@@ -5,8 +5,53 @@
 // ============================================
 
 const LEAVE = {
-    get STORAGE_KEY() {
-        return window.getUserStorageKey ? window.getUserStorageKey('leaveRecords') : 'leaveRecords';
+    // 로컬 단독 저장. auth 독립이므로 namespace 없이 단일 키 사용.
+    STORAGE_KEY: 'leaveRecords',
+
+    // ── 구버전 키 마이그레이션 ──
+    // 과거에는 `leaveRecords_<uid>` / `leaveRecords_guest` 처럼
+    // 사용자별 접미사가 붙은 키를 썼다. 로컬 단독으로 전환하면서 단일 키로 병합한다.
+    // 최초 로드 시 1회만 실행되어 기존 데이터 유실 방지.
+    _migrateLegacyKeys() {
+        try {
+            if (localStorage.getItem('bhm_leave_migrated_v1')) return;
+
+            const merged = (() => {
+                try { return JSON.parse(localStorage.getItem('leaveRecords')) || {}; }
+                catch { return {}; }
+            })();
+
+            const legacyKeys = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (k && k.startsWith('leaveRecords_')) legacyKeys.push(k);
+            }
+
+            legacyKeys.forEach(key => {
+                let data;
+                try { data = JSON.parse(localStorage.getItem(key)); }
+                catch { return; }
+                if (!data || typeof data !== 'object') return;
+
+                for (const [year, records] of Object.entries(data)) {
+                    if (!Array.isArray(records)) continue;
+                    if (!merged[year]) merged[year] = [];
+                    const existingIds = new Set(merged[year].map(r => r && r.id));
+                    records.forEach(r => {
+                        if (r && r.id && !existingIds.has(r.id)) merged[year].push(r);
+                    });
+                }
+            });
+
+            if (legacyKeys.length > 0) {
+                localStorage.setItem('leaveRecords', JSON.stringify(merged));
+                legacyKeys.forEach(k => localStorage.removeItem(k));
+                console.log('[LEAVE] 구버전 키 ' + legacyKeys.length + '개 → leaveRecords 단일 키로 병합');
+            }
+            localStorage.setItem('bhm_leave_migrated_v1', '1');
+        } catch (e) {
+            console.warn('[LEAVE] 레거시 키 마이그레이션 실패:', e);
+        }
     },
 
     // ── 유형 조회 (data.js 기반) ──
@@ -56,6 +101,7 @@ const LEAVE = {
 
     // ── 저장소 접근 ──
     _loadAll() {
+        this._migrateLegacyKeys();
         try {
             return JSON.parse(localStorage.getItem(this.STORAGE_KEY)) || {};
         } catch { return {}; }
@@ -63,6 +109,7 @@ const LEAVE = {
 
     _saveAll(data) {
         localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
+        if (window.recordLocalEdit) window.recordLocalEdit('leaveRecords');
     },
 
     // ── CRUD ──
@@ -133,10 +180,7 @@ const LEAVE = {
         all[year].push(record);
         this._saveAll(all);
 
-        // Sync to Supabase async
-        if (window.SupabaseSync) {
-            window.SupabaseSync.pushCloudData('leave_records', record);
-        }
+        // REMOVED auth: Drive/Calendar 동기화 제거 (로컬 단독 저장)
 
         return record;
     },
@@ -171,10 +215,7 @@ const LEAVE = {
 
                 this._saveAll(all);
 
-                // Sync to Supabase async
-                if (window.SupabaseSync) {
-                    window.SupabaseSync.pushCloudData('leave_records', all[year][idx]);
-                }
+                // REMOVED auth: Drive/Calendar 동기화 제거 (로컬 단독 저장)
 
                 return all[year][idx];
             }
@@ -190,10 +231,7 @@ const LEAVE = {
                 all[year].splice(idx, 1);
                 this._saveAll(all);
 
-                // Sync delete to Supabase async
-                if (window.SupabaseSync) {
-                    window.SupabaseSync.deleteCloudRecord('leave_records', id);
-                }
+                // REMOVED auth: Drive/Calendar 동기화 제거 (로컬 단독 저장)
 
                 return true;
             }

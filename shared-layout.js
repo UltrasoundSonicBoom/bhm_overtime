@@ -7,7 +7,14 @@
   'use strict';
 
   var CURRENT_PAGE = location.pathname.split('/').pop() || 'index.html';
+  var isIndex = CURRENT_PAGE === 'index.html';
   var isRegulation = CURRENT_PAGE === 'regulation.html';
+  var isCardNews = CURRENT_PAGE === 'cardnews.html';
+  var isStandalone = !isIndex && !isRegulation;
+
+  function homeHref(tab) {
+    return 'index.html?app=1&tab=' + tab;
+  }
 
   function el(tag, attrs) {
     var e = document.createElement(tag);
@@ -20,6 +27,48 @@
     return e;
   }
 
+  function syncThemeButtonIcon() {
+    var button = document.getElementById('themeToggle');
+    if (!button) return;
+    var isNeo = document.documentElement.getAttribute('data-theme') === 'neo';
+    button.textContent = isNeo ? '🎨' : '🌙';
+  }
+
+  function fallbackToggleTheme() {
+    var html = document.documentElement;
+    var isNeo = html.getAttribute('data-theme') === 'neo';
+    if (isNeo) {
+      html.removeAttribute('data-theme');
+      localStorage.setItem('theme', 'linear');
+    } else {
+      html.setAttribute('data-theme', 'neo');
+      localStorage.setItem('theme', 'neo');
+    }
+    syncThemeButtonIcon();
+  }
+
+  // REMOVED auth: Google G SVG / _readCachedUser / _renderSignInButton / _renderUserState — 로컬 전용 앱
+
+  // ── 베타 공지 티커 (헤더 바로 아래, 항상 표시) ──
+  function _renderBetaNoticeTicker() {
+    if (document.getElementById('betaNoticeTicker')) return;
+    var ticker = document.createElement('div');
+    ticker.id = 'betaNoticeTicker';
+    var inner = document.createElement('div');
+    inner.className = 'ticker-inner';
+    var msg = '🚧 정식 오픈전 테스터 목적외 데이터 저장 금지 · Do NOT store real personal data before official launch · 🚧 정식 오픈전 테스터 목적외 데이터 저장 금지 · Do NOT store real personal data before official launch';
+    var span = document.createElement('span');
+    span.textContent = msg;
+    inner.appendChild(span);
+    ticker.appendChild(inner);
+    var header = document.getElementById('sharedHeader');
+    if (header && header.parentNode) {
+      header.parentNode.insertBefore(ticker, header.nextSibling);
+    }
+  }
+
+  // REMOVED auth: _renderGuestNoticeBanner — 로컬 전용 앱
+
   // ── Header 렌더 (DOM API) ──
   function renderSharedHeader() {
     var header = document.getElementById('sharedHeader');
@@ -30,10 +79,10 @@
     var inner = el('div', { className: 'header-inner' });
     var topRow = el('div', { className: 'header-top-row' });
 
-    // Logo — index: switchTab('home'), regulation: link to snuhmate.com
+    // Logo — index: switchTab('home'), regulation/standalone: link
     var logo;
-    if (isRegulation) {
-      logo = el('a', { className: 'logo', href: 'https://www.snuhmate.com' });
+    if (isRegulation || isStandalone) {
+      logo = el('a', { className: 'logo', href: homeHref('home') });
       logo.style.textDecoration = 'none';
       logo.style.color = 'inherit';
     } else {
@@ -41,46 +90,53 @@
       logo.style.cursor = 'pointer';
       logo.onclick = function () { if (window.switchTab) switchTab('home'); };
     }
+    // 로고 이미지: 44px (컴팩트, 서브타이틀 제거로 헤더 높이 줄임)
     var img = el('img', { src: 'logo.png', alt: 'SNUH Mate' });
-    img.style.cssText = 'width:81px;height:81px;object-fit:contain;flex-shrink:0;border-radius:10px;';
+    img.style.cssText = 'width:56px;height:56px;object-fit:contain;flex-shrink:0;border-radius:10px;';
     logo.appendChild(img);
-    var logoText = el('div');
+    var titleWrap = el('div', { className: 'logo-title-wrap' });
+    titleWrap.style.cssText = 'display:flex;flex-direction:column;min-width:0;';
     var h1 = el('h1', { className: 'logo-main-title', textContent: '슬기로운 병원 생활 메이트' });
-    var sub = el('p', { className: 'logo-sub-title' });
-    sub.textContent = '휴가, 시간외/온콜 등의 기록을 직접 관리해보세요.';
-    sub.appendChild(el('br'));
-    sub.appendChild(document.createTextNode('기록은 이 브라우저에만 저장되서 개발자도 볼 수 없어요!'));
-    logoText.appendChild(h1);
-    logoText.appendChild(sub);
-    logo.appendChild(logoText);
+    var sub = el('div', { className: 'logo-sub-title', textContent: '2026.5.1 정식 오픈' });
+    titleWrap.appendChild(h1);
+    titleWrap.appendChild(sub);
+    logo.appendChild(titleWrap);
     topRow.appendChild(logo);
 
     // Header right
     var right = el('div', { className: 'header-right' });
 
-    // Auth container
-    var auth = el('div', { id: 'authContainer', className: 'auth-container' });
-    auth.style.cssText = 'display:none;align-items:center;gap:8px;';
-    var authBtn = el('button', { className: 'btn btn-outline', textContent: '접속 확인 중...' });
-    authBtn.style.cssText = 'padding:4px 10px;font-size:var(--text-body-normal);border-color:var(--text-muted);color:var(--text-muted);border-radius:20px;';
-    authBtn.onclick = function () { if (window.SupabaseSync) window.SupabaseSync.signInWithGoogle(); };
-    auth.appendChild(authBtn);
-    right.appendChild(auth);
+    // REMOVED auth: authContainer (Google 로그인 버튼/계정 영역) — 로컬 전용 앱
 
-    // Theme toggle
-    var themeBtn = el('button', { className: 'theme-toggle-btn', id: 'themeToggle', title: '테마 전환', textContent: '🎨' });
-    themeBtn.onclick = function () { toggleTheme(); };
-    right.appendChild(themeBtn);
+    // // Theme toggle (주석처리)
+    // var themeBtn = el('button', { className: 'theme-toggle-btn', id: 'themeToggle', title: '테마 전환', textContent: '🎨' });
+    // themeBtn.onclick = function () {
+    //   if (typeof window.toggleTheme === 'function') window.toggleTheme();
+    //   else fallbackToggleTheme();
+    //   syncThemeButtonIcon();
+    // };
+    // right.appendChild(themeBtn);
 
-    // ChannelIO button
-    var chatBtn = el('button', { className: 'theme-toggle-btn', title: '피드백 보내기', textContent: '💬' });
-    chatBtn.onclick = function () { if (window.ChannelIO) ChannelIO('showMessenger'); };
-    right.appendChild(chatBtn);
+    // Settings button (헤더 ⚙️) — 채널톡 자리 대체
+    var settingsBtn = el('button', { className: 'theme-toggle-btn', title: '설정', textContent: '⚙️' });
+    settingsBtn.onclick = function () {
+      if (isIndex && window.switchTab) {
+        var settingsContent = document.getElementById('tab-settings');
+        var isSettingsActive = settingsContent && settingsContent.classList.contains('active');
+        switchTab(isSettingsActive ? 'home' : 'settings');
+      } else { location.href = homeHref('settings'); }
+    };
+    right.appendChild(settingsBtn);
+
+    // ChannelIO 채팅 버튼 비활성 (차후 복구 시 주석 해제)
+    // var chatBtn = el('button', { className: 'theme-toggle-btn', title: '피드백 보내기', textContent: '💬' });
+    // chatBtn.onclick = function () { if (window.ChannelIO) ChannelIO('showMessenger'); };
+    // right.appendChild(chatBtn);
 
     topRow.appendChild(right);
     inner.appendChild(topRow);
-
     header.appendChild(inner);
+    syncThemeButtonIcon();
   }
 
   // ── Footer Nav 렌더 (양쪽 공용) ──
@@ -92,43 +148,41 @@
     footer.id = 'navTabs';
     footer.textContent = '';
 
-    if (isRegulation) {
-      var items = [
-        { label: '📅 휴가', href: 'index.html?app=1&tab=leave' },
-        { label: '⏰ 시간외', href: 'index.html?app=1&tab=overtime' },
-        { label: '💰 급여', href: 'index.html?app=1&tab=payroll' },
-        { label: '📖 규정', active: true },
-        { label: '👤 info', href: 'index.html?app=1&tab=profile' }
-      ];
-      items.forEach(function (t) {
-        var a = el('a', { className: 'nav-tab' + (t.active ? ' active' : ''), textContent: t.label });
-        a.style.textDecoration = 'none';
-        if (t.href) a.href = t.href;
-        else a.style.cursor = 'default';
-        footer.appendChild(a);
-      });
-    } else {
-      var tabs = [
-        { label: '📅 휴가', tab: 'leave' },
-        { label: '⏰ 시간외', tab: 'overtime' },
-        { label: '💰 급여', tab: 'payroll' },
-        { label: '📖 규정', href: 'regulation.html' },
-        { label: '👤 info', tab: 'profile' },
-        { label: '📢 피드백', tab: 'feedback', hidden: true }
-      ];
-      tabs.forEach(function (t) {
-        if (t.href) {
-          var a = el('a', { className: 'nav-tab', textContent: t.label, href: t.href });
-          a.style.textDecoration = 'none';
-          footer.appendChild(a);
-        } else {
-          var btn = el('button', { className: 'nav-tab', textContent: t.label });
-          btn.dataset.tab = t.tab;
-          if (t.hidden) btn.style.display = 'none';
-          footer.appendChild(btn);
-        }
-      });
+    // header-inner와 동일한 구조: nav-tabs-inner가 max-width:640px 중앙 정렬
+    var inner = el('div', { className: 'nav-tabs-inner' });
+
+    function addTabContent(elem, icon, text) {
+      elem.appendChild(el('span', { className: 'nav-tab-icon', textContent: icon }));
+      elem.appendChild(el('span', { className: 'nav-tab-text', textContent: text }));
     }
+
+    var items = [
+      { icon: '🏠', text: '홈', tab: 'home', href: homeHref('home') },
+      { icon: '📅', text: '휴가', tab: 'leave', href: homeHref('leave') },
+      { icon: '⏰', text: '시간외', tab: 'overtime', href: homeHref('overtime') },
+      { icon: '💰', text: '급여', tab: 'payroll', href: homeHref('payroll') },
+      { icon: '📖', text: '규정', href: 'regulation.html', active: isRegulation },
+      // 뉴스 탭 비활성 (차후 복구 시 주석 해제)
+      // { icon: '📰', text: '뉴스', href: 'cardnews.html', active: isCardNews },
+      { icon: '👤', text: 'info', tab: 'profile', href: homeHref('profile') }
+    ];
+
+    items.forEach(function (item) {
+      if (isIndex && item.tab) {
+        var btn = el('button', { className: 'nav-tab' });
+        btn.dataset.tab = item.tab;
+        addTabContent(btn, item.icon, item.text);
+        inner.appendChild(btn);
+        return;
+      }
+
+      var a = el('a', { className: 'nav-tab' + (item.active ? ' active' : ''), href: item.href });
+      a.style.textDecoration = 'none';
+      addTabContent(a, item.icon, item.text);
+      inner.appendChild(a);
+    });
+
+    footer.appendChild(inner);
   }
 
   // ── ChannelIO 부트 ──
@@ -167,11 +221,25 @@
 
   // ── Init: 헤더/푸터 즉시 렌더, ChannelIO는 DOM 준비 후 ──
   renderSharedHeader();
+  _renderBetaNoticeTicker();
   renderSharedFooter();
+  // _renderGuestNoticeBanner();  // 사용자 요청으로 비활성화 (2026-04-15)
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bootChannelIO);
-  } else {
-    bootChannelIO();
+  // AppLock: DOM 준비 후 잠금 오버레이 체크
+  // appLock.js가 먼저 로드된 경우에만 실행 (shared-layout.js는 여러 페이지에서 사용)
+  function checkAppLock() {
+    if (window.AppLock) window.AppLock.checkAndPrompt();
   }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', checkAppLock);
+  } else {
+    checkAppLock();
+  }
+
+  // ChannelIO 자동 부트 비활성 (차후 복구 시 주석 해제)
+  // if (document.readyState === 'loading') {
+  //   document.addEventListener('DOMContentLoaded', bootChannelIO);
+  // } else {
+  //   bootChannelIO();
+  // }
 })();

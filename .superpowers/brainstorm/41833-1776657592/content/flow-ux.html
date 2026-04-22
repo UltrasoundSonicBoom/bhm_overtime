@@ -1,0 +1,528 @@
+<h2>C형 — 독립 크롬 탭 흐름 & UX 미리보기</h2>
+<p class="subtitle">아이콘 클릭부터 기록까지 전체 흐름. 팝업이 아닌 <strong>전용 탭</strong>이 열립니다.</p>
+
+<style>
+/* ─── 공통 ─── */
+body { font-family: -apple-system, 'Noto Sans KR', sans-serif; }
+
+/* ─── 흐름도 ─── */
+.flow-wrap {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  overflow-x: auto;
+  padding: 12px 0 20px;
+  margin-bottom: 28px;
+}
+.flow-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 110px;
+}
+.flow-box {
+  border-radius: 12px;
+  padding: 10px 10px 8px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+  width: 96px;
+  box-sizing: border-box;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+.flow-icon { font-size: 22px; display: block; margin-bottom: 4px; }
+.flow-label { font-size: 11px; color: #6b7280; margin-top: 2px; text-align: center; line-height: 1.3; }
+.flow-arrow {
+  align-self: center;
+  margin-top: -18px;
+  font-size: 18px;
+  color: #9ca3af;
+  padding: 0 2px;
+}
+.flow-cond {
+  font-size: 10px;
+  color: #fff;
+  background: #6b7280;
+  border-radius: 20px;
+  padding: 1px 7px;
+  margin-top: 2px;
+}
+/* colors */
+.fc-gray  { background:#f3f4f6; color:#374151; border:1.5px solid #d1d5db; }
+.fc-blue  { background:#eff6ff; color:#1d4ed8; border:1.5px solid #93c5fd; }
+.fc-red   { background:#fef2f2; color:#b91c1c; border:1.5px solid #fca5a5; }
+.fc-green { background:#f0fdf4; color:#15803d; border:1.5px solid #86efac; }
+.fc-yellow{ background:#fffbeb; color:#b45309; border:1.5px solid #fcd34d; }
+.fc-purple{ background:#f5f3ff; color:#6d28d9; border:1.5px solid #c4b5fd; }
+
+/* ─── 스크린 목업 ─── */
+.screens-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+.screen-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.screen-no {
+  font-size: 11px;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* 크롬 브라우저 껍데기 */
+.chrome-shell {
+  width: 360px;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  border: 1.5px solid #d1d5db;
+}
+.chrome-bar {
+  background: #f1f3f4;
+  padding: 7px 10px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border-bottom: 1px solid #ddd;
+}
+.chrome-dots { display:flex; gap:4px; }
+.chrome-dot { width:10px; height:10px; border-radius:50%; }
+.chrome-url {
+  flex: 1;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 11px;
+  color: #5f6368;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chrome-ext-icon {
+  width: 20px; height: 20px;
+  background: #1a56db;
+  border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 12px;
+}
+.chrome-body {
+  background: #fff;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 앱 껍데기 (탭 내부 앱 영역) */
+.app-shell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  font-family: -apple-system, 'Noto Sans KR', sans-serif;
+  font-size: 13px;
+  color: #111;
+}
+.app-header {
+  background: #1a56db;
+  color: #fff;
+  padding: 10px 16px;
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.app-body { padding: 16px; flex: 1; }
+.app-footer {
+  display: flex;
+  border-top: 1.5px solid #e5e7eb;
+  background: #f9fafb;
+}
+.app-nav-item {
+  flex: 1;
+  padding: 8px 4px;
+  text-align: center;
+  font-size: 11px;
+  color: #9ca3af;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.app-nav-item .nav-icon { font-size: 18px; }
+.app-nav-item.active { color: #1a56db; font-weight: 600; }
+
+/* 공통 폼 요소 */
+.field-row { display:flex; flex-direction:column; gap:3px; margin-bottom:10px; }
+.field-label { font-size:10px; color:#6b7280; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+.field-input { border:1.5px solid #d1d5db; border-radius:7px; padding:6px 10px; font-size:12px; color:#111; background:#f9fafb; }
+.btn-primary { width:100%; background:#1a56db; color:#fff; border-radius:8px; padding:8px; text-align:center; font-weight:700; font-size:12px; margin-top:6px; }
+.btn-green { background:#059669; }
+
+/* PIN */
+.pin-dots { display:flex; gap:10px; justify-content:center; margin:8px 0; }
+.pin-dot { width:13px; height:13px; border-radius:50%; border:2px solid #1a56db; }
+.pin-dot.filled { background:#1a56db; }
+.pin-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+.pin-key { border:1.5px solid #e5e7eb; border-radius:9px; padding:9px; text-align:center; font-size:16px; font-weight:600; color:#111; background:#f9fafb; }
+.pin-key.action { font-size:11px; color:#6b7280; }
+
+/* 타입 버튼 */
+.type-row { display:flex; gap:5px; margin-bottom:10px; }
+.type-btn { flex:1; border:1.5px solid #d1d5db; border-radius:7px; padding:6px 2px; text-align:center; font-size:11px; color:#374151; background:#f9fafb; }
+.type-btn.active { border-color:#1a56db; color:#1a56db; background:#eff6ff; font-weight:700; }
+.type-btn.green { border-color:#059669; color:#059669; background:#f0fdf4; font-weight:700; }
+
+/* 미니 캘린더 */
+.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:1px; margin-bottom:8px; }
+.cal-day { text-align:center; padding:3px 1px; font-size:10px; border-radius:4px; color:#374151; }
+.cal-day.hd { color:#9ca3af; font-weight:600; font-size:9px; }
+.cal-day.today { background:#1a56db; color:#fff; font-weight:700; }
+.cal-day.sel { background:#dbeafe; color:#1a56db; font-weight:600; }
+.cal-day.dim { color:#d1d5db; }
+.cal-nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; font-size:11px; font-weight:600; }
+
+/* 휴가 유형 그리드 */
+.leave-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:5px; margin-bottom:10px; }
+.leave-item { border:1.5px solid #d1d5db; border-radius:7px; padding:6px 4px; text-align:center; font-size:11px; color:#374151; background:#f9fafb; }
+.leave-item.active { border-color:#059669; color:#059669; background:#f0fdf4; font-weight:700; }
+
+/* 배지 */
+.sync-badge { display:inline-flex; align-items:center; gap:3px; background:#dcfce7; color:#166534; border-radius:5px; padding:1px 6px; font-size:10px; font-weight:600; }
+.lock-badge { background:#fef9c3; color:#854d0e; }
+
+/* 로그인 화면 */
+.login-screen { padding:24px 16px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:10px; }
+.google-btn { width:100%; border:1.5px solid #d1d5db; border-radius:8px; padding:8px 14px; display:flex; align-items:center; justify-content:center; gap:8px; font-size:12px; font-weight:600; color:#374151; background:#fff; }
+
+/* PDF */
+.pdf-area { border:2px dashed #d1d5db; border-radius:10px; padding:20px; text-align:center; color:#9ca3af; font-size:12px; margin-bottom:10px; }
+.recent-pdf { display:flex; align-items:center; gap:8px; background:#f9fafb; border:1.5px solid #e5e7eb; border-radius:8px; padding:8px 10px; font-size:12px; margin-bottom:6px; }
+
+/* 설명 레이블 */
+.screen-desc { font-size:12px; color:#6b7280; text-align:center; max-width:200px; line-height:1.4; }
+</style>
+
+<!-- ── 흐름도 ── -->
+<div class="section">
+  <h3>① 아이콘 클릭부터 기록까지 전체 흐름</h3>
+  <div class="flow-wrap">
+
+    <div class="flow-step">
+      <div class="flow-box fc-gray">
+        <span class="flow-icon">🖱️</span>크롬 툴바 아이콘 클릭
+      </div>
+      <div class="flow-label">확장 아이콘</div>
+    </div>
+    <div class="flow-arrow">→</div>
+
+    <div class="flow-step">
+      <div class="flow-box fc-blue">
+        <span class="flow-icon">🗂️</span>전용 탭 열림 (또는 포커스)
+      </div>
+      <div class="flow-label">chrome://extension-id/app.html</div>
+    </div>
+    <div class="flow-arrow">→</div>
+
+    <div class="flow-step">
+      <div class="flow-box fc-red">
+        <span class="flow-icon">👤</span>구글 로그인?
+      </div>
+      <div class="flow-cond">미로그인</div>
+      <div class="flow-label" style="color:#b91c1c">→ 로그인 화면</div>
+    </div>
+    <div class="flow-arrow">→</div>
+
+    <div class="flow-step">
+      <div class="flow-box fc-yellow">
+        <span class="flow-icon">🔒</span>PIN 입력
+      </div>
+      <div class="flow-cond">30분 잠금</div>
+      <div class="flow-label">오류 5회 → 잠금</div>
+    </div>
+    <div class="flow-arrow">→</div>
+
+    <div class="flow-step">
+      <div class="flow-box fc-green">
+        <span class="flow-icon">✅</span>메인 앱
+      </div>
+      <div class="flow-label">시간외 / 휴가 / PDF</div>
+    </div>
+    <div class="flow-arrow">→</div>
+
+    <div class="flow-step">
+      <div class="flow-box fc-purple">
+        <span class="flow-icon">☁️</span>Drive 동기화
+      </div>
+      <div class="flow-label">저장 후 3초 내 자동</div>
+    </div>
+
+  </div>
+  <div style="font-size:12px;color:#6b7280;background:#f8fafc;border-radius:8px;padding:10px 14px;border:1px solid #e2e8f0;">
+    💡 <strong>팝업이 없습니다</strong> — 아이콘 클릭 시 작은 팝업 대신 <strong>일반 크롬 탭</strong>이 열립니다. 탭은 이미 열려 있으면 그 탭으로 포커스만 이동합니다.
+  </div>
+</div>
+
+<!-- ── 스크린 목업 ── -->
+<div class="section">
+  <h3>② 각 화면 미리보기</h3>
+  <div class="screens-row">
+
+    <!-- Screen 1: Login -->
+    <div class="screen-wrap">
+      <div class="screen-no">화면 1 · 로그인</div>
+      <div class="chrome-shell">
+        <div class="chrome-bar">
+          <div class="chrome-dots">
+            <div class="chrome-dot" style="background:#ff5f57"></div>
+            <div class="chrome-dot" style="background:#febc2e"></div>
+            <div class="chrome-dot" style="background:#28c840"></div>
+          </div>
+          <div class="chrome-url">chrome-extension://…/app.html</div>
+          <div class="chrome-ext-icon">🏥</div>
+        </div>
+        <div class="chrome-body">
+          <div class="app-shell">
+            <div class="app-header">🏥 SNUH Mate</div>
+            <div class="login-screen">
+              <div style="font-size:40px">🏥</div>
+              <div style="font-weight:700;font-size:15px">SNUH Mate</div>
+              <div style="font-size:12px;color:#6b7280;line-height:1.5">시간외·휴가·급여명세서를<br>언제든 기록하세요</div>
+              <div class="google-btn">
+                <span style="font-size:16px">G</span>
+                Google 계정으로 로그인
+              </div>
+              <div style="font-size:11px;color:#9ca3af">snuhmate.com과 동일 계정 사용</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="screen-desc">미로그인 상태. Google 계정 연결 필요.</div>
+    </div>
+
+    <!-- Screen 2: PIN -->
+    <div class="screen-wrap">
+      <div class="screen-no">화면 2 · PIN 잠금</div>
+      <div class="chrome-shell">
+        <div class="chrome-bar">
+          <div class="chrome-dots">
+            <div class="chrome-dot" style="background:#ff5f57"></div>
+            <div class="chrome-dot" style="background:#febc2e"></div>
+            <div class="chrome-dot" style="background:#28c840"></div>
+          </div>
+          <div class="chrome-url">chrome-extension://…/app.html</div>
+          <div class="chrome-ext-icon">🏥</div>
+        </div>
+        <div class="chrome-body">
+          <div class="app-shell">
+            <div class="app-header">🔒 잠금 해제</div>
+            <div class="app-body" style="display:flex;flex-direction:column;align-items:center;padding-top:20px">
+              <div style="font-size:12px;color:#6b7280;margin-bottom:10px">홍길동 · 간호사</div>
+              <div class="pin-dots">
+                <div class="pin-dot filled"></div>
+                <div class="pin-dot filled"></div>
+                <div class="pin-dot filled"></div>
+                <div class="pin-dot"></div>
+              </div>
+              <div style="font-size:11px;color:#9ca3af;margin-bottom:12px">4자리 PIN 입력</div>
+              <div class="pin-grid" style="width:100%;max-width:200px">
+                <div class="pin-key">1</div><div class="pin-key">2</div><div class="pin-key">3</div>
+                <div class="pin-key">4</div><div class="pin-key">5</div><div class="pin-key">6</div>
+                <div class="pin-key">7</div><div class="pin-key">8</div><div class="pin-key">9</div>
+                <div class="pin-key action">취소</div><div class="pin-key">0</div><div class="pin-key action">←</div>
+              </div>
+              <div style="font-size:11px;color:#9ca3af;margin-top:10px">30분 비활성 시 자동 잠금</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="screen-desc">로그인 후 또는 30분 비활성 시. 오류 5회 → 1시간 잠금.</div>
+    </div>
+
+    <!-- Screen 3: 시간외 -->
+    <div class="screen-wrap">
+      <div class="screen-no">화면 3 · 시간외 기록</div>
+      <div class="chrome-shell">
+        <div class="chrome-bar">
+          <div class="chrome-dots">
+            <div class="chrome-dot" style="background:#ff5f57"></div>
+            <div class="chrome-dot" style="background:#febc2e"></div>
+            <div class="chrome-dot" style="background:#28c840"></div>
+          </div>
+          <div class="chrome-url">chrome-extension://…/app.html#overtime</div>
+          <div class="chrome-ext-icon">🏥</div>
+        </div>
+        <div class="chrome-body">
+          <div class="app-shell">
+            <div class="app-header">
+              ⏱️ 시간외 기록
+              <span class="sync-badge">✅ 동기화됨</span>
+            </div>
+            <div class="app-body">
+              <div class="cal-nav">
+                <span>◀</span> <span>2026년 4월</span> <span>▶</span>
+              </div>
+              <div class="cal-grid">
+                <div class="cal-day hd">일</div><div class="cal-day hd">월</div><div class="cal-day hd">화</div><div class="cal-day hd">수</div><div class="cal-day hd">목</div><div class="cal-day hd">금</div><div class="cal-day hd">토</div>
+                <div class="cal-day dim">30</div><div class="cal-day dim">31</div><div class="cal-day">1</div><div class="cal-day">2</div><div class="cal-day">3</div><div class="cal-day">4</div><div class="cal-day">5</div>
+                <div class="cal-day">13</div><div class="cal-day">14</div><div class="cal-day">15</div><div class="cal-day">16</div><div class="cal-day">17</div><div class="cal-day">18</div><div class="cal-day">19</div>
+                <div class="cal-day">20</div><div class="cal-day sel">21</div><div class="cal-day today">22</div><div class="cal-day">23</div><div class="cal-day">24</div><div class="cal-day">25</div><div class="cal-day">26</div>
+              </div>
+              <div class="type-row">
+                <div class="type-btn active">시간외</div>
+                <div class="type-btn">온콜대기</div>
+                <div class="type-btn">온콜출근</div>
+              </div>
+              <div style="display:flex;gap:6px;margin-bottom:10px">
+                <div style="flex:1"><div class="field-label">시작</div><div class="field-input">18:00</div></div>
+                <div style="align-self:flex-end;padding-bottom:7px;color:#9ca3af">~</div>
+                <div style="flex:1"><div class="field-label">종료</div><div class="field-input">21:00</div></div>
+              </div>
+              <div style="font-size:11px;background:#eff6ff;border-radius:6px;padding:5px 8px;color:#1d4ed8;margin-bottom:8px">📊 연장 3h · 야간 0h · 휴일 0h</div>
+              <div class="btn-primary">💾 저장</div>
+            </div>
+            <div class="app-footer">
+              <div class="app-nav-item active"><div class="nav-icon">⏱️</div>시간외</div>
+              <div class="app-nav-item"><div class="nav-icon">🌴</div>휴가</div>
+              <div class="app-nav-item"><div class="nav-icon">📄</div>PDF</div>
+              <div class="app-nav-item"><div class="nav-icon">⚙️</div>설정</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="screen-desc">하단 탭으로 기능 전환. 시간 계산 실시간 미리보기.</div>
+    </div>
+
+    <!-- Screen 4: 휴가 -->
+    <div class="screen-wrap">
+      <div class="screen-no">화면 4 · 휴가 신청</div>
+      <div class="chrome-shell">
+        <div class="chrome-bar">
+          <div class="chrome-dots">
+            <div class="chrome-dot" style="background:#ff5f57"></div>
+            <div class="chrome-dot" style="background:#febc2e"></div>
+            <div class="chrome-dot" style="background:#28c840"></div>
+          </div>
+          <div class="chrome-url">chrome-extension://…/app.html#leave</div>
+          <div class="chrome-ext-icon">🏥</div>
+        </div>
+        <div class="chrome-body">
+          <div class="app-shell">
+            <div class="app-header">🌴 휴가 신청</div>
+            <div class="app-body">
+              <div class="leave-grid">
+                <div class="leave-item active">연차</div>
+                <div class="leave-item">반차</div>
+                <div class="leave-item">병가</div>
+                <div class="leave-item">경조사</div>
+                <div class="leave-item">무급</div>
+                <div class="leave-item">기타</div>
+              </div>
+              <div style="display:flex;gap:6px;margin-bottom:10px">
+                <div style="flex:1"><div class="field-label">시작일</div><div class="field-input">04/21 (화)</div></div>
+                <div style="flex:1"><div class="field-label">종료일</div><div class="field-input">04/23 (목)</div></div>
+              </div>
+              <div style="font-size:11px;background:#f0fdf4;border-radius:6px;padding:5px 8px;color:#15803d;margin-bottom:8px">📊 영업일 3일 · 잔여 연차 12일 → 9일</div>
+              <div class="field-row"><div class="field-label">사유 (선택)</div><div class="field-input" style="color:#9ca3af">입력하세요</div></div>
+              <div class="btn-primary btn-green">🌴 3일 연차 신청</div>
+            </div>
+            <div class="app-footer">
+              <div class="app-nav-item"><div class="nav-icon">⏱️</div>시간외</div>
+              <div class="app-nav-item active"><div class="nav-icon">🌴</div>휴가</div>
+              <div class="app-nav-item"><div class="nav-icon">📄</div>PDF</div>
+              <div class="app-nav-item"><div class="nav-icon">⚙️</div>설정</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="screen-desc">날짜 선택 시 영업일·잔여 연차 자동 계산.</div>
+    </div>
+
+    <!-- Screen 5: PDF -->
+    <div class="screen-wrap">
+      <div class="screen-no">화면 5 · PDF 가져오기</div>
+      <div class="chrome-shell">
+        <div class="chrome-bar">
+          <div class="chrome-dots">
+            <div class="chrome-dot" style="background:#ff5f57"></div>
+            <div class="chrome-dot" style="background:#febc2e"></div>
+            <div class="chrome-dot" style="background:#28c840"></div>
+          </div>
+          <div class="chrome-url">chrome-extension://…/app.html#pdf</div>
+          <div class="chrome-ext-icon">🏥</div>
+        </div>
+        <div class="chrome-body">
+          <div class="app-shell">
+            <div class="app-header">📄 급여명세서</div>
+            <div class="app-body">
+              <div class="pdf-area">
+                📥 PDF를 여기에 드래그<br>또는 클릭해서 선택
+              </div>
+              <div style="font-size:11px;color:#9ca3af;text-align:center;margin-bottom:10px">— 또는 최근 다운로드 —</div>
+              <div class="recent-pdf">
+                <span style="font-size:18px">📄</span>
+                <div style="flex:1">
+                  <div style="font-weight:600">payslip_2026_03.pdf</div>
+                  <div style="font-size:11px;color:#9ca3af">3분 전 다운로드</div>
+                </div>
+                <div style="background:#1a56db;color:#fff;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600">가져오기</div>
+              </div>
+              <div style="font-size:11px;background:#f0fdf4;border-radius:6px;padding:6px 8px;color:#15803d;">
+                ✅ 2026년 3월 명세서 파싱 완료<br>기본급 3,200,000 · 시간외수당 245,000
+              </div>
+            </div>
+            <div class="app-footer">
+              <div class="app-nav-item"><div class="nav-icon">⏱️</div>시간외</div>
+              <div class="app-nav-item"><div class="nav-icon">🌴</div>휴가</div>
+              <div class="app-nav-item active"><div class="nav-icon">📄</div>PDF</div>
+              <div class="app-nav-item"><div class="nav-icon">⚙️</div>설정</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="screen-desc">최근 다운로드 자동 감지. 드래그&드롭도 가능.</div>
+    </div>
+
+  </div>
+</div>
+
+<div class="section" style="background:#f8fafc;border-radius:10px;padding:14px;border:1.5px solid #e2e8f0;">
+  <h3>③ "팝업형 vs 탭형" 차이 한눈에</h3>
+  <table style="width:100%;font-size:12px;border-collapse:collapse">
+    <tr style="background:#e2e8f0">
+      <th style="padding:7px 10px;text-align:left">항목</th>
+      <th style="padding:7px 10px;text-align:center">A/B 팝업형</th>
+      <th style="padding:7px 10px;text-align:center;color:#1a56db">C 탭형 (선택)</th>
+    </tr>
+    <tr style="border-bottom:1px solid #e5e7eb">
+      <td style="padding:7px 10px">아이콘 클릭</td>
+      <td style="padding:7px 10px;text-align:center">작은 팝업 뜸 (떠있는 창)</td>
+      <td style="padding:7px 10px;text-align:center;color:#1a56db;font-weight:600">크롬 탭 열림 (일반 탭)</td>
+    </tr>
+    <tr style="border-bottom:1px solid #e5e7eb">
+      <td style="padding:7px 10px">다른 곳 클릭 시</td>
+      <td style="padding:7px 10px;text-align:center;color:#dc2626">팝업 닫힘 → 작업 중단</td>
+      <td style="padding:7px 10px;text-align:center;color:#059669">탭 유지 → 나중에 돌아올 수 있음</td>
+    </tr>
+    <tr style="border-bottom:1px solid #e5e7eb">
+      <td style="padding:7px 10px">snuhmate.com</td>
+      <td style="padding:7px 10px;text-align:center;color:#dc2626">반드시 열려있어야 함</td>
+      <td style="padding:7px 10px;text-align:center;color:#059669">불필요</td>
+    </tr>
+    <tr>
+      <td style="padding:7px 10px">화면 크기</td>
+      <td style="padding:7px 10px;text-align:center">320×480px 고정</td>
+      <td style="padding:7px 10px;text-align:center;color:#1a56db">브라우저 전체 너비 활용</td>
+    </tr>
+  </table>
+</div>

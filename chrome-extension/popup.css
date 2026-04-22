@@ -1,0 +1,233 @@
+/* ── SNUH Mate Companion Popup ── */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  width: 320px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 13px;
+  color: #1a1a1a;
+  background: #f5f5f5;
+}
+
+.popup-shell { padding: 12px; }
+
+.card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.popup-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: #333;
+}
+
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #555;
+}
+
+/* ── Mini Calendar ── */
+.mini-calendar {
+  margin-bottom: 10px;
+}
+
+.cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.cal-header button {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #555;
+}
+.cal-header button:hover { background: #eee; }
+
+.cal-header .cal-title {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  text-align: center;
+}
+
+.cal-day-label {
+  font-size: 10px;
+  color: #999;
+  padding: 2px 0;
+}
+
+.cal-day {
+  font-size: 12px;
+  padding: 5px 0;
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: #333;
+}
+.cal-day:hover { background: #e8f0fe; }
+.cal-day.selected { background: #4285f4; color: #fff; font-weight: 600; }
+.cal-day.today { border: 1.5px solid #4285f4; }
+.cal-day.other-month { color: #ccc; }
+.cal-day.sunday { color: #e53935; }
+
+/* ── Capture Type Buttons ── */
+.capture-type-group {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.type-btn {
+  flex: 1;
+  padding: 7px 4px;
+  font-size: 12px;
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+.type-btn:hover { border-color: #4285f4; }
+.type-btn.active {
+  background: #4285f4;
+  color: #fff;
+  border-color: #4285f4;
+}
+
+/* ── Time Inputs ── */
+.time-inputs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.time-inputs label {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.time-inputs span {
+  font-size: 11px;
+  color: #777;
+}
+.time-inputs input[type="time"] {
+  padding: 6px 8px;
+  border: 1.5px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+/* ── Memo ── */
+.memo-row {
+  margin-bottom: 8px;
+}
+.memo-row input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1.5px solid #ddd;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+/* ── Holiday ── */
+.holiday-row {
+  margin-bottom: 10px;
+}
+.holiday-row label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #555;
+  cursor: pointer;
+}
+
+/* ── Save Button ── */
+.save-btn {
+  width: 100%;
+  padding: 10px;
+  background: #4285f4;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.save-btn:hover { background: #3367d6; }
+.save-btn:disabled { background: #bbb; cursor: not-allowed; }
+
+/* ── Status Message ── */
+.status-msg {
+  margin-top: 6px;
+  font-size: 12px;
+  text-align: center;
+  min-height: 18px;
+}
+.status-msg.success { color: #0d8a3e; }
+.status-msg.error { color: #d93025; }
+
+/* ── PDF Section ── */
+.recent-pdf-list { margin-bottom: 8px; }
+.recent-pdf-list .empty-state {
+  font-size: 12px;
+  color: #999;
+  text-align: center;
+  padding: 8px 0;
+}
+.recent-pdf-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.recent-pdf-item:hover { background: #f0f0f0; }
+
+.import-btn {
+  width: 100%;
+  padding: 8px;
+  background: #fff;
+  color: #4285f4;
+  border: 1.5px solid #4285f4;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.import-btn:hover { background: #e8f0fe; }
+
+/* ── Footer ── */
+.popup-footer {
+  text-align: center;
+  padding: 4px 0;
+}
+.popup-footer a {
+  font-size: 11px;
+  color: #4285f4;
+  text-decoration: none;
+}
+.popup-footer a:hover { text-decoration: underline; }
