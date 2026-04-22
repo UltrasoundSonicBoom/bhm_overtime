@@ -43,8 +43,8 @@ export async function requireAdmin(c: Context, next: Next) {
   const payload = await verifyJwt(token)
   if (!payload?.sub) return c.json({ error: 'Unauthorized' }, 401)
 
-  const { db } = await import('../db/client')
-  const { adminUsers } = await import('../db/schema')
+  const { db } = await import('../db/client.js')
+  const { adminUsers } = await import('../db/schema.js')
   const { or, eq } = await import('drizzle-orm')
 
   const [admin] = await db.select().from(adminUsers).where(

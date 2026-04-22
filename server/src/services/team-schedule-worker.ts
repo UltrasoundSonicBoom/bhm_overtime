@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import type { SolverPayload, SolverRunResult } from './team-schedules'
+import type { SolverPayload, SolverRunResult } from './team-schedules.js'
 
 const currentDir = path.dirname(fileURLToPath(import.meta.url))
 const defaultScriptPath = path.resolve(currentDir, '../../workers/schedule_solver.py')

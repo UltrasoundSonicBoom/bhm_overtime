@@ -1,8 +1,8 @@
 import OpenAI from 'openai'
 import postgres from 'postgres'
 import 'dotenv/config'
-import { embed } from './embedding'
-import { classifyRagMode, rerankMatches } from './rag-ranking'
+import { embed } from './embedding.js'
+import { classifyRagMode, rerankMatches } from './rag-ranking.js'
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 const sql = postgres(process.env.DATABASE_URL!, { prepare: false })

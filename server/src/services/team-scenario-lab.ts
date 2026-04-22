@@ -4,8 +4,8 @@ import {
   buildEventLocks,
   buildLeaveLedger,
   validateDataset,
-} from './team-dataset'
-import { runScheduleSolver } from './team-schedule-worker'
+} from './team-dataset.js'
+import { runScheduleSolver } from './team-schedule-worker.js'
 import {
   buildSolverPayload,
   type AssignmentLock,
@@ -14,7 +14,7 @@ import {
   type ScheduleEvent,
   type ScheduleGenerationContext,
   type SolverCandidate,
-} from './team-schedules'
+} from './team-schedules.js'
 
 export type TeamScenarioCheck = {
   label: string

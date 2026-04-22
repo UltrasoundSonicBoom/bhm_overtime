@@ -1,15 +1,15 @@
 import { Hono } from 'hono'
 import postgres from 'postgres'
 import { sql as drizzleSql, eq } from 'drizzle-orm'
-import { db } from '../db/client'
-import { userSyncItems } from '../db/schema'
-import { optionalAuth } from '../middleware/auth'
+import { db } from '../db/client.js'
+import { userSyncItems } from '../db/schema.js'
+import { optionalAuth } from '../middleware/auth.js'
 import {
   buildPersonalScheduleView,
   type PublishedAssignment,
   type ShiftTypeDefinition,
-} from '../services/team-schedules'
-import { buildIcsCalendar } from '../services/calendar-ics'
+} from '../services/team-schedules.js'
+import { buildIcsCalendar } from '../services/calendar-ics.js'
 
 const meRoutes = new Hono()
 const sql = postgres(process.env.DATABASE_URL!, { prepare: false })

@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { db } from '../db/client'
+import { db } from '../db/client.js'
 import {
   regulationVersions,
   payTables,
@@ -8,12 +8,12 @@ import {
   faqEntries,
   leaveTypes,
   ceremonies,
-} from '../db/schema'
+} from '../db/schema.js'
 import { eq, and } from 'drizzle-orm'
 import {
   evaluateNurseRegulationScenarios,
   loadNurseRegulation,
-} from '../services/nurse-regulation'
+} from '../services/nurse-regulation.js'
 
 const dataRoutes = new Hono()
 

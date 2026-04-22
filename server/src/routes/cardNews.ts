@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { generateCardNewsDecks, normalizeKeywords, summarizeArticle } from '../services/cardNews'
+import { generateCardNewsDecks, normalizeKeywords, summarizeArticle } from '../services/cardNews.js'
 
 const cardNewsRoutes = new Hono()
 

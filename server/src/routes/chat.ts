@@ -1,8 +1,8 @@
 import { Hono } from 'hono'
 import postgres from 'postgres'
 import 'dotenv/config'
-import { ragAnswer } from '../services/rag'
-import { optionalAuth } from '../middleware/auth'
+import { ragAnswer } from '../services/rag.js'
+import { optionalAuth } from '../middleware/auth.js'
 
 const sql = postgres(process.env.DATABASE_URL!, { prepare: false })
 const chatRoutes = new Hono()

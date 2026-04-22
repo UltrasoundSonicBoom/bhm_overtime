@@ -1,8 +1,8 @@
 import { Hono } from 'hono'
-import { faqEntries } from '../db/schema'
+import { faqEntries } from '../db/schema.js'
 import { eq, and } from 'drizzle-orm'
-import { embed } from '../services/embedding'
-import { db } from '../db/client'
+import { embed } from '../services/embedding.js'
+import { db } from '../db/client.js'
 import postgres from 'postgres'
 import 'dotenv/config'
 

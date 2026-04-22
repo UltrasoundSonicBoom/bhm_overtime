@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import postgres from 'postgres'
-import { requireAdmin } from '../middleware/auth'
+import { requireAdmin } from '../middleware/auth.js'
 
 const adminCalendarRoutes = new Hono()
 const sql = postgres(process.env.DATABASE_URL!, { prepare: false })

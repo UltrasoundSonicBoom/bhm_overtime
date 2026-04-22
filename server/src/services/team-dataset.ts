@@ -12,7 +12,7 @@ import {
   type ScheduleEvent,
   type ScheduleMember,
   type ShiftTypeDefinition,
-} from './team-schedules'
+} from './team-schedules.js'
 
 type DateBounds = {
   start: string

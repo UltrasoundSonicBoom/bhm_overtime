@@ -1,12 +1,12 @@
 import { Hono } from 'hono'
 import postgres from 'postgres'
-import { requireAdmin } from '../middleware/auth'
+import { requireAdmin } from '../middleware/auth.js'
 import {
   canRequestReview,
   canTransitionStatus,
   normalizeSlug,
   resolveApprovalDecision,
-} from '../services/admin-ops'
+} from '../services/admin-ops.js'
 
 const adminOpsRoutes = new Hono()
 const sql = postgres(process.env.DATABASE_URL!, { prepare: false })
