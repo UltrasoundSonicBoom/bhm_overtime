@@ -54,6 +54,7 @@ const PROFILE = {
         if (window.recordLocalEdit) window.recordLocalEdit('bhm_hr_profile');
 
         // REMOVED auth: Drive sync push — 로컬 전용 앱
+        window.dispatchEvent(new CustomEvent('profileChanged'));
 
         return profile;
     },

@@ -919,3 +919,24 @@ function applyProfileToLeave() {
 
 // applyProfileToCareer — 제거됨 (승진·퇴직은 Q&A 카드로 이동)
 
+// ── 탭 간 실시간 갱신 — 휴가/시간외 저장 시 프로필 탭 active 면 잔여 연차·요약 재계산 ──
+(function () {
+  if (typeof window === 'undefined') return;
+  var _refreshProfile = function () {
+    var profileTab = document.getElementById('tab-profile');
+    if (!profileTab || !profileTab.classList.contains('active')) return;
+    // 우선순위: initProfileTab (전체 재초기화) → updateProfileSummary(load()) → PROFILE.render
+    if (typeof initProfileTab === 'function') {
+      try { initProfileTab(); return; } catch (_) {}
+    }
+    if (typeof updateProfileSummary === 'function' && window.PROFILE && typeof window.PROFILE.load === 'function') {
+      try { var p = window.PROFILE.load(); if (p) updateProfileSummary(p); return; } catch (_) {}
+    }
+    if (window.PROFILE && typeof window.PROFILE.render === 'function') {
+      try { window.PROFILE.render(); } catch (_) {}
+    }
+  };
+  window.addEventListener('leaveChanged', _refreshProfile);
+  window.addEventListener('overtimeChanged', _refreshProfile);
+})();
+

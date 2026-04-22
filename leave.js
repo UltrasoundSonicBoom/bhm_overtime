@@ -181,6 +181,7 @@ const LEAVE = {
         this._saveAll(all);
 
         // REMOVED auth: Drive/Calendar 동기화 제거 (로컬 단독 저장)
+        window.dispatchEvent(new CustomEvent('leaveChanged'));
 
         return record;
     },
@@ -216,6 +217,7 @@ const LEAVE = {
                 this._saveAll(all);
 
                 // REMOVED auth: Drive/Calendar 동기화 제거 (로컬 단독 저장)
+                window.dispatchEvent(new CustomEvent('leaveChanged'));
 
                 return all[year][idx];
             }
@@ -232,6 +234,7 @@ const LEAVE = {
                 this._saveAll(all);
 
                 // REMOVED auth: Drive/Calendar 동기화 제거 (로컬 단독 저장)
+                window.dispatchEvent(new CustomEvent('leaveChanged'));
 
                 return true;
             }

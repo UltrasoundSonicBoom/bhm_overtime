@@ -46,6 +46,7 @@ const OVERTIME = {
         this._saveAll(all);
 
         // REMOVED auth: Drive sync push — 로컬 전용 앱
+        window.dispatchEvent(new CustomEvent('overtimeChanged'));
 
         return record;
     },
@@ -59,6 +60,7 @@ const OVERTIME = {
                 this._saveAll(all);
 
                 // REMOVED auth: Drive sync push — 로컬 전용 앱
+                window.dispatchEvent(new CustomEvent('overtimeChanged'));
 
                 return all[key][idx];
             }
@@ -75,6 +77,7 @@ const OVERTIME = {
                 this._saveAll(all);
 
                 // REMOVED auth: Drive sync push — 로컬 전용 앱
+                window.dispatchEvent(new CustomEvent('overtimeChanged'));
 
                 return true;
             }

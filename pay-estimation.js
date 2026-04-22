@@ -855,3 +855,19 @@ function initPayEstimate() {
   renderPayEstHero();
   renderPayEstDetail();
 }
+
+// ── 탭 간 실시간 갱신 — 다른 탭에서 저장된 변경을 급여 탭 active 면 즉시 반영 ──
+function _isPayCalcTabActive() {
+  var payrollTab = document.getElementById('tab-payroll');
+  if (!payrollTab || !payrollTab.classList.contains('active')) return false;
+  var activeSub = payrollTab.querySelector('.pay-bookmark-tab.active, .sub-content.active');
+  return !!(activeSub && (activeSub.dataset?.subtab === 'pay-calc' || activeSub.id === 'sub-pay-calc'));
+}
+function _refreshPayEstIfActive() {
+  if (_isPayCalcTabActive() && typeof initPayEstimate === 'function') {
+    try { initPayEstimate(); } catch (e) { console.warn('[PayEst] refresh failed:', e); }
+  }
+}
+window.addEventListener('overtimeChanged', _refreshPayEstIfActive);
+window.addEventListener('leaveChanged',    _refreshPayEstIfActive);
+window.addEventListener('profileChanged',  _refreshPayEstIfActive);
