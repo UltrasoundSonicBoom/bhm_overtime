@@ -167,13 +167,13 @@ window.SyncManager = (function () {
         try { errBody = await res.text() } catch (_) {}
         console.warn('[SyncManager] Neon sync HTTP error', res.status, 'keys=', itemKeys, 'body=', String(errBody).slice(0, 300))
         if (window.Telemetry && typeof window.Telemetry.error === 'function') {
-          try { window.Telemetry.error('neon_sync_push_error', { status: res.status, body: String(errBody).slice(0, 300), itemKeys: itemKeys }) } catch (_) {}
+          try { window.Telemetry.error('neon_sync_push_error', { status: res.status, body: String(errBody).slice(0, 300), itemKeys: itemKeys, deviceId: deviceId }) } catch (_) {}
         }
       }
     } catch (e) {
       console.warn('[SyncManager] Neon sync failed:', e, 'keys=', itemKeys)
       if (window.Telemetry && typeof window.Telemetry.error === 'function') {
-        try { window.Telemetry.error('neon_sync_push_error', { error: String(e && e.message || e), itemKeys: itemKeys }) } catch (_) {}
+        try { window.Telemetry.error('neon_sync_push_error', { error: String(e && e.message || e), itemKeys: itemKeys, deviceId: deviceId }) } catch (_) {}
       }
     }
   }
@@ -182,6 +182,7 @@ window.SyncManager = (function () {
   async function pullFromNeon() {
     var authHeader = await _getAuthHeader()
     if (!authHeader['Authorization']) return false
+    var deviceId = localStorage.getItem('bhm_deviceId')
     try {
       var res = await fetch(API_BASE + '/api/me/sync', { headers: authHeader })
       if (!res.ok) {
@@ -189,7 +190,7 @@ window.SyncManager = (function () {
         try { errBody = await res.text() } catch (_) {}
         console.warn('[SyncManager] Neon pull HTTP error', res.status, 'body=', String(errBody).slice(0, 300))
         if (window.Telemetry && typeof window.Telemetry.error === 'function') {
-          try { window.Telemetry.error('neon_sync_pull_error', { status: res.status, body: String(errBody).slice(0, 300) }) } catch (_) {}
+          try { window.Telemetry.error('neon_sync_pull_error', { status: res.status, body: String(errBody).slice(0, 300), deviceId: deviceId }) } catch (_) {}
         }
         return false
       }
@@ -207,7 +208,7 @@ window.SyncManager = (function () {
     } catch (e) {
       console.warn('[SyncManager] pullFromNeon failed:', e)
       if (window.Telemetry && typeof window.Telemetry.error === 'function') {
-        try { window.Telemetry.error('neon_sync_pull_error', { error: String(e && e.message || e) }) } catch (_) {}
+        try { window.Telemetry.error('neon_sync_pull_error', { error: String(e && e.message || e), deviceId: deviceId }) } catch (_) {}
       }
       return false
     }
