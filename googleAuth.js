@@ -255,6 +255,9 @@ window.GoogleAuth = (function () {
       _oldGoogleSub: null,
     })
 
+    // 다음 로그인 시도에서 stale verifier 재사용 방지 (사용자가 명시적으로 로그아웃했으므로)
+    try { sessionStorage.removeItem('bhm_neon_verifier') } catch (_) {}
+
     // URL 정리 (?demo=1 제거, ?app=1 유지). 데모·일반 동일.
     var _sp = new URLSearchParams(window.location.search)
     _sp.delete('demo')
@@ -311,8 +314,8 @@ window.GoogleAuth = (function () {
         // 이 불일치를 감지하면 localStorage 를 비우고 UI 를 non-signed 로 갱신.
         if (settings.googleSub) {
           console.warn('[GoogleAuth] localStorage googleSub 있으나 Neon 세션 없음 — 상태 cleanup')
-          if (window.Telemetry && typeof window.Telemetry.error === 'function') {
-            try { window.Telemetry.error('auth_state_mismatch', { hadSub: true, verifier: !!_cbVerifier }) } catch (_) {}
+          if (window.Telemetry && typeof window.Telemetry.track === 'function') {
+            try { window.Telemetry.track('auth_state_mismatch', { hadSub: true, verifier: !!_cbVerifier }) } catch (_) {}
           }
           _session = null
           _jwtToken = null
@@ -379,6 +382,9 @@ window.GoogleAuth = (function () {
   }
 
   function _attachCrossTabSync() {
+    // INVARIANT: init() 당 최대 1회만 호출. _reloadPending 가 function 스코프라
+    // 두 번 이상 attach 하면 각 listener 가 독립된 flag 를 가져 cascade guard 가 깨진다.
+    // 현재 init() 내 두 호출 지점은 mutually exclusive (mismatch early return vs 정상 경로).
     try { _knownSub = loadSettings().googleSub || null } catch (e) { _knownSub = null }
     var _reloadPending = false
     window.addEventListener('storage', function (e) {
