@@ -397,7 +397,7 @@
         '급여명세서',
         '아직 등록된 명세서가 없습니다.',
         _signedIn
-          ? '업로드한 PDF는 내 드라이브 BHM Overtime/급여명세서/ 폴더에 저장돼요.'
+          ? '업로드한 PDF는 내 드라이브 snuhmate 폴더에 저장돼요.'
           : '현재 이 브라우저에만 저장됩니다. 다른 기기에서 보려면 Google 로그인이 필요해요.',
         function () {
           // 이미 열려 있는 picker가 있으면 제거 후 새로 생성 (iOS 취소 후 재시도 대응)
@@ -572,9 +572,9 @@
       className: 'btn btn-outline',
       style: { padding: '6px 10px', fontSize: 'var(--text-body-small)' },
       textContent: '📂 내 드라이브 열기',
-      title: '내 드라이브의 BHM Overtime 폴더 열기',
+      title: '내 드라이브의 snuhmate 폴더 열기',
       onClick: function () {
-        window.open('https://drive.google.com/drive/search?q=BHM%20Overtime', '_blank', 'noopener');
+        window.open('https://drive.google.com/drive/search?q=snuhmate', '_blank', 'noopener');
       }
     });
   }
