@@ -7,11 +7,9 @@ import chatRoutes from './routes/chat'
 import calendarRoutes from './routes/calendar'
 import adminCalendarRoutes from './routes/adminCalendar'
 import adminOpsRoutes from './routes/adminOps'
-import teamRoutes from './routes/teams'
 import meRoutes from './routes/me'
 import cardNewsRoutes from './routes/cardNews'
 import regulationRoutes from './routes/regulations'
-import resumeRoutes from './routes/resume'
 
 const app = new Hono().basePath('/api')
 
@@ -52,9 +50,7 @@ app.route('/calendar', calendarRoutes)
 app.route('/admin/calendar', adminCalendarRoutes)
 app.route('/admin', adminOpsRoutes)
 app.route('/regulations', regulationRoutes)
-app.route('/teams', teamRoutes)
 app.route('/me', meRoutes)
-app.route('/resume', resumeRoutes)
 
 // Vercel serverless export
 export default app
