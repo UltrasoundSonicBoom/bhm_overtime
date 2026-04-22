@@ -211,31 +211,59 @@ window.GoogleAuth = (function () {
 
   // ── signOut ──
   async function signOut() {
-    if (localStorage.getItem('bhm_demo_mode') === '1') {
-      if (typeof window.exitDemoMode === 'function') window.exitDemoMode()
-      // exitDemoMode may restore a prior real user — clear it too so disconnect actually disconnects
-      saveSettings({ googleSub: null, driveEnabled: false, calendarEnabled: false, _oldGoogleSub: null })
-      // Navigate away from ?demo=1 URL or reload would re-trigger demo mode
-      var _sp = new URLSearchParams(window.location.search)
-      _sp.delete('demo')
-      _sp.set('app', '1')
-      window.location.replace(window.location.pathname + '?' + _sp.toString())
-      return
-    }
+    var isDemoMode = localStorage.getItem('bhm_demo_mode') === '1'
+    console.log('[GoogleAuth] signOut demo=' + isDemoMode)
+
+    // pending push 취소 (데이터 손실 방지)
     if (window.SyncManager && typeof window.SyncManager.clearPendingPushes === 'function') {
       window.SyncManager.clearPendingPushes()
     }
+
+    // 데모 모드: exitDemoMode 가 bhm_demo_saved_auth 를 복원하려고 시도하지만
+    // 여기선 "연결해제" 의도이므로 복원 후 즉시 다시 clear.
+    if (isDemoMode) {
+      if (typeof window.exitDemoMode === 'function') {
+        try { window.exitDemoMode() } catch (e) { console.warn('[GoogleAuth] exitDemoMode 실패:', e) }
+      }
+      // exitDemoMode 가 복원한 실계정 정보를 명시적으로 지운다.
+      // bhm_demo_saved_auth 도 지워 다음 진입 시 잔존 방지.
+      localStorage.removeItem('bhm_demo_saved_auth')
+    }
+
+    // Neon 세션 무효화 — 데모 모드여도 혹시 실계정 쿠키가 남아있을 수 있어 항상 호출.
     if (_neonBaseUrl) {
       try {
-        await fetch(_neonBaseUrl + '/sign-out', {
+        var res = await fetch(_neonBaseUrl + '/sign-out', {
           method: 'POST',
           credentials: 'include',
         })
-      } catch (_e) {}
+        console.log('[GoogleAuth] Neon /sign-out status=' + res.status)
+      } catch (e) {
+        console.warn('[GoogleAuth] Neon /sign-out 실패:', e)
+      }
     }
-    _session = null; _jwtToken = null
-    saveSettings({ googleSub: null, driveEnabled: false, calendarEnabled: false, _oldGoogleSub: null })
-    window.location.reload()
+
+    _session = null
+    _jwtToken = null
+    saveSettings({
+      googleSub: null,
+      googleEmail: null,
+      googleName: null,
+      googlePicture: null,
+      driveEnabled: false,
+      calendarEnabled: false,
+      _oldGoogleSub: null,
+    })
+
+    // URL 정리 (?demo=1 제거, ?app=1 유지). 데모·일반 동일.
+    var _sp = new URLSearchParams(window.location.search)
+    _sp.delete('demo')
+    _sp.delete('neon_auth_session_verifier')
+    _sp.set('app', '1')
+    var nextUrl = window.location.pathname + '?' + _sp.toString()
+
+    // location.replace 는 reload 를 포함하므로 별도 reload 불필요.
+    window.location.replace(nextUrl)
   }
 
   // ── init: 페이지 로드 시 세션 확인 ──
@@ -259,20 +287,48 @@ window.GoogleAuth = (function () {
     if (!_neonBaseUrl) return
 
     // Extract OAuth callback verifier from URL (Better Auth cross-domain session mechanism)
+    // verifier 는 1회용이지만 직후 reload 시에도 재사용 가능하도록 sessionStorage 에 임시 보관.
     var _cbVerifier = null
     try {
       var _sp = new URLSearchParams(window.location.search)
       _cbVerifier = _sp.get('neon_auth_session_verifier')
       if (_cbVerifier) {
+        try { sessionStorage.setItem('bhm_neon_verifier', _cbVerifier) } catch (_) {}
         _sp.delete('neon_auth_session_verifier')
         var _qs = _sp.toString()
         window.history.replaceState({}, '', window.location.pathname + (_qs ? '?' + _qs : ''))
+      } else {
+        // URL 에 없으면 sessionStorage 에서 복원 (같은 탭 내 reload 이후).
+        try { _cbVerifier = sessionStorage.getItem('bhm_neon_verifier') } catch (_) {}
       }
     } catch (_e) {}
 
     try {
       var session = await _getNeonSession(_cbVerifier)
-      if (!session || !session.user) return
+      if (!session || !session.user) {
+        // Neon 세션 조회 실패. localStorage 에 stale googleSub 이 있으면
+        // 사용자는 "로그인됨" 으로 보이는데 실제 API 호출은 모두 401 이 됨.
+        // 이 불일치를 감지하면 localStorage 를 비우고 UI 를 non-signed 로 갱신.
+        if (settings.googleSub) {
+          console.warn('[GoogleAuth] localStorage googleSub 있으나 Neon 세션 없음 — 상태 cleanup')
+          if (window.Telemetry && typeof window.Telemetry.error === 'function') {
+            try { window.Telemetry.error('auth_state_mismatch', { hadSub: true, verifier: !!_cbVerifier }) } catch (_) {}
+          }
+          _session = null
+          _jwtToken = null
+          saveSettings({
+            googleSub: null,
+            googleEmail: null,
+            googleName: null,
+            googlePicture: null,
+            driveEnabled: false,
+            calendarEnabled: false,
+          })
+          if (typeof updateAuthUI === 'function') updateAuthUI(null)
+        }
+        _attachCrossTabSync()
+        return
+      }
 
       _session = session
       _jwtToken = (session && session.session && session.session.token) ? session.session.token : null
@@ -289,6 +345,8 @@ window.GoogleAuth = (function () {
         googlePicture: session.user.image || null,
         driveEnabled: true,
       })
+
+      try { sessionStorage.removeItem('bhm_neon_verifier') } catch (_) {}
 
       if (typeof updateAuthUI === 'function') updateAuthUI({
         sub: session.user.id,
@@ -322,18 +380,24 @@ window.GoogleAuth = (function () {
 
   function _attachCrossTabSync() {
     try { _knownSub = loadSettings().googleSub || null } catch (e) { _knownSub = null }
+    var _reloadPending = false
     window.addEventListener('storage', function (e) {
       if (e.key !== 'bhm_settings') return
       var nextSub = null
       try { nextSub = (JSON.parse(e.newValue || '{}') || {}).googleSub || null } catch (err) { nextSub = null }
       if (nextSub === _knownSub) return
       _knownSub = nextSub
+      if (_reloadPending) return  // cascade 방지
+      _reloadPending = true
+
       if (window.SyncManager && typeof window.SyncManager.clearPendingPushes === 'function') {
         window.SyncManager.clearPendingPushes()
       }
       _jwtToken = null
       _session = null
-      window.location.reload()
+
+      // 300ms 디바운스 — 같은 cascade 내 연속 이벤트 흡수
+      setTimeout(function () { window.location.reload() }, 300)
     })
   }
 
