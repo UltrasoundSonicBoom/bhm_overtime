@@ -155,14 +155,26 @@ window.SyncManager = (function () {
     var authHeader = await _getAuthHeader()
     if (!authHeader['Authorization']) return
     var deviceId = localStorage.getItem('bhm_deviceId')
+    var itemKeys = (items || []).map(function (it) { return it && it.itemKey })
     try {
-      await fetch(API_BASE + '/api/me/sync', {
+      var res = await fetch(API_BASE + '/api/me/sync', {
         method: 'PUT',
         headers: Object.assign({ 'Content-Type': 'application/json' }, authHeader),
         body: JSON.stringify({ items: items, deviceId: deviceId }),
       })
+      if (!res.ok) {
+        var errBody = ''
+        try { errBody = await res.text() } catch (_) {}
+        console.warn('[SyncManager] Neon sync HTTP error', res.status, 'keys=', itemKeys, 'body=', String(errBody).slice(0, 300))
+        if (window.Telemetry && typeof window.Telemetry.error === 'function') {
+          try { window.Telemetry.error('neon_sync_push_error', { status: res.status, body: String(errBody).slice(0, 300), itemKeys: itemKeys }) } catch (_) {}
+        }
+      }
     } catch (e) {
-      console.warn('[SyncManager] Neon sync failed:', e)
+      console.warn('[SyncManager] Neon sync failed:', e, 'keys=', itemKeys)
+      if (window.Telemetry && typeof window.Telemetry.error === 'function') {
+        try { window.Telemetry.error('neon_sync_push_error', { error: String(e && e.message || e), itemKeys: itemKeys }) } catch (_) {}
+      }
     }
   }
 
@@ -172,18 +184,31 @@ window.SyncManager = (function () {
     if (!authHeader['Authorization']) return false
     try {
       var res = await fetch(API_BASE + '/api/me/sync', { headers: authHeader })
-      if (!res.ok) return false
+      if (!res.ok) {
+        var errBody = ''
+        try { errBody = await res.text() } catch (_) {}
+        console.warn('[SyncManager] Neon pull HTTP error', res.status, 'body=', String(errBody).slice(0, 300))
+        if (window.Telemetry && typeof window.Telemetry.error === 'function') {
+          try { window.Telemetry.error('neon_sync_pull_error', { status: res.status, body: String(errBody).slice(0, 300) }) } catch (_) {}
+        }
+        return false
+      }
       var data = await res.json()
+      var itemsArr = data.items || []
+      console.log('[SyncManager] Neon pull items=' + itemsArr.length + ' driveImportNeeded=' + !!data.drive_import_needed)
       if (data.drive_import_needed) return false
-      ;(data.items || []).forEach(function (item) {
+      itemsArr.forEach(function (item) {
         var key = item.item_key
         if (key && item.payload != null) {
           localStorage.setItem(key, JSON.stringify(item.payload))
         }
       })
-      return (data.items || []).length > 0
+      return itemsArr.length > 0
     } catch (e) {
       console.warn('[SyncManager] pullFromNeon failed:', e)
+      if (window.Telemetry && typeof window.Telemetry.error === 'function') {
+        try { window.Telemetry.error('neon_sync_pull_error', { error: String(e && e.message || e) }) } catch (_) {}
+      }
       return false
     }
   }
