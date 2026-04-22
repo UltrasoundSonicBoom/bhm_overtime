@@ -124,13 +124,37 @@ window.GoogleAuth = (function () {
     } catch (e) { return null }
   }
 
-  // ── getJwtToken: 백엔드 API 호출용 Neon JWT ──
+  // ── getJwtToken: 백엔드 API 호출용 Neon Auth JWT ──
+  // Neon Auth 의 /get-session.session.token 은 opaque 세션 식별자(32자).
+  // Vercel API 는 JWT 가 필요하므로 /token 엔드포인트를 별도 호출 (세션 쿠키로 인증).
+  // ref: https://neon.com/docs/auth/guides/plugins/jwt
   async function getJwtToken() {
     if (_jwtToken) return _jwtToken
     if (!_neonBaseUrl) return null
-    var data = await _getNeonSession()
-    _jwtToken = (data && data.session && data.session.token) ? data.session.token : null
-    return _jwtToken
+    try {
+      var res = await fetch(_neonBaseUrl + '/token', {
+        credentials: 'include',
+      })
+      if (!res.ok) {
+        var errBody = ''
+        try { errBody = await res.text() } catch (_) {}
+        console.warn('[GoogleAuth] /token status=' + res.status + ' body=' + String(errBody).slice(0, 200))
+        if (window.Telemetry && typeof window.Telemetry.error === 'function') {
+          try { window.Telemetry.error('neon_token_http_error', { status: res.status, body: String(errBody).slice(0, 200) }) } catch (_) {}
+        }
+        return null
+      }
+      var data = {}
+      try { data = await res.json() } catch (_) {}
+      _jwtToken = data.token || null
+      if (!_jwtToken) {
+        console.warn('[GoogleAuth] /token 200 but no token in body. keys=' + Object.keys(data || {}).join(','))
+      }
+      return _jwtToken
+    } catch (e) {
+      console.warn('[GoogleAuth] /token fetch 실패:', e)
+      return null
+    }
   }
 
   // ── getAccessToken: Drive/Calendar용 Google OAuth access_token ──
@@ -334,7 +358,8 @@ window.GoogleAuth = (function () {
       }
 
       _session = session
-      _jwtToken = (session && session.session && session.session.token) ? session.session.token : null
+      // session.token 은 opaque 세션 식별자. JWT 는 getJwtToken() 이 /token 호출로 별도 획득.
+      _jwtToken = null
 
       // 이전 googleSub 보존 (Task 7 localStorage 키 이전 용도)
       if (settings.googleSub && settings.googleSub !== session.user.id) {
