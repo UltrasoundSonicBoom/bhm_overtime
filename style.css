@@ -6220,10 +6220,7 @@ html[data-theme="neo"] .career-rot-chip-add {
 }
 html[data-theme="neo"] .ret-guide-table th { background: rgba(0,0,0,0.05); border-bottom: 2px solid #1a1a1a; }
 
-/* ─────────────────────────────────────────────
-   Migration/Onboarding Modal (migrationOverlay에서 사용)
-   원래 index.html 46-64줄에 인라인으로 존재
-   ───────────────────────────────────────────── */
+/* ── Migration/Onboarding Modal (migrationOverlay에서 사용) ── */
 .onboarding-icon {
   font-size: 52px;
   margin-bottom: -4px;
@@ -6242,10 +6239,7 @@ html[data-theme="neo"] .ret-guide-table th { background: rgba(0,0,0,0.05); borde
   margin-bottom: 20px;
 }
 
-/* ─────────────────────────────────────────────
-   시간외 시급 미입력 경고 배너
-   원래 index.html 66-93줄에 인라인으로 존재
-   ───────────────────────────────────────────── */
+/* ── 시간외 시급 미입력 경고 배너 ── */
 .hourly-warning-banner {
   display: none;
   align-items: flex-start;
@@ -6274,10 +6268,7 @@ html[data-theme="neo"] .hourly-warning-banner {
   font-weight: 600;
 }
 
-/* ─────────────────────────────────────────────
-   정보 안내 배너 (홈 프로필 nudge 등)
-   원래 index.html 95-121줄에 인라인으로 존재
-   ───────────────────────────────────────────── */
+/* ── 정보 안내 배너 (홈 프로필 nudge 등) ── */
 .info-note-banner {
   display: flex;
   align-items: flex-start;
@@ -6305,10 +6296,7 @@ html[data-theme="neo"] .info-note-banner {
   font-weight: 600;
 }
 
-/* ─────────────────────────────────────────────
-   시간외 도움말 아코디언
-   원래 index.html 123-181줄에 인라인으로 존재
-   ───────────────────────────────────────────── */
+/* ── 시간외 도움말 아코디언 ── */
 .ot-help-grid {
   display: flex;
   flex-direction: column;
@@ -6368,10 +6356,7 @@ html[data-theme="neo"] .ot-help-a {
   border-top: 1.5px solid #c4b5fd;
 }
 
-/* ─────────────────────────────────────────────
-   도메인 이전 안내 모달 (migration-overlay.js에서 표시)
-   원래 index.html 183-241줄에 인라인으로 존재
-   ───────────────────────────────────────────── */
+/* ── 도메인 이전 안내 모달 (migration-overlay.js에서 표시) ── */
 .migration-overlay {
   position: fixed;
   top: 0;
