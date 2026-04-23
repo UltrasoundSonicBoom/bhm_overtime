@@ -6219,3 +6219,25 @@ html[data-theme="neo"] .career-rot-chip-add {
   background: rgba(250,204,21,.18);
 }
 html[data-theme="neo"] .ret-guide-table th { background: rgba(0,0,0,0.05); border-bottom: 2px solid #1a1a1a; }
+
+/* ─────────────────────────────────────────────
+   Migration/Onboarding Modal (migrationOverlay에서 사용)
+   원래 index.html 46-64줄에 인라인으로 존재
+   ───────────────────────────────────────────── */
+.onboarding-icon {
+  font-size: 52px;
+  margin-bottom: -4px;
+}
+
+.onboarding-title {
+  font-size: var(--text-title-large);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.onboarding-sub {
+  font-size: var(--text-body-normal);
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
