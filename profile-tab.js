@@ -232,12 +232,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // 초기 로드 시 현재 선택된 연도/월로 자동설정
   autoFillMonth();
 
-  // 초기 기본 탭 (휴가 탭 우선)
+  // 초기 기본 탭 — switchTab 자체가 lazy-load + init을 트리거하므로 사전 호출 불필요.
   function activateV1DefaultTab() {
-    applyProfileToOvertime();
-    initOvertimeTab();
-    initLeaveTab();
-
     const params = getCaptureParams();
     const requestedTab = params.get('tab');
     if (!switchTab(requestedTab || 'home')) {
