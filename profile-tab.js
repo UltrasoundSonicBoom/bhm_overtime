@@ -136,8 +136,12 @@ function populateJobTypeDropdowns() {
   });
 }
 
-// ── 초기화 ──
-document.addEventListener('DOMContentLoaded', () => {
+// ── 초기화 (profile 탭이 처음 로드된 직후 1회 실행) ──
+window._bootstrapProfileTab = (function () {
+  var called = false;
+  return function () {
+    if (called) return;
+    called = true;
   populateJobTypeDropdowns();
   updateProfileGrades();
   updateGrades();
@@ -231,16 +235,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 초기 로드 시 현재 선택된 연도/월로 자동설정
   autoFillMonth();
-
-  // 초기 기본 탭 — switchTab 자체가 lazy-load + init을 트리거하므로 사전 호출 불필요.
-  function activateV1DefaultTab() {
-    const params = getCaptureParams();
-    const requestedTab = params.get('tab');
-    if (!switchTab(requestedTab || 'home')) {
-      switchTab('home');
-    }
-  }
-  activateV1DefaultTab();
 
   // REMOVED auth: ?mode=family 배너 + authContainer (Google 로그인 UI) — 로컬 전용 앱
 
@@ -377,7 +371,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   };
-});
+  };
+})();
 
 // ═══════════ 📌 프로필 관리 ═══════════
 function updateProfileGrades() {
@@ -932,4 +927,14 @@ function applyProfileToLeave() {
   window.addEventListener('leaveChanged', _refreshProfile);
   window.addEventListener('overtimeChanged', _refreshProfile);
 })();
+
+// ── 페이지 로드 직후 기본 탭 활성화 (URL ?tab= 파라미터 우선, 없으면 home) ──
+document.addEventListener('DOMContentLoaded', function () {
+  if (typeof window.switchTab !== 'function') return;
+  var params = new URLSearchParams(window.location.search);
+  var requestedTab = params.get('tab');
+  if (!window.switchTab(requestedTab || 'home')) {
+    window.switchTab('home');
+  }
+});
 
