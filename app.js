@@ -348,23 +348,32 @@ function switchTab(tabName) {
   if (targetTab) targetTab.classList.add('active');
   targetContent.classList.add('active');
 
-  if (tabName === 'home') initHomeTab();
+  // lazy-loaded 탭은 fragment 도착 후 init 실행 (DOM 요소 의존성 때문)
+  function _afterLoad(name, cb) {
+    if (window.loadTab) window.loadTab(name).then(cb).catch(function () {});
+    else cb();
+  }
+
+  if (tabName === 'home') _afterLoad('home', initHomeTab);
   if (tabName === 'payroll') { applyProfileToPayroll(); initPayrollTab(); }
   if (tabName === 'overtime') {
-    const savedCTA = document.getElementById('profileSavedCTA');
-    if (savedCTA) savedCTA.style.display = 'none';
-    applyProfileToOvertime(); initOvertimeTab();
+    _afterLoad('overtime', function () {
+      const savedCTA = document.getElementById('profileSavedCTA');
+      if (savedCTA) savedCTA.style.display = 'none';
+      applyProfileToOvertime(); initOvertimeTab();
+    });
   }
-  if (tabName === 'leave') { applyProfileToLeave(); initLeaveTab(); }
-  if (tabName === 'reference') {
-    if (window.loadTab) {
-      window.loadTab('reference').then(function () { renderWikiToc(); }).catch(function () {});
-    } else {
-      renderWikiToc();
-    }
+  if (tabName === 'leave') {
+    _afterLoad('leave', function () { applyProfileToLeave(); initLeaveTab(); });
   }
+  if (tabName === 'reference') _afterLoad('reference', renderWikiToc);
   if (tabName === 'profile') initProfileTab();
-  if (tabName === 'settings') { if (typeof updateAppLockUI === 'function') updateAppLockUI(); }
+  if (tabName === 'settings') {
+    _afterLoad('settings', function () {
+      if (typeof updateAppLockUI === 'function') updateAppLockUI();
+    });
+  }
+  if (tabName === 'feedback') _afterLoad('feedback', function () {});
 
   return true;
 }
