@@ -27,26 +27,6 @@
     return e;
   }
 
-  function syncThemeButtonIcon() {
-    var button = document.getElementById('themeToggle');
-    if (!button) return;
-    var isNeo = document.documentElement.getAttribute('data-theme') === 'neo';
-    button.textContent = isNeo ? '🎨' : '🌙';
-  }
-
-  function fallbackToggleTheme() {
-    var html = document.documentElement;
-    var isNeo = html.getAttribute('data-theme') === 'neo';
-    if (isNeo) {
-      html.removeAttribute('data-theme');
-      localStorage.setItem('theme', 'linear');
-    } else {
-      html.setAttribute('data-theme', 'neo');
-      localStorage.setItem('theme', 'neo');
-    }
-    syncThemeButtonIcon();
-  }
-
   // REMOVED auth: Google G SVG / _readCachedUser / _renderSignInButton / _renderUserState — 로컬 전용 앱
 
   // ── 베타 공지 티커 (헤더 바로 아래, 항상 표시) ──
@@ -108,15 +88,6 @@
 
     // REMOVED auth: authContainer (Google 로그인 버튼/계정 영역) — 로컬 전용 앱
 
-    // // Theme toggle (주석처리)
-    // var themeBtn = el('button', { className: 'theme-toggle-btn', id: 'themeToggle', title: '테마 전환', textContent: '🎨' });
-    // themeBtn.onclick = function () {
-    //   if (typeof window.toggleTheme === 'function') window.toggleTheme();
-    //   else fallbackToggleTheme();
-    //   syncThemeButtonIcon();
-    // };
-    // right.appendChild(themeBtn);
-
     // Settings button (헤더 ⚙️) — 채널톡 자리 대체
     var settingsBtn = el('button', { className: 'theme-toggle-btn', title: '설정', textContent: '⚙️' });
     settingsBtn.onclick = function () {
@@ -136,7 +107,6 @@
     topRow.appendChild(right);
     inner.appendChild(topRow);
     header.appendChild(inner);
-    syncThemeButtonIcon();
   }
 
   // ── Footer Nav 렌더 (양쪽 공용) ──

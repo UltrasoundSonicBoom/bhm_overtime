@@ -60,19 +60,18 @@ function initSubTabs() {
 }
 
 // ═══════════ 테마 ═══════════
-
-function toggleTheme() {
-  const html = document.documentElement;
-  const current = html.getAttribute('data-theme');
-  const next = current === 'neo' ? '' : 'neo';
-  html.setAttribute('data-theme', next);
-  localStorage.setItem('snuhmate-theme', next);
-}
+// 키는 'theme' 하나로 통일 (값: 'neo' | 'linear'). 과거 'snuhmate-theme' 키는 1회성 마이그레이션 후 제거.
+// 토글 UI는 현재 비활성 (shared-layout.js에서 themeBtn 주석 처리) — init만 수행.
 
 function initTheme() {
-  const saved = localStorage.getItem('snuhmate-theme');
-  if (saved !== null) {
-    document.documentElement.setAttribute('data-theme', saved);
+  var legacy = localStorage.getItem('snuhmate-theme');
+  if (legacy !== null) {
+    localStorage.setItem('theme', legacy === 'neo' ? 'neo' : 'linear');
+    localStorage.removeItem('snuhmate-theme');
+  }
+  var saved = localStorage.getItem('theme');
+  if (saved === 'linear') {
+    document.documentElement.removeAttribute('data-theme');
   }
 }
 
