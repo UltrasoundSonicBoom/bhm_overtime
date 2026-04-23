@@ -367,7 +367,12 @@ function switchTab(tabName) {
     _afterLoad('leave', function () { applyProfileToLeave(); initLeaveTab(); });
   }
   if (tabName === 'reference') _afterLoad('reference', renderWikiToc);
-  if (tabName === 'profile') initProfileTab();
+  if (tabName === 'profile') {
+    _afterLoad('profile', function () {
+      if (typeof window._bootstrapProfileTab === 'function') window._bootstrapProfileTab();
+      initProfileTab();
+    });
+  }
   if (tabName === 'settings') {
     _afterLoad('settings', function () {
       if (typeof updateAppLockUI === 'function') updateAppLockUI();
