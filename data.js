@@ -686,4 +686,12 @@ async function loadDataFromAPI() {
 }
 // 초기 로드를 10초 지연: 앱 렌더에 필요한 데이터는 DATA_STATIC로 즉시 충족.
 // API 데이터는 월간 업데이트용이라 지연해도 사용자 체감 영향 없음.
-setTimeout(loadDataFromAPI, 10000);
+// 브라우저에서만 실행 (Node/Vitest 환경에선 fetch/setTimeout 모두 스킵).
+if (typeof window !== 'undefined') {
+  setTimeout(loadDataFromAPI, 10000);
+}
+
+// Node (Vitest) 환경에서 require 가능하도록 CommonJS export.
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { DATA, DATA_STATIC };
+}
