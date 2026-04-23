@@ -15,14 +15,7 @@ const els = {
   testsetGrid: document.getElementById('testsetGrid'),
 };
 
-function escapeHtml(value) {
-  return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
+// escapeHtml은 shared-utils.js에서 window 전역으로 제공됨.
 
 async function loadReport() {
   const response = await fetch(REPORT_PATH);

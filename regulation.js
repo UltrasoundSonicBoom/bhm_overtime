@@ -787,11 +787,7 @@ function applyHighlight(text, query) {
   return text.replace(re, '<span class="reg-highlight">$1</span>');
 }
 
-function escapeHtml(str) {
-  var div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}
+// escapeHtml은 shared-utils.js에서 window 전역으로 제공됨.
 
 function getHandbookPdfUrl() {
   // file:// 프로토콜에서는 PDF.js가 상대경로를 못 읽으므로 절대 URL 사용

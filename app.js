@@ -4,15 +4,7 @@
 
 // ── HTML 이스케이프 (XSS 방지) ──
 // innerHTML에 사용자 입력값을 삽입할 때 반드시 이 함수를 거칠 것
-function escapeHtml(str) {
-  if (str == null) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
+// escapeHtml은 shared-utils.js에서 window 전역으로 제공됨.
 
 // ── 프로필 필드 매핑 ──
 const PROFILE_FIELDS = {
