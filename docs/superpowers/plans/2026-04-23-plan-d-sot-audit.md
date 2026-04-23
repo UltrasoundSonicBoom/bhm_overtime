@@ -24,13 +24,25 @@
 
 | 파일 | 역할 | 계산 SoT 여부 |
 |------|------|-------------|
-| `data.js` (`DATA_STATIC`) | 하드코드 JS 객체 — payTables, allowances, overtimeRates, annualLeave, longServicePay, familyAllowance 등 | **✅ 진짜 SoT** |
-| `data/hospital_guidelines_2026.md` | 사람 가독용 규정 요약 (제32조~제57조) | ❌ 텍스트만, 계산 연결 없음 |
-| `data/union_regulation_2026.json` | 단협 조항 배열 (id, title, content) — regulation.html 브라우저용 | ❌ 텍스트만 |
+| `data/full_union_regulation_2026.md` | **단협 전문 (canonical 원본 SoT)** — 사용자가 정본을 관리함 (2026-04-23 시점 0바이트, 채워질 예정) | **✅ 규정 원본 SoT** |
+| `data.js` (`DATA_STATIC`) | 하드코드 JS 객체 — payTables, allowances, overtimeRates, annualLeave, longServicePay, familyAllowance 등 | **✅ 계산용 SoT** (full 에서 파생되어야 함) |
+| `data/hospital_guidelines_2026.md` | **축약형 — regulation.html 표시용 요약** (제32~57조, 개발자 참고용) | ❌ 파생본 (full_union에서 수동 요약) |
+| `data/union_regulation_2026.json` | 단협 조항 배열 (id, title, content) — regulation.js 가 runtime fetch | ❌ 파생본 (full_union 에서 구조화) |
 | `data/user_profile.json` | 예시/스키마 템플릿 | ❌ **런타임 미사용** (확인 필요) |
 | API `localhost:3001/api/data/bundle` | 월간 업데이트용 백엔드 | ⚠️ 배포 안 됨 — 매 페이지 로드 CSP 에러 |
 
-**드리프트 리스크:** `.md` 문서는 사람이 업데이트하지만 `data.js` 상수는 별도 수정 필요. 연결 메커니즘 없음 → 규정 바뀌어도 계산 그대로.
+**SoT 계층:**
+```
+full_union_regulation_2026.md (사람이 관리하는 원본)
+    ↓ 사람 수동 요약
+hospital_guidelines_2026.md (축약)  ↘
+    ↓ 사람 수동 구조화                ↘
+union_regulation_2026.json (조항 배열)  → regulation.html 브라우저
+    ↓ 사람 수동 수치 추출
+data.js DATA_STATIC (계산값)            → calculators.js → UI 탭
+```
+
+**드리프트 리스크:** full_union 원본이 바뀔 때 하위 4개 파일이 자동 반영되지 않음. 5곳 다 수동 동기화.
 
 ---
 
@@ -100,24 +112,34 @@ cat /tmp/sot-datastatic-keys.txt
 > 작성일: 2026-04-23 (Plan D Task 2)
 > 업데이트: 데이터 파일 추가/삭제 시 본 문서도 같이 수정.
 
-## 1. 런타임 데이터 파일
+## 1. 단협 규정 원본 (canonical)
+
+### `data/full_union_regulation_2026.md` ⭐ **원본 SoT**
+- **역할:** 단협 전문. 다른 모든 규정 파일의 원천.
+- **관리:** 사용자가 직접 유지보수 (단협 개정 시 여기 먼저 반영).
+- **런타임 로드:** 안 함 (사람이 읽는 마스터 문서).
+- **2026-04-23 시점 크기:** 0 bytes (채워질 예정 — Plan 시점 placeholder).
+- **파생 파일:** hospital_guidelines_2026.md (축약), union_regulation_2026.json (구조화), data.js DATA_STATIC (수치 추출).
+
+### `data/hospital_guidelines_2026.md`
+- **역할:** full_union 의 **축약본** — regulation.html 표시/개발자 참고용 요약.
+- **로드:** **런타임 미사용** (grep으로 확인).
+- **갱신 관계:** full_union 변경 시 여기도 사람이 수동 갱신 필요.
+
+### `data/union_regulation_2026.json`
+- **역할:** 단협 조항의 구조화된 JSON (id/title/content/clauses/tables/history).
+- **로드:** regulation.js:257 `fetch('data/union_regulation_2026.json')`.
+- **소비자:** regulation.html — 찾아보기 / 검색.
+- **계산 영향:** 없음 (텍스트만).
+- **갱신 관계:** full_union 변경 시 여기 조항도 사람이 구조화해서 동기화.
+
+## 2. 런타임 계산 데이터
 
 ### `data.js` (DATA_STATIC)
 - **역할:** 모든 급여/수당/휴가 계산의 SoT. 하드코드된 JS 상수.
 - **로드 방식:** index.html에서 `<script src="data.js">` 로 직접 import.
 - **Top-level 키 목록:** (실제 grep 결과 붙여넣기 — /tmp/sot-datastatic-keys.txt)
-- **갱신 주기:** 단협 변경 시 수동 (자동 반영 메커니즘 없음).
-
-### `data/union_regulation_2026.json`
-- **역할:** 단협 조항 텍스트 (제1조~제69조 등).
-- **로드:** regulation.js 에서 fetch (상대경로).
-- **소비자:** regulation.html — 찾아보기 / 검색.
-- **계산 영향:** 없음 (텍스트만).
-
-### `data/hospital_guidelines_2026.md`
-- **역할:** 사람용 규정 요약 (개발자 참고용).
-- **로드:** **런타임 미사용** (grep으로 확인).
-- **갱신:** 단협 개정 시 사람이 직접 반영.
+- **갱신 관계:** full_union 에서 수치(예: 시간외 150%, 가족수당 40,000원)를 사람이 추출해 여기 반영.
 
 ### `data/user_profile.json`
 - **역할:** 스키마 템플릿 (버전 1.0).
@@ -140,7 +162,19 @@ grep -rn "user_profile\.json" --include="*.js" --include="*.html" . | grep -v no
 - `data/angio/` → `archive/angio/` 로 이관됨 (정리 완료).
 - `data/excel-parser/`, `data/nurse-rostering-builder/` → `archive/` (독립 프로젝트).
 
-## 3. 로드 플로우
+## 3. SoT 계층 + 갱신 흐름
+
+```mermaid
+graph TD
+    FullMD[data/full_union_regulation_2026.md<br/>⭐ 단협 전문 SoT] -->|사람 수동 축약| GuideMD[data/hospital_guidelines_2026.md<br/>축약 요약]
+    FullMD -->|사람 수동 구조화| UnionJSON[data/union_regulation_2026.json<br/>조항 배열]
+    FullMD -->|사람 수동 수치 추출| DataJS[data.js DATA_STATIC<br/>계산 상수]
+    UnionJSON -->|regulation.js fetch| RegHTML[regulation.html]
+    DataJS -->|import| CALC[calculators.js]
+    CALC --> UI[시간외/휴가/급여 탭 UI]
+```
+
+## 4. 런타임 로드 플로우
 
 ```mermaid
 sequenceDiagram
@@ -167,11 +201,11 @@ sequenceDiagram
     end
 ```
 
-## 4. 결론
+## 5. 결론
 
-- **Plan D 시점 SoT**: `DATA_STATIC` (data.js 하드코드)
-- **규정 원문**: `hospital_guidelines_2026.md`, `union_regulation_2026.json` — 계산과 단방향 분리
-- **연결 메커니즘**: **없음** (드리프트 위험 — sot-drift-risk.md 참조)
+- **canonical SoT**: `data/full_union_regulation_2026.md` — 사용자 관리.
+- **파생 SoT 3종**: hospital_guidelines (축약), union_regulation.json (브라우저), DATA_STATIC (계산).
+- **연결 메커니즘**: **없음** — full_union 변경 시 3곳 모두 사람이 수동 동기화 (sot-drift-risk.md 참조).
 ```
 
 - [ ] **Step 3: grep 결과를 실제로 본문에 삽입**
@@ -445,18 +479,19 @@ diff /tmp/datajs-articles.txt /tmp/mdd-articles.txt | head -20
 
 ```mermaid
 graph LR
-    단협개정 -->|사람 수동| MD[hospital_guidelines_2026.md]
-    단협개정 -->|사람 수동| DataJS[data.js DATA_STATIC]
-    단협개정 -->|사람 수동| UnionJSON[union_regulation_2026.json]
-    MD -.연결없음.-> DataJS
-    MD -.연결없음.-> UnionJSON
+    단협개정 -->|사용자 반영| FullMD[full_union_regulation_2026.md<br/>⭐ canonical]
+    FullMD -.사람 수동.-> GuideMD[hospital_guidelines_2026.md<br/>축약]
+    FullMD -.사람 수동.-> DataJS[data.js DATA_STATIC<br/>계산값]
+    FullMD -.사람 수동.-> UnionJSON[union_regulation_2026.json<br/>조항 배열]
+    GuideMD -.연결없음.-> DataJS
+    GuideMD -.연결없음.-> UnionJSON
     DataJS --> CALC[calculators.js]
     UnionJSON --> RegHTML[regulation.html]
     CALC --> UI탭[시간외/휴가/급여탭]
     RegHTML --> UI탭
 ```
 
-**문제:** 세 개의 SoT 후보가 병렬 존재하고 연결이 없음. 하나만 바꿔도 나머지는 변화 없음.
+**문제:** canonical full_union 변경 시 3개 파생 파일이 자동 반영되지 않음. 점선 연결은 전부 사람 의존.
 
 ## 드리프트 위험 매트릭스
 
