@@ -9,6 +9,15 @@
 const SALARY_PARSER = (() => {
   'use strict';
 
+  // ── DEBUG 플래그 — localStorage.bhm_debug_parser = '1' 설정 시 trace 활성화 ──
+  const DEBUG = (function () {
+    try { return localStorage.getItem('bhm_debug_parser') === '1'; }
+    catch (e) { return false; }
+  })();
+  function debug() {
+    if (DEBUG) console.log.apply(console, arguments);
+  }
+
   // ── 지급 항목 패턴 (TypeScript 파서에서 이관) ──
   const SALARY_PATTERNS = [
     /기본기준급|기준기본급|기본급/, /근속가산기본급|근속가산/,
@@ -368,9 +377,9 @@ const SALARY_PARSER = (() => {
       return merged;
     });
 
-    console.log('[PayslipParser] PDF 행 그룹핑: ' + rows.length + '행 (병합 후)');
+    debug('[PayslipParser] PDF 행 그룹핑: ' + rows.length + '행 (병합 후)');
     rows.forEach((r, i) => {
-      console.log('  [' + i + '] ' + r.map(it => it.str).join(' | '));
+      debug('  [' + i + '] ' + r.map(it => it.str).join(' | '));
     });
 
     // ── 전체 텍스트 (행 순서대로) — 개인정보/기간 추출용 ──
@@ -643,7 +652,7 @@ const SALARY_PARSER = (() => {
     const salaryAnchorRow = findAnchorRow(/기본기준급|기준기본급/);
     const deductionAnchorRow = findAnchorRow(/^소득세$/);
 
-    console.log('[PayslipParser] 앵커 행: 지급=' + salaryAnchorRow + ', 공제=' + deductionAnchorRow);
+    debug('[PayslipParser] 앵커 행: 지급=' + salaryAnchorRow + ', 공제=' + deductionAnchorRow);
 
     // 글로벌 그리드: 지급 첫 이름행(항상 11열)으로 정의
     const globalGrid = salaryAnchorRow >= 0 ? buildGlobalGrid(rows[salaryAnchorRow]) : null;
@@ -688,7 +697,7 @@ const SALARY_PARSER = (() => {
         }
         return merged;
       });
-      console.log('[PayslipParser] 2-pass 그리드 기반 재병합 완료: ' + rows.length + '행');
+      debug('[PayslipParser] 2-pass 그리드 기반 재병합 완료: ' + rows.length + '행');
 
       // ── 3-pass: 패턴 기반 연결 항목명 분리 ──
       // 2-pass 후에도 여러 급여/공제 항목명이 하나로 붙어있으면
@@ -725,7 +734,7 @@ const SALARY_PARSER = (() => {
               });
             });
             splitCount++;
-            console.log('[PayslipParser] 3-pass 분리: "' + name + '" → ' + JSON.stringify(matches));
+            debug('[PayslipParser] 3-pass 분리: "' + name + '" → ' + JSON.stringify(matches));
           } else {
             newRow.push(item);
           }
@@ -733,7 +742,7 @@ const SALARY_PARSER = (() => {
         return newRow;
       });
       if (splitCount > 0) {
-        console.log('[PayslipParser] 3-pass 패턴 기반 분리: ' + splitCount + '건 분리됨');
+        debug('[PayslipParser] 3-pass 패턴 기반 분리: ' + splitCount + '건 분리됨');
       }
     }
 
@@ -744,7 +753,7 @@ const SALARY_PARSER = (() => {
       const separated = separateAndMerge(salaryAnchorRow, salaryEnd);
       salNameRows = separated.nameRows;
       salAmtRows = separated.amtRows;
-      console.log('[PayslipParser] 지급 분리: 이름행 ' + salNameRows.length + ', 금액행 ' + salAmtRows.length);
+      debug('[PayslipParser] 지급 분리: 이름행 ' + salNameRows.length + ', 금액행 ' + salAmtRows.length);
       salaryItems = extractByGlobalGrid(globalGrid, salNameRows, salAmtRows);
       console.table(salaryItems.map(i => ({ 이름: i.name, 금액: i.amount, 열: i.col, 행: i.row })));
     }
@@ -759,13 +768,13 @@ const SALARY_PARSER = (() => {
         else if (foundFirstAmt && !isGarbageRow(rows[i])) { nonAmtCount++; if (nonAmtCount >= 2) { deductionEnd = i - 1; break; } }
       }
       const separated = separateAndMerge(deductionAnchorRow, deductionEnd);
-      console.log('[PayslipParser] 공제 분리: 이름행 ' + separated.nameRows.length + ', 금액행 ' + separated.amtRows.length);
+      debug('[PayslipParser] 공제 분리: 이름행 ' + separated.nameRows.length + ', 금액행 ' + separated.amtRows.length);
       deductionItems = extractByGlobalGrid(globalGrid, separated.nameRows, separated.amtRows);
       console.table(deductionItems.map(i => ({ 이름: i.name, 금액: i.amount, 열: i.col, 행: i.row })));
       // 근무시간 통계: 공제 섹션 col7-10에서 GRID_STATS_NAMES 항목 추출
       workStats = extractWorkStats(globalGrid, separated.nameRows, separated.amtRows);
       if (workStats.length > 0) {
-        console.log('[PayslipParser] 근무통계 추출: ' + workStats.length + '건');
+        debug('[PayslipParser] 근무통계 추출: ' + workStats.length + '건');
         console.table(workStats.map(i => ({ 항목: i.name, 값: i.value, 열: i.col, 행: i.row })));
       }
     }
@@ -794,7 +803,7 @@ const SALARY_PARSER = (() => {
           if (!amount) continue;
           const idx = salaryItems.findIndex(i => i.row === r && i.col === c);
           if (idx >= 0 && salaryItems[idx].name !== canonicalName) {
-            console.log('[PayslipParser] SNUH이름보정: "' + salaryItems[idx].name + '" → "' + canonicalName + '" (행' + r + ',열' + c + ')');
+            debug('[PayslipParser] SNUH이름보정: "' + salaryItems[idx].name + '" → "' + canonicalName + '" (행' + r + ',열' + c + ')');
             salaryItems[idx] = { name: canonicalName, amount, col: c, row: r };
           }
         }
@@ -833,10 +842,10 @@ const SALARY_PARSER = (() => {
     // 총액 검증
     const calcGross = salaryItems.reduce((s, i) => s + i.amount, 0);
     const calcDed = deductionItems.reduce((s, i) => s + i.amount, 0);
-    console.log('[PayslipParser] 글로벌 그리드 매칭: 지급 ' + salaryItems.length + '건, 공제 ' + deductionItems.length + '건');
-    console.log('[PayslipParser] 총액 검증: 지급 ' + calcGross + '=' + grossPay + (Math.abs(calcGross - grossPay) <= 1 ? ' ✅' : ' ❌ 차이=' + (calcGross - grossPay)));
-    console.log('[PayslipParser] 총액 검증: 공제 ' + calcDed + '=' + totalDeduction + (Math.abs(calcDed - totalDeduction) <= 1 ? ' ✅' : ' ❌ 차이=' + (calcDed - totalDeduction)));
-    console.log('[PayslipParser] 총액: 급여=' + grossPay + ', 공제=' + totalDeduction + ', 실지급=' + netPay);
+    debug('[PayslipParser] 글로벌 그리드 매칭: 지급 ' + salaryItems.length + '건, 공제 ' + deductionItems.length + '건');
+    debug('[PayslipParser] 총액 검증: 지급 ' + calcGross + '=' + grossPay + (Math.abs(calcGross - grossPay) <= 1 ? ' ✅' : ' ❌ 차이=' + (calcGross - grossPay)));
+    debug('[PayslipParser] 총액 검증: 공제 ' + calcDed + '=' + totalDeduction + (Math.abs(calcDed - totalDeduction) <= 1 ? ' ✅' : ' ❌ 차이=' + (calcDed - totalDeduction)));
+    debug('[PayslipParser] 총액: 급여=' + grossPay + ', 공제=' + totalDeduction + ', 실지급=' + netPay);
 
     // ── 신뢰도 점수 계산 ──
     function calcConfidence(opts) {
@@ -872,7 +881,7 @@ const SALARY_PARSER = (() => {
       deductionDiff: calcDed - totalDeduction,
     });
 
-    console.log('[PayslipParser] 신뢰도: ' + confidence + '/100 (method=globalGrid)');
+    debug('[PayslipParser] 신뢰도: ' + confidence + '/100 (method=globalGrid)');
 
     // ── fallback: 글로벌 그리드 매칭 실패 시 parsePDFText 시도 ──
     if (salaryItems.length === 0 && deductionItems.length === 0) {
