@@ -1449,42 +1449,6 @@ function calculateParentalLeave() {
   document.getElementById('parentalResult').innerHTML = html;
 }
 
-// ═══════════ 💵 가족수당 ═══════════
-function calculateFamily() {
-  const spouse = document.getElementById('faSpouse').checked;
-  const children = parseInt(document.getElementById('faChildren').value) || 0;
-  const other = parseInt(document.getElementById('faOther').value) || 0;
-
-  const r = CALC.calcFamilyAllowance(spouse, children, other);
-
-  let html = `
-    <div class="result-box success">
-      <div class="result-label">월 가족수당</div>
-      <div class="result-total green">${CALC.formatCurrency(r.월수당)}</div>
-    </div>
-  `;
-  Object.entries(r.breakdown).forEach(([key, val]) => {
-    html += `<div class="result-row"><span class="key">${key}</span><span class="val accent">${CALC.formatCurrency(val)}</span></div>`;
-  });
-
-  document.getElementById('familyResult').innerHTML = html;
-}
-
-// ═══════════ 🏅 장기근속수당 ═══════════
-function calculateLongService() {
-  const years = parseInt(document.getElementById('lsYears').value) || 0;
-  const r = CALC.calcLongServicePay(years);
-
-  document.getElementById('longServiceResult').innerHTML = `
-    <div class="result-box ${r.월수당 > 0 ? 'success' : ''}">
-      <div class="result-label">월 장기근속수당</div>
-      <div class="result-total ${r.월수당 > 0 ? 'green' : ''}">${r.월수당 > 0 ? CALC.formatCurrency(r.월수당) : '해당없음 (5년 미만)'}</div>
-      <div class="result-row"><span class="key">근속연수</span><span class="val">${r.근속연수}년</span></div>
-      <div class="result-row"><span class="key">적용 구간</span><span class="val">${r.구간}</span></div>
-    </div>
-  `;
-}
-
 // ═══════════ 🌙 야간근무가산금 ═══════════
 function calculateNightBonus() {
   const count = parseInt(document.getElementById('nsCount').value) || 0;
@@ -1515,43 +1479,6 @@ function calculateNightBonus() {
   }
 
   document.getElementById('nightBonusResult').innerHTML = html;
-}
-
-// ═══════════ 📊 승진 시뮬레이터 ═══════════
-function calculatePromotion() {
-  const jobType = document.getElementById('prJobType').value;
-  const grade = document.getElementById('prGrade').value;
-  const raw = document.getElementById('prHireDate').value;
-  const parsed = PROFILE.parseDate(raw);
-
-  if (!parsed) {
-    document.getElementById('promoResult').innerHTML = '<div class="warning-box">⚠️ 입사일을 입력하세요. (예: 2006-07-05)</div>';
-    return;
-  }
-
-  const r = CALC.calcPromotionDate(jobType, grade, new Date(parsed));
-
-  if (r.message) {
-    const warnBox = document.createElement('div');
-    warnBox.className = 'warning-box';
-    warnBox.textContent = r.message;
-    const promoEl = document.getElementById('promoResult');
-    promoEl.textContent = '';
-    promoEl.appendChild(warnBox);
-    return;
-  }
-
-  const isPast = r.남은일수 === 0;
-
-  document.getElementById('promoResult').innerHTML = `
-    <div class="result-box ${isPast ? 'success' : ''}">
-      <div class="result-label">승격 경로</div>
-      <div class="result-total ${isPast ? 'green' : ''}">${r.label}</div>
-      <div class="result-row"><span class="key">소요 연수</span><span class="val">${r.소요연수}</span></div>
-      <div class="result-row"><span class="key">예상 승격일</span><span class="val accent">${r.예상승격일}</span></div>
-      <div class="result-row"><span class="key">남은 일수</span><span class="val">${isPast ? '✅ 이미 도래' : r.남은일수 + '일'}</span></div>
-    </div>
-  `;
 }
 
 // ═══════════ 🏦 퇴직금 시뮬레이터 ═══════════
