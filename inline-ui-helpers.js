@@ -1,9 +1,12 @@
 // inline-ui-helpers.js — index.html 인라인 스크립트를 통합
-// 1) 테마 토글 (linear ↔ neo)
+// 1) 저장된 테마(linear) 복원 — DOMContentLoaded 전 flicker 방지
 // 2) capture 파라미터 기반 문서 타이틀
-// 3) 시간외 시급 0원 경고 배너
+// 3) 시간외 시급 0원 경고 배너 + 리스너
+// 4) 데모 배너 표시 (?demo=1 또는 bhm_demo_mode 플래그)
+// 5) ?tutorial=1 → tutorial.html 리다이렉트
 
 (function () {
+  'use strict';
   // ── (사전 반영) 테마: DOMContentLoaded 전에 즉시 적용해 flicker 방지 ──
   try {
     var savedTheme = localStorage.getItem('theme');
@@ -48,32 +51,8 @@
   window.updateHourlyWarning = updateHourlyWarning;
   window.dismissHwBanner = dismissHwBanner;
 
-  // ── 테마 토글 (설정 탭 버튼에서 호출) ──
-  function toggleTheme() {
-    var html = document.documentElement;
-    var btn = document.getElementById('themeToggle');
-    var isNeo = html.getAttribute('data-theme') === 'neo';
-    if (isNeo) {
-      html.removeAttribute('data-theme');
-      if (btn) btn.textContent = '🌙';
-      localStorage.setItem('theme', 'linear');
-    } else {
-      html.setAttribute('data-theme', 'neo');
-      if (btn) btn.textContent = '🎨';
-      localStorage.setItem('theme', 'neo');
-    }
-  }
-  window.toggleTheme = toggleTheme;
-
   // ── DOMContentLoaded 후 초기화 ──
   document.addEventListener('DOMContentLoaded', function () {
-    // 테마 버튼 초기 아이콘
-    var saved = localStorage.getItem('theme');
-    if (saved === 'linear') {
-      var tgl = document.getElementById('themeToggle');
-      if (tgl) tgl.textContent = '🌙';
-    }
-
     // 데모 배너
     var isDemoUrl = new URLSearchParams(window.location.search).get('demo') === '1';
     var isDemoFlag = localStorage.getItem('bhm_demo_mode') === '1';
