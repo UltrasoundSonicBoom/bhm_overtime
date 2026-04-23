@@ -3211,9 +3211,6 @@ function toggleOtVerifyDetail() {
   if (arrow) arrow.style.transform = isHidden ? 'rotate(180deg)' : '';
 }
 
-// 하위 호환
-function renderOtStats(year, month) { renderOtDashboard(year, month); }
-
 // 통계 카드 클릭 → 해당 그룹 열기 + 스크롤
 function scrollToOtGroup(type) {
   const groupEl = document.getElementById('otGroup_' + type);
