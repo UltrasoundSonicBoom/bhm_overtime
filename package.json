@@ -8,7 +8,10 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "npm run test:unit && npm run test:smoke",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "test:smoke": "playwright test"
   },
   "repository": {
     "type": "git",
@@ -21,5 +24,9 @@
   "bugs": {
     "url": "https://github.com/UltrasoundSonicBoom/bhm_overtime/issues"
   },
-  "homepage": "https://github.com/UltrasoundSonicBoom/bhm_overtime#readme"
+  "homepage": "https://github.com/UltrasoundSonicBoom/bhm_overtime#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "vitest": "^4.1.5"
+  }
 }

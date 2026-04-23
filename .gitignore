@@ -29,6 +29,8 @@ node_modules/
 .gstack/
 .worktrees/
 .playwright-mcp/
+test-results/
+playwright-report/
 tmp/
 .superpowers/
 .gstack-designs/

@@ -798,3 +798,9 @@ const CALC = {
         return { recoveryDays, warnings };
     }
 };
+
+// Node (Vitest) 환경에서 require 가능하도록 CommonJS export.
+// 브라우저는 global const CALC만 사용 (변경 없음).
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { CALC };
+}
