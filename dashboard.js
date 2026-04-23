@@ -34,14 +34,7 @@ const els = {
   decisionBanner: document.getElementById('decisionBanner'),
 };
 
-function escapeHtml(value) {
-  return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
+// escapeHtml은 shared-utils.js에서 window 전역으로 제공됨.
 
 async function apiJson(path) {
   const response = await fetch(`${API_BASE}${path}`);

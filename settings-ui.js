@@ -1,13 +1,5 @@
 // settings-ui.js — 설정 탭 UI (AppLock 전용)
-
-function showOtToast(message) {
-  var toast = document.getElementById('otToast');
-  if (!toast) return;
-  toast.textContent = message;
-  toast.style.display = 'block';
-  clearTimeout(toast._hideTimer);
-  toast._hideTimer = setTimeout(function () { toast.style.display = 'none'; }, 3000);
-}
+// showOtToast는 app.js:2374 에 정의된 버전을 공용으로 사용 (2-arg signature).
 
 // ── 앱 잠금 설정 UI ──
 function updateAppLockUI() {

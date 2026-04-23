@@ -159,7 +159,6 @@ window.AppLock = (function () {
     return _sha256(pin + salt).then(function (hash) {
       _saveSettings({ pinEnabled: true, pinHash: hash, pinSalt: salt, pinLength: pin.length, pinFailCount: 0, pinLockUntil: null });
       _unlocked = true;
-      // REMOVED auth: Drive 백업 제거 (로컬 단독)
     });
   }
 
@@ -205,7 +204,6 @@ window.AppLock = (function () {
     _unlocked = true;
     var overlay = document.getElementById(OVERLAY_ID);
     if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
-    // REMOVED auth: Drive 비활성화 반영 제거 (로컬 단독)
   }
 
   function isEnabled() { return !!_loadSettings().pinEnabled; }

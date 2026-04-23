@@ -4,15 +4,7 @@
 
 // ── HTML 이스케이프 (XSS 방지) ──
 // innerHTML에 사용자 입력값을 삽입할 때 반드시 이 함수를 거칠 것
-function escapeHtml(str) {
-  if (str == null) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
+// escapeHtml은 shared-utils.js에서 window 전역으로 제공됨.
 
 // ── 프로필 필드 매핑 ──
 const PROFILE_FIELDS = {
@@ -1449,42 +1441,6 @@ function calculateParentalLeave() {
   document.getElementById('parentalResult').innerHTML = html;
 }
 
-// ═══════════ 💵 가족수당 ═══════════
-function calculateFamily() {
-  const spouse = document.getElementById('faSpouse').checked;
-  const children = parseInt(document.getElementById('faChildren').value) || 0;
-  const other = parseInt(document.getElementById('faOther').value) || 0;
-
-  const r = CALC.calcFamilyAllowance(spouse, children, other);
-
-  let html = `
-    <div class="result-box success">
-      <div class="result-label">월 가족수당</div>
-      <div class="result-total green">${CALC.formatCurrency(r.월수당)}</div>
-    </div>
-  `;
-  Object.entries(r.breakdown).forEach(([key, val]) => {
-    html += `<div class="result-row"><span class="key">${key}</span><span class="val accent">${CALC.formatCurrency(val)}</span></div>`;
-  });
-
-  document.getElementById('familyResult').innerHTML = html;
-}
-
-// ═══════════ 🏅 장기근속수당 ═══════════
-function calculateLongService() {
-  const years = parseInt(document.getElementById('lsYears').value) || 0;
-  const r = CALC.calcLongServicePay(years);
-
-  document.getElementById('longServiceResult').innerHTML = `
-    <div class="result-box ${r.월수당 > 0 ? 'success' : ''}">
-      <div class="result-label">월 장기근속수당</div>
-      <div class="result-total ${r.월수당 > 0 ? 'green' : ''}">${r.월수당 > 0 ? CALC.formatCurrency(r.월수당) : '해당없음 (5년 미만)'}</div>
-      <div class="result-row"><span class="key">근속연수</span><span class="val">${r.근속연수}년</span></div>
-      <div class="result-row"><span class="key">적용 구간</span><span class="val">${r.구간}</span></div>
-    </div>
-  `;
-}
-
 // ═══════════ 🌙 야간근무가산금 ═══════════
 function calculateNightBonus() {
   const count = parseInt(document.getElementById('nsCount').value) || 0;
@@ -1515,43 +1471,6 @@ function calculateNightBonus() {
   }
 
   document.getElementById('nightBonusResult').innerHTML = html;
-}
-
-// ═══════════ 📊 승진 시뮬레이터 ═══════════
-function calculatePromotion() {
-  const jobType = document.getElementById('prJobType').value;
-  const grade = document.getElementById('prGrade').value;
-  const raw = document.getElementById('prHireDate').value;
-  const parsed = PROFILE.parseDate(raw);
-
-  if (!parsed) {
-    document.getElementById('promoResult').innerHTML = '<div class="warning-box">⚠️ 입사일을 입력하세요. (예: 2006-07-05)</div>';
-    return;
-  }
-
-  const r = CALC.calcPromotionDate(jobType, grade, new Date(parsed));
-
-  if (r.message) {
-    const warnBox = document.createElement('div');
-    warnBox.className = 'warning-box';
-    warnBox.textContent = r.message;
-    const promoEl = document.getElementById('promoResult');
-    promoEl.textContent = '';
-    promoEl.appendChild(warnBox);
-    return;
-  }
-
-  const isPast = r.남은일수 === 0;
-
-  document.getElementById('promoResult').innerHTML = `
-    <div class="result-box ${isPast ? 'success' : ''}">
-      <div class="result-label">승격 경로</div>
-      <div class="result-total ${isPast ? 'green' : ''}">${r.label}</div>
-      <div class="result-row"><span class="key">소요 연수</span><span class="val">${r.소요연수}</span></div>
-      <div class="result-row"><span class="key">예상 승격일</span><span class="val accent">${r.예상승격일}</span></div>
-      <div class="result-row"><span class="key">남은 일수</span><span class="val">${isPast ? '✅ 이미 도래' : r.남은일수 + '일'}</span></div>
-    </div>
-  `;
 }
 
 // ═══════════ 🏦 퇴직금 시뮬레이터 ═══════════
@@ -3284,9 +3203,6 @@ function toggleOtVerifyDetail() {
   if (arrow) arrow.style.transform = isHidden ? 'rotate(180deg)' : '';
 }
 
-// 하위 호환
-function renderOtStats(year, month) { renderOtDashboard(year, month); }
-
 // 통계 카드 클릭 → 해당 그룹 열기 + 스크롤
 function scrollToOtGroup(type) {
   const groupEl = document.getElementById('otGroup_' + type);
@@ -3530,8 +3446,6 @@ function _propagatePayslipToWorkHistory(parsed, ym) {
   list.push(entry);
   list.sort(function (a, b) { return (a.from || '') < (b.from || '') ? -1 : 1; });
   localStorage.setItem(whKey, JSON.stringify(list));
-
-  // REMOVED auth: Drive sync push — 로컬 전용 앱
 }
 // payroll-views.js 에서도 호출 가능하도록 노출
 window._propagatePayslipToWorkHistory = _propagatePayslipToWorkHistory;
@@ -3645,8 +3559,6 @@ async function handlePayslipUpload(file) {
     if (!ym) throw new Error('급여 기간을 인식하지 못했습니다. 파일을 확인해주세요.');
 
     SALARY_PARSER.saveMonthlyData(ym.year, ym.month, parsed, ym.type);
-
-    // REMOVED auth: PDF 내 드라이브 업로드 — 로컬 전용 앱 (브라우저에만 저장)
 
     // employeeInfo (이름/직종/직급/호봉/부서/입사일/사번) + 수당 항목 일괄 반영
     // (이전에 분산되어 있던 _applyPayslipEmployeeInfo 로직은 applyStableItemsToProfile 로 일원화)

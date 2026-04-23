@@ -70,7 +70,6 @@ function _saveWorkHistory(list) {
   localStorage.setItem(_whKey(), JSON.stringify(list));
   // bhm_lastEdit_<key> 도 갱신 — 향후 서버 sync 재도입 시 충돌 비교용
   localStorage.setItem('bhm_lastEdit_' + _whKey(), new Date().toISOString());
-  // REMOVED auth: SyncManager.enqueuePush — 로컬 저장만 사용
 }
 
 function _fmtYm(iso) {
