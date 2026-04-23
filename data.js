@@ -558,7 +558,7 @@ const DATA_STATIC = {
   // API (/regulations/browse) 또는 JSON fallback으로 교체됨.
   handbook: [],
 
-  // ── 퇴직금 2001.08.31 이전 입사자 누진배수 (hospital_rule_master_2026.json 기준) ──
+  // ── 퇴직금 2001.08.31 이전 입사자 누진배수 (단체협약 별표 기준) ──
   severanceMultipliersPre2001: [
     { min: 30, multiplier: 52.5 },
     { min: 25, multiplier: 42.5 },
