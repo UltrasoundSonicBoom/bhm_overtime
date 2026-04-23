@@ -22,7 +22,17 @@
 - 콘솔 에러 0건
 
 ### 권한 설정
-모든 `mcp__plugin_playwright_playwright__browser_*` 도구는 `.claude/settings.local.json` 에서 승인 없이 실행됨 (프롬프트 발생 시 설정 누락으로 간주하고 `/agent-skills:update-config` 참고).
+모든 `mcp__plugin_playwright_playwright__browser_*` 도구는 `.claude/settings.local.json` 에서 승인 없이 실행됨.
+
+### 알려진 제약 — Playwright MCP + 로컬호스트
+이전 MCP 설정(기본 bundled Chromium)에서 `localhost`/LAN IP로 바인딩된 로컬 서버의 subresource 로드가 `ERR_EMPTY_RESPONSE` 발생. curl은 정상 200 응답.
+**해결책 적용 완료** (`~/.claude/plugins/cache/claude-plugins-official/playwright/unknown/.mcp.json` 및 marketplaces 원본):
+```json
+"args": ["@playwright/mcp@latest", "--browser", "chrome", "--allowed-origins", "*"]
+```
+시스템 Chrome + allowed-origins 와일드카드로 전환. **Claude Code 재시작 필요** (MCP 서버 재초기화).
+
+재시작 전에는 수동 스모크 (사용자가 개인 Chrome으로 열람)로 폴백.
 
 ## Skill routing
 
