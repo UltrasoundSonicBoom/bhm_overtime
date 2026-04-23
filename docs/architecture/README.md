@@ -39,7 +39,7 @@ data.js DATA_STATIC                (계산값)──┴→ calculators.js → UI
 - `leaveRecords` 키 고정 (getUserStorageKey 미적용) — 멀티 유저 환경 데이터 섞임 위험.
 - 급여명세서 체인 중복 구현 (app.js + payroll-views.js).
 - 미사용 공개 함수 3개 (calcSeverancePay, checkNurseScheduleRules, calcPromotionDate).
-- `showOtToast('메시지', 4500)` 시그니처 불일치 (app.js:3660).
+- `showOtToast('메시지', 4500)` 시그니처 불일치 (app.js:3598).
 - `localhost:3001/api/data/bundle` CSP 차단 (콘솔 오염).
 
 ### 후속 플랜 제안

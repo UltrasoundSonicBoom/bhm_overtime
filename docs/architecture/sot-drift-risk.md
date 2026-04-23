@@ -53,8 +53,8 @@ graph LR
 | 온콜/야간가산 (allowances) | 부속합의 | data.js DATA_STATIC | ❌ | Medium |
 | 장기근속수당 구간 (longServicePay) | 단협 | data.js DATA_STATIC | ❌ | Medium |
 | 퇴직수당 구간 (severancePay) | 동결 (과거 기준) | data.js DATA_STATIC | ❌ | Low |
-| 리커버리 데이 누적 트리거 | 부속합의 | data.js DATA_STATIC.recoveryDay | ❌ | **High (Bug #4 참조)** |
-| 장기재직 휴가 (longServiceLeave) | 단협 | data.js FAQ vs md 제42조 | ❌ | **High (Bug #5 참조)** |
+| 리커버리 데이 누적 트리거 | 부속합의 | data.js DATA_STATIC.recoveryDay | ❌ | **High (Bug #6 참조)** |
+| 장기재직 휴가 (longServiceLeave) | 단협 | data.js FAQ vs md 제42조 | ❌ | **High (Bug #7 참조)** |
 
 ## 3. 실증 드리프트 사례 (Task 3/4 발견)
 
