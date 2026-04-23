@@ -355,7 +355,9 @@ function switchTab(tabName) {
   }
 
   if (tabName === 'home') _afterLoad('home', initHomeTab);
-  if (tabName === 'payroll') { applyProfileToPayroll(); initPayrollTab(); }
+  if (tabName === 'payroll') {
+    _afterLoad('payroll', function () { applyProfileToPayroll(); initPayrollTab(); });
+  }
   if (tabName === 'overtime') {
     _afterLoad('overtime', function () {
       const savedCTA = document.getElementById('profileSavedCTA');
@@ -392,22 +394,26 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
 });
 
 // ── 서브탭 전환 (payroll 탭 — 책갈피 탭) ──
-document.querySelectorAll('#tab-payroll .pay-bookmark-tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('#tab-payroll .pay-bookmark-tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('#tab-payroll .sub-content').forEach(c => c.classList.remove('active'));
-    tab.classList.add('active');
-    document.getElementById('sub-' + tab.dataset.subtab).classList.add('active');
-    const name = tab.dataset.subtab;
-    // 퇴직금 탭이면 상단 급여 탭을 접힘 처리
-    const payrollSubTabs = document.getElementById('payrollSubTabs');
+// payroll 탭은 lazy-load 되므로 이벤트 위임으로 바인딩 (로드 시점과 무관하게 동작)
+document.addEventListener('click', function (e) {
+  const tab = e.target.closest('#tab-payroll .pay-bookmark-tab');
+  if (!tab) return;
+  document.querySelectorAll('#tab-payroll .pay-bookmark-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('#tab-payroll .sub-content').forEach(c => c.classList.remove('active'));
+  tab.classList.add('active');
+  const subEl = document.getElementById('sub-' + tab.dataset.subtab);
+  if (subEl) subEl.classList.add('active');
+  const name = tab.dataset.subtab;
+  // 퇴직금 탭이면 상단 급여 탭을 접힘 처리
+  const payrollSubTabs = document.getElementById('payrollSubTabs');
+  if (payrollSubTabs) {
     if (name === 'pay-retirement') payrollSubTabs.classList.add('retracted');
     else payrollSubTabs.classList.remove('retracted');
-    if (name === 'pay-payslip') renderPayPayslip();
-    if (name === 'pay-calc') { initPayEstimate(); if (typeof PAYROLL !== 'undefined') PAYROLL.init(); }
-    if (name === 'pay-qa') { if (typeof PAYROLL !== 'undefined') PAYROLL.init(); }
-    if (name === 'pay-retirement') initRetirementTab();
-  });
+  }
+  if (name === 'pay-payslip') renderPayPayslip();
+  if (name === 'pay-calc') { initPayEstimate(); if (typeof PAYROLL !== 'undefined') PAYROLL.init(); }
+  if (name === 'pay-qa') { if (typeof PAYROLL !== 'undefined') PAYROLL.init(); }
+  if (name === 'pay-retirement') initRetirementTab();
 });
 
 // ═══════════ 직급 목록 업데이트 ═══════════
