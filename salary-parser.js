@@ -1102,7 +1102,6 @@ const SALARY_PARSER = (() => {
     const merged = existing ? mergePayslipData(existing, data) : data;
 
     localStorage.setItem(key, JSON.stringify({ ...merged, savedAt: new Date().toISOString() }));
-    // REMOVED auth: Drive sync push — 로컬 전용 앱
 
     // 사번 자동 채움: 프로필에 사번이 비어 있고 payslip에서 추출된 사번이 있으면 저장
     var empNum = merged && merged.employeeInfo && merged.employeeInfo.employeeNumber;
@@ -1190,7 +1189,6 @@ const SALARY_PARSER = (() => {
   function replaceMonthlyData(year, month, data, type) {
     const key = storageKey(year, month, type);
     localStorage.setItem(key, JSON.stringify({ ...data, savedAt: new Date().toISOString() }));
-    // REMOVED auth: Drive sync push — 로컬 전용 앱
   }
 
   function deleteMonthlyData(year, month, type) {

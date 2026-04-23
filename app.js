@@ -3446,8 +3446,6 @@ function _propagatePayslipToWorkHistory(parsed, ym) {
   list.push(entry);
   list.sort(function (a, b) { return (a.from || '') < (b.from || '') ? -1 : 1; });
   localStorage.setItem(whKey, JSON.stringify(list));
-
-  // REMOVED auth: Drive sync push — 로컬 전용 앱
 }
 // payroll-views.js 에서도 호출 가능하도록 노출
 window._propagatePayslipToWorkHistory = _propagatePayslipToWorkHistory;
@@ -3561,8 +3559,6 @@ async function handlePayslipUpload(file) {
     if (!ym) throw new Error('급여 기간을 인식하지 못했습니다. 파일을 확인해주세요.');
 
     SALARY_PARSER.saveMonthlyData(ym.year, ym.month, parsed, ym.type);
-
-    // REMOVED auth: PDF 내 드라이브 업로드 — 로컬 전용 앱 (브라우저에만 저장)
 
     // employeeInfo (이름/직종/직급/호봉/부서/입사일/사번) + 수당 항목 일괄 반영
     // (이전에 분산되어 있던 _applyPayslipEmployeeInfo 로직은 applyStableItemsToProfile 로 일원화)

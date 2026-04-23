@@ -290,21 +290,18 @@ document.addEventListener('DOMContentLoaded', () => {
       // 프로필: 클라우드에 없을 때만 이전
       if (!cloudData.profile && rawGuestProfile) {
         localStorage.setItem(PROFILE.STORAGE_KEY, rawGuestProfile);
-        // REMOVED auth: Drive sync 제거됨 — 로컬 전용 앱
         migrated = true;
       }
 
       // 시간외: 클라우드 레코드가 없을 때만 이전
       if (!(cloudData.overtime && cloudData.overtime.length > 0) && rawGuestOt) {
         localStorage.setItem(OVERTIME.STORAGE_KEY, rawGuestOt);
-        // REMOVED auth: Drive sync 제거됨 — 로컬 전용 앱
         migrated = true;
       }
 
       // 휴가: 클라우드 레코드가 없을 때만 이전
       if (!(cloudData.leave && cloudData.leave.length > 0) && rawGuestLeave) {
         localStorage.setItem(LEAVE.STORAGE_KEY, rawGuestLeave);
-        // REMOVED auth: Drive sync 제거됨 — 로컬 전용 앱
         migrated = true;
       }
 

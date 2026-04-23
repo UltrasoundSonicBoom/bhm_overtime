@@ -100,7 +100,6 @@
           localStorage.setItem(activeKey, localStorage.getItem(oKey));
           localStorage.setItem('bhm_lastEdit_' + activeKey, new Date().toISOString());
           localStorage.removeItem(oKey);
-          // REMOVED auth: SyncManager.enqueuePush — 로컬 저장만 사용
           if (window.OT && window.OT.renderList) window.OT.renderList();
           if (window.LEAVE && window.LEAVE.renderList) window.LEAVE.renderList();
           if (window.PROFILE && window.PROFILE.render) window.PROFILE.render();

@@ -45,7 +45,6 @@ const OVERTIME = {
         all[key].push(record);
         this._saveAll(all);
 
-        // REMOVED auth: Drive sync push — 로컬 전용 앱
         window.dispatchEvent(new CustomEvent('overtimeChanged'));
 
         return record;
@@ -59,8 +58,7 @@ const OVERTIME = {
                 all[key][idx] = { ...all[key][idx], ...updates, id };
                 this._saveAll(all);
 
-                // REMOVED auth: Drive sync push — 로컬 전용 앱
-                window.dispatchEvent(new CustomEvent('overtimeChanged'));
+                        window.dispatchEvent(new CustomEvent('overtimeChanged'));
 
                 return all[key][idx];
             }
@@ -76,8 +74,7 @@ const OVERTIME = {
                 all[key].splice(idx, 1);
                 this._saveAll(all);
 
-                // REMOVED auth: Drive sync push — 로컬 전용 앱
-                window.dispatchEvent(new CustomEvent('overtimeChanged'));
+                        window.dispatchEvent(new CustomEvent('overtimeChanged'));
 
                 return true;
             }
@@ -506,7 +503,6 @@ const OVERTIME = {
         const all = this._loadPayslipAll();
         all[ym] = { ...data, savedAt: new Date().toISOString() };
         this._savePayslipAll(all);
-        // REMOVED auth: Drive sync push — 로컬 전용 앱
     },
 
     getPayslipData(year, month) {

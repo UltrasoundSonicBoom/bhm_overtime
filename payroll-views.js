@@ -586,8 +586,6 @@
           window._propagatePayslipToWorkHistory(result, ym);
         }
 
-        // REMOVED auth: PDF 내 드라이브 업로드 — 로컬 전용 앱 (브라우저에만 저장)
-
         currentPayslipIdx = 0;
         renderPayPayslip();
       } else {
