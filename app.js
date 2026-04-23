@@ -356,7 +356,13 @@ function switchTab(tabName) {
     applyProfileToOvertime(); initOvertimeTab();
   }
   if (tabName === 'leave') { applyProfileToLeave(); initLeaveTab(); }
-  if (tabName === 'reference') renderWikiToc();
+  if (tabName === 'reference') {
+    if (window.loadTab) {
+      window.loadTab('reference').then(function () { renderWikiToc(); }).catch(function () {});
+    } else {
+      renderWikiToc();
+    }
+  }
   if (tabName === 'profile') initProfileTab();
   if (tabName === 'settings') { if (typeof updateAppLockUI === 'function') updateAppLockUI(); }
 
