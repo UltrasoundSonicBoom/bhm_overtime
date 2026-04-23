@@ -6219,3 +6219,199 @@ html[data-theme="neo"] .career-rot-chip-add {
   background: rgba(250,204,21,.18);
 }
 html[data-theme="neo"] .ret-guide-table th { background: rgba(0,0,0,0.05); border-bottom: 2px solid #1a1a1a; }
+
+/* ── Migration/Onboarding Modal (migrationOverlay에서 사용) ── */
+.onboarding-icon {
+  font-size: 52px;
+  margin-bottom: -4px;
+}
+
+.onboarding-title {
+  font-size: var(--text-title-large);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.onboarding-sub {
+  font-size: var(--text-body-normal);
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+
+/* ── 시간외 시급 미입력 경고 배너 ── */
+.hourly-warning-banner {
+  display: none;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 8px;
+  font-size: var(--text-body-normal);
+  color: var(--accent-amber);
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+html[data-theme="neo"] .hourly-warning-banner {
+  border: 2px solid #1a1a1a;
+  box-shadow: 2px 2px 0 #1a1a1a;
+  background: #fff8e1;
+  color: #000000;
+}
+
+.hourly-warning-banner a {
+  color: var(--accent-indigo);
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* ── 정보 안내 배너 (홈 프로필 nudge 등) ── */
+.info-note-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(99, 102, 241, 0.07);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 8px;
+  font-size: var(--text-body-normal);
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+html[data-theme="neo"] .info-note-banner {
+  border: 2px solid #1a1a1a;
+  background: #ede9fe;
+  color: #3730a3;
+}
+
+.info-note-banner a {
+  color: var(--accent-indigo);
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* ── 시간외 도움말 아코디언 ── */
+.ot-help-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ot-help-item {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(99, 102, 241, 0.12);
+  border-radius: 8px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: background 0.2s;
+}
+
+.ot-help-item:active {
+  background: rgba(99, 102, 241, 0.08);
+}
+
+.ot-help-q {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  font-size: var(--text-body-normal);
+  font-weight: 600;
+  color: var(--text-primary);
+  gap: 6px;
+}
+
+.ot-help-a {
+  display: none;
+  padding: 0 12px 10px 12px;
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+  border-top: 1px solid rgba(99, 102, 241, 0.08);
+}
+
+.ot-help-item.open .ot-help-a {
+  display: block;
+}
+
+.ot-help-ref {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--accent-indigo);
+  opacity: 0.7;
+}
+
+html[data-theme="neo"] .ot-help-item {
+  background: #f5f3ff;
+  border: 1.5px solid #c4b5fd;
+}
+
+html[data-theme="neo"] .ot-help-a {
+  border-top: 1.5px solid #c4b5fd;
+}
+
+/* ── 도메인 이전 안내 모달 (migration-overlay.js에서 표시) ── */
+.migration-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.migration-card {
+  background: var(--bg-card);
+  border: 3px solid #1a1a1a;
+  box-shadow: 8px 8px 0px #1a1a1a;
+  border-radius: 24px;
+  padding: 32px 24px;
+  max-width: 460px;
+  width: 100%;
+  text-align: center;
+  animation: modalSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.migration-btn {
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  border: 2px solid #1a1a1a;
+  box-shadow: 4px 4px 0px #1a1a1a;
+  transition: all 0.1s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: var(--text-body-large);
+}
+
+.migration-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px #1a1a1a;
+}
+
+.migration-btn.primary {
+  background: #fbbf24;
+  color: #1a1a1a;
+}
+
+.migration-btn.secondary {
+  background: #ffffff;
+  color: #1a1a1a;
+}
