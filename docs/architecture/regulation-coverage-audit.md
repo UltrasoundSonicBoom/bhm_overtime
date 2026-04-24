@@ -58,7 +58,7 @@
 | 제20조(1) 승진 T/O | 4급 이하 T/O 발생 시 승진발령 한도 | 1개월 | ❌ | ❌ | N/A (HR 절차) | N/A |
 | 제21조 명단통지 | 신규·퇴직자 명단 통보 기한 | 7일 / 1개월 | ❌ | ❌ | N/A (HR 절차) | N/A |
 | 제23조 이의제기 | 부당 인사처분 이의제기 기한 | 10일 | ❌ | ❌ | N/A (HR 절차) | N/A |
-| 제24조 정년 | 정년 연령 / 퇴직일 | 만 60세 / 12월 말일 | 🟡 retirement.js `_retPeakDate` 계산 (만 60세 + 임금피크 만 61세) | tab-payroll (퇴직금) | 🟡 부partial | Medium |
+| 제24조 정년 | 정년 연령 / 퇴직일 | 만 60세 / 12월 말일 | 🟡 retirement.js `_retPeakDate` 계산 (만 60세 + 임금피크 만 61세) | tab-payroll (퇴직금) | 🟡 부분 | Medium |
 | 제26조(2)(2) 병가 후 공상휴직 | 업무상 상병 6개월간 병가 후 복직 불가 시 휴직 | 6개월 | 🟡 DATA.leaveOfAbsence '공상휴직' `tenure:true` | tab-leave (읽기 전용 표) | 🟡 부분 | Low |
 | 제26조(1)(4) 육아휴직 대상 연령 | 만 8세 이하 또는 초2 이하 자녀 | 만 8세 / 초2 | 🟡 DATA.leaveOfAbsence '육아휴직' 설명 문자열 | tab-leave | 🟡 부분 | Low |
 | 제26조(2)(6) 국외유학 재직요건 | 국외유학휴직 최소 재직기간 | 8년 | 🟡 DATA.leaveOfAbsence '국외유학휴직' condition | tab-leave | 🟡 부분 | Low |
