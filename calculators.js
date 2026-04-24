@@ -121,7 +121,8 @@ const CALC = {
             // ※ 가족수당은 통상임금에 포함되지 않음 (보수규정 제44조 2항)
             '명절지원비(월할)': monthlyHolidayBonus,
             '교육훈련비': trainingAllowance,      // 제43조 (구: 자기계발별정수당)
-            '별정수당5': DATA.allowances.specialPay5,
+            // <2025.10> 별정수당: S1·C1·SC1 이하 등급만 35,000원 (2026.01~)
+            '별정수당5': this.calcSpecialAllowance(grade),
             '리프레시지원비': refreshBenefit      // 별도합의 2024.11: 2026.01~통상임금 산입
         };
 
@@ -245,6 +246,37 @@ const CALC = {
         }
 
         return { totalLeave, diffYears, diffMonths, explanation };
+    },
+
+    /**
+     * 명절지원비 계산 (제49조)
+     * = (기준기본급 + 조정급/2) × 50% per 1회, 연 4회 (설·추석·5월·7월)
+     * @param {number} monthlyBase - 기준기본급 월액
+     * @param {number} adjustPay - 조정급 월액 (기본 0)
+     * @returns {{perTime: number, annual: number, monthly: number}}
+     */
+    calcHolidayBonus(monthlyBase, adjustPay = 0) {
+        const perTime = Math.round((monthlyBase + adjustPay / 2) * 0.5);
+        const annual = perTime * 4;
+        const monthly = Math.round(annual / 12);
+        return { perTime, annual, monthly };
+    },
+
+    /**
+     * 별정수당 <2025.10> 합의: S1·C1·SC1 이하 등급에 월 35,000원 (2026.01~)
+     * @param {string} grade - 등급 코드 (예: 'M3', 'S1', 'J2', 'A1')
+     * @returns {number} 수당 (원) — 대상 등급이면 DATA.allowances.specialPay5, 아니면 0
+     */
+    calcSpecialAllowance(grade) {
+        if (!grade || typeof grade !== 'string') return 0;
+        // S1·C1·SC1 이하 — 각 payTable 의 하위 등급
+        // 일반직: S1, J3, J2, J1  · 운영기능직: C1, A3, A2, A1  · 환경유지: SC1, SA3, SA2, SA1
+        const lowGrades = new Set([
+            'S1', 'J3', 'J2', 'J1',
+            'C1', 'A3', 'A2', 'A1',
+            'SC1', 'SA3', 'SA2', 'SA1',
+        ]);
+        return lowGrades.has(grade) ? DATA.allowances.specialPay5 : 0;
     },
 
     /**

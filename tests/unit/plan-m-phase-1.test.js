@@ -10,6 +10,59 @@ const { CALC } = require('../../calculators.js');
 // 이라 CommonJS require 로는 로드 불가 — 단위 테스트는 calculators.js CALC 경로로만 커버.
 // overtime.js 의 publicHoliday 통합은 브라우저 스모크/수동 확인으로 검증.
 
+describe('M1-5 명절지원비 (제49조)', () => {
+  it('calcHolidayBonus(기본급, 조정급): (base + adjust/2) × 0.5 × 4회/년 (월할)', () => {
+    // 기본급 2,000,000 + 조정급 200,000 → per-time = (2,000,000 + 100,000) × 0.5 = 1,050,000
+    // 연 4회 / 12 = 월할 350,000
+    const r = CALC.calcHolidayBonus(2_000_000, 200_000);
+    expect(r.perTime).toBe(1_050_000);
+    expect(r.annual).toBe(4_200_000);
+    expect(r.monthly).toBe(350_000);
+  });
+
+  it('조정급 0 인 경우 → (기본급) × 0.5 × 4회', () => {
+    const r = CALC.calcHolidayBonus(3_000_000, 0);
+    expect(r.perTime).toBe(1_500_000);
+    expect(r.annual).toBe(6_000_000);
+    expect(r.monthly).toBe(500_000);
+  });
+});
+
+describe('M1-5 별정수당 <2025.10> (S1·C1·SC1 이하 35,000원/월)', () => {
+  it('calcSpecialAllowance: 저등급 S1 → 35,000', () => {
+    expect(CALC.calcSpecialAllowance('S1')).toBe(35000);
+  });
+
+  it('저등급 C1 / SC1 → 35,000', () => {
+    expect(CALC.calcSpecialAllowance('C1')).toBe(35000);
+    expect(CALC.calcSpecialAllowance('SC1')).toBe(35000);
+  });
+
+  it('저등급 아래 J1, A1, SA1 → 35,000 (이하 포함)', () => {
+    expect(CALC.calcSpecialAllowance('J1')).toBe(35000);
+    expect(CALC.calcSpecialAllowance('A1')).toBe(35000);
+    expect(CALC.calcSpecialAllowance('SA1')).toBe(35000);
+  });
+
+  it('고등급 M1 / L1 / SL1 → 0', () => {
+    expect(CALC.calcSpecialAllowance('M1')).toBe(0);
+    expect(CALC.calcSpecialAllowance('L1')).toBe(0);
+    expect(CALC.calcSpecialAllowance('SL1')).toBe(0);
+  });
+
+  it('최고등급 M3 / L3 / SL3 → 0', () => {
+    expect(CALC.calcSpecialAllowance('M3')).toBe(0);
+    expect(CALC.calcSpecialAllowance('L3')).toBe(0);
+    expect(CALC.calcSpecialAllowance('SL3')).toBe(0);
+  });
+
+  it('잘못된/빈 등급 → 0 (안전)', () => {
+    expect(CALC.calcSpecialAllowance(null)).toBe(0);
+    expect(CALC.calcSpecialAllowance('')).toBe(0);
+    expect(CALC.calcSpecialAllowance('XYZ')).toBe(0);
+  });
+});
+
 describe('M1-7 연차 미사용 수당화 (제36조(4))', () => {
   it('미사용 3일 × 통상임금 월액 3,135,000 (=209h × 15000시급) → 360,000원', () => {
     // 3일 × 시급 15000 × 8h = 360,000
