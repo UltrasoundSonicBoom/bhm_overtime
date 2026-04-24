@@ -147,3 +147,104 @@
 - ⁵ 공로연수 60% 는 `retirement.js` 에 하드코딩된 것으로 추정되며 `DATA_STATIC` 에 상수로 분리되어 있지 않음 → SoT 관점에서 drift.
 
 ---
+
+## 제5장 임금 및 퇴직금
+
+> 출처: `data/full_union_regulation_2026.md` L652–988. **급여·시간외·퇴직금의 SoT 영역** — 통상임금 정의, 가족수당, 장기근속, 상여금, 퇴직금 지급률, 퇴직수당.
+
+| 조항 | 규정 내용 (요약) | 수치/공식 | 현재 구현 | UI 탭 | 상태 | 우선순위 |
+|------|-----------------|-----------|----------|-------|------|---------|
+| 제43조 임금의 정의 | 임금 = 노동력 대가 일체 | 서술 | N/A | ❌ | N/A (정의) | N/A |
+| **<2016.05>·<2018.12> 기본급 구성** | 기준기본급 + 근속가산기본급 + (승급조정급 또는 군복무수당) | 3개 구성 | ✅ `CALC.calcOrdinaryWage` breakdown 에 `기준기본급`·`근속가산기본급`·`군복무수당`·`승급조정급` 분리 | tab-payroll | ✅ 구현 | **High** |
+| **제44조 통상임금 구성 (16요소)** | 기준기본급·근속가산·군복무·능력급·상여·가계지원·조정급·승급조정·장기근속·별정·직책·업무보조·급식·교통·명절·교육훈련 | 16개 | ✅ `CALC.calcOrdinaryWage` breakdown (`calculators.js:106-126`) 에 16개 모두 산입 (가족수당 제외 — 제44조 2항) | tab-payroll | ✅ 구현 | **High** |
+| 제45조(1) 임금인상 | 매년 1월 단체교섭 | N/A | N/A (연례 갱신 프로세스) | ❌ | N/A (HR 절차) | N/A |
+| <2005.09> 단시간근무자 인상률 | 정규직 인상률 이상 | ≥ 정규직 | ❌ | ❌ | N/A (HR 정책) | N/A |
+| **<2019.11> 임금피크제** | 정년 이전 1년, 보수 60% 지급 (공로연수 1년) | 1년 · 60% | 🟡 `retirement.js:148` 임금피크 시뮬레이터에서 60% 하드코딩 — DATA 상수 없음 ¹ | tab-payroll (퇴직금 탭) | 🟡 부분 | Medium |
+| <2019.11> 임금피크 적용 제외 | 입사일로부터 5년 이내 정년 도달자 | 5년 | ❌ | ❌ | ❌ 누락 | Low |
+| <2021.11> 운영기능직 임금피크 하한 | 직무능력급이 최저임금 120% 이하로 미감액 | 120% | ❌ | ❌ | ❌ 누락 | Low |
+| **<2022.12> 임금피크 선택제** | 옵션A: 공로연수 1년+60% / 옵션B: 공로연수 미부여+100% (2024~) | A/B 선택 | 🟡 `tab-payroll.html` L279-413 옵션 A/B UI 존재 (retirement.js) · DATA 상수 없음 ¹ | tab-payroll | 🟡 부분 — 하드코딩 | Medium |
+| 제46조 정기승급 | 입사 익월 1호봉씩 | 월 1호봉 | 🟡 `DATA.payTables[직군].autoPromotion` 연차 테이블 + `calcOrdinaryWage` yearIdx | tab-payroll | 🟡 부분 — 자동승급 연수는 있으나 입사 익월 트리거는 없음 | Medium |
+| <2005.09>·<2012.09> 운영기능직 한계호봉 | 10→8→6호봉 | 6호봉 (최종) | ❌ (DATA.payTables 에는 8년치 호봉 배열; 한계호봉 상수 없음) | ❌ | ❌ 누락 | Low |
+| <2008.09> 운영기능직 자동승급제 | 5등급 4년 / 4등급 7년 / 3등급 9년 초과 자동승진 | 4/7/9년 | 🟡 `DATA.payTables.운영기능직.autoPromotion` (A1→A2: 4년, A2→A3: 7년, A3→C1: 7년) — 규정 9년과 drift ² | tab-payroll | 🟡 부분 — drift 의심 | Medium |
+| <2021.11> 운영기능직 경력수당 | 2015.7.1 이후 입사, A1→A2 소멸경력 120,000원/연 | 120,000원/연 | ❌ | ❌ | ❌ 누락 | Low |
+| <2024.11> 환경유지지원직 경력수당 | SA1→SA2 소멸경력 105,600원/연 (2025~) | 105,600원/연 | ❌ | ❌ | ❌ 누락 | Low |
+| **제47조 연장·야간·휴일수당** | 통상임금 가산 지급 | 150/200/150% | ✅ 제34조와 동일 — `overtimeRates` + `CALC.calcOvertimePay` | tab-overtime | ✅ 구현 | **High** |
+| **제47조 일직·숙직비** | 1일 50,000원 | 50,000원 | ✅ `DATA.allowances.dutyAllowance=50000` | UI 진입점 없음 | 🟡 부분 — DATA 만 존재 | Low |
+| **제48조(1) 임금지급일** | 매월 17일 (의사직 25일 / 단시간 익월 5일) | 17일 | 🟡 `DATA.faqs`/`handbook` 텍스트 안내만. 상수/계산 로직 없음 | tab-payroll 안내 | 🟡 부분 — 상수 없음 | Low |
+| **제49조 가족수당** | 배우자 40k / 일반가족 20k / 자녀 1째 30k · 2째 70k · 3째+ 110k / 최대 5인 | 40k/20k/30k/70k/110k | ✅ `DATA.familyAllowance.{spouse:40000, generalFamily:20000, maxFamilyMembers:5, child1:30000, child2:70000, child3Plus:110000}` + `CALC.calcFamilyAllowance` (`calculators.js:267`) | tab-payroll (계산) | ✅ 구현 | **High** |
+| **제50조 장기근속수당** | 5~9년 5만 / 10~14년 6만 / 15~19년 8만 / 20년+ 10만 | 5/6/8/10만 | ✅ `DATA.longServicePay` (`data.js:177-185`) + `CALC.calcLongServicePay` (`calculators.js:248`) + `calcOrdinaryWage` L83-87 | tab-payroll | ✅ 구현 | **High** |
+| **제50조 장기근속 가산금** | 21년+ +1만 / 25년+ +3만 (ADDITIVE) | 11만 / 14만 | ✅ `DATA.longServicePay` 21~24년 110,000원 / 25년+ 140,000원 (BUG-02/03 수정 완료) | tab-payroll | ✅ 구현 | **High** |
+| **제51조 상여금 (27직급 연 금액표)** | 일반직 9 + 운영기능 9 + 환경유지 9 직급별 연 상여 | 834,000~2,908,800 | ✅ `DATA.payTables[직군].bonus[grade]` 27셀 모두 정의 (`data.js:47-51, 86-90, 125-129`) + `calcOrdinaryWage` 월할 반영 | tab-payroll | ✅ 구현 | **High** |
+| <2017.12>~<2024.11> 군복무수당 | 36k→45k/월, 2018~ 직급연차 미산입, 2018/2015이후 월할 지급 | 45,000원/월 | ✅ `DATA.allowances.militaryService=45000` + `calcOrdinaryWage` L76-81 월할 로직 | tab-payroll | ✅ 구현 | Medium |
+| <2017.12>·<2020.10> 5월 명절지원비 | 정액 500,000원 → (기본급+조정급1/2)×50% | (기본급+조정급/2)×50% | ✅ `calcOrdinaryWage` L103 `holidayBonusPerTime = (monthlyBase + adjustPay/2) × 0.5` + `calcPayrollSimulation` isHolidayMonth 플래그 | tab-payroll | ✅ 구현 | **High** |
+| <2022.12>~<2024.11> 교육훈련비 | 10만 일시 → 25,000원 → 40,000원/월 (2024~ 통상 산입) | 40,000원/월 | ✅ `DATA.allowances.selfDevAllowance=40000` + `calcOrdinaryWage` L97,123 breakdown `교육훈련비` | tab-payroll | ✅ 구현 | Medium |
+| <2025.10> 리프레시지원비 | 매년 360,000원 (월 30,000원 환산) | 30,000원/월 | ✅ `DATA.allowances.refreshBenefit=30000` + `calcOrdinaryWage` L98-100,125 | tab-payroll | ✅ 구현 | Medium |
+| **제52조(1) 퇴직금 지급률 표** | 근속 1~30년 지급률 1~52.5개월 (2001.08.31 이전 누진배수) | 1 / 2 / 3.5 / ... / 52.5 | ✅ `DATA.severanceMultipliersPre2001` 18행 (`data.js:562-581`) + `CALC.calcSeveranceFullPay` (`calculators.js:305`) | tab-payroll (퇴직금) | ✅ 구현 | **High** |
+| **제52조(1) 법정 퇴직금** | 1년+ 1개월분 평균임금 × 근속년수 | 평균임금 × N | ✅ `CALC.calcSeveranceFullPay` L323 `baseSeverance = avgMonthlyPay × preciseYears` | tab-payroll | ✅ 구현 | **High** |
+| 제52조(1) 단수 계산 | 6개월↑ = 1년 / 6개월 미만 월할 | 6개월 경계 | 🟡 `calcSeveranceFullPay` 은 일 단위 정밀 (`preciseYears = totalDays/365`) — 규정의 6개월 반올림과 비교 drift 가능 ³ | tab-payroll | 🟡 부분 | Low |
+| 제52조(2) 퇴직금 지급기한 | 퇴직일로부터 15일 이내 | 15일 | N/A (사용자 계산 불필요, HR 절차) | ❌ | N/A (HR 절차) | N/A |
+| 제52조(3) 중간정산 재원 | 전년 충당금의 12% | 12% | ❌ | ❌ | ❌ 누락 | Low |
+| **제52조(4) 사학연금 2016.03+ 분리** | 사학연금 가입일 전일까지 근속+평균임금으로 분리 산정 | 2016.03.01 | ❌ (`calcSeveranceFullPay` 는 cutoff2001/cutoff2015 만 분기, 2016 사학연금 컷오프 없음) | tab-payroll | ❌ 누락 | Medium |
+| **제53조(1) 퇴직수당 5구간** | 20년↑ 60% / 15~19 50% / 10~14 45% / 5~9 35% / 1~4 10% | 10/35/45/50/60% | ✅ `DATA.severancePay` (`data.js:353-359`) + `calcSeveranceFullPay` L341-347 (2015.06.30 이전 입사자) | tab-payroll | ✅ 구현 | **High** |
+| 제53조(2) 만 60세 이후 퇴직자 | 만 60세 직전 평균임금 기준 | 만 60세 컷오프 | 🟡 `retirement.js` 임금피크 전후 평균임금 분기 로직은 있으나 제53조(2) 명시적 구현 여부 추가확인 필요 | tab-payroll | 🟡 부분 | Low |
+| <2016.05> 근속가산기본급/명절지원비 조정급 가산 | 조정급 1/2 가산 | +조정급/2 | ✅ `calcOrdinaryWage` L69 `(monthlyBase + adjustPay/2) × rate` + L103 명절지원비 동일 적용 | tab-payroll | ✅ 구현 | Medium |
+| 제54조 공제금 | 소득세·주민세·조합비·사학연금·건강보험 등 | 다항목 | 🟡 `calcPayrollSimulation` L608-634 에 건강보험·장기요양·국민연금·고용보험·소득세·주민세 구현 — 조합비·새마을금고는 미포함 | tab-payroll | 🟡 부분 | Medium |
+| 제55조 비상시 지불 | 결혼·출산·사망·입학·휴직·퇴직·해고·재해 시 임금 선지급 | 사유 6가지 | N/A (HR 절차) | ❌ | N/A (HR 절차) | N/A |
+| 제56조 임금인하 금지 | 기본급여 수준 인하 금지 | N/A | N/A (정책) | ❌ | N/A (정책) | N/A |
+| **제57조 휴업수당** | 정전·단수·기계보수·병원 귀책 휴업 시 평균임금 100% | 100% | ❌ (`calcAverageWage` 존재하나 휴업 시나리오 진입점 없음) | ❌ | ❌ 누락 | Low |
+
+**제5장 행 수: 30행** (수치·공식 22 + N/A 8)
+
+각주:
+- ¹ 임금피크제 60% 지급률이 `retirement.js` 코드에 하드코딩됨 (제4장 각주 ⁵와 동일) — `DATA.wagePeak` 상수 분리 필요.
+- ² 제45조(1) <2008.09> 에는 "3등급 9년 초과자" 자동승진이고, `DATA.payTables.운영기능직.autoPromotion.A3.years=7` 은 "A3→C1 7년" 으로 설정되어 있음. A3가 3등급에 해당한다면 9년과 drift. 추가 규정-코드 매핑 검증 필요 (Plan M 후보).
+- ³ `calcSeveranceFullPay` 의 `preciseYears = totalDays / 365` 는 규정의 "6월 이상은 1년, 6월 미만 월할" 과 다르게 일 단위 정밀 계산. 사용자에게 더 유리할 수도 불리할 수도 있는 미세 drift.
+
+---
+
+## 제6장 복리후생 및 교육훈련
+
+> 출처: `data/full_union_regulation_2026.md` L989–1398. **수당 안내·경조금·복지포인트·교육** 영역 — 일부 규정 텍스트 표현만 노출되고 계산기 없는 항목이 많다.
+
+| 조항 | 규정 내용 (요약) | 수치/공식 | 현재 구현 | UI 탭 | 상태 | 우선순위 |
+|------|-----------------|-----------|----------|-------|------|---------|
+| **제58조(1) 가계지원비 (27직급 연 금액표)** | 일반직 7,634,410~15,941,330 / 운영 4,962,370~10,361,870 / 환경유지 1,686,500~2,548,900 | 27셀 (연) | ✅ `DATA.payTables[직군].familySupport[grade]` 27셀 (`data.js:52-56, 91-95, 130-134`) + `calcOrdinaryWage` L55 `monthlyFamilyPaid = annualFamily/11` + `calcPayrollSimulation` L583 11개월 지급 분기 | tab-payroll | ✅ 구현 | **High** |
+| **제58조(1) 가계지원비 지급월** | 3,4,5,6,7,8,10,11,12월 + 설·추석월 = 11개월 (1월·9월 미지급) | 11개월 | ✅ `DATA.familySupportMonths=[3,4,5,6,7,8,10,11,12]` (`data.js:596`) + `calcPayrollSimulation` isFamilySupportMonth / isHolidayMonth 플래그 | tab-payroll | ✅ 구현 | **High** |
+| **제58조(1)-1 맞춤형 복지 기본포인트** | 40만원 → (2020) 60만P → (2025) +10만P = 700P | 700P (2025~) | 🟡 `DATA.faqs`/`handbook` 에 "기본 700P" 텍스트만 (`data.js:464, 544`) — 계산기/DATA 구조화 항목 없음 ¹ | tab-browse | 🟡 부분 — 설명만 | Medium |
+| **제58조(1)-1 맞춤형 복지 근속포인트** | 1년당 1만원 (최대 30만원) | 10P/년 · max 300P | 🟡 텍스트만 (`data.js:464,544`) — 계산기 없음 | tab-browse | 🟡 부분 | Medium |
+| **제58조(1)-1 맞춤형 복지 가족포인트** | 배우자 10만 / 1·2자녀 10만 / 3자녀+ 20만/인 / 기타가족 5만/인 (4인 이내) | 10/10/20/5만 | ❌ (DATA/CALC 모두 없음) | ❌ | ❌ 누락 | Medium |
+| <2019.11> 자녀출산축하포인트 | 첫째 1,000P / 둘째 2,000P / 셋째+ 3,000P (2020~) | 100~300만 | ❌ | ❌ | ❌ 누락 | Low |
+| <2017.12> 자녀학자금포인트 | 만 16세+ 7년간 연 1,200P(120만원) | 120만/년 | 🟡 `DATA.faqs`/`handbook` 텍스트 안내만 — 계산기 없음 | tab-browse | 🟡 부분 | Medium |
+| <2023.11> 생일 축하 상품권 | 온누리상품권 50,000원 (2024~) | 50,000원 | ❌ | ❌ | ❌ 누락 | Low |
+| <2020.10>~<2025.10> 환경유지지원직 가계지원비 인상 누적 | +200k/+200k/+200k/+100k/+200k (연단위 누적) | 연 총 +900k | 🟡 `DATA.payTables.환경유지지원직.familySupport` 에는 최신 금액 반영 추정. 추가 검증 필요 | tab-payroll | 🟡 부분 | Low |
+| **제58조(2) 학비 지원** | 중·고·대학 자녀 국가공무원 동일 | 공무원 수준 | ❌ | ❌ | ❌ 누락 | Low |
+| **제58조(3) 급식보조비** | **120,000원/월** (규정) | 120,000원 | 🟡 `DATA.allowances.mealSubsidy=150000` (`data.js:145`) — **150k 하드코딩, 규정 120k와 drift** ² | tab-payroll | 🟡 부분 — **drift** | **High** |
+| **제58조(4) 교통보조비** | 매월 일정액 (규정은 금액 미명시) | 150,000원 (현재값) | ✅ `DATA.allowances.transportSubsidy=150000` + `calcOrdinaryWage` L96,120 | tab-payroll | ✅ 구현 | Medium |
+| 제58조(5)~(7) 휴게실·콘도·직원식당 시설 | 설치·운영 의무 | N/A | N/A (시설) | ❌ | N/A (시설) | N/A |
+| 제59조 식사 제공 (야간·예비군·보라매 밤번) | 식비 수준 식사 현물 제공 | N/A | N/A (현물) | ❌ | N/A (현물) | N/A |
+| 제60조 제복지급 | 양질의 제복 + 주1회 외부세탁 | N/A | N/A (현물·서비스) | ❌ | N/A (현물) | N/A |
+| 제61조 간호사 기숙사 | 기숙사 마련·합의 운영 | N/A | N/A (시설) | ❌ | N/A (시설) | N/A |
+| 제62조 어린이집 | 수유실·어린이집 설치·운영 | N/A | N/A (시설) | ❌ | N/A (시설) | N/A |
+| **제63조(1) 본인결혼 경조금** | 300,000원 | 300,000원 | ✅ `DATA.leaveQuotas.ceremony_marriage_self.ceremonyPay=300000` + `DATA.ceremonies` (`data.js:324`) | tab-leave | ✅ 구현 | **High** |
+| **제63조(2) 자녀결혼 경조금** | 100,000원 | 100,000원 | ✅ `DATA.leaveQuotas.ceremony_marriage_child.ceremonyPay=100000` | tab-leave | ✅ 구현 | Medium |
+| **제63조(3) 자녀출산 경조금** | 100,000원 (+ 공제회 첫째·둘째 10만/셋째+ 30만) | 100,000원 | ✅ `DATA.ceremonies` 본인출산 100k (`data.js:326`) + `DATA.leaveQuotas.ceremony_birth.ceremonyPay=100000` | tab-leave | ✅ 구현 | **High** |
+| **제63조(4) 본인사망** | 1,000,000원 | 1,000,000원 | ✅ `DATA.ceremonies` 본인사망 1,000,000 (`data.js:329`) | tab-leave / tab-browse | ✅ 구현 (사용자 입장에서는 유족 지급이라 UI 진입 제한적) | Low |
+| **제63조(5) 배우자사망** | 1,000,000원 | 1,000,000원 | ✅ `DATA.leaveQuotas.ceremony_death_spouse.ceremonyPay=1000000` | tab-leave | ✅ 구현 | **High** |
+| **제63조(6) 본인·배우자 부모 사망** | 300,000원 | 300,000원 | ✅ `DATA.leaveQuotas.ceremony_death_parent.ceremonyPay=300000` | tab-leave | ✅ 구현 | **High** |
+| **제63조(7) 자녀사망** | 300,000원 | 300,000원 | ✅ `DATA.leaveQuotas.ceremony_death_child.ceremonyPay=300000` (자녀배우자 사망은 경조금 없음) | tab-leave | ✅ 구현 | Medium |
+| **제63조(8) 조부모·외조부모·형제·자매 사망** | 50,000원 | 50,000원 | ✅ `DATA.leaveQuotas.ceremony_death_grandparent`/`ceremony_death_sibling.ceremonyPay=50000` | tab-leave | ✅ 구현 | Medium |
+| **제63조의2(1) 신규간호사 교육** | 8주 (중환자실 10주), 신규 간호운영기능직 5일, 프리셉터 +2주 팀 | 8/10주 / 5일 / 2주 | ❌ (DATA/CALC 없음; 텍스트 안내도 미확인) | ❌ | ❌ 누락 | Low |
+| **<2017.12> 신규간호사 교육기간 급여** | 첫 4주간 간호사 신규초임의 80% | 초임 × 80% | ❌ | ❌ | ❌ 누락 | Low |
+| **<2021.11> 프리셉터 교육수당** | 월 200,000원 (2022~) | 200,000원 | ✅ `DATA.allowances.preceptorPay=200000` | UI 진입점 없음 | 🟡 부분 — DATA만 존재 | Low |
+| 제63조의2(2) 인권교육 | 전 직원 대상 | N/A | N/A (교육 절차) | ❌ | N/A | N/A |
+| 제63조의2(3) 발령 전 인수인계 | 발령일 전 5일 업무 인수인계 (2026.01~) | 5일 | ❌ | ❌ | N/A (HR 절차) | N/A |
+| <2012.09> 교대근무자 전보 교육시간 | 유급 부여 | N/A | N/A (유급 여부 판단) | ❌ | N/A | N/A |
+| <2009.10> 보건직 보수교육 등록비 지원 | 면허유지 이수시간 범위 | 범위 내 | ❌ | ❌ | ❌ 누락 | Low |
+
+**제6장 행 수: 32행** (수치·공식 21 + N/A 11)
+
+각주:
+- ¹ 복지포인트는 규정상 "기본 400P → 600P(2020) → 700P(2025)" 단계적 인상이었고 1P=1,000원 환산이 `data.js:544` 에 명시되어 있으나 `DATA.welfarePoints` 같은 구조화 상수나 `CALC.calcWelfarePoint` 계산기가 없음. FAQ/handbook 설명만 노출됨.
+- ² **급식보조비 drift (known-issues D-1):** 규정(제58조(3) · 2026 handbook p.34/39/104)은 **120,000원/월** 이지만 `data.js:145` 에는 `mealSubsidy: 150000` 으로 하드코딩되어 통상임금 계산 시 매달 30,000원 과다 산정. Plan K 에서 발견 → Plan L/M 에서 수정 대상. 본 감사에서는 🟡 부분 (DATA 존재하나 값 불일치) 로 표기.
+
+---
