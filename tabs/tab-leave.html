@@ -140,4 +140,36 @@
     </div>
   </div>
 </div>
-    
+
+<!-- 👶 육아휴직 급여 시뮬레이터 (제28조(5) · 고용보험 기준) -->
+<div class="card" style="margin-top:16px;">
+  <div class="collapsible-header" onclick="toggleCollapsible('plCalcBody')">
+    <div style="display:flex; align-items:center; gap:8px;">
+      <span class="toggle-icon">▼</span>
+      <span class="card-title" style="margin:0; font-size:var(--text-title-large); display:flex; align-items:center; gap:8px;">
+        <span class="icon amber">👶</span> 육아휴직 급여 시뮬레이터
+      </span>
+    </div>
+  </div>
+  <div id="plCalcBody" class="collapsible-body" style="display:none;">
+    <p style="color:var(--text-muted); font-size:14px; margin:8px 0 12px;">
+      고용보험 육아휴직 급여 예상액을 개월별로 산출합니다.<br>
+      · 1~3개월: 통상임금 100% (상한 월 250만원)<br>
+      · 4~6개월: 통상임금 100% (상한 월 200만원)<br>
+      · 7~12개월: 통상임금 80% (상한 월 160만원)
+    </p>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+      <label for="plWage" style="color:var(--text-primary); font-weight:600;">월 통상임금</label>
+      <input type="number" id="plWage" placeholder="예: 3000000" min="0" step="10000"
+        style="width:140px; padding:4px 8px; border-radius:6px; border:1px solid var(--border-glass); background:var(--bg-glass); color:var(--accent-emerald); font-weight:700; font-size:var(--text-body-large); text-align:right;">
+    </div>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+      <label for="plMonths" style="color:var(--text-primary); font-weight:600;">휴직 개월 수 (최대 12)</label>
+      <input type="number" id="plMonths" value="12" min="1" max="12" step="1"
+        style="width:80px; padding:4px 8px; border-radius:6px; border:1px solid var(--border-glass); background:var(--bg-glass); color:var(--accent-emerald); font-weight:700; font-size:var(--text-body-large); text-align:right;">
+    </div>
+    <button type="button" class="btn btn-primary" onclick="calculateParentalLeave()" style="width:100%; margin-top:4px;">계산하기</button>
+    <div id="parentalResult" style="margin-top:12px;"></div>
+  </div>
+</div>
+
