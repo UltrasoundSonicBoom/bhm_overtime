@@ -67,7 +67,6 @@
     { "name": "checkNurseScheduleRules", "required": false, "note": "dead export — 호출처 미확인" }
   ],
   "calc_references": [
-    { "name": "calcRetirement", "status": "broken", "note": "Plan F Bug #3 — app.js:1347 호출, calculators.js 정의 없음. silent try/catch." },
     { "name": "calcServiceYears", "status": "wrong_namespace", "actual_namespace": "PROFILE", "note": "Plan F Bug #4 — salary-parser.js:1352 호출, 실제는 PROFILE.calcServiceYears (profile.js:129). serviceYears=0 고정." }
   ]
 }

@@ -1344,11 +1344,11 @@ function _renderRetirementTimeline(profile, avgWage) {
 
     var ret = null;
     try {
-      ret = typeof CALC !== 'undefined' ? CALC.calcRetirement({
-        avgWage: avgWage,
-        hireDate: hireDateStr,
-        retireDate: retDateStr
-      }) : null;
+      // Plan F Bug #3: CALC.calcRetirement 미존재 → calcSeveranceFullPay 로 교체
+      if (typeof CALC !== 'undefined' && CALC.calcSeveranceFullPay) {
+        var svcYears = Math.floor((retDate - new Date(hireDateStr)) / (1000 * 60 * 60 * 24 * 365.25));
+        ret = CALC.calcSeveranceFullPay(avgWage, svcYears, hireDateStr);
+      }
     } catch(e) {}
 
     results.push({
