@@ -4,15 +4,16 @@
 > 업데이트: 데이터 파일 추가/삭제 시 본 문서도 같이 수정.
 > 목적: "어떤 데이터가 어디에 살고, 어떻게 로드되고, 어느 소비자가 읽는가" 를 한눈에.
 
-## 1. 단협 규정 원본 (canonical)
+## 1. 단협 규정 원본 (historical reference)
 
-### `data/full_union_regulation_2026.md` ⭐ **원본 SoT**
+### `data/full_union_regulation_2026.md` 📖 **2025.10.23 단협 전문 (이전 버전 참고)**
 
-- **역할:** 단협 전문 (full text). 다른 모든 규정 파일의 원천.
-- **관리:** 사용자가 직접 유지보수 (단협 개정 시 여기 **먼저** 반영).
-- **런타임 로드:** **안 함** (사람이 읽는 마스터 문서).
-- **파생 파일:** hospital_guidelines_2026.md (축약), union_regulation_2026.json (구조화), data.js DATA_STATIC (수치 추출).
-- **현재 파일 상태:** 437 lines, 단협 전문 (제1~92조 + 별도 합의 + 별첨 임금표). 2026-04-24 기준 채워짐 (canonical 원본).
+- **역할:** 단협 전문 (full text). 원문 검색 / 개정 이력 추적 / 인용 참고용.
+- **SoT 지위:** **이전 버전 참고 자료** — 런타임 계산에 **직접 반영되지 않음**.
+- **관리:** 사용자가 직접 유지보수. 다음 단협 갱신 시 `data/full_union_regulation_YYYY.md` 신규 추가, 본 파일은 과거 버전으로 보존.
+- **런타임 로드:** **안 함** (사람이 읽는 참고 문서).
+- **실제 계산 SoT:** `data.js DATA_STATIC` 이 독립된 숫자 원본. 본 문서와의 정합성은 `data/calc-registry.json` + Vitest 가 간접 검증 + 사람이 주기적으로 `docs/architecture/known-issues.md` 의 드리프트 기록 확인.
+- **현재 파일 상태:** 3,145 lines, 95 조항, 364 개 `<YYYY.MM>` 합의 주석. handbook PDF (p.5~104) 전수 전사본 (2026-04-24).
 
 ### `data/hospital_guidelines_2026.md`
 
@@ -104,9 +105,11 @@
 
 ```mermaid
 graph TD
-    FullMD[data/full_union_regulation_2026.md<br/>⭐ canonical 단협 전문<br/>437 lines] -->|사람 수동 축약| GuideMD[data/hospital_guidelines_2026.md<br/>축약 요약 · 42 lines]
-    FullMD -->|사람 수동 구조화| UnionJSON[data/union_regulation_2026.json<br/>조항 배열 · 2184 lines]
-    FullMD -->|사람 수동 수치 추출| DataJS[data.js DATA_STATIC<br/>계산 상수 · 697 lines]
+    FullMD[data/full_union_regulation_2026.md<br/>📖 2025.10.23 전문 참고<br/>3145 lines, 계산 반영 ❌]
+    FullMD -.참고만.-> GuideMD[data/hospital_guidelines_2026.md<br/>축약 요약 · 42 lines]
+    FullMD -.참고만.-> UnionJSON[data/union_regulation_2026.json<br/>조항 배열 · 2184 lines]
+    Handbook[data/2026_handbook.pdf<br/>원본 PDF canonical] -->|수동 수치 추출| DataJS[data.js DATA_STATIC<br/>계산 상수 · 697 lines]
+    Handbook -->|수동 전사| FullMD
     UnionJSON -->|regulation.js:257 fetch| RegHTML[regulation.html<br/>찾아보기 / 검색 UI]
     DataJS -->|index.html script import| CALC[calculators.js]
     CALC --> UI[시간외/휴가/급여 탭]
@@ -141,7 +144,9 @@ sequenceDiagram
 
 ## 6. 결론
 
-- **canonical SoT**: `data/full_union_regulation_2026.md` — 사용자 관리. 2026-04-24 기준 채워짐 (437 lines, canonical 원본).
+- **단협 전문 (참고 자료)**: `data/full_union_regulation_2026.md` — 3,145 lines, 95조, 364 합의. **계산 반영 안 함** — 원문 검색/개정 추적용.
+- **계산 SoT**: `data.js DATA_STATIC` (697 lines). 단협 개정 시 사용자가 수치를 수동 추출해 갱신.
+- **canonical 원본**: `data/2026_handbook.pdf` (PDF). full_union.md 는 여기서 수동 전사된 사본.
 - **파생 SoT 3종**: hospital_guidelines (축약 · 런타임 미사용), union_regulation.json (브라우저 찾아보기), DATA_STATIC (계산).
 - **연결 메커니즘**: **없음** — full_union 변경 시 3곳 모두 사람이 수동 동기화.
 - **런타임 미사용 파일**: `full_union_regulation_2026.md` (런타임 로드 안 함, 사람 읽는 마스터 문서), `hospital_guidelines_2026.md` (grep 0건), `user_profile.json` (grep 0건) — 모두 사람 관리 문서.
