@@ -1473,7 +1473,7 @@ function calculateNightBonus() {
   const profile = PROFILE.load();
   const prevCumulative = (profile && profile.nightShiftsUnrewarded != null)
     ? profile.nightShiftsUnrewarded : 0;
-  const r = CALC.calcNightShiftBonus(count, prevCumulative);
+  const r = CALC.calcNightShiftBonus(count, prevCumulative, profile && profile.jobType);
 
   let html = `
     <div class="result-box ${r.초과경고 ? '' : 'success'}">

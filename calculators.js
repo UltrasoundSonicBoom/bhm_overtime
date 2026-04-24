@@ -387,9 +387,17 @@ const CALC = {
      * @param {number} prevCumulative - 이전 누적 미지급 야간횟수 (profile.nightShiftsUnrewarded, 기본 0)
      * @returns {object} { 야간근무가산금, 횟수, 리커버리데이, 누적리커버리데이(잔여), 초과경고 }
      */
-    calcNightShiftBonus(nightShiftCount, prevCumulative = 0) {
+    calcNightShiftBonus(nightShiftCount, prevCumulative = 0, jobType = null) {
         const bonus = nightShiftCount * DATA.allowances.nightShiftBonus;
         const rd = DATA.recoveryDay;
+
+        // Bug #6 — handbook p.25 제32조 (2)-2:
+        // 시설지원직/환경미화직/지원직: 누적 20회 트리거
+        // 그 외(간호직 등): 누적 15회 트리거
+        var isFacilityJob = jobType && ['시설직', '환경미화직', '지원직'].indexOf(jobType) !== -1;
+        var cumulativeTrigger = isFacilityJob
+            ? rd.otherCumulativeTrigger   // 20
+            : rd.nurseCumulativeTrigger;  // 15
 
         let recoveryDaysEarned = 0;
         let newCumulative = prevCumulative + nightShiftCount;
@@ -400,10 +408,10 @@ const CALC = {
             newCumulative -= rd.monthlyTrigger;
         }
 
-        // 누적 15일 도달 시 1일 추가 부여
-        if (newCumulative >= rd.nurseCumulativeTrigger) {
+        // 누적 트리거 도달 시 1일 추가 부여 (간호직 15일, 시설직/환경미화/지원직 20일)
+        if (newCumulative >= cumulativeTrigger) {
             recoveryDaysEarned += 1;
-            newCumulative -= rd.nurseCumulativeTrigger;
+            newCumulative -= cumulativeTrigger;
         }
 
         return {
@@ -591,7 +599,7 @@ const CALC = {
 
         // 야간근무가산금
         if (nightShiftCount > 0) {
-            const nb = this.calcNightShiftBonus(nightShiftCount);
+            const nb = this.calcNightShiftBonus(nightShiftCount, 0, jobType);
             지급내역['야간근무가산금'] = nb.야간근무가산금;
         }
 

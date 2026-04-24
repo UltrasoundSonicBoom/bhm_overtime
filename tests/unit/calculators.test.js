@@ -152,3 +152,36 @@ describe('CALC.calcOnCallPay (온콜)', () => {
     expect(r.합계).toBe(r.온콜대기수당 + r.온콜교통비 + r.시간외근무수당);
   });
 });
+
+describe('CALC.calcNightShiftBonus 시설직 분기 (Bug #6)', () => {
+  it('간호직 15회 누적 시 리커버리 1일', () => {
+    const r = CALC.calcNightShiftBonus(15, 0, '간호직');
+    const recovery = r.리커버리데이 ?? r.recoveryDays ?? 0;
+    expect(recovery).toBe(1);
+  });
+
+  it('시설직 누적 15회(이월만, 월 횟수 0) 시 리커버리 0일 — 20 미도달', () => {
+    // 당월 0회 + 이월 15회: 월 트리거(7) 미발동, 누적 15 < 20 → 리커버리 0일
+    const r = CALC.calcNightShiftBonus(0, 15, '시설직');
+    const recovery = r.리커버리데이 ?? r.recoveryDays ?? 0;
+    expect(recovery).toBe(0);
+  });
+
+  it('시설직 20회 누적 시 리커버리 1일', () => {
+    const r = CALC.calcNightShiftBonus(20, 0, '시설직');
+    const recovery = r.리커버리데이 ?? r.recoveryDays ?? 0;
+    expect(recovery).toBe(1);
+  });
+
+  it('환경미화직 20회 + 이월 5 = 25 → 리커버리 1일', () => {
+    const r = CALC.calcNightShiftBonus(20, 5, '환경미화직');
+    const recovery = r.리커버리데이 ?? r.recoveryDays ?? 0;
+    expect(recovery).toBeGreaterThanOrEqual(1);
+  });
+
+  it('jobType 미전달 시 기본 간호직 기준 (15)', () => {
+    const r = CALC.calcNightShiftBonus(15, 0);
+    const recovery = r.리커버리데이 ?? r.recoveryDays ?? 0;
+    expect(recovery).toBe(1);
+  });
+});
