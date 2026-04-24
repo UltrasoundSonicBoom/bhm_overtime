@@ -3595,7 +3595,7 @@ async function handlePayslipUpload(file) {
     const profileAfterPayslip = PROFILE.load() || {};
     if (!profileAfterPayslip.grade || !profileAfterPayslip.year) {
       if (typeof showOtToast === 'function') {
-        showOtToast('⚠️ 직급/호봉이 자동 설정되지 않았습니다. 내 정보에서 확인해주세요.', 4500);
+        showOtToast('⚠️ 직급/호봉이 자동 설정되지 않았습니다. 내 정보에서 확인해주세요.', 'warning');
       }
     }
 
