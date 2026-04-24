@@ -1344,11 +1344,11 @@ function _renderRetirementTimeline(profile, avgWage) {
 
     var ret = null;
     try {
-      ret = typeof CALC !== 'undefined' ? CALC.calcRetirement({
-        avgWage: avgWage,
-        hireDate: hireDateStr,
-        retireDate: retDateStr
-      }) : null;
+      // Plan F Bug #3: CALC.calcRetirement 미존재 → calcSeveranceFullPay 로 교체
+      if (typeof CALC !== 'undefined' && CALC.calcSeveranceFullPay) {
+        var svcYears = Math.floor((retDate - new Date(hireDateStr)) / (1000 * 60 * 60 * 24 * 365.25));
+        ret = CALC.calcSeveranceFullPay(avgWage, svcYears, hireDateStr);
+      }
     } catch(e) {}
 
     results.push({
@@ -1473,7 +1473,7 @@ function calculateNightBonus() {
   const profile = PROFILE.load();
   const prevCumulative = (profile && profile.nightShiftsUnrewarded != null)
     ? profile.nightShiftsUnrewarded : 0;
-  const r = CALC.calcNightShiftBonus(count, prevCumulative);
+  const r = CALC.calcNightShiftBonus(count, prevCumulative, profile && profile.jobType);
 
   let html = `
     <div class="result-box ${r.초과경고 ? '' : 'success'}">
@@ -3595,7 +3595,7 @@ async function handlePayslipUpload(file) {
     const profileAfterPayslip = PROFILE.load() || {};
     if (!profileAfterPayslip.grade || !profileAfterPayslip.year) {
       if (typeof showOtToast === 'function') {
-        showOtToast('⚠️ 직급/호봉이 자동 설정되지 않았습니다. 내 정보에서 확인해주세요.', 4500);
+        showOtToast('⚠️ 직급/호봉이 자동 설정되지 않았습니다. 내 정보에서 확인해주세요.', 'warning');
       }
     }
 

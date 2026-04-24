@@ -221,6 +221,28 @@
 
 ---
 
+## Plan F 실행 결과 (2026-04-24)
+
+| Bug | 상태 | 해결 커밋 |
+|-----|------|-----------|
+| #1 showOtToast 시그니처 | ✅ 해결 | (batch A 커밋) |
+| #2 localhost:3001 CSP | ✅ 해결 | (batch A) |
+| #3 CALC.calcRetirement | ✅ 해결 — calcSeveranceFullPay 로 교체 | (batch A) |
+| #4 CALC.calcServiceYears 네임스페이스 | ✅ 해결 — PROFILE 로 교체 | (batch A) |
+| #5 calcNursePay 하드코딩 | ✅ 해결 — 함수 자체 제거 | (batch B) |
+| #6 recoveryDay 시설직 분기 | ✅ 해결 — jobType 분기 + 테스트 5개 | (batch C) |
+| #7 장기재직 휴가 | ✅ 해결 — 7일 canonical | (batch B) |
+| #8 dead exports | ✅ 부분 해결 — 4개 제거. `calcUnionStepAdjust` 는 payroll.js 에서 활성 호출 확인되어 유지 (Plan D 오분류 정정) | (batch B) |
+| #9 leaveRecords 격리 | 🟡 유지 — 의도 설계, 별도 판단 후 Plan | — |
+| #10 applyProfileToOvertime profileChanged 미수신 | 🟡 Plan G 이연 | — |
+| #11 profileChanged 수신자 희소 | 🟡 Plan G 이연 | — |
+| #12 급여명세서 체인 중복 | 🟡 별도 플랜 이연 | — |
+| #13 배우자 출산 10일 (신규) | ✅ 해결 — data.js 4곳 + hospital_guidelines 정정 | (batch B) |
+
+테스트 상태: 66 passed | 0 skipped (Plan E 스킵 전부 해제).
+
+---
+
 ## 5. 권장 실행 순서
 
 1. **Plan E** (구조 개선) 먼저 — 이후 모든 수정의 안전망.

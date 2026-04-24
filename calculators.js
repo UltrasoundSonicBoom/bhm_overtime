@@ -295,25 +295,6 @@ const CALC = {
     },
 
     /**
-     * 퇴직금 시뮬레이터 (2015.6.30 이전 입사자)
-     * @param {number} avgMonthlyPay - 월 평균임금
-     * @param {number} years - 근속년수
-     * @returns {object}
-     */
-    calcSeverancePay(avgMonthlyPay, years) {
-        const sp = DATA.severancePay.find(s => years >= s.min);
-        if (!sp) return { 퇴직금: 0, 적용계수: 0, note: '근속 1년 미만 해당없음' };
-
-        const amount = Math.round(avgMonthlyPay * years * sp.rate);
-        return {
-            퇴직금: amount,
-            적용계수: `${sp.rate * 100}%`,
-            산식: `${avgMonthlyPay.toLocaleString()}원 × ${years}년 × ${sp.rate * 100}%`,
-            note: `재직기간 ${sp.min}년 이상 기준 (2015.6.30 이전 입사자)`
-        };
-    },
-
-    /**
      * 퇴직금 통합 계산 (2001.08.31 이전 입사자 누진배수 + 2015.06.30 이전 퇴직수당 포함)
      * 법정 퇴직금 공식: 1일 평균임금 × 30 × (총 근속일수 / 365)
      * @param {number} avgMonthlyPay - 월 평균임금 (= 1일 평균임금 × 30)
@@ -401,44 +382,22 @@ const CALC = {
     },
 
     /**
-     * 승진 시뮬레이터
-     * @param {string} jobType
-     * @param {string} currentGrade
-     * @param {Date} hireDate
-     * @returns {object}
-     */
-    calcPromotionDate(jobType, currentGrade, hireDate) {
-        const table = DATA.payTables[this.resolvePayTable(jobType)];
-        if (!table || !table.autoPromotion[currentGrade]) {
-            return { message: '해당 등급에 대한 자동승격 정보가 없습니다.' };
-        }
-
-        const promo = table.autoPromotion[currentGrade];
-        const promoDate = new Date(hireDate);
-        promoDate.setFullYear(promoDate.getFullYear() + promo.years);
-
-        const now = new Date();
-        const remaining = Math.max(0, Math.ceil((promoDate - now) / (1000 * 60 * 60 * 24)));
-
-        return {
-            현재등급: currentGrade,
-            다음등급: promo.next,
-            소요연수: `${promo.years}년`,
-            예상승격일: promoDate.toISOString().split('T')[0],
-            남은일수: remaining,
-            label: table.gradeLabels[currentGrade] + ' → ' + table.gradeLabels[promo.next]
-        };
-    },
-
-    /**
      * 야간근무 가산금 및 리커버리 데이 계산 (교대근무자 전용)
      * @param {number} nightShiftCount - 당월 야간근무 횟수
      * @param {number} prevCumulative - 이전 누적 미지급 야간횟수 (profile.nightShiftsUnrewarded, 기본 0)
      * @returns {object} { 야간근무가산금, 횟수, 리커버리데이, 누적리커버리데이(잔여), 초과경고 }
      */
-    calcNightShiftBonus(nightShiftCount, prevCumulative = 0) {
+    calcNightShiftBonus(nightShiftCount, prevCumulative = 0, jobType = null) {
         const bonus = nightShiftCount * DATA.allowances.nightShiftBonus;
         const rd = DATA.recoveryDay;
+
+        // Bug #6 — handbook p.25 제32조 (2)-2:
+        // 시설지원직/환경미화직/지원직: 누적 20회 트리거
+        // 그 외(간호직 등): 누적 15회 트리거
+        var isFacilityJob = jobType && ['시설직', '환경미화직', '지원직'].indexOf(jobType) !== -1;
+        var cumulativeTrigger = isFacilityJob
+            ? rd.otherCumulativeTrigger   // 20
+            : rd.nurseCumulativeTrigger;  // 15
 
         let recoveryDaysEarned = 0;
         let newCumulative = prevCumulative + nightShiftCount;
@@ -449,10 +408,10 @@ const CALC = {
             newCumulative -= rd.monthlyTrigger;
         }
 
-        // 누적 15일 도달 시 1일 추가 부여
-        if (newCumulative >= rd.nurseCumulativeTrigger) {
+        // 누적 트리거 도달 시 1일 추가 부여 (간호직 15일, 시설직/환경미화/지원직 20일)
+        if (newCumulative >= cumulativeTrigger) {
             recoveryDaysEarned += 1;
-            newCumulative -= rd.nurseCumulativeTrigger;
+            newCumulative -= cumulativeTrigger;
         }
 
         return {
@@ -640,7 +599,7 @@ const CALC = {
 
         // 야간근무가산금
         if (nightShiftCount > 0) {
-            const nb = this.calcNightShiftBonus(nightShiftCount);
+            const nb = this.calcNightShiftBonus(nightShiftCount, 0, jobType);
             지급내역['야간근무가산금'] = nb.야간근무가산금;
         }
 
@@ -747,56 +706,6 @@ const CALC = {
         return { matched: discrepancies.length === 0, discrepancies };
     },
 
-    /**
-     * 간호사 전용 수당 계산
-     * @param {object} profile - { preceptorWeeks, primeTeamDays }
-     *   preceptorWeeks: 프리셉터 담당 주수 (2주 단위로 200,000원)
-     *   primeTeamDays:  프라임팀(예비인력) 대체근무 일수 (20,000원/일)
-     * @returns {{ preceptorPay, primeTeamPay, total }}
-     * 근거: 제63조의2 (프리셉터), 제32조 부속합의 (프라임팀)
-     */
-    calcNursePay({ preceptorWeeks = 0, primeTeamDays = 0 } = {}) {
-        const PRECEPTOR_PER_2WEEKS = 200000; // 제63조의2
-        const PRIME_TEAM_DAILY = 20000;      // 제32조 부속합의
-        const preceptorPay = Math.floor(preceptorWeeks / 2) * PRECEPTOR_PER_2WEEKS;
-        const primeTeamPay = primeTeamDays * PRIME_TEAM_DAILY;
-        return { preceptorPay, primeTeamPay, total: preceptorPay + primeTeamPay };
-    },
-
-    /**
-     * 간호사 스케줄 규정 준수 검사
-     * @param {object} schedule - { nightShifts, age, pattern:string[] }
-     *   nightShifts: 월간 야간근무 횟수
-     *   age:         간호사 나이
-     *   pattern:     근무 패턴 배열 (예: ['N','OFF','D'])
-     * @returns {{ recoveryDays, warnings:[{type, message}] }}
-     * 근거: 제32조 부속합의 (리커버리데이), 제32조 (40세 야간 제외)
-     */
-    checkNurseScheduleRules({ nightShifts = 0, age = 0, pattern = [] } = {}) {
-        const warnings = [];
-
-        // 리커버리데이: 야간 7회 초과 시 초과분만큼 발생 (제32조 부속합의)
-        const recoveryDays = nightShifts > 7 ? nightShifts - 7 : 0;
-
-        // 40세 이상 야간근무 제외 원칙 (제32조 부속합의 — 간호부 교대근무자)
-        if (age >= 40 && nightShifts > 0) {
-            warnings.push({
-                type: 'age_night_exclusion',
-                message: '40세 이상 야간근무 제외 원칙 적용 대상 (제32조 부속합의)'
-            });
-        }
-
-        // N-OFF-D 금지 패턴 탐지 (야간 직후 비번 없이 주간 출근 금지)
-        const patternStr = pattern.join('-');
-        if (/N-OFF-D/.test(patternStr)) {
-            warnings.push({
-                type: 'forbidden_pattern',
-                message: 'N-OFF-D 금지 패턴: 야간 후 비번 없이 주간 출근 불가'
-            });
-        }
-
-        return { recoveryDays, warnings };
-    }
 };
 
 // Node (Vitest) 환경에서 require 가능하도록 CommonJS export.

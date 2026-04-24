@@ -12,6 +12,7 @@
 | 3 | [integration-points.md](./integration-points.md) | 탭 간 이벤트/주입 경로 맵 |
 | 4 | [sot-drift-risk.md](./sot-drift-risk.md) | 드리프트 위험 매트릭스 + 실증 8건 + 개선안 Tier 1/2/3 |
 | 5 | [known-issues.md](./known-issues.md) | 확실한 Latent 버그 12건 + 미검증 경로 17건 |
+| 6 | [sot-update-runbook.md](./sot-update-runbook.md) | 단협 개정 시 5단계 동기화 절차 (2027.md 경로 등) |
 
 ## 머신 리더블 SoT (Plan E 산출)
 

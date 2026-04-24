@@ -261,7 +261,7 @@ const DATA_STATIC = {
       },
       {
         id: 'ceremony_spouse_birth', label: '배우자 출산', category: 'ceremony', isPaid: true, quota: null, usesAnnual: false, deductType: 'none',
-        ceremonyDays: 20, ceremonyPay: 100000, docs: '주민등록등본(가족관계증명서)', extra: '출산일로부터 120일 이내 사용 완료'
+        ceremonyDays: 10, ceremonyPay: 100000, docs: '주민등록등본(가족관계증명서)', extra: '출산일로부터 120일 이내 사용 완료'
       },
       {
         id: 'ceremony_adoption', label: '입양', category: 'ceremony', isPaid: true, quota: null, usesAnnual: false, deductType: 'none',
@@ -324,7 +324,7 @@ const DATA_STATIC = {
     { type: '본인 결혼', leave: 5, hospitalPay: 300000, pensionPay: '결혼축하금', coopPay: '축하선물', docs: '없음', extra: '축하화환 지급' },
     { type: '자녀 결혼', leave: 1, hospitalPay: 100000, pensionPay: '-', coopPay: '-', docs: '청첩장, 주민등록등본' },
     { type: '본인 출산', leave: '90일', hospitalPay: 100000, pensionPay: '경조비', coopPay: '첫째·둘째 10만/셋째+ 30만', docs: '주민등록등본, 출생증명서', extra: '출산 후 45일 확보, 다자녀 120일' },
-    { type: '배우자 출산', leave: 20, hospitalPay: 100000, pensionPay: '-', coopPay: '-', docs: '주민등록등본', extra: '출산일로부터 120일 이내 사용, 3회 분할 가능' },
+    { type: '배우자 출산', leave: 10, hospitalPay: 100000, pensionPay: '-', coopPay: '-', docs: '주민등록등본', extra: '출산일로부터 120일 이내 사용, 3회 분할 가능' },
     { type: '입양', leave: 20, hospitalPay: 0, docs: '입양증명서' },
     { type: '본인 사망', leave: '-', hospitalPay: 1000000, pensionPay: '사망조위금 지급' },
     { type: '배우자 사망', leave: 5, hospitalPay: 1000000, pensionPay: '사망조위금 지급' },
@@ -408,7 +408,7 @@ const DATA_STATIC = {
 
     // ── 연차/휴가 ──
     { category: '휴가', q: '연차가 몇 일이에요?', a: '• 1년 미만: 월 1일 (최대 11일)\n• 1년 이상: 15일\n• 3년차부터: 2년마다 1일 가산 (최대 25일)\n\n시간 단위 사용 가능 (1일 = 8시간)', ref: '제36조' },
-    { category: '휴가', q: '배우자 출산휴가는?', a: '• 20일\n• 출산일로부터 120일 이내 사용 완료\n• 3회까지 분할 가능', ref: '제38조' },
+    { category: '휴가', q: '배우자 출산휴가는?', a: '• 10일\n• 출산일로부터 120일 이내 사용 완료\n• 3회까지 분할 가능', ref: '제41조' },
     { category: '휴가', q: '출산휴가는 몇 일?', a: '• 일반: 90일 (출산 후 45일 확보)\n• 다자녀: 120일\n• 미숙아: 100일\n\n출산 전 분할 사용 가능', ref: '제38조' },
     { category: '휴가', q: '병가는 최대 며칠?', a: '• 연 통산 2개월 (60일)\n• 공무상 질병/부상: 6개월 연장 가능\n• 진단서 제출 필요', ref: '복무규정 제30조' },
     { category: '휴가', q: '생리휴가는?', a: '월 1일 (유급)', ref: '제37조' },
@@ -418,7 +418,7 @@ const DATA_STATIC = {
     { category: '휴가', q: '교육연수 휴가는?', a: '• 교육연수: 연 3일\n• 병원필수교육: 연 3일 (하반기)\n• 보수교육(방사선학회): 1일\n• 외부교육(방사선작업종사자): 1일', ref: '복무규정' },
     { category: '휴가', q: '가족돌봄 휴가는?', a: '• 유급: 2일 (다자녀/장애 자녀 3일)\n• 무급: 10일', ref: '제37조, 단체협약' },
     { category: '휴가', q: '예비군/민방위 휴가는?', a: '훈련일수만큼 유급 휴가 부여', ref: '복무규정' },
-    { category: '휴가', q: '장기재직 휴가는?', a: '• 10년 재직: 5일\n• 20년 이상: 10일', ref: '복무규정' },
+    { category: '휴가', q: '장기재직 휴가는?', a: '• 10년 재직: 5일\n• 20년 이상: 7일', ref: '2025.10단협' },
 
     // ── 경조 (청원휴가) ──
     { category: '경조', q: '결혼하면 휴가와 지원금은?', a: '본인 결혼:\n• 휴가 5일 + 경조비 300,000원 + 축하화환\n\n자녀 결혼:\n• 휴가 1일 + 경조비 100,000원\n• 청첩장·등본 제출', ref: '제63조' },
@@ -510,7 +510,7 @@ const DATA_STATIC = {
         { title: '연차유급휴가', ref: '제36조', body: '• 1년 미만: 월 1일 (최대 11일)\n• 1년 이상: 15일\n• 3년차부터 2년마다 1일 가산 (최대 25일)\n\n시간 단위 사용 가능 (1일 = 8시간).' },
         { title: '병가', ref: '복무규정 제30조', body: '연 통산 2개월 (60일).\n공무상 질병/부상: 6개월 연장 가능.\n진단서 제출 필요.' },
         { title: '출산휴가', ref: '제38조', body: '• 일반: 90일 (출산 후 45일 확보)\n• 다자녀: 120일\n• 미숙아: 100일\n\n출산 전 분할 사용 가능.' },
-        { title: '배우자 출산휴가', ref: '제38조', body: '20일 (2026 단체협약 기준).\n출산일로부터 120일 이내 사용 완료.\n3회까지 분할 가능.' },
+        { title: '배우자 출산휴가', ref: '제41조', body: '10일 (handbook 제41조(청원휴가)(3) canonical).\n출산일로부터 120일 이내 사용 완료.\n3회까지 분할 가능.' },
         { title: '생리휴가', ref: '제37조', body: '월 1일 (유급).' },
         { title: '난임 치료 휴가', ref: '제40조 제6호', body: '연간 6일.\n최초 2일 유급, 나머지 무급.' },
         { title: '검진·헌혈·교육', ref: '복무규정', body: '• 검진휴가: 연 1일 유급\n• 헌혈휴가: 헌혈 시 1일 유급\n• 교육연수: 연 3일\n• 병원필수교육: 연 3일 (하반기)\n• 보수교육(방사선학회): 1일\n• 외부교육(방사선작업종사자): 1일' },
@@ -657,6 +657,8 @@ async function loadDataFromAPI() {
       if (_lh[location.hostname] && location.port !== '3001') return 'http://localhost:3001/api';
       return '/api';
     })();
+    // Plan F Bug #2: dev 환경(localhost API)에서는 fetch 스킵 — CSP 차단 에러 2건 오염 방지.
+    if (_apiBase.startsWith('http://localhost')) { dataLoadPromise = null; return; }
     const res = await fetch(_apiBase + '/data/bundle');
     if (!res.ok) throw new Error(`API ${res.status}`);
     const contentType = res.headers.get('content-type') || '';

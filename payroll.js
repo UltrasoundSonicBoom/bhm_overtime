@@ -134,7 +134,7 @@ const PAYROLL = {
         const count = inputs.count || 7;
         const prevCumulative = (profile && profile.nightShiftsUnrewarded != null)
           ? profile.nightShiftsUnrewarded : 0;
-        const r = CALC.calcNightShiftBonus(count, prevCumulative);
+        const r = CALC.calcNightShiftBonus(count, prevCumulative, profile && profile.jobType);
         const details = [
           { key: '야간근무 횟수', val: count + '회' },
           { key: '가산금 (' + count + '회 \u00d7 ' + CALC.formatNumber(DATA.allowances.nightShiftBonus) + ')', val: CALC.formatCurrency(r.야간근무가산금) },
