@@ -59,6 +59,7 @@
     { "name": "calcUnionStepAdjust", "required": true, "note": "payroll.js 에서 호출 (노조협의 호봉 보정)" },
     { "name": "calcNightShiftBonus", "required": true, "note": "야간 가산 + 리커버리 데이" },
     { "name": "calcParentalLeavePay", "required": true, "note": "육아휴직 급여" },
+    { "name": "calcAnnualLeaveBonus", "required": true, "note": "미사용 연차 수당 (제36조(4)): unusedDays × (월급/209 × 8)" },
     { "name": "calcAverageWage", "required": true, "note": "평균임금" },
     { "name": "formatNumber", "required": true, "note": "천단위 콤마" },
     { "name": "formatCurrency", "required": true, "note": "원 접미사" },

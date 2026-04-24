@@ -10,6 +10,35 @@ const { CALC } = require('../../calculators.js');
 // 이라 CommonJS require 로는 로드 불가 — 단위 테스트는 calculators.js CALC 경로로만 커버.
 // overtime.js 의 publicHoliday 통합은 브라우저 스모크/수동 확인으로 검증.
 
+describe('M1-7 연차 미사용 수당화 (제36조(4))', () => {
+  it('미사용 3일 × 통상임금 월액 3,135,000 (=209h × 15000시급) → 360,000원', () => {
+    // 3일 × 시급 15000 × 8h = 360,000
+    const r = CALC.calcAnnualLeaveBonus(3, 3_135_000);
+    expect(r).toBe(360000);
+  });
+
+  it('미사용 0일 → 0원', () => {
+    expect(CALC.calcAnnualLeaveBonus(0, 3_000_000)).toBe(0);
+  });
+
+  it('월급 0 → 0원 (fallback)', () => {
+    expect(CALC.calcAnnualLeaveBonus(5, 0)).toBe(0);
+  });
+
+  it('미사용 1일 × 월급 2,090,000 (시급 10,000) → 80,000원', () => {
+    // 시급 10000 × 8h × 1일 = 80,000
+    expect(CALC.calcAnnualLeaveBonus(1, 2_090_000)).toBe(80000);
+  });
+
+  it('반환 결과는 정수 (Math.round 적용)', () => {
+    // 월급 3,000,000 / 209 = 14,354.067... × 8 = 114,832.5... ≈ 114,833
+    // × 2일 = 229,665 (일액이 먼저 반올림되므로)
+    const result = CALC.calcAnnualLeaveBonus(2, 3_000_000);
+    expect(Number.isInteger(result)).toBe(true);
+    expect(result).toBeGreaterThan(0);
+  });
+});
+
 describe('M1-3 생리휴가 9/10 공제 (제37조, 2026.01~)', () => {
   const menstrualType = DATA.leaveQuotas.types.find(t => t.id === 'menstrual');
 

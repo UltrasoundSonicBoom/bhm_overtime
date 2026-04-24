@@ -248,6 +248,21 @@ const CALC = {
     },
 
     /**
+     * 미사용 연차 수당 계산 (제36조(4))
+     * 통상임금 일액 = 월급 ÷ 209 × 8 (소수점 반올림)
+     * 수당 = 미사용 일수 × 일액
+     * @param {number} unusedDays - 미사용 연차 일수
+     * @param {number} monthlyWage - 통상임금 월액
+     * @returns {number} 수당 금액 (원)
+     */
+    calcAnnualLeaveBonus(unusedDays, monthlyWage) {
+        if (!unusedDays || !monthlyWage) return 0;
+        const weeklyHours = DATA.allowances.weeklyHours; // 월 소정근로시간 209
+        const dailyWage = Math.round(monthlyWage / weeklyHours * 8);
+        return unusedDays * dailyWage;
+    },
+
+    /**
      * 장기근속수당 계산
      * @param {number} years - 근속연수
      * @returns {object}
