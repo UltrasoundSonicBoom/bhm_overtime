@@ -6,10 +6,11 @@
 
 ```
 tests/
-├── unit/                     # Vitest 단위 테스트 (빠른 로직 회귀)
-│   └── calculators.test.js   # CALC 순수 함수 — 시간외/연차/가족수당/퇴직금 등
-└── e2e/                      # Playwright 구조 스모크
-    └── smoke.spec.js         # 8 메인 탭 + 4 payroll 서브탭 + 콘솔 에러
+├── unit/                       # Vitest 단위 테스트 (빠른 로직 회귀)
+│   ├── calculators.test.js     # CALC 순수 함수 — 시간외/연차/가족수당/퇴직금 (21)
+│   └── calc-registry.test.js   # Plan E: data/calc-registry.json ↔ DATA drift-check (43 + 7 skip)
+└── e2e/                        # Playwright 구조 스모크
+    └── smoke.spec.js           # 8 메인 탭 + 4 payroll 서브탭 + 콘솔 에러 (3)
 ```
 
 ## 실행
@@ -35,6 +36,7 @@ npm run test:unit:watch  # 개발 중 watch 모드
 ### 단위 (Vitest)
 - `tests/unit/<파일명>.test.js`
 - `CALC.*` 순수 함수 위주. DATA 의존은 `globalThis.DATA = DATA;` 먼저 세팅.
+- **Registry drift**: 신규 DATA 값·계산 함수·CALC 참조 추가 시 `data/calc-registry.json` 에도 항목 추가 필요 (`docs/architecture/README.md` 참조).
 
 ### e2e (Playwright)
 - `tests/e2e/<파일명>.spec.js`
