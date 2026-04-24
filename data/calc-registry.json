@@ -9,6 +9,7 @@
     { "path": "allowances.overtimeRates.extendedNight", "expected": 2.0, "article": "제34조", "summary": "통상근무자 연장→야간 200%", "consumers": ["CALC.calcOvertimePay"] },
     { "path": "allowances.overtimeRates.holiday", "expected": 1.5, "article": "제34조", "summary": "휴일 150% (8h 이내)", "consumers": ["CALC.calcOvertimePay"] },
     { "path": "allowances.overtimeRates.holidayOver8", "expected": 2.0, "article": "제34조", "summary": "휴일 200% (8h 초과)", "consumers": ["CALC.calcOvertimePay"] },
+    { "path": "allowances.overtimeRates.publicHoliday", "expected": 0.5, "article": "제32조(6)", "summary": "법정공휴일 근무 시 통상임금 50% 추가 가산 (휴일 150% 와 별개)", "consumers": ["CALC.calcOvertimePay"] },
     { "path": "allowances.onCallStandby", "expected": 10000, "article": "제32조 온콜 부속합의", "summary": "온콜대기 1일 10,000원", "consumers": ["CALC.calcOnCallPay"] },
     { "path": "allowances.onCallTransport", "expected": 50000, "article": "제32조 온콜 부속합의", "summary": "온콜 출근 교통비 50,000원", "consumers": ["CALC.calcOnCallPay"] },
     { "path": "allowances.onCallCommuteHours", "expected": 2, "article": "제32조 온콜 부속합의", "summary": "출근 시 2시간 근무 인정", "consumers": ["CALC.calcOnCallPay"] },

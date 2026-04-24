@@ -147,7 +147,7 @@ const CALC = {
      * @param {boolean} isExtendedNight - 통상근무자가 연장→야간 여부
      * @returns {object}
      */
-    calcOvertimePay(hourlyRate, extHours = 0, nightHours = 0, holidayHours = 0, isExtendedNight = false) {
+    calcOvertimePay(hourlyRate, extHours = 0, nightHours = 0, holidayHours = 0, isExtendedNight = false, extras = {}) {
         const rates = DATA.allowances.overtimeRates;
 
         // 15분 단위 절삭
@@ -164,8 +164,15 @@ const CALC = {
         // 휴일근무: 8시간 이내 150%, 8시간 초과 200% (제34조)
         const holidayBase = Math.min(holidayHours, 8);
         const holidayOver = Math.max(holidayHours - 8, 0);
-        const holidayPay = Math.round(hourlyRate * rates.holiday * holidayBase)
-                         + Math.round(hourlyRate * rates.holidayOver8 * holidayOver);
+        let holidayPay = Math.round(hourlyRate * rates.holiday * holidayBase)
+                       + Math.round(hourlyRate * rates.holidayOver8 * holidayOver);
+
+        // 법정공휴일 가산: 휴일근무 가산과 별개로 통상임금 50% 추가 (제32조(6))
+        let publicHolidayExtra = 0;
+        if (extras.isPublicHoliday && holidayHours > 0) {
+            publicHolidayExtra = Math.round(hourlyRate * rates.publicHoliday * holidayHours);
+            holidayPay += publicHolidayExtra;
+        }
 
         const total = extPay + nightPay + holidayPay;
 
@@ -174,7 +181,7 @@ const CALC = {
             야간근무수당: nightPay,
             휴일근무수당: holidayPay,
             합계: total,
-            detail: { extHours, nightHours, holidayHours, holidayBase, holidayOver, hourlyRate }
+            detail: { extHours, nightHours, holidayHours, holidayBase, holidayOver, hourlyRate, publicHolidayExtra }
         };
     },
 
