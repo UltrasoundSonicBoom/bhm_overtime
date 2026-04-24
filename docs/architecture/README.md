@@ -18,7 +18,7 @@
 | 파일 | 역할 |
 |------|------|
 | [`data/calc-registry.json`](../../data/calc-registry.json) | DATA 값 assert 대상 + CALC 함수 존재성 + 외부 참조 무결성 (20 data_values + 1 array 7 items + 20 functions + 2 references) |
-| [`tests/unit/calc-registry.test.js`](../../tests/unit/calc-registry.test.js) | Vitest drift-check — 43 active assert + 7 skip |
+| [`tests/unit/calc-registry.test.js`](../../tests/unit/calc-registry.test.js) | Vitest drift-check — 36 active tests + 7 skip (npm run test:unit 기준) |
 
 ### 단협 개정 시 업데이트 순서
 
