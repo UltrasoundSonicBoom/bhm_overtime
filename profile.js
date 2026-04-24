@@ -227,3 +227,8 @@ const PROFILE = {
         });
     }
 };
+
+// Node (Vitest) 환경에서 require 가능하도록 CommonJS export
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { PROFILE };
+}

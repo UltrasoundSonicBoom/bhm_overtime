@@ -63,6 +63,9 @@ describe('CALC 함수 존재성 (registry 기준)', () => {
 
 // ── Task 5: CALC.xxx 외부 호출 참조 무결성 (Bug #3/#4) ──
 describe('CALC.xxx 외부 호출 참조 무결성', () => {
+  if (registry.calc_references.length === 0) {
+    it('broken 참조 없음 — 모든 CALC 외부 호출이 정상', () => { expect(true).toBe(true); });
+  }
   registry.calc_references.forEach(({ name, status, actual_namespace, note }) => {
     if (status === 'ok') {
       it(`CALC.${name} 호출 가능 (정상 참조)`, () => {

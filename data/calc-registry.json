@@ -66,7 +66,5 @@
     { "name": "calcNursePay", "required": false, "note": "dead export + Bug #5 (DATA 미참조 하드코딩)" },
     { "name": "checkNurseScheduleRules", "required": false, "note": "dead export — 호출처 미확인" }
   ],
-  "calc_references": [
-    { "name": "calcServiceYears", "status": "wrong_namespace", "actual_namespace": "PROFILE", "note": "Plan F Bug #4 — salary-parser.js:1352 호출, 실제는 PROFILE.calcServiceYears (profile.js:129). serviceYears=0 고정." }
-  ]
+  "calc_references": []
 }

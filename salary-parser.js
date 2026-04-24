@@ -1349,7 +1349,10 @@ const SALARY_PARSER = (() => {
     const profile = PROFILE.load();
     if (!profile || !profile.jobType) return null;
 
-    const serviceYears = CALC.calcServiceYears ? CALC.calcServiceYears(profile.hireDate) : 0;
+    // Plan F Bug #4: CALC.calcServiceYears 미존재 → PROFILE.calcServiceYears 로 정정
+    const serviceYears = (typeof PROFILE !== 'undefined' && PROFILE.calcServiceYears)
+      ? PROFILE.calcServiceYears(profile.hireDate)
+      : 0;
     const appWage = CALC.calcOrdinaryWage(
       profile.jobType, profile.grade, parseInt(profile.year) || 1,
       {
