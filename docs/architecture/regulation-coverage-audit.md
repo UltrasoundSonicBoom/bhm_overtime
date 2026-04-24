@@ -127,7 +127,7 @@
 | **제40조(4) 공로연수** | 정년 퇴직자 1년 공로연수 (기준임금 × 60%) | 1년 · 60% | 🟡 `tab-payroll.html` L279-413 임금피크 옵션 A UI 존재. 계산 공식은 retirement.js에 `기준임금 × 0.6` 로 하드코딩 | tab-payroll (퇴직금 시나리오) | 🟡 부분 — DATA 상수 없음 ⁵ | Medium |
 | **제41조(1) 본인결혼** | 5일 | 5일 + 경조금 30만 | ✅ `DATA.leaveQuotas ceremony_marriage_self.ceremonyDays=5, ceremonyPay=300000` + `DATA.ceremonies` | tab-leave | ✅ 구현 | **High** |
 | **제41조(2) 자녀결혼** | 1일 | 1일 + 10만 | ✅ `DATA.leaveQuotas ceremony_marriage_child` (1일 / 10만) | tab-leave | ✅ 구현 | Medium |
-| **제41조(3) 배우자 출산** | 10일 | 10일 + 10만 | ✅ `DATA.leaveQuotas ceremony_spouse_birth` (10일 / 10만) | tab-leave | ✅ 구현 | **High** |
+| **제41조(3) 배우자 출산** | 20일 (2026-04-24 별첨 기준 동기화) | 20일 + 10만 | ✅ `DATA.leaveQuotas ceremony_spouse_birth` (20일 / 10만) | tab-leave | ✅ 구현 | **High** |
 | **제41조(4) 배우자/부모 사망** | 5일 | 5일 + 30만 (배우자 100만) | ✅ `DATA.leaveQuotas ceremony_death_spouse` (5일/100만) + `ceremony_death_parent` (5일/30만) | tab-leave | ✅ 구현 | **High** |
 | **제41조(5) 자녀·자녀배우자 사망** | 3일 | 3일 + 30만 | ✅ `DATA.leaveQuotas ceremony_death_child` (3일/30만, 자녀배우자 경조금 없음) | tab-leave | ✅ 구현 | Medium |
 | **제41조(6) 조부모·외조부모 / 형제자매 사망** | 3일 | 3일 + 5만 | ✅ `DATA.leaveQuotas ceremony_death_grandparent` / `ceremony_death_sibling` (3일/5만) | tab-leave | ✅ 구현 | Medium |
@@ -218,7 +218,7 @@
 | <2023.11> 생일 축하 상품권 | 온누리상품권 50,000원 (2024~) | 50,000원 | ❌ | ❌ | ❌ 누락 | Low |
 | <2020.10>~<2025.10> 환경유지지원직 가계지원비 인상 누적 | +200k/+200k/+200k/+100k/+200k (연단위 누적) | 연 총 +900k | 🟡 `DATA.payTables.환경유지지원직.familySupport` 에는 최신 금액 반영 추정. 추가 검증 필요 | tab-payroll | 🟡 부분 | Low |
 | **제58조(2) 학비 지원** | 중·고·대학 자녀 국가공무원 동일 | 공무원 수준 | ❌ | ❌ | ❌ 누락 | Low |
-| **제58조(3) 급식보조비** | **120,000원/월** (규정) | 120,000원 | 🟡 `DATA.allowances.mealSubsidy=150000` (`data.js:145`) — **150k 하드코딩, 규정 120k와 drift** ² | tab-payroll | 🟡 부분 — **drift** | **High** |
+| **제58조(3) 급식보조비** | 150,000원/월 (2026-04-24 본문 정정: 120k → 150k) | 150,000원 | ✅ `DATA.allowances.mealSubsidy=150000` (`data.js:145`) | tab-payroll | ✅ 구현 (drift 해소) | **High** |
 | **제58조(4) 교통보조비** | 매월 일정액 (규정은 금액 미명시) | 150,000원 (현재값) | ✅ `DATA.allowances.transportSubsidy=150000` + `calcOrdinaryWage` L96,120 | tab-payroll | ✅ 구현 | Medium |
 | 제58조(5)~(7) 휴게실·콘도·직원식당 시설 | 설치·운영 의무 | N/A | N/A (시설) | ❌ | N/A (시설) | N/A |
 | 제59조 식사 제공 (야간·예비군·보라매 밤번) | 식비 수준 식사 현물 제공 | N/A | N/A (현물) | ❌ | N/A (현물) | N/A |
@@ -245,7 +245,7 @@
 
 각주:
 - ¹ 복지포인트는 규정상 "기본 400P → 600P(2020) → 700P(2025)" 단계적 인상이었고 1P=1,000원 환산이 `data.js:544` 에 명시되어 있으나 `DATA.welfarePoints` 같은 구조화 상수나 `CALC.calcWelfarePoint` 계산기가 없음. FAQ/handbook 설명만 노출됨.
-- ² **급식보조비 drift (known-issues D-1):** 규정(제58조(3) · 2026 handbook p.34/39/104)은 **120,000원/월** 이지만 `data.js:145` 에는 `mealSubsidy: 150000` 으로 하드코딩되어 통상임금 계산 시 매달 30,000원 과다 산정. Plan K 에서 발견 → Plan L/M 에서 수정 대상. 본 감사에서는 🟡 부분 (DATA 존재하나 값 불일치) 로 표기.
+- ² **급식보조비 drift (known-issues D-1) — 2026-04-24 해소:** 사용자 지시로 `full_union_regulation_2026.md:1042` 본문 120,000원 → **150,000원** 으로 정정 (2019.12.1 별첨 일람표 기준 반영). 현재 SoT: 본문 150k + 별첨 150k + `data.js:145` 150k + `hospital_guidelines.md` 150k 모두 일치. handbook PDF 원본 120k 값은 역사적 기록으로만 남음 (다음 2027 단협본 발간 시 handbook 도 150k 로 인쇄 예정).
 
 ---
 
@@ -360,7 +360,7 @@
 |------|-----------------|-----------|----------|-------|------|---------|
 | 별첨 임금구성표 — 근속가산율 | 1~5년 2% / 5~10년 5% / 10~15년 6% / 15~20년 7% / 20년↑ 8% | 2/5/6/7/8% | ✅ `CALC.calcOrdinaryWage` L69 근속가산기본급 5구간 분기 | tab-payroll | ✅ 구현 | **High** |
 | 별첨 임금구성표 — 군복무수당 | 45,000원 · 직급연차 미산입 · 2년 기준 월할 | 45,000원 | ✅ `DATA.allowances.militaryService=45000` + `calcOrdinaryWage` L76-81 (제5장 중복) | tab-payroll | ✅ 구현 | Medium |
-| **별첨 수당표 — 급식보조비** | 150,000원 (2019.12~) ← **핸드북 p.34/39/104 는 120,000원** | 150k ↔ 120k | 🟡 `DATA.allowances.mealSubsidy=150000` — 내부 별첨(L2963)은 150k, 본문 handbook p.34/39/104 는 120k ¹ | tab-payroll | 🟡 부분 — SoT 내부 drift | **High** |
+| **별첨 수당표 — 급식보조비** | 150,000원 (2019.12~) | 150,000원 | ✅ `DATA.allowances.mealSubsidy=150000` — 본문 제58조(3) 도 2026-04-24 사용자 지시로 150k 정정되어 모두 일치 ¹ | tab-payroll | ✅ 구현 (drift 해소) | **High** |
 | 별첨 수당표 — 교통보조비 | 150,000원 | 150,000원 | ✅ `DATA.allowances.transportSubsidy=150000` | tab-payroll | ✅ 구현 | Medium |
 | 별첨 수당표 — 가족수당 | 배우자 40k / 일반 20k / 첫째 30k / 둘째 70k / 셋째↑ 110k (5인 이내) | 제49조 중복 | ✅ 제49조와 동일 | tab-payroll | ✅ 구현 | **High** |
 | 별첨 수당표 — 온콜대기수당 | 1일 10,000원 | 10,000원 | ✅ 제32조(9)·<2019.11>과 중복 — `DATA.allowances.onCallStandby=10000` | tab-overtime | ✅ 구현 | Medium |
@@ -371,7 +371,7 @@
 | 별첨 경조사 — 본인 결혼 | 5일 / 30만 | 5일 / 30만 | ✅ 제41조(1)·제63조(1) 중복 — `DATA.leaveQuotas.ceremony_marriage_self` | tab-leave | ✅ 구현 | **High** |
 | 별첨 경조사 — 자녀 결혼 | 1일 / 10만 | 1일 / 10만 | ✅ 제41조(2)·제63조(2) 중복 — `DATA.leaveQuotas.ceremony_marriage_child` | tab-leave | ✅ 구현 | Medium |
 | **별첨 경조사 — 본인 출산** | 90일 (쌍둥이 120일) / 10만 / 교직원공제회 첫째·둘째 10만·셋째+ 30만 | 90/120일 | 🟡 `DATA.ceremonies` 본인출산 90일 + `ceremony_birth.ceremonyDays=90` · 쌍둥이 120일 분기 미구현 · 공제회 금액 미구조화 | tab-leave | 🟡 부분 — 쌍둥이 분기 없음 ³ | Medium |
-| **별첨 경조사 — 배우자 출산** | 20일 / 10만 (본문 제41조는 10일) ← **내부 drift** | 20일 ↔ 10일 | 🟡 `DATA.leaveQuotas.ceremony_spouse_birth.ceremonyDays=10` — 별첨(L3070) 20일과 **drift** ⁴ | tab-leave | 🟡 부분 — SoT 내부 drift | Medium |
+| **별첨 경조사 — 배우자 출산** | 20일 / 10만 | 20일 / 10만 | ✅ `DATA.leaveQuotas.ceremony_spouse_birth.ceremonyDays=20` — 본문 제41조(3) 도 2026-04-24 사용자 지시로 20일 정정되어 모두 일치 ⁴ | tab-leave | ✅ 구현 (drift 해소) | **High** |
 | 별첨 경조사 — 입양 | 20일 / 0원 | 20일 | ✅ `DATA.leaveQuotas.ceremony_adoption.ceremonyDays=20` | tab-leave | ✅ 구현 | Low |
 | 별첨 경조사 — 본인 사망 | 100만 | 100만 | ✅ `DATA.ceremonies` 본인사망 1,000,000 | (유족용) | ✅ 구현 | Low |
 | 별첨 경조사 — 배우자 사망 | 5일 / 100만 | 5일/100만 | ✅ `DATA.leaveQuotas.ceremony_death_spouse` (5일/100만) | tab-leave | ✅ 구현 | **High** |
@@ -400,10 +400,10 @@
 **별첨 행 수: 36행** (수치·금액 23 + 보수표 구조 1 + 기타 12)
 
 각주:
-- ¹ **급식보조비 drift (known-issues D-1 · 제6장 각주 ²):** 규정 본문 제58조(3) 은 120,000원 / 별첨 수당표(L2963) 및 `data.js:145` 는 150,000원 — **단협 내부 drift**. 핸드북 p.34/39/104 와 별첨이 상충하므로 SoT 재정비 필요 (Plan L/M).
+- ¹ **급식보조비 drift (known-issues D-1) — 2026-04-24 해소:** 사용자 지시로 본문 120k → 150k 정정. 현재 본문·별첨·`data.js`·`hospital_guidelines.md` 모두 150,000원 일치.
 - ² 2025 보수표 전수 대조 (3직군 × 9등급 × 8호봉 × 4계열 = 864셀)는 Plan L Tier 2 범위. 본 감사에서는 DATA 구조(키 이름, 9×8 배열 차원)가 별첨 구조와 일치함을 확인.
 - ³ `DATA.ceremonies` 본인 출산 항목은 extra 문자열에 "다자녀 120일"을 포함하지만 `DATA.leaveQuotas.ceremony_birth.ceremonyDays=90` 은 쌍둥이 분기가 없어 계산 시 단태아 기준만 적용됨. 제38조(1) 각주와 동일 drift.
-- ⁴ **배우자 출산휴가 drift:** 단협 제41조(3) 본문(L1225경)은 **10일** / 별첨 경조사 일람(L3070)은 **20일** 로 서로 **내부 drift**. `DATA.leaveQuotas.ceremony_spouse_birth.ceremonyDays=10` 은 본문 쪽을 따름. 2026.01 개정·<2025.10> 합의 이후 별첨이 선행 반영됐을 가능성 있음 → regulation SoT 재확인 필요.
+- ⁴ **배우자 출산휴가 drift — 2026-04-24 해소:** 사용자 지시로 별첨 일람표 기준 20일로 통일. `data.js` 4위치 (ceremony_spouse_birth.ceremonyDays, leave 표, FAQ, handbookTopics) + 본문 제41조(3) + hospital_guidelines 모두 20일로 동기화 완료.
 
 ---
 
@@ -539,9 +539,9 @@ Tasks 3~5 에서 발견된 모든 drift 모음:
 
 | # | 조항 | 규정 (full_union) | 코드 (data.js / leave.js) | 핸드북 PDF | 분류 | 조치 |
 |---|------|-------------------|----------------------------|-----------|------|------|
-| D1 | **제58조(3) 급식보조비** | 본문 120,000원 | `DATA.allowances.mealSubsidy=150000` | p.34/39/104 = 120,000원 | 단협 **내부 drift** + 코드 drift | known-issues.md D-1, SoT 재정비 |
-| D2 | **별첨 수당표 급식보조비** | 별첨 = 150,000원 (2019.12~) | 150,000 일치 | 120,000 | 단협 본문↔별첨 내부 drift | D1과 통합 |
-| D3 | **별첨 배우자 출산휴가** | 제41조(3) 본문 = 10일 / 별첨 = 20일 | `ceremony_spouse_birth.ceremonyDays=10` | — | 단협 **내부 drift** | SoT 재확인 (2025.10 반영 여부) |
+| ~~D1~~ | ~~제58조(3) 급식보조비~~ | **2026-04-24 해소**: 본문 150,000원 / 별첨 150,000원 | `mealSubsidy=150000` | p.34/39/104 = 120,000원 (역사 기록) | ✅ SoT 일치 | ~~Plan M 대상~~ — 완료 |
+| ~~D2~~ | ~~별첨 수당표 급식보조비~~ | **D1과 통합 해소** | — | — | ✅ SoT 일치 | — |
+| ~~D3~~ | ~~별첨 배우자 출산휴가~~ | **2026-04-24 해소**: 본문 20일 / 별첨 20일 | `ceremony_spouse_birth.ceremonyDays=20` | — | ✅ SoT 일치 | ~~Plan M M2-3 대상~~ — 완료 |
 | D4 | **제37조 생리휴가 공제율** | 2026.01~ 기본급 일액 **9/10 (90%)** 공제 | `leave.js` 공제 로직 = 100% | — | 코드 drift | `leave.js` 9/10 적용 |
 | D5 | **제32조(6) 공휴일 가산** | 50% (publicHoliday) | DATA 0.5 존재 / `calcOvertimePay` 미참조 | — | 코드 drift (연동 누락) | TODO P1 |
 | D6 | **제52조(4) 사학연금 2016.03 분리** | 2016.03.01 가입일 전일까지 분리 | `calcSeveranceFullPay` cutoff2001/2015 만 분기 | — | 코드 누락 | 신규 구현 #21 |
@@ -567,7 +567,7 @@ Tasks 3~5 에서 발견된 모든 drift 모음:
 | # | 항목 | 조항 | 산출물 | 예상 공수 | 비고 |
 |---|------|-------|--------|----------|------|
 | M1-1 | **공휴일 50% 가산 연동** | 제32조(6) | `CALC.calcOvertimePay` 에 `publicHoliday` 분기 추가 + UI 토글 | 2h | DATA 이미 존재 (D5 해소) |
-| M1-2 | **급식보조비 SoT 정정** | 제58조(3) / 별첨 | 단협 원문 재확인 후 120k 또는 150k 로 통일 · `data.js:145` 정렬 · known-issues.md D-1 클로즈 | 3h | Plan L T1 과 결합 가능 |
+| ~~M1-2~~ | ~~급식보조비 SoT 정정~~ | **2026-04-24 선제 해소**: 본문 150k 로 통일 · `data.js` · known-issues D-1 close 완료 | — | 0h | **Phase 1 에서 제거** |
 | M1-3 | **생리휴가 9/10 공제** | 제37조 | `leave.js` 공제율 1.0 → 0.9 (2026.01~) + 테스트 | 2h | D4 해소 |
 | M1-4 | **사학연금 2016.03 컷오프** | 제52조(4)/<2016.05> | `calcSeveranceFullPay` cutoff2016 분기 추가 | 4h | D6 해소. 기존 cutoff 로직 패턴 재사용 |
 | M1-5 | **명절지원비 (별정 <2025.10>)** | <2025.10> | `CALC.calcSpecialAllowance` 신규 + S1·C1·SC1 이하 35,000원/월 | 2h | 월 정기 지급 |
@@ -575,7 +575,7 @@ Tasks 3~5 에서 발견된 모든 drift 모음:
 | M1-7 | **연차 미사용 수당화** | 제36조(4) | `calcAnnualLeaveBonus` 신규 + tab-leave 카드 | 2h | `calcAnnualLeave` 확장 |
 | M1-8 | **맞춤형 복지 포인트 계산기** | 제58조(1)-1 | 기본포인트 + 근속포인트 + 가족포인트 통합 계산기 | 5h | S1+S2+#23 통합 |
 
-**Phase 1 총 공수 추정: 약 22시간 (2~3 sprint days).**
+**Phase 1 총 공수 추정: 약 19시간** (M1-2 선제 해소로 22h → 19h).
 
 ### Phase 2 — Medium (조건부 영향)
 
@@ -583,7 +583,7 @@ Tasks 3~5 에서 발견된 모든 drift 모음:
 |---|------|-------|--------|----------|
 | M2-1 | **장기재직휴가 5/7일 자동부여** | <2025.10> | `DATA.leaveQuotas.long_service.quota` 구간 정의 + `calcLongServiceLeave` | 2h |
 | M2-2 | **질병/공상 휴직 70% 계산** | 제28조(2) | `calcLeaveOfAbsencePay` (기본급+능력급+조정급+상여금) × 0.7 | 3h |
-| M2-3 | **배우자 출산휴가 drift 해소** | 제41조(3) / 별첨 | 규정 재확인 후 10일 or 20일 통일 | 1h (조사 포함) |
+| ~~M2-3~~ | ~~배우자 출산휴가 drift 해소~~ | **2026-04-24 선제 해소**: 본문 20일 / data.js 20일 통일 완료 | — | 0h — **제거** |
 | M2-4 | **쌍둥이 출산 120일 분기** | 제38조(1) | `ceremony_birth` 쌍둥이 플래그 + UI 체크박스 | 2h |
 | M2-5 | **유산·사산 5구간 UI 노출** | 제38조(2) / 별첨 | `leaveQuotas.types` 에 id 추가 + 선택 UI | 2h |
 | M2-6 | **온콜 입력 UI 명시** | 제32조(9) | tab-overtime 에 온콜 체크박스 + 교통비/대기수당 자동 합산 표시 | 3h |
