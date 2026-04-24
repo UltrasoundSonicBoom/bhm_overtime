@@ -65,7 +65,7 @@
 | 제26조(2)(7) 자기계발휴직 재직요건 | 단계적 단축: 11→9→7→5년 | 5년 (2022~) / 10년↑ +6개월 | 🟡 DATA.leaveOfAbsence '자기계발휴직' condition="재직 5년 이상" | tab-leave | 🟡 부분 | Low |
 | 제28조(2) 휴직자 대우 — 질병/공상 | (기본급+능력급+조정급+상여금) × 70% | 70% | 🟡 DATA.leaveOfAbsence '질병휴직'/'공상휴직' pay 문자열만 | tab-leave (표) | 🟡 부분 — 계산 미연동 | Medium |
 | 제28조(5) 육아휴직 | 만 8세 이하, 3년 이내, 최초 1년 근속 산입, 무급 | 3년 / 최초 1년 산입 | 🟡 DATA.leaveOfAbsence '육아휴직' period/tenure; `CALC.calcParentalLeavePay` (고용보험 급여 계산) | tab-leave (표) · tab-payroll 미연동 | 🟡 부분 | Medium |
-| 제28조(5) 육아휴직 급여 (고용보험) | 1~3개월 100% (상한 250만) / 4~6 100% (200만) / 7~12 80% (160만) | 250/200/160만 | ✅ `CALC.calcParentalLeavePay` (`calculators.js:432`) + DATA.leaveOfAbsence pay 문자열 | UI 진입점 없음 (계산기 존재) | 🟡 부분 — UI 미노출 | Medium |
+| 제28조(5) 육아휴직 급여 (고용보험) | 1~3개월 100% (상한 250만) / 4~6 100% (200만) / 7~12 80% (160만) | 250/200/160만 | ✅ `CALC.calcParentalLeavePay` + `calculateParentalLeave()` 핸들러 + tab-leave 시뮬레이터 카드 (Plan M M1-6 해소) | tab-leave | ✅ 구현 | Medium |
 | 제31조의2 <2020.10> 감정노동자 특별휴가 | 환자·보호자 폭언·폭행 피해 시 | 2일 이내 | 🟡 DATA.leaveQuotas `special_disaster` note="재해 3일, 교통차단 등"이지만 감정노동 2일 구분 없음 | tab-leave | 🟡 부분 — 유형 미분리 | Low |
 
 **제3장 행 수: 17행** (수치 조항 13 + N/A 4)
@@ -87,7 +87,7 @@
 | **제32조(2)-2 시설·이송·미화 리커버리** | 누적 20일 야간마다 1일 | 20일 | ✅ `DATA.recoveryDay.otherCumulativeTrigger=20` + `CALC.calcNightShiftBonus` jobType 분기 | tab-overtime | ✅ 구현 (Plan F #6) | **High** |
 | 제32조(3) 유해위험작업 단축 | 1일 6시간 / 주 35시간 (인가시 +2h/+12h) | 6h / 35h | ❌ | ❌ | ❌ 누락 | Low |
 | 제32조(4) 통상근무 시간 | 9시 ~ 18시 | 09:00–18:00 | ❌ (상수 없음, UI 서술만) | ❌ | N/A (서술) | N/A |
-| **제32조(6) 공휴일 근무 가산** | 법정공휴일 근무 시 통상임금 50% | 50% | 🟡 `DATA.allowances.overtimeRates.publicHoliday=0.5` — **but 미사용** (drift: `CALC.calcOvertimePay`는 holiday 1.5/2.0만 참조) | tab-overtime 안내만 | 🟡 부분 — DATA 있으나 calc 미연동 ¹ | **High** |
+| **제32조(6) 공휴일 근무 가산** | 법정공휴일 근무 시 통상임금 50% | 50% | ✅ `CALC.calcOvertimePay` + `OVERTIME.calcEstimatedPay` 둘 다 publicHoliday 0.5 참조 (Plan M M1-1 D5 해소) | tab-overtime (날짜 API 자동 판별) | ✅ 구현 | **High** |
 | 제32조(8) 간호부 야간 연령 제한 | 만 40세↑ 야간근무 미배치 원칙 | 40세 | ❌ | ❌ | N/A (HR 정책) | N/A |
 | **제32조(9) 온콜 교통비** | 1회 5만원 | 50,000원 | ✅ `DATA.allowances.onCallTransport=50000` + `CALC.calcOnCallPay` (`calculators.js:193`) | tab-overtime (계산 진입점은 overtime 계산기 내) | 🟡 부분 — DATA/calc 있으나 UI 명시적 온콜 입력 없음 ² | Medium |
 | 제32조(9) 온콜 출퇴근 인정시간 | 출퇴근 2시간 근무시간 인정 | 2시간 | ✅ `DATA.allowances.onCallCommuteHours=2` + `CALC.calcOnCallPay` | tab-overtime | 🟡 부분 | Medium |
@@ -113,8 +113,8 @@
 | **제36조(1) 연차** | 8할 이상 출근 시 15일, 2년마다 +1일, 상한 25일 | 15 / +1/2y / 25 | ✅ `CALC.calcAnnualLeave` (`calculators.js:215`) + `DATA.annualLeave.{baseLeave:15, addPerTwoYears:1, maxLeave:25}` | tab-leave | ✅ 구현 | **High** |
 | **제36조(2) 연차보전수당** | (기존-신법 산정일수) ÷ 23 × 통상임금 × 150% | ÷23 × 1.5 | ❌ | ❌ | ❌ 누락 ³ | Low |
 | 제36조(5) 1년 미만 월차 | 월 개근 시 1일 부여, 최대 11일 | 1일/월, max 11 | ✅ `DATA.annualLeave.{underOneYear:1, maxUnderOne:11}` + `CALC.calcAnnualLeave` | tab-leave | ✅ 구현 | Medium |
-| 제36조(4) 미사용 연차 수당화 | 다음해 1월 평균임금 지급 | 일액 × 미사용일수 | ❌ (자동 지급 계산 없음) | ❌ | ❌ 누락 | Medium |
-| **제37조 생리휴가** | 월 1회 무급, 기본급 일액 9/10 공제 (2026.01~) | 12일/년 · 공제 90% | 🟡 `DATA.leaveQuotas menstrual.quota=12` + `leave.js` 공제 로직은 기본급 일액 100% 공제 (drift: 규정 9/10) ⁴ | tab-leave | 🟡 부분 — 공제율 drift | Medium |
+| 제36조(4) 미사용 연차 수당화 | 다음해 1월 통상임금 일액 지급 | 일액 × 미사용일수 | ✅ `CALC.calcAnnualLeaveBonus(unusedDays, monthlyWage)` (Plan M M1-7) — 통상임금 일액 × 미사용일수 반환. UI 진입점은 tab-leave FAQ 에 계산식 노출 | tab-leave (FAQ) | 🟡 부분 — 계산기 있으나 자동 진입 UI 미구현 | Medium |
+| **제37조 생리휴가** | 월 1회 무급, 기본급 일액 9/10 공제 (2026.01~) | 12일/년 · 공제 90% | ✅ `DATA.leaveQuotas.menstrual` (deductType=basePay + deductRate=0.9) + `leave.js` / `leave-tab.js` 9/10 적용 (Plan M M1-3 D4 해소) | tab-leave | ✅ 구현 | Medium |
 | **제38조(1) 산전후 휴가** | 산전 90일 (쌍둥이 120) / 산후 45일 (쌍둥이 60) 보장 | 90/120, 45/60 | 🟡 `DATA.leaveQuotas maternity` note 문자열; `ceremony_birth.ceremonyDays=90` | tab-leave | 🟡 부분 — 쌍둥이 120일 분기 없음 | Medium |
 | **제38조(2) 유산·사산** | 주수별 90/60/30/10/5일 | 28주↑90 / 22~27주60 / 16~21주30 / 12~15주10 / ≤11주5 | ✅ `DATA.leaveQuotas.miscarriageLeave` (5단계) | UI 미노출 (leaveQuotas.types에 유산/사산 id 없음) | 🟡 부분 — DATA만 존재 | Medium |
 | 제38조(4) 임부 정기검진 | 월 1일 유급 | 1일/월 | ✅ `DATA.leaveQuotas pregnancy_checkup` note="월 1일 유급" | tab-leave | ✅ 구현 | Low |
@@ -331,7 +331,7 @@
 | **<2008.09> 콜센터 근무수당** | 매월 30,000원 (2008.10~) | 30,000원/월 | ❌ (DATA.allowances 항목 없음) | ❌ | ❌ 누락 | Low |
 | <2019.09> 환경유지지원직 임금피크 제외 | 기준기본급 ≤ 최저임금 150% 인 경우 공로연수·임금피크 미적용 | 150% | ❌ | ❌ | ❌ 누락 ¹ | Low |
 | <2019.09> 환경유지지원직 사학연금 전환 | 정년 잔여 10년↑ 전환 / 10년 미만 무기 촉탁 | 10년 | ❌ | ❌ | N/A (HR 절차) | N/A |
-| **<2025.10> 임금체계 개선 별정수당** | S1·C1·SC1 이하 월 35,000원 신설 (퇴직 시까지) | 35,000원/월 | ❌ (DATA 항목 없음) | ❌ | ❌ 누락 ² | Medium |
+| **<2025.10> 임금체계 개선 별정수당** | S1·C1·SC1 이하 월 35,000원 신설 (퇴직 시까지) | 35,000원/월 | ✅ `DATA.allowances.specialPay5=35000` + `CALC.calcSpecialAllowance(grade)` + `calcOrdinaryWage` 등급 게이팅 (Plan M M1-5 해소) | tab-payroll (통상임금 내 자동 반영) | ✅ 구현 | Medium |
 | **<2025.10> 자동승격 연수 (2026.01 입사자)** | 일반직 J1/J2/J3 = 4/7/8년 / 운영기능 A1/A2/A3 = 4/7/7년 / 환경유지 SA1/SA2/SA3 = 4/7/7년 | 4/7/8 & 4/7/7 | ✅ `DATA.payTables.*.autoPromotion` 수치 일치 (일반직 J3=8·운영기능 A3=7·환경유지 SA3=7) | tab-payroll | ✅ 구현 | Medium |
 | **<2025.10> 기존 재직자 자격등급 상향** | 2025.12.31. 기준 S2·C2·SC2 이하 연차 +1년 | +1년 | ❌ (전환 시나리오 계산기 없음) | ❌ | ❌ 누락 ² | Low |
 | **<2015.07> 신 취업규칙 근속가산율** | 1~5년 2% / 5~10년 5% / 10~15년 6% / 15~20년 7% / 20년↑ 8% | 2/5/6/7/8% | ✅ `CALC.calcOrdinaryWage` L69 근속가산기본급 5구간 분기 (제5장 각주와 동일) | tab-payroll | ✅ 구현 | **High** |
@@ -383,7 +383,7 @@
 | 별첨 병가 3구간 | ≤4일 부서장 재량 / 5~14일 2차기관 진단서 / 15일↑ 본원 확인 | 4/14/15일 | ❌ (구간별 구조화 없음) | ❌ | ❌ 누락 | Low |
 | 별첨 병가 상한 | 연 통산 2개월 / 공무상 6개월 연장 | 60일 / 180일 | 🟡 `DATA.faqs` 안내 텍스트 (`data.js:413`) — 계산기 없음 | tab-browse | 🟡 부분 | Low |
 | 별첨 노조 경조금 | 본인결혼 10만/자녀결혼 5만/사망 5~10만 | 5~10만 | ❌ (`DATA.ceremonies` 는 병원 지급액만, 노조 지급액 없음) | ❌ | ❌ 누락 | Low |
-| **별첨 휴직 — 육아휴직** | 3년 이내 / 만 8세↓ / 최초 1년 근속산입 / 1~3개월 250만·4~6개월 200만·7~12개월 160만·+6+6 첫달 250만 | 3년 / 250/200/160만 | ✅ `DATA.leaveOfAbsence` 육아휴직 + `6+6 육아휴직` + `CALC.calcParentalLeavePay` (`calculators.js:432`) | tab-leave (표) · 계산기 UI 미노출 | 🟡 부분 — 표만 노출, 계산기 진입점 없음 | Medium |
+| **별첨 휴직 — 육아휴직** | 3년 이내 / 만 8세↓ / 최초 1년 근속산입 / 1~3개월 250만·4~6개월 200만·7~12개월 160만·+6+6 첫달 250만 | 3년 / 250/200/160만 | ✅ `DATA.leaveOfAbsence` 육아휴직 + `6+6 육아휴직` + `CALC.calcParentalLeavePay` + tab-leave 시뮬레이터 카드 (Plan M M1-6) | tab-leave | ✅ 구현 | Medium |
 | 별첨 휴직 — 임신휴직 | 임신기간 무급 | N/A | ✅ `DATA.leaveOfAbsence` 임신휴직 | tab-leave | ✅ 구현 | Low |
 | 별첨 휴직 — 요양휴직 | 1년 이내 무급 | 1년 | ✅ `DATA.leaveOfAbsence` 요양휴직 | tab-leave | ✅ 구현 | Low |
 | 별첨 휴직 — 간병휴직 | 1년 이내 무급 · 임신·요양·간병 합산 3년 상한 | 1년 / 3년 | 🟡 `DATA.leaveOfAbsence` 간병휴직 period 문자열 — **합산 3년 상한 검증 로직 없음** | tab-leave | 🟡 부분 | Low |
@@ -542,8 +542,8 @@ Tasks 3~5 에서 발견된 모든 drift 모음:
 | ~~D1~~ | ~~제58조(3) 급식보조비~~ | **2026-04-24 해소**: 본문 150,000원 / 별첨 150,000원 | `mealSubsidy=150000` | p.34/39/104 = 120,000원 (역사 기록) | ✅ SoT 일치 | ~~Plan M 대상~~ — 완료 |
 | ~~D2~~ | ~~별첨 수당표 급식보조비~~ | **D1과 통합 해소** | — | — | ✅ SoT 일치 | — |
 | ~~D3~~ | ~~별첨 배우자 출산휴가~~ | **2026-04-24 해소**: 본문 20일 / 별첨 20일 | `ceremony_spouse_birth.ceremonyDays=20` | — | ✅ SoT 일치 | ~~Plan M M2-3 대상~~ — 완료 |
-| D4 | **제37조 생리휴가 공제율** | 2026.01~ 기본급 일액 **9/10 (90%)** 공제 | `leave.js` 공제 로직 = 100% | — | 코드 drift | `leave.js` 9/10 적용 |
-| D5 | **제32조(6) 공휴일 가산** | 50% (publicHoliday) | DATA 0.5 존재 / `calcOvertimePay` 미참조 | — | 코드 drift (연동 누락) | TODO P1 |
+| ~~D4~~ | ~~제37조 생리휴가 공제율~~ | **2026-04-24 해소** (Plan M M1-3): menstrual deductType=basePay + deductRate=0.9 · leave.js/leave-tab.js 9/10 적용 | — | — | ✅ 해소 | — |
+| ~~D5~~ | ~~제32조(6) 공휴일 가산~~ | **2026-04-24 해소** (Plan M M1-1): CALC.calcOvertimePay extras={isPublicHoliday} + OVERTIME.calcEstimatedPay breakdown.isHoliday | — | — | ✅ 해소 | — |
 | D6 | **제52조(4) 사학연금 2016.03 분리** | 2016.03.01 가입일 전일까지 분리 | `calcSeveranceFullPay` cutoff2001/2015 만 분기 | — | 코드 누락 | 신규 구현 #21 |
 | D7 | **제38조(1) 쌍둥이 산전후 120일** | 쌍둥이 120 / 단태아 90 | `ceremony_birth.ceremonyDays=90` 고정 | — | 코드 drift (분기 없음) | 쌍둥이 플래그 |
 | D8 | **<2008.09> 운영기능직 자동승급 9년** | A3→C1 = 9년 | `payTables.autoPromotion` A3→C1 = 7년 | — | 코드 drift 의심 | 2025.10 합의 이후 변경 여부 확인 |
@@ -566,16 +566,21 @@ Tasks 3~5 에서 발견된 모든 drift 모음:
 
 | # | 항목 | 조항 | 산출물 | 예상 공수 | 비고 |
 |---|------|-------|--------|----------|------|
-| M1-1 | **공휴일 50% 가산 연동** | 제32조(6) | `CALC.calcOvertimePay` 에 `publicHoliday` 분기 추가 + UI 토글 | 2h | DATA 이미 존재 (D5 해소) |
+| ~~M1-1~~ | ~~공휴일 50% 가산~~ | **2026-04-24 완료** — CALC.calcOvertimePay extras + OVERTIME.calcEstimatedPay 통합 | — | 0h | ✅ D5 해소 |
 | ~~M1-2~~ | ~~급식보조비 SoT 정정~~ | **2026-04-24 선제 해소**: 본문 150k 로 통일 · `data.js` · known-issues D-1 close 완료 | — | 0h | **Phase 1 에서 제거** |
-| M1-3 | **생리휴가 9/10 공제** | 제37조 | `leave.js` 공제율 1.0 → 0.9 (2026.01~) + 테스트 | 2h | D4 해소 |
-| M1-4 | **사학연금 2016.03 컷오프** | 제52조(4)/<2016.05> | `calcSeveranceFullPay` cutoff2016 분기 추가 | 4h | D6 해소. 기존 cutoff 로직 패턴 재사용 |
-| M1-5 | **명절지원비 (별정 <2025.10>)** | <2025.10> | `CALC.calcSpecialAllowance` 신규 + S1·C1·SC1 이하 35,000원/월 | 2h | 월 정기 지급 |
-| M1-6 | **육아휴직 급여 UI 노출** | 제28조(5) | 계산기 진입점 (휴가 탭 또는 급여 탭 서브탭) | 2h | `calcParentalLeavePay` 존재 (P2) |
-| M1-7 | **연차 미사용 수당화** | 제36조(4) | `calcAnnualLeaveBonus` 신규 + tab-leave 카드 | 2h | `calcAnnualLeave` 확장 |
-| M1-8 | **맞춤형 복지 포인트 계산기** | 제58조(1)-1 | 기본포인트 + 근속포인트 + 가족포인트 통합 계산기 | 5h | S1+S2+#23 통합 |
+| ~~M1-3~~ | ~~생리휴가 9/10 공제~~ | **2026-04-24 완료** — menstrual deductType=basePay + deductRate=0.9 | — | 0h | ✅ D4 해소 |
+| ~~M1-4~~ | ~~사학연금 2016.03 컷오프~~ | **범위 밖 — 사학연금 홈페이지 사용자 직접 확인** (외부 공식 의존) | — | — | 제외 |
+| ~~M1-5~~ | ~~명절지원비·별정수당~~ | **2026-04-24 완료** — calcHolidayBonus 독립 함수 + calcSpecialAllowance 등급 게이팅 | — | 0h | ✅ 완료 |
+| ~~M1-6~~ | ~~육아휴직 UI~~ | **2026-04-24 완료** — tab-leave 시뮬레이터 카드 추가 | — | 0h | ✅ 완료 |
+| ~~M1-7~~ | ~~연차 미사용 수당화~~ | **2026-04-24 완료** — calcAnnualLeaveBonus 신규 (UI 진입 카드는 Phase 2 후속) | — | 0h | ✅ 계산기 완료 · UI 진입 TODO |
+| ~~M1-8~~ | ~~복지포인트~~ | **범위 밖 — 사람마다 다름** (가족/교육/출산 조합 복잡, 일괄 계산기 부적합) | — | — | 제외 |
 
-**Phase 1 총 공수 추정: 약 19시간** (M1-2 선제 해소로 22h → 19h).
+**Phase 1 완료 상태 (2026-04-24):**
+- ✅ 구현 5건: M1-1 (공휴일 50%) · M1-3 (생리휴가 9/10) · M1-5 (명절지원비·별정수당) · M1-6 (육아휴직 UI) · M1-7 (미사용 연차 계산기)
+- ✅ 선제 해소 1건: M1-2 (급식보조비)
+- 🚫 범위 밖 2건: M1-4 (사학연금 — 외부 홈페이지) · M1-8 (복지포인트 — 개인별 조합)
+- **실 투입 공수: ~5~6시간 · 실제 drift 해소: D1/D4/D5 + 3건 UI/계산기 추가**
+- 원 추정 19h 대비 상당 단축 — 일부 기능이 이미 존재했고 (명절지원비 breakdown), 2건 범위 축소 덕.
 
 ### Phase 2 — Medium (조건부 영향)
 

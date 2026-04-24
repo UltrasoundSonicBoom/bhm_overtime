@@ -177,7 +177,7 @@ const OVERTIME = {
             holiday,      // 휴일근무 시간
             holidayNight, // 휴일야간 시간
             isWeekend,
-            isHoliday,
+            isHoliday,    // 법정공휴일 여부 (API 판별) — 제32조(6) 50% 추가 가산 트리거
         };
     },
 
@@ -194,6 +194,12 @@ const OVERTIME = {
         pay += holBase * hourlyRate * rates.holiday;
         pay += holOver * hourlyRate * rates.holidayOver8;
         pay += breakdown.holidayNight * hourlyRate * rates.holidayNight;
+
+        // 제32조(6) 법정공휴일 50% 추가 가산 — 휴일근무 가산과 별개로 적용
+        // isHoliday=true 는 공공데이터포털 API 가 법정공휴일로 판별한 날짜만 의미 (주휴일·토요일 제외)
+        if (breakdown.isHoliday && (breakdown.holiday > 0 || breakdown.holidayNight > 0)) {
+            pay += (breakdown.holiday + breakdown.holidayNight) * hourlyRate * rates.publicHoliday;
+        }
 
         // 온콜 추가 수당
         if (type === 'oncall_standby') {
