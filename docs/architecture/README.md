@@ -13,6 +13,29 @@
 | 4 | [sot-drift-risk.md](./sot-drift-risk.md) | 드리프트 위험 매트릭스 + 실증 8건 + 개선안 Tier 1/2/3 |
 | 5 | [known-issues.md](./known-issues.md) | 확실한 Latent 버그 12건 + 미검증 경로 17건 |
 
+## 머신 리더블 SoT (Plan E 산출)
+
+| 파일 | 역할 |
+|------|------|
+| [`data/calc-registry.json`](../../data/calc-registry.json) | DATA 값 assert 대상 + CALC 함수 존재성 + 외부 참조 무결성 (20 data_values + 1 array 7 items + 20 functions + 2 references) |
+| [`tests/unit/calc-registry.test.js`](../../tests/unit/calc-registry.test.js) | Vitest drift-check — 43 active assert + 7 skip |
+
+### 단협 개정 시 업데이트 순서
+
+1. `full_union_regulation_2026.md` 전문 수정 (사용자 관리)
+2. `hospital_guidelines_2026.md` 축약 갱신
+3. `data.js` DATA_STATIC 수치 반영
+4. `data/calc-registry.json` expected 값 동기화
+5. `npm test` 실행 → drift 0 확인
+
+하나라도 스킵하면 Vitest 가 실패로 감지한다.
+
+### Plan F 실행 후 승격 예정
+
+`tests/unit/calc-registry.test.js` 의 7개 `.skip` 은 Plan F Bug 수정 후 `.skip` 제거하면 자동으로 green 승격:
+- 5개 dead export (calcSeverancePay/calcPromotionDate/calcNursePay/calcUnionStepAdjust/checkNurseScheduleRules) 제거
+- 2개 broken refs (calcRetirement 추가, calcServiceYears 네임스페이스 수정)
+
 ## Plan D 감사 결과 요약
 
 ### SoT 계층
