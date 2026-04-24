@@ -234,7 +234,7 @@ const DATA_STATIC = {
       { id: 'sick', label: '병가', category: 'health', isPaid: true, quota: 14, usesAnnual: false, deductType: 'none', note: '14일 이내 유급, 2차의료기관 진단서 인정, 15일↑ 해당과 확인', ref: '제71조' },
       { id: 'checkup', label: '검진휴가', category: 'health', isPaid: true, quota: 1, usesAnnual: false, deductType: 'none', ref: '제65조' },
       { id: 'blood_donation', label: '헌혈휴가', category: 'health', isPaid: true, quota: 1, usesAnnual: false, deductType: 'none' },
-      { id: 'menstrual', label: '생리휴가', category: 'health', isPaid: true, quota: 12, usesAnnual: false, deductType: 'none', gender: 'F', note: '월 1일 유급', ref: '제37조' },
+      { id: 'menstrual', label: '생리휴가', category: 'health', isPaid: false, quota: 12, usesAnnual: false, deductType: 'basePay', deductRate: 0.9, gender: 'F', note: '월 1일 무급 (기본급 일액 9/10 공제, 2026.01~)', ref: '제37조' },
 
       // ── 🎓 교육/연수 ──
       { id: 'edu_training', label: '교육연수', category: 'education', isPaid: true, quota: 3, usesAnnual: false, deductType: 'none', note: '연 3일' },
@@ -411,7 +411,7 @@ const DATA_STATIC = {
     { category: '휴가', q: '배우자 출산휴가는?', a: '• 20일\n• 출산일로부터 120일 이내 사용 완료\n• 3회까지 분할 가능', ref: '제41조' },
     { category: '휴가', q: '출산휴가는 몇 일?', a: '• 일반: 90일 (출산 후 45일 확보)\n• 다자녀: 120일\n• 미숙아: 100일\n\n출산 전 분할 사용 가능', ref: '제38조' },
     { category: '휴가', q: '병가는 최대 며칠?', a: '• 연 통산 2개월 (60일)\n• 공무상 질병/부상: 6개월 연장 가능\n• 진단서 제출 필요', ref: '복무규정 제30조' },
-    { category: '휴가', q: '생리휴가는?', a: '월 1일 (유급)', ref: '제37조' },
+    { category: '휴가', q: '생리휴가는?', a: '• 월 1일 (무급)\n• 기본급 일액의 9/10 공제 (2026.01~ 시행)\n• 즉 하루 쉬면 기본급 일액의 10% 만 지급', ref: '제37조' },
     { category: '휴가', q: '난임 치료 휴가는?', a: '• 연간 6일\n• 최초 2일 유급, 나머지 무급', ref: '제40조 제6호' },
     { category: '휴가', q: '검진휴가는?', a: '연 1일 유급\n건강검진일에 사용', ref: '복무규정' },
     { category: '휴가', q: '헌혈휴가는?', a: '헌혈 시 1일 유급휴가 부여', ref: '복무규정' },
@@ -445,7 +445,7 @@ const DATA_STATIC = {
     { category: '수당', q: '일직/숙직비는 얼마인가요?', a: '• 1회당 50,000원\n• 일직·숙직 동일 금액', ref: '별도합의' },
 
     // ── 휴가 (추가) ──
-    { category: '휴가', q: '무급휴가 쓰면 얼마 공제되나요?', a: '무급휴가 1일 공제액 = 통상임금 월액 ÷ 30\n\n• 생리휴가 공제: 기본급 ÷ 30 기준', ref: '보수규정 제7조②' },
+    { category: '휴가', q: '무급휴가 쓰면 얼마 공제되나요?', a: '무급휴가 1일 공제액 = 통상임금 월액 ÷ 30\n\n• 생리휴가: 기본급 월액 ÷ 30 × 9/10 (2026.01~ 시행 · 제37조)\n  예: 기본급 월액 300만원 → 1일 공제 90,000원', ref: '보수규정 제7조② · 제37조' },
     { category: '휴가', q: '미사용 연차 보상금은?', a: '잔여 연차 × 시급 × 8시간\n\n• 시급 = 통상임금 ÷ 209시간\n• 프로필 입력 시 자동 계산 가능', ref: '보수규정' },
 
     // ── 휴직 ──
@@ -511,7 +511,7 @@ const DATA_STATIC = {
         { title: '병가', ref: '복무규정 제30조', body: '연 통산 2개월 (60일).\n공무상 질병/부상: 6개월 연장 가능.\n진단서 제출 필요.' },
         { title: '출산휴가', ref: '제38조', body: '• 일반: 90일 (출산 후 45일 확보)\n• 다자녀: 120일\n• 미숙아: 100일\n\n출산 전 분할 사용 가능.' },
         { title: '배우자 출산휴가', ref: '제41조', body: '20일 (별첨 일람표 · 2025.10 단협 반영).\n출산일로부터 120일 이내 사용 완료.\n3회까지 분할 가능.' },
-        { title: '생리휴가', ref: '제37조', body: '월 1일 (유급).' },
+        { title: '생리휴가', ref: '제37조', body: '월 1일 (무급).\n기본급 일액의 9/10 공제 (2026.01~ 시행).\n1일 쉬면 기본급 일액의 10% 만 지급.' },
         { title: '난임 치료 휴가', ref: '제40조 제6호', body: '연간 6일.\n최초 2일 유급, 나머지 무급.' },
         { title: '검진·헌혈·교육', ref: '복무규정', body: '• 검진휴가: 연 1일 유급\n• 헌혈휴가: 헌혈 시 1일 유급\n• 교육연수: 연 3일\n• 병원필수교육: 연 3일 (하반기)\n• 보수교육(방사선학회): 1일\n• 외부교육(방사선작업종사자): 1일' },
         { title: '가족돌봄 휴가', ref: '제37조, 단체협약', body: '• 유급: 2일 (다자녀/장애 자녀 3일)\n• 무급: 10일' },

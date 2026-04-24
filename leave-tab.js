@@ -722,11 +722,13 @@ function previewLvCalc() {
     let dailyAmount = 0;
 
     if (typeInfo.deductType === 'basePay') {
-      // 생리휴가: 기본급 월액 / 30 × 일수
+      // 생리휴가: 기본급 월액 / 30 × 일수 × deductRate (제37조 9/10)
       const monthlyBasePay = wage && wage.breakdown ? (wage.breakdown['기준기본급'] || 0) : 0;
-      dailyAmount = Math.round(monthlyBasePay / 30);
+      const rate = typeInfo.deductRate ?? 1.0;
+      dailyAmount = Math.round(monthlyBasePay / 30 * rate);
       deduction = dailyAmount * days;
-      basisLabel = `기본급 일액 ${CALC.formatCurrency(dailyAmount)} (보수규정 제7조)`;
+      const rateLabel = rate < 1.0 ? ` × ${rate}` : '';
+      basisLabel = `기본급 일액${rateLabel} ${CALC.formatCurrency(dailyAmount)} (보수규정 제7조 · 제37조 ${rate * 10}/10)`;
     } else {
       // 무급: 통상임금 월액 / 30 × 일수
       const monthlyWage = wage ? wage.monthlyWage : 0;

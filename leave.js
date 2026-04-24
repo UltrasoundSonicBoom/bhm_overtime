@@ -272,9 +272,11 @@ const LEAVE = {
         }
 
         if (typeInfo.deductType === 'basePay') {
-            // 생리휴가: 기본급 일액 공제 (기본급 월액 / 30 × 일수)
+            // 생리휴가: 기본급 일액 × 공제율 × 일수 (제37조: 9/10 공제, 2026.01~)
+            // deductRate 미설정 시 1.0 (하위 호환)
             if (monthlyBasePay === 0) return 0;
-            return -(Math.round(monthlyBasePay / 30) * days);
+            const rate = typeInfo.deductRate ?? 1.0;
+            return -(Math.round(monthlyBasePay / 30 * rate) * days);
         }
 
         if (typeInfo.deductType === 'ordinary') {

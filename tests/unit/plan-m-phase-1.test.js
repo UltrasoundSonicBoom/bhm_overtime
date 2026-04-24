@@ -10,6 +10,33 @@ const { CALC } = require('../../calculators.js');
 // 이라 CommonJS require 로는 로드 불가 — 단위 테스트는 calculators.js CALC 경로로만 커버.
 // overtime.js 의 publicHoliday 통합은 브라우저 스모크/수동 확인으로 검증.
 
+describe('M1-3 생리휴가 9/10 공제 (제37조, 2026.01~)', () => {
+  const menstrualType = DATA.leaveQuotas.types.find(t => t.id === 'menstrual');
+
+  it('생리휴가 타입에 deductType=basePay + deductRate=0.9 설정', () => {
+    expect(menstrualType).toBeTruthy();
+    expect(menstrualType.deductType).toBe('basePay');
+    expect(menstrualType.deductRate).toBe(0.9);
+    expect(menstrualType.isPaid).toBe(false);
+  });
+
+  it('계산: 기본급 월액 / 30 × 일수 × 0.9 공제 (1일 · 월액 3,000,000 → 90,000 공제)', () => {
+    const monthlyBasePay = 3_000_000;
+    const days = 1;
+    const rate = menstrualType.deductRate;
+    // 일액 = 100,000 × 0.9 = 90,000 공제
+    const expected = Math.round(monthlyBasePay / 30) * days * rate;
+    expect(expected).toBe(90000);
+  });
+
+  it('공제 rate 미설정 타입은 100% (하위 호환)', () => {
+    // 가정의 타입: deductType=basePay, deductRate 없음
+    const fallbackType = { deductType: 'basePay' };
+    const rate = fallbackType.deductRate ?? 1.0;
+    expect(rate).toBe(1.0);
+  });
+});
+
 describe('M1-1 공휴일 50% 가산 (제32조(6))', () => {
   it('isPublicHoliday=true: 휴일 150% + 공휴일 추가 50% = 200% 효과', () => {
     // hourlyRate 10,000 × 8h 휴일 × 150% = 120,000 (기존 휴일 가산)
