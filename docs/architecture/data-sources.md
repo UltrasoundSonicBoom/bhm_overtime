@@ -12,7 +12,7 @@
 - **관리:** 사용자가 직접 유지보수 (단협 개정 시 여기 **먼저** 반영).
 - **런타임 로드:** **안 함** (사람이 읽는 마스터 문서).
 - **파생 파일:** hospital_guidelines_2026.md (축약), union_regulation_2026.json (구조화), data.js DATA_STATIC (수치 추출).
-- **현재 파일 상태:** 존재하나 **0바이트 placeholder** (2026-04-23 시점). 사용자가 단협 전문을 추후 채울 예정.
+- **현재 파일 상태:** 437 lines, 단협 전문 (제1~92조 + 별도 합의 + 별첨 임금표). 2026-04-24 기준 채워짐 (canonical 원본).
 
 ### `data/hospital_guidelines_2026.md`
 
@@ -104,7 +104,7 @@
 
 ```mermaid
 graph TD
-    FullMD[data/full_union_regulation_2026.md<br/>⭐ canonical 단협 전문<br/>0바이트 placeholder] -->|사람 수동 축약| GuideMD[data/hospital_guidelines_2026.md<br/>축약 요약 · 42 lines]
+    FullMD[data/full_union_regulation_2026.md<br/>⭐ canonical 단협 전문<br/>437 lines] -->|사람 수동 축약| GuideMD[data/hospital_guidelines_2026.md<br/>축약 요약 · 42 lines]
     FullMD -->|사람 수동 구조화| UnionJSON[data/union_regulation_2026.json<br/>조항 배열 · 2184 lines]
     FullMD -->|사람 수동 수치 추출| DataJS[data.js DATA_STATIC<br/>계산 상수 · 697 lines]
     UnionJSON -->|regulation.js:257 fetch| RegHTML[regulation.html<br/>찾아보기 / 검색 UI]
@@ -141,7 +141,7 @@ sequenceDiagram
 
 ## 6. 결론
 
-- **canonical SoT**: `data/full_union_regulation_2026.md` — 사용자 관리. 2026-04-23 현재 0바이트 placeholder 상태 (단협 전문 작성 대기).
+- **canonical SoT**: `data/full_union_regulation_2026.md` — 사용자 관리. 2026-04-24 기준 채워짐 (437 lines, canonical 원본).
 - **파생 SoT 3종**: hospital_guidelines (축약 · 런타임 미사용), union_regulation.json (브라우저 찾아보기), DATA_STATIC (계산).
 - **연결 메커니즘**: **없음** — full_union 변경 시 3곳 모두 사람이 수동 동기화.
-- **런타임 미사용 파일**: `full_union_regulation_2026.md` (0바이트), `hospital_guidelines_2026.md` (grep 0건), `user_profile.json` (grep 0건) — 모두 사람 관리 문서.
+- **런타임 미사용 파일**: `full_union_regulation_2026.md` (런타임 로드 안 함, 사람 읽는 마스터 문서), `hospital_guidelines_2026.md` (grep 0건), `user_profile.json` (grep 0건) — 모두 사람 관리 문서.
