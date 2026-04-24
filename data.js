@@ -657,6 +657,8 @@ async function loadDataFromAPI() {
       if (_lh[location.hostname] && location.port !== '3001') return 'http://localhost:3001/api';
       return '/api';
     })();
+    // Plan F Bug #2: dev 환경(localhost API)에서는 fetch 스킵 — CSP 차단 에러 2건 오염 방지.
+    if (_apiBase.startsWith('http://localhost')) { dataLoadPromise = null; return; }
     const res = await fetch(_apiBase + '/data/bundle');
     if (!res.ok) throw new Error(`API ${res.status}`);
     const contentType = res.headers.get('content-type') || '';
