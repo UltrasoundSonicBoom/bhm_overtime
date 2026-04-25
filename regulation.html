@@ -15,6 +15,8 @@
   <link rel="icon" type="image/png" sizes="16x16" href="snuhmaterect.png?v=1.3">
   <link rel="shortcut icon" href="snuhmaterect.png?v=1.3">
   <link rel="stylesheet" href="style.css?v=2.6">
+  <!-- 규정 JSON 을 HTML 파싱과 병렬로 fetch 시작해 빈 화면 시간 단축 -->
+  <link rel="preload" as="fetch" href="data/union_regulation_2026.json" crossorigin="anonymous">
   <style>
     /* ═══════════ regulation.html — page-scoped styles ═══════════ */
     .main { max-width: 640px; }
@@ -904,8 +906,13 @@
       <div class="reg-section-label">⭐ 즐겨찾기</div>
       <div class="reg-fav-chips" id="browseFavChips"></div>
 
-      <!-- 조항 리스트 -->
-      <div id="browseArticles" style="margin-top:12px;"></div>
+      <!-- 조항 리스트 (JSON 로드 전 즉시 보이는 placeholder — initBrowse 가 채움) -->
+      <div id="browseArticles" style="margin-top:12px;">
+        <div id="browseLoading" style="padding:32px 16px; text-align:center; color:var(--text-muted);">
+          <div style="font-size:1.5rem; margin-bottom:8px;">📚</div>
+          <div>규정을 불러오는 중...</div>
+        </div>
+      </div>
     </div>
 
   </main>
