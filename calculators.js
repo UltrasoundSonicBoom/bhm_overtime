@@ -280,6 +280,23 @@ const CALC = {
     },
 
     /**
+     * 연차보전수당 (제36조(2) · 2004.6.30 이전 근무자, M3-3)
+     * 공식: (기존-신법 산정일수 차) ÷ 23 × 통상임금 일액 × 150%
+     * @param {number} years - 입사연수
+     * @param {number} monthlyWage - 통상임금 월액
+     * @returns {{factor: number, amount: number, legacy: number, current: number}}
+     */
+    calcAnnualLeaveCompensation(years, monthlyWage) {
+        if (!years || !monthlyWage) return { factor: 0, amount: 0, legacy: 0, current: 0 };
+        const ref = DATA.leaveQuotas.annualLeaveCompensationRef;
+        if (!ref) return { factor: 0, amount: 0, legacy: 0, current: 0 };
+        const row = [...ref].reverse().find(r => years >= r.years) || ref[0];
+        const dailyWage = Math.round(monthlyWage / DATA.allowances.weeklyHours * 8);
+        const amount = Math.round((row.factor / 23) * dailyWage * 1.5);
+        return { factor: row.factor, amount, legacy: row.legacy, current: row.current };
+    },
+
+    /**
      * 예비간호인력 대체근무가산금 (<2022.12> 별도합의)
      * 1일당 20,000원
      * @param {number} days - 대체근무 일수

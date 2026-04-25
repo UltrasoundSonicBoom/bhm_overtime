@@ -326,7 +326,21 @@ const DATA_STATIC = {
       maxDays: 14,
       maxContinuous: '연 통상 2개월 초과 불가 (공무상 질병·부상은 6개월 연장 가능)',
       docRule: '14일 이내: 2차의료기관 진단서 인정 / 15일↑: 타병원 진단서는 해당과 확인',
-    }
+    },
+
+    // ── 연차보전수당 일람표 (제36조(2) · 별첨 — 2004.6.30 이전 근무자) ──
+    // M3-3: (기존-신법 산정일수) ÷ 23 × 통상임금 × 150%
+    annualLeaveCompensationRef: [
+      { years: 1,  legacy: 22, current: 15, factor: 7  },
+      { years: 2,  legacy: 23, current: 16, factor: 7  },
+      { years: 3,  legacy: 24, current: 16, factor: 8  },
+      { years: 5,  legacy: 26, current: 17, factor: 9  },
+      { years: 7,  legacy: 28, current: 18, factor: 10 },
+      { years: 10, legacy: 31, current: 20, factor: 11 },
+      { years: 15, legacy: 36, current: 22, factor: 14 },
+      { years: 20, legacy: 41, current: 25, factor: 16 },
+      { years: 25, legacy: 46, current: 25, factor: 21 },
+    ],
   },
 
   // ── 청원휴가 & 경조금 ──
@@ -477,7 +491,16 @@ const DATA_STATIC = {
     // ── 복지 ──
     { category: '복지', q: '진료비 감면 혜택은?', a: '직원 본인:\n• 보험·비보험 50% 감면\n• 선택진료비 100% 감면\n\n가족 (배우자·부모·만25세 미만 자녀):\n• 50% 감면\n\n적용 병원: 본원·보라매·분당·치과병원', ref: '제67조' },
     { category: '복지', q: '어린이집 정원은?', a: '보라매병원 1동 3층\n\n• 1세: 10명\n• 2세: 14명\n• 3~5세: 20명\n• 총 44명\n\n운영시간: 07:30~19:30', ref: '제62조' },
-    { category: '복지', q: '복지포인트는 얼마?', a: '• 기본: 700P\n• 근속 가산: 10P/년 (최대 300P)\n• 가족포인트: 별도\n• 자녀학자금: 1,200P\n\n1P = 1,000원', ref: '복리후생 안내서' }
+    { category: '복지', q: '복지포인트는 얼마?', a: '• 기본: 700P\n• 근속 가산: 10P/년 (최대 300P)\n• 가족포인트: 별도\n• 자녀학자금: 1,200P\n\n1P = 1,000원', ref: '복리후생 안내서' },
+    { category: '복지', q: '자녀 출산 축하 포인트?', a: '<2019.11> 별도합의:\n• 첫째: 500P (50만원)\n• 둘째: 1,000P (100만원)\n• 셋째 이상: 2,000P (200만원)\n\n1P = 1,000원', ref: '<2019.11>' },
+    { category: '복지', q: '생일에 받는 게 있나요?', a: '<2023.11> 별도합의: 생일상품권 100,000원 지급', ref: '<2023.11>' },
+    { category: '복지', q: '자녀 학비 지원?', a: '제58조(2): 국가공무원 자녀학비 지원제도와 동일 적용 (중·고·대학)', ref: '제58조(2)' },
+    { category: '건강', q: '건강진단은 어떤 게 있나요?', a: '제65조 + <2019.11>·<2024.11> 합의:\n• 일반·특수 건강진단\n• HIV / VDRL (간호직·임상병리사 등)\n• 콜레스테롤·유방촬영·대장·위 검사 (40대 이상)\n• 갑상선·심혈관 (50대 이상)\n\n총 10종 — 데이터: DATA.healthCheckRef', ref: '제65조' },
+    { category: '건강', q: '안전보건 교육 시간은?', a: '제64조의3:\n• 재직자: 연 4시간 (공가)\n• 신규 채용자: 8시간', ref: '제64조의3' },
+    { category: '인사', q: '배치전환 시 교육 기간은?', a: '제18조(12):\n간호직:\n• 동일계열: 3일\n• 이종계열: 6일\n• 일반병동 → 중환자실: 14일\n\n간호운영기능직:\n• 교대 근무: 1일\n• 비교대 근무: 2일\n• 수술장: 10일', ref: '제18조(12)' },
+    { category: '인사', q: '신규간호사 교육 기간 + 급여?', a: '제63조의2 + <2017.12>:\n• 일반: 8주 / 중환자실: 10주\n• 첫 4주 초임의 80% 지급\n• 프리셉터 교육수당 월 200,000원', ref: '제63조의2' },
+    { category: '인사', q: '단시간 근로자 처우?', a: '제19조 · 제67조(3):\n• 월 110시간 이하 근무\n• 6개월 이상 → 정규직 전환 시 경력 50% 인정\n• 1년 이상 → 조건부기간 면제\n• 본인 진료비 50% 감면 (정규직 100%)\n• <2024.11> 장애인 30,000원/월 처우개선수당', ref: '제19조 · 제67조(3)' },
+    { category: '수당', q: '연차보전수당은 누가?', a: '제36조(2): 2004.6.30 이전 입사자 한정\n공식: (기존-신법 산정일수 차) ÷ 23 × 통상임금 × 150%\n\n계산기: CALC.calcAnnualLeaveCompensation(years, monthlyWage)\n예: 10년차 · 월급 3,135,000 → factor 11 적용', ref: '제36조(2) · 별첨' }
   ],
 
   // ── 부서 연락망 (규정 찾아보기 탭 연락처 버튼용) ──
@@ -616,7 +639,68 @@ const DATA_STATIC = {
     monthlyTrigger: 7,            // 당월 7일 이상 야간 시 즉시 1일 부여, 누적에서 7일 차감
     nurseCumulativeTrigger: 15,   // 간호부 누적 기준
     otherCumulativeTrigger: 20    // 시설·이송·미화 등 누적 기준
-  }
+  },
+
+  // ── 건강진단 종류 (제65조 · M3-4) ──
+  healthCheckRef: [
+    { name: '일반건강진단', cycle: '연 1회', target: '전 직원', ref: '제65조(1)' },
+    { name: '특수건강진단', cycle: '직무별 6~24개월', target: '유해작업 종사자', ref: '제65조(2)' },
+    { name: 'HIV 검사', cycle: '연 1회', target: '간호직·임상병리사 등', ref: '제65조(3) · <2019.11>' },
+    { name: 'VDRL 검사', cycle: '연 1회', target: '간호직·임상병리사 등', ref: '제65조(3)' },
+    { name: '콜레스테롤', cycle: '연 1회', target: '40세 이상', ref: '제65조(3)' },
+    { name: '유방촬영', cycle: '2년 1회', target: '40세 이상 여성', ref: '제65조(3) · <2024.11>' },
+    { name: '대장 검사', cycle: '5년 1회', target: '50세 이상', ref: '제65조(3)' },
+    { name: '위 검사', cycle: '2년 1회', target: '40세 이상', ref: '제65조(3)' },
+    { name: '갑상선 검사', cycle: '연 1회', target: '여성 (선택)', ref: '<2024.11>' },
+    { name: '심혈관 검사', cycle: '5년 1회', target: '50세 이상', ref: '<2024.11>' },
+  ],
+
+  // ── 안전보건교육 (제64조의3 · M3-5) ──
+  safetyEducation: {
+    annualHours: 4,    // 연 4시간 (재직자)
+    newHireHours: 8,   // 신규 채용자 8시간
+    cycle: '연간',
+  },
+
+  // ── 배치전환 교육일수 (제18조(12) · M3-6) ──
+  jobTransferEducation: {
+    nurse: { sameDept: 3, crossDept: 6, icu: 14 },     // 간호직 동일계열/이종계열/중환자실
+    nursingOps: { sameShift: 1, crossShift: 2, surgery: 10 }, // 간호운영기능직 교대/비교대/수술장
+  },
+
+  // ── 신규간호사 교육 (제63조의2 · M3-7) ──
+  newNurseTraining: {
+    weeks: 8,                     // 일반 간호직 8주
+    icuWeeks: 10,                 // 중환자실 10주
+    payRatio: 0.8,                // 첫 4주 초임의 80% 지급
+    preceptorMonthlyPay: 200000,  // 프리셉터 교육수당 월 20만원
+    ref: '제63조의2 · <2017.12>',
+  },
+
+  // ── 단시간 근로자 (제19조 · 제67조(3) · M3-8) ──
+  partTimeRules: {
+    monthlyHourThreshold: 110,    // 월 110시간 이하 (단시간)
+    careerRecognitionRatio: 0.5,  // 6개월 이상 단시간 근무 시 정규직 전환 경력 50% 인정
+    careerRecognitionMin: 6,      // 인정 최소 근무 기간 6개월
+    probationWaiver: 1,           // 1년 이상 근무 시 조건부기간 면제
+    disabilityBonus: 30000,       // <2024.11> 장애인 처우개선수당 30,000원/월
+    medicalDiscount: 0.5,         // 본인 진료비 50% 감면 (정규직 100%)
+    ref: '제19조 · 제67조(3) · <2003.07>·<2024.11>·<2015.07>',
+  },
+
+  // ── 자녀 출산 축하 포인트 (<2019.11> · <2023.11> · M3-9) ──
+  childBirthCongratulations: [
+    { order: 1, points: 500,  note: '첫째 (1P=1,000원 환산)' },
+    { order: 2, points: 1000, note: '둘째' },
+    { order: '3+', points: 2000, note: '셋째 이상' },
+  ],
+  birthdayCoupon: 100000, // <2023.11> 생일상품권 10만원
+
+  // ── 학비지원 (제58조(2) · M3-9) ──
+  educationSupport: {
+    note: '국가공무원 자녀학비 지원제도와 동일 적용',
+    ref: '제58조(2)',
+  },
 };
 
 // DATA 객체: 초기값은 static, API 로드 성공 시 덮어쓰기

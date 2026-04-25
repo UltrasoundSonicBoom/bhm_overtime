@@ -12,7 +12,8 @@
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "test:smoke": "playwright test",
-    "check:regulation": "node scripts/check-regulation-link.js"
+    "check:regulation": "node scripts/check-regulation-link.js",
+    "check:paytable": "node scripts/check-paytable.js"
   },
   "repository": {
     "type": "git",

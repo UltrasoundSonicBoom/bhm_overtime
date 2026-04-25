@@ -15,6 +15,7 @@
 | 6 | [sot-update-runbook.md](./sot-update-runbook.md) | 단협 개정 시 5단계 동기화 절차 (2027.md 경로 등) |
 | 7 | [regulation-coverage-audit.md](./regulation-coverage-audit.md) | Plan L T4 — 규정 → 계산기/UI 커버리지 감사 (244행 / ❌ 누락 56건 / Plan M 초안) |
 | 8 | [registry-link-report.md](./registry-link-report.md) | Plan J — `calc-registry.json` ↔ `full_union_regulation_2026.md` 자동 검증 결과 (`npm run check:regulation`) |
+| 9 | [paytable-link-report.md](./paytable-link-report.md) | Plan L Tier 2 — 보수표 27등급 × 8호봉 × 4계열 = 297셀 자동 대조 (`npm run check:paytable`) |
 
 ## 머신 리더블 SoT (Plan E 산출)
 
