@@ -49,12 +49,12 @@
 
 | 조항 | 규정 내용 (요약) | 수치/공식 | 현재 구현 | UI 탭 | 상태 | 우선순위 |
 |------|-----------------|-----------|----------|-------|------|---------|
-| 제18조(12) 간호본부 배치전환 교육 | 간호직 동일/이종계열/병동→중환자실 교육일수 | 3일 / 6일 / 14일 | ❌ | ❌ | ❌ 누락 | Low |
-| 제18조(12) 간호운영기능직 배치전환 교육 | 교대/비교대/수술장 교육일수 | 각 듀티별 1일 / 2일 / 10일 | ❌ | ❌ | ❌ 누락 | Low |
+| 제18조(12) 간호본부 배치전환 교육 | 간호직 동일/이종계열/병동→중환자실 교육일수 | 3일 / 6일 / 14일 | ✅ `DATA.jobTransferEducation.nurse={sameDept:3,crossDept:6,icu:14}` + FAQ (Plan M M3-6) | tab-browse (FAQ) | ✅ 구현 | Low |
+| 제18조(12) 간호운영기능직 배치전환 교육 | 교대/비교대/수술장 교육일수 | 각 듀티별 1일 / 2일 / 10일 | ✅ `DATA.jobTransferEducation.nursingOps={sameShift:1,crossShift:2,surgery:10}` + FAQ (Plan M M3-6) | tab-browse (FAQ) | ✅ 구현 | Low |
 | 제18조(13) 야간 배치 제한 (간호운영기능직) | 야간근무 10년 이상 배치 금지 (희망자 예외) | 10년 | ❌ | ❌ | ❌ 누락 | Low |
-| <2024.11> 장애인 처우개선수당 | 월 110시간 이하 단시간 장애인 | 30,000원/월 | ❌ | ❌ | ❌ 누락 | Low |
+| <2024.11> 장애인 처우개선수당 | 월 110시간 이하 단시간 장애인 | 30,000원/월 | ✅ `DATA.partTimeRules.disabilityBonus=30000` + FAQ (Plan M M3-8) | tab-browse (FAQ) | ✅ 구현 | Low |
 | 제19조(1) 조건부기간 | 신규 채용자 수습기간 | 3개월 | ❌ | ❌ | ❌ 누락 | Low |
-| <2003.07> 단시간→정규직 경력 인정 | 6개월↑ 근무 시 경력 50% 인정 / 1년↑ 조건부 면제 | 50% / 1년 | ❌ | ❌ | ❌ 누락 | Low |
+| <2003.07> 단시간→정규직 경력 인정 | 6개월↑ 근무 시 경력 50% 인정 / 1년↑ 조건부 면제 | 50% / 1년 | ✅ `DATA.partTimeRules.{careerRecognitionRatio:0.5, careerRecognitionMin:6, probationWaiver:1}` + FAQ (Plan M M3-8) | tab-browse (FAQ) | ✅ 구현 | Low |
 | 제20조(1) 승진 T/O | 4급 이하 T/O 발생 시 승진발령 한도 | 1개월 | ❌ | ❌ | N/A (HR 절차) | N/A |
 | 제21조 명단통지 | 신규·퇴직자 명단 통보 기한 | 7일 / 1개월 | ❌ | ❌ | N/A (HR 절차) | N/A |
 | 제23조 이의제기 | 부당 인사처분 이의제기 기한 | 10일 | ❌ | ❌ | N/A (HR 절차) | N/A |
@@ -105,13 +105,13 @@
 | **제34조 연장 150%** | 연장근무 가산 | 150% | ✅ `overtimeRates.extended=1.5` + `CALC.calcOvertimePay` L161 | tab-overtime | ✅ 구현 | **High** |
 | **제34조 야간 200%** | 야간근무 (22:00~06:00) 가산 | 200% | ✅ `overtimeRates.night=2.0` + `CALC.calcOvertimePay` L162 | tab-overtime | ✅ 구현 | **High** |
 | **제34조 휴일근무** | 8h 이내 150% / 8h 초과 200% | 150% / 200% | ✅ `overtimeRates.holiday=1.5` / `holidayOver8=2.0` + `CALC.calcOvertimePay` L167-168 | tab-overtime | ✅ 구현 | **High** |
-| **제35조 유급휴일** | 주휴·공휴일·근로자의 날·개원기념일·조합설립일 | 서술 | 🟡 제32조(6) 가산율로 부분 커버, 휴일 목록 자체는 캘린더 미노출 | tab-overtime (법정공휴일 버튼) | 🟡 부분 | Low |
-| <2015.05>·<2025.10> 조합설립일 | 8/1 오전 반일 (복무 휴일 겹치면 그 주 금요일) | 9–13시 | ❌ | ❌ | N/A (HR 운영) | N/A |
+| **제35조 유급휴일** | 주휴·공휴일·근로자의 날·개원기념일·조합설립일 | 서술 | ✅ `HOLIDAYS.hospitalHolidays` (근로자의 날·조합설립일·개원기념일) + 공휴일 API 자동 병합 (Plan L T1 D9) | tab-overtime 캘린더 | ✅ 구현 | Low |
+| <2015.05>·<2025.10> 조합설립일 | 8/1 오전 반일 (복무 휴일 겹치면 그 주 금요일) | 9–13시 | ✅ `HOLIDAYS.hospitalHolidays` 8/1 (halfDay=true, halfDayHours='09:00–13:00') (Plan L T1 D9) | tab-overtime 캘린더 | ✅ 구현 (M3-10) | Low |
 | <2017.12>~<2018.12> 교육연수 공가 | 연 3일 (2019~) | 3일 | ✅ `DATA.leaveQuotas edu_training.quota=3` | tab-leave | ✅ 구현 | Low |
 | <2022.12> 병원 온라인 필수교육 공가 | 연 3일 | 3일 | ✅ `DATA.leaveQuotas edu_mandatory.quota=3` | tab-leave | ✅ 구현 | Low |
 | <2023.11> 헌혈 공가 | 연 1일 | 1일 | ✅ `DATA.leaveQuotas blood_donation.quota=1` | tab-leave | ✅ 구현 | Low |
 | **제36조(1) 연차** | 8할 이상 출근 시 15일, 2년마다 +1일, 상한 25일 | 15 / +1/2y / 25 | ✅ `CALC.calcAnnualLeave` (`calculators.js:215`) + `DATA.annualLeave.{baseLeave:15, addPerTwoYears:1, maxLeave:25}` | tab-leave | ✅ 구현 | **High** |
-| **제36조(2) 연차보전수당** | (기존-신법 산정일수) ÷ 23 × 통상임금 × 150% | ÷23 × 1.5 | ❌ | ❌ | ❌ 누락 ³ | Low |
+| **제36조(2) 연차보전수당** | (기존-신법 산정일수) ÷ 23 × 통상임금 × 150% | ÷23 × 1.5 | ✅ `CALC.calcAnnualLeaveCompensation(years, monthlyWage)` + `DATA.leaveQuotas.annualLeaveCompensationRef` 9행 + FAQ (Plan M M3-3) | tab-browse (FAQ) | ✅ 구현 | Low |
 | 제36조(5) 1년 미만 월차 | 월 개근 시 1일 부여, 최대 11일 | 1일/월, max 11 | ✅ `DATA.annualLeave.{underOneYear:1, maxUnderOne:11}` + `CALC.calcAnnualLeave` | tab-leave | ✅ 구현 | Medium |
 | 제36조(4) 미사용 연차 수당화 | 다음해 1월 통상임금 일액 지급 | 일액 × 미사용일수 | ✅ `CALC.calcAnnualLeaveBonus(unusedDays, monthlyWage)` (Plan M M1-7) — 통상임금 일액 × 미사용일수 반환. UI 진입점은 tab-leave FAQ 에 계산식 노출 | tab-leave (FAQ) | 🟡 부분 — 계산기 있으나 자동 진입 UI 미구현 | Medium |
 | **제37조 생리휴가** | 월 1회 무급, 기본급 일액 9/10 공제 (2026.01~) | 12일/년 · 공제 90% | ✅ `DATA.leaveQuotas.menstrual` (deductType=basePay + deductRate=0.9) + `leave.js` / `leave-tab.js` 9/10 적용 (Plan M M1-3 D4 해소) | tab-leave | ✅ 구현 | Medium |
@@ -217,7 +217,7 @@
 | <2017.12> 자녀학자금포인트 | 만 16세+ 7년간 연 1,200P(120만원) | 120만/년 | 🟡 `DATA.faqs`/`handbook` 텍스트 안내만 — 계산기 없음 | tab-browse | 🟡 부분 | Medium |
 | <2023.11> 생일 축하 상품권 | 온누리상품권 50,000원 (2024~) | 50,000원 | ❌ | ❌ | ❌ 누락 | Low |
 | <2020.10>~<2025.10> 환경유지지원직 가계지원비 인상 누적 | +200k/+200k/+200k/+100k/+200k (연단위 누적) | 연 총 +900k | 🟡 `DATA.payTables.환경유지지원직.familySupport` 에는 최신 금액 반영 추정. 추가 검증 필요 | tab-payroll | 🟡 부분 | Low |
-| **제58조(2) 학비 지원** | 중·고·대학 자녀 국가공무원 동일 | 공무원 수준 | ❌ | ❌ | ❌ 누락 | Low |
+| **제58조(2) 학비 지원** | 중·고·대학 자녀 국가공무원 동일 | 공무원 수준 | ✅ `DATA.educationSupport` + FAQ (Plan M M3-9) | tab-browse (FAQ) | ✅ 구현 | Low |
 | **제58조(3) 급식보조비** | 150,000원/월 (2026-04-24 본문 정정: 120k → 150k) | 150,000원 | ✅ `DATA.allowances.mealSubsidy=150000` (`data.js:145`) | tab-payroll | ✅ 구현 (drift 해소) | **High** |
 | **제58조(4) 교통보조비** | 매월 일정액 (규정은 금액 미명시) | 150,000원 (현재값) | ✅ `DATA.allowances.transportSubsidy=150000` + `calcOrdinaryWage` L96,120 | tab-payroll | ✅ 구현 | Medium |
 | 제58조(5)~(7) 휴게실·콘도·직원식당 시설 | 설치·운영 의무 | N/A | N/A (시설) | ❌ | N/A (시설) | N/A |
@@ -233,8 +233,8 @@
 | **제63조(6) 본인·배우자 부모 사망** | 300,000원 | 300,000원 | ✅ `DATA.leaveQuotas.ceremony_death_parent.ceremonyPay=300000` | tab-leave | ✅ 구현 | **High** |
 | **제63조(7) 자녀사망** | 300,000원 | 300,000원 | ✅ `DATA.leaveQuotas.ceremony_death_child.ceremonyPay=300000` (자녀배우자 사망은 경조금 없음) | tab-leave | ✅ 구현 | Medium |
 | **제63조(8) 조부모·외조부모·형제·자매 사망** | 50,000원 | 50,000원 | ✅ `DATA.leaveQuotas.ceremony_death_grandparent`/`ceremony_death_sibling.ceremonyPay=50000` | tab-leave | ✅ 구현 | Medium |
-| **제63조의2(1) 신규간호사 교육** | 8주 (중환자실 10주), 신규 간호운영기능직 5일, 프리셉터 +2주 팀 | 8/10주 / 5일 / 2주 | ❌ (DATA/CALC 없음; 텍스트 안내도 미확인) | ❌ | ❌ 누락 | Low |
-| **<2017.12> 신규간호사 교육기간 급여** | 첫 4주간 간호사 신규초임의 80% | 초임 × 80% | ❌ | ❌ | ❌ 누락 | Low |
+| **제63조의2(1) 신규간호사 교육** | 8주 (중환자실 10주), 신규 간호운영기능직 5일, 프리셉터 +2주 팀 | 8/10주 / 5일 / 2주 | ✅ `DATA.newNurseTraining={weeks:8, icuWeeks:10}` + 프리셉터 200,000원 + FAQ (Plan M M3-7) | tab-browse (FAQ) | ✅ 구현 | Low |
+| **<2017.12> 신규간호사 교육기간 급여** | 첫 4주간 간호사 신규초임의 80% | 초임 × 80% | ✅ `DATA.newNurseTraining.payRatio=0.8` + FAQ (Plan M M3-7) | tab-browse (FAQ) | ✅ 구현 | Low |
 | **<2021.11> 프리셉터 교육수당** | 월 200,000원 (2022~) | 200,000원 | ✅ `DATA.allowances.preceptorPay=200000` | UI 진입점 없음 | 🟡 부분 — DATA만 존재 | Low |
 | 제63조의2(2) 인권교육 | 전 직원 대상 | N/A | N/A (교육 절차) | ❌ | N/A | N/A |
 | 제63조의2(3) 발령 전 인수인계 | 발령일 전 5일 업무 인수인계 (2026.01~) | 5일 | ❌ | ❌ | N/A (HR 절차) | N/A |
@@ -259,10 +259,10 @@
 | 제64조(2) 정기회의 주기 | 6개월마다 정기 소집 | 6개월 | ❌ | ❌ | N/A (조직 운영) | N/A |
 | 제64조의2(2) 근골격계 실무위 공가 | 예방 실무위원 월 1일 공가 | 1일/월 | ❌ (DATA.leaveQuotas 없음) | ❌ | ❌ 누락 | Low |
 | 제64조의2(4) 체력증진센터 운영시간 | 주중 07:30~20:00 | 07:30–20:00 | ❌ (상수·서술 없음) | ❌ | N/A (시설 운영) | N/A |
-| **제64조의3(1) 조합 주관 안전보건교육** | 연 4시간 | 4시간/년 | ❌ | ❌ | ❌ 누락 | Low |
-| **제64조의3(2) 신규직원 안전보건교육** | 8시간 | 8시간 | ❌ | ❌ | ❌ 누락 | Low |
-| 제65조(1) 정기 건강진단 | 전 직원 연 1회 이상 | 1회/년 | 🟡 `DATA.faqs` 내 "건강검진 1일 유급" 안내 (`<2019.11>`) | tab-browse FAQ | 🟡 부분 — 검사 항목 미구조화 | Low |
-| 제65조(2) 유해위험·감염 부서 특수 건강진단 | 연 2회 이상 | 2회/년 | ❌ | ❌ | ❌ 누락 | Low |
+| **제64조의3(1) 조합 주관 안전보건교육** | 연 4시간 | 4시간/년 | ✅ `DATA.safetyEducation.annualHours=4` + FAQ (Plan M M3-5) | tab-browse (FAQ) | ✅ 구현 | Low |
+| **제64조의3(2) 신규직원 안전보건교육** | 8시간 | 8시간 | ✅ `DATA.safetyEducation.newHireHours=8` + FAQ (Plan M M3-5) | tab-browse (FAQ) | ✅ 구현 | Low |
+| 제65조(1) 정기 건강진단 | 전 직원 연 1회 이상 | 1회/년 | ✅ `DATA.healthCheckRef[0]=일반건강진단` + FAQ (Plan M M3-4) | tab-browse (FAQ) | ✅ 구현 | Low |
+| 제65조(2) 유해위험·감염 부서 특수 건강진단 | 연 2회 이상 | 2회/년 | ✅ `DATA.healthCheckRef[1]=특수건강진단` + FAQ (Plan M M3-4) | tab-browse (FAQ) | ✅ 구현 | Low |
 | 제65조(3) HIV/VDRL/콜레스테롤 검사 | 전 직원 1회/1년 | 1/년 | ❌ (DATA 없음) | ❌ | ❌ 누락 | Low |
 | 제65조(3) 유방촬영(양측) | 만 40세↑ 여성 1회/2년 | 40세 / 2년 | ❌ | ❌ | ❌ 누락 | Low |
 | 제65조(3) 대장검사 (분변잠혈) | 만 50세↑ 1회/1년 | 50세 / 1년 | ❌ | ❌ | ❌ 누락 | Low |
@@ -273,7 +273,7 @@
 | 제66조 건강관리실 설치 | 본원 2007·보라매 2009 | N/A | N/A (시설) | ❌ | N/A (시설) | N/A |
 | **제67조(1) 본인·배우자 진료비 감면** | 선택진료 100% / 접수·보험·비보험·비급여 50% | 100% / 50% | ✅ `DATA.medicalDiscount.self`·`.spouse` (`data.js:369-373`) | UI 진입점 불명 (tab-browse 참조) | 🟡 부분 — DATA만 존재 ¹ | Medium |
 | **제67조(2) 부모·자녀 진료비 감면** | 보험·비보험·비급여 50% | 50% | ✅ `DATA.medicalDiscount.family` (`data.js:372`) | UI 진입점 불명 | 🟡 부분 — DATA만 존재 ¹ | Medium |
-| 제67조(3) 단시간 진료비 감면 | 3개월↑ 재직, 정규직 동률 | 동률 | ❌ (단시간 분기 플래그 없음) | ❌ | ❌ 누락 | Low |
+| 제67조(3) 단시간 진료비 감면 | 3개월↑ 재직, 정규직 동률 | 동률 | ✅ `DATA.partTimeRules.medicalDiscount=0.5` + FAQ (Plan M M3-8) | tab-browse (FAQ) | ✅ 구현 | Low |
 | <2011.09>·<2013.11> 용역직원 진료비 감면 | 1인당 연 300만원 한도 | 300만원 | ❌ | ❌ | ❌ 누락 | Low |
 | 제69조 업무상 질병·재해 범위 | 근로기준법 준용 | N/A | N/A (법령 위임) | ❌ | N/A | N/A |
 | 제70조(1) 요양보상 | 근로기준법 제78조 기준 + 개호비 | N/A | ❌ (계산기 부재) | ❌ | ❌ 누락 | Low |
@@ -364,10 +364,10 @@
 | 별첨 수당표 — 교통보조비 | 150,000원 | 150,000원 | ✅ `DATA.allowances.transportSubsidy=150000` | tab-payroll | ✅ 구현 | Medium |
 | 별첨 수당표 — 가족수당 | 배우자 40k / 일반 20k / 첫째 30k / 둘째 70k / 셋째↑ 110k (5인 이내) | 제49조 중복 | ✅ 제49조와 동일 | tab-payroll | ✅ 구현 | **High** |
 | 별첨 수당표 — 온콜대기수당 | 1일 10,000원 | 10,000원 | ✅ 제32조(9)·<2019.11>과 중복 — `DATA.allowances.onCallStandby=10000` | tab-overtime | ✅ 구현 | Medium |
-| 별첨 수당표 — 연차보전수당 | 통상임금 × 150% (2004.6.30 이전 근무자) | 150% | ❌ (제36조(2)와 중복 — `÷23 × 1.5` 계산기 없음) | ❌ | ❌ 누락 | Low |
+| 별첨 수당표 — 연차보전수당 | 통상임금 × 150% (2004.6.30 이전 근무자) | 150% | ✅ `CALC.calcAnnualLeaveCompensation` (Plan M M3-3) | tab-browse (FAQ) | ✅ 구현 | Low |
 | 별첨 퇴직수당 5구간 | 20년↑ 60% / 15~19 50% / 10~14 45% / 5~9 35% / 1~4 10% | 10/35/45/50/60% | ✅ `DATA.severancePay` + `calcSeveranceFullPay` (제53조(1)와 중복) | tab-payroll | ✅ 구현 | **High** |
-| 별첨 연차보전수당 일람 | 입사연수별 기존-현재 일수 차이 7~21일 | 표 9행 | ❌ (`DATA` 항목 없음) | ❌ | ❌ 누락 | Low |
-| **별첨 2025 보수표 (3직군 × 9등급 × 8호봉)** | 기본급·능력급·상여금·가계지원비 4계열 × 27등급 × 8호봉 | 전수 표 | ✅ `DATA.payTables.{일반직,운영기능직,환경유지지원직}.{basePay,abilityPay,bonus,familySupport}` 구조 일치 (수치 전수 대조는 Plan L Tier 2 범위) ² | tab-payroll | ✅ 구현 (구조) | `N/A` |
+| 별첨 연차보전수당 일람 | 입사연수별 기존-현재 일수 차이 7~21일 | 표 9행 | ✅ `DATA.leaveQuotas.annualLeaveCompensationRef` 9행 (Plan M M3-3) | tab-browse (FAQ) | ✅ 구현 | Low |
+| **별첨 2025 보수표 (3직군 × 9등급 × 8호봉)** | 기본급·능력급·상여금·가계지원비 4계열 × 27등급 × 8호봉 | 전수 표 | ✅ `DATA.payTables.{일반직,운영기능직,환경유지지원직}` — **Plan L Tier 2 자동 검증 완료**: `npm run check:paytable` 297셀 100% match (drift 0). 리포트: `docs/architecture/paytable-link-report.md` | tab-payroll | ✅ 구현 (수치 전수) | `N/A` |
 | 별첨 경조사 — 본인 결혼 | 5일 / 30만 | 5일 / 30만 | ✅ 제41조(1)·제63조(1) 중복 — `DATA.leaveQuotas.ceremony_marriage_self` | tab-leave | ✅ 구현 | **High** |
 | 별첨 경조사 — 자녀 결혼 | 1일 / 10만 | 1일 / 10만 | ✅ 제41조(2)·제63조(2) 중복 — `DATA.leaveQuotas.ceremony_marriage_child` | tab-leave | ✅ 구현 | Medium |
 | **별첨 경조사 — 본인 출산** | 90일 (쌍둥이 120일) / 10만 / 교직원공제회 첫째·둘째 10만·셋째+ 30만 | 90/120일 | 🟡 `DATA.ceremonies` 본인출산 90일 + `ceremony_birth.ceremonyDays=90` · 쌍둥이 120일 분기 미구현 · 공제회 금액 미구조화 | tab-leave | 🟡 부분 — 쌍둥이 분기 없음 ³ | Medium |
@@ -625,14 +625,25 @@ Tasks 3~5 에서 발견된 모든 drift 모음:
 **Phase 3 부분 완료 (2026-04-25, Phase A 세션):**
 - ✅ **임금피크 (M3-1 mapping)**: 기존 `retirement.js` + `tab-payroll` UI 확인, audit 갱신만 (코드 변경 0)
 - ✅ **운영기능직 자동승급 (M3-2 mapping)**: 2026 신설 데이터(7년) 통일, drift D8 해소
-- ⏭️ **보수표 전수 대조**: Plan L Tier 2 로 이관
+- ✅ **보수표 전수 대조 (Plan L Tier 2)**: 2026-04-25 완료 — `scripts/check-paytable.js` 297셀 / 100% match / drift 0
 - ✅ **예비간호인력 대체근무가산금 (M3-4 mapping)**: `DATA.allowances.nurseSubstituteBonus=20000` + `CALC.calcNurseSubstituteBonus` + FAQ
 - ✅ **감정노동 특별휴가 (M3-5 mapping)**: `leaveQuotas.types.emotional_labor` (quota=2) + FAQ
 - ✅ **A1 경력수당 (M3-6 mapping)**: `DATA.allowances.a1Career` + `CALC.calcA1CareerAllowance` + FAQ
 
 남은 audit M3-3/4/5/6/7/8/9/10 항목 (건강진단·교육·신규간호사·단시간·경조금 등)은 향후 후속 plan 으로.
 
+**Phase 3 후속 완료 (2026-04-25, 추가 세션):**
+- ✅ **M3-3 연차보전수당**: `CALC.calcAnnualLeaveCompensation` + `annualLeaveCompensationRef` 9행 + FAQ
+- ✅ **M3-4 건강진단 10종**: `DATA.healthCheckRef` 10항목 + FAQ
+- ✅ **M3-5 안전보건교육**: `DATA.safetyEducation` (4h/8h) + FAQ
+- ✅ **M3-6 배치전환 교육**: `DATA.jobTransferEducation.{nurse, nursingOps}` + FAQ
+- ✅ **M3-7 신규간호사 교육**: `DATA.newNurseTraining` (8/10주, 80%, 프리셉터 20만) + FAQ
+- ✅ **M3-8 단시간 5건**: `DATA.partTimeRules` (110h, 50%, 1년, 30k, 50% 감면) + FAQ
+- ✅ **M3-9 경조금 잔여 3건**: `DATA.{childBirthCongratulations, birthdayCoupon, educationSupport}` + FAQ 3건
+- ✅ **M3-10 캘린더 공휴일 목록**: Plan L T1 D9 에서 이미 `HOLIDAYS.hospitalHolidays` 에 조합설립일 추가 완료
+
 Phase 3 (사용자 합의 6항목) 실 투입 공수: ~2시간.
+M3-3~10 후속 (이번 세션) 실 투입 공수: ~1.5시간 (DATA + FAQ + 단위 테스트).
 
 **Phase 3 총 공수 추정 (전체 audit M3-1~10 기준): 약 31시간.**
 
