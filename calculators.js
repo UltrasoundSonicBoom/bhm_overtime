@@ -458,12 +458,20 @@ const CALC = {
     /**
      * 퇴직금 통합 계산 (2001.08.31 이전 입사자 누진배수 + 2015.06.30 이전 퇴직수당 포함)
      * 법정 퇴직금 공식: 1일 평균임금 × 30 × (총 근속일수 / 365)
+     *
+     * roundingMode (D11 단수계산 — 보수규정 미명시, 일반 병원회계 관행):
+     *   'precise' (기본): 일 단위 정밀 (현행 동작 유지)
+     *   'lenient': 6개월 이상 → 1년으로 환산 / 6개월 미만 → 월할
+     *              근로기준법·사학연금 시행령에서 채택하는 보수적 기준
+     *
      * @param {number} avgMonthlyPay - 월 평균임금 (= 1일 평균임금 × 30)
      * @param {number} totalYearsInt - 총 근속연수 (정수, 누진배수/퇴직수당 구간 판정용)
      * @param {string} hireDateStr - 입사일 문자열 (YYYY-MM-DD)
+     * @param {object} [opts] - { roundingMode: 'precise'|'lenient' }
      * @returns {object}
      */
-    calcSeveranceFullPay(avgMonthlyPay, totalYearsInt, hireDateStr) {
+    calcSeveranceFullPay(avgMonthlyPay, totalYearsInt, hireDateStr, opts = {}) {
+        const roundingMode = opts.roundingMode || 'precise';
         const hireDate = hireDateStr ? new Date(hireDateStr) : null;
 
         // 정밀 근속연수 계산 (일 단위)
@@ -473,6 +481,13 @@ const CALC = {
             const now = new Date();
             totalDays = Math.floor((now - hireDate) / (1000 * 60 * 60 * 24));
             preciseYears = totalDays / 365;
+        }
+
+        // D11: lenient 모드 — 6개월↑ 1년 / 6개월 미만 월할 (보수적 산정)
+        if (roundingMode === 'lenient' && preciseYears >= 1) {
+            const wholeYears = Math.floor(preciseYears);
+            const fractionalYear = preciseYears - wholeYears;
+            preciseYears = fractionalYear >= 0.5 ? (wholeYears + 1) : wholeYears + Math.floor(fractionalYear * 12) / 12;
         }
 
         if (preciseYears < 1) return { 퇴직금: 0, note: '근속 1년 미만 해당없음' };

@@ -113,9 +113,10 @@ const HOLIDAYS = {
         ]
     },
 
-    // ── 병원 자체 유급휴일 (API 미제공, 취업규칙 제35조) ──
+    // ── 병원 자체 유급휴일 (API 미제공, 취업규칙 제35조 + <2015.05>·<2025.10>) ──
     hospitalHolidays: [
         { name: '근로자의 날', month: 5, day: 1 },
+        { name: '조합설립일', month: 8, day: 1, halfDay: true, halfDayHours: '09:00–13:00' }, // <2015.05>·<2025.10> 오전 반일 휴무
         { name: '개원기념일', month: 10, day: 15 },
     ],
 
