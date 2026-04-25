@@ -612,6 +612,19 @@ window.AppLock = (function () {
     document.head.appendChild(style);
   })();
 
+  // 자체 자동 트리거 — shared-layout.js 가 먼저 로드되어 window.AppLock 미정의일 때
+  // 자동 잠금이 누락되는 결함 보완. defer 스크립트 순서와 무관하게 동작.
+  function _autoTrigger() {
+    if (isEnabled() && !_unlocked) {
+      try { checkAndPrompt(); } catch (e) { console.warn('[AppLock] auto-trigger', e); }
+    }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _autoTrigger);
+  } else {
+    _autoTrigger();
+  }
+
   return {
     setupPin: setupPin,
     verifyPin: verifyPin,
