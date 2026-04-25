@@ -192,19 +192,19 @@
 
 ---
 
-## 3. 🟠 완전 미검증 영역 (Plan H)
+## 3. ✅ Plan H — 완전 미검증 영역 1차 검증 완료 (2026-04-25)
 
-자동 테스트 + 수동 검증 모두 없음:
+상세 리포트: `plan-h-audit.md`.
 
-- [ ] `retirement.html` 독립 페이지 — 계산 정확성, UI
-- [ ] `regulation.html` — 조항 검색, PDF 뷰어
-- [ ] 급여 탭 `pay-calc` 서브탭 (이번 달 예상액 계산기)
-- [ ] 급여 탭 `pay-qa` 서브탭 (수당 Q&A — 가족수당/장기근속 등)
-- [ ] AppLock PIN 설정/변경/해제 + 생체인증 플로우
-- [ ] 백업 다운로드/복원
-- [ ] `chrome-extension/` 확장 프로그램
-- [ ] `nurse_admin/` 서브앱
-- [ ] 모바일 뷰포트/터치
+- [x] `retirement.html` 독립 페이지 ✅ 합계 120,575,343원 정확 + 임금피크 옵션 토글
+- [x] `regulation.html` 조항 검색 + PDF 뷰어 ✅ 271 article 카드 + 검색 240결과
+- [x] 급여 탭 `pay-calc` 서브탭 ✅ 예상 실수령액 ₩4,582,641 정상
+- [x] 급여 탭 `pay-qa` 서브탭 (수당 Q&A) ✅ 4개 서브탭 + 수당 계산기 노출
+- [x] AppLock PIN 설정/변경/해제 + 생체 ✅ 모듈 + 함수 노출 (헤더 ⚙️ 진입). 실제 PIN 입력 plumbing 은 수동 스모크 잔여
+- [x] 백업 다운로드/복원 ✅ `downloadBackup` + `OVERTIME/LEAVE.exportData()` 정의 확인. round-trip 수동 스모크 잔여
+- [x] `chrome-extension/` ✅ manifest_v3 + popup + content/background 갖춤. unpacked 로드 수동 잔여
+- [x] `nurse_admin/` 서브앱 ✅ admin/index/my-day 구조 확인. 별도 plan 으로 다룰 것
+- [x] 모바일 뷰포트 (390×844) ✅ 5탭 가로 스크롤 0건 + 콘솔 에러 0건
 
 ---
 
