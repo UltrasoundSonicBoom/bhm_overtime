@@ -905,6 +905,28 @@ function renderLvQuotaTable(year) {
     </div>`;
   });
   html += '</div>';
+
+  // M1-7: 미사용 연차 수당 예상 (제36조(4)) — 잔여 연차 + 프로필 통상임금 자동 계산
+  const annualEntry = quotas.find(q => q.id === 'annual' || q.label === '연차');
+  if (annualEntry && annualEntry.remaining > 0 && typeof PROFILE !== 'undefined' && typeof CALC !== 'undefined') {
+    const profile = PROFILE.load();
+    const wage = profile ? PROFILE.calcWage(profile) : null;
+    const monthlyWage = wage?.monthlyWage || 0;
+    if (monthlyWage > 0) {
+      const bonus = CALC.calcAnnualLeaveBonus(annualEntry.remaining, monthlyWage);
+      const dailyWage = Math.round(monthlyWage / DATA.allowances.weeklyHours * 8);
+      html += '<div style="margin-top:10px; padding:10px 12px; border-radius:8px; background:var(--bg-glass); border:1px dashed var(--accent-emerald);">';
+      html += '<div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">';
+      html += '<div>';
+      html += '<div style="font-weight:600; font-size:var(--text-body-large); color:var(--accent-emerald);">💰 미사용 연차 수당 예상</div>';
+      html += '<div style="font-size:var(--text-body-normal); color:var(--text-muted); margin-top:2px;">잔여 ' + annualEntry.remaining + '일 × 통상임금 일액 ' + CALC.formatCurrency(dailyWage) + ' (제36조(4))</div>';
+      html += '</div>';
+      html += '<div style="font-weight:800; font-size:var(--text-title-large); color:var(--accent-emerald); white-space:nowrap;">' + CALC.formatCurrency(bonus) + '</div>';
+      html += '</div>';
+      html += '</div>';
+    }
+  }
+
   container.innerHTML = html;
 }
 
