@@ -332,9 +332,25 @@ const LEAVE = {
         const result = [];
         this.getTypes().forEach(t => {
             const used = round1(usage[t.id] || 0);
-            
+
+            // 장기재직휴가: 근속연수 기반 동적 부여 (<2025.10> 별도합의, 2026 시행)
+            // 10~19년 5일 / 20년+ 7일 / 미달 0일 — 자격자는 사용 0 이어도 표시
+            let dynamicLongService = null;
+            if (t.id === 'long_service' && typeof CALC !== 'undefined' && CALC.calcLongServiceLeave) {
+                const profile = typeof PROFILE !== 'undefined' ? PROFILE.load() : null;
+                if (profile && profile.hireDate) {
+                    const parsed = PROFILE.parseDate(profile.hireDate);
+                    if (parsed) {
+                        const yearsServed = (Date.now() - new Date(parsed)) / (1000 * 60 * 60 * 24 * 365.25);
+                        const allotted = CALC.calcLongServiceLeave(yearsServed);
+                        if (allotted > 0) dynamicLongService = allotted;
+                    }
+                }
+            }
+
             // 항상 표시 항목이 아니고, 사용량이 0이면 숨김 처리
-            if (!alwaysShow.includes(t.id) && used === 0) {
+            // (장기재직휴가는 자격자에 한해 사용 0 이어도 표시)
+            if (!alwaysShow.includes(t.id) && used === 0 && dynamicLongService == null) {
                 return;
             }
 
@@ -347,6 +363,8 @@ const LEAVE = {
                     quota = 3;
                 }
             }
+
+            if (dynamicLongService != null) quota = dynamicLongService;
 
             // 연차는 동적 한도
             if (t.usesAnnual) {

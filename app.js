@@ -3050,6 +3050,40 @@ function renderOtDashboard(year, month) {
 
   const monthEl = document.getElementById('otRecordMonth');
   if (monthEl) monthEl.textContent = month;
+
+  // M2-8 — 주간 연장근로 한도 경고 (제34조(1))
+  renderOtLimitWarnings(year, month);
+}
+
+// M2-8 — 연장근로 한도 경고 배너 (제34조(1)) · DOM 조립
+function renderOtLimitWarnings(year, month) {
+  const slot = document.getElementById('otLimitWarning');
+  if (!slot) return;
+  while (slot.firstChild) slot.removeChild(slot.firstChild);
+  const warnings = OVERTIME.calcWeeklyLimitCheck(year, month);
+  if (!warnings || warnings.length === 0) {
+    slot.style.display = 'none';
+    return;
+  }
+  slot.style.display = 'block';
+  const title = document.createElement('div');
+  title.style.cssText = 'font-weight:700; margin-bottom:6px;';
+  title.textContent = '⚠️ 연장근로 한도 점검 (제34조(1))';
+  slot.appendChild(title);
+  warnings.forEach(w => {
+    const wd = new Date(w.weekStart);
+    const wkLabel = `${wd.getMonth() + 1}/${wd.getDate()} 주`;
+    const row = document.createElement('div');
+    row.style.marginTop = '4px';
+    const head = document.createElement('div');
+    head.textContent = `· ${wkLabel} — 일 최대 ${w.daily.toFixed(1)}h · 주 ${w.weekly.toFixed(1)}h`;
+    const msg = document.createElement('div');
+    msg.style.color = 'var(--accent-rose)';
+    msg.textContent = w.warning;
+    row.appendChild(head);
+    row.appendChild(msg);
+    slot.appendChild(row);
+  });
 }
 
 // ── 명세서 자동 보충 카드 렌더링 ──
