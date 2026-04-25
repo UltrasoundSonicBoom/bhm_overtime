@@ -293,6 +293,9 @@ const DATA_STATIC = {
       { id: 'pregnancy_checkup', label: '임부 정기검진', category: 'maternity', isPaid: true, quota: null, usesAnnual: false, deductType: 'none', gender: 'F', note: '월 1일 유급', ref: '제38조④' },
       { id: 'spouse_pregnancy', label: '임신검진 동행', category: 'maternity', isPaid: true, quota: 10, usesAnnual: false, deductType: 'none', note: '배우자 임신기간 중 (2026시행)', ref: '2025.10단협' },
 
+      // ── 🟣 출산 (유산/사산) ──
+      { id: 'miscarriage', label: '유산·사산 휴가', category: 'maternity', isPaid: true, quota: null, usesAnnual: false, deductType: 'none', gender: 'F', note: '주수별 5/10/30/60/90일 (제38조(2))', ref: '제38조(2)' },
+
       // ── 🔷 특별 ──
       { id: 'special_disaster', label: '특별휴가(재해 등)', category: 'special', isPaid: true, quota: null, usesAnnual: false, deductType: 'none', note: '재해 3일, 교통차단 등', ref: '제40조' },
       { id: 'military_reserve', label: '예비군/민방위', category: 'special', isPaid: true, quota: null, usesAnnual: false, deductType: 'none', note: '해당일 유급, 야간훈련 시 익일 휴가', ref: '제42조' },
@@ -409,7 +412,10 @@ const DATA_STATIC = {
     // ── 연차/휴가 ──
     { category: '휴가', q: '연차가 몇 일이에요?', a: '• 1년 미만: 월 1일 (최대 11일)\n• 1년 이상: 15일\n• 3년차부터: 2년마다 1일 가산 (최대 25일)\n\n시간 단위 사용 가능 (1일 = 8시간)', ref: '제36조' },
     { category: '휴가', q: '배우자 출산휴가는?', a: '• 20일\n• 출산일로부터 120일 이내 사용 완료\n• 3회까지 분할 가능', ref: '제41조' },
-    { category: '휴가', q: '출산휴가는 몇 일?', a: '• 일반: 90일 (출산 후 45일 확보)\n• 다자녀: 120일\n• 미숙아: 100일\n\n출산 전 분할 사용 가능', ref: '제38조' },
+    { category: '휴가', q: '출산휴가는 몇 일?', a: '• 단태아: 90일 (출산 후 45일 확보)\n• 다태아(쌍둥이↑): 120일 (출산 후 60일 확보)\n• 미숙아: 100일\n\n계산기: CALC.calcMaternityLeave({multiple, premature})\n출산 전 분할 사용 가능', ref: '제38조(1)' },
+    { category: '휴가', q: '유산·사산 휴가는 며칠?', a: '주수별 5구간 (제38조(2)):\n• 28주 이상: 90일\n• 22~27주: 60일\n• 16~21주: 30일\n• 12~15주: 10일\n• 11주 이하: 5일\n\n계산기: CALC.calcMiscarriageLeave(weeks)', ref: '제38조(2)' },
+    { category: '휴가', q: '질병/공상 휴직 시 급여는?', a: '(기본급 + 능력급 + 조정급 + 상여금) × 70% 지급 (제28조(2))\n\n계산기: CALC.calcLeaveOfAbsencePay({monthlyBase, ability, adjust, bonus}, "sick")\n\n예: 기본 200만 + 능력 50만 + 조정 10만 + 상여 20만 = 280만 → 70% = 196만원', ref: '제28조(2)' },
+    { category: '휴가', q: '장기재직휴가는?', a: '근속연수 기반 자동 부여 (<2025.10> 단협, 2026 시행):\n• 10~19년: 5일\n• 20년 이상: 7일\n\n프로필 입사일 등록 시 휴가 탭 [장기재직 휴가] 항목에 자동 표시', ref: '<2025.10> 단협' },
     { category: '휴가', q: '병가는 최대 며칠?', a: '• 연 통산 2개월 (60일)\n• 공무상 질병/부상: 6개월 연장 가능\n• 진단서 제출 필요', ref: '복무규정 제30조' },
     { category: '휴가', q: '생리휴가는?', a: '• 월 1일 (무급)\n• 기본급 일액의 9/10 공제 (2026.01~ 시행)\n• 즉 하루 쉬면 기본급 일액의 10% 만 지급', ref: '제37조' },
     { category: '휴가', q: '난임 치료 휴가는?', a: '• 연간 6일\n• 최초 2일 유급, 나머지 무급', ref: '제40조 제6호' },

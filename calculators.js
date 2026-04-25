@@ -309,6 +309,84 @@ const CALC = {
     },
 
     /**
+     * 장기재직휴가 일수 (<2025.10> 별도합의 — 2026 시행)
+     * 10~19년 5일 / 20년+ 7일 / 미달 0일
+     * @param {number} years - 근속연수
+     * @returns {number} 휴가 일수
+     */
+    calcLongServiceLeave(years) {
+        if (years == null || typeof years !== 'number' || years < 10) return 0;
+        if (years >= 20) return 7;
+        return 5;
+    },
+
+    /**
+     * 연장근로 한도 검증 (제34조(1))
+     * 1일 2시간 / 주 10시간 (부득이 시 12시간 상한)
+     * @param {{daily: number, weekly: number}} hours
+     * @returns {{exceedsDaily: boolean, exceedsWeekly: boolean, warning: string|null}}
+     */
+    checkOvertimeLimit({ daily = 0, weekly = 0 } = {}) {
+        const exceedsDaily = daily > 2;
+        const exceedsWeekly = weekly > 12;
+        const isOverFlex = !exceedsWeekly && weekly > 10;
+        let warning = null;
+        if (exceedsDaily) {
+            warning = '⚠️ 1일 2시간 한도 초과 (제34조(1))';
+        } else if (exceedsWeekly) {
+            warning = '⚠️ 주 12시간 법정 상한 초과 (제34조(1) 위반)';
+        } else if (isOverFlex) {
+            warning = 'ℹ️ 주 10시간 초과 — 부득이한 경우만 허용 (주 12시간 상한)';
+        }
+        return { exceedsDaily, exceedsWeekly, warning };
+    },
+
+    /**
+     * 산전후 휴가 일수 (제38조(1))
+     * 단태아 90 / 다태아 120 / 미숙아 100. 다태아 우선.
+     * @param {{multiple?: boolean, premature?: boolean}} opts
+     * @returns {number}
+     */
+    calcMaternityLeave({ multiple = false, premature = false } = {}) {
+        if (multiple) return 120;
+        if (premature) return 100;
+        return 90;
+    },
+
+    /**
+     * 유산·사산 휴가 5구간 (제38조(2))
+     * 28주↑ 90 / 22~27 60 / 16~21 30 / 12~15 10 / ≤11 5
+     * @param {number} weeks - 임신 주수
+     * @returns {number}
+     */
+    calcMiscarriageLeave(weeks) {
+        if (weeks == null || weeks <= 0) return 5;
+        if (weeks >= 28) return 90;
+        if (weeks >= 22) return 60;
+        if (weeks >= 16) return 30;
+        if (weeks >= 12) return 10;
+        return 5;
+    },
+
+    /**
+     * 휴직자 급여 (제28조(2))
+     * 기본급 + 능력급 + 조정급 + 상여금 의 비율 (질병/공상 70%, 그 외 사용자 지정)
+     * @param {{monthlyBase?: number, ability?: number, adjust?: number, bonus?: number}} components
+     * @param {string} kind - 'sick'|'industrial'|'parental'|'custom'
+     * @param {number} [customRate] - kind='custom' 일 때 사용 (0~1)
+     * @returns {{amount: number, rate: number, base: number}}
+     */
+    calcLeaveOfAbsencePay(components = {}, kind = 'sick', customRate) {
+        const base = (components.monthlyBase || 0)
+                   + (components.ability || 0)
+                   + (components.adjust || 0)
+                   + (components.bonus || 0);
+        const rateMap = { sick: 0.7, industrial: 0.7, parental: 0 };
+        const rate = customRate != null ? customRate : (rateMap[kind] != null ? rateMap[kind] : 0.7);
+        return { amount: Math.round(base * rate), rate, base };
+    },
+
+    /**
      * 가족수당 계산
      * 첫 번째 가족 (= 배우자 등 주치) : 40,000원
      * 추가 가족 1인당 : 20,000원

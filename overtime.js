@@ -319,6 +319,37 @@ const OVERTIME = {
         });
     },
 
+    // ── 주간 한도 검증 (제34조(1)) — M2-8 ──
+    // 주별 시간외 + 연장 시간 합산 후 CALC.checkOvertimeLimit 호출.
+    // 반환: [{weekStart: 'YYYY-MM-DD', daily: max일 hours, weekly: 합계, warning?}]
+    calcWeeklyLimitCheck(year, month) {
+        const records = this.getMonthRecords(year, month);
+        const weekMap = {}; // ISO week key → { daily: max, weekly: sum, days: { 'YYYY-MM-DD': hours } }
+
+        records.forEach(r => {
+            if (r.type !== 'overtime') return; // 연장근로만 한도 적용
+            const date = r.date || r.startDate;
+            if (!date) return;
+            const ext = r.breakdown?.extended || 0;
+            // ISO 주 키: 해당 날짜의 월요일
+            const d = new Date(date);
+            const dow = (d.getDay() + 6) % 7; // 월=0
+            d.setDate(d.getDate() - dow);
+            const weekKey = d.toISOString().slice(0, 10);
+
+            if (!weekMap[weekKey]) weekMap[weekKey] = { weekly: 0, days: {} };
+            weekMap[weekKey].days[date] = (weekMap[weekKey].days[date] || 0) + ext;
+            weekMap[weekKey].weekly += ext;
+        });
+
+        const checkFn = (typeof CALC !== 'undefined' && CALC.checkOvertimeLimit) ? CALC.checkOvertimeLimit : null;
+        return Object.entries(weekMap).map(([weekStart, w]) => {
+            const dailyMax = Math.max(0, ...Object.values(w.days));
+            const result = checkFn ? checkFn({ daily: dailyMax, weekly: w.weekly }) : { warning: null };
+            return { weekStart, daily: dailyMax, weekly: w.weekly, warning: result.warning };
+        }).filter(w => w.warning);
+    },
+
     // ── 월간 통계 ──
     calcMonthlyStats(year, month) {
         const records = this.getMonthRecords(year, month);
