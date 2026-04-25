@@ -32,11 +32,13 @@ mkdirSync(ASSETS, { recursive: true });
 // hash 붙이면 깨짐. root 에 그대로 복사.
 const HASHABLE = /\.(js|mjs|css|woff2?|ttf|eot|otf)$/i;
 const PLAIN_COPY = /\.(png|jpg|jpeg|gif|webp|svg|ico|md|txt|xml|json)$/i;
+// sw.js 는 반드시 /sw.js 경로 유지 (scope 결정) — hash 제외
+const HASH_EXCLUDE = new Set(['sw.js']);
 const hashMap = {};
 
 const rootFiles = readdirSync(ROOT).filter(f => statSync(join(ROOT, f)).isFile());
 for (const f of rootFiles) {
-  if (HASHABLE.test(f)) {
+  if (HASHABLE.test(f) && !HASH_EXCLUDE.has(f)) {
     const content = readFileSync(join(ROOT, f));
     const hash = createHash('sha256').update(content).digest('hex').slice(0, 8);
     const ext = extname(f);
@@ -83,7 +85,8 @@ for (const d of COPY_DIRS) copyDir(join(ROOT, d), join(DIST, d));
 console.log(`[build] copied dirs: ${COPY_DIRS.join(', ')}`);
 
 // ── 5. 기타 root 정적 파일 (hash 미적용) ──
-const PLAIN_FILES = ['manifest.json', 'robots.txt', 'sitemap.xml', '.well-known'];
+// sw.js 는 반드시 root 경로 (/sw.js) — scope 가 origin 전체 적용. hash 부여 X.
+const PLAIN_FILES = ['manifest.json', 'robots.txt', 'sitemap.xml', '.well-known', 'sw.js'];
 for (const f of PLAIN_FILES) {
   const sp = join(ROOT, f);
   if (existsSync(sp) && statSync(sp).isFile()) {

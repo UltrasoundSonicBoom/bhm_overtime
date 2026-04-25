@@ -949,6 +949,8 @@
   <style>
     #ch-plugin-script-iframe { max-width: 500px !important; }
   </style>
+  <!-- Service Worker (offline-first + 안전 갱신) -->
+  <script>if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(function(e){console.warn('[SW] register failed', e)});</script>
 </body>
 
 </html>
