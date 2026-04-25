@@ -66,7 +66,7 @@
 | 제28조(2) 휴직자 대우 — 질병/공상 | (기본급+능력급+조정급+상여금) × 70% | 70% | ✅ `CALC.calcLeaveOfAbsencePay({monthlyBase, ability, adjust, bonus}, "sick")` (Plan M M2-2) + FAQ 항목 추가 | tab-leave (FAQ) | ✅ 구현 | Medium |
 | 제28조(5) 육아휴직 | 만 8세 이하, 3년 이내, 최초 1년 근속 산입, 무급 | 3년 / 최초 1년 산입 | 🟡 DATA.leaveOfAbsence '육아휴직' period/tenure; `CALC.calcParentalLeavePay` (고용보험 급여 계산) | tab-leave (표) · tab-payroll 미연동 | 🟡 부분 | Medium |
 | 제28조(5) 육아휴직 급여 (고용보험) | 1~3개월 100% (상한 250만) / 4~6 100% (200만) / 7~12 80% (160만) | 250/200/160만 | ✅ `CALC.calcParentalLeavePay` + `calculateParentalLeave()` 핸들러 + tab-leave 시뮬레이터 카드 (Plan M M1-6 해소) | tab-leave | ✅ 구현 | Medium |
-| 제31조의2 <2020.10> 감정노동자 특별휴가 | 환자·보호자 폭언·폭행 피해 시 | 2일 이내 | 🟡 DATA.leaveQuotas `special_disaster` note="재해 3일, 교통차단 등"이지만 감정노동 2일 구분 없음 | tab-leave | 🟡 부분 — 유형 미분리 | Low |
+| 제31조의2 <2020.10> 감정노동자 특별휴가 | 환자·보호자 폭언·폭행 피해 시 | 2일 이내 | ✅ `DATA.leaveQuotas.types` 에 `emotional_labor` 신규 (quota=2, isPaid=true) + FAQ (Plan M M3-5) | tab-leave | ✅ 구현 | Low |
 
 **제3장 행 수: 17행** (수치 조항 13 + N/A 4)
 
@@ -93,7 +93,7 @@
 | 제32조(9) 온콜 출퇴근 인정시간 | 출퇴근 2시간 근무시간 인정 | 2시간 | ✅ `DATA.allowances.onCallCommuteHours=2` + `CALC.calcOnCallPay` (commute 자동 산입) | tab-overtime | ✅ 구현 | Medium |
 | <2019.11> 온콜대기수당 | 1일당 1만원 (2022.01~) | 10,000원/일 | ✅ `DATA.allowances.onCallStandby=10000` + `CALC.calcOnCallPay` + 온콜대기 라디오 진입 | tab-overtime | ✅ 구현 | Medium |
 | <2004.08> 야간근무가산금 (근본 6,000원) → <2015.05> 10,000원 | 야간근무 1일당 | 10,000원/회 | ✅ `DATA.allowances.nightShiftBonus=10000` + `CALC.calcNightShiftBonus` L391 | tab-overtime | ✅ 구현 | **High** |
-| <2022.12> 예비간호인력 대체근무가산금 | 근무일당 2만원 | 20,000원/일 | ❌ | ❌ | ❌ 누락 | Low |
+| <2022.12> 예비간호인력 대체근무가산금 | 근무일당 2만원 | 20,000원/일 | ✅ `DATA.allowances.nurseSubstituteBonus=20000` + `CALC.calcNurseSubstituteBonus(days)` + FAQ (Plan M M3-4) | (계산기 + FAQ — UI 진입 후속) | ✅ 구현 (계산기) | Low |
 | <2021.11> 긴급 대체근무 통상 150% | 휴일 긴급 대체 시 | 150% | 🟡 `overtimeRates.holiday=1.5` 로 계산 가능하나 명시적 대체근무 입력 경로 없음 | ❌ | 🟡 부분 | Low |
 | 제33조(1) 휴게시간 | 정오 1시간 | 60분 | ❌ (상수 없음) | tab-overtime 안내 | N/A (서술) | N/A |
 | 제33조(2)(4) 휴게시간 미사용 → 시간외수당 | 미사용분 시간외 인정 | 수당화 | ❌ (자동 변환 로직 없음) | ❌ | ❌ 누락 | Medium |
@@ -159,14 +159,14 @@
 | **제44조 통상임금 구성 (16요소)** | 기준기본급·근속가산·군복무·능력급·상여·가계지원·조정급·승급조정·장기근속·별정·직책·업무보조·급식·교통·명절·교육훈련 | 16개 | ✅ `CALC.calcOrdinaryWage` breakdown (`calculators.js:106-126`) 에 16개 모두 산입 (가족수당 제외 — 제44조 2항) | tab-payroll | ✅ 구현 | **High** |
 | 제45조(1) 임금인상 | 매년 1월 단체교섭 | N/A | N/A (연례 갱신 프로세스) | ❌ | N/A (HR 절차) | N/A |
 | <2005.09> 단시간근무자 인상률 | 정규직 인상률 이상 | ≥ 정규직 | ❌ | ❌ | N/A (HR 정책) | N/A |
-| **<2019.11> 임금피크제** | 정년 이전 1년, 보수 60% 지급 (공로연수 1년) | 1년 · 60% | 🟡 `retirement.js:148` 임금피크 시뮬레이터에서 60% 하드코딩 — DATA 상수 없음 ¹ | tab-payroll (퇴직금 탭) | 🟡 부분 | Medium |
+| **<2019.11> 임금피크제** | 정년 이전 1년, 보수 60% 지급 (공로연수 1년) | 1년 · 60% | ✅ `retirement.js` 임금피크 시뮬레이터 + `tab-payroll.html` UI (옵션 A/B 선택) — Plan M M3-1 확인. 60% 하드코딩은 의도적 (단협 명시 값) | tab-payroll (퇴직금 탭) | ✅ 구현 | Medium |
 | <2019.11> 임금피크 적용 제외 | 입사일로부터 5년 이내 정년 도달자 | 5년 | ❌ | ❌ | ❌ 누락 | Low |
 | <2021.11> 운영기능직 임금피크 하한 | 직무능력급이 최저임금 120% 이하로 미감액 | 120% | ❌ | ❌ | ❌ 누락 | Low |
-| **<2022.12> 임금피크 선택제** | 옵션A: 공로연수 1년+60% / 옵션B: 공로연수 미부여+100% (2024~) | A/B 선택 | 🟡 `tab-payroll.html` L279-413 옵션 A/B UI 존재 (retirement.js) · DATA 상수 없음 ¹ | tab-payroll | 🟡 부분 — 하드코딩 | Medium |
+| **<2022.12> 임금피크 선택제** | 옵션A: 공로연수 1년+60% / 옵션B: 공로연수 미부여+100% (2024~) | A/B 선택 | ✅ `tab-payroll.html` L279-413 옵션 A/B UI + retirement.js 분기 (Plan M M3-1 확인) | tab-payroll | ✅ 구현 | Medium |
 | 제46조 정기승급 | 입사 익월 1호봉씩 | 월 1호봉 | 🟡 `DATA.payTables[직군].autoPromotion` 연차 테이블 + `calcOrdinaryWage` yearIdx | tab-payroll | 🟡 부분 — 자동승급 연수는 있으나 입사 익월 트리거는 없음 | Medium |
 | <2005.09>·<2012.09> 운영기능직 한계호봉 | 10→8→6호봉 | 6호봉 (최종) | ❌ (DATA.payTables 에는 8년치 호봉 배열; 한계호봉 상수 없음) | ❌ | ❌ 누락 | Low |
-| <2008.09> 운영기능직 자동승급제 | 5등급 4년 / 4등급 7년 / 3등급 9년 초과 자동승진 | 4/7/9년 | 🟡 `DATA.payTables.운영기능직.autoPromotion` (A1→A2: 4년, A2→A3: 7년, A3→C1: 7년) — 규정 9년과 drift ² | tab-payroll | 🟡 부분 — drift 의심 | Medium |
-| <2021.11> 운영기능직 경력수당 | 2015.7.1 이후 입사, A1→A2 소멸경력 120,000원/연 | 120,000원/연 | ❌ | ❌ | ❌ 누락 | Low |
+| <2008.09>·<2026.01> 운영기능직 자동승급 | 2026.01~ 5등급 4년 / 4등급 7년 / 3등급 7년 (감축 시행) | 4/7/7년 | ✅ `DATA.payTables.운영기능직.autoPromotion` (A1→A2: 4년, A2→A3: 7년, A3→C1: 7년) — **2026 신설 데이터 일치 (Plan M M3-2 확정)** | tab-payroll | ✅ 구현 | Medium |
+| <2022.01> 운영기능직 A1 경력수당 | 연 12만원 (월 1만), A1→A2 소멸 시까지 | 120,000원/연 | ✅ `DATA.allowances.a1Career` + `CALC.calcA1CareerAllowance(grade, years)` + FAQ (Plan M M3-6) | (계산기 + FAQ — UI 진입 후속) | ✅ 구현 (계산기) | Low |
 | <2024.11> 환경유지지원직 경력수당 | SA1→SA2 소멸경력 105,600원/연 (2025~) | 105,600원/연 | ❌ | ❌ | ❌ 누락 | Low |
 | **제47조 연장·야간·휴일수당** | 통상임금 가산 지급 | 150/200/150% | ✅ 제34조와 동일 — `overtimeRates` + `CALC.calcOvertimePay` | tab-overtime | ✅ 구현 | **High** |
 | **제47조 일직·숙직비** | 1일 50,000원 | 50,000원 | ✅ `DATA.allowances.dutyAllowance=50000` | UI 진입점 없음 | 🟡 부분 — DATA 만 존재 | Low |
@@ -546,7 +546,7 @@ Tasks 3~5 에서 발견된 모든 drift 모음:
 | ~~D5~~ | ~~제32조(6) 공휴일 가산~~ | **2026-04-24 해소** (Plan M M1-1): CALC.calcOvertimePay extras={isPublicHoliday} + OVERTIME.calcEstimatedPay breakdown.isHoliday | — | — | ✅ 해소 | — |
 | D6 | **제52조(4) 사학연금 2016.03 분리** | 2016.03.01 가입일 전일까지 분리 | `calcSeveranceFullPay` cutoff2001/2015 만 분기 | — | 코드 누락 | 신규 구현 #21 |
 | ~~D7~~ | ~~제38조(1) 쌍둥이 산전후~~ | **2026-04-25 해소** (Plan M M2-4) — `CALC.calcMaternityLeave({multiple})` 분기 함수 + FAQ 명시 | — | — | ✅ 해소 | — |
-| D8 | **<2008.09> 운영기능직 자동승급 9년** | A3→C1 = 9년 | `payTables.autoPromotion` A3→C1 = 7년 | — | 코드 drift 의심 | 2025.10 합의 이후 변경 여부 확인 |
+| ~~D8~~ | ~~운영기능직 자동승급 9년~~ | **2026-04-25 정정** (Plan L T1) — 2026 신설 데이터(7년)가 정답. 사용자 지시로 통일. drift 아님 | — | — | ✅ 해소 | — |
 | D9 | **제35조 유급휴일 캘린더** | 주휴·공휴일·근로자의 날·개원·조합일 | 캘린더 미노출 (가산율만 부분 적용) | — | UI 누락 | 캘린더/목록 구조화 |
 | ~~D10~~ | ~~제34조(1) 연장근로 한도~~ | **2026-04-25 해소** (Plan M M2-8) — `CALC.checkOvertimeLimit` + `OVERTIME.calcWeeklyLimitCheck` + tab-overtime 배너 자동 노출 | — | — | ✅ 해소 | — |
 | D11 | **제52조(1) 단수 계산** | 6개월↑ = 1년 / 6개월 미만 월할 | `calcSeveranceFullPay` = 일 단위 정밀 | — | 정밀도 drift | 의도적 일치 여부 검증 |
@@ -622,7 +622,19 @@ Tasks 3~5 에서 발견된 모든 drift 모음:
 | M3-10 | **캘린더 공휴일 목록** | 제35조 | tab-overtime 법정공휴일 버튼 확장 | 2h |
 | M3-11 | **임금지급일 상수 + 기타** | 제48조(1)·노조경조금·연수휴직·용역직원·요양·장해·콜센터수당 | DATA 7건 | 4h |
 
-**Phase 3 총 공수 추정: 약 31시간.**
+**Phase 3 부분 완료 (2026-04-25, Phase A 세션):**
+- ✅ **임금피크 (M3-1 mapping)**: 기존 `retirement.js` + `tab-payroll` UI 확인, audit 갱신만 (코드 변경 0)
+- ✅ **운영기능직 자동승급 (M3-2 mapping)**: 2026 신설 데이터(7년) 통일, drift D8 해소
+- ⏭️ **보수표 전수 대조**: Plan L Tier 2 로 이관
+- ✅ **예비간호인력 대체근무가산금 (M3-4 mapping)**: `DATA.allowances.nurseSubstituteBonus=20000` + `CALC.calcNurseSubstituteBonus` + FAQ
+- ✅ **감정노동 특별휴가 (M3-5 mapping)**: `leaveQuotas.types.emotional_labor` (quota=2) + FAQ
+- ✅ **A1 경력수당 (M3-6 mapping)**: `DATA.allowances.a1Career` + `CALC.calcA1CareerAllowance` + FAQ
+
+남은 audit M3-3/4/5/6/7/8/9/10 항목 (건강진단·교육·신규간호사·단시간·경조금 등)은 향후 후속 plan 으로.
+
+Phase 3 (사용자 합의 6항목) 실 투입 공수: ~2시간.
+
+**Phase 3 총 공수 추정 (전체 audit M3-1~10 기준): 약 31시간.**
 
 ### 의존성 그래프
 

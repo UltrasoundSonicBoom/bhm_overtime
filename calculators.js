@@ -280,6 +280,35 @@ const CALC = {
     },
 
     /**
+     * 예비간호인력 대체근무가산금 (<2022.12> 별도합의)
+     * 1일당 20,000원
+     * @param {number} days - 대체근무 일수
+     * @returns {number}
+     */
+    calcNurseSubstituteBonus(days) {
+        if (!days || days <= 0) return 0;
+        return Math.round(days * DATA.allowances.nurseSubstituteBonus);
+    },
+
+    /**
+     * 운영기능직 A1 경력 수당 (<2022.01> 별도합의)
+     * 경력 1년 기준 연 12만원 (월 1만). 1년 미만은 월할.
+     * 대상 등급: A1 (정규 입사 후 A2 자동승격까지 적용)
+     * @param {string} grade - 등급 코드
+     * @param {number} years - 근속/경력 연수
+     * @returns {number} 월 수당
+     */
+    calcA1CareerAllowance(grade, years) {
+        if (!grade || typeof grade !== 'string') return 0;
+        const cfg = DATA.allowances.a1Career;
+        if (!cfg.eligibleGrades.includes(grade)) return 0;
+        if (!years || years <= 0) return 0;
+        if (years >= 1) return cfg.monthlyAmount;
+        // 1년 미만: 월할 (yearlyAmount × years / 12)
+        return Math.round(cfg.yearlyAmount * years / 12);
+    },
+
+    /**
      * 미사용 연차 수당 계산 (제36조(4))
      * 통상임금 일액 = 월급 ÷ 209 × 8 (소수점 반올림)
      * 수당 = 미사용 일수 × 일액
