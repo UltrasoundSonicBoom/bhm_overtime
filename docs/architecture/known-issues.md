@@ -234,8 +234,8 @@
 | #7 장기재직 휴가 | ✅ 해결 — 7일 canonical | (batch B) |
 | #8 dead exports | ✅ 부분 해결 — 4개 제거. `calcUnionStepAdjust` 는 payroll.js 에서 활성 호출 확인되어 유지 (Plan D 오분류 정정) | (batch B) |
 | #9 leaveRecords 격리 | 🟡 유지 — 의도 설계, 별도 판단 후 Plan | — |
-| #10 applyProfileToOvertime profileChanged 미수신 | 🟡 Plan G 이연 | — |
-| #11 profileChanged 수신자 희소 | 🟡 Plan G 이연 | — |
+| #10 applyProfileToOvertime profileChanged 미수신 | ✅ 2026-04-25 해소 — `app.js` 전역 `setupLiveSyncListeners()` IIFE 추가. profileChanged → 활성 탭에 따라 applyProfileTo* + init* 재호출 | (audit/data-flow + fix/profile-sync) |
+| #11 profileChanged 수신자 희소 | ✅ 2026-04-25 해소 — overtime/leave/payroll/home 모두 활성 시 라이브 갱신. 추가로 overtimeChanged·leaveChanged·payslipChanged 도 홈/관련 탭에 라우팅 | (fix/profile-sync) |
 | #12 급여명세서 체인 중복 | 🟡 별도 플랜 이연 | — |
 | #13 배우자 출산 10일 (신규) | ✅ 해결 — data.js 4곳 + hospital_guidelines 정정 | (batch B) |
 
