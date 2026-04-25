@@ -14,6 +14,7 @@
 | 5 | [known-issues.md](./known-issues.md) | 확실한 Latent 버그 12건 + 미검증 경로 17건 |
 | 6 | [sot-update-runbook.md](./sot-update-runbook.md) | 단협 개정 시 5단계 동기화 절차 (2027.md 경로 등) |
 | 7 | [regulation-coverage-audit.md](./regulation-coverage-audit.md) | Plan L T4 — 규정 → 계산기/UI 커버리지 감사 (244행 / ❌ 누락 56건 / Plan M 초안) |
+| 8 | [registry-link-report.md](./registry-link-report.md) | Plan J — `calc-registry.json` ↔ `full_union_regulation_2026.md` 자동 검증 결과 (`npm run check:regulation`) |
 
 ## 머신 리더블 SoT (Plan E 산출)
 
@@ -21,6 +22,10 @@
 |------|------|
 | [`data/calc-registry.json`](../../data/calc-registry.json) | DATA 값 assert 대상 + CALC 함수 존재성 + 외부 참조 무결성 (20 data_values + 1 array 7 items + 20 functions + 2 references) |
 | [`tests/unit/calc-registry.test.js`](../../tests/unit/calc-registry.test.js) | Vitest drift-check — 36 active tests + 7 skip (npm run test:unit 기준) |
+
+### 자동화 스크립트
+
+- `npm run check:regulation` — `data/calc-registry.json` 의 각 항목이 `full_union_regulation_2026.md` 본문에 정확히 반영되어 있는지 검증. ❌ 미일치 발견 시 비0 종료 (CI hook 후보).
 
 ### 단협 개정 시 업데이트 순서
 

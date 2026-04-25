@@ -11,7 +11,8 @@
     "test": "npm run test:unit && npm run test:smoke",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
-    "test:smoke": "playwright test"
+    "test:smoke": "playwright test",
+    "check:regulation": "node scripts/check-regulation-link.js"
   },
   "repository": {
     "type": "git",
