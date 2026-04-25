@@ -155,38 +155,115 @@ function _renderHomeOtYear(year) {
 function _renderHomeLeaveMonth(year, month, totalAnnual) {
   const leaveBody = document.getElementById('homeLeaveBody');
   const leaveStatsEl = document.getElementById('homeLeaveStats');
+  const summary = LEAVE.calcMonthlySummary(year, month);
+
+  // 기록이 있거나 연차 한도가 산정됐으면 노출. 둘 다 없을 때만 숨김.
+  if (summary.recordCount === 0 && (!totalAnnual || totalAnnual === 0)) {
+    leaveBody.style.display = 'none';
+    return;
+  }
+  leaveBody.style.display = '';
+
+  while (leaveStatsEl.firstChild) leaveStatsEl.removeChild(leaveStatsEl.firstChild);
+  const period = document.createElement('div');
+  period.className = 'home-stat-period';
+  period.textContent = month + '월 현황';
+  leaveStatsEl.appendChild(period);
+
+  const addRow = (label, value, cls) => {
+    const row = document.createElement('div');
+    row.className = 'home-stat-row';
+    const lbl = document.createElement('span');
+    lbl.className = 'home-stat-label';
+    lbl.textContent = label;
+    const val = document.createElement('span');
+    val.className = 'home-stat-value' + (cls ? ' ' + cls : '');
+    val.textContent = value;
+    row.appendChild(lbl);
+    row.appendChild(val);
+    leaveStatsEl.appendChild(row);
+  };
 
   if (totalAnnual > 0) {
-    const summary = LEAVE.calcMonthlySummary(year, month);
-    const pct = totalAnnual > 0 ? Math.round((summary.annualUsed / totalAnnual) * 100) : 0;
-    leaveStatsEl.innerHTML =
-      '<div class="home-stat-period">' + month + '월 현황</div>' +
-      '<div class="home-stat-row"><span class="home-stat-label">연차</span><span class="home-stat-value emerald">' + summary.annualUsed + ' / ' + totalAnnual + '일</span></div>' +
-      '<div class="home-progress-wrap"><div class="home-progress-bar" style="width:' + pct + '%"></div></div>';
-    leaveBody.style.display = '';
-  } else {
-    leaveBody.style.display = 'none';
+    const pct = Math.round((summary.annualUsed / totalAnnual) * 100);
+    addRow('연차', summary.annualUsed + ' / ' + totalAnnual + '일', 'emerald');
+    const wrap = document.createElement('div');
+    wrap.className = 'home-progress-wrap';
+    const bar = document.createElement('div');
+    bar.className = 'home-progress-bar';
+    bar.style.width = pct + '%';
+    wrap.appendChild(bar);
+    leaveStatsEl.appendChild(wrap);
+  } else if (summary.totalDays > 0) {
+    // 입사일 미설정: 사용 일수만 표시 + 안내
+    addRow('사용', summary.totalDays + '일', 'emerald');
+    const hint = document.createElement('div');
+    hint.style.cssText = 'font-size:0.7rem; color:var(--text-muted); margin-top:4px;';
+    hint.textContent = '개인정보에 입사일 등록 시 연차 한도 표시';
+    leaveStatsEl.appendChild(hint);
   }
+  if (summary.recordCount > 0) addRow('기록', summary.recordCount + '건');
+  if (summary.deduction > 0) addRow('공제', '₩' + summary.deduction.toLocaleString());
 }
 
 // 연간 연차 렌더
 function _renderHomeLeaveYear(year, totalAnnual) {
   const leaveBody = document.getElementById('homeLeaveBody');
   const leaveStatsEl = document.getElementById('homeLeaveStats');
+  const records = LEAVE.getYearRecords(year);
+  const recordCount = records.length;
+
+  if (recordCount === 0 && (!totalAnnual || totalAnnual === 0)) {
+    leaveBody.style.display = 'none';
+    return;
+  }
+  leaveBody.style.display = '';
+
+  while (leaveStatsEl.firstChild) leaveStatsEl.removeChild(leaveStatsEl.firstChild);
+  const period = document.createElement('div');
+  period.className = 'home-stat-period';
+  period.textContent = year + '년 합계';
+  leaveStatsEl.appendChild(period);
+
+  const addRow = (label, value, cls) => {
+    const row = document.createElement('div');
+    row.className = 'home-stat-row';
+    const lbl = document.createElement('span');
+    lbl.className = 'home-stat-label';
+    lbl.textContent = label;
+    const val = document.createElement('span');
+    val.className = 'home-stat-value' + (cls ? ' ' + cls : '');
+    val.textContent = value;
+    row.appendChild(lbl);
+    row.appendChild(val);
+    leaveStatsEl.appendChild(row);
+  };
 
   if (totalAnnual > 0) {
     const summary = LEAVE.calcAnnualSummary(year, totalAnnual);
     const pct = summary.usagePercent;
     const remaining = totalAnnual - summary.usedAnnual;
-    leaveStatsEl.innerHTML =
-      '<div class="home-stat-period">' + year + '년 합계</div>' +
-      '<div class="home-stat-row"><span class="home-stat-label">연차</span><span class="home-stat-value emerald">' + summary.usedAnnual + ' / ' + summary.totalAnnual + '일</span></div>' +
-      '<div class="home-stat-row"><span class="home-stat-label">잔여</span><span class="home-stat-value">' + remaining + '일</span></div>' +
-      '<div class="home-progress-wrap"><div class="home-progress-bar" style="width:' + pct + '%"></div></div>';
-    leaveBody.style.display = '';
+    addRow('연차', summary.usedAnnual + ' / ' + summary.totalAnnual + '일', 'emerald');
+    addRow('잔여', remaining + '일');
+    const wrap = document.createElement('div');
+    wrap.className = 'home-progress-wrap';
+    const bar = document.createElement('div');
+    bar.className = 'home-progress-bar';
+    bar.style.width = pct + '%';
+    wrap.appendChild(bar);
+    leaveStatsEl.appendChild(wrap);
   } else {
-    leaveBody.style.display = 'none';
+    let totalDays = 0;
+    records.forEach(r => { totalDays += (r.days || 0); });
+    if (totalDays > 0) {
+      addRow('사용', (Math.round(totalDays * 10) / 10) + '일', 'emerald');
+      const hint = document.createElement('div');
+      hint.style.cssText = 'font-size:0.7rem; color:var(--text-muted); margin-top:4px;';
+      hint.textContent = '개인정보에 입사일 등록 시 연차 한도 표시';
+      leaveStatsEl.appendChild(hint);
+    }
   }
+  if (recordCount > 0) addRow('기록', recordCount + '건');
 }
 
 // ── Newsboard 탭 전환 ──
