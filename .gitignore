@@ -26,6 +26,7 @@ credentials.md
 .vercel
 
 node_modules/
+dist/
 .gstack/
 .worktrees/
 .playwright-mcp/
