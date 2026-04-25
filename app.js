@@ -3874,3 +3874,49 @@ async function handleProfilePayslipUpload(file) {
   }
 }
 
+// ═══════════ 활성 탭 라이브 동기화 (#10 해소 + 홈 요약 자동 갱신) ═══════════
+// profile/leave/overtime/payslip 데이터가 변경되면, 현재 활성 탭의 렌더 함수를
+// 안전하게 재호출해 사용자가 페이지를 떠나지 않고도 즉시 갱신을 본다.
+(function setupLiveSyncListeners() {
+  const isActive = (name) => {
+    const el = document.getElementById('tab-' + name);
+    return !!(el && el.classList.contains('active'));
+  };
+  const safeCall = (fnName) => {
+    if (typeof window[fnName] === 'function') {
+      try { window[fnName](); } catch (e) { console.warn('[live-sync]', fnName, e); }
+    }
+  };
+
+  // 프로필 변경 → 모든 의존 탭 라이브 갱신
+  window.addEventListener('profileChanged', () => {
+    if (isActive('home')) safeCall('initHomeTab');
+    if (isActive('overtime')) safeCall('applyProfileToOvertime');
+    if (isActive('leave')) {
+      safeCall('applyProfileToLeave');
+      safeCall('initLeaveTab');
+    }
+    if (isActive('payroll')) {
+      safeCall('applyProfileToPayroll');
+      safeCall('initPayrollTab');
+    }
+  });
+
+  // 시간외 기록 변경 → 홈 요약 갱신
+  window.addEventListener('overtimeChanged', () => {
+    if (isActive('home')) safeCall('initHomeTab');
+  });
+
+  // 휴가 기록 변경 → 홈 요약 갱신
+  window.addEventListener('leaveChanged', () => {
+    if (isActive('home')) safeCall('initHomeTab');
+  });
+
+  // 명세서 데이터 변경 → 홈 (시간외 보충값) + 급여 탭 갱신
+  window.addEventListener('payslipChanged', () => {
+    if (isActive('home')) safeCall('initHomeTab');
+    if (isActive('overtime')) safeCall('initOvertimeTab');
+    if (isActive('payroll')) safeCall('initPayrollTab');
+  });
+})();
+

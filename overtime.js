@@ -540,6 +540,7 @@ const OVERTIME = {
         const all = this._loadPayslipAll();
         all[ym] = { ...data, savedAt: new Date().toISOString() };
         this._savePayslipAll(all);
+        window.dispatchEvent(new CustomEvent('payslipChanged', { detail: { ym } }));
     },
 
     getPayslipData(year, month) {
