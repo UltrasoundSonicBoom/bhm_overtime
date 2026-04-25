@@ -3874,6 +3874,13 @@ async function handleProfilePayslipUpload(file) {
   }
 }
 
+// ═══════════ 탭 fragment 백그라운드 프리페치 (Plan B 분할 후 모바일 체감 회복) ═══════════
+// requestIdleCallback 으로 idle 시 모든 탭 HTML fragment 를 미리 받아둠.
+// 이후 사용자가 탭 클릭하면 cache hit → fetch round-trip 제거 → Plan B 이전 수준 즉시 전환.
+if (typeof window.prefetchTabs === 'function') {
+  window.prefetchTabs(['home', 'leave', 'overtime', 'payroll', 'profile', 'reference', 'settings', 'feedback']);
+}
+
 // ═══════════ 활성 탭 라이브 동기화 (#10 해소 + 홈 요약 자동 갱신) ═══════════
 // profile/leave/overtime/payslip 데이터가 변경되면, 현재 활성 탭의 렌더 함수를
 // 안전하게 재호출해 사용자가 페이지를 떠나지 않고도 즉시 갱신을 본다.
