@@ -201,7 +201,7 @@
 - [x] 급여 탭 `pay-calc` 서브탭 ✅ 예상 실수령액 ₩4,582,641 정상
 - [x] 급여 탭 `pay-qa` 서브탭 (수당 Q&A) ✅ 4개 서브탭 + 수당 계산기 노출
 - [x] AppLock PIN 설정/변경/해제 + 생체 ✅ 모듈 + 함수 노출 (헤더 ⚙️ 진입). 실제 PIN 입력 plumbing 은 수동 스모크 잔여
-- [x] 백업 다운로드/복원 ✅ `downloadBackup` + `OVERTIME/LEAVE.exportData()` 정의 확인. round-trip 수동 스모크 잔여
+- [x] 백업 다운로드/복원 ✅ **2026-04-25 round-trip 자동 검증 완료** — 시드(프로필+시간외 2건+휴가 2건) → 1,894 bytes 직렬화 → localStorage 클리어 → 복원 후 7/7 필드 일치 + 손상/이미지/PDF 거부 7/7 통과. 리포트: `backup-roundtrip-audit.md`
 - [x] `chrome-extension/` ✅ manifest_v3 + popup + content/background 갖춤. unpacked 로드 수동 잔여
 - [x] `nurse_admin/` 서브앱 ✅ admin/index/my-day 구조 확인. 별도 plan 으로 다룰 것
 - [x] 모바일 뷰포트 (390×844) ✅ 5탭 가로 스크롤 0건 + 콘솔 에러 0건
