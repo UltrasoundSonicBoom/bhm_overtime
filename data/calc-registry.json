@@ -68,6 +68,8 @@
     { "name": "calcMaternityLeave", "required": true, "note": "산전후 휴가 (제38조(1)): 단태아 90 / 다태아 120 / 미숙아 100" },
     { "name": "calcMiscarriageLeave", "required": true, "note": "유산·사산 휴가 5구간 (제38조(2))" },
     { "name": "calcLeaveOfAbsencePay", "required": true, "note": "휴직자 급여 (제28조(2)): 기본+능력+조정+상여 × rate" },
+    { "name": "calcNurseSubstituteBonus", "required": true, "note": "예비간호인력 대체근무가산금 (<2022.12>): 1일당 20,000원" },
+    { "name": "calcA1CareerAllowance", "required": true, "note": "운영기능직 A1 경력수당 (<2022.01>): 연 12만 (월 1만), A1/A2 한정" },
     { "name": "calcAverageWage", "required": true, "note": "평균임금" },
     { "name": "formatNumber", "required": true, "note": "천단위 콤마" },
     { "name": "formatCurrency", "required": true, "note": "원 접미사" },

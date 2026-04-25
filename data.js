@@ -147,6 +147,12 @@ const DATA_STATIC = {
     refreshBenefit: 30000,      // 리프레시지원비 월 (2026.01~)
     selfDevAllowance: 40000,    // 자기계발별정수당 월
     specialPay5: 35000,         // 별정수당5 월
+    nurseSubstituteBonus: 20000, // 예비간호인력 대체근무가산금 1일당 (<2022.12>)
+    a1Career: {                  // 운영기능직 A1 경력 수당 (<2022.01>)
+      yearlyAmount: 120000,      // 연 12만원 (경력 1년 기준)
+      monthlyAmount: 10000,      // 월할 1만원
+      eligibleGrades: ['A1', 'A2'], // A1 정규 입사 후 A2 자동승격까지
+    },
     militaryService: 45000,     // 군복무수당 월 (2년 기준)
     onCallStandby: 10000,       // 온콜대기수당 일당
     onCallTransport: 50000,     // 온콜교통비 회당
@@ -298,6 +304,7 @@ const DATA_STATIC = {
 
       // ── 🔷 특별 ──
       { id: 'special_disaster', label: '특별휴가(재해 등)', category: 'special', isPaid: true, quota: null, usesAnnual: false, deductType: 'none', note: '재해 3일, 교통차단 등', ref: '제40조' },
+      { id: 'emotional_labor', label: '감정노동 특별휴가', category: 'special', isPaid: true, quota: 2, usesAnnual: false, deductType: 'none', note: '환자/보호자 폭언·폭행 피해 시 2일 이내', ref: '제31조의2 <2020.10>' },
       { id: 'military_reserve', label: '예비군/민방위', category: 'special', isPaid: true, quota: null, usesAnnual: false, deductType: 'none', note: '해당일 유급, 야간훈련 시 익일 휴가', ref: '제42조' },
       { id: 'long_service', label: '장기재직 휴가', category: 'special', isPaid: true, quota: null, usesAnnual: false, deductType: 'none', note: '10년↑ 5일, 20년↑ 7일 (2026시행)', ref: '2025.10단협' },
 
@@ -416,6 +423,9 @@ const DATA_STATIC = {
     { category: '휴가', q: '유산·사산 휴가는 며칠?', a: '주수별 5구간 (제38조(2)):\n• 28주 이상: 90일\n• 22~27주: 60일\n• 16~21주: 30일\n• 12~15주: 10일\n• 11주 이하: 5일\n\n계산기: CALC.calcMiscarriageLeave(weeks)', ref: '제38조(2)' },
     { category: '휴가', q: '질병/공상 휴직 시 급여는?', a: '(기본급 + 능력급 + 조정급 + 상여금) × 70% 지급 (제28조(2))\n\n계산기: CALC.calcLeaveOfAbsencePay({monthlyBase, ability, adjust, bonus}, "sick")\n\n예: 기본 200만 + 능력 50만 + 조정 10만 + 상여 20만 = 280만 → 70% = 196만원', ref: '제28조(2)' },
     { category: '휴가', q: '장기재직휴가는?', a: '근속연수 기반 자동 부여 (<2025.10> 단협, 2026 시행):\n• 10~19년: 5일\n• 20년 이상: 7일\n\n프로필 입사일 등록 시 휴가 탭 [장기재직 휴가] 항목에 자동 표시', ref: '<2025.10> 단협' },
+    { category: '휴가', q: '환자/보호자에게 폭언·폭행 당하면?', a: '제31조의2 감정노동자 특별휴가 2일 이내 부여 (<2020.10> 신설):\n• 휴가 탭에서 [감정노동 특별휴가] 선택\n• 연 2일 한도 (유급)\n• 사용자 신청 → 부서장 승인 후 부여', ref: '제31조의2' },
+    { category: '수당', q: '예비간호인력 대체근무 가산금?', a: '<2022.12> 별도합의: 대체근무 1일당 20,000원\n\n계산기: CALC.calcNurseSubstituteBonus(days)\n예: 5일 대체 → 100,000원', ref: '<2022.12>' },
+    { category: '수당', q: 'A1 경력수당이 뭔가요?', a: '<2022.01> 별도합의: 운영기능직 A1·A2 등급 한정 경력 수당\n• 경력 1년 기준 연 12만원 (월 1만원)\n• 1년 미만은 월할\n• A2 자동승격 후 소멸\n\n계산기: CALC.calcA1CareerAllowance(grade, years)', ref: '<2022.01>' },
     { category: '휴가', q: '병가는 최대 며칠?', a: '• 연 통산 2개월 (60일)\n• 공무상 질병/부상: 6개월 연장 가능\n• 진단서 제출 필요', ref: '복무규정 제30조' },
     { category: '휴가', q: '생리휴가는?', a: '• 월 1일 (무급)\n• 기본급 일액의 9/10 공제 (2026.01~ 시행)\n• 즉 하루 쉬면 기본급 일액의 10% 만 지급', ref: '제37조' },
     { category: '휴가', q: '난임 치료 휴가는?', a: '• 연간 6일\n• 최초 2일 유급, 나머지 무급', ref: '제40조 제6호' },
