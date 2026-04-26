@@ -9,7 +9,12 @@
 // 레거시 build.mjs 는 build:legacy 스크립트로 백업 보존.
 
 import { defineConfig } from 'vite';
-import { resolve } from 'path';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+// Phase 2-B 에서 package.json "type": "module" 로 전환 → __dirname 미정의.
+// fileURLToPath(import.meta.url) 패턴은 CJS/ESM 양쪽 모두에서 안전.
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   // root 는 프로젝트 루트 (HTML 들이 root 에 있음)
