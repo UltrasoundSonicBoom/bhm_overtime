@@ -17,8 +17,7 @@
     "check:paytable": "node scripts/check-paytable.cjs",
     "dev": "vite",
     "preview": "vite preview",
-    "build": "vite build",
-    "build:legacy": "node scripts/build.mjs"
+    "build": "vite build"
   },
   "repository": {
     "type": "git",

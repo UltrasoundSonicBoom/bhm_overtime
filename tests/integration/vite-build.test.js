@@ -50,27 +50,10 @@ describe('Vite build (Phase 2-A)', () => {
   });
 
   // ── Vite 사용 검증 (build script regression guard) ──
-  it('package.json: build = vite build (legacy 회귀 방지)', () => {
+  it('package.json: build = vite build (Phase 2-H — legacy build.mjs 폐기)', () => {
     const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
     expect(pkg.scripts.build).toBe('vite build');
-    expect(pkg.scripts['build:legacy']).toBe('node scripts/build.mjs');
-  });
-
-  // ── 루트 IIFE .js 가 모두 dist/assets 에 hash 처리됐는지 ──
-  // legacy-iife-scripts plugin 이 하는 일 — index.html 안 <script src> 가
-  // dist/assets/[name]-[hash].js 로 rewrite 되어야 함.
-  it('루트 IIFE .js: app.js 는 dist/assets/app-[hash].js 로 hash 처리', () => {
-    const assets = readdirSync(join(DIST, 'assets'));
-    const appJs = assets.find(f => /^app-[A-Za-z0-9]{8,}\.js$/.test(f));
-    expect(appJs, 'expected dist/assets/app-[hash].js (legacy-iife-scripts plugin)').toBeDefined();
-    const dataJs = assets.find(f => /^data-[A-Za-z0-9]{8,}\.js$/.test(f));
-    expect(dataJs, 'expected dist/assets/data-[hash].js').toBeDefined();
-  });
-
-  it('index.html: <script src> 가 /assets/ hash 경로로 rewrite', () => {
-    const html = readFileSync(join(DIST, 'index.html'), 'utf8');
-    expect(html).toMatch(/<script[^>]*src=["']\/assets\/app-[A-Za-z0-9]{8,}\.js["']/);
-    expect(html).toMatch(/<script[^>]*src=["']\/assets\/data-[A-Za-z0-9]{8,}\.js["']/);
+    expect(pkg.scripts['build:legacy']).toBeUndefined();
   });
 
   // ── PNG 는 public/ 에서 hash 없이 mirror (manifest.json 호환) ──
@@ -79,13 +62,19 @@ describe('Vite build (Phase 2-A)', () => {
     expect(existsSync(join(DIST, 'snuhmatecircle.png'))).toBe(true);
   });
 
-  // ── Phase 2-B 진입 신호 (현재는 미통과 — IIFE 의존) ──
-  // 모든 .js 가 ESM 으로 변환되면 Vite multi-page input 의 entry chunk
-  // (assets/index-[hash].js) 가 생성되어 이 테스트가 PASS. Phase 2-B 완료
-  // 시점의 회귀 가드.
-  it.skip('[Phase 2-B 후 enable] Vite multi-page entry chunk: assets/index-[hash].js', () => {
+  // ── Vite multi-page entry chunk: assets/index-[hash].js (Phase 2-G+ 활성화) ──
+  it('Vite multi-page entry chunk: assets/index-[hash].js + 4 추가 entry', () => {
     const assets = readdirSync(join(DIST, 'assets'));
     const indexEntry = assets.find(f => /^index-[A-Za-z0-9]{8,}\.js$/.test(f));
-    expect(indexEntry, 'expected assets/index-[hash].js (Vite entry chunk)').toBeDefined();
+    expect(indexEntry, 'expected assets/index-[hash].js').toBeDefined();
+    const regulationEntry = assets.find(f => /^regulation-[A-Za-z0-9]{8,}\.js$/.test(f));
+    expect(regulationEntry).toBeDefined();
+    const retirementEntry = assets.find(f => /^retirement-[A-Za-z0-9]{8,}\.js$/.test(f));
+    expect(retirementEntry).toBeDefined();
+  });
+
+  it('index.html: <script type=module src=/assets/index-[hash].js>', () => {
+    const html = readFileSync(join(DIST, 'index.html'), 'utf8');
+    expect(html).toMatch(/<script[^>]*type=["']module["'][^>]*src=["']\/?assets\/index-[A-Za-z0-9]{8,}\.js["']/);
   });
 });
