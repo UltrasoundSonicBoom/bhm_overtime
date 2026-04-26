@@ -55,10 +55,10 @@ for (const f of rootFiles) {
 console.log(`[build] hashed ${Object.keys(hashMap).length} files → dist/assets/`);
 console.log(`[build] copied root static (images/md/json) as-is`);
 
-// ── 3. HTML 처리 (src/href 치환) ──
-const HTMLS = ['index.html', 'regulation.html', 'retirement.html'];
+// ── 3. HTML 처리 (root 의 모든 .html 자동 — src/href 치환) ──
+// onboarding/dashboard/tutorial/terms/privacy/schedule_suite 등 누락 방지
+const HTMLS = readdirSync(ROOT).filter(f => f.endsWith('.html') && statSync(join(ROOT, f)).isFile());
 for (const html of HTMLS) {
-  if (!existsSync(join(ROOT, html))) continue;
   let src = readFileSync(join(ROOT, html), 'utf8');
   for (const [orig, hashed] of Object.entries(hashMap)) {
     // src="X" / href="X" / src='X' / href='X' (절대/상대 경로 모두 매칭)
@@ -67,10 +67,10 @@ for (const html of HTMLS) {
   }
   writeFileSync(join(DIST, html), src);
 }
-console.log(`[build] processed ${HTMLS.length} HTML files`);
+console.log(`[build] processed ${HTMLS.length} HTML files: ${HTMLS.join(', ')}`);
 
-// ── 4. 디렉토리 통째 복사 (data/, tabs/, archive/ 등 — hash 미적용) ──
-const COPY_DIRS = ['data', 'tabs', 'icons'];
+// ── 4. 디렉토리 통째 복사 (data/, tabs/ 및 서브앱 — hash 미적용) ──
+const COPY_DIRS = ['data', 'tabs', 'icons', 'nurse_admin', 'admin', 'content', 'ops', 'shorts-studio', 'chrome-extension'];
 function copyDir(srcDir, destDir) {
   if (!existsSync(srcDir)) return;
   mkdirSync(destDir, { recursive: true });
