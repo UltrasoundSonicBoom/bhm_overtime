@@ -1,8 +1,10 @@
 // ============================================
 // 병원 HR 종합 시스템 - 프로필 모듈
 // ============================================
+import { CALC } from './calculators.js';
+import { DATA } from './data.js';
 
-const PROFILE = {
+export const PROFILE = {
     get STORAGE_KEY() {
         return window.getUserStorageKey ? window.getUserStorageKey('bhm_hr_profile') : 'bhm_hr_profile';
     },
@@ -228,7 +230,7 @@ const PROFILE = {
     }
 };
 
-// Node (Vitest) 환경에서 require 가능하도록 CommonJS export
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { PROFILE };
+// 호환층 — IIFE 모듈 (Layer 4 등) 이 아직 window.PROFILE 사용
+if (typeof window !== 'undefined') {
+  window.PROFILE = PROFILE;
 }

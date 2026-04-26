@@ -1,8 +1,13 @@
 // ============================================
 // 병원 HR 종합 시스템 - 급여 계산 모듈
 // ============================================
+import { CALC } from './calculators.js';
+import { DATA } from './data.js';
+import { PROFILE } from './profile.js';
+import { OVERTIME } from './overtime.js';
+import { LEAVE } from './leave.js';
 
-const PAYROLL = {
+export const PAYROLL = {
   // ── 카테고리 정의 ──
   categories: [
     { id: 'overtime', label: '시간외·수당', icon: '⏰' },
@@ -1247,3 +1252,8 @@ const PAYROLL = {
     });
   }
 };
+
+// 호환층 — IIFE 모듈 + inline onclick="PAYROLL.X()" 가 window.PAYROLL 사용
+if (typeof window !== 'undefined') {
+  window.PAYROLL = PAYROLL;
+}

@@ -3,8 +3,11 @@
 // CRUD + 잔여 연차 추적 + 급여 영향 계산
 // data.js leaveQuotas 기반 동적 유형 관리
 // ============================================
+import { CALC } from './calculators.js';
+import { DATA } from './data.js';
+import { PROFILE } from './profile.js';
 
-const LEAVE = {
+export const LEAVE = {
     // 로컬 단독 저장. auth 독립이므로 namespace 없이 단일 키 사용.
     STORAGE_KEY: 'leaveRecords',
 
@@ -516,3 +519,8 @@ const LEAVE = {
         return migrated;
     },
 };
+
+// 호환층 — IIFE 모듈이 window.LEAVE 사용
+if (typeof window !== 'undefined') {
+  window.LEAVE = LEAVE;
+}

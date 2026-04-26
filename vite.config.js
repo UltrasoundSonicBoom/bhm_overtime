@@ -36,15 +36,18 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 //
 // ESM 판정: 명시 allowlist (ESM_MODULES). 주석/문자열의 'import' 키워드 false-positive 회피.
 //
-// Phase 2-B Layer 0+1: data.js, regulation-constants.js, shared-utils.js, calculators.js,
-//                      holidays.js, retirement-engine.js
-// Phase 2-D 진입 시: profile.js, overtime.js, leave.js, payroll.js 추가
-// Phase 2-E 진입 시: appLock.js 추가
+// Phase 2-B+C Layer 0+1: data, regulation-constants, shared-utils, calculators,
+//                          holidays, retirement-engine
+// Phase 2-D Layer 2: profile, overtime, leave, payroll
+// Phase 2-E 진입 시: appLock 추가
 // Phase 2-F 진입 시: shared-layout / tab-loader / *-tab.js / ... 추가
-// Phase 2-G 진입 시: app.js / regulation.js / retirement.js entry — 이 시점에 plugin 폐기
+// Phase 2-G 진입 시: app / regulation / retirement entry — 이 시점에 plugin 폐기
 const ESM_MODULES = new Set([
+  // Layer 0+1
   'data.js', 'regulation-constants.js', 'shared-utils.js',
   'calculators.js', 'holidays.js', 'retirement-engine.js',
+  // Layer 2 (Phase 2-D)
+  'profile.js', 'overtime.js', 'leave.js', 'payroll.js',
 ]);
 
 function legacyIifeScripts() {

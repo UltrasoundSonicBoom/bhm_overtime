@@ -2,8 +2,10 @@
 // 시간외·온콜 기록 관리 모듈
 // CRUD + 자동 요율 계산 + 월간 통계
 // ============================================
+import { CALC } from './calculators.js';
+import { DATA } from './data.js';
 
-const OVERTIME = {
+export const OVERTIME = {
     get STORAGE_KEY() {
         return window.getUserStorageKey ? window.getUserStorageKey('overtimeRecords') : 'overtimeRecords';
     },
@@ -654,3 +656,8 @@ const OVERTIME = {
         };
     },
 };
+
+// 호환층 — IIFE 모듈이 window.OVERTIME 사용
+if (typeof window !== 'undefined') {
+  window.OVERTIME = OVERTIME;
+}
