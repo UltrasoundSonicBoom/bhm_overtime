@@ -1,16 +1,20 @@
 #!/usr/bin/env node
-// 자체 빌드 (Vite 대안) — 정적 자산에 content-hash 자동 부여
+// 자체 빌드 (Vite rollback) — 정적 자산에 content-hash 자동 부여
 //
-// 우리 47개 .js 는 IIFE/window 전역 의존 → ESM 마이그레이션 없이는 Vite 가
-// 처리 못 함. 핵심 가치 (auto-hash → immutable cache 안전) 만 직접 구현.
+// 역할: Phase 2-A 이후 `npm run build:legacy` 백업. Vite 가 깨지거나
+//       ESM 마이그레이션이 회귀하면 이 스크립트로 복귀 가능.
+//
+// 주의 (Phase 2-A 후 변경):
+//   - sw.js / manifest.json / data/ / tabs/ / icons / 서브앱은 모두 public/ 하위로 이동.
+//   - 이 스크립트는 root + public/ 양쪽 모두를 source 로 처리 (ROOT 가 우선).
 //
 // 동작:
 //   1) HTML 안 <script src=> / <link href=> 매칭
 //   2) 각 정적 파일 sha256 hash 8자리 부여 → assets/[name]-[hash].[ext]
 //   3) HTML 의 src/href 를 hash 경로로 치환
-//   4) data/, tabs/, 기타 디렉토리는 그대로 복사 (lazy load 경로 보존)
+//   4) data/, tabs/, 기타 디렉토리는 public/ 에서 dist/ 로 그대로 복사 (lazy load 경로 보존)
 //
-// 실행: npm run build → dist/ 출력
+// 실행: npm run build:legacy → dist/ 출력
 //
 // 의존성 0 (Node 표준 fs/path/crypto 만)
 
@@ -20,6 +24,7 @@ import { join, dirname, extname, basename } from 'path';
 import { fileURLToPath } from 'url';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
+const PUBLIC = join(ROOT, 'public');   // Phase 2-A 후: 정적 자산 source
 const DIST = join(ROOT, 'dist');
 const ASSETS = join(DIST, 'assets');
 
@@ -69,8 +74,9 @@ for (const html of HTMLS) {
 }
 console.log(`[build] processed ${HTMLS.length} HTML files: ${HTMLS.join(', ')}`);
 
-// ── 4. 디렉토리 통째 복사 (data/, tabs/ 및 서브앱 — hash 미적용) ──
-const COPY_DIRS = ['data', 'tabs', 'icons', 'nurse_admin', 'admin', 'content', 'ops', 'shorts-studio', 'chrome-extension'];
+// ── 4. 디렉토리 통째 복사 (public/* → dist/) ──
+// Phase 2-A 후: data / tabs / icons / 서브앱은 모두 public/ 하위.
+// public/ 안 모든 항목을 dist/ 로 그대로 mirror — Vite publicDir 동작과 일치.
 function copyDir(srcDir, destDir) {
   if (!existsSync(srcDir)) return;
   mkdirSync(destDir, { recursive: true });
@@ -81,17 +87,7 @@ function copyDir(srcDir, destDir) {
     else copyFileSync(sp, dp);
   }
 }
-for (const d of COPY_DIRS) copyDir(join(ROOT, d), join(DIST, d));
-console.log(`[build] copied dirs: ${COPY_DIRS.join(', ')}`);
-
-// ── 5. 기타 root 정적 파일 (hash 미적용) ──
-// sw.js 는 반드시 root 경로 (/sw.js) — scope 가 origin 전체 적용. hash 부여 X.
-const PLAIN_FILES = ['manifest.json', 'robots.txt', 'sitemap.xml', '.well-known', 'sw.js'];
-for (const f of PLAIN_FILES) {
-  const sp = join(ROOT, f);
-  if (existsSync(sp) && statSync(sp).isFile()) {
-    copyFileSync(sp, join(DIST, f));
-  }
-}
+copyDir(PUBLIC, DIST);
+console.log(`[build] mirrored public/ → dist/`);
 
 console.log('[build] ✅ done. dist/ ready.');

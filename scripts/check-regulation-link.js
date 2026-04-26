@@ -13,8 +13,9 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
-const REGISTRY_PATH = path.join(ROOT, 'data', 'calc-registry.json');
-const REGULATION_PATH = path.join(ROOT, 'data', 'full_union_regulation_2026.md');
+// Phase 2-A 후: 데이터 자산은 public/ 하위 (Vite publicDir).
+const REGISTRY_PATH = path.join(ROOT, 'public', 'data', 'calc-registry.json');
+const REGULATION_PATH = path.join(ROOT, 'public', 'data', 'full_union_regulation_2026.md');
 const REPORT_PATH = path.join(ROOT, 'docs', 'architecture', 'registry-link-report.md');
 
 function readJson(p) {

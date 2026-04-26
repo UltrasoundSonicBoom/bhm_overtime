@@ -1,6 +1,6 @@
 // Plan E: calc-registry.json ↔ DATA 드리프트 감지
 // 단협 개정 시 세 곳 동기화 안 되면 이 테스트가 실패한다:
-//   1) data/calc-registry.json (본 assert 기준)
+//   1) public/data/calc-registry.json (본 assert 기준 — Phase 2-A 후 public/ 이동)
 //   2) data.js DATA_STATIC (실제 런타임 값)
 //   3) hospital_guidelines_2026.md (사람 가독용 요약)
 import { describe, it, expect } from 'vitest';
@@ -8,7 +8,7 @@ import fs from 'fs';
 import path from 'path';
 
 const registry = JSON.parse(
-  fs.readFileSync(path.resolve(__dirname, '../../data/calc-registry.json'), 'utf8')
+  fs.readFileSync(path.resolve(__dirname, '../../public/data/calc-registry.json'), 'utf8')
 );
 
 // data.js 전역 DATA 로드 (Node 호환 CommonJS export 이용)

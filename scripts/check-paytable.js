@@ -13,7 +13,8 @@ const vm = require('vm');
 
 const ROOT = path.resolve(__dirname, '..');
 const DATA_PATH = path.join(ROOT, 'data.js');
-const REG_PATH = path.join(ROOT, 'data', 'full_union_regulation_2026.md');
+// Phase 2-A 후: 규정 본문은 public/data/ 하위 (Vite publicDir).
+const REG_PATH = path.join(ROOT, 'public', 'data', 'full_union_regulation_2026.md');
 const REPORT_PATH = path.join(ROOT, 'docs', 'architecture', 'paytable-link-report.md');
 
 // ── data.js DATA_STATIC 로드 (브라우저 전역 stub) ──

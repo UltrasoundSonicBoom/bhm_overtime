@@ -1,9 +1,13 @@
 // Vite 빌드 결과 검증 — Phase 2-A 진입 기준 충족 여부
 import { describe, it, expect, beforeAll } from 'vitest';
 import { existsSync, readFileSync, readdirSync } from 'fs';
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { spawnSync } from 'child_process';
 
+// Phase 2-B 에서 package.json "type": "module" 전환 시 __dirname 미정의.
+// fileURLToPath(import.meta.url) 패턴으로 CJS/ESM 양쪽 안전.
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '../..');
 const DIST = join(ROOT, 'dist');
 
