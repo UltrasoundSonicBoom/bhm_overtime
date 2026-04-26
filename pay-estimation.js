@@ -871,3 +871,6 @@ function _refreshPayEstIfActive() {
 window.addEventListener('overtimeChanged', _refreshPayEstIfActive);
 window.addEventListener('leaveChanged',    _refreshPayEstIfActive);
 window.addEventListener('profileChanged',  _refreshPayEstIfActive);
+
+// Phase 2-F: ESM marker — 파일을 ES module 로 표시 (side-effect IIFE 보존)
+export {};

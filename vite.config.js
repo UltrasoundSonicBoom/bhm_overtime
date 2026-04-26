@@ -50,6 +50,12 @@ const ESM_MODULES = new Set([
   'profile.js', 'overtime.js', 'leave.js', 'payroll.js',
   // Layer 3 (Phase 2-E)
   'appLock.js',
+  // Layer 4 UI (Phase 2-F)
+  'shared-layout.js', 'tab-loader.js', 'settings-ui.js', 'inline-ui-helpers.js',
+  'share-utils.js', 'migration-overlay.js', 'orphan-recovery.js', 'insight-engine.js',
+  'job-templates.js', 'sentry.js', 'utils-lazy.js', 'config.js',
+  'salary-parser.js', 'resume.js', 'work-history.js',
+  'profile-tab.js', 'leave-tab.js', 'payslip-tab.js', 'pay-estimation.js', 'payroll-views.js',
 ]);
 
 function legacyIifeScripts() {

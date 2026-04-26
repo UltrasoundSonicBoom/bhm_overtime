@@ -96,3 +96,6 @@
   // SDK가 init 되면 window.onerror / unhandledrejection 자동 후킹.
   // 명시적 fallback은 불필요. 단, DSN 미설정 시 조용히 무시.
 })();
+
+// Phase 2-F: ESM marker — 파일을 ES module 로 표시 (side-effect IIFE 보존)
+export {};
