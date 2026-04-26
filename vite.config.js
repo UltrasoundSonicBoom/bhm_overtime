@@ -48,6 +48,8 @@ const ESM_MODULES = new Set([
   'calculators.js', 'holidays.js', 'retirement-engine.js',
   // Layer 2 (Phase 2-D)
   'profile.js', 'overtime.js', 'leave.js', 'payroll.js',
+  // Layer 3 (Phase 2-E)
+  'appLock.js',
 ]);
 
 function legacyIifeScripts() {

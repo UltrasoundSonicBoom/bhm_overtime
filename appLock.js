@@ -17,7 +17,7 @@
 //   window.AppLock.BiometricLock.*            — 생체인증 서브모듈
 // ============================================================
 
-window.AppLock = (function () {
+export const AppLock = (function () {
   'use strict';
 
   // ── 상수 ──
@@ -640,3 +640,8 @@ window.AppLock = (function () {
     BiometricLock: BiometricLock
   };
 })();
+
+// 호환층 — index.html / regulation.html 등 inline script + IIFE 모듈이 window.AppLock 사용
+if (typeof window !== 'undefined') {
+  window.AppLock = AppLock;
+}
