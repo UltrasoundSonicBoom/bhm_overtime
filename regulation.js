@@ -1,12 +1,21 @@
 /* ============================================
-   regulation.js — 규정/상담 페이지 로직 v3
+   regulation.js — 규정/상담 페이지 로직 v3 — regulation.html 단일 ESM entry
    2-tab structure: 찾아보기 (FAQ 통합) / 물어보기
+
+   Phase 2-G: regulation.html 의 8 script 통합 → 단일 type=module entry.
 
    Security note: All innerHTML usage in this file renders content from
    DATA.handbook and DATA.faq — trusted, hardcoded internal data sources
    defined in data.js. No user-supplied content is rendered as HTML.
    This matches the existing pattern used in app.js.
    ============================================ */
+import './appLock.js';
+import './shared-layout.js';
+import './shared-utils.js';
+import './data.js';
+import './profile.js';
+import './calculators.js';
+// pdf.js는 CDN — type=module HTML 에 명시 외부 로드 유지
 
 // ── handbook 조항 제목 → 계산기 매핑 (FAQ 중간 레이어 제거) ──
 var ARTICLE_CALCULATORS = {

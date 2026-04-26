@@ -108,8 +108,6 @@
   <!-- ═══════════ Header & Footer (shared-layout.js에서 렌더) ═══════════ -->
   <header id="sharedHeader"></header>
   <nav id="sharedFooter"></nav>
-  <script src="shared-layout.js" defer></script>
-  <script src="tab-loader.js" defer></script>
 
   <main class="main">
 
@@ -150,40 +148,14 @@
 
 
   <!-- xlsx.js / pdf.js는 utils-lazy.js를 통해 필요 시점에만 로드 (홈 진입 시 1.1MB 다운로드 회피) -->
-  <script src="shared-utils.js" defer></script>
-  <script src="utils-lazy.js" defer></script>
 
-  <script src="config.js" defer></script>
-  <script src="appLock.js" defer></script>
-  <script src="sentry.js" defer></script>
-  <script src="data.js" defer></script>
-  <script src="calculators.js" defer></script>
-  <script src="holidays.js" defer></script>
-  <script src="profile.js" defer></script>
-  <script src="overtime.js" defer></script>
-  <script src="leave.js" defer></script>
-  <script src="payroll.js" defer></script>
 
-  <script src="salary-parser.js" defer></script>
 
-  <script src="payroll-views.js" defer></script>
-  <script src="resume.js" defer></script>
-  <script src="job-templates.js" defer></script>
-  <script src="profile-tab.js" defer></script>
-  <script src="work-history.js" defer></script>
-  <script src="pay-estimation.js" defer></script>
-  <script src="payslip-tab.js" defer></script>
-  <script src="leave-tab.js" defer></script>
-  <script src="app.js" defer></script>
-  <script src="settings-ui.js" defer></script>
-  <script src="inline-ui-helpers.js" defer></script>
+  <script type="module" src="app.js"></script>
   <!-- Toast notification -->
   <div id="otToast" class="ot-toast" style="display:none;"></div>
 
 
-  <script src="share-utils.js" defer></script>
-  <script src="migration-overlay.js" defer></script>
-  <script src="orphan-recovery.js" defer></script>
   <script>var d = document, w = "https://tally.so/widgets/embed.js", v = function () { "undefined" != typeof Tally ? Tally.loadEmbeds() : d.querySelectorAll("iframe[data-tally-src]:not([src])").forEach((function (e) { e.src = e.dataset.tallySrc })) }; if ("undefined" != typeof Tally) v(); else if (d.querySelector('script[src="' + w + '"]') == null) { var s = d.createElement("script"); s.src = w, s.onload = v, s.onerror = v, d.body.appendChild(s); }</script>
 
   <style>

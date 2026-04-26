@@ -984,8 +984,7 @@
 
   </div><!-- /rt-page -->
 
-  <script src="retirement-engine.js" defer></script>
-  <script src="retirement.js" defer></script>
+  <script type="module" src="retirement.js"></script>
   <!-- Service Worker (offline-first + 안전 갱신) -->
   <script>if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(function(e){console.warn('[SW] register failed', e)});</script>
 </body>

@@ -56,6 +56,14 @@ const ESM_MODULES = new Set([
   'job-templates.js', 'sentry.js', 'utils-lazy.js', 'config.js',
   'salary-parser.js', 'resume.js', 'work-history.js',
   'profile-tab.js', 'leave-tab.js', 'payslip-tab.js', 'pay-estimation.js', 'payroll-views.js',
+  // Layer 5 Entry (Phase 2-G) — 5 HTML 의 단일 type=module entry
+  'app.js', 'regulation.js', 'retirement.js', 'dashboard.js', 'schedule_suite.js',
+]);
+
+// Phase 2-G 후: HTML 이 type=module entry 로 통합되어 Vite 가 ESM graph 직접 처리.
+// plugin 은 entry .js 들을 SKIP — 중복 IIFE bundle 방지 + dist/assets 청결.
+const ENTRY_FILES = new Set([
+  'app.js', 'regulation.js', 'retirement.js', 'dashboard.js', 'schedule_suite.js',
 ]);
 
 function legacyIifeScripts() {
@@ -80,6 +88,8 @@ function legacyIifeScripts() {
 
       for (const f of readdirSync(ROOT)) {
         if (!HASHABLE.test(f) || HASH_EXCLUDE.has(f)) continue;
+        // Phase 2-G: entry .js 는 Vite type=module 처리 — plugin SKIP
+        if (ENTRY_FILES.has(f)) continue;
         const sp = resolve(ROOT, f);
         if (!statSync(sp).isFile()) continue;
 

@@ -1,6 +1,9 @@
 // ══════════════════════════════════════════════════════════════
-//  retirement.js — UI 오케스트레이션 + 렌더링
+//  retirement.js — UI 오케스트레이션 + 렌더링 — retirement.html 단일 entry
 // ══════════════════════════════════════════════════════════════
+// Phase 2-G: retirement.html 의 2 script 통합 → 단일 type=module entry.
+import './retirement-engine.js';
+
 (function () {
   'use strict';
 

@@ -871,8 +871,6 @@
   <!-- ═══════════ Header & Footer (shared-layout.js에서 렌더) ═══════════ -->
   <header id="sharedHeader"></header>
   <nav id="sharedFooter"></nav>
-  <script src="appLock.js" defer></script>
-  <script src="shared-layout.js" defer></script>
 
   <nav class="reg-bookmark-tabs" id="regSubTabs" style="display:none;">
     <button class="reg-bookmark-tab active" data-subtab="browse">규정</button>
@@ -941,11 +939,7 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer></script>
-  <script src="shared-utils.js" defer></script>
-  <script src="data.js" defer></script>
-  <script src="profile.js" defer></script>
-  <script src="calculators.js" defer></script>
-  <script src="regulation.js" defer></script>
+  <script type="module" src="regulation.js"></script>
   <style>
     #ch-plugin-script-iframe { max-width: 500px !important; }
   </style>

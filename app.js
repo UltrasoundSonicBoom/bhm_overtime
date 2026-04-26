@@ -1,6 +1,46 @@
 // ============================================
-// 병원 HR 종합 시스템 - 앱 로직
+// 병원 HR 종합 시스템 - 앱 로직 — index.html 단일 ESM entry
 // ============================================
+//
+// Phase 2-G 단일 entry: 모든 Layer 0~4 모듈 import (HTML 의 47 script 태그 통합).
+// import 순서 = 기존 HTML script 순서 (window.X 호환층 부작용 보존).
+//
+// Layer 4 UI / 기반
+import './shared-layout.js';
+import './tab-loader.js';
+import './shared-utils.js';
+import './utils-lazy.js';
+import './config.js';
+// Layer 3 + telemetry
+import './appLock.js';
+import './sentry.js';
+// Layer 0 + 1
+import './data.js';
+import './calculators.js';
+import './holidays.js';
+// Layer 2 State
+import './profile.js';
+import './overtime.js';
+import './leave.js';
+import './payroll.js';
+// Layer 4 UI (큰 모듈)
+import './salary-parser.js';
+import './payroll-views.js';
+import './resume.js';
+import './job-templates.js';
+import './profile-tab.js';
+import './work-history.js';
+import './pay-estimation.js';
+import './payslip-tab.js';
+import './leave-tab.js';
+// app.js 이후 로드되던 것들도 통합 (HTML <script src=...> 24~28번)
+import './settings-ui.js';
+import './inline-ui-helpers.js';
+import './share-utils.js';
+import './migration-overlay.js';
+import './orphan-recovery.js';
+
+// ── 본문 시작 ──
 
 // ── HTML 이스케이프 (XSS 방지) ──
 // innerHTML에 사용자 입력값을 삽입할 때 반드시 이 함수를 거칠 것

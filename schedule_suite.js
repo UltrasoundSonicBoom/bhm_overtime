@@ -1,3 +1,6 @@
+// schedule_suite.html 단일 ESM entry (Phase 2-G)
+import './shared-utils.js';
+
 const REPORT_PATH = './data/schedule_suite_report_2026-05.json';
 
 const state = {
