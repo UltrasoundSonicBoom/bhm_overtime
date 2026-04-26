@@ -1,10 +1,8 @@
 // Plan M Phase 3 (잔여) — M3-4/5/6 단위 테스트
 // 실행: npm run test:unit -- plan-m-phase-3
 import { describe, it, expect } from 'vitest';
-
-const { DATA } = require('../../data.js');
-globalThis.DATA = DATA;
-const { CALC } = require('../../calculators.js');
+import { DATA } from '../../data.js';
+import { CALC } from '../../calculators.js';
 
 describe('M3-4 예비간호인력 대체근무가산금 (<2022.12>)', () => {
   it('DATA.allowances.nurseSubstituteBonus = 20,000원/일', () => {

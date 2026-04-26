@@ -1,10 +1,8 @@
 // Plan M Phase 1 — 신규 계산기 단위 테스트
 // 실행: npm run test:unit -- plan-m-phase-1
 import { describe, it, expect } from 'vitest';
-
-const { DATA } = require('../../data.js');
-globalThis.DATA = DATA;
-const { CALC } = require('../../calculators.js');
+import { DATA } from '../../data.js';
+import { CALC } from '../../calculators.js';
 
 // overtime.js 런타임 경로는 window/브라우저 의존 (window.getUserStorageKey, 전역 _OT_*)
 // 이라 CommonJS require 로는 로드 불가 — 단위 테스트는 calculators.js CALC 경로로만 커버.

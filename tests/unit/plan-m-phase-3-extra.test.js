@@ -1,9 +1,7 @@
 // Plan M M3-3~10 잔여 항목 단위 테스트
 import { describe, it, expect } from 'vitest';
-
-const { DATA } = require('../../data.js');
-globalThis.DATA = DATA;
-const { CALC } = require('../../calculators.js');
+import { DATA } from '../../data.js';
+import { CALC } from '../../calculators.js';
 
 describe('M3-3 연차보전수당 (제36조(2))', () => {
   it('annualLeaveCompensationRef 9행 정의', () => {

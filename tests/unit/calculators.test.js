@@ -2,11 +2,9 @@
 // 실행: npm run test:unit
 import { describe, it, expect, beforeAll } from 'vitest';
 
-// data.js는 브라우저 전역을 설정하므로, 테스트에서 DATA를 global에 세팅.
-// calculators.js는 호출 시점에 DATA.*를 참조함 (로드 시점은 아님).
-const { DATA } = require('../../data.js');
-globalThis.DATA = DATA;
-const { CALC } = require('../../calculators.js');
+// Phase 2-B: data.js + calculators.js 모두 ESM (Layer 0+1 통합 마이그레이션).
+import { DATA } from '../../data.js';
+import { CALC } from '../../calculators.js';
 
 describe('CALC.calcOvertimePay', () => {
   // hourlyRate=10000, 연장 1h (150%) = 15000

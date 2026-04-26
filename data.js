@@ -4,7 +4,7 @@
 // ============================================
 
 // Static fallback — API 실패 시에도 기존 기능 100% 동작
-const DATA_STATIC = {
+export const DATA_STATIC = {
   // ── 직종 → 보수표 매핑 ──
   jobTypes: {
     '사무직': { payTable: '일반직', label: '사무직 (일반직 보수표)' },
@@ -704,7 +704,8 @@ const DATA_STATIC = {
 };
 
 // DATA 객체: 초기값은 static, API 로드 성공 시 덮어쓰기
-let DATA = DATA_STATIC;
+// ESM `export let` — import 한 모듈은 live binding 으로 갱신값 자동 반영.
+export let DATA = DATA_STATIC;
 let dataLoadPromise = null;
 
 const DATA_BUNDLE_CACHE_KEY = 'data_bundle_cache_2026-04';
@@ -731,7 +732,7 @@ function writeStorageJSON(key, value) {
 }
 
 // API에서 최신 데이터 로드 (비동기, 실패 시 static fallback 유지)
-async function loadDataFromAPI() {
+export async function loadDataFromAPI() {
   if (dataLoadPromise) return dataLoadPromise;
 
   const monthKey = getCurrentMonthKey();
@@ -786,14 +787,17 @@ async function loadDataFromAPI() {
 
   return dataLoadPromise;
 }
+// 호환층: window.DATA / window.DATA_STATIC (IIFE 모듈 잔존 의존)
 // 초기 로드를 10초 지연: 앱 렌더에 필요한 데이터는 DATA_STATIC로 즉시 충족.
 // API 데이터는 월간 업데이트용이라 지연해도 사용자 체감 영향 없음.
 // 브라우저에서만 실행 (Node/Vitest 환경에선 fetch/setTimeout 모두 스킵).
 if (typeof window !== 'undefined') {
-  setTimeout(loadDataFromAPI, 10000);
-}
-
-// Node (Vitest) 환경에서 require 가능하도록 CommonJS export.
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { DATA, DATA_STATIC };
+  window.DATA = DATA;
+  window.DATA_STATIC = DATA_STATIC;
+  setTimeout(() => {
+    loadDataFromAPI().then(() => {
+      // API 갱신 후 window 동기화 (live binding 은 ESM import 측만 자동)
+      window.DATA = DATA;
+    });
+  }, 10000);
 }

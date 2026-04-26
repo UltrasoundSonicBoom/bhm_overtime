@@ -3,7 +3,7 @@
 // 공공데이터포털 특일 정보 API + 정적 데이터 폴백
 // ============================================
 
-const HOLIDAYS = {
+export const HOLIDAYS = {
     // 서버 프록시 API (공공데이터 키는 서버 환경변수에서만 사용)
     _getApiBase() {
         if (location.protocol === 'file:') return 'http://localhost:3001/api';
@@ -693,3 +693,8 @@ const HOLIDAYS = {
         };
     }
 };
+
+// 호환층 — IIFE 모듈 (Layer 2~4) 이 아직 window.HOLIDAYS 사용
+if (typeof window !== 'undefined') {
+  window.HOLIDAYS = HOLIDAYS;
+}

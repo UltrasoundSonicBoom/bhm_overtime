@@ -1,8 +1,9 @@
 // ============================================
 // 병원 HR 종합 시스템 - 계산기 모듈
 // ============================================
+import { DATA } from './data.js';
 
-const CALC = {
+export const CALC = {
     /**
      * 통상임금 계산
      * @param {string} jobType - 세분화 직종 또는 보수표 이름
@@ -901,8 +902,7 @@ const CALC = {
 
 };
 
-// Node (Vitest) 환경에서 require 가능하도록 CommonJS export.
-// 브라우저는 global const CALC만 사용 (변경 없음).
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { CALC };
+// 호환층 — IIFE 모듈 (Layer 2~4) 이 아직 window.CALC 사용
+if (typeof window !== 'undefined') {
+  window.CALC = CALC;
 }

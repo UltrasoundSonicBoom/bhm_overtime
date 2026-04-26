@@ -1,10 +1,8 @@
 // Plan M Phase 2 — 신규 계산기 단위 테스트
 // 실행: npm run test:unit -- plan-m-phase-2
 import { describe, it, expect } from 'vitest';
-
-const { DATA } = require('../../data.js');
-globalThis.DATA = DATA;
-const { CALC } = require('../../calculators.js');
+import { DATA } from '../../data.js';
+import { CALC } from '../../calculators.js';
 
 describe('M2-1 장기재직휴가 5/7일 자동부여 (<2025.10>)', () => {
   it('< 10년: 미부여 (0일)', () => {

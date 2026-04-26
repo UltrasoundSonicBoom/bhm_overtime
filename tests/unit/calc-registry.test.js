@@ -6,14 +6,17 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Phase 2-B 후 (type: module): __dirname 미정의 → import.meta.url 패턴.
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const registry = JSON.parse(
   fs.readFileSync(path.resolve(__dirname, '../../public/data/calc-registry.json'), 'utf8')
 );
 
-// data.js 전역 DATA 로드 (Node 호환 CommonJS export 이용)
-const { DATA } = require('../../data.js');
-globalThis.DATA = DATA;
+// Phase 2-B: data.js 는 ESM.
+import { DATA } from '../../data.js';
 
 function getPath(obj, pathStr) {
   return pathStr.split('.').reduce((acc, key) => (acc == null ? undefined : acc[key]), obj);

@@ -9,7 +9,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const vm = require('vm');
+const { pathToFileURL } = require('url');
 
 const ROOT = path.resolve(__dirname, '..');
 const DATA_PATH = path.join(ROOT, 'data.js');
@@ -17,22 +17,12 @@ const DATA_PATH = path.join(ROOT, 'data.js');
 const REG_PATH = path.join(ROOT, 'public', 'data', 'full_union_regulation_2026.md');
 const REPORT_PATH = path.join(ROOT, 'docs', 'architecture', 'paytable-link-report.md');
 
-// ── data.js DATA_STATIC 로드 (브라우저 전역 stub) ──
-function loadData() {
-    const src = fs.readFileSync(DATA_PATH, 'utf8');
-    const ctx = {
-        window: {},
-        document: { addEventListener: () => {} },
-        localStorage: { getItem: () => null, setItem: () => {} },
-        console,
-        setTimeout: () => 0,
-        clearTimeout: () => {},
-        fetch: () => Promise.reject(new Error('no fetch in script ctx')),
-    };
-    ctx.window = ctx;
-    vm.createContext(ctx);
-    vm.runInContext(src + '\n; this.DATA_STATIC = DATA_STATIC;', ctx);
-    return ctx.DATA_STATIC;
+// Phase 2-B 후: data.js 는 ESM. CJS .cjs 에서 동적 import 으로 로드.
+async function loadData() {
+    // Node 의 ESM 로더는 브라우저 globals 미정의 → data.js 의 호환층
+    // (`if (typeof window !== 'undefined')`) 가 자동 스킵되어 안전하게 import 됨.
+    const mod = await import(pathToFileURL(DATA_PATH).href);
+    return mod.DATA_STATIC;
 }
 
 // ── 별첨 보수표 파싱 ──
@@ -104,8 +94,8 @@ function compareTable(name, regTable, dataTable) {
     return { table: name, drift };
 }
 
-function main() {
-    const DATA = loadData();
+async function main() {
+    const DATA = await loadData();
     const regText = fs.readFileSync(REG_PATH, 'utf8');
 
     const sections = [
@@ -175,4 +165,4 @@ function main() {
     if (totalDrift > 0) process.exitCode = 2;
 }
 
-main();
+main().catch(err => { console.error(err); process.exit(1); });

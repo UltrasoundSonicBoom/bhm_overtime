@@ -14,78 +14,78 @@
 // ── 근로시간 기준 ───────────────────────────────────────────
 
 /** 월 소정근로시간 (제32조: 1일 8h × 주 5일 × 52/12주 ≈ 209h) */
-const ORDINARY_WAGE_HOURS = 209;
+export const ORDINARY_WAGE_HOURS = 209;
 
 /** 시간외근무 계산 단위 (분) */
-const OVERTIME_UNIT_MINUTES = 15;
+export const OVERTIME_UNIT_MINUTES = 15;
 
 // ── 시간외수당 배율 ─────────────────────────────────────────
 
 /** 연장근로 배율 150% (제34조: 합의 하 1일 2시간/주 12시간 한도) */
-const OVERTIME_MULTIPLIER = 1.5;
+export const OVERTIME_MULTIPLIER = 1.5;
 
 /** 야간근로 배율 200% (제47조: 22:00~06:00) */
-const NIGHT_ALLOWANCE_MULTIPLIER = 2.0;
+export const NIGHT_ALLOWANCE_MULTIPLIER = 2.0;
 
 /** 통상근무자 연장→야간 배율 200% (제34조) */
-const EXTENDED_NIGHT_MULTIPLIER = 2.0;
+export const EXTENDED_NIGHT_MULTIPLIER = 2.0;
 
 /** 휴일근로 배율 150% (제34조: 8시간 이내) */
-const HOLIDAY_MULTIPLIER = 1.5;
+export const HOLIDAY_MULTIPLIER = 1.5;
 
 /** 휴일근로 초과 배율 200% (제34조: 8시간 초과) */
-const HOLIDAY_OVER8_MULTIPLIER = 2.0;
+export const HOLIDAY_OVER8_MULTIPLIER = 2.0;
 
 /** 일직/숙직비 1일 (제34조) */
-const DUTY_ALLOWANCE_DAILY = 50000;
+export const DUTY_ALLOWANCE_DAILY = 50000;
 
 // ── 수당 금액 ───────────────────────────────────────────────
 
 /** 급식보조비 월 (제43조, 별표: 2026년 기준) */
-const MEAL_SUBSIDY = 150000;
+export const MEAL_SUBSIDY = 150000;
 
 /** 교통보조비 월 (제43조, 별표: 2026년 기준) */
-const TRANSPORT_SUBSIDY = 150000;
+export const TRANSPORT_SUBSIDY = 150000;
 
 /** 교육훈련비(자기계발별정수당) 월 (제43조, 별표) */
-const EDUCATION_ALLOWANCE_MONTHLY = 40000;
+export const EDUCATION_ALLOWANCE_MONTHLY = 40000;
 
 /** 별정수당5 월 (별표) */
-const SPECIAL_PAY5_MONTHLY = 35000;
+export const SPECIAL_PAY5_MONTHLY = 35000;
 
 /** 리프레시지원비 월 30,000원 (별도합의 2024.11: 2026.01.01부터 통상임금 산입) */
-const REFRESH_BENEFIT_MONTHLY = 30000;
+export const REFRESH_BENEFIT_MONTHLY = 30000;
 
 /** 군복무수당 월 (별표: 최대 2년/24개월 기준 월할) */
-const MILITARY_SERVICE_PAY_MONTHLY = 45000;
+export const MILITARY_SERVICE_PAY_MONTHLY = 45000;
 
 /** 군복무수당 최대 인정 개월 (별표: 2년) */
-const MILITARY_SERVICE_MAX_MONTHS = 24;
+export const MILITARY_SERVICE_MAX_MONTHS = 24;
 
 /** 온콜 대기수당 일당 (제32조) */
-const ON_CALL_STANDBY_DAILY = 10000;
+export const ON_CALL_STANDBY_DAILY = 10000;
 
 /** 온콜 출근 교통비 (제32조) */
-const ON_CALL_TRANSPORT = 50000;
+export const ON_CALL_TRANSPORT = 50000;
 
 /** 온콜 출근 인정 근무시간 (제32조: 2시간) */
-const ON_CALL_COMMUTE_HOURS = 2;
+export const ON_CALL_COMMUTE_HOURS = 2;
 
 /** 야간근무 가산금 회당 (제32조 부속합의) */
-const NIGHT_SHIFT_BONUS_PER_SHIFT = 10000;
+export const NIGHT_SHIFT_BONUS_PER_SHIFT = 10000;
 
 /** 프라임팀(예비인력) 대체근무 가산 일당 (제32조 부속합의) */
-const PRIME_TEAM_SUBSTITUTE_DAILY = 20000;
+export const PRIME_TEAM_SUBSTITUTE_DAILY = 20000;
 
 /** 프리셉터 교육수당 (제63조의2) */
-const PRECEPTOR_ALLOWANCE = 200000;
+export const PRECEPTOR_ALLOWANCE = 200000;
 
 // ── 장기근속수당 (제50조 — ADDITIVE 구조) ──────────────────
 // 규정: 5~9년 5만 / 10~14년 6만 / 15~19년 8만 / 20년+ 10만
 //       21년 이상 1만 가산 / 25년 이상 3만 가산
 // ADDITIVE 계산: 해당 구간 금액 = 기준액 + 가산액 합계
 // 20년=100,000 / 21년=110,000(+10,000) / 25년=140,000(+30,000)
-const LONG_SERVICE_PAY = [
+export const LONG_SERVICE_PAY = [
   { min:  0, max:  5, amount:       0 }, // 5년 미만: 미지급
   { min:  5, max: 10, amount:   50000 }, // 5~9년
   { min: 10, max: 15, amount:   60000 }, // 10~14년
@@ -96,7 +96,7 @@ const LONG_SERVICE_PAY = [
 ];
 
 // ── 근속가산율 (제46조 — 2016.02.29 이전 입사자 한정) ────────
-const SENIORITY_RATES = [
+export const SENIORITY_RATES = [
   { min:  1, max:  5, rate: 0.02 }, // 1~5년 2%
   { min:  5, max: 10, rate: 0.05 }, // 5~10년 5%
   { min: 10, max: 15, rate: 0.06 }, // 10~15년 6%
@@ -105,15 +105,15 @@ const SENIORITY_RATES = [
 ];
 
 /** 근속가산기본급 적용 기준일 (제46조: 이전 입사자만) */
-const SENIORITY_CUT_DATE = '2016-02-29';
+export const SENIORITY_CUT_DATE = '2016-02-29';
 
 // ── 가계지원비 지급월 ────────────────────────────────────────
 // 별표: 3,4,5,6,7,8,10,11,12월 고정 + 설/추석 해당 2개월 = 연 11개월
 // 미지급 기준월: 1월, 9월 (단, 설/추석 해당 시 지급)
-const FAMILY_SUPPORT_SKIP_MONTHS = [1, 9]; // 기준 미지급월 (설/추석 해당 시 제외)
+export const FAMILY_SUPPORT_SKIP_MONTHS = [1, 9]; // 기준 미지급월 (설/추석 해당 시 제외)
 
 // ── 퇴직수당 요율 (제52~57조 — 2015.06.30 이전 입사자) ─────
-const SEVERANCE_PAY_RATES = [
+export const SEVERANCE_PAY_RATES = [
   { min: 20, rate: 0.60 }, // 20년 이상 60%
   { min: 15, rate: 0.50 }, // 15~19년 50%
   { min: 10, rate: 0.45 }, // 10~14년 45%
@@ -122,10 +122,10 @@ const SEVERANCE_PAY_RATES = [
 ];
 
 /** 퇴직수당 기준일 (제52조: 이전 입사자) */
-const SEVERANCE_CUT_DATE_2015 = '2015-06-30';
+export const SEVERANCE_CUT_DATE_2015 = '2015-06-30';
 
 // ── 2001.08.31 이전 입사자 누진배수 (제52~57조) ─────────────
-const SEVERANCE_MULTIPLIERS_PRE2001 = [
+export const SEVERANCE_MULTIPLIERS_PRE2001 = [
   { min: 30, multiplier: 52.5 },
   { min: 25, multiplier: 42.5 },
   { min: 20, multiplier: 33.0 },
@@ -147,10 +147,10 @@ const SEVERANCE_MULTIPLIERS_PRE2001 = [
 ];
 
 /** 누진배수 기준일 (제52조) */
-const SEVERANCE_CUT_DATE_2001 = '2001-08-31';
+export const SEVERANCE_CUT_DATE_2001 = '2001-08-31';
 
 // ── 연차 규정 (제36조) ─────────────────────────────────────
-const ANNUAL_LEAVE = {
+export const ANNUAL_LEAVE = {
   underOneYear: 1,    // 1년 미만: 월 1일
   maxUnderOne: 11,    // 1년 미만 최대
   baseLeave: 15,      // 1년 이상: 15일
@@ -159,7 +159,7 @@ const ANNUAL_LEAVE = {
 };
 
 // ── 가족수당 (제44조 2항 — 통상임금 제외) ────────────────────
-const FAMILY_ALLOWANCE = {
+export const FAMILY_ALLOWANCE = {
   spouse: 40000,         // 배우자
   generalFamily: 20000,  // 가족 1인당 (5인 제한)
   maxFamilyMembers: 5,
@@ -170,7 +170,7 @@ const FAMILY_ALLOWANCE = {
 
 // ── 조항 주석 매핑 ─────────────────────────────────────────
 // 모든 상수의 규정 근거를 추적
-const _refs = {
+export const _refs = {
   ORDINARY_WAGE_HOURS:              '제32조',
   OVERTIME_UNIT_MINUTES:            '제34조',
   OVERTIME_MULTIPLIER:              '제34조',
@@ -204,45 +204,23 @@ const _refs = {
   FAMILY_ALLOWANCE:                 '제44조'
 };
 
-// ── 내보내기 ────────────────────────────────────────────────
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = {
-    ORDINARY_WAGE_HOURS,
-    OVERTIME_UNIT_MINUTES,
-    OVERTIME_MULTIPLIER,
-    NIGHT_ALLOWANCE_MULTIPLIER,
-    EXTENDED_NIGHT_MULTIPLIER,
-    HOLIDAY_MULTIPLIER,
-    HOLIDAY_OVER8_MULTIPLIER,
-    DUTY_ALLOWANCE_DAILY,
-    MEAL_SUBSIDY,
-    TRANSPORT_SUBSIDY,
-    EDUCATION_ALLOWANCE_MONTHLY,
-    SPECIAL_PAY5_MONTHLY,
-    REFRESH_BENEFIT_MONTHLY,
-    MILITARY_SERVICE_PAY_MONTHLY,
-    MILITARY_SERVICE_MAX_MONTHS,
-    ON_CALL_STANDBY_DAILY,
-    ON_CALL_TRANSPORT,
-    ON_CALL_COMMUTE_HOURS,
-    NIGHT_SHIFT_BONUS_PER_SHIFT,
-    PRIME_TEAM_SUBSTITUTE_DAILY,
-    PRECEPTOR_ALLOWANCE,
-    LONG_SERVICE_PAY,
-    SENIORITY_RATES,
-    SENIORITY_CUT_DATE,
-    FAMILY_SUPPORT_SKIP_MONTHS,
-    SEVERANCE_PAY_RATES,
-    SEVERANCE_CUT_DATE_2015,
-    SEVERANCE_MULTIPLIERS_PRE2001,
-    SEVERANCE_CUT_DATE_2001,
-    ANNUAL_LEAVE,
-    FAMILY_ALLOWANCE,
-    _refs
-  };
-}
-
-// 브라우저 환경 지원 (window 전역)
+// ── 호환층 (window.RC) ──────────────────────────────────────
+// IIFE 모듈 (regulation.js / payroll.js 등) 이 아직 window.RC 참조.
+// Phase 2-F/H 정리 후 제거 가능.
 if (typeof window !== 'undefined') {
-  window.RC = module ? module.exports : {};
+  window.RC = {
+    ORDINARY_WAGE_HOURS, OVERTIME_UNIT_MINUTES, OVERTIME_MULTIPLIER,
+    NIGHT_ALLOWANCE_MULTIPLIER, EXTENDED_NIGHT_MULTIPLIER,
+    HOLIDAY_MULTIPLIER, HOLIDAY_OVER8_MULTIPLIER,
+    DUTY_ALLOWANCE_DAILY, MEAL_SUBSIDY, TRANSPORT_SUBSIDY,
+    EDUCATION_ALLOWANCE_MONTHLY, SPECIAL_PAY5_MONTHLY, REFRESH_BENEFIT_MONTHLY,
+    MILITARY_SERVICE_PAY_MONTHLY, MILITARY_SERVICE_MAX_MONTHS,
+    ON_CALL_STANDBY_DAILY, ON_CALL_TRANSPORT, ON_CALL_COMMUTE_HOURS,
+    NIGHT_SHIFT_BONUS_PER_SHIFT, PRIME_TEAM_SUBSTITUTE_DAILY,
+    PRECEPTOR_ALLOWANCE, LONG_SERVICE_PAY,
+    SENIORITY_RATES, SENIORITY_CUT_DATE, FAMILY_SUPPORT_SKIP_MONTHS,
+    SEVERANCE_PAY_RATES, SEVERANCE_CUT_DATE_2015,
+    SEVERANCE_MULTIPLIERS_PRE2001, SEVERANCE_CUT_DATE_2001,
+    ANNUAL_LEAVE, FAMILY_ALLOWANCE, _refs
+  };
 }

@@ -2,7 +2,7 @@
 //  RetirementEngine — 임금피크 × 중간정산 계산 엔진
 //  side-effect 없는 순수 계산 모듈. data.js / calculators.js 불필요.
 // ══════════════════════════════════════════════════════════════
-const RetirementEngine = (function () {
+export const RetirementEngine = (function () {
   'use strict';
 
   // ── 퇴직금 계산에 필요한 내장 데이터 ──────────────────────
@@ -343,3 +343,8 @@ const RetirementEngine = (function () {
     getThreeMonthAverage
   };
 })();
+
+// 호환층 — retirement.html 안 IIFE 코드가 window.RetirementEngine 사용
+if (typeof window !== 'undefined') {
+  window.RetirementEngine = RetirementEngine;
+}

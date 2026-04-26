@@ -13,8 +13,8 @@
     "test:unit:watch": "vitest tests/unit",
     "test:integration": "vitest run tests/integration",
     "test:smoke": "playwright test",
-    "check:regulation": "node scripts/check-regulation-link.js",
-    "check:paytable": "node scripts/check-paytable.js",
+    "check:regulation": "node scripts/check-regulation-link.cjs",
+    "check:paytable": "node scripts/check-paytable.cjs",
     "dev": "vite",
     "preview": "vite preview",
     "build": "vite build",
@@ -27,7 +27,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "bugs": {
     "url": "https://github.com/UltrasoundSonicBoom/bhm_overtime/issues"
   },
