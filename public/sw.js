@@ -16,7 +16,7 @@
 
 // 캐시 버전 — 변경 시 옛 캐시 자동 삭제 + 새 SW 즉시 활성화
 // 단협 갱신·중대 변경 시 bump (코드 hash 는 자동이라 bump 불필요)
-const CACHE_VERSION = '2026-04-27-v6'; // bump: downloadBackup v2.0 통일 (명세서/근무이력 백업 누락 fix)
+const CACHE_VERSION = '2026-04-27-v7'; // bump: 규정 탭 SPA iframe 임베드 (info 탭 form 초기화 회귀 fix)
 const CACHE_RUNTIME = `snuhmate-runtime-${CACHE_VERSION}`;
 const CACHE_PRECACHE = `snuhmate-precache-${CACHE_VERSION}`;
 

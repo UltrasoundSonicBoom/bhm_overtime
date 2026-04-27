@@ -1,12 +1,19 @@
-<div class="card" style="text-align:center; padding:32px 20px;">
-  <div style="font-size:var(--text-amount-huge); margin-bottom:12px;">📖</div>
-  <div style="font-size:var(--text-title-large); font-weight:600; margin-bottom:8px;">규정 / AI 상담</div>
-  <p style="color:var(--text-secondary); margin-bottom:16px;">
-    단체협약 규정 원문, PDF 뷰어, AI 상담, FAQ가<br>
-    별도 페이지로 이동했습니다.
-  </p>
-  <a href="regulation.html" class="btn"
-    style="display:inline-block; padding:10px 24px; background:var(--accent-indigo); color:white; border-radius:var(--radius-full); text-decoration:none; font-weight:600;">
-    규정/상담 페이지 열기
-  </a>
+<!--
+  규정 탭 (Phase 5-followup): SPA iframe 임베드 — full page navigation 제거
+  사용자 보고: "규정 클릭하고 info 가면 화면 초기화" 회귀 fix
+  근본 원인: 옛 nav 가 <a href="regulation.html"> 풀페이지 navigation → SPA in-memory state 손실
+  해결: SPA 안 iframe 으로 regulation.html 임베드 → in-memory state 보존
+-->
+<div id="referenceEmbedWrap" style="position:relative; width:100%; height:calc(100vh - 220px); min-height:500px; border:1px solid var(--border-glass); border-radius:var(--radius-lg); overflow:hidden; background:var(--bg-card);">
+  <iframe id="referenceFrame"
+    src="regulation.html?embed=1"
+    title="규정 / AI 상담"
+    loading="lazy"
+    style="width:100%; height:100%; border:0; display:block;"
+    referrerpolicy="same-origin"
+    sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals allow-downloads allow-popups-to-escape-sandbox allow-storage-access-by-user-activation"></iframe>
 </div>
+<p style="text-align:center; margin-top:8px; font-size:var(--text-body-small); color:var(--text-muted);">
+  💡 규정 페이지를 새 탭으로 열기:
+  <a href="regulation.html" target="_blank" rel="noopener noreferrer" style="color:var(--accent-indigo); font-weight:600;">전체 화면 보기 →</a>
+</p>

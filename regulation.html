@@ -868,6 +868,11 @@
 </head>
 
 <body>
+  <!-- Phase 5-followup: ?embed=1 (iframe 안 — tab-reference fragment) 시 header/footer 숨김 -->
+  <script>(function(){try{if(new URLSearchParams(location.search).get('embed')==='1'){document.documentElement.classList.add('reg-embed-mode');}}catch(e){}})();</script>
+  <style>html.reg-embed-mode #sharedHeader, html.reg-embed-mode #sharedFooter { display:none !important; }
+    html.reg-embed-mode body { padding-top:0 !important; padding-bottom:0 !important; }</style>
+
   <!-- ═══════════ Header & Footer (shared-layout.js에서 렌더) ═══════════ -->
   <header id="sharedHeader"></header>
   <nav id="sharedFooter"></nav>

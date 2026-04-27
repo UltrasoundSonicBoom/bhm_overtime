@@ -131,7 +131,10 @@
       { icon: '📅', text: '휴가', tab: 'leave', href: homeHref('leave') },
       { icon: '⏰', text: '시간외', tab: 'overtime', href: homeHref('overtime') },
       { icon: '💰', text: '급여', tab: 'payroll', href: homeHref('payroll') },
-      { icon: '📖', text: '규정', href: 'regulation.html', active: isRegulation },
+      // Phase 5-followup: 규정 탭도 SPA 방식 — full page navigation 제거 → in-memory state 보존
+      // 사용자 보고: "규정 클릭하고 info 가면 화면 초기화된 것처럼 나옴" 회귀 fix
+      // tab-reference.html 안에 iframe 으로 regulation.html 임베드
+      { icon: '📖', text: '규정', tab: 'reference', href: homeHref('reference'), active: isRegulation },
       // 뉴스 탭 비활성 (차후 복구 시 주석 해제)
       // { icon: '📰', text: '뉴스', href: 'cardnews.html', active: isCardNews },
       { icon: '👤', text: 'info', tab: 'profile', href: homeHref('profile') }
