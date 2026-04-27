@@ -8,6 +8,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import HomeIsland from '../components/tabs/HomeIsland.astro';
 import ProfileIsland from '../components/tabs/ProfileIsland.astro';
 import PayrollIsland from '../components/tabs/PayrollIsland.astro';
+import OvertimeIsland from '../components/tabs/OvertimeIsland.astro';
+import LeaveIsland from '../components/tabs/LeaveIsland.astro';
 ---
 <BaseLayout
   title="SNUH 메이트 (SNUH Mate)"
@@ -106,10 +108,10 @@ import PayrollIsland from '../components/tabs/PayrollIsland.astro';
     <PayrollIsland />
 
     <!-- ═══════════ ⏰ 시간외·온콜 관리 ═══════════ -->
-    <div class="tab-content" id="tab-overtime"></div>
+    <OvertimeIsland />
 
     <!-- ═══════════ 📅 휴가 관리 ═══════════ -->
-    <div class="tab-content" id="tab-leave"></div>
+    <LeaveIsland />
 
     <!-- ═══════════ 📋 규정·챗봇 ═══════════ -->
     <div class="tab-content" id="tab-reference"></div>
