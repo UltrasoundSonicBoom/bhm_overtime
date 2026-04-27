@@ -16,7 +16,7 @@
 
 // 캐시 버전 — 변경 시 옛 캐시 자동 삭제 + 새 SW 즉시 활성화
 // 단협 갱신·중대 변경 시 bump (코드 hash 는 자동이라 bump 불필요)
-const CACHE_VERSION = '2026-04-25-v1';
+const CACHE_VERSION = '2026-04-27-v3'; // bump: CSP / form-refresh / clear-UX fix 강제 배포
 const CACHE_RUNTIME = `snuhmate-runtime-${CACHE_VERSION}`;
 const CACHE_PRECACHE = `snuhmate-precache-${CACHE_VERSION}`;
 

@@ -652,33 +652,8 @@ function _downloadFullBackup() {
   } catch (e) { return false; }
 }
 
-function clearProfile() {
-  const keys = _collectUserDataKeys();
-  const payslipCount = keys.filter(k => /^payslip_/.test(k)).length;
-  const otherCount = keys.length - payslipCount;
-
-  // 자동 백업 다운로드 (안전 마진 — 사용자 동의 없이 선제적 backup)
-  let backupOk = false;
-  if (keys.length > 0) {
-    backupOk = _downloadFullBackup();
-  }
-
-  // 1단계 confirm (사용자 의도: 한 번만 묻기)
-  const summary = backupOk
-    ? '✅ 전체 데이터 백업이 다운로드되었습니다.\n\n' +
-      '⚠️ 다음 데이터를 모두 삭제합니다 (되돌릴 수 없음):\n' +
-      `  • 개인정보 / 시간외 / 휴가 / 근무이력\n` +
-      `  • 급여명세서 ${payslipCount}개\n` +
-      `  • 기타 사용자 데이터 ${otherCount}개\n\n` +
-      '정말로 모든 사용자 데이터를 삭제하시겠습니까?'
-    : '⚠️ 백업 다운로드를 건너뛰고 모든 사용자 데이터를 삭제합니다.\n\n정말 진행하시겠습니까? (되돌릴 수 없습니다)';
-
-  if (!confirm(summary)) return;
-
-  // 실제 삭제
+function _executeFullClear(keys) {
   keys.forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
-
-  // 폼 즉시 초기화 (reload 전 시각 피드백)
   Object.values(PROFILE_FIELDS).forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -688,14 +663,129 @@ function clearProfile() {
     else el.value = '';
   });
   updateProfileTitle('');
-
-  // 페이지 새로고침 (메모리 상태 + 다른 탭 UI 초기화)
-  // 테스트 hook: window.__bhmReloadHook 가 있으면 그걸 호출 (jsdom 환경)
   if (typeof window.__bhmReloadHook === 'function') {
     window.__bhmReloadHook();
   } else {
     setTimeout(() => window.location.reload(), 100);
   }
+}
+
+// Phase 5-followup UX: native confirm 대신 custom modal — [백업 저장] [모두 삭제] [취소] 3 버튼
+// 사용자 의도: 자동 백업 X, 명시적 [백업 저장] 버튼으로 시각 구별
+function _openClearProfileModal(keys) {
+  const old = document.getElementById('clearProfileModal');
+  if (old) old.remove();
+
+  const payslipCount = keys.filter(k => /^payslip_/.test(k)).length;
+  const otherCount = keys.length - payslipCount;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'clearProfileModal';
+  overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:99999; display:flex; align-items:center; justify-content:center; padding:16px;';
+
+  const card = document.createElement('div');
+  card.style.cssText = 'background:#fff; border-radius:14px; max-width:440px; width:100%; padding:24px; box-shadow:0 20px 60px rgba(0,0,0,0.3); font-family:inherit;';
+
+  const title = document.createElement('h2');
+  title.textContent = '⚠️ 모든 사용자 데이터 초기화';
+  title.style.cssText = 'margin:0 0 12px; font-size:1.15rem; color:#dc2626;';
+  card.appendChild(title);
+
+  const desc = document.createElement('p');
+  desc.style.cssText = 'margin:0 0 12px; font-size:0.9rem; line-height:1.55; color:#374151;';
+  desc.textContent = '다음 데이터를 모두 삭제합니다 (되돌릴 수 없습니다):';
+  card.appendChild(desc);
+
+  const ul = document.createElement('ul');
+  ul.style.cssText = 'margin:0 0 16px 18px; font-size:0.85rem; color:#4b5563; line-height:1.6;';
+  [
+    '개인정보 / 시간외 / 휴가 / 근무이력',
+    `급여명세서 ${payslipCount}개`,
+    `기타 사용자 데이터 ${otherCount}개`,
+  ].forEach(t => {
+    const li = document.createElement('li');
+    li.textContent = t;
+    ul.appendChild(li);
+  });
+  card.appendChild(ul);
+
+  const note = document.createElement('p');
+  note.style.cssText = 'margin:0 0 18px; padding:10px 12px; background:#fef3c7; border-radius:8px; font-size:0.82rem; color:#78350f; line-height:1.5;';
+  note.appendChild(document.createTextNode('💡 삭제 전 '));
+  const noteStrong = document.createElement('strong');
+  noteStrong.textContent = '[백업 저장]';
+  note.appendChild(noteStrong);
+  note.appendChild(document.createTextNode('을 눌러 현재 데이터를 안전하게 보관하세요.'));
+  card.appendChild(note);
+
+  const backupStatus = document.createElement('div');
+  backupStatus.id = 'clearProfileBackupStatus';
+  backupStatus.style.cssText = 'margin:0 0 14px; padding:8px 12px; background:#f3f4f6; border-radius:6px; font-size:0.8rem; color:#6b7280; min-height:1.4em;';
+  backupStatus.textContent = '백업 미저장';
+  card.appendChild(backupStatus);
+
+  const btnRow = document.createElement('div');
+  btnRow.style.cssText = 'display:flex; gap:8px; flex-wrap:wrap;';
+
+  // [백업 저장하기] — 강조: indigo, full width
+  const btnBackup = document.createElement('button');
+  btnBackup.type = 'button';
+  btnBackup.textContent = '💾 백업 저장하기';
+  btnBackup.style.cssText = 'flex:1 1 100%; padding:11px 16px; background:#4f46e5; color:#fff; border:none; border-radius:8px; font-size:0.95rem; font-weight:600; cursor:pointer;';
+  btnBackup.onclick = function () {
+    const ok = _downloadFullBackup();
+    backupStatus.textContent = ok ? '✅ 백업 다운로드됨 — 안전하게 삭제 가능' : '⚠️ 백업 다운로드 실패';
+    backupStatus.style.background = ok ? '#dcfce7' : '#fee2e2';
+    backupStatus.style.color = ok ? '#166534' : '#991b1b';
+    btnBackup.disabled = true;
+    btnBackup.style.background = '#9ca3af';
+    btnBackup.style.cursor = 'default';
+    btnBackup.textContent = '✅ 백업 저장됨';
+  };
+  btnRow.appendChild(btnBackup);
+
+  // [취소] — 보조
+  const btnCancel = document.createElement('button');
+  btnCancel.type = 'button';
+  btnCancel.textContent = '취소';
+  btnCancel.style.cssText = 'flex:1 1 45%; padding:10px 16px; background:#e5e7eb; color:#374151; border:none; border-radius:8px; font-size:0.9rem; font-weight:500; cursor:pointer;';
+  btnCancel.onclick = function () { overlay.remove(); };
+  btnRow.appendChild(btnCancel);
+
+  // [모두 삭제] — 위험
+  const btnDelete = document.createElement('button');
+  btnDelete.type = 'button';
+  btnDelete.textContent = '🗑 모두 삭제';
+  btnDelete.style.cssText = 'flex:1 1 45%; padding:10px 16px; background:#dc2626; color:#fff; border:none; border-radius:8px; font-size:0.9rem; font-weight:600; cursor:pointer;';
+  btnDelete.onclick = function () {
+    overlay.remove();
+    _executeFullClear(keys);
+  };
+  btnRow.appendChild(btnDelete);
+
+  card.appendChild(btnRow);
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+
+  overlay.tabIndex = -1;
+  overlay.focus();
+  overlay.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { overlay.remove(); }
+  });
+}
+
+function clearProfile() {
+  const keys = _collectUserDataKeys();
+  if (keys.length === 0) {
+    if (typeof alert === 'function') alert('초기화할 사용자 데이터가 없습니다.');
+    return;
+  }
+  // 테스트 hook: 자동 confirm + 즉시 wipe (modal 우회)
+  if (typeof window.__bhmConfirmClearForTest === 'function' && window.__bhmConfirmClearForTest()) {
+    _executeFullClear(keys);
+    return;
+  }
+  _openClearProfileModal(keys);
 }
 
 // ═══════════ 생년월일 양방향 동기화 ═══════════
@@ -1030,7 +1120,28 @@ function applyProfileToLeave() {
   };
   window.addEventListener('leaveChanged', _refreshProfile);
   window.addEventListener('overtimeChanged', _refreshProfile);
+  // Phase 5-followup: 명세서 업로드 → PROFILE.save 의 profileChanged 이벤트로 자동 form 갱신
+  // 사용자가 다른 탭에 있다가 info 진입 시 항상 최신 데이터 반영 (initProfileTab 가 매번 form 채움)
+  window.addEventListener('profileChanged', _refreshProfile);
 })();
+
+// 모든 탭 진입 시 정보 항상 최신화 — switchTab 이벤트 hook
+// 사용자: "급여명세서 입력 후 개인정보 탭 처음에는 아무것도 안 나옴" 회귀 fix
+// initProfileTab() 이 active 상태에서만 실행되도록 deferred — 탭 전환 시점에 호출 보장
+if (typeof window !== 'undefined') {
+  var _origSwitchTabForProfile = window.switchTab;
+  if (typeof _origSwitchTabForProfile === 'function' && !_origSwitchTabForProfile.__phase5Wrapped) {
+    var wrapped = function (name) {
+      var ret = _origSwitchTabForProfile.apply(this, arguments);
+      if (name === 'profile' && typeof initProfileTab === 'function') {
+        try { initProfileTab(); } catch (e) {}
+      }
+      return ret;
+    };
+    wrapped.__phase5Wrapped = true;
+    window.switchTab = wrapped;
+  }
+}
 
 // ── 페이지 로드 직후 기본 탭 활성화 (URL ?tab= 파라미터 우선, 없으면 home) ──
 document.addEventListener('DOMContentLoaded', function () {

@@ -116,9 +116,10 @@ describe('Issue 2: clearProfile — 전체 사용자 데이터 wipe', () => {
 
   it('clearProfile 호출 → 모든 사용자 도메인 데이터 삭제 (KEEP 항목 제외)', async () => {
     seedProfileForm();
-    // reload 호출 hook (테스트에서 reload 가로채기)
     let reloadCalled = false;
     window.__bhmReloadHook = () => { reloadCalled = true; };
+    // Phase 5-followup: clearProfile 가 modal 띄움 — 테스트 hook 으로 자동 confirm
+    window.__bhmConfirmClearForTest = () => true;
 
     await import('../../profile-tab.js');
     expect(typeof window.clearProfile).toBe('function');
@@ -142,13 +143,14 @@ describe('Issue 2: clearProfile — 전체 사용자 데이터 wipe', () => {
     // reload 호출됨 (메모리 상태 초기화)
     expect(reloadCalled).toBe(true);
     delete window.__bhmReloadHook;
+    delete window.__bhmConfirmClearForTest;
   });
 
-  it('confirm 취소 시 → 어떤 데이터도 삭제 안 됨', async () => {
+  it('취소 (confirm hook=false) → modal 띄우고 자동 클릭 X → 데이터 보존', async () => {
     seedProfileForm();
-    global.confirm = () => false;
     let reloadCalled = false;
     window.__bhmReloadHook = () => { reloadCalled = true; };
+    window.__bhmConfirmClearForTest = () => false;
 
     await import('../../profile-tab.js');
     window.clearProfile();
@@ -158,7 +160,11 @@ describe('Issue 2: clearProfile — 전체 사용자 데이터 wipe', () => {
     expect(localStorage.getItem('payslip_guest_2026_04')).not.toBeNull();
     expect(reloadCalled).toBe(false);
 
-    global.confirm = () => true; // restore
+    // modal 닫기 (cleanup)
+    const modal = document.getElementById('clearProfileModal');
+    if (modal) modal.remove();
+
     delete window.__bhmReloadHook;
+    delete window.__bhmConfirmClearForTest;
   });
 });

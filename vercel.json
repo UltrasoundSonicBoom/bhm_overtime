@@ -28,6 +28,18 @@
       ]
     },
     {
+      "source": "/",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://cdn.sheetjs.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://cdn.channel.io https://tally.so https://browser.sentry-cdn.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://*.googleusercontent.com https://www.google-analytics.com https://www.googletagmanager.com https://cdn.channel.io https://snuhmate.com https://tally.so; font-src 'self' data: https://fonts.gstatic.com; media-src 'self' https://cdn.channel.io; connect-src 'self' https://*.googleapis.com https://www.google-analytics.com https://www.google.com https://www.googletagmanager.com https://apis.data.go.kr https://api.rss2json.com https://api.openalex.org https://news.google.com https://*.channel.io wss://*.channel.io https://*.sentry.io https://tally.so https://cdn.jsdelivr.net; frame-src 'self' https://tally.so; worker-src 'self' blob:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+        },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+      ]
+    },
+    {
       "source": "/(.*)\\.(png|jpg|jpeg|gif|webp|svg|ico|md|txt|xml)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }
