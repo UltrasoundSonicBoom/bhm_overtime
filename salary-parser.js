@@ -6,7 +6,13 @@
 // - 개인 정보 프로필 자동 반영 기능 포함
 // ============================================================
 
-const SALARY_PARSER = (() => {
+// Phase 5: cross-module 명시 named import (PROFILE_FIELDS bare 참조 회귀 종결)
+import { PROFILE, PROFILE_FIELDS } from './profile.js';
+import { CALC } from './calculators.js';
+import { DATA } from './data.js';
+import { _loadWorkHistory, _saveWorkHistory, renderWorkHistory, _showWorkHistoryUpdateBanner } from './work-history.js';
+
+export const SALARY_PARSER = (() => {
   'use strict';
 
   // ── DEBUG 플래그 — localStorage.bhm_debug_parser = '1' 설정 시 trace 활성화 ──
@@ -1105,7 +1111,7 @@ const SALARY_PARSER = (() => {
 
     // 사번 자동 채움: 프로필에 사번이 비어 있고 payslip에서 추출된 사번이 있으면 저장
     var empNum = merged && merged.employeeInfo && merged.employeeInfo.employeeNumber;
-    if (empNum && typeof PROFILE !== 'undefined') {
+    if (empNum) {
       var current = PROFILE.load() || {};
       if (!current.employeeNumber) {
         PROFILE.save({ ...current, employeeNumber: String(empNum).trim() });
@@ -1293,9 +1299,7 @@ const SALARY_PARSER = (() => {
 
     if (changed) {
       PROFILE.save(profile);
-      if (typeof PROFILE.applyToForm === 'function' && typeof PROFILE_FIELDS !== 'undefined') {
-        PROFILE.applyToForm(profile, PROFILE_FIELDS);
-      }
+      PROFILE.applyToForm(profile, PROFILE_FIELDS);
       // 가족수당 필드도 직접 세팅 (PROFILE_FIELDS에 없을 수 있으므로)
       const directSets = [
         ['pfFamily', profile.numFamily],
@@ -1312,18 +1316,17 @@ const SALARY_PARSER = (() => {
     }
 
     // Phase 4-A: 명세서 시계열 → 근무이력 자동 시드 (mode='replace' 만 자동 쓰기)
+    // Phase 5: window 가드 제거 — named import 으로 보장
     try {
-      if (typeof window !== 'undefined' && typeof window._loadWorkHistory === 'function') {
-        const existing = window._loadWorkHistory();
-        const result = rebuildWorkHistoryFromPayslips({
-          profile, existing, hospital: profile.hospital || '서울대학교병원',
-        });
-        if (result.mode === 'replace' && typeof window._saveWorkHistory === 'function') {
-          window._saveWorkHistory(result.records);
-          if (typeof window.renderWorkHistory === 'function') window.renderWorkHistory();
-        } else if (result.mode === 'banner' && typeof window._showWorkHistoryUpdateBanner === 'function') {
-          window._showWorkHistoryUpdateBanner(result.segments);
-        }
+      const existing = _loadWorkHistory();
+      const result = rebuildWorkHistoryFromPayslips({
+        profile, existing, hospital: profile.hospital || '서울대학교병원',
+      });
+      if (result.mode === 'replace') {
+        _saveWorkHistory(result.records);
+        renderWorkHistory();
+      } else if (result.mode === 'banner') {
+        _showWorkHistoryUpdateBanner(result.segments);
       }
     } catch (e) {
       console.warn('[Phase 4-A] rebuild work history failed:', e);
@@ -1335,7 +1338,7 @@ const SALARY_PARSER = (() => {
   // 가족수당 총액에서 가족 수/자녀 수 역산
   function estimateFamilyFromPay(totalPay) {
     if (!totalPay || totalPay <= 0) return null;
-    const fa = typeof DATA !== 'undefined' ? DATA.familyAllowance : null;
+    const fa = DATA ? DATA.familyAllowance : null;
     if (!fa) return null;
 
     // 경우의 수를 brute-force로 탐색 (가족 0~5, 자녀 0~5)
@@ -1369,7 +1372,7 @@ const SALARY_PARSER = (() => {
     if (!profile || !profile.jobType) return null;
 
     // Plan F Bug #4: CALC.calcServiceYears 미존재 → PROFILE.calcServiceYears 로 정정
-    const serviceYears = (typeof PROFILE !== 'undefined' && PROFILE.calcServiceYears)
+    const serviceYears = PROFILE.calcServiceYears
       ? PROFILE.calcServiceYears(profile.hireDate)
       : 0;
     const appWage = CALC.calcOrdinaryWage(
@@ -1536,11 +1539,7 @@ const SALARY_PARSER = (() => {
   };
 })();
 
-// Phase 3-F 회귀 fix: app.js / payroll-views.js 가 bare global SALARY_PARSER 참조.
-// ESM 모듈 스코프에서는 안 잡힘 → window 노출.
+// Phase 5: window.SALARY_PARSER 호환층 (Phase 3-F KEEP) — HTML inline / data-action 위임 호환
 if (typeof window !== 'undefined') {
   window.SALARY_PARSER = SALARY_PARSER;
 }
-
-// Phase 2-F: ESM marker — 파일을 ES module 로 표시 (side-effect IIFE 보존)
-export {};

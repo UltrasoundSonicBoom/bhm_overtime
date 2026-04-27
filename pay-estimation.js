@@ -1,4 +1,9 @@
 // pay-estimation.js — 급여 계산 + 예상액
+// Phase 5: cross-module 명시 named import
+import { PROFILE, PROFILE_FIELDS } from './profile.js';
+import { CALC } from './calculators.js';
+import { DATA } from './data.js';
+import { SALARY_PARSER } from './salary-parser.js';
 
 // ═══════════ 🧾 급여 시뮬레이터 ═══════════
 function calculatePayroll() {
@@ -251,7 +256,6 @@ function fmtW(n) { return '₩' + Math.round(n).toLocaleString(); }
 // ── 실제 급여 데이터 감지 ──
 // 해당 월에 실제 급여명세서가 업로드되어 있으면 반환, 없으면 null
 function getActualPayrollData(year, month) {
-  if (typeof SALARY_PARSER === 'undefined') return null;
   const data = SALARY_PARSER.loadMonthlyData(year, month, '급여');
   if (!data) return null;
   const s = data.summary;
@@ -743,9 +747,7 @@ const PayrollImprovementAgent = (() => {
   // 실제 명세서에서 확인된 항목 → 프로필 필드에 반영
   // 반환: {changed: bool, applied: [{name, from, to}]}
   function applyToProfile(year, month) {
-    const actual = typeof SALARY_PARSER !== 'undefined'
-      ? SALARY_PARSER.loadMonthlyData(year, month, '급여')
-      : null;
+    const actual = SALARY_PARSER.loadMonthlyData(year, month, '급여');
     if (!actual) return { changed: false, applied: [] };
 
     const profile = PROFILE.load() || {};
@@ -788,9 +790,7 @@ const PayrollImprovementAgent = (() => {
 
     if (applied.length > 0) {
       PROFILE.save(profile);
-      if (typeof PROFILE.applyToForm === 'function' && typeof PROFILE_FIELDS !== 'undefined') {
-        PROFILE.applyToForm(profile, PROFILE_FIELDS);
-      }
+      PROFILE.applyToForm(profile, PROFILE_FIELDS);
     }
 
     return { changed: applied.length > 0, applied };
@@ -799,9 +799,7 @@ const PayrollImprovementAgent = (() => {
   // 실제 데이터 업로드 완료 시 호출 (salary-parser.js의 저장 후 hook)
   // year, month 에 해당하는 실제+예상 데이터를 비교·저장·보정
   function runOnActualUpload(year, month) {
-    const actual = typeof SALARY_PARSER !== 'undefined'
-      ? SALARY_PARSER.loadMonthlyData(year, month, '급여')
-      : null;
+    const actual = SALARY_PARSER.loadMonthlyData(year, month, '급여');
     if (!actual) return;
 
     const est = calcMonthEstimate(year, month);

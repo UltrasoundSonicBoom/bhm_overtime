@@ -1,4 +1,8 @@
 // work-history.js — 근무이력 관리
+// Phase 5: cross-module 명시 named import
+import { PROFILE } from './profile.js';
+import { SALARY_PARSER } from './salary-parser.js';
+
 // ── E1: 근무이력 ──────────────────────────────────────────────────
 var _whEditId = null;
 function _whKey() {
@@ -8,7 +12,7 @@ function _whSeedKey() {
   return window.getUserStorageKey ? window.getUserStorageKey('bhm_work_history_seeded') : 'bhm_work_history_seeded_guest';
 }
 
-function _loadWorkHistory() {
+export function _loadWorkHistory() {
   try {
     var list = JSON.parse(localStorage.getItem(_whKey()) || '[]');
     // lazy 마이그레이션
@@ -65,7 +69,7 @@ function deleteRotation(parentId, rotId) {
 }
 
 
-function _saveWorkHistory(list) {
+export function _saveWorkHistory(list) {
   localStorage.setItem(_whKey(), JSON.stringify(list));
   // bhm_lastEdit_<key> 도 갱신 — 향후 서버 sync 재도입 시 충돌 비교용
   localStorage.setItem('bhm_lastEdit_' + _whKey(), new Date().toISOString());
@@ -92,7 +96,7 @@ function _humanDuration(fromIso, toIso) {
   return (m || 1) + '개월';
 }
 
-function renderWorkHistory() {
+export function renderWorkHistory() {
   var container = document.getElementById('workHistoryList');
   if (!container) return;
 
@@ -778,7 +782,7 @@ if (typeof window !== 'undefined') {
 //
 // salary-parser 의 rebuildWorkHistoryFromPayslips 가 mode='banner' 일 때 호출.
 // 사용자 수동 record 가 있으므로 자동 덮어쓰기 0 — 알림만 표시.
-function _showWorkHistoryUpdateBanner(segments) {
+export function _showWorkHistoryUpdateBanner(segments) {
   var container = document.getElementById('workHistoryBanner');
   if (!container) return;
   while (container.firstChild) container.removeChild(container.firstChild);
@@ -811,10 +815,10 @@ function _showWorkHistoryUpdateBanner(segments) {
 
 // 사용자가 [명세서로 재구성] 클릭 → 보호 정책 무시 동의 → 강제 replace
 function rebuildWorkHistoryFromPayslipsForceReplace() {
-  if (!window.SALARY_PARSER || !window.SALARY_PARSER.rebuildWorkHistoryFromPayslips) return;
-  var profile = (window.PROFILE && window.PROFILE.load) ? window.PROFILE.load() : {};
+  if (!SALARY_PARSER || !SALARY_PARSER.rebuildWorkHistoryFromPayslips) return;
+  var profile = PROFILE.load() || {};
   // existing=[] 으로 호출 → 보호 정책 우회 (mode='replace' 강제)
-  var result = window.SALARY_PARSER.rebuildWorkHistoryFromPayslips({
+  var result = SALARY_PARSER.rebuildWorkHistoryFromPayslips({
     profile: profile, existing: [], hospital: profile.hospital || '서울대학교병원',
   });
   if (result.mode === 'replace') {

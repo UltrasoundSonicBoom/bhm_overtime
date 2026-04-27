@@ -1,4 +1,14 @@
 // profile-tab.js — 프로필 탭 UI + 저장
+// Phase 5: cross-module 명시 named import (PROFILE_FIELDS bare 참조 회귀 종결)
+import { PROFILE, PROFILE_FIELDS } from './profile.js';
+import { CALC } from './calculators.js';
+import { DATA } from './data.js';
+import { PAYROLL } from './payroll.js';
+import {
+  _loadWorkHistory, _saveWorkHistory, renderWorkHistory,
+  _showWorkHistoryUpdateBanner,
+} from './work-history.js';
+
 // ── 개인정보 탭 초기화 ──
 function initProfileTab() {
   const saved = PROFILE.load();
@@ -515,7 +525,7 @@ function saveProfile() {
   document.getElementById('profileStatus').className = 'badge emerald';
   // Variant C: fields stay visible after save
   // Q&A 카드 갱신
-  if (typeof PAYROLL !== 'undefined') PAYROLL.init();
+  PAYROLL.init();
   // 휴가 연차 한도 갱신 및 UI 리렌더링
   if (typeof applyProfileToLeave === 'function') {
     applyProfileToLeave();
@@ -584,7 +594,7 @@ function clearProfile() {
         <p style="color:var(--text-muted)">정보를 입력하고 [저장하기]를 눌러주세요.</p>
     `;
   // Q&A 카드 갱신
-  if (typeof PAYROLL !== 'undefined') PAYROLL.init();
+  PAYROLL.init();
   // 초기화 후 기본 정보 펼침 + 프리뷰 숨김
   const basicFields = document.getElementById('pfBasicFields');
   if (basicFields) basicFields.style.display = 'block';

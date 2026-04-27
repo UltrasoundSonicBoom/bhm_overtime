@@ -447,15 +447,6 @@
   global.printResume = printResume;
 })(window);
 
-// Phase 2-F: ESM marker — 파일을 ES module 로 표시 (side-effect IIFE 보존)
-
-// Phase 2-regression: inline onclick window 노출 (ESM 모듈 스코프 회복)
-
-
-
-// Phase 3-F 회귀 fix: tabs/*.html fragment + safeCall 동적 dispatch 가 의존하는 호환층 복원
-if (typeof window !== 'undefined') {
-  window.closeResumeItemSheet = closeResumeItemSheet;
-  window.saveResumeItem = saveResumeItem;
-}
+// Phase 5: 호환층 — IIFE 내부에서 이미 global.X 노출 중 (line 442-447). 중복 제거.
+// closeResumeItemSheet / saveResumeItem 등은 IIFE 안에서 정의되므로 모듈 스코프에서 직접 접근 불가.
 export {};
