@@ -66,6 +66,8 @@ function _seedFirstWorkFromProfile() {
       to: '',
       role: jobType,
       desc: '',
+      rotations: [],
+      source: 'auto',   // Phase 4-A: 자동 시드 마킹 (rebuildWorkHistoryFromPayslips 와 일관)
       updatedAt: new Date().toISOString()
     };
   } catch (e) { return null; }

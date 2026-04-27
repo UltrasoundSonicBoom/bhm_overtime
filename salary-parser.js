@@ -1310,6 +1310,25 @@ const SALARY_PARSER = (() => {
       });
       if (typeof toggleChildFields === 'function') toggleChildFields();
     }
+
+    // Phase 4-A: 명세서 시계열 → 근무이력 자동 시드 (mode='replace' 만 자동 쓰기)
+    try {
+      if (typeof window !== 'undefined' && typeof window._loadWorkHistory === 'function') {
+        const existing = window._loadWorkHistory();
+        const result = rebuildWorkHistoryFromPayslips({
+          profile, existing, hospital: profile.hospital || '서울대학교병원',
+        });
+        if (result.mode === 'replace' && typeof window._saveWorkHistory === 'function') {
+          window._saveWorkHistory(result.records);
+          if (typeof window.renderWorkHistory === 'function') window.renderWorkHistory();
+        } else if (result.mode === 'banner' && typeof window._showWorkHistoryUpdateBanner === 'function') {
+          window._showWorkHistoryUpdateBanner(result.segments);
+        }
+      }
+    } catch (e) {
+      console.warn('[Phase 4-A] rebuild work history failed:', e);
+    }
+
     return { changed, applied };
   }
 

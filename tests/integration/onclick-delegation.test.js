@@ -44,14 +44,16 @@ describe('onclick delegation — Phase 3', () => {
 
   // ── Phase 3-F: root .js 의 window.X 호환층 KEEP allowlist 외 0 ──
   it('root .js 의 window.X 호환층 KEEP only — Phase 3-F 완료 기준', () => {
-    // KEEP: 외부 모듈 / inline HTML script 가 참조하는 진짜 필요한 노출
+    // KEEP: 외부 모듈 / inline HTML script / fragments onclick 참조 — 의도된 노출
     const KEEP = new Set([
       // ESM 모듈 ↔ legacy IIFE 호환 (다른 모듈이 window.X 참조)
       'AppLock', 'CALC', 'DATA', 'DATA_STATIC', 'HOLIDAYS',
       'LEAVE', 'PAYROLL', 'OVERTIME', 'PROFILE', 'RetirementEngine', 'escapeHtml',
+      'SALARY_PARSER', 'PROFILE_FIELDS',
       // app.js entry safeCall 동적 dispatch 대상
       'switchTab', 'switchHomePeriod', 'initHomeTab', 'changelogPage',
       'initPayrollTab', '_propagatePayslipToWorkHistory',
+      'initLeaveTab', 'initOvertimeTab', 'initProfileTab',
       // app.js 의 entry handler 참조
       'closeMigrationModal', 'downloadBackupAndStay', 'switchToProfileTab',
       // tab-loader 동적 dispatch
@@ -60,10 +62,54 @@ describe('onclick delegation — Phase 3', () => {
       'loadPDFJS', 'loadXLSX',
       // inline-ui-helpers
       'updateHourlyWarning', 'dismissHwBanner',
-      // shared-utils 헬퍼 (다른 entry 가 import 하지만 window 호환층 보존)
+      // shared-utils 헬퍼
       'delegateActions', 'delegateInput', 'registerActions', 'registerInputActions',
-      // function expression 형태 (Phase 4 정리 candidate — 일단 KEEP)
+      // function expression 형태 (Phase 4 정리 candidate)
       'renderPayHistory', 'renderPayPayslip', 'syncCloudData',
+      // ── Phase 3-regression 회귀 fix: tabs/*.html fragment inline onclick 참조 ──
+      // app.js
+      'calcRetirementEmbedded', 'calculateParentalLeave', 'closeOtBottomSheet',
+      'deleteOtRecord', 'noticePage', 'retSelectPeakOpt', 'retSetRetireDate',
+      'retToggleRateCard', 'saveOtRecord', 'switchNewsTab',
+      'toggleOtHelp', 'toggleOtHelpDetail', 'toggleOtVerifyDetail',
+      'renderLeaveTable', 'renderQuickTags', 'retUpdateQuickDates',
+      'getCaptureParams', 'updatePayrollGrades', 'updateGrades', 'renderCeremonyTable',
+      'answerFaqItem',
+      // dashboard / schedule_suite (sub-app cross-call)
+      'renderAll', 'renderTabs',
+      // leave-tab cross-module variables/functions
+      'lvTotalAnnual', 'lvInitialized',
+      'closeLvBottomSheet', 'closeLvTypeBottomSheet', 'deleteLvRecord',
+      'openLvTypeBottomSheet', 'saveLvRecord',
+      'populateLvTypeSelect', 'previewLvCalc', 'editLvRecord',
+      'lvNavMonth', 'lvGoToday', 'onLvDateClick', 'toggleCollapsible',
+      // pay-estimation
+      'calculatePayroll', 'initPayEstimate', 'calcMonthEstimate',
+      'payEstMonth', 'changePayEstMonth',
+      // payslip-tab
+      'renderPayslip', 'renderPayslipMgmt', 'renderVerification', 'renderSavedMonths',
+      'showVerifyInQna',
+      // profile-tab cross-module + fragments
+      'applyProfileToLeave', 'applyProfileToOvertime', 'applyProfileToPayroll',
+      'clearProfile', 'downloadBackup', 'saveProfile',
+      'switchProfileSection',
+      'updateProfileGrades', 'toggleChildFields',
+      '_collapseBasicFieldsWithPreview', '_seedFirstWorkFromProfile', '_suggestYear',
+      // resume
+      'closeResumeItemSheet', 'saveResumeItem',
+      // settings-ui (AppLock fragment buttons)
+      'onAppLockChangePin', 'onAppLockDisable', 'onAppLockSetupPin',
+      'onBiometricDisable', 'onBiometricRegister', 'updateAppLockUI',
+      // share-utils
+      'shareApp',
+      // work-history fragments + cross-call
+      'autofillJobDesc', 'autofillRotationTasks',
+      'closeRotationSheet', 'closeWorkHistorySheet',
+      'deleteRotationEntry', 'openWorkHistorySheet',
+      'saveRotationEntry', 'saveWorkHistoryEntry',
+      'renderWorkHistory', '_genId', '_saveWorkHistory', '_loadWorkHistory',
+      // Phase 4-A 신규
+      '_showWorkHistoryUpdateBanner', 'rebuildWorkHistoryFromPayslipsForceReplace',
     ]);
     const rootJs = readdirSync(ROOT).filter(f => f.endsWith('.js') && !f.startsWith('vite') && f !== 'vitest.config.js');
     const offenders = [];
