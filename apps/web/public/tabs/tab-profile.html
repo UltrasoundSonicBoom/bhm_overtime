@@ -1,0 +1,426 @@
+<!-- 책갈피 (개인 정보 / 근무 정보) -->
+<nav class="pay-bookmark-tabs" id="profileBookmarkBar" role="tablist" aria-label="정보 구분">
+  <button id="bmPersonal" class="pay-bookmark-tab active" data-subtab="profile-personal" role="tab"
+    aria-selected="true" onclick="switchProfileSection('personal')">👤 개인 정보</button>
+  <button id="bmWork" class="pay-bookmark-tab" data-subtab="profile-work" role="tab" aria-selected="false"
+    onclick="switchProfileSection('work')">💼 근무 정보</button>
+</nav>
+<div class="pay-tab-accent" id="profileTabAccent" style="background:#4f46e5;"></div>
+
+<div id="profileSectionPersonal">
+  <div class="card" style="max-width:600px; margin:0 auto;">
+    <div class="card-title"><span class="icon indigo">👤</span> <span id="pfTitleName">내 정보</span>
+      <span class="badge emerald" id="profileStatus">미저장</span>
+    </div>
+
+    <!-- 급여탭 안내 링크 (PDF 배너 대체) -->
+    <div id="pfPayslipLink" onclick="if(window.switchTab)switchTab('payroll');"
+      style="display:flex; align-items:center; gap:10px; padding:10px 14px; margin-bottom:14px; background:rgba(99,102,241,0.08); border:2px solid var(--accent-indigo); border-radius:8px; cursor:pointer; font-size:var(--text-body-normal); font-weight:600; color:var(--accent-indigo);">
+      <span style="font-size:1.2rem;">💰</span>
+      <span>급여 탭에서 명세서를 등록하면 자동으로 채워집니다</span>
+      <span style="margin-left:auto;">→</span>
+    </div>
+    <!-- 자동갱신 상태 배너 (JS에서 표시) -->
+    <div id="pfAutoSyncBanner"
+      style="display:none; align-items:center; gap:8px; padding:8px 14px; margin-bottom:10px; background:rgba(16,185,129,0.08); border:1px solid var(--accent-emerald); border-radius:8px; font-size:var(--text-body-small); font-weight:600; color:var(--accent-emerald);">
+      <span>✅</span> <span id="pfAutoSyncText">명세서 기준 자동 갱신됨</span>
+    </div>
+
+    <!-- pfInputFields 래퍼 유지 (CSS 셀렉터 호환) -->
+    <div id="pfInputFields">
+      <span id="pfInputToggleLabel" style="display:none;">내 정보 입력/수정</span>
+
+      <!-- ▸ 기본 정보 (토글 아코디언) -->
+      <div class="collapsible-header" onclick="toggleCollapsible('pfBasicFields')" id="pfBasicHeader">
+        <span style="display:flex; align-items:center; gap:8px;">
+          <span class="toggle-icon">▸</span> 기본 정보
+          <span id="pfBasicBadge" class="badge emerald" style="display:none; font-size:10px;">저장됨</span>
+        </span>
+      </div>
+      <div id="pfBasicPreview"
+        style="display:none; padding:6px 14px; font-size:var(--text-body-small); color:var(--text-muted); font-weight:600; background:var(--bg-hover); border-radius:0 0 8px 8px; margin-top:-2px; cursor:pointer;"
+        onclick="toggleCollapsible('pfBasicFields')"></div>
+      <div class="collapsible-body" id="pfBasicFields" style="display:none;">
+        <div class="form-row">
+          <div class="form-group">
+            <label>이름 (별칭)</label>
+            <input type="text" id="pfName" placeholder="예: 홍길동" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label style="white-space:nowrap;">성별 <small style="color:var(--text-muted)">(생휴 여부)</small></label>
+            <select id="pfGender">
+              <option value="">미설정</option>
+              <option value="M">남성</option>
+              <option value="F">여성</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label style="white-space:nowrap;">생년월일 <small style="color:var(--text-muted)">(정년 산정)</small></label>
+            <input type="date" id="pfBirthDate" oninput="syncBirthDateToRetirement(this.value)">
+          </div>
+          <div class="form-group">
+            <label>부서</label>
+            <input type="text" id="pfDepartment" placeholder="예: 핵의학과, 중환자실" autocomplete="off">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>직종</label>
+            <select id="pfJobType" onchange="updateProfileGrades()"></select>
+          </div>
+          <div class="form-group">
+            <label>직급·등급</label>
+            <select id="pfGrade" onchange="_suggestYear(document.getElementById('pfHireDate').value)"></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>입사일</label>
+            <input type="text" id="pfHireDate" placeholder="예: 2021-01-01">
+            <small id="pfServiceDisplay" style="color:var(--text-muted)"></small>
+          </div>
+          <div class="form-group">
+            <label>호봉 (연차)</label>
+            <select id="pfYear">
+              <option value="1">1년차</option>
+              <option value="2">2년차</option>
+              <option value="3">3년차</option>
+              <option value="4">4년차</option>
+              <option value="5">5년차</option>
+              <option value="6">6년차</option>
+              <option value="7">7년차</option>
+              <option value="8">8년차</option>
+            </select>
+            <small id="pfYearHint" style="color:var(--text-muted)"></small>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>사번</label>
+            <input type="text" id="pfEmployeeNumber" placeholder="예: 20842" autocomplete="off"
+              inputmode="numeric">
+          </div>
+          <div class="form-group">
+            <label>조정급 (필수!!)</label>
+            <input type="number" id="pfAdjust" value="0" placeholder="급여명세서 확인">
+          </div>
+        </div>
+      </div><!-- /pfBasicFields -->
+
+      <!-- ▸ 가족 수당 (아코디언) -->
+      <div class="collapsible-header" onclick="toggleCollapsible('pfFamilyFields')" style="margin-top:8px;">
+        <span style="display:flex; align-items:center; gap:8px;">
+          <span class="toggle-icon">▸</span> 가족 수당 <small
+            style="font-weight:400; color:var(--text-muted); margin-left:4px;">통상임금 미포함 · 별도 지급</small>
+        </span>
+      </div>
+      <div class="collapsible-body" id="pfFamilyFields" style="display:none;">
+        <div class="form-row profile-row-solo">
+          <div class="form-group">
+            <label>가족 수 <small style="color:var(--text-muted)">(자녀 제외·최대 5인)</small></label>
+            <input type="number" id="pfFamily" value="0" min="0" max="5" onchange="updateFamilyUI()"
+              oninput="updateFamilyUI()">
+            <small style="color:var(--text-muted)">배우자 4만원 / 추가 1인당 2만원</small>
+          </div>
+        </div>
+        <div id="pfChildrenRow" class="form-row" style="display:none;">
+          <div class="form-group">
+            <label>자녀 수</label>
+            <input type="number" id="pfChildren" value="0" min="0" max="10" onchange="updateFamilyUI()"
+              oninput="updateFamilyUI()">
+            <small style="color:var(--text-muted)">첫째 3만 / 둘째 7만 / 셋째이상 11만</small>
+          </div>
+        </div>
+        <div id="childExtraRow" class="form-row" style="display:none;">
+          <div class="form-group">
+            <label>6세이하 자녀수당 <small style="color:var(--text-muted)">(월액 직접 입력)</small></label>
+            <input type="number" id="pfChildrenUnder6Pay" value="0" min="0" step="10000" placeholder="급여명세서 확인"
+              onchange="updateFamilyUI()" oninput="updateFamilyUI()">
+            <small style="color:var(--text-muted)">급여명세서의 6세이하자녀수당 금액 그대로 입력</small>
+          </div>
+        </div>
+        <div id="pfFamilySummary"
+          style="display:none; margin-top:4px; padding:8px 12px; background:var(--bg-hover); border-radius:8px; font-size:var(--text-body-small);">
+        </div>
+      </div>
+
+      <!-- ▸ 개인 수당 (아코디언) -->
+      <div class="collapsible-header" onclick="toggleCollapsible('pfAllowanceFields')" style="margin-top:16px;">
+        <span style="display:flex; align-items:center; gap:8px;">
+          <span class="toggle-icon">▸</span> 개인 수당 <small
+            style="font-weight:400; color:var(--text-muted); margin-left:4px;">5개</small>
+        </span>
+      </div>
+      <div class="collapsible-body" id="pfAllowanceFields" style="display:none;">
+        <div class="form-row">
+          <div class="form-group">
+            <label>승급조정급</label>
+            <input type="number" id="pfUpgradeAdjust" value="0">
+          </div>
+          <div class="form-group">
+            <label>별정수당</label>
+            <input type="number" id="pfSpecial" value="0" min="0">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>직책급</label>
+            <input type="number" id="pfPosition" value="0" min="0">
+          </div>
+          <div class="form-group">
+            <label>업무보조비</label>
+            <input type="number" id="pfWorkSupport" value="0" min="0">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>군복무수당</label>
+            <div class="toggle-group" style="margin-top:6px;">
+              <input type="checkbox" id="pfMilitary">
+              <label for="pfMilitary">해당 있음</label>
+            </div>
+            <div id="pfMilitaryMonthsGroup" style="display:none; margin-top:6px;">
+              <input type="number" id="pfMilitaryMonths" value="24" min="1" max="36" placeholder="복무기간(개월)">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ▸ 고급 설정 (아코디언) -->
+      <div class="collapsible-header" onclick="toggleCollapsible('pfAdvancedFields')" style="margin-top:8px;">
+        <span style="display:flex; align-items:center; gap:8px;">
+          <span class="toggle-icon">▸</span> 고급 설정 <small
+            style="font-weight:400; color:var(--text-muted); margin-left:4px;">승진일·호봉보정·근로시간</small>
+        </span>
+      </div>
+      <div class="collapsible-body" id="pfAdvancedFields" style="display:none;">
+        <div class="form-row">
+          <div class="form-group">
+            <label>최근 승진일 <small style="font-weight:400; color:var(--text-muted)">선택</small></label>
+            <input type="text" id="pfPromotionDate" placeholder="예: 2024-03-01">
+            <small id="pfPromotionHint" style="color:var(--text-muted)"></small>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>노조협의 호봉 보정 <small style="font-weight:400; color:var(--text-muted)">선택</small></label>
+            <select id="pfUnionStepAdjust">
+              <option value="">자동 (직급 기준 자동 적용)</option>
+              <option value="0">0 — 해당 없음</option>
+              <option value="1">+1호봉 (수동 지정)</option>
+              <option value="2">+2호봉 (수동 지정)</option>
+            </select>
+            <small style="color:var(--text-muted)">2026.02 노조협의: J1~S1 +1호봉 자동 적용</small>
+          </div>
+        </div>
+        <div class="form-row profile-row-solo">
+          <div class="form-group">
+            <label>월 소정근로시간 <small style="font-weight:400; color:var(--text-muted)">기본 209h</small></label>
+            <input type="number" id="pfWeeklyHours" value="209" min="1" max="300" placeholder="209">
+            <small style="color:var(--text-muted)">시급 계산 기준 · 일반 전일제 근무자는 209h 그대로</small>
+          </div>
+          <div class="form-group"></div>
+        </div>
+      </div>
+
+      <input type="checkbox" id="pfSeniority" style="display:none;">
+
+      <!-- 공용 기기 개인정보 주의 안내 -->
+      <div
+        style="display:flex; align-items:flex-start; gap:10px; padding:10px 12px; background:rgba(245,158,11,0.09); border:1px solid rgba(245,158,11,0.35); border-radius:8px; font-size:var(--text-body-normal); margin-top:20px; line-height:1.5;">
+        <span style="font-size:1.1rem; flex-shrink:0; margin-top:1px;">⚠️</span>
+        <div>
+          <strong style="color:#F080A0; font-weight: bold; display:block; margin-bottom:2px;">공용 기기에서는 개인정보를 저장하지
+            마세요</strong>
+          <span style="color:var(--text-secondary);">학교·도서관·직장 공용 컴퓨터에서는 개인정보를 입력하지 마세요. 데이터는 이 브라우저에만 저장되어
+            <strong>다음 사용자가 동일 브라우저를 열면 볼 수 있습니다.</strong></span>
+        </div>
+      </div>
+
+      <div class="form-row profile-action-row" style="margin-top:16px;">
+        <button class="btn btn-primary" onclick="saveProfile()" style="flex:2">💾 저장하기</button>
+        <button class="btn btn-outline" onclick="clearProfile()" style="flex:1">🗑 초기화</button>
+      </div>
+      <div id="profileSavedCTA"
+        style="display:none; margin-top:14px; padding:12px 16px; background:rgba(52,211,153,0.1); border:1px solid rgba(52,211,153,0.3); border-radius:8px; text-align:center;">
+        <p id="profileSavedCTADesc"
+          style="font-size:var(--text-body-small); color:var(--text-muted); margin:0 0 8px;">정보가 저장됐어요. 이번 달 시간외
+          수당을 계산해볼까요?</p>
+        <button id="profileSavedCTABtn" onclick="switchTab('overtime')" class="btn btn-primary"
+          style="width:100%;">⏰ 시간외 계산하러 가기 →</button>
+      </div>
+
+    </div><!-- /pfInputFields -->
+  </div><!-- End of Profile Form Card -->
+
+  <!-- 프로필 요약 -->
+  <div id="profileSummary" class="card" style="max-width:600px; margin:20px auto 0;">
+    <div class="card-title" style="font-size:var(--text-body-large);"><span class="icon indigo">📝</span> 통상임금 내역
+    </div>
+    <p style="color:var(--text-muted)">정보를 입력하고 [저장하기]를 눌러주세요.</p>
+  </div>
+
+</div><!-- /profileSectionPersonal -->
+
+<div id="profileSectionWork" style="display:none;">
+  <!-- E1: 근무이력 섹션 -->
+  <div class="card" id="workHistoryCard" style="max-width:600px; margin:0 auto;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+      <div class="card-title" style="font-size:var(--text-body-large); margin:0;">
+        <span class="icon indigo">💼</span> 근무이력
+      </div>
+      <button id="addWorkHistoryBtn" class="btn btn-primary"
+        style="padding:6px 14px; font-size:var(--text-body-small);"
+        onclick="openWorkHistorySheet({__newPost:true})">+ 근무지 추가</button>
+    </div>
+    <!-- Phase 4-A: 명세서 시계열 → 근무이력 알림 배너 (mode='banner' 시) -->
+    <div id="workHistoryBanner" style="display:none; margin-bottom:12px;"></div>
+    <div id="workHistoryList"></div>
+  </div>
+
+  <!-- 근무이력 입력 바텀시트 -->
+  <div id="workHistorySheet" style="display:none; position:fixed; inset:0; z-index:9000;
+     background:rgba(0,0,0,0.5);" onclick="if(event.target===this)closeWorkHistorySheet()">
+    <div style="position:absolute; bottom:0; left:0; right:0; max-width:480px; margin:0 auto; background:var(--bg-card,#fff);
+       border-radius:16px 16px 0 0; padding:20px 16px 32px; max-height:85vh; overflow-y:auto;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+        <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
+          <span style="font-size:var(--text-body-large); font-weight:600;" id="workHistorySheetTitle">근무이력
+            추가</span>
+          <span id="workHistorySheetBadge"
+            style="display:none; font-size:0.68rem; font-weight:700; padding:3px 8px; border-radius:10px; background:rgba(245,158,11,.15); color:#d97706;"></span>
+        </div>
+        <button onclick="closeWorkHistorySheet()"
+          style="background:none; border:none; font-size:1.4rem; cursor:pointer; line-height:1; padding:4px 8px;">×</button>
+      </div>
+      <input type="hidden" id="whEditId" value="">
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div>
+          <label style="font-size:var(--text-body-small); font-weight:600; display:block; margin-bottom:4px;">직장명
+            *</label>
+          <input id="whWorkplace" type="text" placeholder="예: 서울대학교병원" class="form-input"
+            style="width:100%; padding:10px 12px; border:1px solid var(--border-glass); border-radius:8px; font-size:var(--text-body-normal);">
+        </div>
+        <div>
+          <label style="font-size:var(--text-body-small); font-weight:600; display:block; margin-bottom:4px;">부서명
+            *</label>
+          <input id="whDept" type="text" placeholder="예: 핵의학과, 중환자실, 101병동" class="form-input"
+            style="width:100%; padding:10px 12px; border:1px solid var(--border-glass); border-radius:8px; font-size:var(--text-body-normal);">
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+          <div>
+            <label style="font-size:var(--text-body-small); font-weight:600; display:block; margin-bottom:4px;">시작
+              (년-월)</label>
+            <input id="whFrom" type="month" class="form-input"
+              style="width:100%; padding:10px 12px; border:1px solid var(--border-glass); border-radius:8px; font-size:var(--text-body-normal);">
+            <small id="whFromHint"
+              style="display:none; margin-top:4px; color:var(--accent-amber,#d97706); font-size:0.7rem;"></small>
+          </div>
+          <div>
+            <label style="font-size:var(--text-body-small); font-weight:600; display:block; margin-bottom:4px;">종료
+              (년-월)</label>
+            <input id="whTo" type="month" class="form-input" placeholder="재직 중이면 빈칸"
+              style="width:100%; padding:10px 12px; border:1px solid var(--border-glass); border-radius:8px; font-size:var(--text-body-normal);">
+          </div>
+        </div>
+        <div>
+          <label
+            style="font-size:var(--text-body-small); font-weight:600; display:block; margin-bottom:4px;">직무</label>
+          <input id="whRole" type="text" list="whRoleSuggestions" placeholder="직종에 따라 자동 추천됩니다" class="form-input"
+            style="width:100%; padding:10px 12px; border:1px solid var(--border-glass); border-radius:8px; font-size:var(--text-body-normal);">
+          <datalist id="whRoleSuggestions"></datalist>
+          <small id="whRoleHint"
+            style="display:block; margin-top:4px; color:var(--text-muted); font-size:0.72rem;"></small>
+        </div>
+        <div>
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+            <label style="font-size:var(--text-body-small); font-weight:600;">주요 역할 (선택)</label>
+            <button type="button" onclick="autofillJobDesc()" id="whAutofillBtn" style="font-size:0.7rem; padding:3px 8px; border:1px solid var(--accent-indigo,#6366f1);
+                   background:rgba(99,102,241,.08); color:var(--accent-indigo,#6366f1);
+                   border-radius:6px; cursor:pointer;">✨ 표준 업무 자동 채움</button>
+          </div>
+          <textarea id="whDesc" rows="4" placeholder="간략한 업무 내용..."
+            style="width:100%; padding:10px 12px; border:1px solid var(--border-glass); border-radius:8px; font-size:var(--text-body-normal); resize:none;"></textarea>
+        </div>
+        <button class="btn btn-primary" style="width:100%; padding:12px;"
+          onclick="saveWorkHistoryEntry()">저장</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- 이력서 섹션 입력 바텀시트 (학력/자격/논문 공용) -->
+  <div id="resumeItemSheet" style="display:none; position:fixed; inset:0; z-index:9100;
+     background:rgba(0,0,0,0.5);" onclick="if(event.target===this)closeResumeItemSheet()">
+    <div style="position:absolute; bottom:0; left:0; right:0; max-width:480px; margin:0 auto; background:var(--bg-card,#fff);
+       border-radius:16px 16px 0 0; padding:20px 16px 32px; max-height:85vh; overflow-y:auto;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+        <span style="font-size:var(--text-body-large); font-weight:600;" id="resumeItemSheetTitle">항목 추가</span>
+        <button onclick="closeResumeItemSheet()"
+          style="background:none; border:none; font-size:1.4rem; cursor:pointer; line-height:1; padding:4px 8px;">×</button>
+      </div>
+      <div id="resumeItemFields" style="display:flex; flex-direction:column; gap:12px;"></div>
+      <button class="btn btn-primary" style="width:100%; padding:12px; margin-top:12px;"
+        onclick="saveResumeItem()">저장</button>
+    </div>
+  </div>
+
+  <!-- 로테이션 입력 바텀시트 -->
+  <div id="rotationSheet" style="display:none; position:fixed; inset:0; z-index:9100;
+     background:rgba(0,0,0,0.5);" onclick="if(event.target===this)closeRotationSheet()">
+    <div style="position:absolute; bottom:0; left:0; right:0; max-width:480px; margin:0 auto; background:var(--bg-card,#fff);
+       border-radius:16px 16px 0 0; padding:20px 16px 32px; max-height:85vh; overflow-y:auto;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+        <span style="font-size:var(--text-body-large); font-weight:600;" id="rotationSheetTitle">로테이션 추가</span>
+        <button onclick="closeRotationSheet()"
+          style="background:none; border:none; font-size:1.4rem; cursor:pointer; line-height:1; padding:4px 8px;">×</button>
+      </div>
+      <p id="rotationParentHint" style="font-size:0.72rem; color:var(--text-muted); margin:0 0 14px;"></p>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div>
+          <label style="font-size:var(--text-body-small); font-weight:600; display:block; margin-bottom:4px;">근무방
+            / 파트 *</label>
+          <input id="rotRoom" type="text" placeholder="예: PET실, 감마실, 갑상선치료실" class="form-input"
+            style="width:100%; padding:10px 12px; border:1px solid var(--border-glass); border-radius:8px; font-size:var(--text-body-normal);">
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+          <div>
+            <label style="font-size:var(--text-body-small); font-weight:600; display:block; margin-bottom:4px;">시작
+              (년-월)</label>
+            <input id="rotFrom" type="month" class="form-input"
+              style="width:100%; padding:10px 12px; border:1px solid var(--border-glass); border-radius:8px; font-size:var(--text-body-normal);">
+          </div>
+          <div>
+            <label style="font-size:var(--text-body-small); font-weight:600; display:block; margin-bottom:4px;">종료
+              (년-월)</label>
+            <input id="rotTo" type="month" class="form-input" placeholder="진행 중이면 빈칸"
+              style="width:100%; padding:10px 12px; border:1px solid var(--border-glass); border-radius:8px; font-size:var(--text-body-normal);">
+          </div>
+        </div>
+        <div>
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+            <label style="font-size:var(--text-body-small); font-weight:600;">수행 업무 (선택)</label>
+            <button type="button" onclick="autofillRotationTasks()" style="font-size:0.7rem; padding:3px 8px; border:1px solid var(--accent-indigo,#6366f1);
+                   background:rgba(99,102,241,.08); color:var(--accent-indigo,#6366f1);
+                   border-radius:6px; cursor:pointer;">✨ 표준 업무 자동 채움</button>
+          </div>
+          <textarea id="rotTasks" rows="4"
+            placeholder="줄바꿈으로 항목 구분&#10;예: PET-CT 검사 진행&#10;FDG 합성 보조&#10;환자 안내 및 교육"
+            style="width:100%; padding:10px 12px; border:1px solid var(--border-glass); border-radius:8px; font-size:var(--text-body-normal); resize:vertical;"></textarea>
+        </div>
+        <div id="rotActions" style="display:grid; grid-template-columns:1fr; gap:8px;">
+          <button id="rotDeleteBtn" type="button"
+            style="display:none; width:100%; padding:12px; border:1px solid var(--accent-rose,#f43f5e); color:var(--accent-rose,#f43f5e); background:transparent; border-radius:8px; font-weight:600; cursor:pointer;"
+            onclick="deleteRotationEntry()">삭제</button>
+          <button id="rotSaveBtn" class="btn btn-primary" style="width:100%; padding:12px;"
+            onclick="saveRotationEntry()">저장</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /profileSectionWork -->
+
+    

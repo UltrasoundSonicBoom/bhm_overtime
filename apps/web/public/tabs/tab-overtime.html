@@ -1,0 +1,207 @@
+<!-- 참고용 안내 배너 + 도움말 -->
+<div class="info-note-banner" style="flex-direction:column; gap:4px;">
+  <div style="display:flex; align-items:center; gap:8px; width:100%; cursor:pointer;" onclick="toggleOtHelp()">
+    <span>ℹ️</span>
+    <div style="flex:1;">수당 계산이 궁금하신가요? <strong style="color:var(--accent-indigo);">도움말 보기</strong></div>
+    <span id="otHelpArrow" style="transition:transform 0.3s; font-size:12px; color:var(--text-muted);">▼</span>
+  </div>
+  <div id="otHelpContent" style="display:none; width:100%; margin-top:8px;">
+    <div class="ot-help-grid">
+      <div class="ot-help-item" onclick="toggleOtHelpDetail(this, event)">
+        <div class="ot-help-q">⏰ 연장근무 수당은 어떻게 계산되나요?</div>
+        <div class="ot-help-a">
+          <strong>통상임금 × 150%</strong>로 계산됩니다.<br>
+          • 소정근로시간(09:00~18:00) 이후 근무분<br>
+          • 15분 단위로 절삭하여 계산<br>
+          • 시급 = 월 통상임금 ÷ 209시간<br>
+          <span class="ot-help-ref">근거: 취업규칙 제34조, 제47조</span>
+        </div>
+      </div>
+      <div class="ot-help-item" onclick="toggleOtHelpDetail(this, event)">
+        <div class="ot-help-q">🌙 야간근무 수당 기준은?</div>
+        <div class="ot-help-a">
+          <strong>22:00 ~ 06:00</strong> 사이 근무 시 적용됩니다.<br>
+          • 통상근무자가 연장→야간: <strong>200%</strong><br>
+          • 휴일 + 야간 겹칠 경우: <strong>200%</strong><br>
+          • 이브닝(E) 근무 시 22:00~23:00 <strong>1시간은 자동으로 야간</strong> 분리 계산<br>
+          <span class="ot-help-ref">근거: 취업규칙 제34조</span>
+        </div>
+      </div>
+      <div class="ot-help-item" onclick="toggleOtHelpDetail(this, event)">
+        <div class="ot-help-q">📅 공휴일 근무 수당은?</div>
+        <div class="ot-help-a">
+          <strong>통상임금 × 150%</strong> (8시간 이내)<br>
+          • 공휴일 + 야간(22~06시): <strong>200%</strong><br>
+          • 날짜 선택 시 공휴일 여부 <strong>자동 판별</strong><br>
+          • 공공데이터포털 API로 매년 공휴일 자동 갱신<br>
+          <span class="ot-help-ref">근거: 취업규칙 제34조</span>
+        </div>
+      </div>
+      <div class="ot-help-item" onclick="toggleOtHelpDetail(this, event)">
+        <div class="ot-help-q">🔧 근로자의 날(5/1)도 휴일수당 받나요?</div>
+        <div class="ot-help-a">
+          <strong>네, 유급휴일</strong>입니다.<br>
+          • 「근로자의 날 제정에 관한 법률」에 의한 법정 유급휴일<br>
+          • 취업규칙 제35조에도 유급휴일로 명시<br>
+          • 근무 시 <strong>휴일근로수당(8h 이내 150%, 초과 200%)</strong> 지급 대상<br>
+          • 개원기념일(10/15)도 유급휴일로 동일 적용<br>
+          <span class="ot-help-ref">근거: 근로자의 날 제정에 관한 법률, 취업규칙 제35조</span>
+        </div>
+      </div>
+      <div class="ot-help-item" onclick="toggleOtHelpDetail(this, event)">
+        <div class="ot-help-q">📞 온콜 수당은 어떻게 되나요?</div>
+        <div class="ot-help-a">
+          <strong>온콜대기:</strong> 1일 10,000원 (대기만 한 경우)<br>
+          <strong>온콜출근:</strong><br>
+          • 교통비 50,000원 별도 지급<br>
+          • 실근무시간 + 출퇴근 2시간 인정<br>
+          • 출근 시 대기수당과 중복 지급 안 됨<br>
+          <span class="ot-help-ref">근거: 단체협약 온콜 조항</span>
+        </div>
+      </div>
+      <div class="ot-help-item" onclick="toggleOtHelpDetail(this, event)">
+        <div class="ot-help-q">🌃 야간근무가산금 & 리커버리데이는?</div>
+        <div class="ot-help-a">
+          <strong>야간근무가산금:</strong> 야간 1회당 10,000원 (3교대 대상)<br>
+          <strong>리커버리데이:</strong><br>
+          • 월 7일 이상 야간 → 1일 부여<br>
+          • 누적 15일당 추가 1일 부여<br>
+          • 월 9일 초과 금지 (10일↑ 시간외수당 처리)<br>
+          <span class="ot-help-ref">근거: 별도합의 (2015.05), 취업규칙 제32조</span>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:8px; font-size:11px; color:var(--text-muted); text-align:center;">
+      ※ 정확한 금액은 개인별 근속연수·조정급 등에 따라 차이가 있을 수 있습니다. 급여 명세서 기준으로 확인하세요.
+    </div>
+  </div>
+</div>
+<!-- Zone A: 모바일 캘린더 -->
+<div class="card" style="margin-bottom: 12px; padding: 12px;">
+  <div class="ot-hourly-bar" style="margin-bottom: 8px;">
+    <span>적용 시급:</span>
+    <input type="number" id="otHourly" value="0" min="0" step="100" placeholder="시급 입력"
+      oninput="onOtHourlyInput()"
+      style="width:110px; padding:4px 8px; border-radius:6px; border:1px solid var(--border-glass); background:var(--bg-glass); color:var(--accent-emerald); font-weight:700; font-size:var(--text-body-large); text-align:right;">
+    <span style="color:var(--text-muted); font-size:var(--text-body-normal);">원</span>
+    <small id="otHourlyHint" style="font-size:var(--text-body-normal);"></small>
+  </div>
+
+  <!-- 시급 0원 경고 배너 -->
+  <div id="otHourlyWarning" class="hourly-warning-banner">
+    <span style="flex-shrink:0; margin-top:2px;">⚠️</span>
+    <div style="flex:1; display:flex; flex-direction:column; gap:6px;">
+      <strong>개인정보를 먼저 입력해주세요</strong>
+      <span style="font-size:var(--text-body-small);">직종·호봉을 입력해야 시간외 수당이 자동 계산됩니다.</span>
+      <button onclick="switchTab('profile')" class="btn btn-primary"
+        style="align-self:flex-start; font-size:var(--text-body-small); margin-top:2px;">👤 개인정보 입력하기 →</button>
+    </div>
+    <button onclick="dismissHwBanner()"
+      style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:16px;padding:0 2px;line-height:1;flex-shrink:0;align-self:flex-start;"
+      title="닫기">✕</button>
+  </div>
+
+  <!-- 캘린더 -->
+  <div id="otCalendar" class="mobile-calendar"></div>
+</div>
+
+<!-- Zone B: 대시보드 (수당 금액 중심) -->
+<div id="otDashboard" class="ot-dashboard"></div>
+
+<!-- Zone V: 명세서 자동 보충 카드 -->
+<div id="otVerifyCard" class="card" style="margin-bottom:12px; display:none;">
+  <div class="card-title" style="cursor:pointer;" onclick="toggleOtVerifyDetail()">
+    <span class="icon" style="font-size:18px;">💡</span>
+    <span id="otVerifyTitle">명세서 자동 보충</span>
+    <span id="otVerifyBadge" class="badge emerald" style="margin-left:auto;"></span>
+    <span id="otVerifyArrow"
+      style="font-size:12px; color:var(--text-muted); transition:transform 0.3s; margin-left:8px;">▼</span>
+  </div>
+  <div id="otVerifyContent"></div>
+</div>
+
+<!-- Zone D: 바텀 시트 오버레이 및 패널 -->
+<div id="otInputOverlay" class="ot-bottom-sheet-overlay" onclick="closeOtBottomSheet()"></div>
+<div id="otInputPanel" class="ot-bottom-sheet">
+  <div class="ot-sheet-handle"></div>
+  <div class="ot-panel-header-v2" style="display:flex; justify-content:space-between; align-items:center;">
+    <span id="otPanelDate"
+      style="font-weight:700; font-size:var(--text-title-large); color:var(--text-primary);">날짜를 선택하세요</span>
+    <button class="btn btn-icon" onclick="closeOtBottomSheet()"
+      style="padding:4px; font-size:var(--text-title-large);"><span
+        style="color:var(--text-muted)">✕</span></button>
+  </div>
+
+  <!-- ① 이 날의 기록 탭 (기존 기록 있을 때 JS로 렌더링) — 선택하면 아래 폼에 로드됨 -->
+  <div id="otExistingRecords" style="margin-top:12px;"></div>
+
+  <!-- ② 입력 폼 영역 -->
+  <div class="form-group" style="margin-top:4px;">
+    <label>유형</label>
+    <div class="ot-type-selector">
+      <label class="ot-type-option active">
+        <input type="radio" name="otType" value="overtime" checked onchange="onOtTypeChange()">
+        <span class="ot-type-label" style="--type-color:var(--accent-amber)">⏰ 시간외</span>
+      </label>
+      <label class="ot-type-option">
+        <input type="radio" name="otType" value="oncall_callout" onchange="onOtTypeChange()">
+        <span class="ot-type-label" style="--type-color:var(--accent-indigo)">🚗 온콜출근</span>
+      </label>
+      <label class="ot-type-option">
+        <input type="radio" name="otType" value="oncall_standby" onchange="onOtTypeChange()">
+        <span class="ot-type-label" style="--type-color:var(--accent-cyan)">📞 온콜대기</span>
+      </label>
+    </div>
+  </div>
+
+  <!-- 시간 입력 (온콜대기 시 숨김) -->
+  <div id="otTimeFields" style="margin-bottom:16px;">
+    <label
+      style="display:block; font-size:var(--text-body-large); font-weight:600; color:var(--text-secondary); margin-bottom:6px;">근무
+      시간</label>
+    <div style="display:flex; flex-direction:row; gap:8px; align-items:center;">
+      <input type="time" id="otStartTime" class="time-picker-premium" style="flex:1; width:100%" value="18:00"
+        step="900" onchange="previewOtCalc()">
+      <span style="color:var(--text-muted); font-weight:700;">~</span>
+      <input type="time" id="otEndTime" class="time-picker-premium" style="flex:1; width:100%" value="22:00"
+        step="900" onchange="previewOtCalc()">
+    </div>
+  </div>
+
+  <!-- 실시간 미리보기 -->
+  <div id="otPreview" class="ot-preview" style="margin-bottom:12px;"></div>
+
+  <div class="form-group">
+    <label>메모 (선택)</label>
+    <input type="text" id="otMemo" placeholder="예: 응급환자 대응" class="premium-input">
+  </div>
+
+  <div style="display:flex; flex-direction:row; margin-top:20px; gap:12px;">
+    <button class="btn btn-outline" onclick="deleteOtRecord()"
+      style="flex:1; display:none; border-color:transparent; background:rgba(244,63,94,0.08); color:var(--accent-rose); font-size:var(--text-body-large); font-weight:600; padding:14px; justify-content:center; border-radius:12px; transition:all 0.2s;"
+      id="otDeleteBtn">삭제</button>
+    <button class="btn btn-primary" onclick="saveOtRecord()"
+      style="flex:1; font-size:var(--text-title-large); padding:14px; justify-content:center; border-radius:12px;"
+      id="otSaveBtn" disabled>저장</button>
+  </div>
+  <input type="hidden" id="otEditId" value="">
+</div> <!-- /otInputPanel -->
+
+<!-- M2-8 연장근로 한도 경고 배너 (제34조(1)) -->
+<div id="otLimitWarning"
+  style="display:none; margin-top:16px; padding:12px 14px; border-radius:10px; background:rgba(244, 63, 94, 0.06); border:1px solid var(--accent-rose); color:var(--text-primary); font-size:var(--text-body-normal);">
+</div>
+
+<!-- Zone C: 하단 기록 -->
+<div class="card" style="margin-top:20px;">
+  <div class="card-title">
+    <span class="icon emerald">📋</span> <span><span id="otRecordMonth"></span>월 기록</span>
+    <span class="badge amber" id="otRecordCount">0건</span>
+  </div>
+  <div id="otRecordList">
+    <p style="color:var(--text-muted); text-align:center; padding:24px;">
+      캘린더에서 날짜를 클릭하여 기록을 추가하세요.
+    </p>
+  </div>
+</div>
+    

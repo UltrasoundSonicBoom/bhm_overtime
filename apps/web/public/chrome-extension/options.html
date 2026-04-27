@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>SNUH Mate Companion 설정</title>
+  <style>
+    body { font-family: -apple-system, sans-serif; padding: 20px; max-width: 400px; font-size: 14px; }
+    h1 { font-size: 16px; margin-bottom: 16px; }
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 13px; }
+    .field input[type="text"] { width: 100%; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; }
+    .field small { color: #888; font-size: 11px; }
+    .toggle-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .toggle-row label { font-size: 13px; cursor: pointer; }
+    .status { margin-top: 12px; font-size: 12px; color: #0d8a3e; }
+    button { padding: 6px 14px; border: none; background: #4285f4; color: #fff; border-radius: 6px; cursor: pointer; font-size: 13px; }
+    button:hover { background: #3367d6; }
+  </style>
+</head>
+<body>
+  <h1>SNUH Mate Companion 설정</h1>
+
+  <div class="field">
+    <label>SNUH Mate 도메인</label>
+    <input id="domain" type="text" value="snuhmate.com" placeholder="snuhmate.com">
+    <small>기본값: snuhmate.com (변경 시 확장프로그램 재로드 필요)</small>
+  </div>
+
+  <div class="toggle-row">
+    <input id="debugMode" type="checkbox">
+    <label for="debugMode">디버그 모드 (콘솔 로그 활성화)</label>
+  </div>
+
+  <button id="saveBtn">저장</button>
+  <div id="status" class="status"></div>
+
+  <script src="options.js"></script>
+</body>
+</html>

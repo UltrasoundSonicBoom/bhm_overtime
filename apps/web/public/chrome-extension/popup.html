@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="popup.css">
+  <title>SNUH Mate 빠른 기록</title>
+</head>
+<body>
+  <main class="popup-shell">
+    <!-- Quick Capture Section -->
+    <section class="card">
+      <h1 class="popup-title">SNUH Mate 빠른 기록</h1>
+
+      <div id="quickCaptureCalendar" class="mini-calendar"></div>
+
+      <div id="captureType" class="capture-type-group">
+        <button class="type-btn active" data-kind="overtime" data-active="1">시간외</button>
+        <button class="type-btn" data-kind="oncall_standby">온콜대기</button>
+        <button class="type-btn" data-kind="oncall_callout">온콜출근</button>
+      </div>
+
+      <div id="timeInputs" class="time-inputs">
+        <label>
+          <span>시작</span>
+          <input id="startTime" type="time" value="18:00">
+        </label>
+        <label>
+          <span>종료</span>
+          <input id="endTime" type="time" value="20:00">
+        </label>
+      </div>
+
+      <div class="memo-row">
+        <input id="memo" type="text" placeholder="메모 (선택)" maxlength="100">
+      </div>
+
+      <div class="holiday-row">
+        <label>
+          <input id="isHoliday" type="checkbox">
+          <span>공휴일/휴일 근무</span>
+        </label>
+      </div>
+
+      <button id="saveQuickCapture" class="save-btn">저장</button>
+      <div id="captureStatus" class="status-msg"></div>
+    </section>
+
+    <!-- Recent PDF Section -->
+    <section class="card">
+      <h2 class="section-title">PDF 가져오기</h2>
+      <div id="recentPdfList" class="recent-pdf-list">
+        <p class="empty-state">최근 PDF 없음</p>
+      </div>
+      <button id="importCurrentPdf" class="import-btn">현재 탭 PDF 가져오기</button>
+    </section>
+
+    <footer class="popup-footer">
+      <a href="https://snuhmate.com/?app=1" target="_blank">SNUH Mate 열기</a>
+    </footer>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>
