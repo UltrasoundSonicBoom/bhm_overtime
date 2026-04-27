@@ -32,8 +32,8 @@
     if (ALLOWED_TABS.indexOf(name) === -1) {
       return Promise.reject(new Error('invalid tab name: ' + name));
     }
-    // Phase 6 Task 5-1/5-2: home/profile tab 은 *Island.astro 로 build-time inline → fetch skip.
-    if (name === 'home' || name === 'profile') {
+    // Phase 6 Task 5-1/5-2/5-3: home/profile/payroll tab 은 *Island.astro 로 build-time inline → fetch skip.
+    if (name === 'home' || name === 'profile' || name === 'payroll') {
       cache[name] = true;
       return Promise.resolve(true);
     }

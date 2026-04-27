@@ -396,57 +396,36 @@ import { PROFILE } from '@snuhmate/profile/profile';
       }
       visualEl.textContent = '';
       if (archiveEl) archiveEl.textContent = '';
-      const empty = buildEmptyState(
-        '급여명세서',
-        '아직 등록된 명세서가 없습니다.',
-        'PDF 는 이 브라우저에만 저장됩니다.',
-        function () {
-          // 이미 열려 있는 picker가 있으면 제거 후 새로 생성 (iOS 취소 후 재시도 대응)
-          const prev = document.querySelector('input[type="file"][data-pay-picker]');
-          if (prev && prev.parentNode) prev.parentNode.removeChild(prev);
+      // Phase 5-followup-2 fix (Phase 6 5-3 재적용): <label for=""> 패턴 — 브라우저 native 처리, user gesture 보장
+      // 이전 패턴 (button onClick → 동적 input 생성 → input.click()) 가 user gesture 손실 → file picker 안 뜸
+      const empty = el('div', { className: 'pay-empty-state' });
+      empty.appendChild(el('div', { style: { fontSize: '2.5rem', marginBottom: '12px' }, textContent: '📭' }));
+      empty.appendChild(el('div', { style: { fontWeight: '600', fontSize: 'var(--text-body-large)', marginBottom: '4px' }, textContent: '아직 등록된 명세서가 없습니다.' }));
+      empty.appendChild(el('div', { style: { color: 'var(--text-muted)', fontSize: 'var(--text-body-normal)' }, textContent: 'PDF 는 이 브라우저에만 저장됩니다.' }));
 
-          const input = document.createElement('input');
-          input.type = 'file';
-          input.accept = '.pdf,.xlsx,.xls,.csv,.png,.jpg,.jpeg,.gif,.bmp,.webp';
-          input.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
-          input.dataset.payPicker = '1';
+      // <input type="file"> 미리 생성 + DOM attach (label-for 가 작동하려면 같은 DOM 안에 있어야)
+      const fileInput = el('input', {
+        type: 'file',
+        id: 'payslipUploadFileInput',
+        accept: '.pdf,.xlsx,.xls,.csv,.png,.jpg,.jpeg,.gif,.bmp,.webp',
+        style: { display: 'none' }
+      });
+      fileInput.addEventListener('change', function () {
+        if (fileInput.files && fileInput.files.length > 0) handleInlineUpload(fileInput.files[0]);
+        fileInput.value = '';  // 같은 파일 재선택 가능
+      });
 
-          let cleaned = false;
-          function cleanup() {
-            if (cleaned) return;
-            cleaned = true;
-            window.removeEventListener('focus', onFocus);
-            document.removeEventListener('visibilitychange', onVisibility);
-            clearTimeout(safetyTimer);
-            if (input.parentNode) input.parentNode.removeChild(input);
-          }
+      // <label for="..."> — 브라우저 native 위임, user gesture 100% 보장
+      const labelBtn = el('label', {
+        className: 'btn btn-primary',
+        style: { marginTop: '16px', cursor: 'pointer', display: 'inline-block' },
+        textContent: '📄 급여명세서 업로드'
+      });
+      labelBtn.htmlFor = 'payslipUploadFileInput';
+      labelBtn.setAttribute('for', 'payslipUploadFileInput');
 
-          input.addEventListener('change', function () {
-            if (input.files && input.files.length > 0) handleInlineUpload(input.files[0]);
-            cleanup();
-          });
-
-          // cancel 이벤트 (Chrome 113+, Safari 17.4+)
-          input.addEventListener('cancel', cleanup);
-
-          // Desktop: window focus 복귀 시 (파일 선택 없이 닫기)
-          function onFocus() { setTimeout(cleanup, 300); }
-          window.addEventListener('focus', onFocus, { once: true });
-
-          // Mobile(iOS/Android): 앱이 foreground로 돌아올 때
-          function onVisibility() {
-            if (document.visibilityState === 'visible') setTimeout(cleanup, 500);
-          }
-          document.addEventListener('visibilitychange', onVisibility);
-
-          // 안전 타임아웃: 30초 후 강제 정리
-          var safetyTimer = setTimeout(cleanup, 30000);
-
-          document.body.appendChild(input);
-          input.click();
-        },
-        '📄 급여명세서 업로드'
-      );
+      empty.appendChild(labelBtn);
+      empty.appendChild(fileInput);
       visualEl.appendChild(empty);
       return;
     }
