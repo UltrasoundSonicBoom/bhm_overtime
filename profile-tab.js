@@ -839,7 +839,7 @@ function updateProfileSummary(profile) {
   html += `
     <div style="margin-top:10px; border-top:1px solid var(--border-glass); padding-top:8px;">
       <div id="pfWageDetailToggle" style="display:flex; align-items:center; gap:6px; cursor:pointer; padding:6px 0; user-select:none;"
-           onclick="var b=document.getElementById('pfWageDetailBody'); var ic=document.getElementById('pfWageDetailIcon'); if(b.style.display==='none'){b.style.display='block';ic.textContent='▼';}else{b.style.display='none';ic.textContent='▸';}">
+           data-action="togglePfWageDetail">
         <span id="pfWageDetailIcon" style="font-size:0.8rem; color:var(--text-muted);">▸</span>
         <span style="font-size:var(--text-body-normal); font-weight:600; color:var(--text-muted);">통상임금 내역</span>
       </div>
@@ -941,7 +941,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // Phase 2-F: ESM marker — 파일을 ES module 로 표시 (side-effect IIFE 보존)
 
-// Phase 2-regression: inline onclick window 노출 (ESM 모듈 스코프 회복)
+// Phase 2-regression: inline onclick window 노출 (Phase 3-F 검토 후 제거 예정)
 if (typeof window !== 'undefined') {
   window.saveProfile = saveProfile;
   window.switchToProfileTab = switchToProfileTab;
@@ -949,5 +949,22 @@ if (typeof window !== 'undefined') {
   window.clearProfile = clearProfile;
   window.downloadBackup = downloadBackup;
 }
+
+// Phase 3-E: profile-tab 1 onclick (통상임금 내역 토글) → data-action 위임
+import { registerActions as _profile_registerActions } from './shared-utils.js';
+_profile_registerActions({
+  togglePfWageDetail: () => {
+    const body = document.getElementById('pfWageDetailBody');
+    const icon = document.getElementById('pfWageDetailIcon');
+    if (!body || !icon) return;
+    if (body.style.display === 'none') {
+      body.style.display = 'block';
+      icon.textContent = '▼';
+    } else {
+      body.style.display = 'none';
+      icon.textContent = '▸';
+    }
+  },
+});
 
 export {};

@@ -29,14 +29,15 @@ describe('onclick delegation — Phase 3', () => {
     expect(offenders, 'HTML inline onclick 잔존').toEqual([]);
   });
 
-  // ── Phase 3-E 후 enable: dist/assets/*.js 안 onclick=" 문자열 0 ──
-  it.skip('[Phase 3-E 후 enable] dist/assets/*.js 안 onclick=" 문자열 0', () => {
+  // ── Phase 3-E 완료 기준: dist/assets/*.js 안 onclick=" 문자열 0 ──
+  it('dist/assets/*.js 안 onclick=" 문자열 0 — Phase 3-E 완료 기준', () => {
     const assets = readdirSync(join(DIST, 'assets')).filter(f => f.endsWith('.js'));
     const offenders = [];
     for (const f of assets) {
       const content = readFileSync(join(DIST, 'assets', f), 'utf8');
-      const count = (content.match(/onclick=/g) || []).length;
-      if (count > 0) offenders.push(f + ': ' + count);
+      // 'onclick="' 문자열 인스턴스 (innerHTML markup) — 주석/코드 일부 false-positive 가능
+      const matches = content.match(/onclick="[^"]+"/g) || [];
+      if (matches.length > 0) offenders.push(f + ': ' + matches.length);
     }
     expect(offenders).toEqual([]);
   });

@@ -551,13 +551,13 @@ function renderArticles(articles, container, options) {
     }
 
     parts.push('<div class="reg-article" data-index="' + i + '" data-article-id="' + escapeHtml(articleId) + '">'
-      + '<div class="reg-article-header" onclick="toggleArticle(this)">'
+      + '<div class="reg-article-header" data-action="toggleArticle">'
       + '<span class="reg-article-num">' + refText + '</span>'
       + '<div class="reg-article-title-group">'
       + '<div class="reg-article-title">' + titleText + '</div>'
       + (previewText ? '<div class="reg-article-preview">' + escapeHtml(previewText) + '</div>' : '')
       + '</div>'
-      + '<span class="' + favClass + '" onclick="handleFavClick(event, \'' + escapedArticleId + '\')" title="즐겨찾기">' + favChar + '</span>'
+      + '<span class="' + favClass + '" data-action="handleFavClick" data-article-id="' + escapedArticleId + '" title="즐겨찾기">' + favChar + '</span>'
       + '<span class="reg-article-chevron">▸</span>'
       + '</div>'
       + '<div class="reg-article-body">'
@@ -574,7 +574,7 @@ function renderArticles(articles, container, options) {
       +   '<span class="reg-box-label reg-box-label-contact">📞 담당 부서</span>'
       +   '<div class="reg-contact-dept">' + escapeHtml(deptName) + '</div>'
       +   '<div class="reg-action-grid-3">'
-      +     '<button class="reg-action-btn btn-pdf" onclick="openPdfForRef(\'' + escapedRef + '\')">📄<br>PDF<span class="reg-action-btn-sub">원문 보기</span></button>'
+      +     '<button class="reg-action-btn btn-pdf" data-action="openPdfForRef" data-pdf-ref="' + escapedRef + '">📄<br>PDF<span class="reg-action-btn-sub">원문 보기</span></button>'
       +     '<a class="reg-action-btn btn-call" href="' + telHref + '">📞<br>전화' + (deptInfo.phone ? '<span class="reg-action-btn-sub">' + escapeHtml(deptInfo.phone) + '</span>' : '') + '</a>'
       +     '<a class="reg-action-btn btn-mail" href="' + mailtoHref + '">✉️<br>이메일<span class="reg-action-btn-sub">' + escapeHtml(deptInfo.email || '문의') + '</span></a>'
       // AI 질문 버튼 (차후 RAG 고도화):
@@ -1154,11 +1154,16 @@ function pdfZoom(delta) {
 }
 
 // Phase 3-A: 정적 HTML 6 onclick 위임 등록
+// Phase 3-E: regulation.js 동적 markup 3 onclick 추가
 registerActions({
   pdfPrevPage: () => pdfPrevPage(),
   pdfNextPage: () => pdfNextPage(),
   pdfZoom: (el) => pdfZoom(parseFloat(el.dataset.zoomDelta)),
   scrollChapterTabs: (el) => scrollChapterTabs(parseInt(el.dataset.scrollDirection, 10)),
+  // Phase 3-E
+  toggleArticle: (el) => toggleArticle(el),  // 기존: toggleArticle(this) — el 자체 전달
+  handleFavClick: (el, e) => handleFavClick(e, el.dataset.articleId),
+  openPdfForRef: (el) => openPdfForRef(el.dataset.pdfRef),
 });
 
 // Phase 2-regression: inline onclick window 노출 (ESM 모듈 스코프 회복)

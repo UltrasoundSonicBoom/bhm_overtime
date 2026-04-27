@@ -90,7 +90,7 @@ function renderPayslip(data, ym, profileUpdated, stableRes) {
         <span class="val" style="font-size:var(--text-body-large); font-weight:700;">${fmt(data.summary.netPay)}</span>
       </div>
     </div>
-    <button class="btn btn-secondary btn-full" style="margin-top:12px;" onclick="showVerifyInQna()">✅ 앱 계산값과 비교하기</button>
+    <button class="btn btn-secondary btn-full" style="margin-top:12px;" data-action="showVerifyInQna">✅ 앱 계산값과 비교하기</button>
   `;
   resultEl.innerHTML = html;
 }
@@ -809,9 +809,15 @@ function deletePayslipMonth(year, month, type) {
 
 // Phase 2-F: ESM marker — 파일을 ES module 로 표시 (side-effect IIFE 보존)
 
-// Phase 2-regression: inline onclick window 노출 (ESM 모듈 스코프 회복)
+// Phase 2-regression: inline onclick window 노출 (Phase 3-F 검토 후 제거 예정)
 if (typeof window !== 'undefined') {
   window.showVerifyInQna = showVerifyInQna;
 }
+
+// Phase 3-E: payslip-tab 1 onclick → data-action 위임
+import { registerActions as _payslip_registerActions } from './shared-utils.js';
+_payslip_registerActions({
+  showVerifyInQna: () => showVerifyInQna(),
+});
 
 export {};
