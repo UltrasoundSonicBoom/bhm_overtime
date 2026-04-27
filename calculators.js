@@ -2,6 +2,9 @@
 // 병원 HR 종합 시스템 - 계산기 모듈
 // ============================================
 import { DATA } from './data.js';
+// Phase 5: Layer 1 → Layer 2 lazy 의존 (retirement 평균임금 계산이 OVERTIME stats 사용)
+// ESM 순환 의존 — 함수 호출 시점에 resolve (모듈 초기화 시점에는 사용 안 함)
+import { OVERTIME } from './overtime.js';
 
 export const CALC = {
     /**

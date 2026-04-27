@@ -4,6 +4,9 @@ import { PROFILE, PROFILE_FIELDS } from './profile.js';
 import { CALC } from './calculators.js';
 import { DATA } from './data.js';
 import { PAYROLL } from './payroll.js';
+import { OVERTIME } from './overtime.js';
+import { LEAVE } from './leave.js';
+import { escapeHtml } from './shared-utils.js';
 import {
   _loadWorkHistory, _saveWorkHistory, renderWorkHistory,
   _showWorkHistoryUpdateBanner,

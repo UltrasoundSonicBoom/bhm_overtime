@@ -32,6 +32,8 @@ import { OVERTIME } from './overtime.js';
 import { LEAVE } from './leave.js';
 import { PAYROLL } from './payroll.js';
 import { HOLIDAYS } from './holidays.js';
+import { SALARY_PARSER } from './salary-parser.js';
+import { escapeHtml } from './shared-utils.js';
 // Layer 4 UI (큰 모듈)
 import './salary-parser.js';
 import './payroll-views.js';
@@ -3777,7 +3779,7 @@ async function handlePayslipUpload(file) {
     // info 탭 폼/토글 상태 동기화 (사용자가 info 탭으로 돌아오면 즉시 최신 상태)
     const updated = PROFILE.load();
     if (updated) {
-      if (typeof PROFILE_FIELDS !== 'undefined') PROFILE.applyToForm(updated, PROFILE_FIELDS);
+      PROFILE.applyToForm(updated, PROFILE_FIELDS);
       if (typeof updateProfileGrades === 'function') updateProfileGrades();
       _collapseBasicFieldsWithPreview(updated);
       const statusBadge = document.getElementById('profileStatus');
@@ -3899,12 +3901,10 @@ async function handleProfilePayslipUpload(file) {
     const stableResult = SALARY_PARSER.applyStableItemsToProfile(parsed);
 
     // 반영 후 최신 프로필 다시 로드 (stableItems가 반영된 버전)
-    const updatedProfile = PROFILE.load() || profile;
+    const updatedProfile = PROFILE.load() || patch;
 
     // 폼에 반영 (stableItems 포함된 최신 프로필)
-    if (typeof PROFILE_FIELDS !== 'undefined') {
-      PROFILE.applyToForm(updatedProfile, PROFILE_FIELDS);
-    }
+    PROFILE.applyToForm(updatedProfile, PROFILE_FIELDS);
     if (typeof updateProfileGrades === 'function') updateProfileGrades();
 
     // 개별 필드 직접 세팅

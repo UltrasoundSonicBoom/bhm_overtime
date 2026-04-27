@@ -3,9 +3,10 @@
 // ============================================
 import { CALC } from './calculators.js';
 import { DATA } from './data.js';
-import { PROFILE } from './profile.js';
+import { PROFILE, PROFILE_FIELDS } from './profile.js';
 import { OVERTIME } from './overtime.js';
 import { LEAVE } from './leave.js';
+import { SALARY_PARSER } from './salary-parser.js';
 
 export const PAYROLL = {
   // ── 카테고리 정의 ──
@@ -1146,7 +1147,7 @@ export const PAYROLL = {
     if (!found || !found.data.summary) return null;
 
     var actual = found.data.summary;
-    var est = (typeof calcMonthEstimate === 'function') ? calcMonthEstimate(found.year, found.month) : null;
+    var est = (typeof window.calcMonthEstimate === 'function') ? window.calcMonthEstimate(found.year, found.month) : null;
     if (!est) return null;
 
     var appGross = est.result.급여총액;

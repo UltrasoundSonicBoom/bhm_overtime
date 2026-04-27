@@ -3,7 +3,9 @@
 import { PROFILE, PROFILE_FIELDS } from './profile.js';
 import { CALC } from './calculators.js';
 import { DATA } from './data.js';
+import { OVERTIME } from './overtime.js';
 import { SALARY_PARSER } from './salary-parser.js';
+import { escapeHtml } from './shared-utils.js';
 
 // ═══════════ 🧾 급여 시뮬레이터 ═══════════
 function calculatePayroll() {

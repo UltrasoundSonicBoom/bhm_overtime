@@ -20,6 +20,7 @@ import { registerActions } from './shared-utils.js';
 import { DATA } from './data.js';
 import { PROFILE } from './profile.js';
 import { CALC } from './calculators.js';
+import { escapeHtml } from './shared-utils.js';
 // pdf.js는 CDN — type=module HTML 에 명시 외부 로드 유지
 
 // ── handbook 조항 제목 → 계산기 매핑 (FAQ 중간 레이어 제거) ──

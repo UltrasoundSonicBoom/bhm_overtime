@@ -1,5 +1,6 @@
 // dashboard.html 단일 ESM entry (Phase 2-G)
 import './shared-utils.js';
+import { escapeHtml } from './shared-utils.js';
 
 const API_BASE = (() => {
   const hostname = window.location.hostname;

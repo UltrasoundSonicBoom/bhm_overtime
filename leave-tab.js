@@ -7,6 +7,8 @@ import { DATA } from './data.js';
 import { HOLIDAYS } from './holidays.js';
 import { LEAVE } from './leave.js';
 import { PROFILE } from './profile.js';
+import { OVERTIME } from './overtime.js';
+import { escapeHtml } from './shared-utils.js';
 
 // ═══════════ 📅 휴가 관리 ═══════════
 
