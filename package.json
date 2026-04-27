@@ -1,7 +1,7 @@
 {
-  "name": "bhm_overtime",
+  "name": "snuhmate",
   "version": "1.0.0",
-  "description": "",
+  "description": "SNUH Mate — 서울대병원 노조 직원용 급여/시간외/휴가/근무이력/규정 PWA",
   "main": "app.js",
   "directories": {
     "doc": "docs",
@@ -32,7 +32,7 @@
   "bugs": {
     "url": "https://github.com/UltrasoundSonicBoom/bhm_overtime/issues"
   },
-  "homepage": "https://github.com/UltrasoundSonicBoom/bhm_overtime#readme",
+  "homepage": "https://snuhmate.com",
   "devDependencies": {
     "@playwright/test": "^1.59.1",
     "eslint": "^10.2.1",

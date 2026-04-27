@@ -110,6 +110,8 @@ describe('onclick delegation — Phase 3', () => {
       'renderWorkHistory', '_genId', '_saveWorkHistory', '_loadWorkHistory',
       // Phase 4-A 신규
       '_showWorkHistoryUpdateBanner', 'rebuildWorkHistoryFromPayslipsForceReplace',
+      // Phase 5-followup: 백업 복원 (모바일 호환 file picker — onclick="triggerBackupFilePicker()")
+      'triggerBackupFilePicker', 'uploadBackup',
     ]);
     const rootJs = readdirSync(ROOT).filter(f => f.endsWith('.js') && !f.startsWith('vite') && f !== 'vitest.config.js');
     const offenders = [];

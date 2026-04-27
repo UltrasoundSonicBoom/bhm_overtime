@@ -1,5 +1,5 @@
 // ============================================
-// 병원 HR 종합 시스템 - 프로필 모듈
+// SNUH Mate — 프로필 모듈
 // ============================================
 import { CALC } from './calculators.js';
 import { DATA } from './data.js';
@@ -81,7 +81,7 @@ export const PROFILE = {
         }
         const profile = { ...this.defaults, ...existing, ...cleaned, savedAt: new Date().toISOString() };
         localStorage.setItem(this.STORAGE_KEY, JSON.stringify(profile));
-        if (window.recordLocalEdit) window.recordLocalEdit('bhm_hr_profile');
+        if (window.recordLocalEdit) window.recordLocalEdit('snuhmate_hr_profile');
 
         window.dispatchEvent(new CustomEvent('profileChanged'));
 

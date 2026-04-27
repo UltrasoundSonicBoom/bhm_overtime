@@ -1,5 +1,5 @@
 // ============================================
-// 병원 HR 종합 시스템 - 앱 로직 — index.html 단일 ESM entry
+// SNUH Mate — 앱 로직 — index.html 단일 ESM entry
 // ============================================
 //
 // Phase 2-G 단일 entry: 모든 Layer 0~4 모듈 import (HTML 의 47 script 태그 통합).
