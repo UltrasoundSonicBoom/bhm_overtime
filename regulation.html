@@ -15,6 +15,8 @@
   <link rel="icon" type="image/png" sizes="16x16" href="snuhmaterect.png">
   <link rel="shortcut icon" href="snuhmaterect.png">
   <link rel="stylesheet" href="style.css">
+  <!-- Phase 5-followup: dark 테마 시 style.dark.css 동적 로드 (default = neo, no extra request) -->
+  <script>(function(){try{var t=localStorage.getItem("theme");if(t==="dark"||t==="linear"){document.documentElement.setAttribute("data-theme","dark");var d=document.createElement("link");d.rel="stylesheet";d.href="style.dark.css";document.head.appendChild(d);if(t==="linear")localStorage.setItem("theme","dark")}else{document.documentElement.setAttribute("data-theme","neo")}}catch(e){}})();</script>
   <!-- 규정 JSON 을 HTML 파싱과 병렬로 fetch 시작해 빈 화면 시간 단축 -->
   <link rel="preload" as="fetch" href="data/union_regulation_2026.json" crossorigin="anonymous">
   <link rel="stylesheet" href="regulation.css">

@@ -7,6 +7,8 @@
   <title>퇴직금 · 임금피크 분석 — SNUH 메이트</title>
   <link rel="icon" type="image/png" href="snuhmaterect.png">
   <link rel="stylesheet" href="style.css">
+  <!-- Phase 5-followup: dark 테마 시 style.dark.css 동적 로드 (default = neo, no extra request) -->
+  <script>(function(){try{var t=localStorage.getItem("theme");if(t==="dark"||t==="linear"){document.documentElement.setAttribute("data-theme","dark");var d=document.createElement("link");d.rel="stylesheet";d.href="style.dark.css";document.head.appendChild(d);if(t==="linear")localStorage.setItem("theme","dark")}else{document.documentElement.setAttribute("data-theme","neo")}}catch(e){}})();</script>
   <style>
     /* ═══════════════════════════════════════
        retirement.html 전용 스타일

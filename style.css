@@ -1,12 +1,13 @@
 /* ============================================
-   병원 HR 종합 시스템 - 스타일
-   Linear / Raycast — Restrained Dark Tech
+   SNUH Mate — Default Theme (Neo)
+   neo 토큰을 default :root 로 승격 (Phase 5-followup)
+   다크 모드: <html data-theme="dark"> + style.dark.css 로드
    ============================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Bakbak+One&family=Black+Han+Sans&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
 
 :root {
-  /* ── Typography Scale ── */
+  /* ── Typography Scale (공통) ── */
   --text-amount-huge: 32px;
   --text-amount-large: 24px;
   --text-title-large: 20px;
@@ -14,44 +15,43 @@
   --text-body-normal: 14px;
   --text-label-small: 12px;
 
-  /* ── Linear Palette: Deep solid darks, no transparency ── */
-  --bg-primary: #09090b;
-  --bg-secondary: #0f0f11;
-  --bg-card: #141416;
-  --bg-glass: rgba(255, 255, 255, 0.03);
-  --bg-glass-hover: rgba(255, 255, 255, 0.06);
-  --border-glass: rgba(255, 255, 255, 0.06);
-  --border-active: rgba(255, 255, 255, 0.15);
+  /* ── Neo Palette (default) ── */
+  --bg-primary: #FFFDF5;
+  --bg-secondary: #FFF8E7;
+  --bg-card: #FFFFFF;
+  --bg-glass: #F5F0E1;
+  --bg-glass-hover: #EDE7D3;
+  --border-glass: #1a1a1a;
+  --border-active: #1a1a1a;
 
-  --text-primary: #ececef;
-  --text-secondary: #a0a0ab;
-  --text-muted: #63636e;
-  --text-accent: #a0a0ab;
+  --text-primary: #1a1a1a;
+  --text-secondary: #4a4a4a;
+  --text-muted: #7a7a7a;
+  --text-accent: #1a1a1a;
 
-  --accent-indigo: #6366f1;
-  --accent-blue: #3b82f6;
-  --accent-cyan: #06b6d4;
-  --accent-emerald: #10b981;
-  --accent-amber: #f59e0b;
-  --accent-amber-text: #F97316; /* 폰트 색상 전용: 노란/금색 금지 → 오렌지로 통일 */
-  --accent-rose: #f43f5e;
-  --accent-violet: #8b5cf6;
+  --accent-indigo: #6C5CE7;
+  --accent-blue: #74B9FF;
+  --accent-cyan: #00CEC9;
+  --accent-emerald: #00B894;
+  --accent-amber: #FDCB6E;
+  --accent-amber-text: #F97316;
+  --accent-rose: #FD79A8;
+  --accent-violet: #A29BFE;
 
-  /* ── Linear: Flat solid colors for buttons, no gradients ── */
-  --gradient-primary: #6366f1;
-  --gradient-success: #10b981;
-  --gradient-warning: #f59e0b;
-  --gradient-info: #3b82f6;
+  --gradient-primary: #6C5CE7;
+  --gradient-success: #00B894;
+  --gradient-warning: #FDCB6E;
+  --gradient-info: #74B9FF;
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.6);
+  --shadow-sm: 2px 2px 0px #1a1a1a;
+  --shadow-md: 4px 4px 0px #1a1a1a;
+  --shadow-lg: 6px 6px 0px #1a1a1a;
   --shadow-glow: none;
 
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 10px;
-  --radius-xl: 12px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
   --radius-full: 9999px;
 
   --transition: all 0.15s ease-out;
@@ -3158,45 +3158,9 @@ html[data-theme="neo"] .nav-tab.active {
   }
 }
 
-/* ── Neo: Design Tokens ── */
-html[data-theme="neo"] {
-  --bg-primary: #FFFDF5;
-  --bg-secondary: #FFF8E7;
-  --bg-card: #FFFFFF;
-  --bg-glass: #F5F0E1;
-  --bg-glass-hover: #EDE7D3;
-  --border-glass: #1a1a1a;
-  --border-active: #1a1a1a;
-
-  --text-primary: #1a1a1a;
-  --text-secondary: #4a4a4a;
-  --text-muted: #7a7a7a;
-  --text-accent: #1a1a1a;
-
-  --accent-indigo: #6C5CE7;
-  --accent-blue: #74B9FF;
-  --accent-cyan: #00CEC9;
-  --accent-emerald: #00B894;
-  --accent-amber: #FDCB6E;
-  --accent-amber-text: #F97316;
-  --accent-rose: #FD79A8;
-  --accent-violet: #A29BFE;
-
-  --gradient-primary: #6C5CE7;
-  --gradient-success: #00B894;
-  --gradient-warning: #FDCB6E;
-  --gradient-info: #74B9FF;
-
-  --shadow-sm: 2px 2px 0px #1a1a1a;
-  --shadow-md: 4px 4px 0px #1a1a1a;
-  --shadow-lg: 6px 6px 0px #1a1a1a;
-  --shadow-glow: none;
-
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-}
+/* ── Neo: Design Tokens — Phase 5-followup: :root 로 승격됨 (style.css:8) ── */
+/* 이전 html[data-theme="neo"] { --... } block 은 default :root 로 통합. */
+/* 아래 html[data-theme="neo"] selector 는 컴포넌트 override 만 (변수 재정의 X). */
 
 /* ── Neo: Typography ── */
 html[data-theme="neo"] body {

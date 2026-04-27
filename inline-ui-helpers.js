@@ -8,9 +8,22 @@
 (function () {
   'use strict';
   // ── (사전 반영) 테마: DOMContentLoaded 전에 즉시 적용해 flicker 방지 ──
+  // Phase 5-followup: neo = default :root, dark = data-theme="dark" + style.dark.css 옵션 로드
+  // 'linear' 레거시 사용자 → 'dark' 매핑 (Linear/Raycast 톤이 다크 베이스)
   try {
     var savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'linear') document.documentElement.removeAttribute('data-theme');
+    if (savedTheme === 'linear' || savedTheme === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      if (!document.querySelector('link[href*="style.dark.css"]')) {
+        var dl = document.createElement('link');
+        dl.rel = 'stylesheet';
+        dl.href = 'style.dark.css';
+        document.head.appendChild(dl);
+      }
+      if (savedTheme === 'linear') localStorage.setItem('theme', 'dark');  // 1회 마이그레이션
+    } else {
+      document.documentElement.setAttribute('data-theme', 'neo');
+    }
   } catch (e) {}
 
   // ── Phase 5-followup: bhm_* → snuhmate_* lazy migration (광역 시스템 키) ──
