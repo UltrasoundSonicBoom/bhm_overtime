@@ -31,7 +31,11 @@ Internal/legacy strings include `bhm_*` prefix (보라매병원 시절 흔적). 
 
 - Phase 5 (완료): cross-module ESM 명시 import + ESLint no-undef strict + 데이터 lifecycle 정책
 - Phase 5-followup (진행 중): 디자인 토큰 분리 + 브랜드/네이밍 위생
-- Phase 6 (예정): TurboRepo + Astro file-based routing + TypeScript gradual
+- Phase 6 (진행 중): TurboRepo + Astro file-based routing + TypeScript gradual
+  - Task 1-3 (완료): pnpm workspace + packages/{shared-utils,regulation-constants,data,calculators,profile} 분리
+  - Task 4 (완료): 9개 root .html → apps/web/src/pages/*.astro 마이그레이션 + apps/web/src/client/ 24개 Layer 3+ 모듈 정리. 빌드 GREEN, Unit 175 / Integration 70 PASS
+  - Task 5 (예정): tab fragment → Astro Island 분할
+  - Task 6 (예정): root .html/.js 정리 + onboarding.html → / 라우팅 확정
 - Phase 7 (예정): Tailwind 디자인 시스템
 
 ## Scripts
