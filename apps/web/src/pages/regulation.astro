@@ -1,0 +1,93 @@
+---
+// Phase 6 Task 4-3: regulation.html → Astro page
+// 원본: root regulation.html
+// regulation.css 는 /styles/regulation.css (public) 로 dynamic load.
+// regulation.js 는 /client/regulation.js (public) 임시 bridge — Task 4-5 에서 src/client/ 로 이동.
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout
+  title="SNUH 메이트 - 규정/상담"
+  description="SNUH 메이트: 단체협약 규정 검색, FAQ"
+  showFooterNav={true}
+  extraCss={["/styles/regulation.css"]}
+>
+  <link rel="preload" as="fetch" href="/data/union_regulation_2026.json" crossorigin="anonymous" />
+
+  <script is:inline>
+    // FOUC 방지: PIN 활성화 시 body 숨김 (appLock.js가 오버레이 렌더 후 복원)
+    (function(){try{var s=JSON.parse(localStorage.getItem('bhm_settings')||'{}');if(s.pinEnabled){document.documentElement.style.visibility='hidden';}}catch(e){}})();
+  </script>
+
+  <nav class="reg-bookmark-tabs" id="regSubTabs" style="display:none;">
+    <button class="reg-bookmark-tab active" data-subtab="browse">규정</button>
+  </nav>
+
+  <main class="main">
+
+    <!-- ═══════════ 찾아보기 (단체협약 규정) ═══════════ -->
+    <div class="sub-content active" id="subtab-browse">
+      <!-- 검색 -->
+      <div class="card" style="padding:12px 16px; margin-bottom:8px;">
+        <input type="text" id="browseSearch" class="reg-search-input"
+          placeholder="규정 검색... (예: 연차, 야간수당, 경조비)" style="width:100%;" />
+      </div>
+
+      <!-- 안내: 원문 번호 유지 정책 -->
+      <div class="reg-info-banner">
+        📘 <b>2026 단체협약 원문</b> 기준.
+        <span style="opacity:0.8;">일부 조항 번호(예: 제13~17조, 제19~31조)는 단체협약 갱신 과정에서 <b>삭제·통합된 번호</b>이며 현행 협약에 존재하지 않습니다.</span>
+      </div>
+
+      <!-- 📖 목차 (장 가로 스크롤 탭 + 좌우 화살표) -->
+      <div class="reg-section-label">📖 목차</div>
+      <div class="reg-chapter-nav-wrap">
+        <button type="button" class="reg-chapter-arrow left" data-action="scrollChapterTabs" data-scroll-direction="-1" aria-label="이전 장">◀</button>
+        <div class="reg-chapter-tabs" id="browseChapterTabs"></div>
+        <button type="button" class="reg-chapter-arrow right" data-action="scrollChapterTabs" data-scroll-direction="1" aria-label="다음 장">▶</button>
+      </div>
+
+      <!-- ⭐ 즐겨찾기 (가로 스크롤 칩) -->
+      <div class="reg-section-label">⭐ 즐겨찾기</div>
+      <div class="reg-fav-chips" id="browseFavChips"></div>
+
+      <!-- 조항 리스트 (JSON 로드 전 즉시 보이는 placeholder — initBrowse 가 채움) -->
+      <div id="browseArticles" style="margin-top:12px;">
+        <div id="browseLoading" style="padding:32px 16px; text-align:center; color:var(--text-muted);">
+          <div style="font-size:1.5rem; margin-bottom:8px;">📚</div>
+          <div>규정을 불러오는 중...</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ═══════════ PDF 바텀시트 ═══════════ -->
+  <div class="pdf-sheet-overlay" id="pdfOverlay">
+    <div class="pdf-sheet" id="pdfSheet">
+      <div class="pdf-sheet-handle"></div>
+      <div class="pdf-sheet-header">
+        <span class="pdf-sheet-title" id="pdfSheetTitle">PDF 원문</span>
+        <button class="pdf-sheet-close" id="pdfClose" title="닫기">✕</button>
+      </div>
+      <div class="pdf-sheet-controls">
+        <button class="btn btn-outline" data-action="pdfPrevPage">◀</button>
+        <span id="pdfPageInfo" class="pdf-page-info">- / -</span>
+        <button class="btn btn-outline" data-action="pdfNextPage">▶</button>
+        <span style="width:1px; height:20px; background:var(--border-glass);"></span>
+        <button class="btn btn-outline" data-action="pdfZoom" data-zoom-delta="-0.25">−</button>
+        <span id="pdfZoomInfo" class="pdf-page-info">100%</span>
+        <button class="btn btn-outline" data-action="pdfZoom" data-zoom-delta="0.25">+</button>
+      </div>
+      <div class="pdf-sheet-body" id="pdfSheetBody">
+        <canvas id="pdfCanvas"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer is:inline></script>
+  <script type="module" src="/client/regulation.js" is:inline></script>
+
+  <style>
+    #ch-plugin-script-iframe { max-width: 500px !important; }
+  </style>
+</BaseLayout>
