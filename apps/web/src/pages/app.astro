@@ -6,6 +6,7 @@
 // regulation.css 는 ReferenceIsland (Task 5) 에서 사용 예정 — 현재는 placeholder 만.
 import BaseLayout from '../layouts/BaseLayout.astro';
 import HomeIsland from '../components/tabs/HomeIsland.astro';
+import ProfileIsland from '../components/tabs/ProfileIsland.astro';
 ---
 <BaseLayout
   title="SNUH 메이트 (SNUH Mate)"
@@ -113,7 +114,7 @@ import HomeIsland from '../components/tabs/HomeIsland.astro';
     <div class="tab-content" id="tab-reference"></div>
 
     <!-- ═══════════ 👤 개인정보 ═══════════ -->
-    <div class="tab-content" id="tab-profile"></div>
+    <ProfileIsland />
 
     <!-- ═══════════ ⚙️ 설정 ═══════════ -->
     <div class="tab-content" id="tab-settings"></div>
