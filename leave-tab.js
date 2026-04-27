@@ -1,6 +1,12 @@
 // ============================================
 // leave-tab.js — 휴가 탭 UI 렌더링
 // ============================================
+// Phase 5: cross-module 명시 named import
+import { CALC } from './calculators.js';
+import { DATA } from './data.js';
+import { HOLIDAYS } from './holidays.js';
+import { LEAVE } from './leave.js';
+import { PROFILE } from './profile.js';
 
 // ═══════════ 📅 휴가 관리 ═══════════
 
@@ -598,7 +604,7 @@ function onLvTypeChange() {
     let effectiveQuota = typeInfo.quota;
     // 가족돌봄(유급): 자녀 2명 이상 → 3일 (제42조, 2021.11 단협)
     if (typeInfo.id === 'family_care_paid') {
-      const _pf = typeof PROFILE !== 'undefined' ? PROFILE.load() : null;
+      const _pf = PROFILE.load();
       if (_pf && (parseInt(_pf.numChildren) || 0) >= 2) effectiveQuota = 3;
     }
     const records = LEAVE.getYearRecords(year);
@@ -918,7 +924,7 @@ function renderLvQuotaTable(year) {
 
   // M1-7: 미사용 연차 수당 예상 (제36조(4)) — 잔여 연차 + 프로필 통상임금 자동 계산
   const annualEntry = quotas.find(q => q.id === 'annual' || q.label === '연차');
-  if (annualEntry && annualEntry.remaining > 0 && typeof PROFILE !== 'undefined' && typeof CALC !== 'undefined') {
+  if (annualEntry && annualEntry.remaining > 0) {
     const profile = PROFILE.load();
     const wage = profile ? PROFILE.calcWage(profile) : null;
     const monthlyWage = wage?.monthlyWage || 0;

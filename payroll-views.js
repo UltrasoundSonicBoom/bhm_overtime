@@ -1,6 +1,10 @@
 // ── payroll-views.js ──
 // 급여 탭 시각적 렌더링: 히스토리(대시보드) + 명세서(뷰어)
 // DOM API 사용 (innerHTML 미사용)
+// Phase 5: cross-module 명시 named import (IIFE 안에서 사용)
+import { PAYROLL } from './payroll.js';
+import { SALARY_PARSER } from './salary-parser.js';
+import { PROFILE } from './profile.js';
 
 (function () {
   'use strict';
@@ -96,8 +100,8 @@
     const active = document.querySelector('#tab-payroll .pay-bookmark-tab.active');
     const name = active ? active.dataset.subtab : 'pay-payslip';
     if (name === 'pay-payslip') renderPayPayslip();
-    else if (name === 'pay-calc') { if (typeof PAYROLL !== 'undefined') PAYROLL.init(); }
-    else if (name === 'pay-qa') { if (typeof PAYROLL !== 'undefined') PAYROLL.init(); }
+    else if (name === 'pay-calc') { PAYROLL.init(); }
+    else if (name === 'pay-qa') { PAYROLL.init(); }
   };
 
   // ══════════════════════════════════════════════
@@ -577,7 +581,7 @@
         SALARY_PARSER.saveMonthlyData(ym.year, ym.month, result, ym.type);
 
         // 프로필 자동 반영 (grade/year/부서/입사일/직종 등) — const SALARY_PARSER 는 top-level 이라 직접 참조 가능
-        if (typeof SALARY_PARSER !== 'undefined' && typeof SALARY_PARSER.applyStableItemsToProfile === 'function') {
+        if (typeof SALARY_PARSER.applyStableItemsToProfile === 'function') {
           SALARY_PARSER.applyStableItemsToProfile(result);
         }
 

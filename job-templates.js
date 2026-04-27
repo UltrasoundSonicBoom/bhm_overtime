@@ -1,6 +1,8 @@
 // job-templates.js — 부서×직종×레벨 JD/JR 시드 (Phase 4)
 // SNUH 조직도/직급체계 기반. 운영팀이 추가 가능한 단순 JSON 구조.
 // 레벨 추정: 1~4년차=junior, 5~12년차=senior, 13년+ = lead
+// Phase 5: cross-module 명시 named import (IIFE 안에서 사용)
+import { PROFILE } from './profile.js';
 
 (function (global) {
   'use strict';

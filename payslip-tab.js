@@ -1,4 +1,9 @@
 // payslip-tab.js — 급여명세서 렌더링 + 관리
+// Phase 5: cross-module 명시 named import
+import { CALC } from './calculators.js';
+import { DATA } from './data.js';
+import { PROFILE } from './profile.js';
+import { SALARY_PARSER } from './salary-parser.js';
 
 function renderPayslip(data, ym, profileUpdated, stableRes) {
   const resultEl = document.getElementById('payslipResult');

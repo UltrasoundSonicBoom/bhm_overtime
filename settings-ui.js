@@ -1,5 +1,7 @@
 // settings-ui.js — 설정 탭 UI (AppLock 전용)
 // showOtToast는 app.js:2374 에 정의된 버전을 공용으로 사용 (2-arg signature).
+// Phase 5: cross-module 명시 named import
+import { AppLock } from './appLock.js';
 
 // ── 앱 잠금 설정 UI ──
 function updateAppLockUI() {
