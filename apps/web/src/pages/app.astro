@@ -4,6 +4,7 @@
 // SPA 의 6 tab-content placeholder 구조 + migration overlay + Tally / ChannelIO 위젯.
 // app.js 진입점은 Astro <script> import 로 hash-bundle.
 // Phase 6 Task 5-5: ReferenceIsland + SettingsIsland 추가 — regulation.css 가 ReferenceIsland 진입 시 활성화.
+// Phase 6 Task 5-6: FeedbackIsland 추가 — Task 5 의 마지막 island. 7 tab 모두 inline island.
 import BaseLayout from '../layouts/BaseLayout.astro';
 import HomeIsland from '../components/tabs/HomeIsland.astro';
 import ProfileIsland from '../components/tabs/ProfileIsland.astro';
@@ -12,6 +13,7 @@ import OvertimeIsland from '../components/tabs/OvertimeIsland.astro';
 import LeaveIsland from '../components/tabs/LeaveIsland.astro';
 import ReferenceIsland from '../components/tabs/ReferenceIsland.astro';
 import SettingsIsland from '../components/tabs/SettingsIsland.astro';
+import FeedbackIsland from '../components/tabs/FeedbackIsland.astro';
 ---
 <BaseLayout
   title="SNUH 메이트 (SNUH Mate)"
@@ -125,7 +127,7 @@ import SettingsIsland from '../components/tabs/SettingsIsland.astro';
     <SettingsIsland />
 
     <!-- ═══════════ 📢 피드백 방 ═══════════ -->
-    <div class="tab-content" id="tab-feedback"></div>
+    <FeedbackIsland />
 
   </main>
 
