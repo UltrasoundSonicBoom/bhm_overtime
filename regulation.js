@@ -1168,12 +1168,4 @@ registerActions({
 
 // Phase 2-regression: inline onclick window 노출 (ESM 모듈 스코프 회복)
 // Phase 3-F 에서 KEEP/REMOVE 결정 — regulation.js 동적 markup onclick (handleFavClick/openPdfForRef/toggleArticle) 잔존
-if (typeof window !== 'undefined') {
-  window.handleFavClick = handleFavClick;
-  window.openPdfForRef = openPdfForRef;
-  window.pdfNextPage = pdfNextPage;
-  window.pdfPrevPage = pdfPrevPage;
-  window.pdfZoom = pdfZoom;
-  window.scrollChapterTabs = scrollChapterTabs;
-  window.toggleArticle = toggleArticle;
-}
+

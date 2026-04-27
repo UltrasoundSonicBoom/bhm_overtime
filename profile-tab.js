@@ -34,7 +34,6 @@ function switchProfileSection(section) {
     if (typeof renderResumeSections === 'function') renderResumeSections();
   }
 }
-window.switchProfileSection = switchProfileSection;
 
 // 프로필 정보 기반 자동 시드 카드 생성 (사용자 확인 후 저장)
 function _seedFirstWorkFromProfile() {
@@ -80,7 +79,6 @@ function acceptSeededWorkHistory() {
   _saveWorkHistory(list);
   renderWorkHistory();
 }
-window.acceptSeededWorkHistory = acceptSeededWorkHistory;
 
 // ── E2: AI 이력서 생성 — 2026-04-15 제거 (구조화 데이터만으로 PDF 출력) ──────
 
@@ -943,11 +941,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // Phase 2-regression: inline onclick window 노출 (Phase 3-F 검토 후 제거 예정)
 if (typeof window !== 'undefined') {
-  window.saveProfile = saveProfile;
   window.switchToProfileTab = switchToProfileTab;
-  window.toggleCollapsible = toggleCollapsible;
-  window.clearProfile = clearProfile;
-  window.downloadBackup = downloadBackup;
 }
 
 // Phase 3-E: profile-tab 1 onclick (통상임금 내역 토글) → data-action 위임

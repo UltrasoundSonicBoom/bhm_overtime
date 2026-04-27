@@ -62,9 +62,6 @@ function deleteRotation(parentId, rotId) {
   return true;
 }
 
-window.addRotation = addRotation;
-window.updateRotation = updateRotation;
-window.deleteRotation = deleteRotation;
 
 function _saveWorkHistory(list) {
   localStorage.setItem(_whKey(), JSON.stringify(list));
@@ -172,7 +169,6 @@ function renderWorkHistory() {
   container.appendChild(timeline);
 
   if (highlightItem) {
-    window._pendingHighlightWHId = null;
     highlightItem.classList.add('highlight');
     setTimeout(function() {
       highlightItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -196,7 +192,6 @@ function _effectivePeriod(item) {
   var toMax = anyOpen ? '' : rots.reduce(function(acc, r) { return r.to > acc ? r.to : acc; }, item.to || '');
   return { from: fromMin, to: toMax, inferred: true };
 }
-window._effectivePeriod = _effectivePeriod;
 
 // 로테이션 기간이 부모 기간을 벗어나는지 검증
 function _isRotationOutOfParent(parent, rot) {
@@ -413,7 +408,6 @@ function deleteRotationEntry() {
   closeRotationSheet();
   renderWorkHistory();
 }
-window.deleteRotationEntry = deleteRotationEntry;
 
 function saveRotationEntry() {
   var room = (document.getElementById('rotRoom').value || '').trim();
@@ -454,11 +448,7 @@ function autofillRotationTasks() {
   if (existing && !confirm('기존 내용 위에 표준 업무를 덮어쓸까요?')) return;
   ta.value = suggestion;
 }
-window.autofillRotationTasks = autofillRotationTasks;
 
-window.openRotationSheet = openRotationSheet;
-window.closeRotationSheet = closeRotationSheet;
-window.saveRotationEntry = saveRotationEntry;
 
 // 직종별 직무 추천 리스트 (보건직은 직무명 자체, 간호/의사는 근무부서와 결합한 예시)
 var JOB_ROLE_SUGGESTIONS = {
@@ -502,7 +492,6 @@ function _nextMonth(yyyymm) {
   if (m > 12) { m = 1; y += 1; }
   return y + '-' + (m < 10 ? '0' + m : '' + m);
 }
-window._nextMonth = _nextMonth;
 
 function _latestEndMonth() {
   var list = _loadWorkHistory();
@@ -583,7 +572,6 @@ function openAddWorkHistoryPicker() {
   ov.appendChild(panel);
   document.body.appendChild(ov);
 }
-window.openAddWorkHistoryPicker = openAddWorkHistoryPicker;
 
 function openWorkHistorySheet(item) {
   var sheet = document.getElementById('workHistorySheet');
@@ -663,7 +651,6 @@ function autofillJobDesc() {
   ta.value = suggestion;
 }
 function global_JT() { return window.JobTemplates && window.JobTemplates.autofillForEntry; }
-window.autofillJobDesc = autofillJobDesc;
 
 function closeWorkHistorySheet() {
   var sheet = document.getElementById('workHistorySheet');
@@ -716,7 +703,6 @@ function saveWorkHistoryEntry() {
   _saveWorkHistory(list);
   closeWorkHistorySheet();
   var isNew = !editId;
-  window._pendingHighlightWHId = entry.id;
   renderWorkHistory();
   if (isNew) _showWorkHistoryToast('새 근무지가 추가됐어요');
 }
@@ -740,15 +726,6 @@ function deleteWorkHistoryEntry(id) {
 // Phase 2-F: ESM marker — 파일을 ES module 로 표시 (side-effect IIFE 보존)
 
 // Phase 2-regression: inline onclick window 노출 (ESM 모듈 스코프 회복)
-if (typeof window !== 'undefined') {
-  window.openWorkHistorySheet = openWorkHistorySheet;
-  window.saveWorkHistoryEntry = saveWorkHistoryEntry;
-  window.closeWorkHistorySheet = closeWorkHistorySheet;
-  window.saveRotationEntry = saveRotationEntry;
-  window.deleteRotationEntry = deleteRotationEntry;
-  window.closeRotationSheet = closeRotationSheet;
-  window.autofillJobDesc = autofillJobDesc;
-  window.autofillRotationTasks = autofillRotationTasks;
-}
+
 
 export {};

@@ -810,9 +810,7 @@ function deletePayslipMonth(year, month, type) {
 // Phase 2-F: ESM marker — 파일을 ES module 로 표시 (side-effect IIFE 보존)
 
 // Phase 2-regression: inline onclick window 노출 (Phase 3-F 검토 후 제거 예정)
-if (typeof window !== 'undefined') {
-  window.showVerifyInQna = showVerifyInQna;
-}
+
 
 // Phase 3-E: payslip-tab 1 onclick → data-action 위임
 import { registerActions as _payslip_registerActions } from './shared-utils.js';

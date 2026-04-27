@@ -63,18 +63,19 @@ describe('Vite build (Phase 2-A)', () => {
   });
 
   // ── Vite multi-page entry chunk: assets/index-[hash].js (Phase 2-G+ 활성화) ──
+  // hash 문자: Vite/Rollup base62 + _ + - 모두 허용
   it('Vite multi-page entry chunk: assets/index-[hash].js + 4 추가 entry', () => {
     const assets = readdirSync(join(DIST, 'assets'));
-    const indexEntry = assets.find(f => /^index-[A-Za-z0-9]{8,}\.js$/.test(f));
+    const indexEntry = assets.find(f => /^index-[A-Za-z0-9_-]{8,}\.js$/.test(f));
     expect(indexEntry, 'expected assets/index-[hash].js').toBeDefined();
-    const regulationEntry = assets.find(f => /^regulation-[A-Za-z0-9]{8,}\.js$/.test(f));
+    const regulationEntry = assets.find(f => /^regulation-[A-Za-z0-9_-]{8,}\.js$/.test(f));
     expect(regulationEntry).toBeDefined();
-    const retirementEntry = assets.find(f => /^retirement-[A-Za-z0-9]{8,}\.js$/.test(f));
+    const retirementEntry = assets.find(f => /^retirement-[A-Za-z0-9_-]{8,}\.js$/.test(f));
     expect(retirementEntry).toBeDefined();
   });
 
   it('index.html: <script type=module src=/assets/index-[hash].js>', () => {
     const html = readFileSync(join(DIST, 'index.html'), 'utf8');
-    expect(html).toMatch(/<script[^>]*type=["']module["'][^>]*src=["']\/?assets\/index-[A-Za-z0-9]{8,}\.js["']/);
+    expect(html).toMatch(/<script[^>]*type=["']module["'][^>]*src=["']\/?assets\/index-[A-Za-z0-9_-]{8,}\.js["']/);
   });
 });

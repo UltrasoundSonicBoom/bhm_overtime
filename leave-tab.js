@@ -1165,18 +1165,7 @@ function startTutorial() {
 
 
 // Phase 2-regression: inline onclick window 노출 (Phase 3-F 검토 후 제거 예정)
-if (typeof window !== 'undefined') {
-  window.closeLvBottomSheet = closeLvBottomSheet;
-  window.closeLvTypeBottomSheet = closeLvTypeBottomSheet;
-  window.editLvRecord = editLvRecord;
-  window.lvGoToday = lvGoToday;
-  window.lvNavMonth = lvNavMonth;
-  window.onLvDateClick = onLvDateClick;
-  window.openLvTypeBottomSheet = openLvTypeBottomSheet;
-  window.saveLvRecord = saveLvRecord;
-  window.deleteLvRecord = deleteLvRecord;
-  window.toggleCollapsible = toggleCollapsible;
-}
+
 
 // Phase 3-D: leave-tab 6 onclick → data-action 위임 등록
 import { registerActions } from './shared-utils.js';

@@ -42,15 +42,41 @@ describe('onclick delegation — Phase 3', () => {
     expect(offenders).toEqual([]);
   });
 
-  // ── Phase 3-F 후 enable: root .js 의 window.X 호환층 KEEP allowlist 만 ──
-  it.skip('[Phase 3-F 후 enable] root .js 의 window.X 호환층 KEEP only', () => {
-    const rootJs = readdirSync(ROOT).filter(f => f.endsWith('.js') && !f.startsWith('vite'));
+  // ── Phase 3-F: root .js 의 window.X 호환층 KEEP allowlist 외 0 ──
+  it('root .js 의 window.X 호환층 KEEP only — Phase 3-F 완료 기준', () => {
+    // KEEP: 외부 모듈 / inline HTML script 가 참조하는 진짜 필요한 노출
+    const KEEP = new Set([
+      // ESM 모듈 ↔ legacy IIFE 호환 (다른 모듈이 window.X 참조)
+      'AppLock', 'CALC', 'DATA', 'DATA_STATIC', 'HOLIDAYS',
+      'LEAVE', 'PAYROLL', 'OVERTIME', 'PROFILE', 'RetirementEngine', 'escapeHtml',
+      // app.js entry safeCall 동적 dispatch 대상
+      'switchTab', 'switchHomePeriod', 'initHomeTab', 'changelogPage',
+      'initPayrollTab', '_propagatePayslipToWorkHistory',
+      // app.js 의 entry handler 참조
+      'closeMigrationModal', 'downloadBackupAndStay', 'switchToProfileTab',
+      // tab-loader 동적 dispatch
+      'loadTab', 'prefetchTabs',
+      // utils-lazy 동적 호출
+      'loadPDFJS', 'loadXLSX',
+      // inline-ui-helpers
+      'updateHourlyWarning', 'dismissHwBanner',
+      // shared-utils 헬퍼 (다른 entry 가 import 하지만 window 호환층 보존)
+      'delegateActions', 'delegateInput', 'registerActions', 'registerInputActions',
+      // function expression 형태 (Phase 4 정리 candidate — 일단 KEEP)
+      'renderPayHistory', 'renderPayPayslip', 'syncCloudData',
+    ]);
+    const rootJs = readdirSync(ROOT).filter(f => f.endsWith('.js') && !f.startsWith('vite') && f !== 'vitest.config.js');
     const offenders = [];
     for (const f of rootJs) {
       const content = readFileSync(join(ROOT, f), 'utf8');
-      const matches = content.match(/^\s*window\.[a-zA-Z_][a-zA-Z0-9_]*\s*=\s*[a-zA-Z_]/gm) || [];
-      if (matches.length > 0) offenders.push(f + ': ' + matches.length);
+      const matches = content.match(/^\s*window\.([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*[a-zA-Z_]/gm) || [];
+      for (const m of matches) {
+        const fnMatch = m.match(/window\.([a-zA-Z_][a-zA-Z0-9_]*)/);
+        if (fnMatch && !KEEP.has(fnMatch[1])) {
+          offenders.push(f + ': ' + fnMatch[1]);
+        }
+      }
     }
-    expect(offenders).toEqual([]);
+    expect(offenders, 'KEEP allowlist 외 window.X 호환층').toEqual([]);
   });
 });
