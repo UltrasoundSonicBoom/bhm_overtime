@@ -13,11 +13,27 @@ import {
 } from './work-history.js';
 
 // ── 개인정보 탭 초기화 ──
+// Phase 5-followup: 명세서 업로드 후 info 탭 재방문 시 form 비어 있음 회귀 fix.
+// 기존: _bootstrapProfileTab 가 1회만 form 채움 → 이후 진입 시 form 갱신 누락.
+// 수정: 매번 진입 시 PROFILE.applyToForm 호출 (저장 상태 항상 반영).
 function initProfileTab() {
   const saved = PROFILE.load();
   if (saved) {
+    PROFILE.applyToForm(saved, PROFILE_FIELDS);
+    if (typeof updateFamilyUI === 'function') updateFamilyUI();
+    if (saved.birthDate && typeof syncBirthDateToRetirement === 'function') {
+      syncBirthDateToRetirement(saved.birthDate);
+    }
     updateProfileSummary(saved);
     updateProfileTitle(saved.name);
+    const profileStatusEl = document.getElementById('profileStatus');
+    if (profileStatusEl) {
+      profileStatusEl.textContent = '저장됨 ✓';
+      profileStatusEl.className = 'badge emerald';
+    }
+    if (typeof _collapseBasicFieldsWithPreview === 'function') {
+      _collapseBasicFieldsWithPreview(saved);
+    }
   } else {
     updateProfileTitle('');
   }
@@ -569,9 +585,100 @@ function saveProfile() {
   _collapseBasicFieldsWithPreview(profile);
 }
 
+// Phase 5-followup: 사용자 데이터 완전 초기화 (다른 사람이 써도 흔적 0)
+// 1) 자동 백업 다운로드 (안전 마진)
+// 2) 1단계 confirm (정말 삭제할 건지)
+// 3) 모든 사용자 도메인 키 wipe
+// 4) 페이지 새로고침 (메모리 상태도 초기화)
+const USER_DATA_PATTERNS = [
+  /^bhm_hr_profile/,
+  /^overtimeRecords/,
+  /^leaveRecords/,
+  /^bhm_work_history/,
+  /^payslip_/,
+  /^otManualHourly/,
+  /^overtimePayslipData/,
+  /^bhm_lastEdit_/,
+  /^_orphan_/,
+  /^snuhmate_reg_favorites/,
+  /^bhm_demo_mode$/,
+  /^hwBannerDismissed$/,
+];
+
+const CLEAR_KEEP_KEYS = new Set([
+  'bhm_local_uid',         // 디바이스 식별자 (재생성하면 기존 백업 복구 깨짐)
+  'bhm_settings',          // 계정 설정 (PIN/구글 로그인 등 — 별도 메뉴에서 해제)
+  'theme', 'snuhmate-theme',
+  'bhm_leave_migrated_v1', // migration 플래그 (재실행 안 됨)
+  'bhm_debug_parser',
+]);
+
+function _collectUserDataKeys() {
+  const keys = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (!k || CLEAR_KEEP_KEYS.has(k)) continue;
+    if (USER_DATA_PATTERNS.some(p => p.test(k))) keys.push(k);
+  }
+  return keys;
+}
+
+function _downloadFullBackup() {
+  const data = {
+    version: '2.0',
+    exportDate: new Date().toISOString(),
+    exportType: 'full',
+    keys: {},
+  };
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (!k) continue;
+    if (USER_DATA_PATTERNS.some(p => p.test(k))) {
+      data.keys[k] = localStorage.getItem(k);
+    }
+  }
+  try {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const yyyymmdd = new Date().toISOString().split('T')[0];
+    a.download = `snuh_backup_full_${yyyymmdd}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    return true;
+  } catch (e) { return false; }
+}
+
 function clearProfile() {
-  PROFILE.clear();
-  // 폼 초기화
+  const keys = _collectUserDataKeys();
+  const payslipCount = keys.filter(k => /^payslip_/.test(k)).length;
+  const otherCount = keys.length - payslipCount;
+
+  // 자동 백업 다운로드 (안전 마진 — 사용자 동의 없이 선제적 backup)
+  let backupOk = false;
+  if (keys.length > 0) {
+    backupOk = _downloadFullBackup();
+  }
+
+  // 1단계 confirm (사용자 의도: 한 번만 묻기)
+  const summary = backupOk
+    ? '✅ 전체 데이터 백업이 다운로드되었습니다.\n\n' +
+      '⚠️ 다음 데이터를 모두 삭제합니다 (되돌릴 수 없음):\n' +
+      `  • 개인정보 / 시간외 / 휴가 / 근무이력\n` +
+      `  • 급여명세서 ${payslipCount}개\n` +
+      `  • 기타 사용자 데이터 ${otherCount}개\n\n` +
+      '정말로 모든 사용자 데이터를 삭제하시겠습니까?'
+    : '⚠️ 백업 다운로드를 건너뛰고 모든 사용자 데이터를 삭제합니다.\n\n정말 진행하시겠습니까? (되돌릴 수 없습니다)';
+
+  if (!confirm(summary)) return;
+
+  // 실제 삭제
+  keys.forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
+
+  // 폼 즉시 초기화 (reload 전 시각 피드백)
   Object.values(PROFILE_FIELDS).forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -580,32 +687,15 @@ function clearProfile() {
     else if (el.tagName === 'SELECT') el.selectedIndex = 0;
     else el.value = '';
   });
-  document.getElementById('pfMilitaryMonthsGroup').style.display = 'none';
-  document.getElementById('pfServiceDisplay').textContent = '';
-  document.getElementById('profileStatus').textContent = '미저장';
-  document.getElementById('profileStatus').className = 'badge amber';
-  // 초기화 후 타이틀 초기화
   updateProfileTitle('');
-  // 초기화 후 입력 폼 열기
-  const pfInput = document.getElementById('pfInputFields');
-  if (pfInput) pfInput.style.display = 'block';
-  const label = document.getElementById('pfInputToggleLabel');
-  if (label) label.textContent = '▼ 내 정보 입력/수정';
-  document.getElementById('profileSummary').innerHTML = `
-        <div class="card-title" style="font-size:var(--text-body-large);"><span class="icon indigo">📝</span> 통상임금 내역</div>
-        <p style="color:var(--text-muted)">정보를 입력하고 [저장하기]를 눌러주세요.</p>
-    `;
-  // Q&A 카드 갱신
-  PAYROLL.init();
-  // 초기화 후 기본 정보 펼침 + 프리뷰 숨김
-  const basicFields = document.getElementById('pfBasicFields');
-  if (basicFields) basicFields.style.display = 'block';
-  const basicPreview = document.getElementById('pfBasicPreview');
-  if (basicPreview) { basicPreview.style.display = 'none'; basicPreview.textContent = ''; }
-  const basicBadge = document.getElementById('pfBasicBadge');
-  if (basicBadge) basicBadge.style.display = 'none';
-  const payslipLink = document.getElementById('pfPayslipLink');
-  if (payslipLink) payslipLink.style.display = 'flex';
+
+  // 페이지 새로고침 (메모리 상태 + 다른 탭 UI 초기화)
+  // 테스트 hook: window.__bhmReloadHook 가 있으면 그걸 호출 (jsdom 환경)
+  if (typeof window.__bhmReloadHook === 'function') {
+    window.__bhmReloadHook();
+  } else {
+    setTimeout(() => window.location.reload(), 100);
+  }
 }
 
 // ═══════════ 생년월일 양방향 동기화 ═══════════

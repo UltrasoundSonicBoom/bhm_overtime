@@ -104,8 +104,11 @@ export function renderWorkHistory() {
   while (container.firstChild) container.removeChild(container.firstChild);
 
   // 비어있고 프로필에 부서+입사일 있으면 무조건 자동 시드 (플래그 없음)
+  // Phase 5-followup: ES module strict mode 에서 bare identifier 참조 → ReferenceError 회귀 fix.
+  // _seedFirstWorkFromProfile 는 profile-tab.js 에 정의 (circular import 회피 위해 window 우회).
   if (list.length === 0) {
-    var seed = _seedFirstWorkFromProfile();
+    var seedFn = (typeof window !== 'undefined') ? window._seedFirstWorkFromProfile : null;
+    var seed = (typeof seedFn === 'function') ? seedFn() : null;
     if (seed) {
       seed.autoSeeded = true;
       list.push(seed);
