@@ -592,50 +592,56 @@ function saveProfile() {
 // 4) 페이지 새로고침 (메모리 상태도 초기화)
 // 단일 진실 원천 — 사용자 도메인 데이터 키 패턴
 // 새 키 추가 시 이 목록 갱신 PR 필수 (docs/superpowers/specs/2026-04-27-data-lifecycle-policy.md)
+// Phase 5-followup: bhm_* / snuhmate_* 양쪽 prefix 매칭 (lazy migration 기간 호환)
 const USER_DATA_PATTERNS = [
-  /^bhm_hr_profile/,           // PROFILE (모든 namespace 포함)
-  /^overtimeRecords/,          // OVERTIME (_guest, _<uid>, _demo)
-  /^leaveRecords/,             // LEAVE
-  /^bhm_work_history/,         // 근무이력
-  /^payslip_/,                 // 급여명세서
-  /^otManualHourly/,           // 수동 시급
-  /^overtimePayslipData/,      // 명세서 시간외 보정
-  /^bhm_lastEdit_/,            // sync 메타
-  /^_orphan_/,                 // orphan recovery
-  /^snuhmate_reg_favorites/,   // 규정 즐겨찾기
-  /^payroll_compare_history/,  // ← Phase 5-followup 누락 fix (이슈 2 보안)
-  /^cardnews\./,               // 카드뉴스 사용자 위젯 설정
-  /^bhm_demo_mode$/,
+  /^(bhm|snuhmate)_hr_profile/,        // PROFILE
+  /^overtimeRecords/,                   // OVERTIME (prefix 없음)
+  /^leaveRecords/,                      // LEAVE
+  /^(bhm|snuhmate)_work_history/,       // 근무이력
+  /^(bhm|snuhmate)_lastEdit_/,          // sync 메타 (legacy)
+  /^snuhmate_last_edit_/,               // 새 snake_case
+  /^payslip_/,                          // 급여명세서
+  /^otManualHourly/,                    // 수동 시급
+  /^overtimePayslipData/,               // 명세서 시간외 보정
+  /^_orphan_/,                          // orphan recovery
+  /^snuhmate_reg_favorites/,            // 규정 즐겨찾기
+  /^payroll_compare_history/,
+  /^cardnews\./,                        // 카드뉴스 사용자 위젯 설정
+  /^(bhm|snuhmate)_demo_mode$/,
   /^hwBannerDismissed$/,
 ];
 
 // 시스템 메타 — KEEP (디바이스 / 마이그레이션 / 테마 / 온보딩 진행상태)
+// 양쪽 prefix 모두 KEEP (마이그레이션 race 방지)
 const CLEAR_KEEP_KEYS = new Set([
-  'bhm_local_uid',
-  'bhm_deviceId',
-  'bhm_anon_id',
+  'bhm_local_uid', 'snuhmate_local_uid',
+  'bhm_deviceId', 'snuhmate_device_id',
+  'bhm_anon_id', 'snuhmate_anon_id',
   'theme', 'snuhmate-theme',
-  'bhm_leave_migrated_v1',
-  'bhm_debug_parser',
+  'bhm_leave_migrated_v1', 'snuhmate_leave_migrated_v1',
+  'bhm_debug_parser', 'snuhmate_debug_parser',
   'onboarding_seen_v2',
   'onboarding_count',
-  // bhm_settings 는 PII 필드만 셀렉티브 wipe (_wipeSettingsPII)
+  // bhm_settings / snuhmate_settings 는 PII 필드만 셀렉티브 wipe (_wipeSettingsPII)
 ]);
 
 // bhm_settings 안에서 PII 만 wipe — 사용자 설정 (driveEnabled 등) 은 보존
 const SETTINGS_PII_FIELDS = ['googleSub', 'googleEmail', 'cachedProfile', 'lastSync', 'pinHash', 'displayName'];
 
 function _wipeSettingsPII() {
-  try {
-    const raw = localStorage.getItem('bhm_settings');
-    if (!raw) return;
-    const settings = JSON.parse(raw);
-    let changed = false;
-    for (const f of SETTINGS_PII_FIELDS) {
-      if (f in settings) { delete settings[f]; changed = true; }
-    }
-    if (changed) localStorage.setItem('bhm_settings', JSON.stringify(settings));
-  } catch (e) { /* noop */ }
+  // 양쪽 키 모두 처리 (lazy migration 기간 호환)
+  ['snuhmate_settings', 'bhm_settings'].forEach(key => {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return;
+      const settings = JSON.parse(raw);
+      let changed = false;
+      for (const f of SETTINGS_PII_FIELDS) {
+        if (f in settings) { delete settings[f]; changed = true; }
+      }
+      if (changed) localStorage.setItem(key, JSON.stringify(settings));
+    } catch (e) { /* noop */ }
+  });
 }
 
 function _collectUserDataKeys() {
