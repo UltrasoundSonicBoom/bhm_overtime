@@ -936,14 +936,30 @@ function applyPromotionDate() {
 }
 
 // ═══════════ 데이터 백업 및 복구 ═══════════
+// Phase 5-followup: downloadBackup 도 v2.0 으로 통일 (모든 사용자 도메인 키 포함)
+// 이전: v1.0 (profile/overtime/leave 3 필드만) → 명세서/근무이력 백업 누락 회귀
+// 신규: USER_DATA_PATTERNS 모든 매칭 키 일괄 백업 (uploadBackup v2.0 path 와 호환)
 function downloadBackup() {
   const data = {
-    version: "1.0",
+    version: "2.0",
     exportDate: new Date().toISOString(),
+    exportType: "full",
+    keys: {},
+    // v1.0 호환 — 옛 uploadBackup 도 동작 (3 필드 동시 포함)
     profile: localStorage.getItem(PROFILE.STORAGE_KEY),
     overtime: localStorage.getItem(OVERTIME.STORAGE_KEY),
-    leave: localStorage.getItem(LEAVE.STORAGE_KEY)
+    leave: localStorage.getItem(LEAVE.STORAGE_KEY),
   };
+
+  // 모든 USER_DATA_PATTERNS 매칭 키 keys 에 추가
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (!k) continue;
+    if (USER_DATA_PATTERNS.some(p => p.test(k))) {
+      data.keys[k] = localStorage.getItem(k);
+    }
+  }
+
   const jsonStr = JSON.stringify(data, null, 2);
   const blob = new Blob([jsonStr], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -956,13 +972,18 @@ function downloadBackup() {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 
+  const totalKeys = Object.keys(data.keys).length;
+  const payslipCount = Object.keys(data.keys).filter(k => /^payslip_/.test(k)).length;
+  const workHistoryCount = Object.keys(data.keys).filter(k => /^bhm_work_history/.test(k)).length;
+
   const toast = document.getElementById('otToast');
+  const msg = `백업 다운로드됨 (총 ${totalKeys}개 항목 — 명세서 ${payslipCount}, 근무이력 ${workHistoryCount}) 📥`;
   if (toast) {
-    toast.textContent = "백업 파일이 안전하게 다운로드되었습니다. 📥";
+    toast.textContent = msg;
     toast.style.display = 'block';
-    setTimeout(() => toast.style.display = 'none', 3000);
+    setTimeout(() => toast.style.display = 'none', 4000);
   } else {
-    alert("백업 파일이 다운로드되었습니다.");
+    alert(msg);
   }
 }
 
