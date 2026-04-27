@@ -105,6 +105,11 @@ const PROFILE_FIELDS = {
   promotionDate: 'pfPromotionDate',
   unionStepAdjust: 'pfUnionStepAdjust'
 };
+// ESM cross-module: salary-parser.js / profile-tab.js 가 PROFILE_FIELDS bare 참조
+// → window 노출 필수. 명세서 업로드 → 폼 자동 갱신 깨졌던 회귀 fix.
+if (typeof window !== 'undefined') {
+  window.PROFILE_FIELDS = PROFILE_FIELDS;
+}
 
 function getCaptureParams() {
   return new URLSearchParams(window.location.search);

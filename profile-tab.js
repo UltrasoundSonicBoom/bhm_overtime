@@ -983,5 +983,7 @@ if (typeof window !== 'undefined') {
   window.toggleChildFields = toggleChildFields;
   window._collapseBasicFieldsWithPreview = _collapseBasicFieldsWithPreview;
   window._seedFirstWorkFromProfile = _seedFirstWorkFromProfile;
+  // tab-profile.html fragment 의 inline onchange="_suggestYear(...)" 가 호출
+  window._suggestYear = _suggestYear;
 }
 export {};
