@@ -1,0 +1,19 @@
+{
+  "extends": "astro/tsconfigs/strict",
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    "baseUrl": ".",
+    "paths": {
+      "@snuhmate/calculators": ["../../packages/calculators/src/index.ts"],
+      "@snuhmate/calculators/*": ["../../packages/calculators/src/*"],
+      "@snuhmate/profile": ["../../packages/profile/src/index.ts"],
+      "@snuhmate/profile/*": ["../../packages/profile/src/*"],
+      "@snuhmate/shared-utils": ["../../packages/shared-utils/src/index.ts"],
+      "@snuhmate/data": ["../../packages/data/src/index.ts"],
+      "@snuhmate/regulation-constants": ["../../packages/regulation-constants/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*", ".astro/types.d.ts"],
+  "exclude": ["dist"]
+}

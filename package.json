@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "SNUH Mate — 서울대병원 노조 직원용 급여/시간외/휴가/근무이력/규정 PWA",
   "main": "app.js",
+  "private": true,
   "directories": {
     "doc": "docs",
     "test": "tests"
@@ -19,7 +20,10 @@
     "lint:fix": "eslint . --fix",
     "dev": "vite",
     "preview": "vite preview",
-    "build": "vite build"
+    "build": "vite build",
+    "web:dev": "pnpm --filter @snuhmate/web dev",
+    "web:build": "pnpm --filter @snuhmate/web build",
+    "turbo:build": "turbo run build"
   },
   "repository": {
     "type": "git",
@@ -38,7 +42,9 @@
     "eslint": "^10.2.1",
     "globals": "^17.5.0",
     "jsdom": "^29.1.0",
-    "vite": "^5.4.21",
+    "turbo": "^2.5.0",
+    "typescript": "^5.7.2",
+    "vite": "^6.4.2",
     "vitest": "^4.1.5"
   }
 }
