@@ -1397,6 +1397,107 @@ const SALARY_PARSER = (() => {
     return { comparison, appWage };
   }
 
+  // ── Phase 4-A: 명세서 시계열 → 근무이력 자동 시드 ──────────────────────
+  //
+  // 부서명 정규화 (variants 통합) — segment 키 비교 시 사용
+  const DEPT_ALIAS = {
+    '간호본부': '간호본부', '간호부': '간호본부',
+  };
+  function normalizeDept(dept) {
+    if (!dept) return '';
+    const trimmed = String(dept).trim().normalize('NFKC');
+    return DEPT_ALIAS[trimmed] || trimmed;
+  }
+
+  // type 화이트리스트: 일반 월급만 segment 입력. 보너스/성과급/세금 제외.
+  const PAYSLIP_TYPE_WHITELIST = new Set(['급여']);
+
+  // 명세서 시간순 정렬 → dept run-length encoding → segment 분할
+  function _buildSegmentsFromPayslips(profile) {
+    profile = profile || {};
+    const inv = listSavedMonths();
+    const now = new Date();
+    const curYM = now.getFullYear() * 100 + (now.getMonth() + 1);
+    const payslips = inv
+      .map(m => Object.assign({}, m, { data: loadMonthlyData(m.year, m.month, m.type) }))
+      .filter(m => m.data && m.data.employeeInfo && m.data.employeeInfo.department)
+      .filter(m => PAYSLIP_TYPE_WHITELIST.has(m.type))
+      .filter(m => (m.year * 100 + m.month) <= curYM)
+      .sort((a, b) => (a.year * 100 + a.month) - (b.year * 100 + b.month));
+
+    const segments = [];
+    let cur = null;
+    for (const p of payslips) {
+      const dept = p.data.employeeInfo.department;
+      const deptKey = normalizeDept(dept);
+      const fromYMD = p.year + '-' + String(p.month).padStart(2, '0') + '-01';
+      if (!cur || cur.deptKey !== deptKey) {
+        if (cur) segments.push(cur);
+        cur = {
+          deptKey, dept, from: fromYMD, to: '',
+          jobType: p.data.employeeInfo.jobType || '',
+          payslips: [p],
+        };
+      } else {
+        cur.payslips.push(p);
+      }
+    }
+    if (cur) segments.push(cur);
+
+    // 입사일 우선
+    if (profile.hireDate && segments.length > 0 && profile.hireDate < segments[0].from) {
+      segments[0].from = profile.hireDate;
+    }
+
+    // segment.to 계산: 다음 segment.from 의 전월 말일
+    for (let i = 0; i < segments.length - 1; i++) {
+      const next = segments[i + 1];
+      const parts = next.from.split('-').map(Number);
+      const prevMonth = new Date(parts[0], parts[1] - 1, 0);   // day=0 → 전월 말일
+      segments[i].to = prevMonth.getFullYear() + '-'
+        + String(prevMonth.getMonth() + 1).padStart(2, '0') + '-'
+        + String(prevMonth.getDate()).padStart(2, '0');
+    }
+
+    return segments;
+  }
+
+  // 보호 정책:
+  //   existing 에 source='user' record ≥ 1 → mode='banner' (데이터 보존, 알림만)
+  //   모두 'auto' 또는 빈 list → mode='replace' (자동 덮어쓰기 OK)
+  //   명세서 0개 → mode='empty'
+  function rebuildWorkHistoryFromPayslips(opts) {
+    opts = opts || {};
+    const profile = opts.profile || {};
+    const existing = opts.existing || [];
+    const hospital = opts.hospital || '서울대학교병원';
+
+    const segments = _buildSegmentsFromPayslips(profile);
+
+    if (segments.length === 0) {
+      return { mode: 'empty', segments: [], existing };
+    }
+
+    const hasUserRecord = existing.some(r => (r.source || 'user') === 'user');
+    if (hasUserRecord) {
+      return { mode: 'banner', segments, existing };
+    }
+
+    const records = segments.map((s, i) => ({
+      id: Date.now().toString(36) + '_' + i + '_auto',
+      workplace: hospital,
+      dept: s.dept,
+      from: s.from,
+      to: s.to,
+      role: s.jobType || '',
+      desc: '명세서 자동',
+      rotations: [],
+      source: 'auto',
+      updatedAt: new Date().toISOString(),
+    }));
+    return { mode: 'replace', records, segments, existing };
+  }
+
   return {
     parseFile,
     saveMonthlyData,
@@ -1409,6 +1510,10 @@ const SALARY_PARSER = (() => {
     compareWithApp,
     parsePDFText,
     parseImage,
+    // Phase 4-A
+    normalizeDept,
+    _buildSegmentsFromPayslips,
+    rebuildWorkHistoryFromPayslips,
   };
 })();
 
