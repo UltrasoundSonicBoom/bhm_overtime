@@ -50,6 +50,8 @@ importers:
 
   packages/data: {}
 
+  packages/profile: {}
+
   packages/regulation-constants: {}
 
   packages/shared-utils: {}
