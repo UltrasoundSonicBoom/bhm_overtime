@@ -104,10 +104,10 @@ export const PAYROLL = {
           : '<span class="ot-auto-badge ot-auto-manual">직접 입력 (기본 연장 1h)</span>';
         var makeStepInput = function(id, val, max) {
           return '<div class="ot-step-wrap">'
-            + '<button type="button" class="ot-step-btn" onclick="PAYROLL._otStep(\'' + id + '\',-0.25,\'overtimeCalc\')" onmousedown="event.preventDefault()">−</button>'
+            + '<button type="button" class="ot-step-btn" data-action="payrollOtStep" data-payroll-id="' + id + '" data-payroll-delta="-0.25" data-payroll-section="overtimeCalc">−</button>'
             + '<input type="number" id="' + id + '" value="' + val + '" min="0" max="' + max + '" step="0.25"'
-            + ' oninput="PAYROLL.recalc(\'overtimeCalc\')">'
-            + '<button type="button" class="ot-step-btn" onclick="PAYROLL._otStep(\'' + id + '\',0.25,\'overtimeCalc\')" onmousedown="event.preventDefault()">+</button>'
+            + ' data-input-action="payrollRecalc" data-payroll-section="overtimeCalc">'
+            + '<button type="button" class="ot-step-btn" data-action="payrollOtStep" data-payroll-id="' + id + '" data-payroll-delta="0.25" data-payroll-section="overtimeCalc">+</button>'
             + '</div>';
         };
         return '<div class="ot-input-header">' + autoTag + '</div>'
@@ -158,9 +158,9 @@ export const PAYROLL = {
         return '<div class="form-group" style="margin-top:12px;">'
           + '<label>이번 달 야간근무 횟수</label>'
           + '<div class="ot-step-wrap">'
-          + '<button type="button" class="ot-step-btn" onclick="PAYROLL._otStep(\'qaNightCount\',-1,\'nightShift\')" onmousedown="event.preventDefault()">−</button>'
-          + '<input type="number" id="qaNightCount" value="7" min="0" max="15" step="1" oninput="PAYROLL.recalc(\'nightShift\')">'
-          + '<button type="button" class="ot-step-btn" onclick="PAYROLL._otStep(\'qaNightCount\',1,\'nightShift\')" onmousedown="event.preventDefault()">+</button>'
+          + '<button type="button" class="ot-step-btn" data-action="payrollOtStep" data-payroll-id="qaNightCount" data-payroll-delta="-1" data-payroll-section="nightShift">−</button>'
+          + '<input type="number" id="qaNightCount" value="7" min="0" max="15" step="1" data-input-action="payrollRecalc" data-payroll-section="nightShift">'
+          + '<button type="button" class="ot-step-btn" data-action="payrollOtStep" data-payroll-id="qaNightCount" data-payroll-delta="1" data-payroll-section="nightShift">+</button>'
           + '</div>'
           + '</div>';
       },
@@ -200,20 +200,20 @@ export const PAYROLL = {
         return '<div style="margin-top:12px;">'
           + '<div class="ot-input-grid" style="margin-bottom:8px;">'
           + '<div class="ot-input-item"><div class="ot-input-label">대기 일수</div>'
-          + '<div class="ot-step-wrap"><button type="button" class="ot-step-btn" onclick="PAYROLL._otStep(\'qaOncallStandby\',-1,\'oncall\')" onmousedown="event.preventDefault()">−</button>'
-          + '<input type="number" id="qaOncallStandby" value="1" min="0" max="7" step="1" oninput="PAYROLL.recalc(\'oncall\')">'
-          + '<button type="button" class="ot-step-btn" onclick="PAYROLL._otStep(\'qaOncallStandby\',1,\'oncall\')" onmousedown="event.preventDefault()">+</button></div></div>'
+          + '<div class="ot-step-wrap"><button type="button" class="ot-step-btn" data-action="payrollOtStep" data-payroll-id="qaOncallStandby" data-payroll-delta="-1" data-payroll-section="oncall">−</button>'
+          + '<input type="number" id="qaOncallStandby" value="1" min="0" max="7" step="1" data-input-action="payrollRecalc" data-payroll-section="oncall">'
+          + '<button type="button" class="ot-step-btn" data-action="payrollOtStep" data-payroll-id="qaOncallStandby" data-payroll-delta="1" data-payroll-section="oncall">+</button></div></div>'
           + '<div class="ot-input-item"><div class="ot-input-label">출근 횟수</div>'
-          + '<div class="ot-step-wrap"><button type="button" class="ot-step-btn" onclick="PAYROLL._otStep(\'qaOncallCallouts\',-1,\'oncall\')" onmousedown="event.preventDefault()">−</button>'
-          + '<input type="number" id="qaOncallCallouts" value="1" min="0" max="7" step="1" oninput="PAYROLL.recalc(\'oncall\')">'
-          + '<button type="button" class="ot-step-btn" onclick="PAYROLL._otStep(\'qaOncallCallouts\',1,\'oncall\')" onmousedown="event.preventDefault()">+</button></div></div>'
+          + '<div class="ot-step-wrap"><button type="button" class="ot-step-btn" data-action="payrollOtStep" data-payroll-id="qaOncallCallouts" data-payroll-delta="-1" data-payroll-section="oncall">−</button>'
+          + '<input type="number" id="qaOncallCallouts" value="1" min="0" max="7" step="1" data-input-action="payrollRecalc" data-payroll-section="oncall">'
+          + '<button type="button" class="ot-step-btn" data-action="payrollOtStep" data-payroll-id="qaOncallCallouts" data-payroll-delta="1" data-payroll-section="oncall">+</button></div></div>'
           + '<div class="ot-input-item"><div class="ot-input-label">실 근무시간</div>'
-          + '<div class="ot-step-wrap"><button type="button" class="ot-step-btn" onclick="PAYROLL._otStep(\'qaOncallHours\',-0.25,\'oncall\')" onmousedown="event.preventDefault()">−</button>'
-          + '<input type="number" id="qaOncallHours" value="2" min="0" max="12" step="0.25" oninput="PAYROLL.recalc(\'oncall\')">'
-          + '<button type="button" class="ot-step-btn" onclick="PAYROLL._otStep(\'qaOncallHours\',0.25,\'oncall\')" onmousedown="event.preventDefault()">+</button></div>'
+          + '<div class="ot-step-wrap"><button type="button" class="ot-step-btn" data-action="payrollOtStep" data-payroll-id="qaOncallHours" data-payroll-delta="-0.25" data-payroll-section="oncall">−</button>'
+          + '<input type="number" id="qaOncallHours" value="2" min="0" max="12" step="0.25" data-input-action="payrollRecalc" data-payroll-section="oncall">'
+          + '<button type="button" class="ot-step-btn" data-action="payrollOtStep" data-payroll-id="qaOncallHours" data-payroll-delta="0.25" data-payroll-section="oncall">+</button></div>'
           + '<div class="ot-input-hint">15분 단위</div></div>'
           + '<div class="ot-input-item"><div class="ot-input-label">야간 포함</div>'
-          + '<select id="qaOncallNight" oninput="PAYROLL.recalc(\'oncall\')" style="padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:var(--text-body-normal);background:var(--bg-card);width:100%;">'
+          + '<select id="qaOncallNight" data-input-action="payrollRecalc" data-payroll-section="oncall" style="padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:var(--text-body-normal);background:var(--bg-card);width:100%;">'
           + '<option value="0">아니오 (150%)</option>'
           + '<option value="1">예 (200%)</option>'
           + '</select></div>'
@@ -260,9 +260,9 @@ export const PAYROLL = {
         return '<div class="form-group" style="margin-top:12px;">'
           + '<label>이번 달 일직/숙직 횟수</label>'
           + '<div class="ot-step-wrap">'
-          + '<button type="button" class="ot-step-btn" onclick="PAYROLL._otStep(\'qaDutyCount\',-1,\'dutyPay\')" onmousedown="event.preventDefault()">−</button>'
-          + '<input type="number" id="qaDutyCount" value="1" min="1" max="10" step="1" oninput="PAYROLL.recalc(\'dutyPay\')">'
-          + '<button type="button" class="ot-step-btn" onclick="PAYROLL._otStep(\'qaDutyCount\',1,\'dutyPay\')" onmousedown="event.preventDefault()">+</button>'
+          + '<button type="button" class="ot-step-btn" data-action="payrollOtStep" data-payroll-id="qaDutyCount" data-payroll-delta="-1" data-payroll-section="dutyPay">−</button>'
+          + '<input type="number" id="qaDutyCount" value="1" min="1" max="10" step="1" data-input-action="payrollRecalc" data-payroll-section="dutyPay">'
+          + '<button type="button" class="ot-step-btn" data-action="payrollOtStep" data-payroll-id="qaDutyCount" data-payroll-delta="1" data-payroll-section="dutyPay">+</button>'
           + '</div>'
           + '</div>';
       },
@@ -463,7 +463,7 @@ export const PAYROLL = {
         } catch(e) {}
         return '<div class="form-group" style="margin-top:12px;">'
           + '<label>잔여 연차 일수 <span style="color:var(--text-muted);font-size:11px;">(자동계산 · 수정 가능)</span></label>'
-          + '<input type="number" id="qaUnusedDays" value="' + remaining + '" min="0" max="30" step="0.5" oninput="PAYROLL.recalc(\'unusedLeave\')">'
+          + '<input type="number" id="qaUnusedDays" value="' + remaining + '" min="0" max="30" step="0.5" data-input-action="payrollRecalc" data-payroll-section="unusedLeave">'
           + '</div>';
       },
       getInputs() {
@@ -505,7 +505,7 @@ export const PAYROLL = {
       renderInput() {
         return '<div class="form-group" style="margin-top:12px;">'
           + '<label>육아휴직 개월수</label>'
-          + '<input type="number" id="qaParentalMonths" value="12" min="1" max="18" oninput="PAYROLL.recalc(\'parentalLeave\')">'
+          + '<input type="number" id="qaParentalMonths" value="12" min="1" max="18" data-input-action="payrollRecalc" data-payroll-section="parentalLeave">'
           + '</div>';
       },
       getInputs() {
@@ -595,7 +595,7 @@ export const PAYROLL = {
         var options = grades.filter(function(g) { return g !== profile.grade; });
         // autoPromotion이 있으면 해당 등급을 기본 선택
         var defaultNext = (table.autoPromotion && table.autoPromotion[profile.grade]) ? table.autoPromotion[profile.grade].next : (options[0] || '');
-        var sel = '<select id="qaTargetGrade" oninput="PAYROLL.recalc(\'promotionDiff\')" onchange="PAYROLL.recalc(\'promotionDiff\')" style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;font-size:var(--text-body-normal);background:var(--bg-card);color:var(--text-primary);font-weight:700;">';
+        var sel = '<select id="qaTargetGrade" data-input-action="payrollRecalc" data-payroll-section="promotionDiff" data-input-action="payrollRecalc" data-payroll-section="promotionDiff" style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;font-size:var(--text-body-normal);background:var(--bg-card);color:var(--text-primary);font-weight:700;">';
         options.forEach(function(g) {
           var label = (table.gradeLabels && table.gradeLabels[g]) ? g + ' · ' + table.gradeLabels[g] : g;
           sel += '<option value="' + g + '"' + (g === defaultNext ? ' selected' : '') + '>' + label + '</option>';
@@ -773,19 +773,19 @@ export const PAYROLL = {
           + '<div style="font-size:11px;color:var(--accent-indigo);font-weight:700;margin-bottom:10px;padding:6px 10px;background:rgba(99,102,241,0.07);border-radius:8px;">아래 값을 수정하면 예상 승격일이 재계산됩니다 · 저장 시 내 정보에 반영</div>'
           + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'
           + '<div class="form-group"><label>현재 직급</label>'
-          + '<select id="qaPromoGrade" oninput="PAYROLL.recalc(\'promotionDate\')" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:var(--text-body-normal);background:var(--bg-card);">'
+          + '<select id="qaPromoGrade" data-input-action="payrollRecalc" data-payroll-section="promotionDate" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:var(--text-body-normal);background:var(--bg-card);">'
           + gradeOptions + '</select></div>'
           + '<div class="form-group"><label>현재 호봉</label>'
           + '<div class="ot-step-wrap">'
-          + '<button type="button" class="ot-step-btn" onclick="PAYROLL._otStep(\'qaPromoYear\',-1,\'promotionDate\')" onmousedown="event.preventDefault()">−</button>'
-          + '<input type="number" id="qaPromoYear" value="' + (profile.year || 1) + '" min="1" max="40" step="1" oninput="PAYROLL.recalc(\'promotionDate\')">'
-          + '<button type="button" class="ot-step-btn" onclick="PAYROLL._otStep(\'qaPromoYear\',1,\'promotionDate\')" onmousedown="event.preventDefault()">+</button>'
+          + '<button type="button" class="ot-step-btn" data-action="payrollOtStep" data-payroll-id="qaPromoYear" data-payroll-delta="-1" data-payroll-section="promotionDate">−</button>'
+          + '<input type="number" id="qaPromoYear" value="' + (profile.year || 1) + '" min="1" max="40" step="1" data-input-action="payrollRecalc" data-payroll-section="promotionDate">'
+          + '<button type="button" class="ot-step-btn" data-action="payrollOtStep" data-payroll-id="qaPromoYear" data-payroll-delta="1" data-payroll-section="promotionDate">+</button>'
           + '</div></div>'
           + '</div>'
           + '<div class="form-group"><label>최근 승진일 <span style="font-weight:400;color:var(--text-muted);">(직급 시작일 · ' + gradeStart.source + ')</span></label>'
-          + '<input type="date" id="qaPromoStartDate" value="' + startDateStr + '" oninput="PAYROLL.recalc(\'promotionDate\')" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:var(--text-body-normal);background:var(--bg-card);">'
+          + '<input type="date" id="qaPromoStartDate" value="' + startDateStr + '" data-input-action="payrollRecalc" data-payroll-section="promotionDate" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:var(--text-body-normal);background:var(--bg-card);">'
           + '</div>'
-          + '<button type="button" onclick="PAYROLL._savePromoData()" style="width:100%;padding:10px;background:var(--accent-indigo);color:#fff;border:2px solid var(--accent-indigo);border-radius:10px;font-weight:700;cursor:pointer;font-size:var(--text-body-normal);">내 정보에 저장 →</button>'
+          + '<button type="button" data-action="payrollSavePromoData" style="width:100%;padding:10px;background:var(--accent-indigo);color:#fff;border:2px solid var(--accent-indigo);border-radius:10px;font-weight:700;cursor:pointer;font-size:var(--text-body-normal);">내 정보에 저장 →</button>'
           + '</div>';
       },
       getInputs() {
@@ -1048,7 +1048,7 @@ export const PAYROLL = {
     if (!profile) {
       html += '<div class="qa-profile-warning">'
         + '내 정보를 먼저 저장하면 자동 계산됩니다. '
-        + '<a onclick="switchToProfileTab()">내 정보 설정 \u2192</a>'
+        + '<a data-action="switchToProfileTab">내 정보 설정 \u2192</a>'
         + '</div>';
     }
 
@@ -1082,7 +1082,7 @@ export const PAYROLL = {
           } catch (e) { result = null; }
         }
 
-        html += '<div class="qa-card ' + (isExpanded ? 'expanded' : '') + '" id="qa-' + card.id + '" onclick="PAYROLL.toggle(\'' + card.id + '\')">';
+        html += '<div class="qa-card ' + (isExpanded ? 'expanded' : '') + '" id="qa-' + card.id + '" data-action="payrollToggle" data-card-id="' + card.id + '">';
 
         // ── 헤더 ──
         html += '<div class="qa-card-header">';
@@ -1106,9 +1106,9 @@ export const PAYROLL = {
 
         // 확장 본문
         if (isExpanded) {
-          html += '<div class="qa-card-body" onclick="event.stopPropagation()">';
+          html += '<div class="qa-card-body" data-stop-propagation>';
           if (!profile || !wage) {
-            html += '<p style="color:var(--accent-amber);font-size:13px;font-weight:600;">내 정보를 먼저 저장해주세요. <a onclick="switchToProfileTab()" style="color:var(--accent-indigo);cursor:pointer;text-decoration:underline;">내 정보 설정 →</a></p>';
+            html += '<p style="color:var(--accent-amber);font-size:13px;font-weight:600;">내 정보를 먼저 저장해주세요. <a data-action="switchToProfileTab" style="color:var(--accent-indigo);cursor:pointer;text-decoration:underline;">내 정보 설정 →</a></p>';
           } else if (result) {
             if (card.renderInput) html += card.renderInput();
             // 결과 영역: id 부여해서 부분 업데이트 가능하게
@@ -1191,7 +1191,7 @@ export const PAYROLL = {
       PROFILE.applyToForm(PROFILE.load(), PROFILE_FIELDS);
     }
     // 저장 완료 피드백
-    var btn = document.querySelector('[onclick="PAYROLL._savePromoData()"]');
+    var btn = document.querySelector('[data-action="payrollSavePromoData"]');
     if (btn) {
       var orig = btn.textContent;
       btn.textContent = '저장 완료 ✓';
@@ -1253,7 +1253,39 @@ export const PAYROLL = {
   }
 };
 
-// 호환층 — IIFE 모듈 + inline onclick="PAYROLL.X()" 가 window.PAYROLL 사용
+// 호환층 — IIFE 모듈 / regulation-views.js 가 window.PAYROLL 참조 (Phase 3-F 검토 후 제거)
 if (typeof window !== 'undefined') {
   window.PAYROLL = PAYROLL;
+}
+
+// Phase 3-B: PAYROLL inline onclick / oninput → data-action 위임 등록
+import { registerActions, registerInputActions } from './shared-utils.js';
+
+registerActions({
+  payrollOtStep: (el) => PAYROLL._otStep(
+    el.dataset.payrollId,
+    parseFloat(el.dataset.payrollDelta),
+    el.dataset.payrollSection,
+  ),
+  // qa-card 토글: 자식 .qa-card-body 안 click 은 무시 (input/select/+- 버튼이 카드를 닫지 않게)
+  payrollToggle: (el, e) => {
+    if (e.target.closest && e.target.closest('.qa-card-body')) return;
+    PAYROLL.toggle(el.dataset.cardId);
+  },
+  payrollSavePromoData: () => PAYROLL._savePromoData(),
+  // switchToProfileTab — profile-tab.js 가 노출 (window.switchToProfileTab)
+  switchToProfileTab: () => window.switchToProfileTab && window.switchToProfileTab(),
+});
+
+registerInputActions({
+  payrollRecalc: (el) => PAYROLL.recalc(el.dataset.payrollSection),
+});
+
+// ot-step-btn 의 mousedown preventDefault — focus 이동 방지 (기존 onmousedown 대체)
+if (typeof document !== 'undefined') {
+  document.addEventListener('mousedown', (e) => {
+    if (e.target.classList && e.target.classList.contains('ot-step-btn')) {
+      e.preventDefault();
+    }
+  });
 }
