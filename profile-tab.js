@@ -966,63 +966,141 @@ function downloadBackup() {
   }
 }
 
+// Phase 5-followup: v1.0 + v2.0 백업 모두 복원 + 다른 디바이스 namespace 매핑 + 모바일 호환
+//
+// 근본 원인 분석 (사용자 보고 "복원 안 됨"):
+//   1. v2.0 (keys object) 미지원 — 신규 _downloadFullBackup 결과 복원 안 됨
+//   2. namespace mismatch — 다른 디바이스 복원 시 PROFILE.STORAGE_KEY 가 다름
+//      (Google 로그인 / guest / demo 별로 키 suffix 다름)
+//   3. 안드로이드 사진 picker 열림 — accept="application/json" 무시
+//   4. iOS 사파리 label[for] click trigger 안 됨
+
+// canonical key 매핑 — 다른 디바이스/브라우저에서 복원 시 현재 namespace 로 변환
+function _restoreKeyForCurrent(key) {
+  // _<uid> / _guest / _demo suffix 제거 → 현재 환경의 same-base 키로
+  const KNOWN_BASES = ['bhm_hr_profile', 'overtimeRecords', 'leaveRecords', 'bhm_work_history', 'otManualHourly', 'overtimePayslipData'];
+  const getKey = (typeof window.getUserStorageKey === 'function') ? window.getUserStorageKey : null;
+  for (const base of KNOWN_BASES) {
+    if (key === base || key.startsWith(base + '_')) {
+      return getKey ? getKey(base) : base;
+    }
+  }
+  return key;  // payslip_<uid>_* 등은 그대로 (uid 가 백업 시점 그대로 보존)
+}
+
 async function uploadBackup(event) {
-  const file = event.target.files[0];
+  const file = event.target.files && event.target.files[0];
   if (!file) return;
 
-  // 이미지 파일 선택 방지 (안드로이드에서 사진을 선택하는 경우)
+  // 1단계: 파일 형식 차단 (사진/PDF/Excel)
   if (file.type.startsWith('image/') || /\.(jpg|jpeg|png|gif|bmp|webp|heic|heif|svg)$/i.test(file.name)) {
-    alert("⚠️ 사진 파일은 백업 파일이 아닙니다.\n\n'snuh_backup_날짜.json' 파일을 선택해주세요.\n(보통 '다운로드' 폴더에 있습니다)");
+    alert("⚠️ 사진 파일은 백업 파일이 아닙니다.\n\n'snuh_backup_*.json' 파일을 선택해주세요.\n(보통 '다운로드' 폴더에 있습니다)");
     event.target.value = '';
     return;
   }
-
-  // PDF/Excel 등 다른 형식 선택 방지
-  if (/\.(pdf|xls|xlsx|csv|doc|docx|hwp)$/i.test(file.name)) {
-    alert("⚠️ 이 파일은 백업 파일이 아닙니다.\n\n'snuh_backup_날짜.json' 파일을 선택해주세요.");
+  if (/\.(pdf|xls|xlsx|csv|doc|docx|hwp|zip|hwpx)$/i.test(file.name)) {
+    alert("⚠️ 이 파일은 백업 파일이 아닙니다.\n\n'snuh_backup_*.json' 파일을 선택해주세요.");
     event.target.value = '';
     return;
   }
 
   try {
-    const text = await file.text();
+    // 2단계: 파일 읽기 (모바일 호환 — file.text() 미지원 fallback)
+    let text;
+    if (typeof file.text === 'function') {
+      text = await file.text();
+    } else {
+      // iOS 12 이하 / 일부 안드로이드 webview
+      text = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = e => resolve(e.target.result);
+        reader.onerror = () => reject(reader.error || new Error('FileReader 실패'));
+        reader.readAsText(file);
+      });
+    }
+
     const data = JSON.parse(text);
 
-    // 백업 파일 구조 검증
-    if (!data.version && !data.profile && !data.overtime && !data.leave) {
+    // 3단계: 백업 구조 검증 (v1.0 / v2.0 지원)
+    const isV2 = data.version && data.keys && typeof data.keys === 'object';
+    const isV1 = data.profile || data.overtime || data.leave;
+    if (!isV2 && !isV1) {
       throw new Error('invalid_structure');
     }
 
-    // 백업 파일 내 각 필드는 localStorage 저장용 JSON 문자열이어야 함.
-    // 수동 편집 등으로 객체로 들어온 경우 다시 직렬화하고,
-    // 최종적으로 JSON.parse 검증을 통과해야만 저장 — 무음 손상 방지.
+    // 4단계: 안전 직렬화 — JSON.parse 검증 통과한 것만 저장
     const toStorable = v => {
-      if (!v) return null;
+      if (v === null || v === undefined) return null;
       const s = typeof v === 'string' ? v : JSON.stringify(v);
-      JSON.parse(s); // 유효하지 않으면 여기서 throw → catch로 이동
+      try { JSON.parse(s); } catch (e) { return null; }
       return s;
     };
 
-    const profileStr = toStorable(data.profile);
-    const overtimeStr = toStorable(data.overtime);
-    const leaveStr = toStorable(data.leave);
+    let restoredCount = 0;
 
-    if (profileStr) localStorage.setItem(PROFILE.STORAGE_KEY, profileStr);
-    if (overtimeStr) localStorage.setItem(OVERTIME.STORAGE_KEY, overtimeStr);
-    if (leaveStr) localStorage.setItem(LEAVE.STORAGE_KEY, leaveStr);
-
-    alert("데이터가 성공적으로 복원되었습니다! 앱을 새로고침합니다.");
-    window.location.reload();
-  } catch (e) {
-    if (e.message === 'invalid_structure') {
-      alert("⚠️ 올바른 백업 파일이 아닙니다.\n\n'snuh_backup_날짜.json' 파일을 선택해주세요.");
+    if (isV2) {
+      // v2.0: keys object — 모든 사용자 도메인 키 일괄 복원 (namespace 매핑)
+      for (const [origKey, value] of Object.entries(data.keys)) {
+        const storable = toStorable(value);
+        if (storable === null) continue;
+        const targetKey = _restoreKeyForCurrent(origKey);
+        try {
+          localStorage.setItem(targetKey, storable);
+          restoredCount++;
+        } catch (e) { /* quota or invalid key */ }
+      }
     } else {
-      alert("복원 실패: 올바른 백업 파일(JSON)이 아닙니다.\n\n사진이나 다른 파일이 아닌, 'snuh_backup_날짜.json' 파일을 선택해주세요.");
+      // v1.0: profile/overtime/leave 3개만 (namespace 매핑)
+      const v1Map = [
+        ['bhm_hr_profile', data.profile],
+        ['overtimeRecords', data.overtime],
+        ['leaveRecords', data.leave],
+      ];
+      for (const [base, value] of v1Map) {
+        const storable = toStorable(value);
+        if (storable === null) continue;
+        const targetKey = _restoreKeyForCurrent(base);
+        try {
+          localStorage.setItem(targetKey, storable);
+          restoredCount++;
+        } catch (e) { /* noop */ }
+      }
+    }
+
+    if (restoredCount === 0) {
+      alert("⚠️ 백업 파일에 복원 가능한 데이터가 없습니다.");
+      event.target.value = '';
+      return;
+    }
+
+    alert(`✅ 데이터가 성공적으로 복원되었습니다! (${restoredCount}개 항목)\n앱을 새로고침합니다.`);
+    if (typeof window.__bhmReloadHook === 'function') {
+      window.__bhmReloadHook();
+    } else {
+      window.location.reload();
+    }
+  } catch (e) {
+    if (e && e.message === 'invalid_structure') {
+      alert("⚠️ 올바른 백업 파일이 아닙니다.\n\n'snuh_backup_*.json' 파일을 선택해주세요.");
+    } else {
+      alert("복원 실패: 올바른 백업 파일(JSON)이 아닙니다.\n\n사진이나 다른 파일이 아닌, 'snuh_backup_*.json' 파일을 선택해주세요.\n\n(에러: " + (e && e.message ? e.message : 'unknown') + ")");
     }
   } finally {
     event.target.value = '';
   }
 }
+
+// Phase 5-followup: 모바일 호환 file picker — label[for] 안 되는 안드로이드/iOS 우회
+// onclick 으로 직접 input.click() trigger
+function triggerBackupFilePicker() {
+  const input = document.getElementById('backupFileInput');
+  if (input) {
+    input.value = '';  // 같은 파일 재선택 가능
+    input.click();
+  }
+}
+window.triggerBackupFilePicker = triggerBackupFilePicker;
+window.uploadBackup = uploadBackup;
 
 function updateProfileSummary(profile) {
   const wage = PROFILE.calcWage(profile);
