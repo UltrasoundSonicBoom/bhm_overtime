@@ -341,7 +341,7 @@ function renderPayEstHero() {
     el.innerHTML = `<div class="card" style="text-align:center; padding:28px;">
       <div style="font-size:var(--text-title-large); margin-bottom:8px; font-weight:800;">급여 예상</div>
       <p style="color:var(--text-muted);">내 정보를 저장하면 월별 예상 급여가 자동 계산됩니다.</p>
-      <button class="btn btn-primary" onclick="switchToProfileTab()" style="margin-top:12px;">내 정보 입력하기</button>
+      <button class="btn btn-primary" data-action="switchToProfileTab" style="margin-top:12px;">내 정보 입력하기</button>
     </div>`;
     return;
   }
@@ -377,9 +377,9 @@ function renderPayEstHero() {
 
     el.innerHTML = `
       <div class="pe-month-slider">
-        <button class="pe-nav-btn" onclick="changePayEstMonth(-1)">◀</button>
+        <button class="pe-nav-btn" data-action="changePayEstMonth" data-nav-delta="-1">◀</button>
         <span class="pe-month-label">${payEstYear}년 ${payEstMonth}월 실제</span>
-        <button class="pe-nav-btn" onclick="changePayEstMonth(1)">▶</button>
+        <button class="pe-nav-btn" data-action="changePayEstMonth" data-nav-delta="1">▶</button>
       </div>
       <div class="pe-hero-card pe-hero-actual">
         <div class="pe-hero-net-label">실지급액</div>
@@ -400,9 +400,9 @@ function renderPayEstHero() {
     // ── 예상 모드 (기존) ──
     el.innerHTML = `
       <div class="pe-month-slider">
-        <button class="pe-nav-btn" onclick="changePayEstMonth(-1)">◀</button>
+        <button class="pe-nav-btn" data-action="changePayEstMonth" data-nav-delta="-1">◀</button>
         <span class="pe-month-label">${payEstYear}년 ${payEstMonth}월 예상</span>
-        <button class="pe-nav-btn" onclick="changePayEstMonth(1)">▶</button>
+        <button class="pe-nav-btn" data-action="changePayEstMonth" data-nav-delta="1">▶</button>
       </div>
       <div class="pe-hero-card">
         <div class="pe-hero-net-label">예상 실수령액</div>
@@ -577,7 +577,7 @@ function renderPayEstDetail() {
           ${yearly.map(yr => {
             const pct = Math.round((yr.net / maxR.net) * 100);
             const isCur = yr.month === payEstMonth;
-            return `<div class="pe-bar-col ${isCur ? 'cur' : ''}" onclick="payEstMonth=${yr.month};initPayEstimate();" title="${yr.month}월: ${fmtW(yr.net)}">
+            return `<div class="pe-bar-col ${isCur ? 'cur' : ''}" data-action="setPayEstMonth" data-month="${yr.month}" title="${yr.month}월: ${fmtW(yr.net)}">
               <div class="pe-bar" style="height:${pct}%"></div>
               <span class="pe-bar-label">${yr.month}</span>
             </div>`;
@@ -874,11 +874,21 @@ window.addEventListener('profileChanged',  _refreshPayEstIfActive);
 
 // Phase 2-F: ESM marker — 파일을 ES module 로 표시 (side-effect IIFE 보존)
 
-// Phase 2-regression: inline onclick window 노출 (ESM 모듈 스코프 회복)
+// Phase 2-regression: inline onclick window 노출 (Phase 3-F 검토 후 제거 예정)
 if (typeof window !== 'undefined') {
   window.payEstMonth = payEstMonth;
   window.changePayEstMonth = changePayEstMonth;
   window.calculatePayroll = calculatePayroll;
 }
+
+// Phase 3-D: pay-estimation 6 onclick → data-action 위임 등록
+import { registerActions as _registerActions } from './shared-utils.js';
+_registerActions({
+  changePayEstMonth: (el) => changePayEstMonth(parseInt(el.dataset.navDelta, 10)),
+  setPayEstMonth: (el) => {
+    payEstMonth = parseInt(el.dataset.month, 10);
+    initPayEstimate();
+  },
+});
 
 export {};

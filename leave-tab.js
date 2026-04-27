@@ -367,9 +367,9 @@ function renderLvCalendar(year, month, recordsByDay) {
 
   const dowLabels = ['일', '월', '화', '수', '목', '금', '토'];
   let html = '<div class="ot-cal"><div class="ot-cal-header" style="background:rgba(16,185,129,0.08); color:var(--accent-emerald)">'
-    + '<button class="cal-nav-btn" onclick="lvNavMonth(-1)">◀</button>'
-    + '<span class="cal-nav-title" onclick="lvGoToday()">' + year + '년 ' + month + '월</span>'
-    + '<button class="cal-nav-btn" onclick="lvNavMonth(1)">▶</button>'
+    + '<button class="cal-nav-btn" data-action="lvNavMonth" data-nav-delta="-1">◀</button>'
+    + '<span class="cal-nav-title" data-action="lvGoToday">' + year + '년 ' + month + '월</span>'
+    + '<button class="cal-nav-btn" data-action="lvNavMonth" data-nav-delta="1">▶</button>'
     + '</div>';
   html += '<div class="ot-cal-grid">';
 
@@ -429,7 +429,7 @@ function renderLvCalendar(year, month, recordsByDay) {
     });
     dotsHtml += '</div>';
 
-    html += `<div class="${cls}" data-day="${d}" onclick="onLvDateClick(${year},${month},${d})">${d}${dotsHtml}</div>`;
+    html += `<div class="${cls}" data-day="${d}" data-action="onLvDateClick" data-lv-year="${year}" data-lv-month="${month}" data-lv-day="${d}">${d}${dotsHtml}</div>`;
   }
 
   html += '</div>';
@@ -1025,7 +1025,7 @@ function renderLvRecordList(year) {
   });
 
   extraHtml += `<div style="margin-top:12px;">
-    <div class="collapsible-header" onclick="toggleCollapsible('lvRecordDetail')">
+    <div class="collapsible-header" data-action="toggleCollapsible" data-collapse-id="lvRecordDetail">
       <span style="display:flex; align-items:center; gap:8px;"><span class="toggle-icon">▸</span> 상세 기록 (${sorted.length}건)</span>
     </div>
     <div class="collapsible-body" id="lvRecordDetail" style="display:none; max-height:400px; overflow-y:auto;">
@@ -1062,7 +1062,7 @@ function renderLvRecordList(year) {
         const tlDays = Math.round((r.hours / 8) * 10) / 10;
         detail = `${dateDisplay} ${r.startTime || ''}~${r.endTime || ''} (${r.hours}h = ${tlDays}일)`;
       }
-      extraHtml += `<div style="display:flex; justify-content:space-between; align-items:center; font-size:var(--text-body-normal); color:var(--text-secondary); cursor:pointer; padding:1px 0;" onclick="editLvRecord('${r.id}')">
+      extraHtml += `<div style="display:flex; justify-content:space-between; align-items:center; font-size:var(--text-body-normal); color:var(--text-secondary); cursor:pointer; padding:1px 0;" data-action="editLvRecord" data-lv-record-id="${r.id}">
         <span>${detail}${r.memo ? ' <span style="color:var(--text-muted)">' + escapeHtml(r.memo) + '</span>' : ''}</span>
       </div>`;
     });
@@ -1164,7 +1164,7 @@ function startTutorial() {
 
 
 
-// Phase 2-regression: inline onclick window 노출 (ESM 자동 노출 회복)
+// Phase 2-regression: inline onclick window 노출 (Phase 3-F 검토 후 제거 예정)
 if (typeof window !== 'undefined') {
   window.closeLvBottomSheet = closeLvBottomSheet;
   window.closeLvTypeBottomSheet = closeLvTypeBottomSheet;
@@ -1175,7 +1175,22 @@ if (typeof window !== 'undefined') {
   window.openLvTypeBottomSheet = openLvTypeBottomSheet;
   window.saveLvRecord = saveLvRecord;
   window.deleteLvRecord = deleteLvRecord;
+  window.toggleCollapsible = toggleCollapsible;
 }
+
+// Phase 3-D: leave-tab 6 onclick → data-action 위임 등록
+import { registerActions } from './shared-utils.js';
+registerActions({
+  lvNavMonth: (el) => lvNavMonth(parseInt(el.dataset.navDelta, 10)),
+  lvGoToday: () => lvGoToday(),
+  onLvDateClick: (el) => onLvDateClick(
+    parseInt(el.dataset.lvYear, 10),
+    parseInt(el.dataset.lvMonth, 10),
+    parseInt(el.dataset.lvDay, 10),
+  ),
+  toggleCollapsible: (el) => toggleCollapsible(el.dataset.collapseId),
+  editLvRecord: (el) => editLvRecord(el.dataset.lvRecordId),
+});
 
 // Phase 2-F: ESM marker
 export {};
