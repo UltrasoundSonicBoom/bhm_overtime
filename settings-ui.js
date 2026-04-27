@@ -10,7 +10,7 @@ function updateAppLockUI() {
   // bhm_settings 직접 로드 (appLock.js 가 사용하는 동일 키).
   // window.loadSettings 헬퍼는 미정의 — 직접 읽기로 변경 (Bug 수정).
   var settings = {};
-  try { settings = JSON.parse(localStorage.getItem('bhm_settings') || '{}'); }
+  try { settings = JSON.parse(localStorage.getItem('snuhmate_settings') || '{}'); }
   catch (e) { settings = {}; }
   var hasBiometric = !!settings.biometricCredId;
   var offDiv = document.getElementById('appLockOff');

@@ -35,12 +35,12 @@ export const AppLock = (function () {
   // WebAuthn user.id 등에 사용할 안정적 식별자가 필요할 때만 호출.
   function _getLocalUid() {
     var uid = null;
-    try { uid = localStorage.getItem('bhm_local_uid'); } catch (e) { /* noop */ }
+    try { uid = localStorage.getItem('snuhmate_local_uid'); } catch (e) { /* noop */ }
     if (!uid) {
       uid = (crypto && crypto.randomUUID)
         ? crypto.randomUUID()
         : ('u-' + Date.now() + '-' + Math.random().toString(36).slice(2));
-      try { localStorage.setItem('bhm_local_uid', uid); } catch (e) { /* noop */ }
+      try { localStorage.setItem('snuhmate_local_uid', uid); } catch (e) { /* noop */ }
     }
     return uid;
   }
@@ -81,12 +81,12 @@ export const AppLock = (function () {
 
   // ── bhm_settings 유틸 ──
   function _loadSettings() {
-    try { return JSON.parse(localStorage.getItem('bhm_settings') || '{}'); } catch (e) { return {}; }
+    try { return JSON.parse(localStorage.getItem('snuhmate_settings') || '{}'); } catch (e) { return {}; }
   }
   function _saveSettings(patch) {
     var s = _loadSettings();
     Object.assign(s, patch);
-    localStorage.setItem('bhm_settings', JSON.stringify(s));
+    localStorage.setItem('snuhmate_settings', JSON.stringify(s));
   }
 
   // ── SHA-256 (WebCrypto) ──

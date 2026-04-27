@@ -26,8 +26,9 @@ describe('CSP — Phase 3-G', () => {
     expect(cspValue).toMatch(/script-src[^;]*https:\/\/www\.googletagmanager\.com/);
   });
 
-  it('clickjacking 방어: frame-ancestors \'none\'', () => {
-    expect(cspValue).toMatch(/frame-ancestors 'none'/);
+  it('clickjacking 방어: frame-ancestors \'self\' (same-origin iframe 허용 — 규정 탭 SPA)', () => {
+    // Phase 5-followup: 'none' → 'self' (same-origin iframe 임베드 허용, cross-origin clickjacking 여전히 차단)
+    expect(cspValue).toMatch(/frame-ancestors 'self'/);
   });
 
   it('object-src \'none\' (Flash/PDF embed 차단)', () => {

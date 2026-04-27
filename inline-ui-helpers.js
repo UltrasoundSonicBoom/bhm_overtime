@@ -13,6 +13,42 @@
     if (savedTheme === 'linear') document.documentElement.removeAttribute('data-theme');
   } catch (e) {}
 
+  // ── Phase 5-followup: bhm_* → snuhmate_* lazy migration (광역 시스템 키) ──
+  // PROFILE/work-history 는 각 모듈에서 처리. 여기서는 settings/device/anon/lastEdit/demo/debug
+  try {
+    var migrateMap = [
+      ['bhm_settings', 'snuhmate_settings'],
+      ['bhm_local_uid', 'snuhmate_local_uid'],
+      ['bhm_deviceId', 'snuhmate_device_id'],
+      ['bhm_anon_id', 'snuhmate_anon_id'],
+      ['bhm_demo_mode', 'snuhmate_demo_mode'],
+      ['bhm_debug_parser', 'snuhmate_debug_parser'],
+      ['bhm_leave_migrated_v1', 'snuhmate_leave_migrated_v1'],
+    ];
+    for (var i = 0; i < migrateMap.length; i++) {
+      var oldK = migrateMap[i][0];
+      var newK = migrateMap[i][1];
+      var v = localStorage.getItem(oldK);
+      if (v !== null && localStorage.getItem(newK) === null) {
+        localStorage.setItem(newK, v);
+        localStorage.removeItem(oldK);
+      }
+    }
+    // bhm_lastEdit_* prefix 키 모두
+    var lastEditKeys = [];
+    for (var j = 0; j < localStorage.length; j++) {
+      var k = localStorage.key(j);
+      if (k && k.indexOf('bhm_lastEdit_') === 0) lastEditKeys.push(k);
+    }
+    lastEditKeys.forEach(function (oldK) {
+      var newK = 'snuhmate_last_edit_' + oldK.substring('bhm_lastEdit_'.length);
+      if (localStorage.getItem(newK) === null) {
+        localStorage.setItem(newK, localStorage.getItem(oldK));
+        localStorage.removeItem(oldK);
+      }
+    });
+  } catch (e) { /* noop */ }
+
   // ── capture 타이틀: DOM 준비 전에 document.title 갱신 ──
   function getCaptureParams() {
     return new URLSearchParams(window.location.search);

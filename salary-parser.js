@@ -17,7 +17,7 @@ export const SALARY_PARSER = (() => {
 
   // ── DEBUG 플래그 — localStorage.bhm_debug_parser = '1' 설정 시 trace 활성화 ──
   const DEBUG = (function () {
-    try { return localStorage.getItem('bhm_debug_parser') === '1'; }
+    try { return localStorage.getItem('snuhmate_debug_parser') === '1'; }
     catch (e) { return false; }
   })();
   function debug() {
@@ -1089,7 +1089,7 @@ export const SALARY_PARSER = (() => {
   // ── localStorage 월별 저장/불러오기 ──
   function _payslipUid() {
     var settings = {};
-    try { settings = JSON.parse(localStorage.getItem('bhm_settings') || '{}'); } catch (e) {}
+    try { settings = JSON.parse(localStorage.getItem('snuhmate_settings') || '{}'); } catch (e) {}
     return settings.googleSub || 'guest';
   }
 

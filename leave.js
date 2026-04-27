@@ -17,7 +17,7 @@ export const LEAVE = {
     // 최초 로드 시 1회만 실행되어 기존 데이터 유실 방지.
     _migrateLegacyKeys() {
         try {
-            if (localStorage.getItem('bhm_leave_migrated_v1')) return;
+            if (localStorage.getItem('snuhmate_leave_migrated_v1')) return;
 
             const merged = (() => {
                 try { return JSON.parse(localStorage.getItem('leaveRecords')) || {}; }
@@ -51,7 +51,7 @@ export const LEAVE = {
                 legacyKeys.forEach(k => localStorage.removeItem(k));
                 console.log('[LEAVE] 구버전 키 ' + legacyKeys.length + '개 → leaveRecords 단일 키로 병합');
             }
-            localStorage.setItem('bhm_leave_migrated_v1', '1');
+            localStorage.setItem('snuhmate_leave_migrated_v1', '1');
         } catch (e) {
             console.warn('[LEAVE] 레거시 키 마이그레이션 실패:', e);
         }

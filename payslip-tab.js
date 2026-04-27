@@ -804,7 +804,7 @@ function renderOvertimeAnalysis(container, data) {
 function deletePayslipMonth(year, month, type) {
   const typeLabel = type && type !== '급여' ? ` (${type})` : '';
   if (!confirm(`${year}년 ${month}월${typeLabel} 급여명세서를 삭제하시겠습니까?`)) return;
-  const settings = (() => { try { return JSON.parse(localStorage.getItem('bhm_settings') || '{}'); } catch(e) { return {}; } })();
+  const settings = (() => { try { return JSON.parse(localStorage.getItem('snuhmate_settings') || '{}'); } catch(e) { return {}; } })();
   const uid = settings.googleSub || 'guest';
   const base = `payslip_${uid}_${year}_${String(month).padStart(2, '0')}`;
   const key = (type && type !== '급여') ? `${base}_${type}` : base;
