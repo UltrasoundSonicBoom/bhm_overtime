@@ -123,6 +123,20 @@ function renderWorkHistory() {
     emptyBtn.onclick = function() { openWorkHistorySheet(); };
     empty.appendChild(emptyMsg);
     empty.appendChild(emptyBtn);
+    // Phase 4-A: 명세서 ≥ 1 시 "명세서로 근무이력 재구성" CTA 추가
+    try {
+      var savedMonths = (window.SALARY_PARSER && window.SALARY_PARSER.listSavedMonths)
+        ? window.SALARY_PARSER.listSavedMonths().filter(function(m) { return !m.type || m.type === '급여'; })
+        : [];
+      if (savedMonths.length > 0) {
+        var rebuildBtn = document.createElement('button');
+        rebuildBtn.textContent = '📋 명세서로 근무이력 재구성 (' + savedMonths.length + '개월)';
+        rebuildBtn.className = 'btn btn-primary';
+        rebuildBtn.style.cssText = 'margin-top:10px; margin-left:8px;';
+        rebuildBtn.dataset.action = 'rebuildWorkHistoryFromPayslipsAction';
+        empty.appendChild(rebuildBtn);
+      }
+    } catch (e) { /* noop */ }
     container.appendChild(empty);
     return;
   }
@@ -226,6 +240,15 @@ function _renderCareerSegment(item, eff) {
   var deptText = item.dept || '(부서명 없음)';
   dept.textContent = workplaceText ? (workplaceText + ' · ' + deptText) : deptText;
   info.appendChild(dept);
+
+  // Phase 4-A: source='auto' 시 🤖 명세서 자동 배지
+  if (item.source === 'auto') {
+    var autoBadge = document.createElement('span');
+    autoBadge.style.cssText = 'display:inline-block; font-size:0.65rem; font-weight:700; padding:2px 8px; background:rgba(99,102,241,.12); color:var(--accent-indigo,#6366f1); border-radius:10px; margin-left:6px; vertical-align:middle;';
+    autoBadge.textContent = '🤖 명세서 자동';
+    autoBadge.title = '급여 명세서로부터 자동 시드된 항목입니다. 직접 수정 시 자동 동기화에서 제외됩니다.';
+    dept.appendChild(autoBadge);
+  }
 
   var period = document.createElement('div');
   period.className = 'career-seg-period';
@@ -750,4 +773,67 @@ if (typeof window !== 'undefined') {
   window._saveWorkHistory = _saveWorkHistory;
   window._loadWorkHistory = _loadWorkHistory;
 }
+
+// ── Phase 4-A: 명세서 시계열 → 근무이력 자동 시드 UI ──────────────────
+//
+// salary-parser 의 rebuildWorkHistoryFromPayslips 가 mode='banner' 일 때 호출.
+// 사용자 수동 record 가 있으므로 자동 덮어쓰기 0 — 알림만 표시.
+function _showWorkHistoryUpdateBanner(segments) {
+  var container = document.getElementById('workHistoryBanner');
+  if (!container) return;
+  while (container.firstChild) container.removeChild(container.firstChild);
+
+  var wrap = document.createElement('div');
+  wrap.style.cssText = 'padding:10px 14px; background:rgba(245,158,11,.1); border:1px solid rgba(245,158,11,.2); border-radius:8px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;';
+
+  var msg = document.createElement('span');
+  msg.style.cssText = 'flex:1; min-width:0; font-size:var(--text-body-small); color:var(--text-primary);';
+  msg.textContent = '📋 명세서에서 부서 ' + segments.length + '곳 감지. 기존 근무이력을 명세서로 재구성하시겠어요?';
+
+  var btn = document.createElement('button');
+  btn.className = 'btn btn-primary';
+  btn.style.cssText = 'font-size:0.8rem; padding:6px 12px; flex-shrink:0;';
+  btn.dataset.action = 'rebuildWorkHistoryFromPayslipsAction';
+  btn.textContent = '명세서로 재구성';
+
+  var dismiss = document.createElement('button');
+  dismiss.style.cssText = 'background:none; border:none; font-size:1.1rem; cursor:pointer; color:var(--text-muted); padding:0 6px;';
+  dismiss.title = '닫기';
+  dismiss.textContent = '×';
+  dismiss.onclick = function() { container.style.display = 'none'; };
+
+  wrap.appendChild(msg);
+  wrap.appendChild(btn);
+  wrap.appendChild(dismiss);
+  container.appendChild(wrap);
+  container.style.display = 'block';
+}
+
+// 사용자가 [명세서로 재구성] 클릭 → 보호 정책 무시 동의 → 강제 replace
+function rebuildWorkHistoryFromPayslipsForceReplace() {
+  if (!window.SALARY_PARSER || !window.SALARY_PARSER.rebuildWorkHistoryFromPayslips) return;
+  var profile = (window.PROFILE && window.PROFILE.load) ? window.PROFILE.load() : {};
+  // existing=[] 으로 호출 → 보호 정책 우회 (mode='replace' 강제)
+  var result = window.SALARY_PARSER.rebuildWorkHistoryFromPayslips({
+    profile: profile, existing: [], hospital: profile.hospital || '서울대학교병원',
+  });
+  if (result.mode === 'replace') {
+    _saveWorkHistory(result.records);
+    renderWorkHistory();
+    var banner = document.getElementById('workHistoryBanner');
+    if (banner) banner.style.display = 'none';
+  }
+}
+
+// 위임 등록 (registerActions 패턴) — Phase 3 표준
+import { registerActions as _phase4ARegisterActions } from './shared-utils.js';
+_phase4ARegisterActions({
+  rebuildWorkHistoryFromPayslipsAction: function() { rebuildWorkHistoryFromPayslipsForceReplace(); },
+});
+
+if (typeof window !== 'undefined') {
+  window._showWorkHistoryUpdateBanner = _showWorkHistoryUpdateBanner;
+  window.rebuildWorkHistoryFromPayslipsForceReplace = rebuildWorkHistoryFromPayslipsForceReplace;
+}
+
 export {};
