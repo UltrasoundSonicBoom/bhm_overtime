@@ -53,6 +53,24 @@ registerActions({
     sp.set('app', '1');
     window.location.replace(window.location.pathname + '?' + sp.toString());
   },
+  // Phase 3-C: app.js 동적 markup 13 onclick
+  showWikiCategory: (el) => showWikiCategory(parseInt(el.dataset.wikiIdx, 10)),
+  answerFaqItem: (el) => answerFaqItem(el.dataset.faqCat, parseInt(el.dataset.faqIdx, 10)),
+  otNavMonth: (el) => otNavMonth(parseInt(el.dataset.navDelta, 10)),
+  otGoToday: () => otGoToday(),
+  onOtDateClick: (el) => onOtDateClick(
+    parseInt(el.dataset.otYear, 10),
+    parseInt(el.dataset.otMonth, 10),
+    parseInt(el.dataset.otDay, 10),
+  ),
+  selectOtRecordTab: (el) => selectOtRecordTab(el.dataset.otRecordId),
+  selectOtNewTab: (el) => selectOtNewTab(el.dataset.otDate),
+  scrollToOtGroup: (el) => scrollToOtGroup(el.dataset.groupName),
+  otGroupToggle: (el) => el.classList.toggle('open'),
+  editOtRecord: (el, e) => {
+    if (e) e.stopPropagation();
+    editOtRecord(el.dataset.otRecordId);
+  },
 });
 
 // ── 본문 시작 ──
@@ -1664,7 +1682,7 @@ function renderWikiToc() {
   let html = '';
   DATA.handbook.forEach((section, idx) => {
     const count = section.articles.length;
-    html += `<div class="wiki-toc-item" onclick="showWikiCategory(${idx})" style="
+    html += `<div class="wiki-toc-item" data-action="showWikiCategory" data-wiki-idx="${idx}" style="
       padding:10px 12px; margin-bottom:4px; border-radius:6px; cursor:pointer;
       display:flex; align-items:center; justify-content:space-between;
       transition:background 0.2s;
@@ -1793,7 +1811,7 @@ function renderQuickTags() {
       setTimeout(() => {
         let btnHtml = `<strong>${cat}</strong> 관련 질문을 선택하세요:<br><div style="margin-top:8px; display:flex; flex-direction:column; gap:6px;">`;
         items.forEach((item, idx) => {
-          btnHtml += `<button class="chat-q-btn" onclick="answerFaqItem('${cat}', ${idx})" style="
+          btnHtml += `<button class="chat-q-btn" data-action="answerFaqItem" data-faq-cat="${cat}" data-faq-idx="${idx}" style="
             text-align:left; padding:8px 12px; border-radius:6px; cursor:pointer;
             background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.2);
             color:var(--text-primary); font-size:var(--text-body-large); transition:background 0.2s;
@@ -2544,9 +2562,9 @@ function renderOtCalendar(year, month, recordsByDay) {
 
   const dowLabels = ['일', '월', '화', '수', '목', '금', '토'];
   let html = '<div class="ot-cal"><div class="ot-cal-header">'
-    + '<button class="cal-nav-btn" onclick="otNavMonth(-1)">◀</button>'
-    + '<span class="cal-nav-title" onclick="otGoToday()">' + year + '년 ' + month + '월</span>'
-    + '<button class="cal-nav-btn" onclick="otNavMonth(1)">▶</button>'
+    + '<button class="cal-nav-btn" data-action="otNavMonth" data-nav-delta="-1">◀</button>'
+    + '<span class="cal-nav-title" data-action="otGoToday">' + year + '년 ' + month + '월</span>'
+    + '<button class="cal-nav-btn" data-action="otNavMonth" data-nav-delta="1">▶</button>'
     + '</div>';
   html += '<div class="ot-cal-grid">';
 
@@ -2610,7 +2628,7 @@ function renderOtCalendar(year, month, recordsByDay) {
     }
     dotsHtml += '</div>';
 
-    html += `<div class="${cls}"${titleAttr} data-day="${d}" onclick="onOtDateClick(${year},${month},${d})">${d}${dotsHtml}</div>`;
+    html += `<div class="${cls}"${titleAttr} data-day="${d}" data-action="onOtDateClick" data-ot-year="${year}" data-ot-month="${month}" data-ot-day="${d}">${d}${dotsHtml}</div>`;
   }
 
   html += '</div>'; // grid
@@ -2700,7 +2718,7 @@ function renderOtRecordTabs(existing, dateStr) {
     const hoursStr = r.totalHours ? ` (${r.totalHours}h)` : '';
     html += `
       <div id="ot-tab-${r.id}"
-        onclick="selectOtRecordTab('${r.id}')"
+        data-action="selectOtRecordTab" data-ot-record-id="${r.id}"
         style="
           padding:12px 14px;
           margin-bottom:8px;
@@ -2730,7 +2748,7 @@ function renderOtRecordTabs(existing, dateStr) {
   // 새 기록 추가 탭
   html += `
     <div id="ot-tab-new"
-      onclick="selectOtNewTab('${dateStr}')"
+      data-action="selectOtNewTab" data-ot-date="${dateStr}"
       style="
         padding:12px 14px;
         margin-bottom:4px;
@@ -3443,9 +3461,9 @@ function renderOtRecordList(records) {
   const pureOvertimeHours = byType.overtime.hours;
   const oncallHours = byType.oncall_callout.hours;
   html += `<div class="lv-stats-grid">
-    <div class="lv-stat-card" onclick="scrollToOtGroup('overtime')" style="cursor:pointer"><div class="lv-stat-num" style="color:var(--accent-rose)">${pureOvertimeHours.toFixed(1)}h</div><div class="lv-stat-label">시간외</div></div>
-    <div class="lv-stat-card" onclick="scrollToOtGroup('oncall_callout')" style="cursor:pointer"><div class="lv-stat-num" style="color:var(--accent-indigo)">${oncallHours.toFixed(1)}h</div><div class="lv-stat-label">온콜출근</div></div>
-    <div class="lv-stat-card" onclick="scrollToOtGroup('oncall_standby')" style="cursor:pointer"><div class="lv-stat-num" style="color:var(--accent-cyan)">${byType.oncall_standby.count}일</div><div class="lv-stat-label">온콜대기</div></div>
+    <div class="lv-stat-card" data-action="scrollToOtGroup" data-group-name="overtime" style="cursor:pointer"><div class="lv-stat-num" style="color:var(--accent-rose)">${pureOvertimeHours.toFixed(1)}h</div><div class="lv-stat-label">시간외</div></div>
+    <div class="lv-stat-card" data-action="scrollToOtGroup" data-group-name="oncall_callout" style="cursor:pointer"><div class="lv-stat-num" style="color:var(--accent-indigo)">${oncallHours.toFixed(1)}h</div><div class="lv-stat-label">온콜출근</div></div>
+    <div class="lv-stat-card" data-action="scrollToOtGroup" data-group-name="oncall_standby" style="cursor:pointer"><div class="lv-stat-num" style="color:var(--accent-cyan)">${byType.oncall_standby.count}일</div><div class="lv-stat-label">온콜대기</div></div>
     <div class="lv-stat-card"><div class="lv-stat-num" style="color:var(--accent-emerald); font-size:var(--text-title-large);">₩${totalPay.toLocaleString()}</div><div class="lv-stat-label">예상수당</div></div>
   </div>`;
 
@@ -3468,7 +3486,7 @@ function renderOtRecordList(records) {
     const groupId = 'otGroup_' + type;
 
     const defaultOpen = type === 'overtime' ? ' open' : '';
-    html += `<div class="ot-group${defaultOpen}" onclick="this.classList.toggle('open')">
+    html += `<div class="ot-group${defaultOpen}" data-action="otGroupToggle">
       <div class="ot-group-header" style="--group-color:${typeColors[type]}">
         <span class="ot-group-chevron">▸</span>
         <span class="ot-group-label">${label}</span>
@@ -3538,7 +3556,7 @@ function renderOtRecordList(records) {
         `<div class="ot-row-line ${d.cls || ''}"><span>${d.label}</span><span>${d.value}</span></div>`
       ).join('');
 
-      html += `<div class="ot-record-row" onclick="event.stopPropagation(); editOtRecord('${r.id}')">
+      html += `<div class="ot-record-row" data-action="editOtRecord" data-ot-record-id="${r.id}">
         <div class="ot-row-head">
           <span class="ot-row-date">${day} ${dowNames[dow]}</span>
           <span class="ot-row-pay">₩${(r.estimatedPay || 0).toLocaleString()}</span>
