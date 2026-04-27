@@ -5,8 +5,27 @@ import { CALC } from './calculators.js';
 import { DATA } from './data.js';
 
 export const PROFILE = {
+    // Phase 5-followup: SNUH Mate 브랜드 일관 — bhm_* → snuhmate_* lazy migration
     get STORAGE_KEY() {
+        return window.getUserStorageKey ? window.getUserStorageKey('snuhmate_hr_profile') : 'snuhmate_hr_profile';
+    },
+
+    get LEGACY_STORAGE_KEY() {
         return window.getUserStorageKey ? window.getUserStorageKey('bhm_hr_profile') : 'bhm_hr_profile';
+    },
+
+    // load 시 옛 키 → 새 키 자동 마이그레이션 (idempotent)
+    _migrateFromLegacy() {
+        try {
+            const legacyKey = this.LEGACY_STORAGE_KEY;
+            const newKey = this.STORAGE_KEY;
+            if (legacyKey === newKey) return;
+            const legacyData = localStorage.getItem(legacyKey);
+            if (legacyData && !localStorage.getItem(newKey)) {
+                localStorage.setItem(newKey, legacyData);
+                localStorage.removeItem(legacyKey);
+            }
+        } catch (e) { /* noop */ }
     },
 
     // ── 기본 프로필 템플릿 ──
@@ -75,6 +94,8 @@ export const PROFILE = {
      */
     load() {
         try {
+            // Phase 5-followup: bhm_* → snuhmate_* 자동 마이그레이션 (idempotent)
+            this._migrateFromLegacy();
             const raw = localStorage.getItem(this.STORAGE_KEY);
             if (!raw) return null;
             const data = JSON.parse(raw);
