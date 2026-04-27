@@ -592,6 +592,15 @@ import { PROFILE } from './profile.js';
 
         currentPayslipIdx = 0;
         renderPayPayslip();
+
+        // Phase 5-followup: 자동 저장 명시 (이슈 3 — 사용자 인지 향상)
+        try {
+          const toast = document.createElement('div');
+          toast.style.cssText = 'position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#10b981; color:#fff; padding:10px 18px; border-radius:8px; z-index:9999; font-size:0.9rem; font-weight:600; box-shadow:0 4px 12px rgba(0,0,0,0.2);';
+          toast.textContent = '💾 명세서 ' + ym.year + '년 ' + ym.month + '월 자동 저장됨 — 내 정보 자동 반영 완료';
+          document.body.appendChild(toast);
+          setTimeout(() => { toast.remove(); }, 3500);
+        } catch (e) { /* noop */ }
       } else {
         alert('급여 기간을 인식할 수 없습니다. 파일을 확인해주세요.');
         renderPayPayslip();
