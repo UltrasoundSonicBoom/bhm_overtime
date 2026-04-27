@@ -738,4 +738,17 @@ function deleteWorkHistoryEntry(id) {
 
 
 // Phase 2-F: ESM marker — 파일을 ES module 로 표시 (side-effect IIFE 보존)
+
+// Phase 2-regression: inline onclick window 노출 (ESM 모듈 스코프 회복)
+if (typeof window !== 'undefined') {
+  window.openWorkHistorySheet = openWorkHistorySheet;
+  window.saveWorkHistoryEntry = saveWorkHistoryEntry;
+  window.closeWorkHistorySheet = closeWorkHistorySheet;
+  window.saveRotationEntry = saveRotationEntry;
+  window.deleteRotationEntry = deleteRotationEntry;
+  window.closeRotationSheet = closeRotationSheet;
+  window.autofillJobDesc = autofillJobDesc;
+  window.autofillRotationTasks = autofillRotationTasks;
+}
+
 export {};

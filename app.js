@@ -4044,3 +4044,36 @@ if (typeof window.prefetchTabs === 'function') {
   });
 })();
 
+
+// Phase 2-regression: inline onclick window 노출 (ESM 모듈 스코프 회복)
+if (typeof window !== 'undefined') {
+  window.noticePage = noticePage;
+  window.onOtDateClick = onOtDateClick;
+  window.otGoToday = otGoToday;
+  window.otNavMonth = otNavMonth;
+  window.retSelectPeakOpt = retSelectPeakOpt;
+  window.retSetRetireDate = retSetRetireDate;
+  window.retToggleRateCard = retToggleRateCard;
+  window.saveOtRecord = saveOtRecord;
+  window.scrollToOtGroup = scrollToOtGroup;
+  window.selectOtNewTab = selectOtNewTab;
+  window.selectOtRecordTab = selectOtRecordTab;
+  window.showWikiCategory = showWikiCategory;
+  window.switchNewsTab = switchNewsTab;
+  window.switchHomePeriod = switchHomePeriod;
+  window.switchTab = switchTab;
+  window.toggleOtHelp = toggleOtHelp;
+  window.toggleOtHelpDetail = toggleOtHelpDetail;
+  window.toggleOtVerifyDetail = toggleOtVerifyDetail;
+  window.deleteOtRecord = deleteOtRecord;
+  window.calculateParentalLeave = calculateParentalLeave;
+  window.calcRetirementEmbedded = calcRetirementEmbedded;
+  window.changelogPage = changelogPage;
+  window.closeOtBottomSheet = closeOtBottomSheet;
+}
+
+// Phase 2-regression: inline onclick window 노출 (ESM 모듈 스코프 회복)
+if (typeof window !== 'undefined') {
+  window.answerFaqItem = answerFaqItem;
+  window.calcRetirementEmbedded = calcRetirementEmbedded;
+}

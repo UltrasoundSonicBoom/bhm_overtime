@@ -1164,5 +1164,18 @@ function startTutorial() {
 
 
 
-// Phase 2-F: ESM marker — 파일을 ES module 로 표시 (side-effect IIFE 보존)
+// Phase 2-regression: inline onclick window 노출 (ESM 자동 노출 회복)
+if (typeof window !== 'undefined') {
+  window.closeLvBottomSheet = closeLvBottomSheet;
+  window.closeLvTypeBottomSheet = closeLvTypeBottomSheet;
+  window.editLvRecord = editLvRecord;
+  window.lvGoToday = lvGoToday;
+  window.lvNavMonth = lvNavMonth;
+  window.onLvDateClick = onLvDateClick;
+  window.openLvTypeBottomSheet = openLvTypeBottomSheet;
+  window.saveLvRecord = saveLvRecord;
+  window.deleteLvRecord = deleteLvRecord;
+}
+
+// Phase 2-F: ESM marker
 export {};

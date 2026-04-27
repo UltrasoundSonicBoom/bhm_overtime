@@ -57,5 +57,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// Phase 2-F: ESM marker — 파일을 ES module 로 표시 (side-effect IIFE 보존)
+// Phase 2-regression: inline onclick window 노출 (ESM 전환으로 자동 노출 사라짐)
+if (typeof window !== 'undefined') {
+  window.closeMigrationModal = closeMigrationModal;
+  window.downloadBackupAndStay = downloadBackupAndStay;
+}
+
+// Phase 2-F: ESM marker — 파일을 ES module 로 표시
 export {};

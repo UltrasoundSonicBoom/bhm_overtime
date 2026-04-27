@@ -873,4 +873,12 @@ window.addEventListener('leaveChanged',    _refreshPayEstIfActive);
 window.addEventListener('profileChanged',  _refreshPayEstIfActive);
 
 // Phase 2-F: ESM marker — 파일을 ES module 로 표시 (side-effect IIFE 보존)
+
+// Phase 2-regression: inline onclick window 노출 (ESM 모듈 스코프 회복)
+if (typeof window !== 'undefined') {
+  window.payEstMonth = payEstMonth;
+  window.changePayEstMonth = changePayEstMonth;
+  window.calculatePayroll = calculatePayroll;
+}
+
 export {};

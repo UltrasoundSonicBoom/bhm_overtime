@@ -1151,3 +1151,14 @@ function pdfZoom(delta) {
   pdfScale = Math.max(0.5, Math.min(3.0, pdfScale + delta));
   renderPdfPage();
 }
+
+// Phase 2-regression: inline onclick window 노출 (ESM 모듈 스코프 회복)
+if (typeof window !== 'undefined') {
+  window.handleFavClick = handleFavClick;
+  window.openPdfForRef = openPdfForRef;
+  window.pdfNextPage = pdfNextPage;
+  window.pdfPrevPage = pdfPrevPage;
+  window.pdfZoom = pdfZoom;
+  window.scrollChapterTabs = scrollChapterTabs;
+  window.toggleArticle = toggleArticle;
+}
