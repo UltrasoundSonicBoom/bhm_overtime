@@ -35,6 +35,21 @@ importers:
 
   apps/web:
     dependencies:
+      '@snuhmate/calculators':
+        specifier: workspace:*
+        version: link:../../packages/calculators
+      '@snuhmate/data':
+        specifier: workspace:*
+        version: link:../../packages/data
+      '@snuhmate/profile':
+        specifier: workspace:*
+        version: link:../../packages/profile
+      '@snuhmate/regulation-constants':
+        specifier: workspace:*
+        version: link:../../packages/regulation-constants
+      '@snuhmate/shared-utils':
+        specifier: workspace:*
+        version: link:../../packages/shared-utils
       astro:
         specifier: ^4.16.18
         version: 4.16.19(rollup@4.60.2)(typescript@5.9.3)
@@ -46,11 +61,25 @@ importers:
         specifier: ^5.7.2
         version: 5.9.3
 
-  packages/calculators: {}
+  packages/calculators:
+    dependencies:
+      '@snuhmate/data':
+        specifier: workspace:*
+        version: link:../data
 
   packages/data: {}
 
-  packages/profile: {}
+  packages/profile:
+    dependencies:
+      '@snuhmate/calculators':
+        specifier: workspace:*
+        version: link:../calculators
+      '@snuhmate/data':
+        specifier: workspace:*
+        version: link:../data
+      '@snuhmate/shared-utils':
+        specifier: workspace:*
+        version: link:../shared-utils
 
   packages/regulation-constants: {}
 

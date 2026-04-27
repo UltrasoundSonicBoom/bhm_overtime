@@ -5,6 +5,11 @@
   "type": "module",
   "main": "./src/index.js",
   "exports": {
-    ".": "./src/index.js"
+    ".": "./src/index.js",
+    "./holidays": "./src/holidays.js",
+    "./retirement-engine": "./src/retirement-engine.js"
+  },
+  "dependencies": {
+    "@snuhmate/data": "workspace:*"
   }
 }

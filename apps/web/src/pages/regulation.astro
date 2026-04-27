@@ -2,7 +2,7 @@
 // Phase 6 Task 4-3: regulation.html → Astro page
 // 원본: root regulation.html
 // regulation.css 는 /styles/regulation.css (public) 로 dynamic load.
-// regulation.js 는 /client/regulation.js (public) 임시 bridge — Task 4-5 에서 src/client/ 로 이동.
+// regulation.js 는 src/client/regulation.js — Astro <script> import 로 hash-bundle (Task 4-5).
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 <BaseLayout
@@ -85,7 +85,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer is:inline></script>
-  <script type="module" src="/client/regulation.js" is:inline></script>
+  <script>
+    import '../client/regulation.js';
+  </script>
 
   <style>
     #ch-plugin-script-iframe { max-width: 500px !important; }

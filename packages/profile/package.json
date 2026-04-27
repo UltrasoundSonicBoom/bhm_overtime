@@ -11,5 +11,10 @@
     "./overtime": "./src/overtime.js",
     "./leave": "./src/leave.js",
     "./payroll": "./src/payroll.js"
+  },
+  "dependencies": {
+    "@snuhmate/calculators": "workspace:*",
+    "@snuhmate/data": "workspace:*",
+    "@snuhmate/shared-utils": "workspace:*"
   }
 }

@@ -6,7 +6,9 @@ import { DATA } from '@snuhmate/data';
 import { PROFILE, PROFILE_FIELDS } from './profile.js';
 import { OVERTIME } from './overtime.js';
 import { LEAVE } from './leave.js';
-import { SALARY_PARSER } from './salary-parser.js';
+// Phase 6 Task 4-5: SALARY_PARSER 는 packages 외부 (apps/web/src/client/salary-parser.js) — window 우회.
+// (work-history.js 와 동일 패턴. 차후 packages/payroll 분리 시 정식 import 으로 fix)
+function _getSALARY_PARSER() { return (typeof window !== 'undefined') ? window.SALARY_PARSER : null; }
 
 export const PAYROLL = {
   // ── 카테고리 정의 ──
@@ -932,15 +934,16 @@ export const PAYROLL = {
   // ── 명세서 이력에서 직급(grade)-호봉(step) 변화 타임라인 생성 ──
   _buildGradeHistory() {
     var result = [];
-    if (typeof SALARY_PARSER === 'undefined') return result;
+    var __SP = _getSALARY_PARSER();
+    if (!__SP) return result;
     try {
-      var months = SALARY_PARSER.listSavedMonths();
+      var months = __SP.listSavedMonths();
       // 날짜 오름차순 정렬
       months.sort(function(a, b) { return (a.year * 12 + a.month) - (b.year * 12 + b.month); });
       var prevGrade = null, prevStep = null;
       var unionEvents = (typeof DATA !== 'undefined' && DATA.unionStepEvents) ? DATA.unionStepEvents : [];
       months.forEach(function(m) {
-        var data = SALARY_PARSER.loadMonthlyData(m.year, m.month, m.type);
+        var data = __SP.loadMonthlyData(m.year, m.month, m.type);
         if (!data) return;
         var pg = (data.employeeInfo && data.employeeInfo.payGrade) || (data.metadata && data.metadata.payGrade);
         if (!pg) return;
@@ -994,13 +997,14 @@ export const PAYROLL = {
     }
 
     // Method 1: 명세서 이력에서 현재 grade + step=1 최초 등장 월
-    if (typeof SALARY_PARSER !== 'undefined') {
+    var __SP1 = _getSALARY_PARSER();
+    if (__SP1) {
       try {
-        var months = SALARY_PARSER.listSavedMonths();
+        var months = __SP1.listSavedMonths();
         months.sort(function(a, b) { return (a.year * 12 + a.month) - (b.year * 12 + b.month); });
         for (var i = 0; i < months.length; i++) {
           var m = months[i];
-          var data = SALARY_PARSER.loadMonthlyData(m.year, m.month, m.type);
+          var data = __SP1.loadMonthlyData(m.year, m.month, m.type);
           if (!data) continue;
           var pg = (data.employeeInfo && data.employeeInfo.payGrade) || (data.metadata && data.metadata.payGrade);
           if (!pg) continue;

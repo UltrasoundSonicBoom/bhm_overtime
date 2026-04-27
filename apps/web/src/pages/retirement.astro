@@ -1,7 +1,7 @@
 ---
 // Phase 6 Task 4-3: retirement.html → Astro page
 // 원본: root retirement.html
-// retirement.js 는 /client/retirement.js (public) 임시 bridge — Task 4-5 에서 src/client/ 로 이동.
+// retirement.js 는 src/client/retirement.js — Astro <script> import 로 hash-bundle (Task 4-5).
 // 페이지 전용 인라인 <style> 은 그대로 유지 (Neo-brutalist × Toss UX 융합 — 이 페이지에서만 사용).
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
@@ -239,7 +239,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   </div><!-- /rt-page -->
 
-  <script type="module" src="/client/retirement.js" is:inline></script>
+  <script>
+    import '../client/retirement.js';
+  </script>
 </BaseLayout>
 
 <style is:global>
