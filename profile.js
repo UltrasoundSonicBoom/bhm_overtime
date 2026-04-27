@@ -51,7 +51,16 @@ export const PROFILE = {
         // 기존 저장본을 defaults와 신규 data 사이에 끼워넣어,
         // data에 없는 키는 기존 저장값을 우선 유지 (생년월일·성별 등 수동입력 필드 보존)
         const existing = this.load() || {};
-        const profile = { ...this.defaults, ...existing, ...data, savedAt: new Date().toISOString() };
+        // Phase 5-followup: 빈 값 보호 — form 의 빈 input 이 명세서로 채워진 값 덮어쓰기 금지
+        // 이슈 4 fix: saveProfile() 후 specialPay/positionPay 등 사라지는 회귀 차단
+        const cleaned = {};
+        for (const [k, v] of Object.entries(data || {})) {
+            if (v === '' || v === null || v === undefined) continue;
+            // 0 보호: existing > 0 인 숫자 필드를 form 의 빈 input(0) 이 덮어쓰지 못함
+            if (typeof v === 'number' && v === 0 && typeof existing[k] === 'number' && existing[k] > 0) continue;
+            cleaned[k] = v;
+        }
+        const profile = { ...this.defaults, ...existing, ...cleaned, savedAt: new Date().toISOString() };
         localStorage.setItem(this.STORAGE_KEY, JSON.stringify(profile));
         if (window.recordLocalEdit) window.recordLocalEdit('bhm_hr_profile');
 

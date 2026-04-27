@@ -3946,8 +3946,14 @@ async function handleProfilePayslipUpload(file) {
     successBox.className = 'warning-box';
     successBox.style.cssText = 'border-color:var(--accent-emerald);margin:0;';
     const titleEl = document.createElement('div');
-    titleEl.textContent = '✅ 급여명세서에서 자동 입력 완료!';
+    titleEl.textContent = '✅ 급여명세서에서 자동 입력 + 저장 완료!';
     successBox.appendChild(titleEl);
+
+    // Phase 5-followup: 자동 저장 명시 (사용자: "기본적으로 저장시켜라")
+    const autoSaveNote = document.createElement('div');
+    autoSaveNote.style.cssText = 'margin-top:4px; font-size:var(--text-body-small); color:var(--accent-emerald); font-weight:600;';
+    autoSaveNote.textContent = '💾 자동 저장됨 — [저장하기] 버튼 별도 클릭 불필요';
+    successBox.appendChild(autoSaveNote);
 
     // 파싱 결과 요약
     const statLine = document.createElement('div');
