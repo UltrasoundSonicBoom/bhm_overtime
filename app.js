@@ -23,6 +23,15 @@ import './profile.js';
 import './overtime.js';
 import './leave.js';
 import './payroll.js';
+
+// Phase 5: cross-module 명시 named import (bare 참조 회귀 차단)
+import { PROFILE, PROFILE_FIELDS } from './profile.js';
+import { CALC } from './calculators.js';
+import { DATA } from './data.js';
+import { OVERTIME } from './overtime.js';
+import { LEAVE } from './leave.js';
+import { PAYROLL } from './payroll.js';
+import { HOLIDAYS } from './holidays.js';
 // Layer 4 UI (큰 모듈)
 import './salary-parser.js';
 import './payroll-views.js';
@@ -79,37 +88,7 @@ registerActions({
 // innerHTML에 사용자 입력값을 삽입할 때 반드시 이 함수를 거칠 것
 // escapeHtml은 shared-utils.js에서 window 전역으로 제공됨.
 
-// ── 프로필 필드 매핑 ──
-const PROFILE_FIELDS = {
-  name: 'pfName',
-  employeeNumber: 'pfEmployeeNumber',
-  gender: 'pfGender',
-  jobType: 'pfJobType',
-  department: 'pfDepartment',
-  grade: 'pfGrade',
-  year: 'pfYear',
-  birthDate: 'pfBirthDate',
-  hireDate: 'pfHireDate',
-  adjustPay: 'pfAdjust',
-  upgradeAdjustPay: 'pfUpgradeAdjust',
-  hasMilitary: 'pfMilitary',
-  militaryMonths: 'pfMilitaryMonths',
-  hasSeniority: 'pfSeniority',
-  numFamily: 'pfFamily',
-  numChildren: 'pfChildren',
-  childrenUnder6Pay: 'pfChildrenUnder6Pay',
-  specialPay: 'pfSpecial',
-  positionPay: 'pfPosition',
-  workSupportPay: 'pfWorkSupport',
-  weeklyHours: 'pfWeeklyHours',
-  promotionDate: 'pfPromotionDate',
-  unionStepAdjust: 'pfUnionStepAdjust'
-};
-// ESM cross-module: salary-parser.js / profile-tab.js 가 PROFILE_FIELDS bare 참조
-// → window 노출 필수. 명세서 업로드 → 폼 자동 갱신 깨졌던 회귀 fix.
-if (typeof window !== 'undefined') {
-  window.PROFILE_FIELDS = PROFILE_FIELDS;
-}
+// PROFILE_FIELDS — Phase 5 D3: 정의를 profile.js 로 이동, app.js 는 import 만
 
 function getCaptureParams() {
   return new URLSearchParams(window.location.search);

@@ -3,6 +3,8 @@
 // ══════════════════════════════════════════════════════════════
 // Phase 2-G: retirement.html 의 2 script 통합 → 단일 type=module entry.
 import './retirement-engine.js';
+// Phase 5: cross-module 명시 named import
+import { RetirementEngine } from './retirement-engine.js';
 
 (function () {
   'use strict';

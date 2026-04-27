@@ -230,7 +230,36 @@ export const PROFILE = {
     }
 };
 
+// PROFILE_FIELDS — form id ↔ profile property 매핑 (Phase 5 D3: app.js → profile.js 이동)
+// consumer: profile-tab.js, salary-parser.js, pay-estimation.js, payroll.js, payslip-tab.js, app.js
+export const PROFILE_FIELDS = {
+  name: 'pfName',
+  employeeNumber: 'pfEmployeeNumber',
+  gender: 'pfGender',
+  jobType: 'pfJobType',
+  department: 'pfDepartment',
+  grade: 'pfGrade',
+  year: 'pfYear',
+  birthDate: 'pfBirthDate',
+  hireDate: 'pfHireDate',
+  adjustPay: 'pfAdjust',
+  upgradeAdjustPay: 'pfUpgradeAdjust',
+  hasMilitary: 'pfMilitary',
+  militaryMonths: 'pfMilitaryMonths',
+  hasSeniority: 'pfSeniority',
+  numFamily: 'pfFamily',
+  numChildren: 'pfChildren',
+  childrenUnder6Pay: 'pfChildrenUnder6Pay',
+  specialPay: 'pfSpecial',
+  positionPay: 'pfPosition',
+  workSupportPay: 'pfWorkSupport',
+  weeklyHours: 'pfWeeklyHours',
+  promotionDate: 'pfPromotionDate',
+  unionStepAdjust: 'pfUnionStepAdjust'
+};
+
 // 호환층 — IIFE 모듈 (Layer 4 등) 이 아직 window.PROFILE 사용
 if (typeof window !== 'undefined') {
   window.PROFILE = PROFILE;
+  window.PROFILE_FIELDS = PROFILE_FIELDS;
 }
