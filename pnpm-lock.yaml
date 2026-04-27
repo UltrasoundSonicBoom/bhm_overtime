@@ -46,6 +46,14 @@ importers:
         specifier: ^5.7.2
         version: 5.9.3
 
+  packages/calculators: {}
+
+  packages/data: {}
+
+  packages/regulation-constants: {}
+
+  packages/shared-utils: {}
+
 packages:
 
   '@asamuzakjp/css-color@5.1.11':
