@@ -112,6 +112,8 @@ describe('onclick delegation — Phase 3', () => {
       '_showWorkHistoryUpdateBanner', 'rebuildWorkHistoryFromPayslipsForceReplace',
       // Phase 5-followup: 백업 복원 (모바일 호환 file picker — onclick="triggerBackupFilePicker()")
       'triggerBackupFilePicker', 'uploadBackup',
+      // Phase 5-followup: 규정 탭 SPA fragment inline (iframe 거울 제거 — regulation.js 동적 import)
+      'initRegulationFragment', '__regulationFragmentInited',
     ]);
     const rootJs = readdirSync(ROOT).filter(f => f.endsWith('.js') && !f.startsWith('vite') && f !== 'vitest.config.js');
     const offenders = [];

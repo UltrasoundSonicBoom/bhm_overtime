@@ -504,7 +504,27 @@ function switchTab(tabName) {
   if (tabName === 'leave') {
     _afterLoad('leave', function () { applyProfileToLeave(); initLeaveTab(); });
   }
-  if (tabName === 'reference') _afterLoad('reference', renderWikiToc);
+  if (tabName === 'reference') {
+    _afterLoad('reference', function () {
+      // Phase 5-followup: tab-reference fragment 안에 regulation main 컨텐츠 inline.
+      // regulation.js 동적 import + initRegulationFragment() 호출 (1회만, 이후는 idempotent).
+      if (window.__regulationFragmentInited) return;
+      // pdf.js CDN 동적 로드 (이미 있으면 skip)
+      if (!document.querySelector('script[src*="pdf.min.js"]')) {
+        var pdfScript = document.createElement('script');
+        pdfScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+        pdfScript.defer = true;
+        document.head.appendChild(pdfScript);
+      }
+      // regulation.js 동적 import
+      import('./regulation.js').then(function () {
+        if (typeof window.initRegulationFragment === 'function') {
+          window.initRegulationFragment();
+          window.__regulationFragmentInited = true;
+        }
+      }).catch(function (e) { console.warn('[reference] regulation.js load 실패', e); });
+    });
+  }
   if (tabName === 'profile') {
     _afterLoad('profile', function () {
       if (typeof window._bootstrapProfileTab === 'function') window._bootstrapProfileTab();

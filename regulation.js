@@ -37,12 +37,23 @@ var ARTICLE_CALCULATORS = {
 };
 
 // ── Init ──
+// Phase 5-followup: 두 진입점 지원
+//   1. regulation.html 단일 entry (DOMContentLoaded) — 직접 URL 접근
+//   2. SPA tab-reference fragment 동적 로드 — window.initRegulationFragment() 호출
+function _initRegulationAll() {
+  if (typeof initTheme === 'function') initTheme();
+  if (typeof initSubTabs === 'function') initSubTabs();
+  if (typeof initBrowse === 'function') initBrowse();
+  if (typeof initPdfSheet === 'function') initPdfSheet();
+}
 document.addEventListener('DOMContentLoaded', () => {
-  initTheme();
-  initSubTabs();
-  initBrowse();
-  initPdfSheet();
+  // browseSearch DOM 이 있을 때만 초기화 (regulation.html 단독 진입)
+  if (document.getElementById('browseSearch')) _initRegulationAll();
 });
+// SPA fragment 진입점 — tab-reference 로드 후 app.js 가 호출
+if (typeof window !== 'undefined') {
+  window.initRegulationFragment = _initRegulationAll;
+}
 
 // ═══════════ Sub-tab 전환 ═══════════
 
