@@ -48,8 +48,7 @@ function switchProfileSection(section) {
 // 프로필 정보 기반 자동 시드 카드 생성 (사용자 확인 후 저장)
 function _seedFirstWorkFromProfile() {
   try {
-    var profile = (window.PROFILE && window.PROFILE.load) ? window.PROFILE.load() : null;
-    profile = profile || {};
+    var profile = PROFILE.load() || {};
     // 저장되지 않았더라도 현재 폼에 입력된 값을 폴백으로 사용 → "보이는 대로" 시드
     var deptEl = document.getElementById('pfDepartment');
     var hireEl = document.getElementById('pfHireDate');
@@ -62,7 +61,7 @@ function _seedFirstWorkFromProfile() {
     var jobType = profile.jobType || formJob;
     if (!hireStr || !dept) return null;
     var hospital = profile.hospital || '서울대학교병원';
-    var hire = window.PROFILE && window.PROFILE.parseDate ? window.PROFILE.parseDate(hireStr) : null;
+    var hire = PROFILE.parseDate ? PROFILE.parseDate(hireStr) : null;
     var fromMonth = '';
     if (hire) {
       var m = String(hire.getMonth() + 1).padStart(2, '0');
@@ -929,11 +928,11 @@ function applyProfileToLeave() {
     if (typeof initProfileTab === 'function') {
       try { initProfileTab(); return; } catch (_) {}
     }
-    if (typeof updateProfileSummary === 'function' && window.PROFILE && typeof window.PROFILE.load === 'function') {
-      try { var p = window.PROFILE.load(); if (p) updateProfileSummary(p); return; } catch (_) {}
+    if (typeof updateProfileSummary === 'function') {
+      try { var p = PROFILE.load(); if (p) updateProfileSummary(p); return; } catch (_) {}
     }
-    if (window.PROFILE && typeof window.PROFILE.render === 'function') {
-      try { window.PROFILE.render(); } catch (_) {}
+    if (typeof PROFILE.render === 'function') {
+      try { PROFILE.render(); } catch (_) {}
     }
   };
   window.addEventListener('leaveChanged', _refreshProfile);

@@ -1,4 +1,8 @@
 // orphan-recovery.js — Orphan 데이터 복구 UI
+// Phase 5: cross-module 명시 named import (IIFE 안에서 사용)
+import { LEAVE } from './leave.js';
+import { PROFILE } from './profile.js';
+
 // ── Orphan 복구 UI ──
 (function () {
   var TYPE_LABELS = {
@@ -101,8 +105,8 @@
           localStorage.setItem('bhm_lastEdit_' + activeKey, new Date().toISOString());
           localStorage.removeItem(oKey);
           if (window.OT && window.OT.renderList) window.OT.renderList();
-          if (window.LEAVE && window.LEAVE.renderList) window.LEAVE.renderList();
-          if (window.PROFILE && window.PROFILE.render) window.PROFILE.render();
+          if (LEAVE && LEAVE.renderList) LEAVE.renderList();
+          if (PROFILE && PROFILE.render) PROFILE.render();
           renderOrphanSection();
           var t = document.getElementById('otToast');
           if (t) { t.textContent = '복구 완료.'; t.style.display = 'block'; setTimeout(function () { t.style.display = 'none'; }, 4000); }

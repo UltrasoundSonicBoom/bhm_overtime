@@ -129,8 +129,8 @@ export function renderWorkHistory() {
     empty.appendChild(emptyBtn);
     // Phase 4-A: 명세서 ≥ 1 시 "명세서로 근무이력 재구성" CTA 추가
     try {
-      var savedMonths = (window.SALARY_PARSER && window.SALARY_PARSER.listSavedMonths)
-        ? window.SALARY_PARSER.listSavedMonths().filter(function(m) { return !m.type || m.type === '급여'; })
+      var savedMonths = (SALARY_PARSER && SALARY_PARSER.listSavedMonths)
+        ? SALARY_PARSER.listSavedMonths().filter(function(m) { return !m.type || m.type === '급여'; })
         : [];
       if (savedMonths.length > 0) {
         var rebuildBtn = document.createElement('button');
@@ -239,7 +239,7 @@ function _renderCareerSegment(item, eff) {
 
   var dept = document.createElement('div');
   dept.className = 'career-seg-dept';
-  var defaultHospital = ((window.PROFILE && window.PROFILE.load && window.PROFILE.load()) || {}).hospital || '서울대학교병원';
+  var defaultHospital = ((PROFILE.load()) || {}).hospital || '서울대학교병원';
   var workplaceText = (item.workplace && item.workplace !== defaultHospital) ? item.workplace : '';
   var deptText = item.dept || '(부서명 없음)';
   dept.textContent = workplaceText ? (workplaceText + ' · ' + deptText) : deptText;
@@ -498,7 +498,7 @@ function _refreshRoleSuggestions() {
   var hint = document.getElementById('whRoleHint');
   if (!dl) return;
   while (dl.firstChild) dl.removeChild(dl.firstChild);
-  var jobType = (window.PROFILE && window.PROFILE.load && (window.PROFILE.load() || {}).jobType) || '';
+  var jobType = (PROFILE.load() || {}).jobType || '';
   // 폼 값이 최신일 수 있으므로 폴백
   if (!jobType) {
     var jobEl = document.getElementById('pfJobType');
@@ -610,11 +610,11 @@ function openWorkHistorySheet(item) {
   var isNewPost = item && item.__newPost === true;
   var editItem = (item && !isNewPost) ? item : null;
 
-  var profile = (window.PROFILE && window.PROFILE.load) ? (window.PROFILE.load() || {}) : {};
+  var profile = (PROFILE.load()) ?  (PROFILE.load() || {}) : {};
   var defaultWorkplace = profile.hospital || '서울대학교병원';
   var hireFromMonth = '';
-  if (profile.hireDate && window.PROFILE && window.PROFILE.parseDate) {
-    var hire = window.PROFILE.parseDate(profile.hireDate);
+  if (profile.hireDate && PROFILE.parseDate) {
+    var hire = PROFILE.parseDate(profile.hireDate);
     if (hire) hireFromMonth = hire.slice(0, 7);
   }
 

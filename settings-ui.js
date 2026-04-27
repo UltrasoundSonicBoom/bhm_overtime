@@ -5,7 +5,7 @@ import { AppLock } from './appLock.js';
 
 // ── 앱 잠금 설정 UI ──
 function updateAppLockUI() {
-  if (!window.AppLock) return;
+  if (!AppLock) return;
   var enabled = AppLock.isEnabled();
   // bhm_settings 직접 로드 (appLock.js 가 사용하는 동일 키).
   // window.loadSettings 헬퍼는 미정의 — 직접 읽기로 변경 (Bug 수정).
@@ -30,7 +30,7 @@ function updateAppLockUI() {
 }
 
 function onAppLockSetupPin() {
-  if (!window.AppLock) return;
+  if (!AppLock) return;
   AppLock._showPinSetupModal(function () {
     updateAppLockUI();
     var toast = document.getElementById('otToast');
@@ -43,7 +43,7 @@ function onAppLockSetupPin() {
 }
 
 function onAppLockChangePin() {
-  if (!window.AppLock) return;
+  if (!AppLock) return;
   // 현재 PIN 먼저 확인 후 새 PIN 설정
   AppLock._showPinSetupModal(function () {
     updateAppLockUI();
@@ -57,7 +57,7 @@ function onAppLockChangePin() {
 }
 
 function onAppLockDisable() {
-  if (!window.AppLock) return;
+  if (!AppLock) return;
   if (!confirm('PIN 잠금을 해제하시겠어요?\n앱이 잠금 없이 열립니다.')) return;
   AppLock.disablePin();
   AppLock.BiometricLock.disable();
@@ -65,7 +65,7 @@ function onAppLockDisable() {
 }
 
 function onBiometricRegister() {
-  if (!window.AppLock) return;
+  if (!AppLock) return;
   AppLock.BiometricLock.register().then(function () {
     updateAppLockUI();
     var toast = document.getElementById('otToast');
@@ -85,7 +85,7 @@ function onBiometricRegister() {
 }
 
 function onBiometricDisable() {
-  if (!window.AppLock) return;
+  if (!AppLock) return;
   if (!confirm('생체인증을 제거하시겠어요?')) return;
   AppLock.BiometricLock.disable();
   updateAppLockUI();
