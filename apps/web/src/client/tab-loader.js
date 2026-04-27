@@ -32,6 +32,11 @@
     if (ALLOWED_TABS.indexOf(name) === -1) {
       return Promise.reject(new Error('invalid tab name: ' + name));
     }
+    // Phase 6 Task 5-1: home tab 은 HomeIsland.astro 로 build-time inline → fetch skip.
+    if (name === 'home') {
+      cache[name] = true;
+      return Promise.resolve(true);
+    }
     if (cache[name]) return Promise.resolve(true);
     if (inflight[name]) return inflight[name];
 
