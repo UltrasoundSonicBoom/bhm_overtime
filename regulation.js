@@ -15,6 +15,7 @@ import './shared-utils.js';
 import './data.js';
 import './profile.js';
 import './calculators.js';
+import { registerActions } from './shared-utils.js';
 // pdf.js는 CDN — type=module HTML 에 명시 외부 로드 유지
 
 // ── handbook 조항 제목 → 계산기 매핑 (FAQ 중간 레이어 제거) ──
@@ -1152,7 +1153,16 @@ function pdfZoom(delta) {
   renderPdfPage();
 }
 
+// Phase 3-A: 정적 HTML 6 onclick 위임 등록
+registerActions({
+  pdfPrevPage: () => pdfPrevPage(),
+  pdfNextPage: () => pdfNextPage(),
+  pdfZoom: (el) => pdfZoom(parseFloat(el.dataset.zoomDelta)),
+  scrollChapterTabs: (el) => scrollChapterTabs(parseInt(el.dataset.scrollDirection, 10)),
+});
+
 // Phase 2-regression: inline onclick window 노출 (ESM 모듈 스코프 회복)
+// Phase 3-F 에서 KEEP/REMOVE 결정 — regulation.js 동적 markup onclick (handleFavClick/openPdfForRef/toggleArticle) 잔존
 if (typeof window !== 'undefined') {
   window.handleFavClick = handleFavClick;
   window.openPdfForRef = openPdfForRef;

@@ -628,7 +628,7 @@
           <path d="M12 5v14M19 12l-7 7-7-7" />
         </svg>
       </div>
-      <div class="scroll-hint-end" onclick="window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})">
+      <div class="scroll-hint-end" data-action="scrollToBottom" style="cursor:pointer;">
         끝으로
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" width="16" height="16">
           <path d="M5 12h14M12 5l7 7-7 7" />
@@ -908,6 +908,15 @@
 
     var hintDown = document.querySelector('.scroll-hint-down');
     if (hintDown) hintDown.addEventListener('click', scrollToNextSection);
+
+    // Phase 3-A: data-action 위임 (인라인 onclick 제거)
+    document.body.addEventListener('click', function (e) {
+      var el = e.target.closest && e.target.closest('[data-action]');
+      if (!el) return;
+      if (el.dataset.action === 'scrollToBottom') {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      }
+    });
   </script>
 </body>
 

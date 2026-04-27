@@ -91,14 +91,14 @@
       </div>
 
       <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 24px;">
-        <button class="migration-btn primary" onclick="downloadBackupAndStay()" style="width: 100%;">📦 데이터 백업하기 (자동 이동
+        <button class="migration-btn primary" data-action="downloadBackupAndStay" style="width: 100%;">📦 데이터 백업하기 (자동 이동
           멈춤)</button>
         <a href="https://snuhmate.com" class="migration-btn secondary" style="width: 100%;">🔗 snuhmate.com으로 바로 이동</a>
         <div id="migrationCountdownText"
           style="font-size: 0.95em; color: var(--text-secondary); background: rgba(99,102,241,0.08); border-radius: 10px; padding: 12px 14px; line-height: 1.5;">
           <strong>3초 뒤</strong> snuhmate.com으로 자동 이동합니다.
         </div>
-        <button onclick="closeMigrationModal()"
+        <button data-action="closeMigrationModal"
           style="border: none; background: none; color: var(--text-muted); text-decoration: underline; cursor: pointer; font-size: 0.95em; margin-top: 8px;">그냥
           시작하기 (기존 데이터 무시)</button>
       </div>
@@ -116,7 +116,7 @@
       style="display:none; align-items:center; gap:10px; background:var(--amber,#F5A623); color:var(--ink,#1a1a1a); padding:10px 16px; border-radius:10px; margin-bottom:8px; font-size:14px; font-weight:600;">
       <span>🎮 데모 모드</span>
       <span style="font-weight:400; flex:1;">샘플 데이터로 체험 중이에요. 실제 데이터는 저장되지 않아요.</span>
-      <button onclick="window.exitDemoMode && window.exitDemoMode(); (function(){ var sp=new URLSearchParams(window.location.search); sp.delete('demo'); sp.set('app','1'); window.location.replace(window.location.pathname+'?'+sp.toString()); })();"
+      <button data-action="exitDemoMode"
         style="background:var(--ink,#1a1a1a); color:#fff; border:none; border-radius:6px; padding:4px 10px; font-size:13px; font-weight:600; cursor:pointer; flex-shrink:0;">나가기</button>
     </div>
 

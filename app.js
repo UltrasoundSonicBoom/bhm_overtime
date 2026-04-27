@@ -40,6 +40,21 @@ import './share-utils.js';
 import './migration-overlay.js';
 import './orphan-recovery.js';
 
+// Phase 3-A: 정적 HTML inline onclick → data-action 위임
+import { registerActions } from './shared-utils.js';
+registerActions({
+  // index.html (3): migration-overlay.js 의 함수 + 데모 모드 종료 인라인 로직
+  closeMigrationModal: () => window.closeMigrationModal && window.closeMigrationModal(),
+  downloadBackupAndStay: () => window.downloadBackupAndStay && window.downloadBackupAndStay(),
+  exitDemoMode: () => {
+    if (window.exitDemoMode) window.exitDemoMode();
+    const sp = new URLSearchParams(window.location.search);
+    sp.delete('demo');
+    sp.set('app', '1');
+    window.location.replace(window.location.pathname + '?' + sp.toString());
+  },
+});
+
 // ── 본문 시작 ──
 
 // ── HTML 이스케이프 (XSS 방지) ──

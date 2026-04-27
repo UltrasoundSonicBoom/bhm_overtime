@@ -284,7 +284,7 @@
         <img src="./snuhmatecircle.png" alt="" style="width:28px;height:28px;border-radius:50%;">
         사용법 튜토리얼
       </div>
-      <button class="tut-header-skip" onclick="goToApp()">건너뛰기 &times;</button>
+      <button class="tut-header-skip" data-action="goToApp">건너뛰기 &times;</button>
     </div>
 
     <!-- 프로그레스 -->
@@ -300,8 +300,8 @@
 
     <!-- 하단 버튼 -->
     <div class="tut-footer">
-      <button class="tut-btn" id="btnPrev" onclick="prevStep()">&#8592; 이전</button>
-      <button class="tut-btn primary" id="btnNext" onclick="nextStep()">다음 &#8594;</button>
+      <button class="tut-btn" id="btnPrev" data-action="prevStep">&#8592; 이전</button>
+      <button class="tut-btn primary" id="btnNext" data-action="nextStep">다음 &#8594;</button>
     </div>
   </div>
 
@@ -566,6 +566,16 @@
     function goToApp() {
       window.location.href = './index.html';
     }
+
+    // Phase 3-A: data-action 위임 (인라인 onclick 제거)
+    document.body.addEventListener('click', function (e) {
+      var el = e.target.closest && e.target.closest('[data-action]');
+      if (!el) return;
+      var a = el.dataset.action;
+      if (a === 'goToApp') goToApp();
+      else if (a === 'nextStep') nextStep();
+      else if (a === 'prevStep') prevStep();
+    });
 
     // 초기 렌더
     renderStep();

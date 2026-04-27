@@ -895,9 +895,9 @@
       <!-- 📖 목차 (장 가로 스크롤 탭 + 좌우 화살표) -->
       <div class="reg-section-label">📖 목차</div>
       <div class="reg-chapter-nav-wrap">
-        <button type="button" class="reg-chapter-arrow left" onclick="scrollChapterTabs(-1)" aria-label="이전 장">◀</button>
+        <button type="button" class="reg-chapter-arrow left" data-action="scrollChapterTabs" data-scroll-direction="-1" aria-label="이전 장">◀</button>
         <div class="reg-chapter-tabs" id="browseChapterTabs"></div>
-        <button type="button" class="reg-chapter-arrow right" onclick="scrollChapterTabs(1)" aria-label="다음 장">▶</button>
+        <button type="button" class="reg-chapter-arrow right" data-action="scrollChapterTabs" data-scroll-direction="1" aria-label="다음 장">▶</button>
       </div>
 
       <!-- ⭐ 즐겨찾기 (가로 스크롤 칩) -->
@@ -924,13 +924,13 @@
         <button class="pdf-sheet-close" id="pdfClose" title="닫기">✕</button>
       </div>
       <div class="pdf-sheet-controls">
-        <button class="btn btn-outline" onclick="pdfPrevPage()">◀</button>
+        <button class="btn btn-outline" data-action="pdfPrevPage">◀</button>
         <span id="pdfPageInfo" class="pdf-page-info">- / -</span>
-        <button class="btn btn-outline" onclick="pdfNextPage()">▶</button>
+        <button class="btn btn-outline" data-action="pdfNextPage">▶</button>
         <span style="width:1px; height:20px; background:var(--border-glass);"></span>
-        <button class="btn btn-outline" onclick="pdfZoom(-0.25)">−</button>
+        <button class="btn btn-outline" data-action="pdfZoom" data-zoom-delta="-0.25">−</button>
         <span id="pdfZoomInfo" class="pdf-page-info">100%</span>
-        <button class="btn btn-outline" onclick="pdfZoom(0.25)">+</button>
+        <button class="btn btn-outline" data-action="pdfZoom" data-zoom-delta="0.25">+</button>
       </div>
       <div class="pdf-sheet-body" id="pdfSheetBody">
         <canvas id="pdfCanvas"></canvas>
