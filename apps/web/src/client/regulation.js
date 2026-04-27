@@ -280,7 +280,7 @@ function initBrowse() {
  * → DATA.handbook에 저장.
  */
 function tryLoadBrowseFromJson() {
-  var url = 'data/union_regulation_2026.json';
+  var url = '/data/union_regulation_2026.json';
   // file:// 에서도 동작하도록 상대경로 사용
   return fetch(url)
     .then(function(res) {
@@ -820,7 +820,7 @@ function getHandbookPdfUrl() {
   if (window.location.protocol === 'file:') {
     return window.location.href.replace(/\/[^/]*$/, '/data/2026_handbook.pdf');
   }
-  return 'data/2026_handbook.pdf';
+  return '/data/2026_handbook.pdf';
 }
 
 function openPdfPicker() {

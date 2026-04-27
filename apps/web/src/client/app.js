@@ -396,7 +396,7 @@ const NOTICE_FALLBACK = [
 
 function loadNotice() {
   if (_noticeItems) { renderNoticePager(_noticeItems); return; }
-  fetch('./notice.md?v=' + Date.now())
+  fetch('/notice.md?v=' + Date.now())
     .then(r => r.ok ? r.text() : '')
     .then(md => {
       _noticeItems = parseNotice(md);
@@ -456,7 +456,7 @@ window.changelogPage = changelogPage;
 
 function loadChangelog() {
   if (_changelogEntries) { renderChangelogPage(); return; }
-  fetch('./CHANGELOG.md?v=' + Date.now())
+  fetch('/CHANGELOG.md?v=' + Date.now())
     .then(r => r.ok ? r.text() : '')
     .then(md => {
       _changelogEntries = parseChangelog(md);

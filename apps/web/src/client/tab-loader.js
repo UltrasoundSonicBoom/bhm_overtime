@@ -42,7 +42,8 @@
       return Promise.resolve(true);
     }
 
-    var url = 'tabs/tab-' + name + '.html?v=1.0';
+    // Phase 6: absolute path — Astro 가 /app/ 등 sub-path 에 페이지 마운트 → 상대 경로 깨짐 fix
+    var url = '/tabs/tab-' + name + '.html?v=1.0';
     inflight[name] = fetch(url, { credentials: 'same-origin' })
       .then(function (r) {
         if (!r.ok) throw new Error('fetch failed: ' + url + ' (' + r.status + ')');

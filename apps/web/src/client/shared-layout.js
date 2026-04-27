@@ -71,7 +71,7 @@
       logo.onclick = function () { if (window.switchTab) switchTab('home'); };
     }
     // 로고 이미지: 44px (컴팩트, 서브타이틀 제거로 헤더 높이 줄임)
-    var img = el('img', { src: 'logo.png', alt: 'SNUH Mate' });
+    var img = el('img', { src: '/logo.png', alt: 'SNUH Mate' });
     img.style.cssText = 'width:56px;height:56px;object-fit:contain;flex-shrink:0;border-radius:10px;';
     logo.appendChild(img);
     var titleWrap = el('div', { className: 'logo-title-wrap' });
