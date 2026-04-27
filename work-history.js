@@ -22,6 +22,8 @@ function _loadWorkHistory() {
       } else if (!item.workplace) {
         item.workplace = '서울대학교병원';
       }
+      // Phase 4-A: source 필드 migration — 기존 record 는 'user' 기본값 (보호)
+      if (!item.source) item.source = 'user';
     });
     return list;
   } catch(e) { return []; }
