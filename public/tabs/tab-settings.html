@@ -57,12 +57,13 @@
   <div class="form-row" style="grid-template-columns: 1fr 1fr;">
     <button class="btn btn-outline" onclick="downloadBackup()"
       style="flex:1; font-weight:600; font-size:var(--text-body-normal); padding:8px 4px;">📥 다운로드 (백업)</button>
-    <button type="button" class="btn btn-outline" onclick="triggerBackupFilePicker()"
-      style="flex:1; font-weight:600; text-align:center; cursor:pointer; font-size:var(--text-body-normal); padding:8px 4px;">
+    <!-- Phase 5-followup-2 fix: <label for=""> 패턴 — 브라우저 native 처리, user gesture 보장 -->
+    <!-- 이전 onclick="triggerBackupFilePicker()" 는 위임 chain 에서 user gesture 손실 → file picker 안 뜸 -->
+    <label for="backupFileInput" class="btn btn-outline"
+      style="flex:1; font-weight:600; text-align:center; cursor:pointer; font-size:var(--text-body-normal); padding:8px 4px; display:flex; align-items:center; justify-content:center;">
       📤 불러오기 (복원)
-    </button>
-    <!-- accept 를 비워둠 — 안드로이드/iOS 가 .json 무시하고 사진 폴더 여는 회귀 방지.
-         JS 에서 파일명 + 내용 검증으로 안전성 확보 -->
+    </label>
+    <!-- accept 비워둠 — 안드로이드/iOS 사진 폴더 회귀 방지. JS 파일명+내용 검증 -->
     <input type="file" id="backupFileInput" style="display:none"
       onchange="uploadBackup(event)">
   </div>
