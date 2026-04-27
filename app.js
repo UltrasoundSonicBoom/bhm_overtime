@@ -2146,6 +2146,11 @@ function initOvertimeTab() {
     }
   }
 
+  // Phase 5-followup: 시간외 탭 진입 시 시급 경고 배너 갱신 보장 (PROFILE 저장 후 자동 사라짐)
+  if (typeof window.updateHourlyWarning === 'function') {
+    try { window.updateHourlyWarning(); } catch (e) {}
+  }
+
   refreshOtCalendar();
   _renderOvertimeAlertBanner(otCurrentYear, otCurrentMonth);
 }

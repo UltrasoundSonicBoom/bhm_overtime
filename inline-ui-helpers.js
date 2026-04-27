@@ -33,12 +33,14 @@
   applyCaptureTitle();
 
   // ── 시간외 시급 경고 ──
+  // Phase 5-followup: 시급 > 0 이면 dismiss 플래그 무시하고 무조건 hide (배너 의미 X)
   function updateHourlyWarning() {
     var val = parseInt(document.getElementById('otHourly')?.value) || 0;
     var warning = document.getElementById('otHourlyWarning');
     if (!warning) return;
+    if (val > 0) { warning.style.display = 'none'; return; }
     if (localStorage.getItem('hwBannerDismissed')) { warning.style.display = 'none'; return; }
-    warning.style.display = val === 0 ? 'flex' : 'none';
+    warning.style.display = 'flex';
   }
 
   function dismissHwBanner() {

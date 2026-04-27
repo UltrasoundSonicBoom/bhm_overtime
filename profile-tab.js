@@ -1080,6 +1080,11 @@ function applyProfileToOvertime() {
   document.getElementById('otHourly').value = wage.hourlyRate;
   const hint = document.getElementById('otHourlyHint');
   if (hint) hint.textContent = `📌 내 정보 자동반영 (통상임금: ${CALC.formatCurrency(wage.monthlyWage)})`;
+  // Phase 5-followup: input.value 직접 설정 → input 이벤트 미발생 → updateHourlyWarning 호출 누락 회귀 fix
+  // 사용자: "급여명세서 + 개인정보 입력됐는데 '개인정보 먼저 입력' 배너가 안 사라짐"
+  if (typeof window.updateHourlyWarning === 'function') {
+    try { window.updateHourlyWarning(); } catch (e) {}
+  }
 }
 
 function applyProfileToPayroll() {
