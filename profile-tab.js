@@ -518,7 +518,8 @@ function saveProfile() {
   if (typeof applyProfileToLeave === 'function') {
     applyProfileToLeave();
     if (typeof populateLvTypeSelect === 'function') populateLvTypeSelect();
-    if (typeof refreshLvCalendar === 'function' && typeof lvInitialized !== 'undefined' && lvInitialized) refreshLvCalendar();
+    // ESM 모듈 cross-reference: lvInitialized 는 leave-tab.js 모듈 스코프 → window 노출 사용
+    if (typeof refreshLvCalendar === 'function' && window.lvInitialized) refreshLvCalendar();
   }
   // 저장 성공 CTA 표시 (직종별 분기)
   const savedCTA = document.getElementById('profileSavedCTA');
@@ -886,11 +887,12 @@ function applyProfileToLeave() {
     const infoNote = document.getElementById('lvAnnualInfoNote');
     if (infoNote) infoNote.style.display = 'none';
 
-    // 연차 자동 산정
+    // 연차 자동 산정 — lvTotalAnnual 은 leave-tab.js 모듈 스코프
+    // ESM 환경: window 통해 cross-module 동기화
     const parsed = PROFILE.parseDate(profile.hireDate);
     if (parsed) {
       const result = CALC.calcAnnualLeave(new Date(parsed));
-      if (result) lvTotalAnnual = result.totalLeave;
+      if (result) window.lvTotalAnnual = result.totalLeave;
     }
   } else {
     const infoNote = document.getElementById('lvAnnualInfoNote');
@@ -961,4 +963,25 @@ _profile_registerActions({
   },
 });
 
+
+// Phase 3-F 회귀 fix: tabs/*.html fragment + safeCall 동적 dispatch 가 의존하는 호환층 복원
+if (typeof window !== 'undefined') {
+  window.applyProfileToLeave = applyProfileToLeave;
+  window.applyProfileToOvertime = applyProfileToOvertime;
+  window.applyProfileToPayroll = applyProfileToPayroll;
+  window.clearProfile = clearProfile;
+  window.downloadBackup = downloadBackup;
+  window.saveProfile = saveProfile;
+  window.switchProfileSection = switchProfileSection;
+  window.toggleCollapsible = toggleCollapsible;
+}
+
+// Phase 3-regression: cross-module bare 호출 → window 호환층 복원
+if (typeof window !== 'undefined') {
+  window.initProfileTab = initProfileTab;
+  window.updateProfileGrades = updateProfileGrades;
+  window.toggleChildFields = toggleChildFields;
+  window._collapseBasicFieldsWithPreview = _collapseBasicFieldsWithPreview;
+  window._seedFirstWorkFromProfile = _seedFirstWorkFromProfile;
+}
 export {};

@@ -887,4 +887,15 @@ _registerActions({
   },
 });
 
+
+// Phase 3-F 회귀 fix: tabs/*.html fragment + safeCall 동적 dispatch 가 의존하는 호환층 복원
+if (typeof window !== 'undefined') {
+  window.calculatePayroll = calculatePayroll;
+}
+
+// Phase 3-regression: cross-module bare 호출 → window 호환층 복원
+if (typeof window !== 'undefined') {
+  window.initPayEstimate = initPayEstimate;
+  window.calcMonthEstimate = calcMonthEstimate;
+}
 export {};

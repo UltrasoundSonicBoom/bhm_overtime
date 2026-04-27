@@ -289,3 +289,9 @@ els.surfaceNav?.querySelectorAll('[data-surface]').forEach((button) => {
     syncSurfaceNav();
   });
 });
+
+// Phase 3-regression: cross-module bare 호출 → window 호환층 복원
+if (typeof window !== 'undefined') {
+  window.renderAll = renderAll;
+  window.renderTabs = renderTabs;
+}

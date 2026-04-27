@@ -507,3 +507,9 @@ loadReport().catch((error) => {
   els.viewMount.innerHTML = `<div class="empty-copy">${escapeHtml(error.message || String(error))}</div>`;
   els.testsetGrid.innerHTML = '';
 });
+
+// Phase 3-regression: cross-module bare 호출 → window 호환층 복원
+if (typeof window !== 'undefined') {
+  window.renderAll = renderAll;
+  window.renderTabs = renderTabs;
+}

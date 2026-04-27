@@ -7,10 +7,16 @@
 
 let lvSelectedDate = null;
 let lvHolidayMap = {};
+// ESM 모듈 cross-reference: profile-tab.js 가 window.lvTotalAnnual / window.lvInitialized
+// 참조 → window 동기화 필요. 변경 지점마다 _set*() 헬퍼 또는 직접 window.X 갱신.
 let lvTotalAnnual = 0;
 let lvCurrentYear = new Date().getFullYear();
 let lvCurrentMonth = new Date().getMonth() + 1;
 let lvInitialized = false;
+if (typeof window !== 'undefined') {
+  window.lvTotalAnnual = lvTotalAnnual;
+  window.lvInitialized = lvInitialized;
+}
 
 // 월 이동
 function lvNavMonth(delta) {
@@ -38,7 +44,10 @@ function initLeaveTab() {
     const parsed = PROFILE.parseDate(profile.hireDate);
     if (parsed) {
       const result = CALC.calcAnnualLeave(new Date(parsed));
-      if (result) lvTotalAnnual = result.totalLeave;
+      if (result) {
+        lvTotalAnnual = result.totalLeave;
+        if (typeof window !== 'undefined') window.lvTotalAnnual = lvTotalAnnual;
+      }
     }
   }
 
@@ -50,6 +59,7 @@ function initLeaveTab() {
     document.getElementById('lvStartDate').addEventListener('change', previewLvCalc);
     document.getElementById('lvEndDate').addEventListener('change', previewLvCalc);
     lvInitialized = true;
+    if (typeof window !== 'undefined') window.lvInitialized = true;
   }
 
   // 기존 기록 마이그레이션 (유형 규정 변경 감지 → 재계산)
@@ -1182,4 +1192,20 @@ registerActions({
 });
 
 // Phase 2-F: ESM marker
+
+// Phase 3-F 회귀 fix: tabs/*.html fragment + safeCall 동적 dispatch 가 의존하는 호환층 복원
+if (typeof window !== 'undefined') {
+  window.closeLvBottomSheet = closeLvBottomSheet;
+  window.closeLvTypeBottomSheet = closeLvTypeBottomSheet;
+  window.deleteLvRecord = deleteLvRecord;
+  window.initLeaveTab = initLeaveTab;
+  window.openLvTypeBottomSheet = openLvTypeBottomSheet;
+  window.saveLvRecord = saveLvRecord;
+}
+
+// Phase 3-regression: cross-module bare 호출 → window 호환층 복원
+if (typeof window !== 'undefined') {
+  window.populateLvTypeSelect = populateLvTypeSelect;
+  window.previewLvCalc = previewLvCalc;
+}
 export {};

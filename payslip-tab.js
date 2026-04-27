@@ -818,4 +818,12 @@ _payslip_registerActions({
   showVerifyInQna: () => showVerifyInQna(),
 });
 
+
+// Phase 3-regression: cross-module bare 호출 → window 호환층 복원
+if (typeof window !== 'undefined') {
+  window.renderPayslip = renderPayslip;
+  window.renderPayslipMgmt = renderPayslipMgmt;
+  window.renderVerification = renderVerification;
+  window.renderSavedMonths = renderSavedMonths;
+}
 export {};

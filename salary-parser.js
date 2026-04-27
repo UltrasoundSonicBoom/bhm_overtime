@@ -1412,5 +1412,11 @@ const SALARY_PARSER = (() => {
   };
 })();
 
+// Phase 3-F 회귀 fix: app.js / payroll-views.js 가 bare global SALARY_PARSER 참조.
+// ESM 모듈 스코프에서는 안 잡힘 → window 노출.
+if (typeof window !== 'undefined') {
+  window.SALARY_PARSER = SALARY_PARSER;
+}
+
 // Phase 2-F: ESM marker — 파일을 ES module 로 표시 (side-effect IIFE 보존)
 export {};
