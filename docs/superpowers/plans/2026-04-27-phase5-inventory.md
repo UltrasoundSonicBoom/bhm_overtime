@@ -1,0 +1,198 @@
+# Phase 5 인벤토리 — 2026-04-27
+
+## Top-level identifiers (per file)
+
+- `app.js`: const CHAT_ALIASES = {,const CHAT_CATEGORY_MAP = {,const NOTICE_FALLBACK = [,const PROFILE_FIELDS = {,function _esc(str) {,function _escWithBr(str) {,function _isImageFile(file) {,function _propagatePayslipToOvertime(parsed, ym) {,function _propagatePayslipToWorkHistory(parsed, ym) {,function _renderHomeLeaveMonth(year, month, totalAnnual) {,function _renderHomeLeaveYear(year, totalAnnual) {,function _renderHomeOtMonth(year, month) {,function _renderHomeOtYear(year) {,function _renderOvertimeAlertBanner(year, month) {,function _renderRetirementTimeline(profile, avgWage) {,function _retComputeSeverance(effectiveWage, preciseYears, hireDateVal) {,function _showAutoSyncBanner(ym) {,function addChatMessage(text, type, ref = null) {,function answerFaqItem(category, idx) {,function applyOtTimePreset(hours) {,function autoSelectToday() {,function calcRetirementEmbedded() {,function calcScenarioEmbedded(silent) {,function calculateLeave() {,function calculateNightBonus() {,function calculateOnCall() {,function calculateOvertime() {,function calculateParentalLeave() {,function calculateSeverance() {,function calculateWage() {,function changelogPage(dir) {,function checkOtOverlap(dateStr, startTime, endTime, type, excludeId) {,function clearWikiSearch() {,function closeCalloutModal() {,function closeOtBottomSheet() {,function closeOtPanel() { resetOtPanel(); },function deleteOtRecord(id) {,function editOtRecord(id) {,function exportOtData() {,function getCaptureParams() {,function handleChat() {,function handlePayslipDrop(event) {,function importOtData(event) {,function initHomeTab() {,function initOvertimeTab() {,function initRetirementTab() {,function loadChangelog() {,function loadNotice() {,function noticePage(dir) {,function onOtDateClick(year, month, day) {,function onOtHourlyInput() {,function onOtTypeChange() {,function openOtBottomSheet() {,function otGoToday() {,function otNavMonth(delta) {,function parseChangelog(md) {,function parseNotice(md) {,function previewCalloutCalc() {,function previewOtCalc() {,function quickOtCallout() {,function quickOtRecord(type, hours) {,function renderCeremonyTable() {,function renderChangelogPage() {,function renderHandbookSource(articles) {,function renderLeaveTable() {,function renderNoticePager(items) {,function renderOtCalendar(year, month, recordsByDay) {,function renderOtDashboard(year, month) {,function renderOtLimitWarnings(year, month) {,function renderOtRecordList(records) {,function renderOtRecordTabs(existing, dateStr) {,function renderOtVerification(year, month) {,function renderQuickTags() {,function renderRetSimTimeline(hire, peakDate, peakEndDate) {,function renderWikiToc() {,function resetOtPanel() {,function retFmt(n) { return Math.round(n).toLocaleString('ko-KR') + '원'; },function retFmtDate(d) {,function retGetRateForYears(years) {,function retGetSeveranceRate(years) {,function retSelectPeakOpt(label) {,function retSetRetireDate(type) {,function retToInputDate(d) {,function retToggleRateCard() {,function retUpdateQuickDates() {,function saveCalloutRecord() {,function saveOtRecord() {,function scrollToOtGroup(type) {,function searchChat(query) {,function searchHandbook() {,function selectOtNewTab(dateStr) {,function selectOtRecordTab(id) {,function showOtToast(message, type = 'success') {,function showWikiCategory(categoryIdx) {,function switchHomePeriod(period) {,function switchNewsTab(tab) {,function switchTab(tabName) {,function toggleOtCustomTime() {,function toggleOtHelp() {,function toggleOtHelpDetail(el, e) {,function toggleOtVerifyDetail() {,function updateGrades() {,function updatePayrollGrades() {,function updateQuickActionPrices() {,let _changelogEntries = null;,let _changelogIdx = 0;,let _noticeIdx = 0;,let _noticeItems = null;,let otCurrentMonth = new Date().getMonth() + 1;,let otCurrentYear = new Date().getFullYear();,let otHolidayMap = {};,let otSelectedDate = null;,var RET_RATES = [,var RET_SEVERANCE_RATES = [,var _homePeriod = 'month'; // 'month' | 'year',var _retInitDone = false;,var _retPeakDate = null, _retPeakEndDate = null, _retLegalRetireDate = null;
+- `appLock.js`: export const AppLock = (function () {
+- `calculators.js`: export const CALC = {
+- `dashboard.js`: const API_BASE = (() => {,const els = {,const state = {,function getPeriodParts() {,function mergeScenarioReport() {,function renderAll() {,function renderCoverageDelta() {,function renderDecisionBanner() {,function renderMemberMatrix() {,function renderRuleCoverage() {,function renderScenarioList() {,function renderSummary() {,function renderTabs() {,function renderValidationList() {,function syncSurfaceNav() {
+- `data.js`: const DATA_BUNDLE_CACHE_KEY = 'data_bundle_cache_2026-04';,const DATA_BUNDLE_STATUS_KEY = 'data_bundle_status_2026-04';,export const DATA_STATIC = {,export let DATA = DATA_STATIC;,function getCurrentMonthKey() {,function readStorageJSON(key) {,function writeStorageJSON(key, value) {,let dataLoadPromise = null;
+- `holidays.js`: export const HOLIDAYS = {
+- `leave-tab.js`: const LV_CAT_COLORS = {,const LV_CAT_DEFAULT_COLOR = { bg: 'rgba(99,102,241,0.10)', accent: 'rgba(99,102,241,0.20)', header: 'rgba(99,102,241,0.06)' };,const LV_CAT_ICONS = {,function buildLvRecordsByDay(year, month, monthRecords, holidayMap) {,function calcLvTimeHours() {,function closeLvBottomSheet() {,function closeLvPanel() { resetLvPanel(); },function closeLvTypeBottomSheet() {,function deleteLvRecord() {,function editLvRecord(id) {,function exportLvData() {,function getLvTimeInfo() {,function importLvData(event) {,function initLeaveTab() {,function lvGoToday() {,function lvNavMonth(delta) {,function onLvDateClick(year, month, day) {,function onLvTypeChange() {,function openLvBottomSheet() {,function openLvTypeBottomSheet() {,function populateLvTypeSelect() {,function previewLvCalc() {,function renderLvCalendar(year, month, recordsByDay) {,function renderLvDashboard(year) {,function renderLvQuotaTable(year) {,function renderLvRecordList(year) {,function renderLvStats(year) {,function renderPayslipVerifyResult(parsedData, calcResult) {,function resetLvPanel() {,function saveLvRecord() {,function selectLvType(id, label) {,function startTutorial() {,function updateLvTypeBtnText(id) {,let lvCurrentMonth = new Date().getMonth() + 1;,let lvCurrentYear = new Date().getFullYear();,let lvHolidayMap = {};,let lvInitialized = false;,let lvSelectedDate = null;,let lvTotalAnnual = 0;
+- `leave.js`: export const LEAVE = {
+- `migration-overlay.js`: const MIGRATION_TARGET_URL = 'https://snuhmate.com';,function closeMigrationModal() {,function downloadBackupAndStay() {,function redirectToNewDomain() {,function startMigrationCountdown() {,function stopMigrationCountdown(message) {,function updateMigrationCountdownText(message) {,let migrationCountdownInterval = null;,let migrationSecondsRemaining = 3;
+- `overtime.js`: export const OVERTIME = {
+- `pay-estimation.js`: const PayrollImprovementAgent = (() => {,function _isPayCalcTabActive() {,function _refreshPayEstIfActive() {,function buildCompareRow(item, isDeduction) {,function buildPayComparison(estimatedItems, actualItems, year, month, flags) {,function calcMonthEstimate(year, month) {,function calcYearlyEstimate(year) {,function calculatePayroll() {,function changePayEstMonth(delta) {,function fmtW(n) { return '₩' + Math.round(n).toLocaleString(); },function getActualPayrollData(year, month) {,function getComparisonReason(name, diff, year, month, flags, isNew, isMissing) {,function getDeductionDesc(name, r) {,function getItemDesc(name, year, month, est) {,function getMonthFlags(year, month) {,function initPayEstimate() {,function renderPayEstDetail() {,function renderPayEstHero() {,let payEstMonth = new Date().getMonth() + 1;,let payEstYear = new Date().getFullYear();
+- `payroll.js`: export const PAYROLL = {
+- `payslip-tab.js`: function deletePayslipMonth(year, month, type) {,function renderOvertimeAnalysis(container, data) {,function renderPayslip(data, ym, profileUpdated, stableRes) {,function renderPayslipMgmt() {,function renderPayslipStats(el, allData, fmt, fmtSign) {,function renderPayslipVerification(container, data) {,function renderSavedMonths() { renderPayslipMgmt(); },function renderVerification(data) {,function showVerifyInQna() {
+- `playwright.config.js`: const PORT = 8785;
+- `profile-tab.js`: function _collapseBasicFieldsWithPreview(data) {,function _seedFirstWorkFromProfile() {,function _suggestYear(hireDateStr) {,function acceptSeededWorkHistory() {,function applyProfileToLeave() {,function applyProfileToOvertime() {,function applyProfileToPayroll() {,function applyPromotionDate() {,function clearProfile() {,function downloadBackup() {,function initProfileTab() {,function populateJobTypeDropdowns() {,function saveProfile() {,function switchProfileSection(section) {,function switchToProfileTab() {,function syncBirthDateToProfile(val) {,function syncBirthDateToRetirement(val) {,function toggleChildFields() { updateFamilyUI(); },function toggleCollapsible(id) {,function toggleUnder6Field() { updateFamilyUI(); },function updateFamilyUI() {,function updateProfileGrades() {,function updateProfileSummary(profile) {,function updateProfileTitle(name) {
+- `profile.js`: export const PROFILE = {
+- `regulation-constants.js`: export const ANNUAL_LEAVE = {,export const DUTY_ALLOWANCE_DAILY = 50000;,export const EDUCATION_ALLOWANCE_MONTHLY = 40000;,export const EXTENDED_NIGHT_MULTIPLIER = 2.0;,export const FAMILY_ALLOWANCE = {,export const FAMILY_SUPPORT_SKIP_MONTHS = [1, 9]; // 기준 미지급월 (설/추석 해당 시 제외),export const HOLIDAY_MULTIPLIER = 1.5;,export const HOLIDAY_OVER8_MULTIPLIER = 2.0;,export const LONG_SERVICE_PAY = [,export const MEAL_SUBSIDY = 150000;,export const MILITARY_SERVICE_MAX_MONTHS = 24;,export const MILITARY_SERVICE_PAY_MONTHLY = 45000;,export const NIGHT_ALLOWANCE_MULTIPLIER = 2.0;,export const NIGHT_SHIFT_BONUS_PER_SHIFT = 10000;,export const ON_CALL_COMMUTE_HOURS = 2;,export const ON_CALL_STANDBY_DAILY = 10000;,export const ON_CALL_TRANSPORT = 50000;,export const ORDINARY_WAGE_HOURS = 209;,export const OVERTIME_MULTIPLIER = 1.5;,export const OVERTIME_UNIT_MINUTES = 15;,export const PRECEPTOR_ALLOWANCE = 200000;,export const PRIME_TEAM_SUBSTITUTE_DAILY = 20000;,export const REFRESH_BENEFIT_MONTHLY = 30000;,export const SENIORITY_CUT_DATE = '2016-02-29';,export const SENIORITY_RATES = [,export const SEVERANCE_CUT_DATE_2001 = '2001-08-31';,export const SEVERANCE_CUT_DATE_2015 = '2015-06-30';,export const SEVERANCE_MULTIPLIERS_PRE2001 = [,export const SEVERANCE_PAY_RATES = [,export const SPECIAL_PAY5_MONTHLY = 35000;,export const TRANSPORT_SUBSIDY = 150000;,export const _refs = {
+- `regulation.js`: function applyHighlight(text, query) {,function buildSmartMailto(article, deptName, email) {,function closePdfSheet() {,function formatBody(body, highlight) {,function formatDeptLabel(deptName) {,function formatFaqAnswer(text) {,function getArticleId(article) {,function getContactDeptForArticle(art) {,function getFavStorageKey() {,function getHandbookPdfUrl() {,function getPdfPageForRef(ref) {,function handleFavClick(event, articleId) {,function initBrowse() {,function initPdfSheet() {,function initSubTabs() {,function initTheme() {,function isFavorited(articleId) {,function loadFavorites() {,function loadProfileForFaq() {,function openPdfForRef(ref) {,function openPdfPicker() {,function openPdfSheet(url, title, startPage) {,function pdfNextPage() {,function pdfPrevPage() {,function pdfZoom(delta) {,function renderArticles(articles, container, options) {,function renderBrowseList() {,function renderCalcBlock(question) {,function renderChapterTabs() {,function renderFavChips() {,function saveFavorites(arr) {,function scrollChapterTabs(direction) {,function searchBrowse(query) {,function toggleArticle(headerEl) {,function toggleFavorite(articleId) {,function tryLoadBrowseFromJson() {,var ARTICLE_CALCULATORS = {,var CHAPTER_ICONS = {,var FAQ_CALCULATORS = {,var HIDDEN_CHAPTERS = {,var PDF_PAGE_MAP = [,var _cachedProfile = null;,var _cachedWage = null;,var browseActiveChapter = null; // null = "전체", 또는 장 이름 (예: "제4장 근로시간"),var pdfCurrentPage = 1;,var pdfDoc = null;,var pdfScale = 1.0;
+- `retirement-engine.js`: export const RetirementEngine = (function () {
+- `salary-parser.js`: const SALARY_PARSER = (() => {
+- `schedule_suite.js`: const REPORT_PATH = './data/schedule_suite_report_2026-05.json';,const els = {,const state = {,function buildBoardHtml(dataset, assignments) {,function getDataset() {,function getSchedule() {,function getTeamData() {,function getTestReport() {,function renderAdminView() {,function renderAll() {,function renderDashboardView() {,function renderDeployView() {,function renderHeroSummary() {,function renderStatusGrid() {,function renderTabs() {,function renderTestsetGrid() {,function renderView() {
+- `settings-ui.js`: function onAppLockChangePin() {,function onAppLockDisable() {,function onAppLockSetupPin() {,function onBiometricDisable() {,function onBiometricRegister() {,function updateAppLockUI() {
+- `share-utils.js`: function _loadQrLib(cb) {,function _showShareFallback(text) {,function _showShareModal(url, shareText) {,function _showShareToast(msg) {,function shareApp() {,var _qrLibLoaded = false;
+- `shared-utils.js`: export function delegateActions(root, handlers) {,export function delegateInput(root, handlers) {,export function escapeHtml(value) {,export function registerActions(newHandlers) {,export function registerInputActions(newHandlers) {,let _globalHandlers = null;,let _globalInputHandlers = null;
+- `vite.config.js`: const __dirname = dirname(fileURLToPath(import.meta.url));
+- `work-history.js`: function _buildPickerButton(emoji, title, subtitle, bgColor) {,function _effectivePeriod(item) {,function _fmtYm(iso) {,function _genId(prefix) {,function _humanDuration(fromIso, toIso) {,function _isRotationOutOfParent(parent, rot) {,function _latestEndMonth() {,function _loadWorkHistory() {,function _nextMonth(yyyymm) {,function _refreshRoleSuggestions() {,function _renderCareerSegment(item, eff) {,function _renderRotationChip(parent, rot) {,function _saveWorkHistory(list) {,function _showWorkHistoryToast(message) {,function _showWorkHistoryUpdateBanner(segments) {,function _whKey() {,function _whSeedKey() {,function addRotation(parentId, rotation) {,function autofillJobDesc() {,function autofillRotationTasks() {,function closeRotationSheet() {,function closeWorkHistorySheet() {,function deleteRotation(parentId, rotId) {,function deleteRotationEntry() {,function deleteWorkHistoryEntry(id) {,function global_JT() { return window.JobTemplates && window.JobTemplates.autofillForEntry; },function openAddWorkHistoryPicker() {,function openRotationSheet(parentId, rotation) {,function openWorkHistorySheet(item) {,function rebuildWorkHistoryFromPayslipsForceReplace() {,function renderWorkHistory() {,function saveRotationEntry() {,function saveWorkHistoryEntry() {,function updateRotation(parentId, rotId, patch) {,var JOB_ROLE_HINTS = {,var JOB_ROLE_SUGGESTIONS = {,var _rotEditCtx = { parentId: null, rotId: null };,var _whEditId = null;
+
+## Cross-module bare 참조 (per file, sorted)
+
+- 136 app.js
+- 126 payroll.js
+- 53 regulation.js
+- 52 profile-tab.js
+- 48 leave-tab.js
+- 43 tests/unit/calculators.test.js
+- 37 tests/unit/plan-m-phase-2.test.js
+- 36 calculators.js
+- 31 pay-estimation.js
+- 28 tests/unit/plan-m-phase-1.test.js
+- 24 tests/unit/plan-m-phase-3-extra.test.js
+- 21 tests/unit/plan-m-phase-3.test.js
+- 13 payslip-tab.js
+- 9 salary-parser.js
+- 9 payroll-views.js
+- 9 data.js
+- 8 tests/unit/plan-l-tier1.test.js
+- 8 tests/unit/calc-registry.test.js
+- 8 settings-ui.js
+- 6 overtime.js
+- 6 leave.js
+- 4 public/admin/rule-versions.js
+- 3 resume.js
+- 3 job-templates.js
+- 2 tests/unit/foundation.test.js
+- 2 retirement-engine.js
+- 2 profile.js
+- 1 shared-utils.js
+- 1 public/admin/calc-flow.js
+
+## HTML inline onclick 대상 (KEEP allowlist 후보)
+
+- autofillJobDesc
+- autofillRotationTasks
+- calcRetirementEmbedded
+- calculateParentalLeave
+- calculatePayroll
+- changelogPage
+- clearProfile
+- closeLvBottomSheet
+- closeLvTypeBottomSheet
+- closeOtBottomSheet
+- closeResumeItemSheet
+- closeRotationSheet
+- closeWorkHistorySheet
+- deleteLvRecord
+- deleteOtRecord
+- deleteRotationEntry
+- dismissHwBanner
+- downloadBackup
+- downloadTeamScheduleIcs
+- if
+- noticePage
+- onAppLockChangePin
+- onAppLockDisable
+- onAppLockSetupPin
+- onBiometricDisable
+- onBiometricRegister
+- openLvTypeBottomSheet
+- openWorkHistorySheet
+- retSelectPeakOpt
+- retSetRetireDate
+- retToggleRateCard
+- saveLvRecord
+- saveOtRecord
+- saveProfile
+- saveResumeItem
+- saveRotationEntry
+- saveWorkHistoryEntry
+- shareApp
+- switchHomePeriod
+- switchNewsTab
+- switchProfileSection
+- switchTab
+- this
+- toggleCollapsible
+- toggleOtHelp
+- toggleOtHelpDetail
+- toggleOtVerifyDetail
+
+## sw.js 참조 함수 (KEEP allowlist 보강)
+
+- Response(
+- URL(
+- add(
+- addEventListener(
+- all(
+- allSettled(
+- cacheFirst(
+- catch(
+- claim(
+- clone(
+- delete(
+- endsWith(
+- fetch(
+- filter(
+- includes(
+- keys(
+- map(
+- match(
+- networkFirst(
+- open(
+- put(
+- respondWith(
+- skipWaiting(
+- staleWhileRevalidate(
+- startsWith(
+- then(
+- waitUntil(
+
+## HTML 의 inline <script> 안 호출 (entry bridging)
+
+- Date
+- IntersectionObserver
+- String
+- _now
+- _wfProg
+- _wfRow
+- add
+- addEventListener
+- appendChild
+- call
+- catch
+- charAt
+- closest
+- createElement
+- find
+- forEach
+- function
+- getDate
+- getDay
+- getElementById
+- getFullYear
+- getItem
+- getMonth
+- goToApp
+- gtag
+- if
+- indexOf
+- initTheme
+- loadEmbeds
+- min
+- nextStep
+- not
+- observe
+- padStart
+- parse
+- prevStep
+- push
+- querySelector
+- querySelectorAll
+- register
+- removeAttribute
+- render
+- renderStep
+- repeat
+- replace
+- rgba
+- round
+- scrollTo
+- scrollToNextSection
+- setAttribute
+- translateX
+- var
+- warn
