@@ -7,13 +7,13 @@
 ---
 <div class="tab-content" id="tab-overtime">
   <!-- 참고용 안내 배너 + 도움말 -->
-  <div class="info-note-banner" style="flex-direction:column; gap:4px;">
-    <div style="display:flex; align-items:center; gap:8px; width:100%; cursor:pointer;" onclick="toggleOtHelp()">
+  <div class="info-note-banner flex-col gap-1">
+    <div class="flex items-center gap-2 w-full cursor-pointer" onclick="toggleOtHelp()">
       <span>ℹ️</span>
-      <div style="flex:1;">수당 계산이 궁금하신가요? <strong style="color:var(--accent-indigo);">도움말 보기</strong></div>
-      <span id="otHelpArrow" style="transition:transform 0.3s; font-size:12px; color:var(--text-muted);">▼</span>
+      <div class="flex-1">수당 계산이 궁금하신가요? <strong class="text-brand-accent-indigo">도움말 보기</strong></div>
+      <span id="otHelpArrow" class="transition-transform duration-300 text-xs text-brand-text-muted">▼</span>
     </div>
-    <div id="otHelpContent" style="display:none; width:100%; margin-top:8px;">
+    <div id="otHelpContent" class="w-full mt-2" style="display:none;">
       <div class="ot-help-grid">
         <div class="ot-help-item" onclick="toggleOtHelpDetail(this, event)">
           <div class="ot-help-q">⏰ 연장근무 수당은 어떻게 계산되나요?</div>
@@ -79,33 +79,32 @@
           </div>
         </div>
       </div>
-      <div style="margin-top:8px; font-size:11px; color:var(--text-muted); text-align:center;">
+      <div class="mt-2 text-[11px] text-brand-text-muted text-center">
         ※ 정확한 금액은 개인별 근속연수·조정급 등에 따라 차이가 있을 수 있습니다. 급여 명세서 기준으로 확인하세요.
       </div>
     </div>
   </div>
   <!-- Zone A: 모바일 캘린더 -->
-  <div class="card" style="margin-bottom: 12px; padding: 12px;">
-    <div class="ot-hourly-bar" style="margin-bottom: 8px;">
+  <div class="card mb-3 p-3">
+    <div class="ot-hourly-bar mb-2">
       <span>적용 시급:</span>
       <input type="number" id="otHourly" value="0" min="0" step="100" placeholder="시급 입력"
         oninput="onOtHourlyInput()"
-        style="width:110px; padding:4px 8px; border-radius:6px; border:1px solid var(--border-glass); background:var(--bg-glass); color:var(--accent-emerald); font-weight:700; font-size:var(--text-body-large); text-align:right;">
-      <span style="color:var(--text-muted); font-size:var(--text-body-normal);">원</span>
-      <small id="otHourlyHint" style="font-size:var(--text-body-normal);"></small>
+        class="w-[110px] py-1 px-2 rounded-md border border-brand-border-glass bg-brand-bg-glass text-brand-accent-emerald font-bold text-brand-body-large text-right">
+      <span class="text-brand-text-muted text-brand-body-normal">원</span>
+      <small id="otHourlyHint" class="text-brand-body-normal"></small>
     </div>
 
-    <!-- 시급 0원 경고 배너 -->
+    <!-- 시급 0원 경고 배너 (색상은 .hourly-warning-banner 클래스가 정의 — utility 변환 시 색상 보존) -->
     <div id="otHourlyWarning" class="hourly-warning-banner">
-      <span style="flex-shrink:0; margin-top:2px;">⚠️</span>
-      <div style="flex:1; display:flex; flex-direction:column; gap:6px;">
+      <span class="flex-shrink-0 mt-0.5">⚠️</span>
+      <div class="flex-1 flex flex-col gap-1.5">
         <strong>개인정보를 먼저 입력해주세요</strong>
-        <span style="font-size:var(--text-body-small);">직종·호봉을 입력해야 시간외 수당이 자동 계산됩니다.</span>
-        <button onclick="switchTab('profile')" class="btn btn-primary"
-          style="align-self:flex-start; font-size:var(--text-body-small); margin-top:2px;">👤 개인정보 입력하기 →</button>
+        <span class="text-[var(--text-body-small)]">직종·호봉을 입력해야 시간외 수당이 자동 계산됩니다.</span>
+        <button onclick="switchTab('profile')" class="btn btn-primary self-start text-[var(--text-body-small)] mt-0.5">👤 개인정보 입력하기 →</button>
       </div>
       <button onclick="dismissHwBanner()"
-        style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:16px;padding:0 2px;line-height:1;flex-shrink:0;align-self:flex-start;"
+        class="bg-none border-none cursor-pointer text-brand-text-muted text-base px-0.5 leading-none flex-shrink-0 self-start"
         title="닫기">✕</button>
     </div>
 
@@ -117,13 +116,12 @@
   <div id="otDashboard" class="ot-dashboard"></div>
 
   <!-- Zone V: 명세서 자동 보충 카드 -->
-  <div id="otVerifyCard" class="card" style="margin-bottom:12px; display:none;">
-    <div class="card-title" style="cursor:pointer;" onclick="toggleOtVerifyDetail()">
-      <span class="icon" style="font-size:18px;">💡</span>
+  <div id="otVerifyCard" class="card mb-3" style="display:none;">
+    <div class="card-title cursor-pointer" onclick="toggleOtVerifyDetail()">
+      <span class="icon text-lg">💡</span>
       <span id="otVerifyTitle">명세서 자동 보충</span>
-      <span id="otVerifyBadge" class="badge emerald" style="margin-left:auto;"></span>
-      <span id="otVerifyArrow"
-        style="font-size:12px; color:var(--text-muted); transition:transform 0.3s; margin-left:8px;">▼</span>
+      <span id="otVerifyBadge" class="badge emerald ml-auto"></span>
+      <span id="otVerifyArrow" class="text-xs text-brand-text-muted transition-transform duration-300 ml-2">▼</span>
     </div>
     <div id="otVerifyContent"></div>
   </div>
@@ -132,19 +130,16 @@
   <div id="otInputOverlay" class="ot-bottom-sheet-overlay" onclick="closeOtBottomSheet()"></div>
   <div id="otInputPanel" class="ot-bottom-sheet">
     <div class="ot-sheet-handle"></div>
-    <div class="ot-panel-header-v2" style="display:flex; justify-content:space-between; align-items:center;">
-      <span id="otPanelDate"
-        style="font-weight:700; font-size:var(--text-title-large); color:var(--text-primary);">날짜를 선택하세요</span>
-      <button class="btn btn-icon" onclick="closeOtBottomSheet()"
-        style="padding:4px; font-size:var(--text-title-large);"><span
-          style="color:var(--text-muted)">✕</span></button>
+    <div class="ot-panel-header-v2 flex justify-between items-center">
+      <span id="otPanelDate" class="font-bold text-brand-title-large text-brand-text-primary">날짜를 선택하세요</span>
+      <button class="btn btn-icon p-1 text-brand-title-large" onclick="closeOtBottomSheet()"><span class="text-brand-text-muted">✕</span></button>
     </div>
 
     <!-- ① 이 날의 기록 탭 (기존 기록 있을 때 JS로 렌더링) — 선택하면 아래 폼에 로드됨 -->
-    <div id="otExistingRecords" style="margin-top:12px;"></div>
+    <div id="otExistingRecords" class="mt-3"></div>
 
     <!-- ② 입력 폼 영역 -->
-    <div class="form-group" style="margin-top:4px;">
+    <div class="form-group mt-1">
       <label>유형</label>
       <div class="ot-type-selector">
         <label class="ot-type-option active">
@@ -163,51 +158,49 @@
     </div>
 
     <!-- 시간 입력 (온콜대기 시 숨김) -->
-    <div id="otTimeFields" style="margin-bottom:16px;">
-      <label
-        style="display:block; font-size:var(--text-body-large); font-weight:600; color:var(--text-secondary); margin-bottom:6px;">근무
-        시간</label>
-      <div style="display:flex; flex-direction:row; gap:8px; align-items:center;">
-        <input type="time" id="otStartTime" class="time-picker-premium" style="flex:1; width:100%" value="18:00"
+    <div id="otTimeFields" class="mb-4">
+      <label class="block text-brand-body-large font-semibold text-brand-text-secondary mb-1.5">근무 시간</label>
+      <div class="flex flex-row gap-2 items-center">
+        <input type="time" id="otStartTime" class="time-picker-premium flex-1 w-full" value="18:00"
           step="900" onchange="previewOtCalc()">
-        <span style="color:var(--text-muted); font-weight:700;">~</span>
-        <input type="time" id="otEndTime" class="time-picker-premium" style="flex:1; width:100%" value="22:00"
+        <span class="text-brand-text-muted font-bold">~</span>
+        <input type="time" id="otEndTime" class="time-picker-premium flex-1 w-full" value="22:00"
           step="900" onchange="previewOtCalc()">
       </div>
     </div>
 
     <!-- 실시간 미리보기 -->
-    <div id="otPreview" class="ot-preview" style="margin-bottom:12px;"></div>
+    <div id="otPreview" class="ot-preview mb-3"></div>
 
     <div class="form-group">
       <label>메모 (선택)</label>
       <input type="text" id="otMemo" placeholder="예: 응급환자 대응" class="premium-input">
     </div>
 
-    <div style="display:flex; flex-direction:row; margin-top:20px; gap:12px;">
-      <button class="btn btn-outline" onclick="deleteOtRecord()"
-        style="flex:1; display:none; border-color:transparent; background:rgba(244,63,94,0.08); color:var(--accent-rose); font-size:var(--text-body-large); font-weight:600; padding:14px; justify-content:center; border-radius:12px; transition:all 0.2s;"
+    <div class="flex flex-row mt-5 gap-3">
+      <button class="btn btn-outline flex-1 border-transparent text-brand-accent-rose text-brand-body-large font-semibold p-3.5 justify-center rounded-xl transition-all duration-200" onclick="deleteOtRecord()"
+        style="display:none; background:rgba(244,63,94,0.08);"
         id="otDeleteBtn">삭제</button>
-      <button class="btn btn-primary" onclick="saveOtRecord()"
-        style="flex:1; font-size:var(--text-title-large); padding:14px; justify-content:center; border-radius:12px;"
+      <button class="btn btn-primary flex-1 text-brand-title-large p-3.5 justify-center rounded-xl" onclick="saveOtRecord()"
         id="otSaveBtn" disabled>저장</button>
     </div>
     <input type="hidden" id="otEditId" value="">
   </div> <!-- /otInputPanel -->
 
-  <!-- M2-8 연장근로 한도 경고 배너 (제34조(1)) -->
+  <!-- M2-8 연장근로 한도 경고 배너 (제34조(1)) — 색상 보존 (rose) -->
   <div id="otLimitWarning"
-    style="display:none; margin-top:16px; padding:12px 14px; border-radius:10px; background:rgba(244, 63, 94, 0.06); border:1px solid var(--accent-rose); color:var(--text-primary); font-size:var(--text-body-normal);">
+    class="mt-4 py-3 px-3.5 rounded-[10px] border border-brand-accent-rose text-brand-text-primary text-brand-body-normal"
+    style="display:none; background:rgba(244, 63, 94, 0.06);">
   </div>
 
   <!-- Zone C: 하단 기록 -->
-  <div class="card" style="margin-top:20px;">
+  <div class="card mt-5">
     <div class="card-title">
       <span class="icon emerald">📋</span> <span><span id="otRecordMonth"></span>월 기록</span>
       <span class="badge amber" id="otRecordCount">0건</span>
     </div>
     <div id="otRecordList">
-      <p style="color:var(--text-muted); text-align:center; padding:24px;">
+      <p class="text-brand-text-muted text-center p-6">
         캘린더에서 날짜를 클릭하여 기록을 추가하세요.
       </p>
     </div>
