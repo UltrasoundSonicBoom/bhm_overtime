@@ -1,0 +1,86 @@
+---
+/**
+ * Button — Action component
+ * 사용 시점: 사용자가 액션을 트리거할 때 (저장, 삭제, 다음, 닫기 등).
+ * 사용 금지: 페이지 이동에는 <a> 우선.
+ *
+ * Variant: primary | secondary | tertiary | danger | ghost
+ * Size: sm | md | lg
+ * State: default / hover / disabled / loading
+ *
+ * Legacy CSS class compatibility: .btn, .btn-primary, .btn-secondary, .btn-outline, .btn-full
+ * 도 함께 출력 → 기존 globals.css 셀렉터와 시각 회귀 0.
+ */
+interface Props {
+  variant?: 'primary' | 'secondary' | 'tertiary' | 'danger' | 'ghost';
+  size?: 'sm' | 'md' | 'lg';
+  type?: 'button' | 'submit' | 'reset';
+  disabled?: boolean;
+  loading?: boolean;
+  fullWidth?: boolean;
+  iconLeft?: string;
+  iconRight?: string;
+  id?: string;
+  name?: string;
+  value?: string;
+  ariaLabel?: string;
+  onclick?: string;
+}
+
+const {
+  variant = 'primary',
+  size = 'md',
+  type = 'button',
+  disabled = false,
+  loading = false,
+  fullWidth = false,
+  iconLeft,
+  iconRight,
+  id,
+  name,
+  value,
+  ariaLabel,
+  onclick,
+} = Astro.props;
+
+const variantClass = {
+  primary:   'bg-ds-brand-primary text-ds-text-inverse hover:bg-ds-brand-primary-hover',
+  secondary: 'bg-ds-bg-muted text-ds-text-primary border border-ds-border-default hover:bg-ds-bg-hover',
+  tertiary:  'bg-transparent text-ds-text-primary hover:bg-ds-bg-muted',
+  danger:    'bg-ds-status-error text-ds-text-inverse hover:opacity-90',
+  ghost:     'bg-transparent text-ds-text-secondary hover:bg-ds-bg-muted',
+}[variant];
+
+const sizeClass = {
+  sm: 'px-3 py-1 text-ds-body-sm min-h-[32px] rounded-brand-sm',
+  md: 'px-5 py-2 text-ds-body-md min-h-[40px] rounded-brand-md',
+  lg: 'px-6 py-3 text-ds-body-lg min-h-[48px] rounded-brand-md',
+}[size];
+
+const widthClass = fullWidth ? 'w-full flex' : 'inline-flex';
+const stateClass = (disabled || loading) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer';
+
+// Legacy .btn .btn-primary 등 — 기존 globals.css 셀렉터 호환.
+const legacyVariant = variant === 'primary'   ? 'btn-primary'
+                    : variant === 'secondary' ? 'btn-secondary'
+                    : variant === 'ghost'     ? 'btn-outline'
+                    : '';
+const legacyClass = ['btn', legacyVariant, fullWidth ? 'btn-full' : ''].filter(Boolean).join(' ');
+---
+<button
+  type={type}
+  id={id}
+  name={name}
+  value={value}
+  disabled={disabled || loading}
+  aria-disabled={disabled || loading}
+  aria-busy={loading}
+  aria-label={ariaLabel}
+  onclick={onclick}
+  class={`ds-button ${legacyClass} ${widthClass} items-center justify-center gap-2 font-semibold transition-all focus-visible:outline-none focus-visible:ring-ds focus-visible:ring-ds-focus focus-visible:ring-offset-ds ${variantClass} ${sizeClass} ${stateClass}`}
+>
+  {loading && <span aria-hidden="true">⏳</span>}
+  {!loading && iconLeft && <span aria-hidden="true">{iconLeft}</span>}
+  <slot />
+  {!loading && iconRight && <span aria-hidden="true">{iconRight}</span>}
+</button>
