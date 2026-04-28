@@ -1,0 +1,60 @@
+/* SNUH Mate Design System — Semantic Tokens
+ * UI 의미별 alias. 모든 신규 컴포넌트는 이 layer 만 참조한다.
+ */
+:root {
+  /* Text */
+  --color-text-primary:   var(--neo-ink);
+  --color-text-secondary: var(--neo-ink-soft);
+  --color-text-muted:     var(--neo-ink-mute);
+  --color-text-inverse:   #ffffff;
+  --color-text-link:      var(--blue-700);
+
+  /* Background */
+  --color-bg-page:     var(--neo-cream-50);
+  --color-bg-surface:  #ffffff;
+  --color-bg-elevated: var(--neo-cream-100);
+  --color-bg-muted:    var(--neo-cream-200);
+  --color-bg-hover:    var(--neo-cream-300);
+
+  /* Border */
+  --color-border-default: var(--gray-200);
+  --color-border-strong:  var(--neo-ink);
+  --color-border-focus:   var(--blue-500);
+
+  /* Brand */
+  --color-brand-primary:        var(--blue-500);
+  --color-brand-primary-hover:  var(--blue-600);
+  --color-brand-secondary:      var(--gray-700);
+
+  /* Status */
+  --color-status-success: var(--emerald-500);
+  --color-status-warning: var(--amber-500);
+  --color-status-error:   var(--red-500);
+  --color-status-info:    var(--blue-500);
+
+  --color-status-success-bg: var(--emerald-50);
+  --color-status-warning-bg: var(--amber-50);
+  --color-status-error-bg:   var(--red-50);
+  --color-status-info-bg:    var(--blue-50);
+
+  /* Focus ring */
+  --focus-ring-color:  var(--blue-500);
+  --focus-ring-width:  2px;
+  --focus-ring-offset: 2px;
+}
+
+html[data-theme="dark"] {
+  --color-text-primary:   #ececef;
+  --color-text-secondary: #a0a0ab;
+  --color-text-muted:     #63636e;
+
+  --color-bg-page:     #09090b;
+  --color-bg-surface:  #141416;
+  --color-bg-elevated: #1c1c1e;
+  --color-bg-muted:    rgba(255, 255, 255, 0.03);
+  --color-bg-hover:    rgba(255, 255, 255, 0.06);
+
+  --color-border-default: rgba(255, 255, 255, 0.06);
+  --color-border-strong:  rgba(255, 255, 255, 0.15);
+  --color-border-focus:   var(--blue-500);
+}
