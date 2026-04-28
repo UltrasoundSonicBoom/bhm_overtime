@@ -31,7 +31,7 @@ function makeFakeFile(name, content) {
 
 describe('uploadBackup v1.0 형식 복원 (legacy)', () => {
   it('profile/overtime/leave 3 필드 → localStorage 저장', async () => {
-    await import('../../profile-tab.js');
+    await import('../../apps/web/src/client/profile-tab.js');
     const reloads = [];
     window.__bhmReloadHook = () => reloads.push('reload');
 
@@ -59,7 +59,7 @@ describe('uploadBackup v1.0 형식 복원 (legacy)', () => {
 
 describe('uploadBackup v2.0 형식 복원 (full)', () => {
   it('keys object 의 모든 사용자 도메인 키 일괄 복원', async () => {
-    await import('../../profile-tab.js');
+    await import('../../apps/web/src/client/profile-tab.js');
     window.__bhmReloadHook = () => {};
 
     const v2Content = JSON.stringify({
@@ -95,7 +95,7 @@ describe('uploadBackup v2.0 형식 복원 (full)', () => {
 
 describe('uploadBackup 잘못된 형식 거부', () => {
   it('이미지 파일명 → 차단', async () => {
-    await import('../../profile-tab.js');
+    await import('../../apps/web/src/client/profile-tab.js');
     let reloadCalled = false;
     window.__bhmReloadHook = () => { reloadCalled = true; };
 
@@ -108,7 +108,7 @@ describe('uploadBackup 잘못된 형식 거부', () => {
   });
 
   it('PDF/Excel 파일명 → 차단', async () => {
-    await import('../../profile-tab.js');
+    await import('../../apps/web/src/client/profile-tab.js');
     let reloadCalled = false;
     window.__bhmReloadHook = () => { reloadCalled = true; };
 
@@ -124,7 +124,7 @@ describe('uploadBackup 잘못된 형식 거부', () => {
   });
 
   it('잘못된 JSON 구조 → 거부 + 데이터 보존', async () => {
-    await import('../../profile-tab.js');
+    await import('../../apps/web/src/client/profile-tab.js');
     localStorage.setItem('bhm_hr_profile', JSON.stringify({ name: '기존' }));
     window.__bhmReloadHook = () => {};
 
@@ -144,7 +144,7 @@ describe('uploadBackup namespace 매핑 (다른 디바이스 호환)', () => {
     // 시뮬: 사용자가 Google 로그인 — uid suffix 적용
     window.getUserStorageKey = (base) => base + '_user-uid-123';
 
-    await import('../../profile-tab.js');
+    await import('../../apps/web/src/client/profile-tab.js');
     window.__bhmReloadHook = () => {};
 
     const v1Content = JSON.stringify({
@@ -168,7 +168,7 @@ describe('uploadBackup namespace 매핑 (다른 디바이스 호환)', () => {
 
 describe('FileReader fallback (구형 모바일 webview)', () => {
   it('file.text() 미지원 → FileReader.readAsText 사용', async () => {
-    await import('../../profile-tab.js');
+    await import('../../apps/web/src/client/profile-tab.js');
     window.__bhmReloadHook = () => {};
 
     // file.text 없는 객체 (구형 안드로이드 webview)

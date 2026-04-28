@@ -37,7 +37,7 @@ describe('PROFILE.STORAGE_KEY: bhm_hr_profile → snuhmate_hr_profile lazy migra
     const data = JSON.stringify({ name: '김계환', department: '핵의학과' });
     localStorage.setItem('bhm_hr_profile', data);
 
-    const profileMod = await import('../../profile.js');
+    const profileMod = await import('@snuhmate/profile/profile');
     const loaded = profileMod.PROFILE.load();
 
     expect(loaded.name).toBe('김계환');
@@ -49,7 +49,7 @@ describe('PROFILE.STORAGE_KEY: bhm_hr_profile → snuhmate_hr_profile lazy migra
     const data = JSON.stringify({ name: '홍길동' });
     localStorage.setItem('snuhmate_hr_profile', data);
 
-    const profileMod = await import('../../profile.js');
+    const profileMod = await import('@snuhmate/profile/profile');
     const loaded = profileMod.PROFILE.load();
 
     expect(loaded.name).toBe('홍길동');
@@ -58,7 +58,7 @@ describe('PROFILE.STORAGE_KEY: bhm_hr_profile → snuhmate_hr_profile lazy migra
   });
 
   it('write 항상 새 snuhmate_* 키로', async () => {
-    const profileMod = await import('../../profile.js');
+    const profileMod = await import('@snuhmate/profile/profile');
     profileMod.PROFILE.save({ name: '신규자' });
 
     expect(localStorage.getItem('snuhmate_hr_profile')).toBeTruthy();
@@ -78,7 +78,7 @@ describe('clearProfile USER_DATA_PATTERNS: 양쪽 prefix 매칭', () => {
     window.__bhmReloadHook = () => {};
     window.__bhmConfirmClearForTest = () => true;
 
-    await import('../../profile-tab.js');
+    await import('../../apps/web/src/client/profile-tab.js');
     window.clearProfile();
 
     expect(localStorage.getItem('bhm_hr_profile_legacy_uid')).toBeNull();

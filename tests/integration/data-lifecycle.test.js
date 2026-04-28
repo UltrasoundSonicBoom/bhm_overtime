@@ -59,7 +59,7 @@ function seedProfileForm() {
 
 describe('이슈 4 회귀 가드 — PROFILE.save 빈 값 보호', () => {
   it('form 의 빈 input 으로 save → 명세서 값 덮어쓰기 금지', async () => {
-    const profileMod = await import('../../profile.js');
+    const profileMod = await import('@snuhmate/profile/profile');
     const PROFILE = profileMod.PROFILE;
 
     // 1. 명세서 자동 저장 (full payload)
@@ -85,7 +85,7 @@ describe('이슈 4 회귀 가드 — PROFILE.save 빈 값 보호', () => {
   });
 
   it('null/undefined 도 덮어쓰기 금지', async () => {
-    const profileMod = await import('../../profile.js');
+    const profileMod = await import('@snuhmate/profile/profile');
     const PROFILE = profileMod.PROFILE;
     PROFILE.save({ name: '홍길동', employeeNumber: '12345' });
     PROFILE.save({ name: '홍길동', employeeNumber: null });  // null 시도
@@ -94,7 +94,7 @@ describe('이슈 4 회귀 가드 — PROFILE.save 빈 값 보호', () => {
   });
 
   it('실제 새 값으로는 덮어쓰기 정상 작동', async () => {
-    const profileMod = await import('../../profile.js');
+    const profileMod = await import('@snuhmate/profile/profile');
     const PROFILE = profileMod.PROFILE;
     PROFILE.save({ name: '홍길동', specialPay: 100 });
     PROFILE.save({ name: '홍길동', specialPay: 200 });  // 진짜 새 값
@@ -146,7 +146,7 @@ describe('이슈 2 회귀 가드 — clearProfile 데이터 wipe scope', () => {
     window.__bhmReloadHook = () => {};
     window.__bhmConfirmClearForTest = () => true;
 
-    await import('../../profile-tab.js');
+    await import('../../apps/web/src/client/profile-tab.js');
     window.clearProfile();
 
     // 모든 USER_DATA_PATTERNS 매칭 키 → null
@@ -176,7 +176,7 @@ describe('이슈 2 회귀 가드 — clearProfile 데이터 wipe scope', () => {
     window.__bhmReloadHook = () => {};
     window.__bhmConfirmClearForTest = () => true;
 
-    await import('../../profile-tab.js');
+    await import('../../apps/web/src/client/profile-tab.js');
     window.clearProfile();
 
     expect(localStorage.getItem('bhm_local_uid')).toBe('uid-1');
@@ -195,7 +195,7 @@ describe('이슈 2 회귀 가드 — clearProfile 데이터 wipe scope', () => {
     window.__bhmReloadHook = () => {};
     window.__bhmConfirmClearForTest = () => true;
 
-    await import('../../profile-tab.js');
+    await import('../../apps/web/src/client/profile-tab.js');
     window.clearProfile();
 
     const settings = JSON.parse(localStorage.getItem('bhm_settings'));

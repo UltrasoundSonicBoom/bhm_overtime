@@ -28,43 +28,43 @@ function seedFormFields(ids) {
 
 describe('Phase 5: cross-module ESM imports', () => {
   it('Layer 0 (data / regulation-constants / shared-utils) → no throw', async () => {
-    await expect(import('../../data.js')).resolves.toBeTruthy();
-    await expect(import('../../regulation-constants.js')).resolves.toBeTruthy();
-    await expect(import('../../shared-utils.js')).resolves.toBeTruthy();
+    await expect(import('@snuhmate/data')).resolves.toBeTruthy();
+    await expect(import('@snuhmate/regulation-constants')).resolves.toBeTruthy();
+    await expect(import('@snuhmate/shared-utils')).resolves.toBeTruthy();
   });
 
   it('Layer 1 (calculators / holidays / retirement-engine) → no throw', async () => {
-    await expect(import('../../calculators.js')).resolves.toBeTruthy();
-    await expect(import('../../holidays.js')).resolves.toBeTruthy();
-    await expect(import('../../retirement-engine.js')).resolves.toBeTruthy();
+    await expect(import('@snuhmate/calculators')).resolves.toBeTruthy();
+    await expect(import('@snuhmate/calculators/holidays')).resolves.toBeTruthy();
+    await expect(import('@snuhmate/calculators/retirement-engine')).resolves.toBeTruthy();
   });
 
   it('Layer 2 (profile / overtime / leave / payroll) → no throw', async () => {
-    await expect(import('../../profile.js')).resolves.toBeTruthy();
-    await expect(import('../../overtime.js')).resolves.toBeTruthy();
-    await expect(import('../../leave.js')).resolves.toBeTruthy();
-    await expect(import('../../payroll.js')).resolves.toBeTruthy();
+    await expect(import('@snuhmate/profile/profile')).resolves.toBeTruthy();
+    await expect(import('@snuhmate/profile/overtime')).resolves.toBeTruthy();
+    await expect(import('@snuhmate/profile/leave')).resolves.toBeTruthy();
+    await expect(import('@snuhmate/profile/payroll')).resolves.toBeTruthy();
   });
 
   it('Layer 3 (appLock) → no throw', async () => {
-    await expect(import('../../appLock.js')).resolves.toBeTruthy();
+    await expect(import('../../apps/web/src/client/appLock.js')).resolves.toBeTruthy();
   });
 
   it('Layer 4 UI 모듈 → no throw', async () => {
-    await expect(import('../../profile-tab.js')).resolves.toBeTruthy();
-    await expect(import('../../work-history.js')).resolves.toBeTruthy();
-    await expect(import('../../salary-parser.js')).resolves.toBeTruthy();
-    await expect(import('../../payslip-tab.js')).resolves.toBeTruthy();
-    await expect(import('../../payroll-views.js')).resolves.toBeTruthy();
-    await expect(import('../../pay-estimation.js')).resolves.toBeTruthy();
-    await expect(import('../../leave-tab.js')).resolves.toBeTruthy();
-    await expect(import('../../settings-ui.js')).resolves.toBeTruthy();
-    await expect(import('../../resume.js')).resolves.toBeTruthy();
-    await expect(import('../../job-templates.js')).resolves.toBeTruthy();
+    await expect(import('../../apps/web/src/client/profile-tab.js')).resolves.toBeTruthy();
+    await expect(import('@snuhmate/profile/work-history')).resolves.toBeTruthy();
+    await expect(import('../../apps/web/src/client/salary-parser.js')).resolves.toBeTruthy();
+    await expect(import('../../apps/web/src/client/payslip-tab.js')).resolves.toBeTruthy();
+    await expect(import('../../apps/web/src/client/payroll-views.js')).resolves.toBeTruthy();
+    await expect(import('../../apps/web/src/client/pay-estimation.js')).resolves.toBeTruthy();
+    await expect(import('../../apps/web/src/client/leave-tab.js')).resolves.toBeTruthy();
+    await expect(import('../../apps/web/src/client/settings-ui.js')).resolves.toBeTruthy();
+    await expect(import('../../apps/web/src/client/resume.js')).resolves.toBeTruthy();
+    await expect(import('../../apps/web/src/client/job-templates.js')).resolves.toBeTruthy();
   });
 
-  it('PROFILE_FIELDS 가 profile.js 에서 named export 으로 노출 (Phase 5 D3)', async () => {
-    const mod = await import('../../profile.js');
+  it('PROFILE_FIELDS 가 @snuhmate/profile 에서 named export 으로 노출 (Phase 5 D3)', async () => {
+    const mod = await import('@snuhmate/profile/profile');
     expect(mod.PROFILE_FIELDS).toBeDefined();
     expect(typeof mod.PROFILE_FIELDS).toBe('object');
     expect(mod.PROFILE_FIELDS.name).toBe('pfName');
@@ -74,7 +74,7 @@ describe('Phase 5: cross-module ESM imports', () => {
     seedFormFields([
       'pfName', 'pfEmployeeNumber', 'pfDepartment', 'pfHireDate', 'pfJobType',
     ]);
-    const profileMod = await import('../../profile.js');
+    const profileMod = await import('@snuhmate/profile/profile');
     profileMod.PROFILE.save({
       name: '홍길동', employeeNumber: '12345', department: '간호본부',
       hireDate: '2020-03-01', jobType: '간호',
@@ -89,15 +89,15 @@ describe('Phase 5: cross-module ESM imports', () => {
     expect(document.getElementById('pfJobType').value).toBe('간호');
   });
 
-  it('work-history.js named export — _loadWorkHistory / _saveWorkHistory / renderWorkHistory', async () => {
-    const mod = await import('../../work-history.js');
+  it('@snuhmate/profile/work-history named export — _loadWorkHistory / _saveWorkHistory / renderWorkHistory', async () => {
+    const mod = await import('@snuhmate/profile/work-history');
     expect(typeof mod._loadWorkHistory).toBe('function');
     expect(typeof mod._saveWorkHistory).toBe('function');
     expect(typeof mod.renderWorkHistory).toBe('function');
   });
 
   it('salary-parser.js named export — SALARY_PARSER (rebuildWorkHistoryFromPayslips 등)', async () => {
-    const mod = await import('../../salary-parser.js');
+    const mod = await import('../../apps/web/src/client/salary-parser.js');
     expect(mod.SALARY_PARSER).toBeDefined();
     expect(typeof mod.SALARY_PARSER.rebuildWorkHistoryFromPayslips).toBe('function');
   });

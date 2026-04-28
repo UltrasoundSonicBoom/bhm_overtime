@@ -7,8 +7,9 @@ let cssMain;
 let cssDark;
 
 beforeAll(() => {
-  cssMain = readFileSync('style.css', 'utf-8');
-  cssDark = existsSync('style.dark.css') ? readFileSync('style.dark.css', 'utf-8') : '';
+  // Phase 6 Task 4: root style.css / style.dark.css 삭제 → apps/web/src/styles/* 로 이동.
+  cssMain = readFileSync('apps/web/src/styles/globals.css', 'utf-8');
+  cssDark = existsSync('apps/web/src/styles/dark.css') ? readFileSync('apps/web/src/styles/dark.css', 'utf-8') : '';
 });
 
 describe('Design Tokens Split (Phase 5-followup)', () => {

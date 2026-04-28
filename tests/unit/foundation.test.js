@@ -3,23 +3,23 @@
 import { describe, it, expect } from 'vitest';
 
 describe('Layer 0 — Foundation ESM exports', () => {
-  it('data.js: import { DATA, DATA_STATIC } 동작', async () => {
-    const { DATA, DATA_STATIC } = await import('../../data.js');
+  it('@snuhmate/data: import { DATA, DATA_STATIC } 동작', async () => {
+    const { DATA, DATA_STATIC } = await import('@snuhmate/data');
     expect(DATA).toBeDefined();
     expect(DATA_STATIC).toBeDefined();
     expect(DATA.allowances).toBeDefined();
     expect(DATA.allowances.overtimeRates).toBeDefined();
   });
 
-  it('regulation-constants.js: import { ORDINARY_WAGE_HOURS, ... } 동작', async () => {
-    const RC = await import('../../regulation-constants.js');
+  it('@snuhmate/regulation-constants: import { ORDINARY_WAGE_HOURS, ... } 동작', async () => {
+    const RC = await import('@snuhmate/regulation-constants');
     expect(RC.ORDINARY_WAGE_HOURS).toBe(209);
     expect(RC.OVERTIME_UNIT_MINUTES).toBe(15);
     expect(RC.OVERTIME_MULTIPLIER).toBe(1.5);
   });
 
-  it('shared-utils.js: import { escapeHtml } 동작', async () => {
-    const { escapeHtml } = await import('../../shared-utils.js');
+  it('@snuhmate/shared-utils: import { escapeHtml } 동작', async () => {
+    const { escapeHtml } = await import('@snuhmate/shared-utils');
     expect(escapeHtml('<script>')).toBe('&lt;script&gt;');
     expect(escapeHtml(null)).toBe('');
   });

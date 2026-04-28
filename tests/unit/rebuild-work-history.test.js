@@ -30,7 +30,7 @@ describe('Phase 4-A Task 2: _buildSegmentsFromPayslips', () => {
     seedPayslip(2026, 2, '간호본부', '간호', 'J3-5');
     seedPayslip(2026, 3, '간호본부', '간호', 'J3-5');
     seedPayslip(2026, 4, '간호본부', '간호', 'J3-5');
-    await import('../../salary-parser.js');
+    await import('../../apps/web/src/client/salary-parser.js');
     const segs = window.SALARY_PARSER._buildSegmentsFromPayslips();
     expect(segs.length).toBe(1);
     expect(segs[0].dept).toBe('간호본부');
@@ -40,7 +40,7 @@ describe('Phase 4-A Task 2: _buildSegmentsFromPayslips', () => {
     seedPayslip(2026, 2, '내과', '간호', 'J3-3');
     seedPayslip(2026, 3, '간호본부', '간호', 'J3-4');
     seedPayslip(2026, 4, '간호본부', '간호', 'J3-5');
-    await import('../../salary-parser.js');
+    await import('../../apps/web/src/client/salary-parser.js');
     const segs = window.SALARY_PARSER._buildSegmentsFromPayslips();
     expect(segs.length).toBe(2);
     expect(segs[0].dept).toBe('내과');
@@ -52,7 +52,7 @@ describe('Phase 4-A Task 2: _buildSegmentsFromPayslips', () => {
 
   it('시나리오 3: profile.hireDate < 첫 명세서 → segments[0].from = hireDate', async () => {
     seedPayslip(2024, 1, '간호본부', '간호', 'J3-1');
-    await import('../../salary-parser.js');
+    await import('../../apps/web/src/client/salary-parser.js');
     const segs = window.SALARY_PARSER._buildSegmentsFromPayslips({ hireDate: '2020-03-01' });
     expect(segs[0].from).toBe('2020-03-01');
   });
@@ -60,7 +60,7 @@ describe('Phase 4-A Task 2: _buildSegmentsFromPayslips', () => {
   it('시나리오 7: payGrade J2-3 → J3-1 동일 부서 → 1 segment', async () => {
     seedPayslip(2026, 2, '간호본부', '간호', 'J2-3');
     seedPayslip(2026, 4, '간호본부', '간호', 'J3-1');
-    await import('../../salary-parser.js');
+    await import('../../apps/web/src/client/salary-parser.js');
     const segs = window.SALARY_PARSER._buildSegmentsFromPayslips();
     expect(segs.length).toBe(1);
   });
@@ -68,7 +68,7 @@ describe('Phase 4-A Task 2: _buildSegmentsFromPayslips', () => {
   it('normalizeDept: 간호본부 ↔ 간호부 동일 segment', async () => {
     seedPayslip(2026, 2, '간호부', '간호', 'J3-5');
     seedPayslip(2026, 4, '간호본부', '간호', 'J3-5');
-    await import('../../salary-parser.js');
+    await import('../../apps/web/src/client/salary-parser.js');
     const segs = window.SALARY_PARSER._buildSegmentsFromPayslips();
     expect(segs.length).toBe(1);
   });
@@ -78,7 +78,7 @@ describe('Phase 4-A Task 2: _buildSegmentsFromPayslips', () => {
     future.setFullYear(future.getFullYear() + 1);
     seedPayslip(future.getFullYear(), 12, '미래부서', '간호', 'J3-5');
     seedPayslip(2026, 2, '간호본부', '간호', 'J3-5');
-    await import('../../salary-parser.js');
+    await import('../../apps/web/src/client/salary-parser.js');
     const segs = window.SALARY_PARSER._buildSegmentsFromPayslips();
     expect(segs.length).toBe(1);
     expect(segs[0].dept).toBe('간호본부');
@@ -88,7 +88,7 @@ describe('Phase 4-A Task 2: _buildSegmentsFromPayslips', () => {
     seedPayslip(2026, 2, '간호본부', '간호', 'J3-5');                  // 급여
     seedPayslip(2026, 3, '보너스부서', '간호', 'J3-5', '보너스');       // 제외
     seedPayslip(2026, 4, '간호본부', '간호', 'J3-5');                  // 급여
-    await import('../../salary-parser.js');
+    await import('../../apps/web/src/client/salary-parser.js');
     const segs = window.SALARY_PARSER._buildSegmentsFromPayslips();
     expect(segs.length).toBe(1);
     expect(segs[0].dept).toBe('간호본부');
@@ -98,7 +98,7 @@ describe('Phase 4-A Task 2: _buildSegmentsFromPayslips', () => {
 describe('Phase 4-A Task 3: rebuildWorkHistoryFromPayslips 보호 정책', () => {
   it('시나리오 4: user record 1개 + 명세서 변경 → mode=banner', async () => {
     seedPayslip(2026, 4, '간호본부', '간호', 'J3-5');
-    await import('../../salary-parser.js');
+    await import('../../apps/web/src/client/salary-parser.js');
     const result = window.SALARY_PARSER.rebuildWorkHistoryFromPayslips({
       profile: { hireDate: '2020-03-01' },
       existing: [{
@@ -114,7 +114,7 @@ describe('Phase 4-A Task 3: rebuildWorkHistoryFromPayslips 보호 정책', () =>
 
   it('시나리오 5: 모든 source=auto → mode=replace + records 모두 source="auto"', async () => {
     seedPayslip(2026, 4, '간호본부', '간호', 'J3-5');
-    await import('../../salary-parser.js');
+    await import('../../apps/web/src/client/salary-parser.js');
     const result = window.SALARY_PARSER.rebuildWorkHistoryFromPayslips({
       profile: { hireDate: '2020-03-01' },
       existing: [{
@@ -130,7 +130,7 @@ describe('Phase 4-A Task 3: rebuildWorkHistoryFromPayslips 보호 정책', () =>
 
   it('빈 existing → mode=replace', async () => {
     seedPayslip(2026, 4, '간호본부', '간호', 'J3-5');
-    await import('../../salary-parser.js');
+    await import('../../apps/web/src/client/salary-parser.js');
     const result = window.SALARY_PARSER.rebuildWorkHistoryFromPayslips({
       profile: { hireDate: '2020-03-01' },
       existing: [],
@@ -144,7 +144,7 @@ describe('Phase 4-A Task 3: rebuildWorkHistoryFromPayslips 보호 정책', () =>
 
 describe('Phase 4-A Task 4: 폴백 명세서 0개', () => {
   it('시나리오 6: 명세서 0개 → mode=empty', async () => {
-    await import('../../salary-parser.js');
+    await import('../../apps/web/src/client/salary-parser.js');
     const result = window.SALARY_PARSER.rebuildWorkHistoryFromPayslips({
       profile: { hireDate: '2020-03-01', department: '간호본부', jobType: '간호' },
       existing: [],

@@ -17,6 +17,9 @@ const registry = JSON.parse(
 
 // Phase 2-B: data.js 는 ESM.
 import { DATA } from '@snuhmate/data';
+// Phase 6 Task 4: root *.js 삭제 → @snuhmate/* 패키지 import.
+import { CALC } from '@snuhmate/calculators';
+import { PROFILE } from '@snuhmate/profile/profile';
 
 function getPath(obj, pathStr) {
   return pathStr.split('.').reduce((acc, key) => (acc == null ? undefined : acc[key]), obj);
@@ -49,7 +52,6 @@ describe('calc-registry.json ↔ DATA 배열 구조 drift', () => {
 });
 
 // ── Task 4: CALC 함수 존재성 ──
-const { CALC } = require('../../calculators.js');
 
 describe('CALC 함수 존재성 (registry 기준)', () => {
   registry.calc_functions.forEach(({ name, required, note }) => {
@@ -78,7 +80,6 @@ describe('CALC.xxx 외부 호출 참조 무결성', () => {
       // 알려진 broken — 현재 skip. Plan F 완료 후 skip 해제해 PASS 로 승격.
       it.skip(`[${status}] CALC.${name} — ${note}`, () => {
         if (status === 'wrong_namespace' && actual_namespace === 'PROFILE') {
-          const { PROFILE } = require('../../profile.js');
           expect(typeof PROFILE[name]).toBe('function'); // 현재는 PROFILE 에 있음
           expect(typeof CALC[name]).toBe('function');    // 수정 후 CALC 에도 있거나 호출부가 PROFILE 로 변경되어야
         } else if (status === 'broken') {

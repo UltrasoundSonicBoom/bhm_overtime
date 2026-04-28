@@ -1,7 +1,7 @@
 # Paytable Link Report
 
 > 자동 생성: `scripts/check-paytable.js`
-> 생성 시각: 2026-04-27T05:28:18.297Z
+> 생성 시각: 2026-04-28T01:29:56.865Z
 > 입력: `data.js DATA_STATIC.payTables` ↔ `data/full_union_regulation_2026.md` 별첨 보수표
 
 ## 요약

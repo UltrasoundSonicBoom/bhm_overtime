@@ -77,14 +77,14 @@ function seedProfileForm() {
 describe('Issue 1: initProfileTab — 명세서 업로드 후 form 자동 반영', () => {
   it('PROFILE 저장된 상태에서 initProfileTab 호출 → form 채워짐', async () => {
     seedProfileForm();
-    const profileMod = await import('../../profile.js');
+    const profileMod = await import('@snuhmate/profile/profile');
     profileMod.PROFILE.save({
       name: '홍길동', employeeNumber: '12345', department: '간호본부',
       hireDate: '2020-03-01', jobType: '간호직', grade: 'J3', year: 5,
     });
 
     // initProfileTab 임포트 (window 노출 가정)
-    await import('../../profile-tab.js');
+    await import('../../apps/web/src/client/profile-tab.js');
     expect(typeof window.initProfileTab).toBe('function');
     window.initProfileTab();
 
@@ -121,7 +121,7 @@ describe('Issue 2: clearProfile — 전체 사용자 데이터 wipe', () => {
     // Phase 5-followup: clearProfile 가 modal 띄움 — 테스트 hook 으로 자동 confirm
     window.__bhmConfirmClearForTest = () => true;
 
-    await import('../../profile-tab.js');
+    await import('../../apps/web/src/client/profile-tab.js');
     expect(typeof window.clearProfile).toBe('function');
     window.clearProfile();
 
@@ -152,7 +152,7 @@ describe('Issue 2: clearProfile — 전체 사용자 데이터 wipe', () => {
     window.__bhmReloadHook = () => { reloadCalled = true; };
     window.__bhmConfirmClearForTest = () => false;
 
-    await import('../../profile-tab.js');
+    await import('../../apps/web/src/client/profile-tab.js');
     window.clearProfile();
 
     expect(localStorage.getItem('bhm_hr_profile')).not.toBeNull();

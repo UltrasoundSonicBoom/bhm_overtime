@@ -22,13 +22,13 @@ describe('work-history migration: source 필드', () => {
       rotations: [], updatedAt: 'now'
     };
     localStorage.setItem('bhm_work_history_guest', JSON.stringify([oldRec]));
-    await import('../../work-history.js');
+    await import('@snuhmate/profile/work-history');
     const loaded = window._loadWorkHistory();
     expect(loaded[0].source).toBe('user');
   });
 
   it('save 시 source 필드 보존 (auto/user 양쪽)', async () => {
-    await import('../../work-history.js');
+    await import('@snuhmate/profile/work-history');
     const records = [
       { id: 'a1', workplace: 'X', dept: 'A', from: '2020-01', to: '', role: '', desc: '', rotations: [], source: 'auto', updatedAt: 'now' },
       { id: 'b1', workplace: 'X', dept: 'B', from: '2021-01', to: '', role: '', desc: '', rotations: [], source: 'user', updatedAt: 'now' },
@@ -46,7 +46,7 @@ describe('work-history migration: source 필드', () => {
       rotations: [], source: 'auto', updatedAt: 'now'
     };
     localStorage.setItem('bhm_work_history_guest', JSON.stringify([autoRec]));
-    await import('../../work-history.js');
+    await import('@snuhmate/profile/work-history');
     const loaded = window._loadWorkHistory();
     expect(loaded[0].source).toBe('auto');
   });

@@ -12,14 +12,15 @@ const path = require('path');
 const { pathToFileURL } = require('url');
 
 const ROOT = path.resolve(__dirname, '..');
-const DATA_PATH = path.join(ROOT, 'data.js');
+// Phase 6 Task 4: root data.js 삭제 → packages/data 로 직접 참조.
+const DATA_PATH = path.join(ROOT, 'packages', 'data', 'src', 'index.js');
 // Phase 2-A 후: 규정 본문은 public/data/ 하위 (Vite publicDir).
 const REG_PATH = path.join(ROOT, 'public', 'data', 'full_union_regulation_2026.md');
 const REPORT_PATH = path.join(ROOT, 'docs', 'architecture', 'paytable-link-report.md');
 
-// Phase 2-B 후: data.js 는 ESM. CJS .cjs 에서 동적 import 으로 로드.
+// Phase 2-B 후: data 모듈은 ESM. CJS .cjs 에서 동적 import 으로 로드.
 async function loadData() {
-    // Node 의 ESM 로더는 브라우저 globals 미정의 → data.js 의 호환층
+    // Node 의 ESM 로더는 브라우저 globals 미정의 → data 모듈의 호환층
     // (`if (typeof window !== 'undefined')`) 가 자동 스킵되어 안전하게 import 됨.
     const mod = await import(pathToFileURL(DATA_PATH).href);
     return mod.DATA_STATIC;
