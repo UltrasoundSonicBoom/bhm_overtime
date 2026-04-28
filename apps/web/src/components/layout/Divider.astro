@@ -1,15 +1,30 @@
 ---
 /**
  * Divider — horizontal 또는 vertical 구분선.
- * spacing 은 ds spacing scale (default 4=16px).
+ * spacing 은 ds spacing scale (4px grid).
+ *
+ * Note: Tailwind JIT 가 ${} 보간 스캔 불가 → explicit map 매핑.
  */
 interface Props {
   orientation?: 'horizontal' | 'vertical';
-  spacing?: number;
+  /** Spacing token (4px grid: 0..6, 8, 10, 12, 16, 20) */
+  spacing?: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 8 | 10 | 12 | 16 | 20;
 }
 const { orientation = 'horizontal', spacing = 4 } = Astro.props;
+
+const yMap: Record<number, string> = {
+  0: 'my-0', 1: 'my-1', 2: 'my-2', 3: 'my-3',
+  4: 'my-4', 5: 'my-5', 6: 'my-6', 8: 'my-8',
+  10: 'my-10', 12: 'my-12', 16: 'my-16', 20: 'my-20',
+};
+const xMap: Record<number, string> = {
+  0: 'mx-0', 1: 'mx-1', 2: 'mx-2', 3: 'mx-3',
+  4: 'mx-4', 5: 'mx-5', 6: 'mx-6', 8: 'mx-8',
+  10: 'mx-10', 12: 'mx-12', 16: 'mx-16', 20: 'mx-20',
+};
+
 const orientClass = orientation === 'horizontal'
-  ? `border-t border-ds-border-default my-${spacing}`
-  : `border-l border-ds-border-default mx-${spacing} self-stretch`;
+  ? `border-t border-ds-border-default ${yMap[spacing] ?? 'my-4'}`
+  : `border-l border-ds-border-default ${xMap[spacing] ?? 'mx-4'} self-stretch`;
 ---
 <hr role="separator" aria-orientation={orientation} class={orientClass} />

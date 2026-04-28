@@ -13,7 +13,7 @@ interface Props {
 const { title, description, collapsible = false, defaultOpen = true, id } = Astro.props;
 ---
 {collapsible ? (
-  <details class="mb-4 border border-ds-border-default rounded-brand-md p-4" open={defaultOpen}>
+  <details id={id} class="mb-4 border border-ds-border-default rounded-brand-md p-4" open={defaultOpen}>
     <summary class="cursor-pointer text-ds-h4 text-ds-text-primary">{title}</summary>
     {description && <p class="mt-2 text-ds-body-sm text-ds-text-muted">{description}</p>}
     <div class="mt-4">

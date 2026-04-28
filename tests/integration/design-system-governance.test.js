@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync, readdirSync } from 'fs';
 import { fileURLToPath } from 'url';
-import { dirname, resolve } from 'path';
+import { dirname, resolve, join } from 'path';
 
 let cfg;
 beforeAll(() => {
@@ -45,5 +45,27 @@ describe('Tailwind config — design system extensions', () => {
     expect(cfg).toMatch(/ringColor:\s*\{[^}]*'ds-focus':\s*'var\(--focus-ring-color\)'/s);
     expect(cfg).toMatch(/ringWidth:\s*\{[^}]*'ds':\s*'var\(--focus-ring-width\)'/s);
     expect(cfg).toMatch(/ringOffsetWidth:\s*\{[^}]*'ds':\s*'var\(--focus-ring-offset\)'/s);
+  });
+});
+
+describe('Tailwind JIT — extended utilities present in dist CSS (build smoke)', () => {
+  // 이 테스트는 build 후 dist/_astro/*.css 를 읽어서 extended utility 가
+  // 실제로 generate 되었는지 확인한다. build 가 없으면 skip.
+  it('dist CSS 에 gap-12 / my-4 / mx-4 / grid-cols-3 등 extended class 존재 (Slice 6 JIT 검증)', () => {
+    const distDir = 'apps/web/dist/_astro';
+    if (!existsSync(distDir)) {
+      console.warn('[skip] dist 없음 — pnpm --filter @snuhmate/web build 후 다시 실행하세요.');
+      return;
+    }
+    const files = readdirSync(distDir).filter(f => f.endsWith('.css'));
+    if (files.length === 0) {
+      console.warn('[skip] dist CSS 없음.');
+      return;
+    }
+    const allCss = files.map(f => readFileSync(join(distDir, f), 'utf-8')).join('\n');
+    // Stack/Grid/Divider 의 explicit map 으로 인해 generate 되어야 하는 utility
+    for (const cls of ['.gap-12', '.my-4', '.mx-4', '.grid-cols-3']) {
+      expect(allCss).toContain(cls);
+    }
   });
 });

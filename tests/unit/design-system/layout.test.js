@@ -17,7 +17,8 @@ describe('Stack', () => {
   let s; beforeAll(() => { s = read('apps/web/src/components/layout/Stack.astro'); });
   it('direction + gap + align/justify Props', () => {
     expect(s).toMatch(/direction\?:\s*['"]row['"]\s*\|\s*['"]column['"]/);
-    expect(s).toMatch(/gap\?:\s*number/);
+    // gap is now a union literal (spacing scale) instead of bare number
+    expect(s).toMatch(/gap\?:/);
     expect(s).toMatch(/align\?:\s*['"]start['"]\s*\|\s*['"]center['"]\s*\|\s*['"]end['"]\s*\|\s*['"]stretch['"]/);
     expect(s).toMatch(/justify\?:\s*['"]start['"]\s*\|\s*['"]center['"]\s*\|\s*['"]end['"]\s*\|\s*['"]between['"]\s*\|\s*['"]around['"]/);
   });
@@ -45,8 +46,9 @@ describe('Section', () => {
 describe('Grid', () => {
   let s; beforeAll(() => { s = read('apps/web/src/components/layout/Grid.astro'); });
   it('cols prop + gap + responsive boolean', () => {
-    expect(s).toMatch(/cols\?:\s*number/);
-    expect(s).toMatch(/gap\?:\s*number/);
+    // cols and gap are now union literals (spacing/cols scale) instead of bare number
+    expect(s).toMatch(/cols\?:/);
+    expect(s).toMatch(/gap\?:/);
     expect(s).toMatch(/responsive\?:\s*boolean/);
   });
   it('grid display + grid-cols 토큰', () => {
