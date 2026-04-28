@@ -482,6 +482,41 @@ const db = initializeFirestore(app, {
 
 ---
 
+## 19.5 Phase 14 — Vercel → Cloudflare Pages 호스팅 이전 (v2 신규, 2026-04-29 추가)
+
+> Phase 8 완료 후 별도 phase. 본 phase 는 코드 변경 0 + 인프라 이전만.
+
+### 19.5.1 동기
+- Vercel Hobby 비상업 ToS 회색지대 (snuhmate 의료직 서비스, AI 분석 유료 기능)
+- 한국 사용자 latency: Vercel us-east default vs Cloudflare ICN edge 무료
+- DNS+host 통합 (snuhmate.com DNS 가 이미 Cloudflare)
+- 무료 티어: Vercel 100GB 대역폭 vs Cloudflare 무제한
+
+### 19.5.2 작업 (예상 1-2일)
+1. `apps/web/public/_headers` 작성 — `vercel.json` headers 포팅 (CSP/cache 헤더)
+2. `apps/web/public/_redirects` 작성 — `vercel.json` redirects 포팅
+3. Cloudflare Pages 프로젝트 생성 + GitHub 연결
+   - Build command: `pnpm install --frozen-lockfile && pnpm --filter @snuhmate/web build`
+   - Output: `apps/web/dist`
+4. env vars 일괄 등록 (Production + Preview):
+   - `PUBLIC_FIREBASE_*` 7개 + 기존 Neon/Google/OpenAI 등
+5. Preview 배포로 검증 — 8 탭 + CSP + Auth + 마이그레이션 다이얼로그
+6. DNS swap: CNAME `www.snuhmate.com` → `<pages>.pages.dev` (CF DNS 즉시 반영)
+7. Vercel 프로젝트 disable (rollback 위해 즉시 삭제 X — 1 주 후)
+8. `vercel.json` archive (`archive/legacy-vercel/`)
+9. `.vercel/` gitignore 유지 + 메모리 갱신
+
+### 19.5.3 회귀 가드 (필수)
+- 8 탭 콘솔 에러 0 (Playwright)
+- CSP 검증 — Cloudflare 의 `_headers` 가 vercel.json CSP 와 동일 또는 더 엄격
+- service worker 캐시 무효화 (Pages 빌드 후 1회)
+- Firebase Auth + Firestore 정상 작동 (Production env vars)
+
+### 19.5.4 Risk
+- Phase 8 production 안정화 후 (≈ 2 weeks) 진입 권장 — 두 변경 (Phase 8 신규 + 호스팅 이전) 동시 디버깅 surface 회피
+
+---
+
 ## 19. Supabase 잔여물 정리 (v2 신규)
 
 > 사용자 승인 blueprint Phase 11. 메모리 (project_backend_upgrade.md / Supabase 재검토 금지) 와 정합.
