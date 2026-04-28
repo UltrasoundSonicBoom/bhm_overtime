@@ -1,0 +1,24 @@
+{
+  "name": "@snuhmate/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check"
+  },
+  "dependencies": {
+    "astro": "^4.16.18",
+    "@snuhmate/calculators": "workspace:*",
+    "@snuhmate/data": "workspace:*",
+    "@snuhmate/profile": "workspace:*",
+    "@snuhmate/regulation-constants": "workspace:*",
+    "@snuhmate/shared-utils": "workspace:*"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.4",
+    "typescript": "^5.7.2"
+  }
+}

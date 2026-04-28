@@ -1,0 +1,306 @@
+---
+// Phase 6 Task 4-2: tutorial.html → Astro page
+// 원본: root tutorial.html
+// Self-contained: shared header/footer 미사용 (tut-container 자체 chrome).
+// 인라인 <script> 는 /client/tutorial.js 로 분리 (Task 4-5 에서 src/client/ 로 이동).
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout title="SNUH 메이트 - 사용법 튜토리얼" description="SNUH 메이트 사용법 튜토리얼" showFooterNav={false}>
+  <div class="tut-container">
+    <!-- 헤더 -->
+    <div class="tut-header">
+      <div class="tut-header-title">
+        <img src="/snuhmatecircle.png" alt="" style="width:28px;height:28px;border-radius:50%;">
+        사용법 튜토리얼
+      </div>
+      <button class="tut-header-skip" data-action="goToApp">건너뛰기 &times;</button>
+    </div>
+
+    <!-- 프로그레스 -->
+    <div class="tut-progress-wrap">
+      <div class="tut-progress-bar">
+        <div class="tut-progress-fill" id="progressFill" style="width:12.5%"></div>
+      </div>
+      <span class="tut-progress-label" id="progressLabel">1 / 8</span>
+    </div>
+
+    <!-- 스텝 콘텐츠 -->
+    <div class="tut-step" id="stepContent"></div>
+
+    <!-- 하단 버튼 -->
+    <div class="tut-footer">
+      <button class="tut-btn" id="btnPrev" data-action="prevStep">&#8592; 이전</button>
+      <button class="tut-btn primary" id="btnNext" data-action="nextStep">다음 &#8594;</button>
+    </div>
+  </div>
+
+  <script src="/client/tutorial.js" is:inline></script>
+</BaseLayout>
+
+<style is:global>
+  /* ── 튜토리얼 전용 레이아웃 ── */
+  body {
+    background: var(--bg-primary);
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .tut-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    max-width: 500px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 16px;
+  }
+
+  /* ── 상단 헤더 ── */
+  .tut-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border-glass);
+    margin-bottom: 16px;
+  }
+
+  .tut-header-title {
+    font-size: var(--text-title-large);
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .tut-header-skip {
+    font-size: var(--text-body-normal);
+    font-weight: 600;
+    color: var(--text-muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: var(--radius-md);
+    transition: all 0.15s;
+  }
+
+  .tut-header-skip:hover {
+    color: var(--text-primary);
+    background: var(--bg-glass);
+  }
+
+  /* ── 프로그레스 바 ── */
+  .tut-progress-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .tut-progress-bar {
+    flex: 1;
+    height: 4px;
+    background: var(--bg-glass);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .tut-progress-fill {
+    height: 100%;
+    background: var(--accent-indigo);
+    border-radius: 2px;
+    transition: width 0.4s cubic-bezier(.4, 0, .2, 1);
+  }
+
+  .tut-progress-label {
+    font-size: var(--text-label-small);
+    font-weight: 600;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  /* ── 스텝 콘텐츠 ── */
+  .tut-step {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    animation: tutFadeIn 0.35s ease;
+    overflow: hidden;
+  }
+
+  @keyframes tutFadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .tut-step-title {
+    font-size: var(--text-title-large);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+  }
+
+  .tut-step-desc {
+    font-size: var(--text-body-large);
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+
+  .tut-step-desc .hl {
+    color: var(--accent-indigo);
+    font-weight: 600;
+  }
+
+  .tut-step-body {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 16px;
+  }
+
+  /* ── 와이어프레임 카드 ── */
+  .wf-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+
+  .wf-card-title {
+    font-weight: 700;
+    font-size: var(--text-body-large);
+    color: var(--text-primary);
+    margin-bottom: 10px;
+  }
+
+  .wf-field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    background: var(--bg-glass);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-md);
+    font-size: var(--text-body-normal);
+    color: var(--text-primary);
+  }
+
+  .wf-field .wf-label {
+    color: var(--text-muted);
+    font-size: var(--text-body-normal);
+    min-width: 55px;
+  }
+
+  .wf-field.active {
+    border-color: var(--accent-indigo);
+    background: rgba(99, 102, 241, 0.06);
+  }
+
+  .wf-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-glass);
+  }
+
+  .wf-row:last-child {
+    border-bottom: none;
+  }
+
+  .wf-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .wf-progress {
+    margin-bottom: 2px;
+  }
+
+  .wf-progress-bar {
+    height: 5px;
+    background: var(--bg-glass);
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 4px 0 2px;
+  }
+
+  .wf-btn-mock {
+    padding: 10px;
+    border-radius: var(--radius-md);
+    text-align: center;
+    font-weight: 700;
+    font-size: var(--text-body-normal);
+  }
+
+  /* ── Neo 테마 와이어프레임 카드 ── */
+  html[data-theme="neo"] .wf-card {
+    border: 2.5px solid #1a1a1a;
+    box-shadow: 3px 3px 0 #1a1a1a;
+  }
+
+  html[data-theme="neo"] .wf-field {
+    border: 2px solid #1a1a1a;
+  }
+
+  /* ── 하단 네비게이션 ── */
+  .tut-footer {
+    padding: 16px 0;
+    border-top: 1px solid var(--border-glass);
+    display: flex;
+    gap: 10px;
+    margin-top: auto;
+  }
+
+  .tut-btn {
+    flex: 1;
+    padding: 14px;
+    border-radius: var(--radius-lg);
+    font-weight: 700;
+    font-size: var(--text-body-large);
+    cursor: pointer;
+    border: 1.5px solid var(--border-glass);
+    background: var(--bg-glass);
+    color: var(--text-secondary);
+    transition: all 0.15s;
+    text-align: center;
+  }
+
+  .tut-btn:active {
+    transform: scale(0.97);
+  }
+
+  .tut-btn.primary {
+    background: var(--accent-indigo);
+    color: #fff;
+    border-color: var(--accent-indigo);
+    flex: 2;
+  }
+
+  html[data-theme="neo"] .tut-btn {
+    border: 2.5px solid #1a1a1a;
+    box-shadow: 3px 3px 0 #1a1a1a;
+  }
+
+  html[data-theme="neo"] .tut-btn:active {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 #1a1a1a;
+  }
+
+  html[data-theme="neo"] .tut-btn.primary {
+    background: var(--accent-violet);
+    border-color: #1a1a1a;
+  }
+</style>

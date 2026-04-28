@@ -1,0 +1,115 @@
+---
+// Phase 6 Task 5-1: HomeIsland.astro
+// 기존 apps/web/public/tabs/tab-home.html 컨텐츠를 Astro component 으로 inline.
+// tab-loader.js 의 fetch lazy-load 대신 빌드 시 inline → 콘솔 에러 0 + race 제거.
+// 기존 initHomeTab() 함수는 app.js 에서 그대로 호출 (tab 진입 시).
+// HTML 본문은 tab-home.html 에서 1:1 복사. 수정 금지.
+---
+<div class="tab-content" id="tab-home">
+  <!-- 프로필 미저장 힌트 배너 -->
+  <div id="homeProfileNudge" class="info-note-banner" style="display:none;">
+    <span>📌</span>
+    <span>아직 개인정보가 없어요 — <a onclick="switchTab('profile')">직종·호봉</a>을 입력하면 시간외 수당이 자동 계산됩니다.</span>
+  </div>
+
+  <!-- 내 현황 요약 카드 -->
+  <div class="home-summary-grid">
+    <div class="home-summary-card">
+      <img src="/overtime.png" alt="시간외" class="home-card-img home-card-img-toggle" id="homeOtImg"
+        onclick="switchHomePeriod(_homePeriod === 'month' ? 'year' : 'month')">
+      <div class="home-card-body" id="homeOtBody" style="display:none;">
+        <div class="home-card-stats" id="homeOtStats"></div>
+      </div>
+    </div>
+    <div class="home-summary-card">
+      <img src="/vacation.png" alt="휴가" class="home-card-img home-card-img-toggle" id="homeLeaveImg"
+        onclick="switchHomePeriod(_homePeriod === 'month' ? 'year' : 'month')">
+      <div class="home-card-body" id="homeLeaveBody" style="display:none;">
+        <div class="home-card-stats" id="homeLeaveStats"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 사용자 한마디 -->
+  <div class="card home-testimonial-card">
+    <div class="card-title" style="font-size:var(--text-body-large); margin-bottom:8px;">
+      <span class="icon" style="color:var(--accent-violet);">💬</span> 사용자 한마디
+    </div>
+    <div class="testimonial-slider">
+      <div class="testimonial-track">
+        <div class="testimonial-item">
+          <span class="testimonial-quote">"휴가 얼마나 남았는지 금방 알 수 있어서 휴가계획 짜기 좋아요"</span>
+          <span class="testimonial-author">핵의학과 · 보건직</span>
+        </div>
+        <div class="testimonial-item">
+          <span class="testimonial-quote">"이번달 온콜 몇 번 했는지 까먹었는데 이제 바로 기록할 수 있어서 최고!"</span>
+          <span class="testimonial-author">영상의학과 · 보건직</span>
+        </div>
+        <div class="testimonial-item">
+          <span class="testimonial-quote">"연차 남은 거 휴대폰에서 바로 알 수 있어서 좋아요"</span>
+          <span class="testimonial-author">원무과 · 사무직</span>
+        </div>
+        <div class="testimonial-item">
+          <span class="testimonial-quote">"이제야 내 통상임금이 어떻게 계산하는지 알겠네요 ㅎㅎ"</span>
+          <span class="testimonial-author">영상의학과 · 보건직</span>
+        </div>
+        <div class="testimonial-item">
+          <span class="testimonial-quote">"야근했는데 기록이 없어서 수당 빠진 적 있거든요. 이제 미리 확인해요"</span>
+          <span class="testimonial-author">진단검사의학과 · 보건직</span>
+        </div>
+        <div class="testimonial-item">
+          <span class="testimonial-quote">"내 시간외 근무 수당을 바로 알 수 있어서 좋아요 ㅋㅋ"</span>
+          <span class="testimonial-author">외래 간호사 · 3교대</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 공지사항 및 업데이트 -->
+  <div class="card home-newsboard">
+    <div class="newsboard-tabs">
+      <button class="newsboard-tab" data-newstab="notice" onclick="switchNewsTab('notice')">📢 공지사항</button>
+      <button class="newsboard-tab active" data-newstab="changelog" onclick="switchNewsTab('changelog')">🎉
+        업데이트</button>
+    </div>
+    <div class="newsboard-body" style="border-top-color: rgba(16, 185, 129, 0.25);">
+      <!-- 공지사항 패널 -->
+      <div class="newsboard-panel" id="newsNoticePanel">
+        <div class="changelog-pager-content" id="noticeContent"></div>
+        <div class="changelog-pager-nav" id="noticeNav" style="display:none;">
+          <button class="changelog-nav-btn" onclick="noticePage(-1)">‹</button>
+          <span class="changelog-pager-indicator" id="noticeIndicator"></span>
+          <button class="changelog-nav-btn" onclick="noticePage(1)">›</button>
+        </div>
+      </div>
+      <!-- 업데이트 패널 -->
+      <div class="newsboard-panel active" id="newsChangelogPanel">
+        <div class="changelog-pager-content" id="changelogContent"></div>
+        <div class="changelog-pager-nav">
+          <button class="changelog-nav-btn" id="changelogPrev" onclick="changelogPage(-1)">‹</button>
+          <span class="changelog-pager-indicator" id="changelogIndicator"></span>
+          <button class="changelog-nav-btn" id="changelogNext" onclick="changelogPage(1)">›</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 프라이버시 안내 -->
+  <div class="home-privacy-banner">
+    <span>🔐</span>
+    <span>모든 데이터는 내 브라우저에만 저장됩니다.<br> 개발자도, 서버도 절대 볼 수 없어요.</span>
+  </div>
+
+  <!-- 튜토리얼 -->
+  <a href="./tutorial.html" class="btn btn-outline"
+    style="display:block; font-size:var(--text-body-normal); padding:10px; color:var(--accent-indigo); border-color:var(--accent-indigo); text-decoration:none; text-align:center;">
+    🎓 사용법 튜토리얼
+  </a>
+
+  <!-- G8: 공유하기 버튼 -->
+  <button id="shareAppBtn" onclick="shareApp()" style="display:block; width:100%; margin-top:10px; padding:10px; background:none;
+           border:1px solid var(--border-glass,rgba(0,0,0,0.15)); border-radius:10px;
+           font-size:var(--text-body-normal); color:var(--text-muted); cursor:pointer;">
+    🔗 동료에게 공유하기
+  </button>
+</div>

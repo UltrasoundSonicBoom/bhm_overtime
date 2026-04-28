@@ -1,0 +1,135 @@
+---
+// Phase 6 Task 5-5: SettingsIsland.astro
+// 기존 apps/web/public/tabs/tab-settings.html 컨텐츠를 Astro component 으로 inline.
+// tab-loader.js fetch lazy-load 대신 빌드 시 inline → 콘솔 에러 0 + race 제거.
+// CRITICAL: Phase 5-followup-2 fix (commit 6a15385) — <label for="backupFileInput"> 패턴 보존.
+//   기존 onclick="triggerBackupFilePicker()" 는 위임 chain 에서 user gesture 손실 → 파일 선택기 안 뜸.
+//   사용자 보고 회귀 ("복원 버튼 안 됨"). 루트 레포 public/tabs/tab-settings.html 의 label-for 버전을 사용.
+//   apps/web/public/tabs/tab-settings.html 은 옛 버전 (Task 5-3 PayrollIsland buildEmptyState 와 같은 패턴).
+// HTML 본문은 root 레포의 fix 적용본 기준 1:1 복사. 수정 금지.
+---
+<div class="tab-content" id="tab-settings">
+  <!-- 🔒 앱 잠금 -->
+  <div class="card" id="appLockSettingsCard" style="max-width:600px; margin:0 auto;">
+    <div class="card-title" style="font-size:var(--text-body-large);">
+      <span class="icon indigo">🔒</span> 앱 잠금
+      <span id="appLockStatusBadge" class="badge"
+        style="display:none; margin-left:8px; background:var(--accent-emerald,#10B981); color:#fff;">켜짐</span>
+    </div>
+    <p style="font-size:var(--text-body-normal); color:var(--text-muted); margin-bottom:12px;">
+      앱을 열 때 PIN 또는 생체인증(Face ID·지문)으로 잠금을 설정해 내 정보를 보호하세요.<br>
+      <span style="font-size:0.75rem;">잠금은 이 기기에서만 적용됩니다.</span>
+    </p>
+    <div id="appLockOff" style="display:block;">
+      <button class="btn btn-primary" onclick="onAppLockSetupPin()" style="width:100%;">
+        🔒 PIN 설정하기
+      </button>
+    </div>
+    <div id="appLockOn" style="display:none;">
+      <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+        <button class="btn btn-outline" onclick="onAppLockChangePin()"
+          style="font-size:var(--text-body-normal); padding:6px 14px;">
+          🔑 PIN 변경
+        </button>
+        <button class="btn btn-outline" onclick="onAppLockDisable()"
+          style="font-size:var(--text-body-normal); padding:6px 14px; color:var(--accent-rose,#EF4444); border-color:var(--accent-rose,#EF4444);">
+          🔓 잠금 해제
+        </button>
+      </div>
+      <div id="biometricSettingRow"
+        style="display:none; margin-top:8px; padding-top:10px; border-top:1px solid var(--border-glass);">
+        <p
+          style="font-size:var(--text-body-normal); color:var(--text-primary); font-weight:600; margin-bottom:6px;">
+          생체인증 (Face ID / 지문)</p>
+        <div id="biometricOff">
+          <button class="btn btn-outline" onclick="onBiometricRegister()"
+            style="font-size:var(--text-body-normal); padding:6px 14px;">
+            🪪 생체인증 추가
+          </button>
+        </div>
+        <div id="biometricOn" style="display:none;">
+          <span class="badge"
+            style="background:var(--accent-emerald,#10B981);color:#fff;margin-right:8px;">등록됨</span>
+          <button class="btn btn-outline" onclick="onBiometricDisable()"
+            style="font-size:var(--text-body-normal); padding:4px 10px; color:var(--accent-rose,#EF4444); border-color:var(--accent-rose,#EF4444);">
+            제거
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 💾 데이터 백업 및 복구 -->
+  <div id="localBackupSection" class="card" style="max-width:600px; margin:20px auto 0;">
+    <div class="card-title" style="font-size:var(--text-body-large);"><span class="icon indigo">💾</span> 데이터 백업 및
+      복구</div>
+    <p style="font-size:var(--text-body-normal); color:var(--text-muted); margin-bottom:12px;">클라우드 동기화 없이 브라우저 내부에
+      저장된 기록을 파일로 안전하게 평생 보관하고 복원할 수 있습니다.</p>
+    <div class="form-row" style="grid-template-columns: 1fr 1fr;">
+      <button class="btn btn-outline" onclick="downloadBackup()"
+        style="flex:1; font-weight:600; font-size:var(--text-body-normal); padding:8px 4px;">📥 다운로드 (백업)</button>
+      <!-- Phase 5-followup-2 fix: <label for=""> 패턴 — 브라우저 native 처리, user gesture 보장 -->
+      <!-- 이전 onclick="triggerBackupFilePicker()" 는 위임 chain 에서 user gesture 손실 → file picker 안 뜸 -->
+      <label for="backupFileInput" class="btn btn-outline"
+        style="flex:1; font-weight:600; text-align:center; cursor:pointer; font-size:var(--text-body-normal); padding:8px 4px; display:flex; align-items:center; justify-content:center;">
+        📤 불러오기 (복원)
+      </label>
+      <!-- accept 비워둠 — 안드로이드/iOS 사진 폴더 회귀 방지. JS 파일명+내용 검증 -->
+      <input type="file" id="backupFileInput" style="display:none"
+        onchange="uploadBackup(event)">
+    </div>
+    <p style="font-size:0.7rem; color:var(--text-muted); margin-top:6px; line-height:1.4;">
+      💡 복원 시 <strong>snuh_backup_*.json</strong> 파일을 선택하세요.<br>
+      📱 <strong>안드로이드</strong>: "파일" 앱 → "다운로드" 폴더에서 선택 (사진 폴더 X)<br>
+      🍎 <strong>iPhone/Safari</strong>: "파일" 앱 → "다운로드"에서 선택<br>
+      💻 <strong>크롬/사파리</strong>: 다운로드 폴더에서 자동 표시
+    </p>
+  </div>
+
+  <!-- 🗓️ 팀 근무표 캘린더 -->
+  <div id="teamScheduleSyncSection" class="card" style="max-width:600px; margin:20px auto 0; display:none;">
+    <div class="card-title" style="font-size:var(--text-body-large);">
+      <span class="icon indigo">🗓️</span> 팀 근무표 캘린더
+    </div>
+    <p style="font-size:var(--text-body-normal); color:var(--text-muted); margin-bottom:12px;">
+      배포된 팀 근무표가 있으면 이번 달 <strong>D/E/N 근무와 승인 휴가만</strong> `.ics` 파일로 내려받아 일반 캘린더에 가져올 수 있어요.
+      Google Calendar 심사 중에는 이 방식으로 테스트합니다.
+    </p>
+    <div class="info-note-banner" style="margin-bottom:12px;">
+      <span>ℹ️</span>
+      <span>OFF는 기본 동기화하지 않고, 팀 검토/배포는 팀 워크스페이스에서 진행합니다.</span>
+    </div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <button id="teamScheduleIcsBtn" class="btn btn-outline" onclick="downloadTeamScheduleIcs(this)"
+        style="font-size:var(--text-body-normal); padding:6px 12px;">📥 이번 달 근무표 .ics 받기</button>
+      <a class="btn btn-outline" href="./nurse_admin/index.html"
+        style="font-size:var(--text-body-normal); padding:6px 12px; text-decoration:none;">배포 근무표 열기</a>
+      <a class="btn btn-outline" href="./nurse_admin/admin.html"
+        style="font-size:var(--text-body-normal); padding:6px 12px; text-decoration:none;">관리자판 열기</a>
+      <a class="btn btn-outline" href="./dashboard.html"
+        style="font-size:var(--text-body-normal); padding:6px 12px; text-decoration:none;">검증 대시보드</a>
+    </div>
+    <p id="teamScheduleSyncNote" style="font-size:0.75rem; color:var(--text-muted); margin-top:8px;">
+      팀 로그인 후 사용할 수 있어요.
+    </p>
+  </div>
+
+  <!-- ⚠️ 데이터 충돌 복구 -->
+  <div id="orphanRecoverySection" class="card" style="max-width:600px; margin:20px auto 0; display:none;">
+    <div class="collapsible-header" onclick="toggleCollapsible('orphanRecoveryBody')" style="margin-bottom:0;">
+      <span style="display:flex;align-items:center;gap:8px;" id="orphanRecoveryToggleLabel">
+        <span class="toggle-icon">▸</span>
+        <span class="icon" style="color:var(--accent-amber);">⚠️</span>
+        <span style="font-size:var(--text-body-large);font-weight:600;">충돌 백업 복구</span>
+        <span id="orphanCountBadge" class="badge" style="background:var(--accent-amber);color:#fff;"></span>
+      </span>
+    </div>
+    <div class="collapsible-body" id="orphanRecoveryBody" style="display:none;">
+      <p style="font-size:var(--text-body-normal);color:var(--text-muted);margin:8px 0 12px;line-height:1.5;">
+        기기 전환 또는 동기화 충돌 때 자동 보관된 이전 데이터 사본입니다.<br>
+        현재 데이터 대신 복구하거나, 확인 후 삭제할 수 있어요.
+      </p>
+      <div id="orphanList" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+  </div>
+</div>

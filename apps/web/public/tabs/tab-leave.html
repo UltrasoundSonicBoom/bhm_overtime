@@ -1,0 +1,175 @@
+<!-- 연차 기준 안내 배너 -->
+<div class="info-note-banner" id="lvAnnualInfoNote">
+  <span>📌</span>
+  <span>연차 일수는 <a onclick="switchTab('profile')">개인정보 탭</a>의 <strong>입사일</strong> 기준으로 자동 산정됩니다. 입사일이 미입력이면 연차 현황이
+    표시되지 않을 수 있어요.</span>
+</div>
+
+<!-- 캘린더 -->
+<div class="card" style="padding: 12px;">
+  <div id="lvCalendar"></div>
+</div>
+
+<!-- 휴가 입력 바텀시트 (시간외·온콜과 동일한 UX) -->
+<div id="lvInputOverlay" class="ot-bottom-sheet-overlay" onclick="closeLvBottomSheet()"></div>
+<div id="lvInputSheet" class="ot-bottom-sheet">
+  <div class="ot-sheet-handle"></div>
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+    <span id="lvPanelDate"
+      style="font-weight:700; font-size:var(--text-title-large); color:var(--text-primary);">날짜를 선택하세요</span>
+    <button class="btn btn-icon" onclick="closeLvBottomSheet()"
+      style="padding:4px; font-size:var(--text-title-large); background:none; border:none; cursor:pointer;">
+      <span style="color:var(--text-muted);">✕</span>
+    </button>
+  </div>
+
+  <div class="form-group" style="margin-top:10px;">
+    <label>휴가 유형</label>
+    <input type="hidden" id="lvType" value="annual">
+    <button id="lvTypeBtn" type="button" class="btn"
+      style="width:100%; height:44px; text-align:left; background:var(--bg-glass); border:1px solid var(--border-glass); border-radius:var(--radius-sm); color:var(--text-primary); font-size:var(--text-body-large); padding:0 14px; display:flex; justify-content:space-between; align-items:center;"
+      onclick="openLvTypeBottomSheet()">
+      <span id="lvTypeBtnText">🏖️ 연차</span>
+      <span style="color:var(--text-muted); font-size:14px; font-family:monospace;">▼</span>
+    </button>
+  </div>
+
+  <!-- 시간차 시간 입력 -->
+  <div id="lvTimeInputArea"
+    style="display:none; margin-bottom:10px; padding:10px; border-radius:8px; background:rgba(16,185,129,0.05); border:1px solid rgba(16,185,129,0.15);">
+    <label
+      style="display:block; font-size:var(--text-body-large); font-weight:600; color:var(--accent-emerald); margin-bottom:6px;">시간
+      설정</label>
+    <div style="display:flex; flex-direction:row; gap:8px; align-items:center; margin-bottom:8px;">
+      <input type="time" id="lvStartTime" class="time-picker-premium" style="flex:1; width:100%" value="09:00"
+        onchange="calcLvTimeHours()">
+      <span style="color:var(--text-muted); font-weight:700;">~</span>
+      <input type="time" id="lvEndTime" class="time-picker-premium" style="flex:1; width:100%" value="13:00"
+        onchange="calcLvTimeHours()">
+    </div>
+    <div id="lvTimeCalcResult"
+      style="font-size:var(--text-body-large); padding:6px 8px; border-radius:6px; background:rgba(99,102,241,0.08); color:var(--accent-indigo); font-weight:600; text-align:center;">
+    </div>
+  </div>
+
+  <!-- 청원/경조 상세정보 패널 -->
+  <div id="lvCeremonyInfo"
+    style="display:none; margin-bottom:10px; padding:10px; border-radius:8px; background:rgba(251,191,36,0.06); border:1px solid rgba(251,191,36,0.2); font-size:var(--text-body-large);">
+    <div style="font-weight:600; color:#000000; margin-bottom:6px;">📋 청원휴가 안내</div>
+    <div id="lvCeremonyDays" style="margin-bottom:3px;"></div>
+    <div id="lvCeremonyPay" style="margin-bottom:3px;"></div>
+    <div id="lvCeremonyDocs" style="margin-bottom:3px;"></div>
+    <div id="lvCeremonyExtra" style="color:var(--accent-indigo);"></div>
+  </div>
+
+  <!-- 한도 현황 뱃지 -->
+  <div id="lvQuotaBadge" style="display:none; margin-bottom:10px;"></div>
+
+  <div class="form-row" id="lvDateFields">
+    <input type="hidden" id="lvStartDate">
+    <div class="form-group" style="width:100%;">
+      <label>종료일 <small style="color:var(--text-muted); font-weight:normal;">(선택한 날짜부터)</small></label>
+      <input type="date" id="lvEndDate">
+    </div>
+  </div>
+
+  <!-- 급여 영향 미리보기 -->
+  <div id="lvPreview" class="ot-preview"></div>
+  <div class="form-group">
+    <label>메모 (선택)</label>
+    <input type="text" id="lvMemo" placeholder="예: 개인사유">
+  </div>
+
+  <div style="display:flex; flex-direction:row; margin-top:16px; gap:12px;">
+    <button class="btn btn-outline" onclick="deleteLvRecord()"
+      style="flex:1; display:none; border-color:transparent; background:rgba(244,63,94,0.08); color:var(--accent-rose); font-size:var(--text-body-large); font-weight:600; padding:14px; justify-content:center; border-radius:12px; transition:all 0.2s;"
+      id="lvDeleteBtn">삭제</button>
+    <button class="btn btn-primary" onclick="saveLvRecord()"
+      style="flex:1; font-size:var(--text-title-large); padding:14px; justify-content:center; border-radius:12px;"
+      id="lvSaveBtn">저장</button>
+  </div>
+  <input type="hidden" id="lvEditId" value="">
+</div>
+<!-- 휴가 유형 선택 네오브루탈리즘 바텀시트 -->
+<div id="lvTypeSelectOverlay" class="ot-bottom-sheet-overlay" onclick="closeLvTypeBottomSheet()"
+  style="z-index: 10001;"></div>
+<div id="lvTypeSelectSheet" class="ot-bottom-sheet"
+  style="z-index: 10002; padding: 20px 16px 30px; max-height: 80vh;">
+  <div class="ot-sheet-handle"></div>
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+    <h3 style="font-size:var(--text-title-large); margin:0; font-weight: 700; color:var(--text-primary);">휴가 유형 선택
+    </h3>
+    <button class="btn btn-icon" onclick="closeLvTypeBottomSheet()"
+      style="padding:4px; font-size:var(--text-title-large); background:none; border:none; cursor:pointer;">
+      <span style="color:var(--text-muted);">✕</span>
+    </button>
+  </div>
+  <div id="lvTypeSelectContainer"
+    style="max-height: 65vh; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin: 0 -8px; padding: 0 8px;">
+    <!-- JS 렌더링 영역 -->
+  </div>
+</div>
+<!-- 하단: 사용내역 + 소진현황 -->
+<div class="grid-2" style="align-items:start;">
+  <!-- 1열: 연간 사용 내역 (대시보드) -->
+  <div class="card">
+    <div class="card-title">
+      <span class="icon amber">📋</span> <span><span id="lvRecordYear">2026</span>년 사용 내역</span>
+      <span class="badge emerald" id="lvRecordCount">0건</span>
+    </div>
+    <div id="lvRecordList">
+      <p style="color:var(--text-muted); text-align:center; padding:24px;">
+        캘린더에서 날짜를 클릭하여 휴가를 등록하세요.
+      </p>
+    </div>
+  </div>
+
+  <!-- 2열: 2026년 휴가 현황 -->
+  <div class="card">
+    <div class="collapsible-header" onclick="toggleCollapsible('lvQuotaTableWrap')">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span class="toggle-icon">▼</span>
+        <span class="card-title"
+          style="margin:0; font-size:var(--text-title-large); display:flex; align-items:center; gap:8px;"><span
+            class="icon amber">🏖️</span> 2026년 휴가 현황</span>
+      </div>
+    </div>
+    <div id="lvQuotaTableWrap" class="collapsible-body" style="display:block;">
+      <div id="lvQuotaTable"></div>
+      <div id="lvQuotaExtra"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 👶 육아휴직 급여 시뮬레이터 (제28조(5) · 고용보험 기준) -->
+<div class="card" style="margin-top:16px;">
+  <div class="collapsible-header" onclick="toggleCollapsible('plCalcBody')">
+    <div style="display:flex; align-items:center; gap:8px;">
+      <span class="toggle-icon">▼</span>
+      <span class="card-title" style="margin:0; font-size:var(--text-title-large); display:flex; align-items:center; gap:8px;">
+        <span class="icon amber">👶</span> 육아휴직 급여 시뮬레이터
+      </span>
+    </div>
+  </div>
+  <div id="plCalcBody" class="collapsible-body" style="display:none;">
+    <p style="color:var(--text-muted); font-size:14px; margin:8px 0 12px;">
+      고용보험 육아휴직 급여 예상액을 개월별로 산출합니다.<br>
+      · 1~3개월: 통상임금 100% (상한 월 250만원)<br>
+      · 4~6개월: 통상임금 100% (상한 월 200만원)<br>
+      · 7~12개월: 통상임금 80% (상한 월 160만원)
+    </p>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+      <label for="plWage" style="color:var(--text-primary); font-weight:600;">월 통상임금</label>
+      <input type="number" id="plWage" placeholder="예: 3000000" min="0" step="10000"
+        style="width:140px; padding:4px 8px; border-radius:6px; border:1px solid var(--border-glass); background:var(--bg-glass); color:var(--accent-emerald); font-weight:700; font-size:var(--text-body-large); text-align:right;">
+    </div>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+      <label for="plMonths" style="color:var(--text-primary); font-weight:600;">휴직 개월 수 (최대 12)</label>
+      <input type="number" id="plMonths" value="12" min="1" max="12" step="1"
+        style="width:80px; padding:4px 8px; border-radius:6px; border:1px solid var(--border-glass); background:var(--bg-glass); color:var(--accent-emerald); font-weight:700; font-size:var(--text-body-large); text-align:right;">
+    </div>
+    <button type="button" class="btn btn-primary" onclick="calculateParentalLeave()" style="width:100%; margin-top:4px;">계산하기</button>
+    <div id="parentalResult" style="margin-top:12px;"></div>
+  </div>
+</div>
+

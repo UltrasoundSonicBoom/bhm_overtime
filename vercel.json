@@ -1,7 +1,21 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
+  "buildCommand": "pnpm install --frozen-lockfile && pnpm --filter @snuhmate/web build",
+  "outputDirectory": "apps/web/dist",
+  "installCommand": "echo 'install handled in buildCommand'",
+  "redirects": [
+    {
+      "source": "/",
+      "has": [{ "type": "query", "key": "app", "value": "1" }],
+      "destination": "/app/",
+      "permanent": false
+    },
+    {
+      "source": "/index.html",
+      "destination": "/app/",
+      "permanent": false
+    }
+  ],
   "headers": [
     {
       "source": "/assets/(.*)",

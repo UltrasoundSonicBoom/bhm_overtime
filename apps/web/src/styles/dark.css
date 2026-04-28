@@ -1,0 +1,46 @@
+/* ============================================
+   SNUH Mate — Dark Theme Tokens (Linear/Raycast)
+   data-theme="dark" 명시 시만 활성화
+   기본 (default :root) 은 neo 토큰 (style.css)
+   ============================================ */
+
+html[data-theme="dark"] {
+  /* ── Linear Palette: Deep solid darks, no transparency ── */
+  --bg-primary: #09090b;
+  --bg-secondary: #0f0f11;
+  --bg-card: #141416;
+  --bg-glass: rgba(255, 255, 255, 0.03);
+  --bg-glass-hover: rgba(255, 255, 255, 0.06);
+  --border-glass: rgba(255, 255, 255, 0.06);
+  --border-active: rgba(255, 255, 255, 0.15);
+
+  --text-primary: #ececef;
+  --text-secondary: #a0a0ab;
+  --text-muted: #63636e;
+  --text-accent: #a0a0ab;
+
+  --accent-indigo: #6366f1;
+  --accent-blue: #3b82f6;
+  --accent-cyan: #06b6d4;
+  --accent-emerald: #10b981;
+  --accent-amber: #f59e0b;
+  --accent-amber-text: #F97316;
+  --accent-rose: #f43f5e;
+  --accent-violet: #8b5cf6;
+
+  --gradient-primary: #6366f1;
+  --gradient-success: #10b981;
+  --gradient-warning: #f59e0b;
+  --gradient-info: #3b82f6;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.6);
+  --shadow-glow: none;
+
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-full: 9999px;
+}
