@@ -1,0 +1,15 @@
+---
+/**
+ * Divider — horizontal 또는 vertical 구분선.
+ * spacing 은 ds spacing scale (default 4=16px).
+ */
+interface Props {
+  orientation?: 'horizontal' | 'vertical';
+  spacing?: number;
+}
+const { orientation = 'horizontal', spacing = 4 } = Astro.props;
+const orientClass = orientation === 'horizontal'
+  ? `border-t border-ds-border-default my-${spacing}`
+  : `border-l border-ds-border-default mx-${spacing} self-stretch`;
+---
+<hr role="separator" aria-orientation={orientation} class={orientClass} />

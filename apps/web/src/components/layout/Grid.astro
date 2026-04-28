@@ -1,0 +1,24 @@
+---
+/**
+ * Grid — 균등 그리드.
+ * responsive=true 면 모바일 1col, 그 이상 화면에서 cols 적용.
+ *
+ * Note: Tailwind JIT 가 동적 cols 를 보려면 safelist 가 필요하다.
+ *       이 컴포넌트는 1~6 cols 를 명시적으로 매핑한다.
+ */
+interface Props {
+  cols?: number;
+  gap?: number;
+  responsive?: boolean;
+}
+const { cols = 2, gap = 4, responsive = true } = Astro.props;
+// Explicit map so Tailwind JIT scans these strings statically.
+const colsMap = { 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3', 4: 'grid-cols-4', 5: 'grid-cols-5', 6: 'grid-cols-6' };
+const responsiveMap = { 1: 'sm:grid-cols-1', 2: 'sm:grid-cols-2', 3: 'sm:grid-cols-3', 4: 'sm:grid-cols-4', 5: 'sm:grid-cols-5', 6: 'sm:grid-cols-6' };
+const colClass = responsive
+  ? `grid-cols-1 ${responsiveMap[cols] ?? 'sm:grid-cols-2'}`
+  : (colsMap[cols] ?? 'grid-cols-2');
+---
+<div class={`grid ${colClass} gap-${gap}`}>
+  <slot />
+</div>

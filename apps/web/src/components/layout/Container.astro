@@ -1,0 +1,16 @@
+---
+/**
+ * Container — 페이지 콘텐츠 폭 wrapper
+ * size: sm (640px Tailwind screen-sm), md (640px 모바일 폭 — 기존 .header-inner 와 동일),
+ *       lg (1024px screen-lg), full (max-w-full).
+ */
+interface Props {
+  size?: 'sm' | 'md' | 'lg' | 'full';
+  as?: string;
+}
+const { size = 'md', as: Tag = 'div' } = Astro.props;
+const widthClass = { sm: 'max-w-screen-sm', md: 'max-w-[640px]', lg: 'max-w-screen-lg', full: 'max-w-full' }[size];
+---
+<Tag class={`${widthClass} mx-auto w-full px-4`}>
+  <slot />
+</Tag>

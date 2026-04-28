@@ -1,0 +1,21 @@
+---
+/**
+ * EmptyState — 데이터 없음 안내 (icon + title + description + action).
+ */
+interface Props {
+  icon?: string;
+  title: string;
+  description?: string;
+}
+const { icon = '📭', title, description } = Astro.props;
+---
+<div class="flex flex-col items-center justify-center text-center py-12 px-4">
+  <span aria-hidden="true" class="text-5xl mb-3">{icon}</span>
+  <h3 class="text-ds-h4 text-ds-text-primary mb-1">{title}</h3>
+  {description && <p class="text-ds-body-md text-ds-text-muted max-w-md">{description}</p>}
+  {Astro.slots.has('action') && (
+    <div class="mt-6">
+      <slot name="action" />
+    </div>
+  )}
+</div>
