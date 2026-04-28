@@ -104,6 +104,16 @@ describe('inline style 잔존 검사', () => {
     });
     expect(illegal, '허용 외 inline style: ' + illegal.join('\n')).toHaveLength(0);
   });
+
+  it('SettingsIsland inline style 잔존 없음 (display:none/block/flex 제외)', () => {
+    const src = readFileSync('apps/web/src/components/tabs/SettingsIsland.astro', 'utf-8');
+    const illegal = (src.match(/style="([^"]*)"/g) || []).filter(s => {
+      const body = s.slice(7, -1).trim();
+      return !/^display:\s*(none|block|flex|grid|inline|inline-flex|inline-block)/.test(body)
+          && !/^--[a-z]/.test(body);
+    });
+    expect(illegal, '허용 외 inline style: ' + illegal.join('\n')).toHaveLength(0);
+  });
 });
 
 // ── Slice 8: Governance Lint (HomeIsland reference migration) ─────────────────
