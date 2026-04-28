@@ -8,8 +8,12 @@
 - 5 layout 컴포넌트 (Container, Stack, Section, Grid, Divider)
 - 5 pattern 컴포넌트 (PageHeader, EmptyState, FormSection, LoadingSkeleton, ErrorState)
 - /design-system 쇼케이스 라우트 (4 sub-page)
-- 거버넌스 lint (raw hex / inline style 금지)
-- HomeIsland 레퍼런스 마이그레이션
+- 거버넌스 lint (raw hex / raw px / raw rgba 금지 — HomeIsland 우선 적용)
+- HomeIsland 레퍼런스 마이그레이션 (5 inline style → utility)
+
+테스트:
+- unit: 82 (design-system)
+- integration: 93 (token contract + governance + showcase + JIT sentinel)
 
 호환:
 - 기존 globals.css `.btn`, `.card`, `.badge`, `.modal-overlay`, `.nav-tabs/.sub-tabs`, `.form-group` 등 클래스 유지.
