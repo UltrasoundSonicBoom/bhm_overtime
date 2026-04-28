@@ -1,0 +1,28 @@
+---
+/**
+ * Switch — visual on/off toggle.
+ * Hidden <input type="checkbox" class="sr-only peer"> drives state.
+ * Track + thumb is a single span using the `after:` pseudo-element so
+ * peer-checked: animations actually work (Tailwind peer requires siblings).
+ */
+interface Props {
+  id?: string;
+  name?: string;
+  checked?: boolean;
+  disabled?: boolean;
+  label?: string;
+  /** Accessible label when no visible label is present */
+  ariaLabel?: string;
+}
+const { id, name, checked, disabled, label, ariaLabel } = Astro.props;
+---
+<label class="inline-flex items-center gap-2 cursor-pointer">
+  <input type="checkbox" id={id} name={name} checked={checked} disabled={disabled} class="sr-only peer" />
+  <span
+    role="switch"
+    aria-checked={checked ? 'true' : 'false'}
+    aria-label={ariaLabel}
+    class="relative w-10 h-6 bg-ds-bg-muted rounded-brand-full transition-colors peer-checked:bg-ds-brand-primary peer-disabled:opacity-50 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:w-5 after:h-5 after:bg-ds-bg-surface after:rounded-brand-full after:shadow-brand-sm after:transition-transform peer-checked:after:translate-x-4"
+  ></span>
+  {label && <span class="text-ds-body-md text-ds-text-primary">{label}</span>}
+</label>

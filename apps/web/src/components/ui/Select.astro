@@ -1,0 +1,38 @@
+---
+/**
+ * Select — dropdown.
+ * options 배열 또는 <slot /> 으로 <option> 직접 작성 지원.
+ */
+interface Option { value: string; label: string; disabled?: boolean }
+interface Props {
+  id?: string;
+  name?: string;
+  value?: string;
+  options?: Option[];
+  required?: boolean;
+  disabled?: boolean;
+  /** Accessible label when no visible label is present */
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
+  invalid?: boolean;
+}
+const { id, name, value, options = [], required, disabled, ariaLabel, ariaDescribedBy, invalid } = Astro.props;
+const borderClass = invalid ? 'border-ds-status-error' : 'border-ds-border-default';
+---
+<select
+  id={id}
+  name={name}
+  required={required}
+  disabled={disabled}
+  aria-label={ariaLabel}
+  aria-describedby={ariaDescribedBy}
+  aria-invalid={invalid ? 'true' : 'false'}
+  class={`w-full min-h-[44px] px-3 py-2 bg-ds-bg-muted text-ds-text-primary border rounded-brand-sm text-ds-body-md transition-colors focus:outline-none focus:border-ds-border-focus focus:ring-ds focus:ring-ds-focus focus:ring-offset-ds disabled:opacity-50 disabled:cursor-not-allowed ${borderClass}`}
+>
+  {options.length > 0
+    ? options.map(o => (
+        <option value={o.value} disabled={o.disabled} selected={o.value === value}>{o.label}</option>
+      ))
+    : <slot />
+  }
+</select>

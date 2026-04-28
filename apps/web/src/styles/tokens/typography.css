@@ -1,0 +1,31 @@
+/* SNUH Mate Design System — Typography Scale */
+:root {
+  /* Font size */
+  --font-size-display: 40px;
+  --font-size-h1:      32px;
+  --font-size-h2:      24px;
+  --font-size-h3:      20px;
+  --font-size-h4:      18px;
+  --font-size-body-lg: 16px;
+  --font-size-body-md: 14px;
+  --font-size-body-sm: 13px;
+  --font-size-label:   13px;
+  --font-size-caption: 12px;
+
+  /* Font weight */
+  --font-weight-regular:  400;
+  --font-weight-medium:   500;
+  --font-weight-semibold: 600;
+  --font-weight-bold:     700;
+
+  /* Line height */
+  --line-height-tight:    1.2;
+  --line-height-snug:     1.4;
+  --line-height-normal:   1.5;
+  --line-height-relaxed:  1.6;
+
+  /* Font family */
+  --font-family-sans:    'Inter', 'Noto Sans KR', -apple-system, sans-serif;
+  --font-family-numeric: 'Space Grotesk', 'Inter', -apple-system, sans-serif;
+  --font-family-mono:    'JetBrains Mono', 'Menlo', 'Consolas', 'Courier New', monospace;
+}

@@ -1,0 +1,154 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Container from '../../components/layout/Container.astro';
+import Section from '../../components/layout/Section.astro';
+import Card from '../../components/ui/Card.astro';
+import PageHeader from '../../components/patterns/PageHeader.astro';
+import Button from '../../components/ui/Button.astro';
+import Badge from '../../components/ui/Badge.astro';
+import Input from '../../components/ui/Input.astro';
+import Select from '../../components/ui/Select.astro';
+import Textarea from '../../components/ui/Textarea.astro';
+import Checkbox from '../../components/ui/Checkbox.astro';
+import Radio from '../../components/ui/Radio.astro';
+import Switch from '../../components/ui/Switch.astro';
+import Alert from '../../components/ui/Alert.astro';
+import Modal from '../../components/ui/Modal.astro';
+import Tabs from '../../components/ui/Tabs.astro';
+import FormField from '../../components/ui/FormField.astro';
+---
+<BaseLayout title="Components — Design System" showFooterNav={false}>
+  <main class="min-h-screen bg-ds-bg-page py-8">
+    <Container>
+      <PageHeader title="Components" description="UI primitives — variant × size × state 매트릭스" />
+
+      <Section title="Button" level={2}>
+        <Card>
+          <span slot="header">Variant × Size</span>
+          <div class="flex flex-wrap gap-3 mb-3">
+            <Button variant="primary">Primary</Button>
+            <Button variant="secondary">Secondary</Button>
+            <Button variant="tertiary">Tertiary</Button>
+            <Button variant="danger">Danger</Button>
+            <Button variant="ghost">Ghost</Button>
+          </div>
+          <div class="flex flex-wrap gap-3 items-center mb-3">
+            <Button size="sm">Small</Button>
+            <Button size="md">Medium</Button>
+            <Button size="lg">Large</Button>
+          </div>
+          <div class="flex flex-wrap gap-3 mb-3">
+            <Button disabled>Disabled</Button>
+            <Button loading>Loading</Button>
+            <Button iconLeft="📥">With icon</Button>
+          </div>
+        </Card>
+      </Section>
+
+      <Section title="Badge" level={2}>
+        <Card>
+          <div class="flex flex-wrap gap-2 mb-3">
+            <Badge variant="neutral">Neutral</Badge>
+            <Badge variant="info">Info</Badge>
+            <Badge variant="success">저장됨</Badge>
+            <Badge variant="warning">주의</Badge>
+            <Badge variant="error">오류</Badge>
+          </div>
+        </Card>
+      </Section>
+
+      <Section title="Form" level={2}>
+        <Card>
+          <FormField label="이름" required helper="성을 제외한 이름만 입력">
+            <Input id="example-name" placeholder="홍길동" />
+          </FormField>
+          <FormField label="직종">
+            <Select id="example-role" options={[
+              { value: '', label: '선택' },
+              { value: 'rn', label: '간호사' },
+              { value: 'pt', label: '물리치료사' },
+            ]} />
+          </FormField>
+          <FormField label="메모">
+            <Textarea id="example-memo" rows={3} placeholder="추가 메모" />
+          </FormField>
+          <FormField>
+            <Checkbox id="example-agree" label="개인정보 수집에 동의합니다" />
+          </FormField>
+          <FormField label="성별">
+            <div class="flex gap-4">
+              <Radio name="example-gender" value="M" label="남성" />
+              <Radio name="example-gender" value="F" label="여성" />
+            </div>
+          </FormField>
+          <FormField label="알림">
+            <Switch id="example-switch" label="이메일 알림 받기" />
+          </FormField>
+        </Card>
+      </Section>
+
+      <Section title="Alert" level={2}>
+        <Card>
+          <div class="flex flex-col gap-3">
+            <Alert variant="info" title="안내">정보 메시지입니다.</Alert>
+            <Alert variant="success" title="성공">저장이 완료되었습니다.</Alert>
+            <Alert variant="warning" title="주의">시급이 평균보다 낮습니다.</Alert>
+            <Alert variant="error" title="오류" dismissible>파일을 업로드하지 못했습니다.</Alert>
+          </div>
+        </Card>
+      </Section>
+
+      <Section title="Modal" level={2}>
+        <Card>
+          <p class="text-ds-body-md text-ds-text-secondary mb-4">버튼을 클릭해 모달을 열어보세요.</p>
+          <Button variant="primary" id="ds-modal-open-btn">모달 열기</Button>
+          <Modal id="ds-example-modal" size="md" title="삭제 확인">
+            <p>정말 삭제하시겠습니까?</p>
+            <Button slot="footer" variant="ghost" id="ds-modal-cancel-btn">취소</Button>
+            <Button slot="footer" variant="danger">삭제</Button>
+          </Modal>
+        </Card>
+      </Section>
+
+      <script>
+        // Showcase 전용 — Modal 토글 동작
+        (() => {
+          const modal = document.getElementById('ds-example-modal');
+          const openBtn = document.getElementById('ds-modal-open-btn');
+          const cancelBtn = document.getElementById('ds-modal-cancel-btn');
+          if (!modal || !openBtn) return;
+          const open = () => { modal.classList.remove('hidden'); modal.classList.add('active', 'flex'); };
+          const close = () => { modal.classList.add('hidden'); modal.classList.remove('active', 'flex'); };
+          openBtn.addEventListener('click', open);
+          cancelBtn?.addEventListener('click', close);
+          modal.querySelector('[data-ds-modal-close]')?.addEventListener('click', close);
+          // Click outside content to close
+          modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+          // Esc to close
+          document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.classList.contains('hidden')) close(); });
+        })();
+      </script>
+
+      <Section title="Tabs" level={2}>
+        <Card>
+          <Tabs items={[
+            { id: 'home', label: '홈', icon: '🏠' },
+            { id: 'pay', label: '급여', icon: '💰' },
+            { id: 'leave', label: '휴가', icon: '🌴' },
+          ]} activeId="home" variant="top" />
+        </Card>
+      </Section>
+    </Container>
+  </main>
+  <script is:inline>
+    document.querySelectorAll('[data-ds-modal-close]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const modal = btn.closest('[data-ds-modal]');
+        if (modal) {
+          modal.classList.add('hidden');
+          modal.classList.remove('active');
+        }
+      });
+    });
+  </script>
+</BaseLayout>

@@ -1,0 +1,23 @@
+---
+/**
+ * Section — 헤딩 + 본문 그룹.
+ * level=2 → <h2>, level=3 → <h3>. spacing: 하단 마진.
+ */
+interface Props {
+  title?: string;
+  description?: string;
+  level?: 2 | 3;
+  spacing?: 'sm' | 'md' | 'lg';
+  /** Anchor id for in-page navigation */
+  id?: string;
+}
+const { title, description, level = 2, spacing = 'md', id } = Astro.props;
+const spacingClass = { sm: 'mb-4', md: 'mb-6', lg: 'mb-8' }[spacing];
+---
+<section id={id} class={spacingClass}>
+  {title && (level === 2
+    ? <h2 class="text-ds-h2 text-ds-text-primary mb-2">{title}</h2>
+    : <h3 class="text-ds-h3 text-ds-text-primary mb-2">{title}</h3>)}
+  {description && <p class="text-ds-body-md text-ds-text-secondary mb-4">{description}</p>}
+  <slot />
+</section>

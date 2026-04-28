@@ -6,6 +6,12 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Bakbak+One&family=Black+Han+Sans&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
 
+/* Design System tokens — 2-tier */
+@import './tokens/primitive.css';
+@import './tokens/semantic.css';
+@import './tokens/spacing.css';
+@import './tokens/typography.css';
+
 /* Phase 7-1: Tailwind directives. preflight 비활성 (tailwind.config.js corePlugins.preflight=false)
    → 기존 globals.css reset (* { margin:0... }, body, html) 그대로 유지. */
 @tailwind base;
@@ -6379,4 +6385,14 @@ html[data-theme="neo"] .ot-help-a {
 .migration-btn.secondary {
   background: #ffffff;
   color: #1a1a1a;
+}
+
+/* ============================================
+   Design System helpers (Slice 8)
+   Token-derived utility classes for non-Tailwind-friendly cases
+   (CSS var alpha modifiers can't be computed at JIT time).
+   ============================================ */
+
+.border-t-ds-status-success-25 {
+  border-top-color: rgba(16, 185, 129, 0.25); /* --emerald-500 @ 25% */
 }

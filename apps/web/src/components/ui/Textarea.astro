@@ -1,0 +1,34 @@
+---
+/**
+ * Textarea — multi-line text input.
+ */
+interface Props {
+  id?: string;
+  name?: string;
+  value?: string;
+  placeholder?: string;
+  rows?: number;
+  maxLength?: number;
+  required?: boolean;
+  disabled?: boolean;
+  /** Accessible label when no visible label is present */
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
+  invalid?: boolean;
+}
+const { id, name, value, placeholder, rows = 4, maxLength, required, disabled, ariaLabel, ariaDescribedBy, invalid } = Astro.props;
+const borderClass = invalid ? 'border-ds-status-error' : 'border-ds-border-default';
+---
+<textarea
+  id={id}
+  name={name}
+  placeholder={placeholder}
+  rows={rows}
+  maxlength={maxLength}
+  required={required}
+  disabled={disabled}
+  aria-label={ariaLabel}
+  aria-describedby={ariaDescribedBy}
+  aria-invalid={invalid ? 'true' : 'false'}
+  class={`w-full px-3 py-2 bg-ds-bg-muted text-ds-text-primary border rounded-brand-sm text-ds-body-md transition-colors focus:outline-none focus:border-ds-border-focus focus:ring-ds focus:ring-ds-focus focus:ring-offset-ds disabled:opacity-50 disabled:cursor-not-allowed resize-y ${borderClass}`}
+>{value}</textarea>

@@ -1,0 +1,57 @@
+---
+/**
+ * Modal — 사용자 확인 / 입력 / 알림 대화창.
+ * role="dialog" + aria-modal="true" + aria-labelledby (title 있을 때) | aria-label (없을 때)
+ *
+ * Stacking context: legacy `.modal-overlay { z-index: 200 }` (globals.css) — z-utility 미사용.
+ * Display: legacy `.modal-overlay.active { display: flex }` 가 winning. open=false 시 `hidden` 클래스로 숨김.
+ *
+ * Legacy CSS class: .modal-overlay, .modal-content, .modal-header, .modal-body (호환).
+ */
+interface Props {
+  id: string;
+  size?: 'sm' | 'md' | 'lg';
+  title?: string;
+  open?: boolean;
+}
+const { id, size = 'md', title, open = false } = Astro.props;
+const sizeClass = { sm: 'max-w-md', md: 'max-w-lg', lg: 'max-w-2xl' }[size];
+const titleId = id + '-title';
+const overlayClasses = [
+  'modal-overlay', 'fixed', 'inset-0',
+  open ? 'flex' : '',
+  'items-center', 'justify-center', 'p-4', 'bg-black/50',
+  open ? 'active' : 'hidden',
+].filter(Boolean).join(' ');
+---
+<div
+  id={id}
+  class={overlayClasses}
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby={title ? titleId : undefined}
+  aria-label={title ? undefined : '대화창'}
+  data-ds-modal
+>
+  <div class={`modal-content w-full ${sizeClass} bg-ds-bg-surface border border-ds-border-default rounded-brand-lg p-6 shadow-brand-lg`}>
+    {title && (
+      <header class="modal-header flex items-center justify-between mb-4">
+        <h2 id={titleId} class="text-ds-h3 text-ds-text-primary">{title}</h2>
+        <button
+          type="button"
+          aria-label="닫기"
+          class="text-ds-text-muted hover:text-ds-text-primary text-ds-h3 focus-visible:outline-none focus-visible:ring-ds focus-visible:ring-ds-focus focus-visible:ring-offset-ds"
+          data-ds-modal-close
+        >×</button>
+      </header>
+    )}
+    <div class="modal-body text-ds-body-md text-ds-text-primary">
+      <slot />
+    </div>
+    {Astro.slots.has('footer') && (
+      <footer class="mt-6 flex justify-end gap-2">
+        <slot name="footer" />
+      </footer>
+    )}
+  </div>
+</div>

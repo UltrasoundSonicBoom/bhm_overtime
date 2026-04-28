@@ -1,0 +1,27 @@
+---
+/**
+ * PageHeader — 페이지 제목 + 설명 + actions
+ * level=1: 페이지 메인 제목 (h1). level=2: sub 페이지 (h2).
+ */
+interface Props {
+  title: string;
+  description?: string;
+  level?: 1 | 2;
+}
+const { title, description, level = 1 } = Astro.props;
+---
+<header class="mb-6">
+  <div class="flex items-start justify-between gap-4">
+    <div class="flex-1 min-w-0">
+      {level === 1
+        ? <h1 class="text-ds-h1 text-ds-text-primary">{title}</h1>
+        : <h2 class="text-ds-h2 text-ds-text-primary">{title}</h2>}
+      {description && <p class="mt-2 text-ds-body-md text-ds-text-secondary">{description}</p>}
+    </div>
+    {Astro.slots.has('actions') && (
+      <div class="flex items-center gap-2">
+        <slot name="actions" />
+      </div>
+    )}
+  </div>
+</header>

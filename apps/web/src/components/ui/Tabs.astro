@@ -1,0 +1,51 @@
+---
+/**
+ * Tabs — 탭 네비게이션
+ * variant=top: 메인 탭 (nav-tabs 호환). variant=sub: 서브 탭 (sub-tabs 호환).
+ * a11y: role=tablist + role=tab + aria-selected + aria-controls.
+ *
+ * Note: 패널 (role=tabpanel) 은 호출자가 별도로 렌더링한다.
+ *       각 패널의 id 는 `panel-${tabId}` 패턴을 따라야 aria-controls 가 유효하다.
+ */
+interface TabItem {
+  id: string;
+  label: string;
+  icon?: string;
+}
+interface Props {
+  items: TabItem[];
+  activeId?: string;
+  variant?: 'top' | 'sub';
+  ariaLabel?: string;
+}
+const { items, activeId, variant = 'top', ariaLabel = '탭' } = Astro.props;
+const containerClass = variant === 'top' ? 'nav-tabs nav-tabs-inner' : 'sub-tabs';
+const itemClass = variant === 'top' ? 'nav-tab' : 'sub-tab';
+---
+<div class={`${containerClass} flex gap-2`} role="tablist" aria-label={ariaLabel}>
+  {items.map(it => {
+    const isActive = activeId === it.id;
+    const tabClasses = [
+      itemClass,
+      isActive ? 'active' : '',
+      'flex-1', 'px-3', 'py-2', 'rounded-brand-sm', 'text-ds-body-md', 'font-medium',
+      'transition-colors',
+      'focus-visible:outline-none', 'focus-visible:ring-ds', 'focus-visible:ring-ds-focus', 'focus-visible:ring-offset-ds',
+    ].filter(Boolean).join(' ');
+    return (
+      <button
+        type="button"
+        class={tabClasses}
+        role="tab"
+        id={`tab-${it.id}`}
+        aria-controls={`panel-${it.id}`}
+        aria-selected={isActive ? 'true' : 'false'}
+        tabindex={isActive ? 0 : -1}
+        data-tab-id={it.id}
+      >
+        {it.icon && <span aria-hidden="true">{it.icon}</span>}
+        {it.label}
+      </button>
+    );
+  })}
+</div>

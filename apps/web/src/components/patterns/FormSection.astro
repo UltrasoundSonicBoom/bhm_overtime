@@ -1,0 +1,29 @@
+---
+/**
+ * FormSection — 폼 필드 그룹.
+ * collapsible=true → <details>/<summary>. false → <fieldset>/<legend>.
+ */
+interface Props {
+  title: string;
+  description?: string;
+  collapsible?: boolean;
+  defaultOpen?: boolean;
+  id?: string;
+}
+const { title, description, collapsible = false, defaultOpen = true, id } = Astro.props;
+---
+{collapsible ? (
+  <details id={id} class="mb-4 border border-ds-border-default rounded-brand-md p-4" open={defaultOpen}>
+    <summary class="cursor-pointer text-ds-h4 text-ds-text-primary">{title}</summary>
+    {description && <p class="mt-2 text-ds-body-sm text-ds-text-muted">{description}</p>}
+    <div class="mt-4">
+      <slot />
+    </div>
+  </details>
+) : (
+  <fieldset class="mb-6" id={id}>
+    <legend class="text-ds-h4 text-ds-text-primary mb-2">{title}</legend>
+    {description && <p class="text-ds-body-sm text-ds-text-muted mb-4">{description}</p>}
+    <slot />
+  </fieldset>
+)}

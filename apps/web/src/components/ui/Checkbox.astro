@@ -1,0 +1,29 @@
+---
+/**
+ * Checkbox — multi-select boolean input. Use within FormField for label/helper.
+ */
+interface Props {
+  id?: string;
+  name?: string;
+  value?: string;
+  checked?: boolean;
+  disabled?: boolean;
+  required?: boolean;
+  label?: string;
+}
+const { id, name, value, checked, disabled, required, label } = Astro.props;
+---
+<label class="inline-flex items-center gap-2 cursor-pointer text-ds-body-md text-ds-text-primary">
+  <input
+    type="checkbox"
+    id={id}
+    name={name}
+    value={value}
+    checked={checked}
+    disabled={disabled}
+    required={required}
+    class="w-4 h-4 rounded-brand-sm border border-ds-border-default text-ds-brand-primary focus:ring-ds focus:ring-ds-focus focus:ring-offset-ds disabled:opacity-50"
+  />
+  {label && <span>{label}</span>}
+  <slot />
+</label>

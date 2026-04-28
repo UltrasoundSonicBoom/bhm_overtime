@@ -1,0 +1,41 @@
+---
+/**
+ * Badge — 짧은 상태/카테고리 라벨
+ * Variant: neutral | info | success | warning | error
+ * Size: sm | md
+ *
+ * Legacy CSS class: .badge, .badge.indigo, .badge.emerald, .badge.amber, .badge.rose
+ * 도 함께 출력 → 기존 globals.css 셀렉터 호환.
+ */
+interface Props {
+  variant?: 'neutral' | 'info' | 'success' | 'warning' | 'error';
+  size?: 'sm' | 'md';
+}
+
+const { variant = 'neutral', size = 'md' } = Astro.props;
+
+const variantClass = {
+  neutral: 'bg-ds-bg-muted text-ds-text-secondary',
+  info:    'bg-ds-status-info-bg text-ds-status-info',
+  success: 'bg-ds-status-success-bg text-ds-status-success',
+  warning: 'bg-ds-status-warning-bg text-ds-status-warning',
+  error:   'bg-ds-status-error-bg text-ds-status-error',
+}[variant];
+
+const sizeClass = {
+  sm: 'px-2 py-0.5 text-ds-caption',
+  md: 'px-2 py-1 text-ds-body-sm',
+}[size];
+
+// Legacy .badge.{indigo|emerald|amber|rose} 와 매핑 (Phase 7 globals.css 호환).
+const legacyVariant = {
+  neutral: '',
+  info:    'indigo',
+  success: 'emerald',
+  warning: 'amber',
+  error:   'rose',
+}[variant];
+---
+<span class={['badge', legacyVariant, 'inline-flex items-center font-semibold rounded-brand-full', variantClass, sizeClass].filter(Boolean).join(' ')}>
+  <slot />
+</span>

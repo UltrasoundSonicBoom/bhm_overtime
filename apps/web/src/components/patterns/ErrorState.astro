@@ -1,0 +1,21 @@
+---
+/**
+ * ErrorState — 오류 안내 + 재시도 액션 슬롯.
+ */
+interface Props {
+  title: string;
+  message?: string;
+  icon?: string;
+}
+const { title, message, icon = '⚠️' } = Astro.props;
+---
+<div role="alert" class="flex flex-col items-center justify-center text-center py-8 px-4">
+  <span aria-hidden="true" class="text-4xl mb-2">{icon}</span>
+  <h3 class="text-ds-h4 text-ds-status-error mb-1">{title}</h3>
+  {message && <p class="text-ds-body-md text-ds-text-secondary max-w-md">{message}</p>}
+  {Astro.slots.has('action') && (
+    <div class="mt-4">
+      <slot name="action" />
+    </div>
+  )}
+</div>
