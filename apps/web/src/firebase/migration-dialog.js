@@ -4,7 +4,9 @@
 //
 // 흐름:
 //   1. shouldShowMigration(uid): 게스트 데이터 존재 + migration_done flag 없음 → true
-//   2. openMigrationDialog(uid): 카테고리 체크박스 UI → 사용자 동의 → uploadCategories
+//   2. openMigrationDialog(uid): 2단계 UI
+//      - Step 1: 간단 확인 ("전체 동기화?" 예/아니요)
+//      - Step 2: 카테고리 선택 (아니요 선택 시)
 //   3. uploadCategories(uid, categories): 게스트 localStorage → Firestore write
 //   4. FLAG_KEY 설정 → shouldShowMigration 이후 false 반환 (idempotent)
 //
@@ -66,6 +68,7 @@ function _hasGuestData() {
       'overtimeRecords_guest',
       'snuhmate_work_history_guest',
       'snuhmate_reg_favorites_guest',
+      'leaveRecords',
     ];
     return checks.some(k => {
       const v = localStorage.getItem(k);
@@ -89,89 +92,102 @@ export async function shouldShowMigration(uid) {
 }
 
 // ── 업로드 로직 ───────────────────────────────────────────────────────────
+// returns { ok: string[], failed: string[] }
 export async function uploadCategories(uid, selectedIds) {
-  const tasks = [];
+  const syncTasks = [];
 
   if (selectedIds.includes('identity') || selectedIds.includes('payroll')) {
-    const raw = localStorage.getItem('snuhmate_hr_profile_guest');
-    if (raw) {
-      try {
+    syncTasks.push({
+      label: '프로필',
+      run: async () => {
+        const raw = localStorage.getItem('snuhmate_hr_profile_guest');
+        if (!raw) return;
         const profile = JSON.parse(raw);
         const { writeProfile } = await import('/src/firebase/sync/profile-sync.js');
-        tasks.push(writeProfile(null, uid, profile));
-      } catch (e) {
-        console.warn('[migration] profile sync 실패', e?.message);
-      }
-    }
+        await writeProfile(null, uid, profile);
+      },
+    });
   }
 
   if (selectedIds.includes('overtime')) {
-    const raw = localStorage.getItem('overtimeRecords_guest');
-    if (raw) {
-      try {
+    syncTasks.push({
+      label: '시간외',
+      run: async () => {
+        const raw = localStorage.getItem('overtimeRecords_guest');
+        if (!raw) return;
         const data = JSON.parse(raw);
         const { writeAllOvertime } = await import('/src/firebase/sync/overtime-sync.js');
-        tasks.push(writeAllOvertime(null, uid, data));
-      } catch (e) {
-        console.warn('[migration] overtime sync 실패', e?.message);
-      }
-    }
+        await writeAllOvertime(null, uid, data);
+      },
+    });
   }
 
   if (selectedIds.includes('leave')) {
-    const raw = localStorage.getItem('leaveRecords');
-    if (raw) {
-      try {
+    syncTasks.push({
+      label: '휴가',
+      run: async () => {
+        const raw = localStorage.getItem('leaveRecords');
+        if (!raw) return;
         const data = JSON.parse(raw);
         const { writeAllLeave } = await import('/src/firebase/sync/leave-sync.js');
-        tasks.push(writeAllLeave(null, uid, data));
-      } catch (e) {
-        console.warn('[migration] leave sync 실패', e?.message);
-      }
-    }
+        await writeAllLeave(null, uid, data);
+      },
+    });
   }
 
   if (selectedIds.includes('workHistory')) {
-    const raw = localStorage.getItem('snuhmate_work_history_guest');
-    if (raw) {
-      try {
+    syncTasks.push({
+      label: '근무이력',
+      run: async () => {
+        const raw = localStorage.getItem('snuhmate_work_history_guest');
+        if (!raw) return;
         const entries = JSON.parse(raw);
         const { writeAllWorkHistory } = await import('/src/firebase/sync/work-history-sync.js');
-        tasks.push(writeAllWorkHistory(null, uid, Array.isArray(entries) ? entries : []));
-      } catch (e) {
-        console.warn('[migration] work_history sync 실패', e?.message);
-      }
-    }
+        await writeAllWorkHistory(null, uid, Array.isArray(entries) ? entries : []);
+      },
+    });
   }
 
   if (selectedIds.includes('settings')) {
-    const raw = localStorage.getItem('snuhmate_settings');
-    if (raw) {
-      try {
+    syncTasks.push({
+      label: '설정',
+      run: async () => {
+        const raw = localStorage.getItem('snuhmate_settings');
+        if (!raw) return;
         const settings = JSON.parse(raw);
         const { writeSettings } = await import('/src/firebase/sync/settings-sync.js');
-        tasks.push(writeSettings(null, uid, settings));
-      } catch (e) {
-        console.warn('[migration] settings sync 실패', e?.message);
-      }
-    }
+        await writeSettings(null, uid, settings);
+      },
+    });
   }
 
   if (selectedIds.includes('reference')) {
-    const raw = localStorage.getItem('snuhmate_reg_favorites_guest');
-    if (raw) {
-      try {
+    syncTasks.push({
+      label: '즐겨찾기',
+      run: async () => {
+        const raw = localStorage.getItem('snuhmate_reg_favorites_guest');
+        if (!raw) return;
         const favs = JSON.parse(raw);
         const { writeFavorites } = await import('/src/firebase/sync/favorites-sync.js');
-        tasks.push(writeFavorites(null, uid, Array.isArray(favs) ? favs : []));
-      } catch (e) {
-        console.warn('[migration] favorites sync 실패', e?.message);
-      }
+        await writeFavorites(null, uid, Array.isArray(favs) ? favs : []);
+      },
+    });
+  }
+
+  const settled = await Promise.allSettled(syncTasks.map(t => t.run()));
+  const ok = [];
+  const failed = [];
+  for (let i = 0; i < syncTasks.length; i++) {
+    if (settled[i].status === 'fulfilled') {
+      ok.push(syncTasks[i].label);
+    } else {
+      failed.push(syncTasks[i].label);
+      console.warn(`[migration] ${syncTasks[i].label} sync 실패`, settled[i].reason?.message);
     }
   }
 
-  await Promise.allSettled(tasks);
   localStorage.setItem(FLAG_KEY, new Date().toISOString());
+  return { ok, failed };
 }
 
 // ── 마이그레이션 다이얼로그 DOM ───────────────────────────────────────────
@@ -179,34 +195,77 @@ export async function openMigrationDialog(uid) {
   if (!uid) return;
   if (document.getElementById('snuhmate-migration-dialog')) return;
 
-  // 오버레이 — 하단에서 올라오는 sheet
   const overlay = document.createElement('div');
   overlay.id = 'snuhmate-migration-dialog';
   overlay.className = 'fixed inset-0 z-[9200] bg-black/60 flex items-end justify-center';
 
-  // 패널 — 디자인시스템 card 스타일 (상단 모서리만 둥글게)
-  const panel = document.createElement('div');
-  panel.className = [
-    'bg-[var(--bg-card)]',
-    'border-t border-[var(--border-glass)]',
-    'rounded-t-[20px]',
-    'px-5 pt-6 pb-8',
-    'w-full max-w-[600px]',
-    'max-h-[90vh] overflow-y-auto',
-  ].join(' ');
+  function makePanel(hidden) {
+    const p = document.createElement('div');
+    p.className = [
+      'bg-[var(--bg-card)]',
+      'border-t border-[var(--border-glass)]',
+      'rounded-t-[20px]',
+      'px-5 pt-6 pb-8',
+      'w-full max-w-[600px]',
+      'max-h-[90vh] overflow-y-auto',
+    ].join(' ');
+    if (hidden) p.style.display = 'none';
+    return p;
+  }
 
-  // 헤더
+  // ── Step 1: 간단 확인 패널 ────────────────────────────────────────────
+  const step1 = makePanel(false);
+
+  const s1Icon = document.createElement('div');
+  s1Icon.className = 'text-2xl text-center mb-3';
+  s1Icon.textContent = '☁️';
+
+  const s1Title = document.createElement('h2');
+  s1Title.className = 'text-[length:var(--text-title-large)] font-bold text-[var(--text-primary)] text-center m-0 mb-3';
+  s1Title.textContent = '클라우드 동기화';
+
+  const s1Desc = document.createElement('p');
+  s1Desc.className = 'text-sm text-[var(--text-secondary)] text-center mt-0 mb-2 leading-relaxed';
+  s1Desc.textContent = '핸드폰에 저장된 내용 전체를 클라우드에 동기화하시겠습니까?';
+
+  const s1Hint = document.createElement('p');
+  s1Hint.className = 'text-xs text-[var(--text-muted)] text-center mt-0 mb-6';
+  s1Hint.textContent = '모든 데이터는 암호화되어 전송됩니다.';
+
+  const s1Actions = document.createElement('div');
+  s1Actions.className = 'grid grid-cols-2 gap-2.5';
+
+  const s1NoBtn = document.createElement('button');
+  s1NoBtn.type = 'button';
+  s1NoBtn.className = 'btn btn-secondary btn-full';
+  s1NoBtn.textContent = '아니요 (선택)';
+
+  const s1YesBtn = document.createElement('button');
+  s1YesBtn.type = 'button';
+  s1YesBtn.className = 'btn btn-primary btn-full';
+  s1YesBtn.textContent = '예 (전체 동기화)';
+
+  s1Actions.appendChild(s1NoBtn);
+  s1Actions.appendChild(s1YesBtn);
+  step1.appendChild(s1Icon);
+  step1.appendChild(s1Title);
+  step1.appendChild(s1Desc);
+  step1.appendChild(s1Hint);
+  step1.appendChild(s1Actions);
+
+  // ── Step 2: 카테고리 선택 패널 ───────────────────────────────────────
+  const step2 = makePanel(true);
+
   const hdr = document.createElement('div');
   hdr.className = 'flex items-center justify-between mb-1';
 
   const titleRow = document.createElement('div');
   titleRow.className = 'flex items-center gap-2';
   const titleIcon = document.createElement('span');
-  titleIcon.className = 'icon indigo';
   titleIcon.textContent = '☁️';
   const titleText = document.createElement('h2');
   titleText.className = 'text-[length:var(--text-title-large)] font-bold text-[var(--text-primary)] m-0';
-  titleText.textContent = '클라우드 동기화 설정';
+  titleText.textContent = '동기화 항목 선택';
   titleRow.appendChild(titleIcon);
   titleRow.appendChild(titleText);
 
@@ -220,11 +279,10 @@ export async function openMigrationDialog(uid) {
   hdr.appendChild(titleRow);
   hdr.appendChild(closeBtn);
 
-  const desc = document.createElement('p');
-  desc.className = 'text-sm text-[var(--text-muted)] mt-2 mb-5 leading-relaxed';
-  desc.textContent = '로그인 전에 저장된 데이터를 클라우드에 업로드할 수 있습니다. 항목을 선택하고 동기화하세요. 모든 데이터는 암호화되어 전송됩니다.';
+  const s2Desc = document.createElement('p');
+  s2Desc.className = 'text-sm text-[var(--text-muted)] mt-2 mb-5 leading-relaxed';
+  s2Desc.textContent = '동기화할 항목을 선택하세요. 모든 데이터는 암호화되어 전송됩니다.';
 
-  // 카테고리 체크박스 목록
   const checkboxes = {};
   const listEl = document.createElement('div');
   listEl.className = 'flex flex-col gap-2.5 mb-5';
@@ -232,13 +290,10 @@ export async function openMigrationDialog(uid) {
   for (const cat of CATEGORIES) {
     const row = document.createElement('label');
     row.className = [
-      'flex items-center gap-3',
-      'p-3 cursor-pointer',
+      'flex items-center gap-3 p-3 cursor-pointer',
       'border border-[var(--border-glass)]',
-      'rounded-[var(--radius-sm)]',
-      'bg-[var(--bg-card)]',
-      'hover:border-[var(--border-active)]',
-      'transition-colors',
+      'rounded-[var(--radius-sm)] bg-[var(--bg-card)]',
+      'hover:border-[var(--border-active)] transition-colors',
     ].join(' ');
 
     const cb = document.createElement('input');
@@ -262,9 +317,8 @@ export async function openMigrationDialog(uid) {
     listEl.appendChild(row);
   }
 
-  // 액션 버튼
-  const actions = document.createElement('div');
-  actions.className = 'grid grid-cols-[1fr_2fr] gap-2.5';
+  const s2Actions = document.createElement('div');
+  s2Actions.className = 'grid grid-cols-[1fr_2fr] gap-2.5';
 
   const skipBtn = document.createElement('button');
   skipBtn.type = 'button';
@@ -276,31 +330,50 @@ export async function openMigrationDialog(uid) {
   syncBtn.type = 'button';
   syncBtn.className = 'btn btn-primary btn-full';
   syncBtn.textContent = '선택 항목 동기화';
-  syncBtn.addEventListener('click', async () => {
+
+  s2Actions.appendChild(skipBtn);
+  s2Actions.appendChild(syncBtn);
+
+  step2.appendChild(hdr);
+  step2.appendChild(s2Desc);
+  step2.appendChild(listEl);
+  step2.appendChild(s2Actions);
+
+  overlay.appendChild(step1);
+  overlay.appendChild(step2);
+  document.body.appendChild(overlay);
+
+  // ── 동기화 실행 (공통) ────────────────────────────────────────────────
+  async function doSync(selectedIds, activeBtn) {
+    activeBtn.disabled = true;
+    activeBtn.textContent = '업로드 중…';
+
+    const { ok, failed } = await uploadCategories(uid, selectedIds);
+
+    if (failed.length === 0) {
+      activeBtn.textContent = ok.length > 0 ? `완료! (${ok.length}개)` : '완료!';
+    } else {
+      activeBtn.textContent = `완료 ${ok.length} / 실패 ${failed.length}`;
+      console.warn('[migration] 실패 항목:', failed);
+    }
+    setTimeout(() => overlay.remove(), 1200);
+  }
+
+  // ── 이벤트 바인딩 ─────────────────────────────────────────────────────
+  s1YesBtn.addEventListener('click', () => {
+    doSync(CATEGORIES.map(c => c.id), s1YesBtn);
+  });
+
+  s1NoBtn.addEventListener('click', () => {
+    step1.style.display = 'none';
+    step2.style.display = '';
+  });
+
+  syncBtn.addEventListener('click', () => {
     const selected = Object.entries(checkboxes)
       .filter(([, cb]) => cb.checked)
       .map(([id]) => id);
     if (selected.length === 0) { overlay.remove(); return; }
-
-    syncBtn.disabled = true;
-    syncBtn.textContent = '업로드 중…';
-    try {
-      await uploadCategories(uid, selected);
-      syncBtn.textContent = '완료!';
-      setTimeout(() => overlay.remove(), 800);
-    } catch {
-      syncBtn.disabled = false;
-      syncBtn.textContent = '다시 시도';
-    }
+    doSync(selected, syncBtn);
   });
-
-  actions.appendChild(skipBtn);
-  actions.appendChild(syncBtn);
-
-  panel.appendChild(hdr);
-  panel.appendChild(desc);
-  panel.appendChild(listEl);
-  panel.appendChild(actions);
-  overlay.appendChild(panel);
-  document.body.appendChild(overlay);
 }
