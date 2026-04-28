@@ -196,14 +196,15 @@ export async function refreshAuthPill(pillEl) {
   if (!pillEl) return;
   const user = await getCurrentUser();
   if (user) {
-    pillEl.textContent = user.displayName || user.email || '로그인됨';
-    pillEl.classList.remove('indigo');
-    pillEl.classList.add('emerald');
+    const name = user.displayName || user.email || '로그인됨';
+    pillEl.textContent = name.length > 18 ? name.slice(0, 18) + '…' : name;
+    // 로그인 상태: btn-secondary (색상 없음, 이름 표시)
+    pillEl.className = 'btn btn-secondary';
     pillEl.dataset.signedIn = '1';
   } else {
     pillEl.textContent = '로그인';
-    pillEl.classList.remove('emerald');
-    pillEl.classList.add('indigo');
+    // 비로그인 상태: btn-primary (인디고 강조)
+    pillEl.className = 'btn btn-primary';
     pillEl.dataset.signedIn = '0';
   }
 }

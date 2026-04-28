@@ -714,23 +714,29 @@ function _openClearProfileModal(keys) {
 
   const overlay = document.createElement('div');
   overlay.id = 'clearProfileModal';
-  overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:99999; display:flex; align-items:center; justify-content:center; padding:16px;';
+  overlay.className = 'fixed inset-0 bg-black/55 z-[99999] flex items-center justify-center p-4';
 
   const card = document.createElement('div');
-  card.style.cssText = 'background:#fff; border-radius:14px; max-width:440px; width:100%; padding:24px; box-shadow:0 20px 60px rgba(0,0,0,0.3); font-family:inherit;';
+  card.className = [
+    'bg-[var(--bg-card)]',
+    'border border-[var(--border-glass)]',
+    'rounded-[var(--radius-md)]',
+    'shadow-[var(--shadow-lg)]',
+    'max-w-[440px] w-full p-6',
+  ].join(' ');
 
   const title = document.createElement('h2');
   title.textContent = '⚠️ 모든 사용자 데이터 초기화';
-  title.style.cssText = 'margin:0 0 12px; font-size:1.15rem; color:#dc2626;';
+  title.className = 'text-[var(--color-status-error,#dc2626)] font-bold text-[length:var(--text-title-large)] m-0 mb-3';
   card.appendChild(title);
 
   const desc = document.createElement('p');
-  desc.style.cssText = 'margin:0 0 12px; font-size:0.9rem; line-height:1.55; color:#374151;';
+  desc.className = 'text-sm leading-relaxed text-[var(--text-primary)] mb-3';
   desc.textContent = '다음 데이터를 모두 삭제합니다 (되돌릴 수 없습니다):';
   card.appendChild(desc);
 
   const ul = document.createElement('ul');
-  ul.style.cssText = 'margin:0 0 16px 18px; font-size:0.85rem; color:#4b5563; line-height:1.6;';
+  ul.className = 'text-sm text-[var(--text-secondary)] mb-4 pl-5 leading-relaxed';
   [
     '개인정보 / 시간외 / 휴가 / 근무이력',
     `급여명세서 ${payslipCount}개`,
@@ -743,7 +749,7 @@ function _openClearProfileModal(keys) {
   card.appendChild(ul);
 
   const note = document.createElement('p');
-  note.style.cssText = 'margin:0 0 18px; padding:10px 12px; background:#fef3c7; border-radius:8px; font-size:0.82rem; color:#78350f; line-height:1.5;';
+  note.className = 'mb-[18px] px-3 py-2.5 bg-[var(--color-status-warning-bg,#fef3c7)] rounded-[var(--radius-sm)] text-xs text-[var(--text-secondary)] leading-relaxed';
   note.appendChild(document.createTextNode('💡 삭제 전 '));
   const noteStrong = document.createElement('strong');
   noteStrong.textContent = '[백업 저장]';
@@ -753,43 +759,43 @@ function _openClearProfileModal(keys) {
 
   const backupStatus = document.createElement('div');
   backupStatus.id = 'clearProfileBackupStatus';
-  backupStatus.style.cssText = 'margin:0 0 14px; padding:8px 12px; background:#f3f4f6; border-radius:6px; font-size:0.8rem; color:#6b7280; min-height:1.4em;';
+  backupStatus.className = 'mb-3.5 px-3 py-2 bg-[var(--bg-muted,#f3f4f6)] rounded-[var(--radius-sm)] text-xs text-[var(--text-muted)] min-h-[1.4em]';
   backupStatus.textContent = '백업 미저장';
   card.appendChild(backupStatus);
 
   const btnRow = document.createElement('div');
-  btnRow.style.cssText = 'display:flex; gap:8px; flex-wrap:wrap;';
+  btnRow.className = 'flex gap-2 flex-wrap';
 
-  // [백업 저장하기] — 강조: indigo, full width
+  // [백업 저장하기] — btn-primary, full width
   const btnBackup = document.createElement('button');
   btnBackup.type = 'button';
   btnBackup.textContent = '💾 백업 저장하기';
-  btnBackup.style.cssText = 'flex:1 1 100%; padding:11px 16px; background:#4f46e5; color:#fff; border:none; border-radius:8px; font-size:0.95rem; font-weight:600; cursor:pointer;';
+  btnBackup.className = 'btn btn-primary btn-full flex-[1_1_100%]';
   btnBackup.onclick = function () {
     const ok = _downloadFullBackup();
     backupStatus.textContent = ok ? '✅ 백업 다운로드됨 — 안전하게 삭제 가능' : '⚠️ 백업 다운로드 실패';
-    backupStatus.style.background = ok ? '#dcfce7' : '#fee2e2';
-    backupStatus.style.color = ok ? '#166534' : '#991b1b';
+    backupStatus.style.background = ok ? 'var(--color-status-success-bg,#dcfce7)' : 'var(--color-status-error-bg,#fee2e2)';
+    backupStatus.style.color = ok ? 'var(--color-status-success,#166534)' : 'var(--color-status-error,#991b1b)';
     btnBackup.disabled = true;
-    btnBackup.style.background = '#9ca3af';
+    btnBackup.style.opacity = '0.5';
     btnBackup.style.cursor = 'default';
     btnBackup.textContent = '✅ 백업 저장됨';
   };
   btnRow.appendChild(btnBackup);
 
-  // [취소] — 보조
+  // [취소] — btn-secondary
   const btnCancel = document.createElement('button');
   btnCancel.type = 'button';
   btnCancel.textContent = '취소';
-  btnCancel.style.cssText = 'flex:1 1 45%; padding:10px 16px; background:#e5e7eb; color:#374151; border:none; border-radius:8px; font-size:0.9rem; font-weight:500; cursor:pointer;';
+  btnCancel.className = 'btn btn-secondary justify-center flex-[1_1_45%]';
   btnCancel.onclick = function () { overlay.remove(); };
   btnRow.appendChild(btnCancel);
 
-  // [모두 삭제] — 위험
+  // [모두 삭제] — 위험 (rose 컬러)
   const btnDelete = document.createElement('button');
   btnDelete.type = 'button';
   btnDelete.textContent = '🗑 모두 삭제';
-  btnDelete.style.cssText = 'flex:1 1 45%; padding:10px 16px; background:#dc2626; color:#fff; border:none; border-radius:8px; font-size:0.9rem; font-weight:600; cursor:pointer;';
+  btnDelete.className = 'btn justify-center flex-[1_1_45%] bg-[var(--color-status-error,#dc2626)] text-white border-none hover:bg-[#b91c1c]';
   btnDelete.onclick = function () {
     overlay.remove();
     _executeFullClear(keys);

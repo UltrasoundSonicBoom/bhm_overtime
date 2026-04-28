@@ -24,7 +24,7 @@ const CATEGORIES = [
     id: 'payroll',
     label: '급여 정보',
     desc: '시급, 연봉, 수당 정책',
-    guestKey: () => 'snuhmate_hr_profile_guest',  // profile 에 포함
+    guestKey: () => 'snuhmate_hr_profile_guest',
   },
   {
     id: 'overtime',
@@ -36,7 +36,7 @@ const CATEGORIES = [
     id: 'leave',
     label: '휴가 기록',
     desc: '연차·병가·청원 휴가 사용 내역',
-    guestKey: () => 'leaveRecords',  // LEAVE 는 단일 키 사용
+    guestKey: () => 'leaveRecords',
   },
   {
     id: 'workHistory',
@@ -48,7 +48,7 @@ const CATEGORIES = [
     id: 'settings',
     label: '앱 설정',
     desc: '테마, AppLock PIN 등',
-    guestKey: () => null,  // snuhmate_settings 는 uid 無관 단일키
+    guestKey: () => null,
   },
   {
     id: 'reference',
@@ -179,64 +179,80 @@ export async function openMigrationDialog(uid) {
   if (!uid) return;
   if (document.getElementById('snuhmate-migration-dialog')) return;
 
+  // 오버레이 — 하단에서 올라오는 sheet
   const overlay = document.createElement('div');
   overlay.id = 'snuhmate-migration-dialog';
-  overlay.style.cssText = [
-    'position:fixed;inset:0;z-index:9200;',
-    'background:rgba(0,0,0,0.55);',
-    'display:flex;align-items:flex-end;justify-content:center;',
-  ].join('');
+  overlay.className = 'fixed inset-0 z-[9200] bg-black/60 flex items-end justify-center';
 
+  // 패널 — 디자인시스템 card 스타일 (상단 모서리만 둥글게)
   const panel = document.createElement('div');
-  panel.style.cssText = [
-    'background:var(--bg-card,#fff);border-radius:20px 20px 0 0;',
-    'padding:24px 20px 32px;width:100%;max-width:600px;',
-    'max-height:90vh;overflow-y:auto;',
-  ].join('');
+  panel.className = [
+    'bg-[var(--bg-card)]',
+    'border-t border-[var(--border-glass)]',
+    'rounded-t-[20px]',
+    'px-5 pt-6 pb-8',
+    'w-full max-w-[600px]',
+    'max-h-[90vh] overflow-y-auto',
+  ].join(' ');
 
-  // Header
+  // 헤더
   const hdr = document.createElement('div');
-  hdr.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;';
-  const title = document.createElement('h2');
-  title.style.cssText = 'font-size:1.1rem;font-weight:700;margin:0;';
-  title.textContent = '클라우드 동기화 설정';
+  hdr.className = 'flex items-center justify-between mb-1';
+
+  const titleRow = document.createElement('div');
+  titleRow.className = 'flex items-center gap-2';
+  const titleIcon = document.createElement('span');
+  titleIcon.className = 'icon indigo';
+  titleIcon.textContent = '☁️';
+  const titleText = document.createElement('h2');
+  titleText.className = 'text-[length:var(--text-title-large)] font-bold text-[var(--text-primary)] m-0';
+  titleText.textContent = '클라우드 동기화 설정';
+  titleRow.appendChild(titleIcon);
+  titleRow.appendChild(titleText);
+
   const closeBtn = document.createElement('button');
   closeBtn.type = 'button';
-  closeBtn.style.cssText = 'background:none;border:none;font-size:1.5rem;cursor:pointer;line-height:1;padding:4px 8px;';
+  closeBtn.className = 'btn-icon';
   closeBtn.textContent = '×';
+  closeBtn.setAttribute('aria-label', '닫기');
   closeBtn.addEventListener('click', () => overlay.remove());
-  hdr.appendChild(title);
+
+  hdr.appendChild(titleRow);
   hdr.appendChild(closeBtn);
 
   const desc = document.createElement('p');
-  desc.style.cssText = 'font-size:0.85rem;color:var(--text-muted);margin:0 0 18px;line-height:1.5;';
+  desc.className = 'text-sm text-[var(--text-muted)] mt-2 mb-5 leading-relaxed';
   desc.textContent = '로그인 전에 저장된 데이터를 클라우드에 업로드할 수 있습니다. 항목을 선택하고 동기화하세요. 모든 데이터는 암호화되어 전송됩니다.';
 
-  // Category checkboxes
+  // 카테고리 체크박스 목록
   const checkboxes = {};
   const listEl = document.createElement('div');
-  listEl.style.cssText = 'display:flex;flex-direction:column;gap:10px;margin-bottom:20px;';
+  listEl.className = 'flex flex-col gap-2.5 mb-5';
 
   for (const cat of CATEGORIES) {
     const row = document.createElement('label');
-    row.style.cssText = [
-      'display:flex;align-items:center;gap:12px;padding:12px 14px;',
-      'border:1px solid var(--border-glass);border-radius:10px;cursor:pointer;',
-      'background:var(--bg-surface,rgba(255,255,255,.04));',
-    ].join('');
+    row.className = [
+      'flex items-center gap-3',
+      'p-3 cursor-pointer',
+      'border border-[var(--border-glass)]',
+      'rounded-[var(--radius-sm)]',
+      'bg-[var(--bg-card)]',
+      'hover:border-[var(--border-active)]',
+      'transition-colors',
+    ].join(' ');
 
     const cb = document.createElement('input');
     cb.type = 'checkbox';
     cb.checked = true;
-    cb.style.cssText = 'width:18px;height:18px;flex-shrink:0;cursor:pointer;';
+    cb.className = 'w-[18px] h-[18px] shrink-0 cursor-pointer accent-[var(--accent-indigo)]';
     checkboxes[cat.id] = cb;
 
     const textWrap = document.createElement('div');
     const labelEl = document.createElement('div');
-    labelEl.style.cssText = 'font-weight:600;font-size:0.9rem;';
+    labelEl.className = 'font-semibold text-sm text-[var(--text-primary)]';
     labelEl.textContent = cat.label;
     const descEl = document.createElement('div');
-    descEl.style.cssText = 'font-size:0.78rem;color:var(--text-muted);margin-top:2px;';
+    descEl.className = 'text-xs text-[var(--text-muted)] mt-0.5';
     descEl.textContent = cat.desc;
     textWrap.appendChild(labelEl);
     textWrap.appendChild(descEl);
@@ -246,22 +262,19 @@ export async function openMigrationDialog(uid) {
     listEl.appendChild(row);
   }
 
-  // Actions
+  // 액션 버튼
   const actions = document.createElement('div');
-  actions.style.cssText = 'display:grid;grid-template-columns:1fr 2fr;gap:10px;';
+  actions.className = 'grid grid-cols-[1fr_2fr] gap-2.5';
 
   const skipBtn = document.createElement('button');
   skipBtn.type = 'button';
-  skipBtn.style.cssText = 'padding:12px;border:1px solid var(--border-glass);border-radius:10px;background:transparent;cursor:pointer;font-size:0.9rem;';
+  skipBtn.className = 'btn btn-secondary btn-full';
   skipBtn.textContent = '나중에';
   skipBtn.addEventListener('click', () => overlay.remove());
 
   const syncBtn = document.createElement('button');
   syncBtn.type = 'button';
-  syncBtn.style.cssText = [
-    'padding:12px;border:none;border-radius:10px;cursor:pointer;',
-    'background:var(--accent-indigo,#6366f1);color:#fff;font-size:0.9rem;font-weight:600;',
-  ].join('');
+  syncBtn.className = 'btn btn-primary btn-full';
   syncBtn.textContent = '선택 항목 동기화';
   syncBtn.addEventListener('click', async () => {
     const selected = Object.entries(checkboxes)
@@ -275,7 +288,7 @@ export async function openMigrationDialog(uid) {
       await uploadCategories(uid, selected);
       syncBtn.textContent = '완료!';
       setTimeout(() => overlay.remove(), 800);
-    } catch (e) {
+    } catch {
       syncBtn.disabled = false;
       syncBtn.textContent = '다시 시도';
     }
