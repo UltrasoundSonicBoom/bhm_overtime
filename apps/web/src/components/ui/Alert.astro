@@ -1,0 +1,35 @@
+---
+/**
+ * Alert — 사용자 안내 (info/success/warning/error)
+ * role="alert" + aria-live="polite" 으로 screen reader 자동 알림.
+ */
+interface Props {
+  variant?: 'info' | 'success' | 'warning' | 'error';
+  title?: string;
+  dismissible?: boolean;
+  icon?: string;
+}
+const { variant = 'info', title, dismissible, icon } = Astro.props;
+const styles = {
+  info:    { bg: 'bg-ds-status-info-bg',    fg: 'text-ds-status-info',    border: 'border-ds-status-info',    defaultIcon: 'ℹ️' },
+  success: { bg: 'bg-ds-status-success-bg', fg: 'text-ds-status-success', border: 'border-ds-status-success', defaultIcon: '✅' },
+  warning: { bg: 'bg-ds-status-warning-bg', fg: 'text-ds-status-warning', border: 'border-ds-status-warning', defaultIcon: '⚠️' },
+  error:   { bg: 'bg-ds-status-error-bg',   fg: 'text-ds-status-error',   border: 'border-ds-status-error',   defaultIcon: '⛔' },
+}[variant];
+const displayIcon = icon ?? styles.defaultIcon;
+---
+<div role="alert" aria-live="polite" class={`flex items-start gap-3 p-3 rounded-brand-md border ${styles.bg} ${styles.border}`}>
+  <span aria-hidden="true" class={`text-ds-body-lg ${styles.fg}`}>{displayIcon}</span>
+  <div class="flex-1 text-ds-body-md text-ds-text-primary">
+    {title && <strong class={`block mb-1 ${styles.fg}`}>{title}</strong>}
+    <slot />
+  </div>
+  {dismissible && (
+    <button
+      type="button"
+      class="text-ds-text-muted hover:text-ds-text-primary px-2 focus-visible:outline-none focus-visible:ring-ds focus-visible:ring-ds-focus focus-visible:ring-offset-ds"
+      aria-label="닫기"
+      data-ds-alert-dismiss
+    >×</button>
+  )}
+</div>

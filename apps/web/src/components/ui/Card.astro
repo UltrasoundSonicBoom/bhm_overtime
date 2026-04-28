@@ -1,0 +1,30 @@
+---
+/**
+ * Card — 콘텐츠 그룹 박스
+ * Slot: default(body), header, footer
+ * Legacy CSS class: .card, .card-title (호환).
+ */
+interface Props {
+  elevated?: boolean;
+  padding?: 'none' | 'sm' | 'md' | 'lg';
+  as?: 'div' | 'section' | 'article';
+  ariaLabel?: string;
+}
+const { elevated = false, padding = 'md', as: Tag = 'div', ariaLabel } = Astro.props;
+const padClass = { none: 'p-0', sm: 'p-3', md: 'p-6', lg: 'p-8' }[padding];
+const shadowClass = elevated ? 'shadow-brand-md' : '';
+const classList = ['card', 'bg-ds-bg-surface', 'border', 'border-ds-border-default', 'rounded-brand-md', 'transition-colors', 'hover:border-ds-border-strong', padClass, shadowClass].filter(Boolean).join(' ');
+---
+<Tag class={classList} aria-label={ariaLabel}>
+  {Astro.slots.has('header') && (
+    <header class="card-title text-ds-h4 text-ds-text-primary mb-3">
+      <slot name="header" />
+    </header>
+  )}
+  <slot />
+  {Astro.slots.has('footer') && (
+    <footer class="mt-4 pt-3 border-t border-ds-border-default">
+      <slot name="footer" />
+    </footer>
+  )}
+</Tag>
