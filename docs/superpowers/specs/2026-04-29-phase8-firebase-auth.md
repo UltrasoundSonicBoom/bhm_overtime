@@ -1,9 +1,16 @@
 # Spec: Phase 8 — Firebase Auth + Firestore 도입
 
-**작성일**: 2026-04-29
+**작성일**: 2026-04-29 (v1) / **갱신**: 2026-04-29 (v2 — 사용자 승인 통합 blueprint)
 **선행 phase**: Phase 7 (Tailwind) 완료
 **Firebase Project**: `snuhmate` (project# 914163950802, owner ultrasoundsonicboom@gmail.com)
 **Hosting (그대로 유지)**: Cloudflare. Firebase Hosting **미사용**.
+
+> **v2 변경점 요약** (2026-04-29 사용자 승인, blueprint: `~/.claude/plans/agile-chasing-stardust.md`):
+> - **Auth 1차 변경**: Email/Password 제거 → **Google + 카카오 1차 통합** (Plan A/B 분리 폐기)
+> - **신규 §18 암호화 레이어**: 민감 필드 AES-GCM (uid 파생 키), 평문 인덱싱 필드는 보존 (Hybrid)
+> - **신규 §19 Supabase 잔여물 정리**: 별도 phase
+> - **데이터 보존**: 10년 누적 비전 유지 (자동 삭제 0)
+> - 본 SPEC 의 §6 Auth, §7 Migration, §15 진행 순서 는 v2 결정으로 해석할 것
 
 ---
 
@@ -426,3 +433,65 @@ const db = initializeFirestore(app, {
 
 **미수정**:
 - 8개 탭의 UI 로직 (Astro components) — additive only, 기존 동작 100% 유지
+
+---
+
+## 18. 암호화 레이어 (v2 신규)
+
+> 사용자 승인 blueprint (`~/.claude/plans/agile-chasing-stardust.md` Phase 4) — DB 해킹 / Firebase 직원 내부자 위협 방어. 한국 PIPA 의료직 정보 추가 layer.
+
+### 18.1 키 파생 + 알고리즘
+- **알고리즘**: AES-GCM 256-bit
+- **키 파생**: `SHA-256(uid + '|snuh-mate-2026')` → AES-GCM key (`crypto.subtle.importKey`)
+- **IV**: 매 암호화마다 12-byte 랜덤 (`crypto.getRandomValues`)
+- **저장 형태**: `{ _v: 1, iv: <base64>, c: <base64-ciphertext> }` 객체
+- **로컬 영향 0**: localStorage 는 평문 유지 (AppLock PIN 으로 보호). 암호화는 Firestore write 직전에만.
+
+### 18.2 적용 범위 — Hybrid (선택적)
+
+**평문 (인덱스/쿼리 가능)**:
+- `payMonth`, `payDate`, `lastEditAt`, `firestoreId`, `createdAt`
+- `payslipName` (카테고리 분류용)
+- `entries[].date`, `entries[].yyyymm`
+- `category`, `type`
+
+**암호화 필드** — `firebase/sync/_encrypted-fields.js` 화이트리스트:
+- Identity: `name`, `employeeId`, `department`, `position`, `hireDate`, `jobLevel`, `rank`
+- Payroll: `hourlyWage`, `annualSalary`, `manualHourly`, `allowancePolicy`, `paymentDay`, `baseHours`
+- Payslip: `parsedFields` (전체)
+- Overtime: `entries[].hours`, `entries[].duration`, `entries[].notes`
+- Leave: `entries[].duration`, `entries[].notes`
+- Settings: `appLockPin`, `customNotes`
+- Work history: `employer`, `position`, `notes`, `salary`
+
+### 18.3 트레이드오프 + 결정 근거
+
+- ✅ **AI 분석 가능**: 클라이언트 fetch → 복호화 → 본인 OpenAI/Anthropic API key 호출. AI 차단 없음.
+- ✅ **Firestore 쿼리 효율**: payMonth orderBy 등 인덱싱 필드 보존.
+- ✅ **본인 검색**: 자기 데이터는 다 fetch 후 클라이언트 메모리 검색 (≤ 1000 doc).
+- ❌ **타인 검색 차단**: Security Rules 가 어차피 차단. 암호화는 추가 layer.
+- ⚠️ **Key recovery**: uid 잃으면 데이터 영구 잠금. Google 로그인 회복 가능 (uid 동일).
+- ⚠️ **Key rotation**: 미지원 (v1). 필요 시 client-side 재암호화 Phase 8.x 신규 task.
+
+### 18.4 신규 파일
+- `firebase/crypto.js` — `deriveKey(uid)`, `encryptValue(v, key)`, `decryptValue(blob, key)`, `encryptDoc(doc, fields, key)`, `decryptDoc(doc, fields, key)`
+- `firebase/sync/_encrypted-fields.js` — 화이트리스트 (위 §18.2)
+- `tests/integration/firebase/crypto.test.js` — 라운드트립 + IV 랜덤성 + 평문 필드 보존
+
+---
+
+## 19. Supabase 잔여물 정리 (v2 신규)
+
+> 사용자 승인 blueprint Phase 11. 메모리 (project_backend_upgrade.md / Supabase 재검토 금지) 와 정합.
+
+### 19.1 정리 대상
+- `archive/` 또는 active source tree 의 `*supabase*.sql` 파일
+- 코드 내 `// TODO: Supabase`, `// SB-` 주석
+- `import` 또는 환경변수 (`SUPABASE_URL`, `SUPABASE_ANON_KEY` 등) 잔재
+- Hono 백엔드 스캐폴드 (재활용 검토 후 archive 이동)
+
+### 19.2 액션
+1. `archive/backend-upgrade-supabase/` 디렉토리 생성 → 잔여물 이동
+2. 코드 grep 후 죽은 코드 제거
+3. README / docs 의 Supabase 참조 → "Phase 8 전 시도, 폐기" 한 줄 + Phase 8 link
+4. `.env*` 의 SUPABASE_* 키 제거
