@@ -83,9 +83,45 @@ export const PROFILE = {
         localStorage.setItem(this.STORAGE_KEY, JSON.stringify(profile));
         if (window.recordLocalEdit) window.recordLocalEdit('snuhmate_hr_profile');
 
+        // Phase 8: Firestore write-through (로그인 시만, fire-and-forget, 실패 무해)
+        if (typeof window !== 'undefined' && window.__firebaseUid) {
+            import('/src/firebase/sync/profile-sync.js').then(m =>
+                m.writeProfile(null, window.__firebaseUid, profile)
+            ).catch(err => {
+                console.warn('[Phase 8] profile cloud sync 실패 (무해)', err?.message || err);
+            });
+        }
+
         window.dispatchEvent(new CustomEvent('profileChanged'));
 
         return profile;
+    },
+
+    // Phase 8: 로그인 시 cloud → local pull (LWW 비교)
+    // load() 가 sync 라 별도 async helper. 첫 로그인 + onAuthChanged 후 1회 호출 권장.
+    async _pullFromCloudOnce() {
+        try {
+            if (typeof window === 'undefined' || !window.__firebaseUid) return;
+            if (this.__pullingFromCloud) return;
+            this.__pullingFromCloud = true;
+            const mod = await import('/src/firebase/sync/profile-sync.js');
+            const cloud = await mod.readProfile(null, window.__firebaseUid);
+            if (cloud) {
+                const localRaw = localStorage.getItem(this.STORAGE_KEY);
+                const localObj = localRaw ? JSON.parse(localRaw) : null;
+                // LWW: cloud lastEditAt 비교 — 없거나 더 신선하면 cloud 채택
+                const useCloud = !localObj
+                    || (cloud.savedAt && (!localObj.savedAt || cloud.savedAt > localObj.savedAt));
+                if (useCloud) {
+                    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(cloud));
+                    window.dispatchEvent(new CustomEvent('profileChanged', { detail: { source: 'cloud' } }));
+                }
+            }
+        } catch (err) {
+            console.warn('[Phase 8] profile cloud pull 실패 (무해)', err?.message || err);
+        } finally {
+            this.__pullingFromCloud = false;
+        }
     },
 
     /**
