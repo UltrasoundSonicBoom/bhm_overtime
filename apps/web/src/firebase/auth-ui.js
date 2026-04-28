@@ -1,7 +1,7 @@
 // firebase/auth-ui.js — Phase 8 Task 5: 로그인 다이얼로그 + status pill
 //
 // XSS 회피: createElement + textContent + setAttribute only (innerHTML 금지).
-// non-pushy: URL 파라미터 자동 오픈 금지, ESC 닫기, '나중에' = flag 미설정.
+// non-pushy: URL 파라미터 자동 오픈 금지, ESC 닫기, '취소' = 다이얼로그 닫기.
 //
 // 1차 provider: Email + Google. 카카오는 Phase 10 에서 추가.
 
@@ -41,54 +41,115 @@ function _el(tag, attrs, children) {
   return e;
 }
 
+// Google G 로고 SVG — DOM API만 사용 (innerHTML 금지)
+function _googleIcon() {
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('width', '18');
+  svg.setAttribute('height', '18');
+  svg.setAttribute('aria-hidden', 'true');
+
+  const paths = [
+    { fill: '#4285F4', d: 'M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z' },
+    { fill: '#34A853', d: 'M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z' },
+    { fill: '#FBBC05', d: 'M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z' },
+    { fill: '#EA4335', d: 'M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z' },
+  ];
+  paths.forEach(({ fill, d }) => {
+    const p = document.createElementNS(NS, 'path');
+    p.setAttribute('fill', fill);
+    p.setAttribute('d', d);
+    svg.appendChild(p);
+  });
+  return svg;
+}
+
 function _buildDialog() {
   const overlay = _el('div', {
     id: DIALOG_ID,
-    className: 'fixed inset-0 z-50 flex items-center justify-center bg-black/50',
+    className: 'fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4',
   });
-  const panel = _el('div', { className: 'bg-white rounded-lg p-6 max-w-sm w-full shadow-xl' });
 
-  panel.appendChild(_el('h2', { className: 'text-lg font-semibold mb-4', text: 'SNUH 메이트 로그인' }));
+  // 디자인 시스템 card 패턴 (margin-bottom 없는 모달용)
+  const panel = _el('div', {
+    className: [
+      'w-full max-w-[360px]',
+      'bg-[var(--bg-card)]',
+      'border border-[var(--border-glass)]',
+      'rounded-[var(--radius-md)]',
+      'shadow-[var(--shadow-md)]',
+      'p-6',
+    ].join(' '),
+  });
 
+  // 제목 (card-title 패턴)
+  const titleRow = _el('div', { className: 'card-title mb-5' });
+  titleRow.appendChild(_el('span', { className: 'icon indigo', text: '👤' }));
+  titleRow.appendChild(_el('span', { text: 'SNUH 메이트 로그인' }));
+  panel.appendChild(titleRow);
+
+  // Google 로그인 버튼 (btn-secondary)
   const googleBtn = _el('button', {
     type: 'button', id: 'snuhmateGoogleBtn',
-    className: 'w-full mb-3 px-4 py-2 border border-gray-300 rounded hover:bg-gray-50',
-    text: 'Google 로 로그인',
+    className: 'btn btn-secondary btn-full mb-4',
   });
+  googleBtn.appendChild(_googleIcon());
+  googleBtn.appendChild(document.createTextNode('Google 로 로그인'));
   panel.appendChild(googleBtn);
 
-  panel.appendChild(_el('div', { className: 'text-xs text-gray-500 text-center my-3', text: '또는' }));
+  // 구분선
+  const dividerRow = _el('div', { className: 'flex items-center gap-3 mb-4' });
+  dividerRow.appendChild(_el('div', { className: 'flex-1 h-px bg-[var(--border-glass)]' }));
+  dividerRow.appendChild(_el('span', { className: 'text-xs text-[var(--text-muted)]', text: '또는' }));
+  dividerRow.appendChild(_el('div', { className: 'flex-1 h-px bg-[var(--border-glass)]' }));
+  panel.appendChild(dividerRow);
 
+  // 이메일 입력 (form-group 래퍼 → .form-group input 스타일 자동 적용)
+  const emailGroup = _el('div', { className: 'form-group' });
   const emailIn = _el('input', {
     type: 'email', id: 'snuhmateEmail', placeholder: '이메일',
-    className: 'w-full mb-2 px-3 py-2 border border-gray-300 rounded',
+    autocomplete: 'email',
   });
+  emailGroup.appendChild(emailIn);
+  panel.appendChild(emailGroup);
+
+  // 비밀번호 입력
+  const passGroup = _el('div', { className: 'form-group' });
   const passIn = _el('input', {
     type: 'password', id: 'snuhmatePass', placeholder: '비밀번호 (6자 이상)',
-    className: 'w-full mb-3 px-3 py-2 border border-gray-300 rounded',
+    autocomplete: 'current-password',
   });
-  panel.appendChild(emailIn);
-  panel.appendChild(passIn);
+  passGroup.appendChild(passIn);
+  panel.appendChild(passGroup);
 
-  const signInBtn = _el('button', {
-    type: 'button', id: 'snuhmateSignInBtn',
-    className: 'w-full mb-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700',
-    text: '이메일 로그인',
+  // 에러 메시지
+  const errEl = _el('p', {
+    id: 'snuhmateAuthErr',
+    className: 'text-xs text-[var(--color-status-error,#ef4444)] mb-3 hidden',
   });
-  const signUpBtn = _el('button', {
-    type: 'button', id: 'snuhmateSignUpBtn',
-    className: 'w-full mb-3 px-4 py-2 border border-blue-600 text-blue-600 rounded hover:bg-blue-50',
-    text: '신규 가입',
-  });
-  panel.appendChild(signInBtn);
-  panel.appendChild(signUpBtn);
-
-  const errEl = _el('p', { id: 'snuhmateAuthErr', className: 'text-xs text-red-600 mb-2 hidden' });
   panel.appendChild(errEl);
 
+  // 이메일 로그인 버튼 (btn-primary)
+  const signInBtn = _el('button', {
+    type: 'button', id: 'snuhmateSignInBtn',
+    className: 'btn btn-primary btn-full mb-2',
+    text: '이메일 로그인',
+  });
+  panel.appendChild(signInBtn);
+
+  // 신규 가입 버튼 (btn-outline)
+  const signUpBtn = _el('button', {
+    type: 'button', id: 'snuhmateSignUpBtn',
+    className: 'btn btn-outline btn-full mb-2',
+    text: '신규 가입',
+  });
+  panel.appendChild(signUpBtn);
+
+  // 취소 버튼
   const closeBtn = _el('button', {
     type: 'button', id: 'snuhmateAuthClose',
-    className: 'w-full px-4 py-2 text-gray-500 hover:text-gray-700',
+    className: 'w-full mt-1 py-2 text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors cursor-pointer bg-transparent border-none',
     text: '취소',
   });
   panel.appendChild(closeBtn);
@@ -125,6 +186,7 @@ function _buildDialog() {
     catch (e) { setErr(prettyErr(e)); }
   });
   closeBtn.addEventListener('click', closeAuthDialog);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeAuthDialog(); });
 
   return overlay;
 }
@@ -134,10 +196,14 @@ export async function refreshAuthPill(pillEl) {
   if (!pillEl) return;
   const user = await getCurrentUser();
   if (user) {
-    pillEl.textContent = user.email || (user.displayName || '로그인됨');
+    pillEl.textContent = user.displayName || user.email || '로그인됨';
+    pillEl.classList.remove('indigo');
+    pillEl.classList.add('emerald');
     pillEl.dataset.signedIn = '1';
   } else {
     pillEl.textContent = '로그인';
+    pillEl.classList.remove('emerald');
+    pillEl.classList.add('indigo');
     pillEl.dataset.signedIn = '0';
   }
 }
