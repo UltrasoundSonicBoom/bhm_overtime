@@ -6,10 +6,12 @@
 **Hosting (그대로 유지)**: Cloudflare. Firebase Hosting **미사용**.
 
 > **v2 변경점 요약** (2026-04-29 사용자 승인, blueprint: `~/.claude/plans/agile-chasing-stardust.md`):
-> - **Auth 1차 변경**: Email/Password 제거 → **Google + 카카오 1차 통합** (Plan A/B 분리 폐기)
+> - **Auth 1차 변경**: Email/Password + Google + 카카오 1차 통합 (Plan A/B 분리 폐기)
 > - **신규 §18 암호화 레이어**: 민감 필드 AES-GCM (uid 파생 키), 평문 인덱싱 필드는 보존 (Hybrid)
 > - **신규 §19 Supabase 잔여물 정리**: 별도 phase
 > - **데이터 보존**: 10년 누적 비전 유지 (자동 삭제 0)
+> - **Phase 0.2/0.3 폐기 (2026-04-29)**: production localStorage dump 회수는 운영 부담 대비 실익 미미.
+>   기존 lazy migration (`inline-ui-helpers.js`) + Phase 8 마이그레이션 다이얼로그 자동 스캔으로 충분.
 > - 본 SPEC 의 §6 Auth, §7 Migration, §15 진행 순서 는 v2 결정으로 해석할 것
 
 ---
