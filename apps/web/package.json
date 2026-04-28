@@ -10,15 +10,17 @@
     "check": "astro check"
   },
   "dependencies": {
-    "astro": "^4.16.18",
     "@snuhmate/calculators": "workspace:*",
     "@snuhmate/data": "workspace:*",
     "@snuhmate/profile": "workspace:*",
     "@snuhmate/regulation-constants": "workspace:*",
-    "@snuhmate/shared-utils": "workspace:*"
+    "@snuhmate/shared-utils": "workspace:*",
+    "astro": "^4.16.18"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.4",
+    "@astrojs/tailwind": "^6.0.2",
+    "tailwindcss": "^3.4.19",
     "typescript": "^5.7.2"
   }
 }

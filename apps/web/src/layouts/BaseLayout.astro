@@ -36,9 +36,9 @@ const {
     (function(){try{var t=localStorage.getItem("theme");if(t==="dark"||t==="linear"){document.documentElement.setAttribute("data-theme","dark");var d=document.createElement("link");d.rel="stylesheet";d.href="/styles/dark.css";document.head.appendChild(d);if(t==="linear")localStorage.setItem("theme","dark")}}catch(e){}})();
   </script>
 </head>
-<body>
-  <header id="sharedHeader"></header>
+<body class="min-h-screen antialiased">
+  <header id="sharedHeader" class="block w-full"></header>
   <slot />
-  {showFooterNav && <nav id="sharedFooter"></nav>}
+  {showFooterNav && <nav id="sharedFooter" class="block w-full"></nav>}
 </body>
 </html>

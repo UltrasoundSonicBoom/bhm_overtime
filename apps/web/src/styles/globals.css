@@ -6,6 +6,12 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Bakbak+One&family=Black+Han+Sans&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
 
+/* Phase 7-1: Tailwind directives. preflight 비활성 (tailwind.config.js corePlugins.preflight=false)
+   → 기존 globals.css reset (* { margin:0... }, body, html) 그대로 유지. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   /* ── Typography Scale (공통) ── */
   --text-amount-huge: 32px;
