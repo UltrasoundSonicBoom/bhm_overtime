@@ -1,0 +1,50 @@
+---
+/**
+ * Input — single-line text/email/tel/number/date/password input.
+ * focus-ring + aria-invalid + disabled state 일관성.
+ */
+interface Props {
+  type?: 'text' | 'email' | 'tel' | 'number' | 'date' | 'password';
+  id?: string;
+  name?: string;
+  value?: string | number;
+  placeholder?: string;
+  required?: boolean;
+  disabled?: boolean;
+  readonly?: boolean;
+  autocomplete?: string;
+  min?: string | number;
+  max?: string | number;
+  step?: string | number;
+  pattern?: string;
+  /** @internal XSS surface — validate before use */
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
+  invalid?: boolean;
+}
+const {
+  type = 'text', id, name, value, placeholder,
+  required, disabled, readonly, autocomplete,
+  min, max, step, pattern, ariaLabel, ariaDescribedBy, invalid,
+} = Astro.props;
+const borderClass = invalid ? 'border-ds-status-error' : 'border-ds-border-default';
+---
+<input
+  type={type}
+  id={id}
+  name={name}
+  value={value}
+  placeholder={placeholder}
+  required={required}
+  disabled={disabled}
+  readonly={readonly}
+  autocomplete={autocomplete}
+  min={min}
+  max={max}
+  step={step}
+  pattern={pattern}
+  aria-label={ariaLabel}
+  aria-describedby={ariaDescribedBy}
+  aria-invalid={invalid ? 'true' : 'false'}
+  class={`w-full min-h-[44px] px-3 py-2 bg-ds-bg-muted text-ds-text-primary border rounded-brand-sm text-ds-body-md transition-colors focus:outline-none focus:border-ds-border-focus focus:ring-ds focus:ring-ds-focus focus:ring-offset-ds disabled:opacity-50 disabled:cursor-not-allowed ${borderClass}`}
+/>

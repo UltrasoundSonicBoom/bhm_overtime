@@ -1,0 +1,35 @@
+---
+/**
+ * FormField — Input/Select/Textarea wrapper
+ * label + helper + error + required 표시 일관성.
+ *
+ * Legacy CSS class: .form-group (호환).
+ */
+interface Props {
+  label?: string;
+  helper?: string;
+  error?: string;
+  required?: boolean;
+  htmlFor?: string;
+  id?: string;
+}
+const { label, helper, error, required, htmlFor, id } = Astro.props;
+const fieldId = htmlFor ?? id;
+const errorId = fieldId ? fieldId + '-error' : undefined;
+const helperId = fieldId ? fieldId + '-helper' : undefined;
+---
+<div class="form-group flex flex-col gap-1 mb-4">
+  {label && (
+    <label for={htmlFor} class="block text-ds-label text-ds-text-secondary font-medium">
+      {label}
+      {required && <span class="text-ds-status-error ml-0.5" aria-hidden="true">*</span>}
+    </label>
+  )}
+  <slot />
+  {helper && !error && (
+    <p id={helperId} class="text-ds-caption text-ds-text-muted">{helper}</p>
+  )}
+  {error && (
+    <p id={errorId} class="text-ds-caption text-ds-status-error" role="alert">{error}</p>
+  )}
+</div>

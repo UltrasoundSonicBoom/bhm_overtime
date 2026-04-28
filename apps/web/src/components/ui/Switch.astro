@@ -1,0 +1,28 @@
+---
+/**
+ * Switch — visual on/off toggle. Underlying <input type="checkbox" class="sr-only peer">
+ * with a styled track/thumb that responds to peer-checked: state.
+ */
+interface Props {
+  id?: string;
+  name?: string;
+  checked?: boolean;
+  disabled?: boolean;
+  label?: string;
+  /** @internal XSS surface — validate before use */
+  ariaLabel?: string;
+}
+const { id, name, checked, disabled, label, ariaLabel } = Astro.props;
+---
+<label class="inline-flex items-center gap-2 cursor-pointer">
+  <input type="checkbox" id={id} name={name} checked={checked} disabled={disabled} class="sr-only peer" />
+  <span
+    role="switch"
+    aria-checked={checked ? 'true' : 'false'}
+    aria-label={ariaLabel}
+    class="relative w-10 h-6 bg-ds-bg-muted rounded-brand-full transition-colors peer-checked:bg-ds-brand-primary peer-disabled:opacity-50"
+  >
+    <span class="absolute top-0.5 left-0.5 w-5 h-5 bg-ds-bg-surface rounded-brand-full shadow-brand-sm transition-transform peer-checked:translate-x-4"></span>
+  </span>
+  {label && <span class="text-ds-body-md text-ds-text-primary">{label}</span>}
+</label>
