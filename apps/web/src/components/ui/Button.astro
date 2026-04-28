@@ -24,6 +24,7 @@ interface Props {
   name?: string;
   value?: string;
   ariaLabel?: string;
+  /** @internal Static string literals only. Never pass user-controlled data — XSS vector. */
   onclick?: string;
 }
 
@@ -73,12 +74,13 @@ const legacyClass = ['btn', legacyVariant, fullWidth ? 'btn-full' : ''].filter(B
   name={name}
   value={value}
   disabled={disabled || loading}
-  aria-disabled={disabled || loading}
-  aria-busy={loading}
+  aria-disabled={(disabled || loading) ? 'true' : 'false'}
+  aria-busy={loading ? 'true' : 'false'}
   aria-label={ariaLabel}
   onclick={onclick}
   class={`ds-button ${legacyClass} ${widthClass} items-center justify-center gap-2 font-semibold transition-all focus-visible:outline-none focus-visible:ring-ds focus-visible:ring-ds-focus focus-visible:ring-offset-ds ${variantClass} ${sizeClass} ${stateClass}`}
 >
+  {loading && <span class="sr-only">처리 중...</span>}
   {loading && <span aria-hidden="true">⏳</span>}
   {!loading && iconLeft && <span aria-hidden="true">{iconLeft}</span>}
   <slot />

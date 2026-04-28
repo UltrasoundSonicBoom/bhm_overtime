@@ -36,6 +36,6 @@ const legacyVariant = {
   error:   'rose',
 }[variant];
 ---
-<span class={`badge ${legacyVariant} inline-flex items-center font-semibold rounded-brand-full ${variantClass} ${sizeClass}`}>
+<span class={['badge', legacyVariant, 'inline-flex items-center font-semibold rounded-brand-full', variantClass, sizeClass].filter(Boolean).join(' ')}>
   <slot />
 </span>

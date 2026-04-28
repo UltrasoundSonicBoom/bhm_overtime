@@ -39,4 +39,14 @@ describe('Button.astro', () => {
     expect(src).toMatch(/bg-ds-brand-primary/);
     expect(src).toMatch(/bg-ds-status-error/);
   });
+  it('aria-disabled / aria-busy 가 string 으로 캐스팅됨 (false 일 때도 출력)', () => {
+    expect(src).toMatch(/aria-disabled=\{[^}]*\?\s*['"]true['"]\s*:\s*['"]false['"]\}/);
+    expect(src).toMatch(/aria-busy=\{[^}]*\?\s*['"]true['"]\s*:\s*['"]false['"]\}/);
+  });
+  it('loading 시 sr-only 텍스트로 screen reader 알림', () => {
+    expect(src).toMatch(/class=["']sr-only["'][^>]*>\s*처리/);
+  });
+  it('onclick prop 에 @internal JSDoc 경고', () => {
+    expect(src).toMatch(/@internal[^*]*XSS/);
+  });
 });

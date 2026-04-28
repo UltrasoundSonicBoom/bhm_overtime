@@ -26,4 +26,8 @@ describe('Badge.astro', () => {
     expect(src).toMatch(/error.*rose/);
     expect(src).toMatch(/info.*indigo/);
   });
+  it('class 출력에 double space 없음 (neutral variant 케이스)', () => {
+    // class={[...].filter(Boolean).join(' ')} 패턴 사용 검증
+    expect(src).toMatch(/class=\{?\[.*\.filter\(Boolean\)\.join/s);
+  });
 });
