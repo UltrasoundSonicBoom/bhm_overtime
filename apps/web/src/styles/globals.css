@@ -6386,3 +6386,13 @@ html[data-theme="neo"] .ot-help-a {
   background: #ffffff;
   color: #1a1a1a;
 }
+
+/* ============================================
+   Design System helpers (Slice 8)
+   Token-derived utility classes for non-Tailwind-friendly cases
+   (CSS var alpha modifiers can't be computed at JIT time).
+   ============================================ */
+
+.border-t-ds-status-success-25 {
+  border-top-color: rgba(16, 185, 129, 0.25); /* --emerald-500 @ 25% */
+}

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest';
-import { readFileSync, existsSync, readdirSync } from 'fs';
+import { readFileSync, existsSync, readdirSync, statSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, resolve, join } from 'path';
 
@@ -67,5 +67,90 @@ describe('Tailwind JIT — extended utilities present in dist CSS (build smoke)'
     for (const cls of ['.gap-12', '.my-4', '.mx-4', '.grid-cols-3']) {
       expect(allCss).toContain(cls);
     }
+  });
+});
+
+// ── Slice 8: Governance Lint (HomeIsland reference migration) ─────────────────
+
+function walk(dir, files = []) {
+  for (const name of readdirSync(dir)) {
+    const p = join(dir, name);
+    if (statSync(p).isDirectory()) walk(p, files);
+    else if (p.endsWith('.astro')) files.push(p);
+  }
+  return files;
+}
+
+describe('Governance — design system lint (HomeIsland reference)', () => {
+  const TARGET_DIRS = [
+    'apps/web/src/components/tabs',
+  ];
+  const SKIP_PREFIX = ['apps/web/src/pages/design-system'];
+
+  function getTargets() {
+    const out = [];
+    for (const d of TARGET_DIRS) {
+      for (const f of walk(d)) {
+        if (SKIP_PREFIX.some(s => f.startsWith(s))) continue;
+        out.push(f);
+      }
+    }
+    return out;
+  }
+
+  it('HomeIsland.astro 의 inline style 안 raw hex 0건', () => {
+    const files = getTargets().filter(f => f.includes('HomeIsland.astro'));
+    expect(files.length).toBeGreaterThan(0);
+    const violations = [];
+    const STYLE_RX = /style=["']([^"']*)["']/g;
+    const HEX_RX = /#[0-9a-fA-F]{3,8}/;
+    for (const f of files) {
+      const src = readFileSync(f, 'utf-8');
+      let m;
+      while ((m = STYLE_RX.exec(src)) !== null) {
+        const styleVal = m[1];
+        if (HEX_RX.test(styleVal)) {
+          violations.push(f + ': style="' + styleVal + '"');
+        }
+      }
+    }
+    expect(violations).toEqual([]);
+  });
+
+  it('HomeIsland.astro 의 inline style 안 raw px (font-size/padding/margin/gap) 0건', () => {
+    const files = getTargets().filter(f => f.includes('HomeIsland.astro'));
+    const violations = [];
+    const STYLE_RX = /style=["']([^"']*)["']/g;
+    const RAW_PX_RX = /(font-size|padding|margin|gap):\s*\d+px/i;
+    for (const f of files) {
+      const src = readFileSync(f, 'utf-8');
+      let m;
+      while ((m = STYLE_RX.exec(src)) !== null) {
+        const styleVal = m[1];
+        const stripped = styleVal.replace(/var\([^)]*\)/g, '');
+        if (RAW_PX_RX.test(stripped)) {
+          violations.push(f + ': style="' + styleVal + '"');
+        }
+      }
+    }
+    expect(violations).toEqual([]);
+  });
+
+  it('HomeIsland.astro 의 inline style 안 raw rgba 0건', () => {
+    const files = getTargets().filter(f => f.includes('HomeIsland.astro'));
+    const violations = [];
+    const STYLE_RX = /style=["']([^"']*)["']/g;
+    const RGBA_RX = /rgba?\(/i;
+    for (const f of files) {
+      const src = readFileSync(f, 'utf-8');
+      let m;
+      while ((m = STYLE_RX.exec(src)) !== null) {
+        const styleVal = m[1];
+        if (RGBA_RX.test(styleVal)) {
+          violations.push(f + ': style="' + styleVal + '"');
+        }
+      }
+    }
+    expect(violations).toEqual([]);
   });
 });

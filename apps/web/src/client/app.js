@@ -179,7 +179,7 @@ function _renderHomeOtMonth(year, month) {
     if (otStats.byType.oncall_callout.count > 0) addRow('온콜 출동', otStats.byType.oncall_callout.count + '회');
     if (effectivePay > 0) addRow('예상 수당', '\u20A9' + effectivePay.toLocaleString(), 'amber');
 
-    otBody.style.display = '';
+    otBody.style.display = 'block'; // DS-8: .hidden class 와 호환
   } else {
     otBody.style.display = 'none';
   }
@@ -204,7 +204,7 @@ function _renderHomeOtYear(year) {
       lines.push('<div class="home-stat-row"><span class="home-stat-label">예상 수당</span><span class="home-stat-value amber">₩' + s.totalPay.toLocaleString() + '</span></div>');
     }
     otStatsEl.innerHTML = lines.join('');
-    otBody.style.display = '';
+    otBody.style.display = 'block'; // DS-8: .hidden class 와 호환
   } else {
     otBody.style.display = 'none';
   }
@@ -221,7 +221,7 @@ function _renderHomeLeaveMonth(year, month, totalAnnual) {
     leaveBody.style.display = 'none';
     return;
   }
-  leaveBody.style.display = '';
+  leaveBody.style.display = 'block'; // DS-8: .hidden class 와 호환
 
   while (leaveStatsEl.firstChild) leaveStatsEl.removeChild(leaveStatsEl.firstChild);
   const period = document.createElement('div');
@@ -276,7 +276,7 @@ function _renderHomeLeaveYear(year, totalAnnual) {
     leaveBody.style.display = 'none';
     return;
   }
-  leaveBody.style.display = '';
+  leaveBody.style.display = 'block'; // DS-8: .hidden class 와 호환
 
   while (leaveStatsEl.firstChild) leaveStatsEl.removeChild(leaveStatsEl.firstChild);
   const period = document.createElement('div');
