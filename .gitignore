@@ -39,3 +39,4 @@ tmp/
 .env.local
 .env.vercel.tmp
 .env*
+firestore-debug.log
