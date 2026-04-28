@@ -4,10 +4,11 @@
 // tab-loader.js 의 fetch lazy-load 대신 빌드 시 inline → 콘솔 에러 0 + race 제거.
 // Tally 위젯 부트스트랩 스크립트는 app.astro 에 이미 존재 — iframe[data-tally-src] 자동 주입 그대로 동작.
 // HTML 본문은 tab-feedback.html 에서 1:1 복사. 수정 금지.
+// Phase 7-5: inline style → Tailwind utility.
 ---
 <div class="tab-content" id="tab-feedback">
   <!-- 만든 사람 소개 -->
-  <div class="info-note-banner" style="margin-bottom:12px;">
+  <div class="info-note-banner mb-3">
     <span>👨‍💻</span>
     <div>
       <strong>만든 사람: 김계환 (핵의학과)</strong><br>
@@ -15,16 +16,16 @@
       문의·제안: <a href="mailto:stevegogothing@gmail.com">stevegogothing@gmail.com</a>
     </div>
   </div>
-  <div class="card" style="padding:16px;">
-    <div class="card-title" style="font-size:var(--text-body-large); margin-bottom:8px;">
-      <span class="icon" style="color:var(--accent-rose);">📢</span> SNUHmate 사용자 피드백 접수
+  <div class="card p-4">
+    <div class="card-title text-brand-body-large mb-2">
+      <span class="icon text-brand-accent-rose">📢</span> SNUHmate 사용자 피드백 접수
     </div>
-    <p style="font-size:var(--text-body-normal); color:var(--text-muted); margin-bottom:16px; line-height:1.5;">
+    <p class="text-brand-body-normal text-brand-text-muted mb-4 leading-relaxed">
       앱을 사용하시면서 겪은 버그, 불편한 점, 또는 개선 아이디어가 있다면 편하게 남겨주세요.<br>
-      <strong style="color:var(--accent-indigo);">오류가 발생한 화면의 스마트폰 스크린샷 캡쳐본을 첨부</strong>해주시면 정확한 원인 파악과 빠른 해결에 가장 큰
+      <strong class="text-brand-accent-indigo">오류가 발생한 화면의 스마트폰 스크린샷 캡쳐본을 첨부</strong>해주시면 정확한 원인 파악과 빠른 해결에 가장 큰
       도움이 됩니다!
     </p>
-    <div style="border-radius:12px; overflow:hidden; background:var(--bg-card);">
+    <div class="rounded-xl overflow-hidden bg-brand-bg-card">
       <iframe
         data-tally-src="https://tally.so/embed/44vYv5?alignLeft=1&hideTitle=1&transparentBackground=1&dynamicHeight=1"
         loading="lazy" width="100%" height="400" frameborder="0" marginheight="0" marginwidth="0"
