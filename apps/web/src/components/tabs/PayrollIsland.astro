@@ -185,7 +185,7 @@
 
     <!-- 급여 검증 (숨김, 명세서 업로드 후 활성화) -->
     <div id="verifyCard" class="card" style="display:none;">
-      <div class="card-title"><span class="icon" style="color:var(--accent-emerald);">✅</span> 앱 계산값 vs 명세서 비교</div>
+      <div class="card-title"><span class="icon text-[color:var(--accent-emerald)]">✅</span> 앱 계산값 vs 명세서 비교</div>
       <div id="verifyResult"></div>
     </div>
 
@@ -210,10 +210,10 @@
 
     <div class="ret-panel active" id="ret-panel-calc">
       <div id="retAutoLoadBanner"
-        class="mb-3 py-3 px-3.5 text-brand-body-normal leading-relaxed rounded-lg"
-        style="display:none; background:#e0e7ff; border:2.5px solid #4338ca; box-shadow:3px 3px 0px #1a1a1a;">
-        <div class="font-bold mb-1" style="color:#1e1b4b;">⚡ 내 정보 자동 반영</div>
-        <div id="retAutoLoadDetail" style="color:#312e81;"></div>
+        class="mb-3 py-3 px-3.5 text-brand-body-normal leading-relaxed rounded-lg bg-[#e0e7ff] border-[2.5px] border-solid border-[#4338ca] shadow-[3px_3px_0px_#1a1a1a]"
+        style="display:none;">
+        <div class="font-bold mb-1 text-[#1e1b4b]">⚡ 내 정보 자동 반영</div>
+        <div id="retAutoLoadDetail" class="text-[#312e81]"></div>
       </div>
       <div class="ret-card">
         <div class="ret-card-title">📋 기본 정보 입력</div>
@@ -310,7 +310,7 @@
           <div class="overflow-x-auto">
             <table class="w-full border-collapse text-brand-body-normal">
               <thead>
-                <tr class="border-b-2" style="border-bottom-color:#1a1a1a; background:rgba(129,140,248,0.12);">
+                <tr class="border-b-2 border-b-[#1a1a1a] bg-[rgba(129,140,248,0.12)]">
                   <th class="p-2 text-center">근속</th>
                   <th class="p-2 text-center">지급률(월)</th>
                   <th class="p-2 text-center">근속</th>
@@ -564,7 +564,7 @@
       <!-- ① 사학연금 -->
       <div class="ret-gs-card">
         <div class="ret-gs-head">
-          <div class="ret-gs-icon-wrap" style="background:#e0e7ff;">🏫</div><!-- 색상 보존 (gs-card brand color) -->
+          <div class="ret-gs-icon-wrap bg-[#e0e7ff]">🏫</div><!-- 색상 보존 (gs-card brand color) -->
           <div>
             <div class="ret-gs-title">사학연금 — 몇 살부터?</div>
             <div class="ret-gs-sub">서울대병원 직원은 국민연금 대신 사학연금 적용</div>
@@ -616,7 +616,7 @@
       <!-- ② 퇴직연금 DB · IRP -->
       <div class="ret-gs-card">
         <div class="ret-gs-head">
-          <div class="ret-gs-icon-wrap" style="background:#d1fae5;">🏦</div>
+          <div class="ret-gs-icon-wrap bg-[#d1fae5]">🏦</div>
           <div>
             <div class="ret-gs-title">퇴직연금 DB · IRP · 절세</div>
             <div class="ret-gs-sub">IRP 이전 후 연금 수령 시 퇴직소득세 30~40% 절감</div>
@@ -630,7 +630,7 @@
           <div class="ret-gs-row-item">
             <div class="ret-gs-row-title">IRP (개인형 퇴직연금) 절세 전략</div>
             <div class="ret-gs-row-desc">퇴직금은 IRP 계좌로 의무 이전 → 55세 이후 연금으로 분할 수령하면 퇴직소득세 <strong
-                style="color:#059669;">30~40% 감면</strong>.</div>
+                class="text-[#059669]">30~40% 감면</strong>.</div>
           </div>
           <div class="ret-gs-row-item">
             <div class="ret-gs-row-title">재직 중 IRP 추가 납입</div>
@@ -663,7 +663,7 @@
       <!-- ③ 퇴직금 중간정산 -->
       <div class="ret-gs-card">
         <div class="ret-gs-head">
-          <div class="ret-gs-icon-wrap" style="background:#fee2e2;">⚠️</div>
+          <div class="ret-gs-icon-wrap bg-[#fee2e2]">⚠️</div>
           <div>
             <div class="ret-gs-title">퇴직금 중간정산</div>
             <div class="ret-gs-sub">2012년 이후 원칙적 불가 — 예외 사유 확인 필수</div>
@@ -687,7 +687,7 @@
       <!-- ④ 기타 놓치기 쉬운 변수 -->
       <div class="ret-gs-card mb-0">
         <div class="ret-gs-head">
-          <div class="ret-gs-icon-wrap" style="background:#f3f4f6;">🔍</div>
+          <div class="ret-gs-icon-wrap bg-[#f3f4f6]">🔍</div>
           <div>
             <div class="ret-gs-title">놓치기 쉬운 변수들</div>
             <div class="ret-gs-sub">퇴직금 외에 챙겨야 할 항목들</div>
@@ -799,7 +799,7 @@
 
     <!-- E4: 퇴직 타임라인 시뮬레이터 -->
     <div class="card mt-4" id="retirementTimelineCard">
-      <div class="card-title text-brand-body-large font-bold" style="font-family:'Space Grotesk',sans-serif;">
+      <div class="card-title text-brand-body-large font-bold [font-family:'Space_Grotesk',sans-serif]">
         퇴직 최적 시기 시뮬레이션
       </div>
       <p class="text-[var(--text-body-small)] text-brand-text-muted mb-3">
