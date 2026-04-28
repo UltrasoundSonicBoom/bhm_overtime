@@ -100,13 +100,34 @@ import FormField from '../../components/ui/FormField.astro';
 
       <Section title="Modal" level={2}>
         <Card>
-          <Modal id="example-modal" size="md" title="삭제 확인" open>
+          <p class="text-ds-body-md text-ds-text-secondary mb-4">버튼을 클릭해 모달을 열어보세요.</p>
+          <Button variant="primary" id="ds-modal-open-btn">모달 열기</Button>
+          <Modal id="ds-example-modal" size="md" title="삭제 확인">
             <p>정말 삭제하시겠습니까?</p>
-            <Button slot="footer" variant="ghost">취소</Button>
+            <Button slot="footer" variant="ghost" id="ds-modal-cancel-btn">취소</Button>
             <Button slot="footer" variant="danger">삭제</Button>
           </Modal>
         </Card>
       </Section>
+
+      <script>
+        // Showcase 전용 — Modal 토글 동작
+        (() => {
+          const modal = document.getElementById('ds-example-modal');
+          const openBtn = document.getElementById('ds-modal-open-btn');
+          const cancelBtn = document.getElementById('ds-modal-cancel-btn');
+          if (!modal || !openBtn) return;
+          const open = () => { modal.classList.remove('hidden'); modal.classList.add('active', 'flex'); };
+          const close = () => { modal.classList.add('hidden'); modal.classList.remove('active', 'flex'); };
+          openBtn.addEventListener('click', open);
+          cancelBtn?.addEventListener('click', close);
+          modal.querySelector('[data-ds-modal-close]')?.addEventListener('click', close);
+          // Click outside content to close
+          modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+          // Esc to close
+          document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.classList.contains('hidden')) close(); });
+        })();
+      </script>
 
       <Section title="Tabs" level={2}>
         <Card>
@@ -119,4 +140,15 @@ import FormField from '../../components/ui/FormField.astro';
       </Section>
     </Container>
   </main>
+  <script is:inline>
+    document.querySelectorAll('[data-ds-modal-close]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const modal = btn.closest('[data-ds-modal]');
+        if (modal) {
+          modal.classList.add('hidden');
+          modal.classList.remove('active');
+        }
+      });
+    });
+  </script>
 </BaseLayout>

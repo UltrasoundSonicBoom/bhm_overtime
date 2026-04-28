@@ -68,6 +68,7 @@ describe('Semantic tokens — no raw hex (2-tier discipline)', () => {
       '--color-bg-page', '--color-bg-surface', '--color-bg-elevated',
       '--color-border-default', '--color-border-strong',
       '--color-text-link',
+      '--color-brand-primary', '--color-brand-primary-hover', '--color-brand-secondary',
       '--color-status-success-bg', '--color-status-warning-bg',
       '--color-status-error-bg', '--color-status-info-bg',
     ]) {

@@ -64,7 +64,18 @@ describe('Tailwind JIT — extended utilities present in dist CSS (build smoke)'
     }
     const allCss = files.map(f => readFileSync(join(distDir, f), 'utf-8')).join('\n');
     // Stack/Grid/Divider 의 explicit map 으로 인해 generate 되어야 하는 utility
-    for (const cls of ['.gap-12', '.my-4', '.mx-4', '.grid-cols-3']) {
+    const required = [
+      // Slice 6 layout
+      '.gap-12', '.my-4', '.mx-4', '.grid-cols-3',
+      // Slice 7 tokens.astro typography preview (Slice 8 fix)
+      '.text-ds-display', '.text-ds-h1', '.text-ds-h2', '.text-ds-h3', '.text-ds-h4',
+      '.text-ds-body-lg', '.text-ds-body-md', '.text-ds-body-sm',
+      '.text-ds-label', '.text-ds-caption',
+      // Slice 7 tokens.astro radius preview (Slice 8 fix)
+      '.rounded-brand-sm', '.rounded-brand-md', '.rounded-brand-lg',
+      '.rounded-brand-xl', '.rounded-brand-full',
+    ];
+    for (const cls of required) {
       expect(allCss).toContain(cls);
     }
   });
