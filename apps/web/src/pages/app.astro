@@ -96,6 +96,29 @@ import FeedbackIsland from '../components/tabs/FeedbackIsland.astro';
 
   <main class="main">
 
+    <!-- Phase 6 Task 6-5: URL 변경 안내 banner — 1개월 한정 (snuhmate_url_banner_dismissed_v6 플래그) -->
+    <div id="urlChangeBanner" style="display:none; align-items:center; gap:10px; background:var(--accent-indigo, #6C5CE7); color:#fff; padding:10px 16px; border-radius:10px; margin-bottom:8px; font-size:14px; font-weight:600;">
+      <span style="font-size:16px;">🆕</span>
+      <span style="font-weight:400; flex:1;">URL 이 단순해졌어요. 새 북마크: <strong style="color:#fff;">snuhmate.com/app</strong> · 옛 <code style="background:rgba(0,0,0,0.15); padding:2px 6px; border-radius:4px;">/?app=1</code> 도 자동 이동돼요.</span>
+      <button id="urlChangeBannerDismiss"
+        style="background:rgba(0,0,0,0.2); color:#fff; border:none; border-radius:6px; padding:4px 10px; font-size:13px; font-weight:600; cursor:pointer; flex-shrink:0;">확인</button>
+    </div>
+    <script is:inline>
+      (function () {
+        try {
+          if (localStorage.getItem('snuhmate_url_banner_dismissed_v6') === '1') return;
+          var banner = document.getElementById('urlChangeBanner');
+          var dismiss = document.getElementById('urlChangeBannerDismiss');
+          if (!banner || !dismiss) return;
+          banner.style.display = 'flex';
+          dismiss.addEventListener('click', function () {
+            try { localStorage.setItem('snuhmate_url_banner_dismissed_v6', '1'); } catch (e) {}
+            banner.style.display = 'none';
+          });
+        } catch (e) { /* noop */ }
+      })();
+    </script>
+
     <!-- 데모 모드 배너 (모든 탭 공통) -->
     <div id="demoBanner"
       style="display:none; align-items:center; gap:10px; background:var(--amber,#F5A623); color:var(--ink,#1a1a1a); padding:10px 16px; border-radius:10px; margin-bottom:8px; font-size:14px; font-weight:600;">
