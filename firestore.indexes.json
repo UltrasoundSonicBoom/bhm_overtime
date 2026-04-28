@@ -1,0 +1,12 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "payslips",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "payMonth", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

@@ -31,7 +31,7 @@ export const AppLock = (function () {
   var _unlocked = false;
 
   // ── 로컬 UID (auth 독립) ──
-  // AppLock 은 기기 로컬 잠금 기능이므로 Google/Neon/Supabase 신원에 의존하지 않는다.
+  // AppLock 은 기기 로컬 잠금 기능이므로 Firebase 등 외부 인증 신원에 의존하지 않는다.
   // WebAuthn user.id 등에 사용할 안정적 식별자가 필요할 때만 호출.
   function _getLocalUid() {
     var uid = null;
@@ -87,6 +87,14 @@ export const AppLock = (function () {
     var s = _loadSettings();
     Object.assign(s, patch);
     localStorage.setItem('snuhmate_settings', JSON.stringify(s));
+    // Phase 8: Firestore write-through (로그인 시만, fire-and-forget)
+    if (typeof window !== 'undefined' && window.__firebaseUid) {
+      import('/src/firebase/sync/settings-sync.js').then(function(m) {
+        return m.writeSettings(null, window.__firebaseUid, s);
+      }).catch(function(err) {
+        console.warn('[Phase 8] settings cloud sync 실패 (무해)', err?.message || err);
+      });
+    }
   }
 
   // ── SHA-256 (WebCrypto) ──

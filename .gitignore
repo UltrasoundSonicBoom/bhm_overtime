@@ -39,3 +39,6 @@ tmp/
 .env.local
 .env.vercel.tmp
 .env*
+firestore-debug.log
+firebase-debug.log
+.astro/

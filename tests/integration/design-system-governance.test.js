@@ -81,6 +81,61 @@ describe('Tailwind JIT — extended utilities present in dist CSS (build smoke)'
   });
 });
 
+// ── inline style 잔존 검사 ────────────────────────────────────────────────────
+
+describe('inline style 잔존 검사', () => {
+  it('OvertimeIsland inline style 잔존 없음 (display:none / CSS custom prop 제외)', () => {
+    const src = readFileSync('apps/web/src/components/tabs/OvertimeIsland.astro', 'utf-8');
+    // display:none 과 CSS custom prop (--xxx:) 은 허용
+    const illegal = (src.match(/style="([^"]*)"/g) || []).filter(s => {
+      const body = s.slice(7, -1).trim();
+      return !/^display:\s*none/.test(body)
+          && !/^--[a-z]/.test(body);
+    });
+    expect(illegal, '허용 외 inline style: ' + illegal.join('\n')).toHaveLength(0);
+  });
+
+  it('LeaveIsland inline style 잔존 없음 (display:none 제외)', () => {
+    const src = readFileSync('apps/web/src/components/tabs/LeaveIsland.astro', 'utf-8');
+    const illegal = (src.match(/style="([^"]*)"/g) || []).filter(s => {
+      const body = s.slice(7, -1).trim();
+      return !/^display:\s*(none|block|flex|grid|inline|inline-flex|inline-block)/.test(body)
+          && !/^--[a-z]/.test(body);
+    });
+    expect(illegal, '허용 외 inline style: ' + illegal.join('\n')).toHaveLength(0);
+  });
+
+  it('SettingsIsland inline style 잔존 없음 (display:none/block/flex 제외)', () => {
+    const src = readFileSync('apps/web/src/components/tabs/SettingsIsland.astro', 'utf-8');
+    const illegal = (src.match(/style="([^"]*)"/g) || []).filter(s => {
+      const body = s.slice(7, -1).trim();
+      return !/^display:\s*(none|block|flex|grid|inline|inline-flex|inline-block)/.test(body)
+          && !/^--[a-z]/.test(body);
+    });
+    expect(illegal, '허용 외 inline style: ' + illegal.join('\n')).toHaveLength(0);
+  });
+
+  it('ProfileIsland inline style 잔존 없음 (display:none 제외)', () => {
+    const src = readFileSync('apps/web/src/components/tabs/ProfileIsland.astro', 'utf-8');
+    const illegal = (src.match(/style="([^"]*)"/g) || []).filter(s => {
+      const body = s.slice(7, -1).trim();
+      return !/^display:\s*(none|block|flex|grid|inline|inline-flex|inline-block)/.test(body)
+          && !/^--[a-z]/.test(body);
+    });
+    expect(illegal, '허용 외 inline style: ' + illegal.join('\n')).toHaveLength(0);
+  });
+
+  it('PayrollIsland inline style 잔존 없음 (display:none 제외)', () => {
+    const src = readFileSync('apps/web/src/components/tabs/PayrollIsland.astro', 'utf-8');
+    const illegal = (src.match(/style="([^"]*)"/g) || []).filter(s => {
+      const body = s.slice(7, -1).trim();
+      return !/^display:\s*(none|block|flex|grid|inline|inline-flex|inline-block)/.test(body)
+          && !/^--[a-z]/.test(body);
+    });
+    expect(illegal, '허용 외 inline style: ' + illegal.join('\n')).toHaveLength(0);
+  });
+});
+
 // ── Slice 8: Governance Lint (HomeIsland reference migration) ─────────────────
 
 function walk(dir, files = []) {

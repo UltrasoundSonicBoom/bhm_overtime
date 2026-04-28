@@ -1,0 +1,20 @@
+rules_version = '2';
+
+// Phase 8 Task 3 — Strict Security Rules (uid match only)
+//
+// 본인 uid 만 자기 users/{uid}/** 경로 read/write.
+// admin 백도어 0, public read 0, custom claim 0.
+// 의료직 데이터 민감도 + Backend Upgrade phase 에서 admin 별도 설계 예정.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 사용자 소유 데이터 — 본인 uid 만 read/write
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null
+                         && request.auth.uid == userId;
+    }
+    // 그 외 모든 경로 — 차단
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

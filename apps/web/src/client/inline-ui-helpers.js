@@ -7,6 +7,28 @@
 
 (function () {
   'use strict';
+
+  // ── Phase 8 Task 0.1: user-scoped storage key wrapper ──
+  // 게스트 (window.__firebaseUid 없음): base + '_guest'
+  // 로그인 (window.__firebaseUid 설정됨): base + '_uid_<uid>'
+  // window.__firebaseUid 는 firebase/auth-service.js 의 onAuthChanged 에서 설정/해제.
+  // 정의가 누락되면 호출자들의 fallback (`base + '_guest'`) 으로만 동작 → user-scoped 분리 작동 안 함.
+  window.getUserStorageKey = function (base) {
+    var uid = window.__firebaseUid;
+    if (uid && typeof uid === 'string' && uid.length > 0) {
+      return base + '_uid_' + uid;
+    }
+    return base + '_guest';
+  };
+
+  // recordLocalEdit: localStorage write 시 lastEdit 메타 기록 (LWW 비교용 — Phase 8 Firestore sync)
+  window.recordLocalEdit = function (base) {
+    try {
+      var key = 'snuhmate_last_edit_' + base;
+      localStorage.setItem(key, new Date().toISOString());
+    } catch (e) { /* noop */ }
+  };
+
   // ── (사전 반영) 테마: DOMContentLoaded 전에 즉시 적용해 flicker 방지 ──
   // Phase 5-followup: neo = default :root, dark = data-theme="dark" + style.dark.css 옵션 로드
   // 'linear' 레거시 사용자 → 'dark' 매핑 (Linear/Raycast 톤이 다크 베이스)

@@ -14,7 +14,7 @@
     <button id="bmWork" class="pay-bookmark-tab" data-subtab="profile-work" role="tab" aria-selected="false"
       onclick="switchProfileSection('work')">💼 근무 정보</button>
   </nav>
-  <div class="pay-tab-accent" id="profileTabAccent" style="background:#4f46e5;"></div>
+  <div class="pay-tab-accent bg-[#4f46e5]" id="profileTabAccent"></div>
 
   <div id="profileSectionPersonal">
     <div class="card max-w-[600px] mx-auto">
@@ -24,15 +24,15 @@
 
       <!-- 급여탭 안내 링크 (PDF 배너 대체) -->
       <div id="pfPayslipLink" onclick="if(window.switchTab)switchTab('payroll');"
-        class="flex items-center gap-2.5 py-2.5 px-3.5 mb-3.5 border-2 border-brand-accent-indigo rounded-lg cursor-pointer text-brand-body-normal font-semibold text-brand-accent-indigo"
-        style="background:rgba(99,102,241,0.08);">
+        class="flex items-center gap-2.5 py-2.5 px-3.5 mb-3.5 border-2 border-brand-accent-indigo rounded-lg cursor-pointer text-brand-body-normal font-semibold text-brand-accent-indigo bg-[rgba(99,102,241,0.08)]">
         <span class="text-[1.2rem]">💰</span>
         <span>급여 탭에서 명세서를 등록하면 자동으로 채워집니다</span>
         <span class="ml-auto">→</span>
       </div>
       <!-- 자동갱신 상태 배너 (JS에서 표시) -->
       <div id="pfAutoSyncBanner"
-        style="display:none; align-items:center; gap:8px; padding:8px 14px; margin-bottom:10px; background:rgba(16,185,129,0.08); border:1px solid var(--accent-emerald); border-radius:8px; font-size:var(--text-body-small); font-weight:600; color:var(--accent-emerald);">
+        class="items-center gap-2 px-3.5 py-2 mb-2.5 bg-[rgba(16,185,129,0.08)] border border-[var(--accent-emerald)] rounded-lg text-brand-body-small font-semibold text-[var(--accent-emerald)]"
+        style="display:none;">
         <span>✅</span> <span id="pfAutoSyncText">명세서 기준 자동 갱신됨</span>
       </div>
 
@@ -44,11 +44,12 @@
         <div class="collapsible-header" onclick="toggleCollapsible('pfBasicFields')" id="pfBasicHeader">
           <span class="flex items-center gap-2">
             <span class="toggle-icon">▸</span> 기본 정보
-            <span id="pfBasicBadge" class="badge emerald" style="display:none; font-size:10px;">저장됨</span>
+            <span id="pfBasicBadge" class="badge emerald text-[10px]" style="display:none;">저장됨</span>
           </span>
         </div>
         <div id="pfBasicPreview"
-          style="display:none; padding:6px 14px; font-size:var(--text-body-small); color:var(--text-muted); font-weight:600; background:var(--bg-hover); border-radius:0 0 8px 8px; margin-top:-2px; cursor:pointer;"
+          class="px-3.5 py-1.5 text-brand-body-small text-[var(--text-muted)] font-semibold bg-[var(--bg-hover)] rounded-b-lg -mt-px cursor-pointer"
+          style="display:none;"
           onclick="toggleCollapsible('pfBasicFields')"></div>
         <div class="collapsible-body" id="pfBasicFields" style="display:none;">
           <div class="form-row">
@@ -152,7 +153,8 @@
             </div>
           </div>
           <div id="pfFamilySummary"
-            style="display:none; margin-top:4px; padding:8px 12px; background:var(--bg-hover); border-radius:8px; font-size:var(--text-body-small);">
+            class="mt-1 px-3 py-2 bg-[var(--bg-hover)] rounded-lg text-brand-body-small"
+            style="display:none;">
           </div>
         </div>
 
@@ -191,7 +193,7 @@
                 <input type="checkbox" id="pfMilitary">
                 <label for="pfMilitary">해당 있음</label>
               </div>
-              <div id="pfMilitaryMonthsGroup" style="display:none; margin-top:6px;">
+              <div id="pfMilitaryMonthsGroup" class="mt-1.5" style="display:none;">
                 <input type="number" id="pfMilitaryMonths" value="24" min="1" max="36" placeholder="복무기간(개월)">
               </div>
             </div>
@@ -239,11 +241,10 @@
 
         <!-- 공용 기기 개인정보 주의 안내 -->
         <div
-          class="flex items-start gap-2.5 py-2.5 px-3 rounded-lg text-brand-body-normal mt-5 leading-[1.5]"
-          style="background:rgba(245,158,11,0.09); border:1px solid rgba(245,158,11,0.35);">
+          class="flex items-start gap-2.5 py-2.5 px-3 rounded-lg text-brand-body-normal mt-5 leading-[1.5] bg-[rgba(245,158,11,0.09)] border border-[rgba(245,158,11,0.35)]">
           <span class="text-[1.1rem] shrink-0 mt-px">⚠️</span>
           <div>
-            <strong class="font-bold block mb-0.5" style="color:#F080A0;">공용 기기에서는 개인정보를 저장하지
+            <strong class="font-bold block mb-0.5 text-[#F080A0]">공용 기기에서는 개인정보를 저장하지
               마세요</strong>
             <span class="text-brand-text-secondary">학교·도서관·직장 공용 컴퓨터에서는 개인정보를 입력하지 마세요. 데이터는 이 브라우저에만 저장되어
               <strong>다음 사용자가 동일 브라우저를 열면 볼 수 있습니다.</strong></span>
@@ -255,12 +256,12 @@
           <button class="btn btn-outline flex-1" onclick="clearProfile()">🗑 초기화</button>
         </div>
         <div id="profileSavedCTA"
-          style="display:none; margin-top:14px; padding:12px 16px; background:rgba(52,211,153,0.1); border:1px solid rgba(52,211,153,0.3); border-radius:8px; text-align:center;">
+          class="mt-3.5 px-4 py-3 bg-[rgba(52,211,153,0.1)] border border-[rgba(52,211,153,0.3)] rounded-lg text-center"
+          style="display:none;">
           <p id="profileSavedCTADesc"
-            style="font-size:var(--text-body-small); color:var(--text-muted); margin:0 0 8px;">정보가 저장됐어요. 이번 달 시간외
+            class="text-brand-body-small text-[var(--text-muted)] mb-2 mt-0">정보가 저장됐어요. 이번 달 시간외
             수당을 계산해볼까요?</p>
-          <button id="profileSavedCTABtn" onclick="switchTab('overtime')" class="btn btn-primary"
-            style="width:100%;">⏰ 시간외 계산하러 가기 →</button>
+          <button id="profileSavedCTABtn" onclick="switchTab('overtime')" class="btn btn-primary w-full">⏰ 시간외 계산하러 가기 →</button>
         </div>
 
       </div><!-- /pfInputFields -->
@@ -286,20 +287,21 @@
           onclick="openWorkHistorySheet({__newPost:true})">+ 근무지 추가</button>
       </div>
       <!-- Phase 4-A: 명세서 시계열 → 근무이력 알림 배너 (mode='banner' 시) -->
-      <div id="workHistoryBanner" style="display:none; margin-bottom:12px;"></div>
+      <div id="workHistoryBanner" class="mb-3" style="display:none;"></div>
       <div id="workHistoryList"></div>
     </div>
 
     <!-- 근무이력 입력 바텀시트 -->
     <div id="workHistorySheet" style="display:none; position:fixed; inset:0; z-index:9000;
        background:rgba(0,0,0,0.5);" onclick="if(event.target===this)closeWorkHistorySheet()">
-      <div class="absolute bottom-0 left-0 right-0 max-w-[480px] mx-auto rounded-t-2xl pt-5 px-4 pb-8 max-h-[85vh] overflow-y-auto" style="background:var(--bg-card,#fff);">
+      <div class="absolute bottom-0 left-0 right-0 max-w-[480px] mx-auto rounded-t-2xl pt-5 px-4 pb-8 max-h-[85vh] overflow-y-auto bg-[var(--bg-card,#fff)]">
         <div class="flex items-center justify-between mb-4">
           <div class="flex items-center gap-2 flex-1 min-w-0">
             <span class="text-brand-body-large font-semibold" id="workHistorySheetTitle">근무이력
               추가</span>
             <span id="workHistorySheetBadge"
-              style="display:none; font-size:0.68rem; font-weight:700; padding:3px 8px; border-radius:10px; background:rgba(245,158,11,.15); color:#d97706;"></span>
+              class="text-[0.68rem] font-bold px-2 py-[3px] rounded-[10px] bg-[rgba(245,158,11,.15)] text-[#d97706]"
+              style="display:none;"></span>
           </div>
           <button onclick="closeWorkHistorySheet()"
             class="bg-transparent border-0 text-[1.4rem] cursor-pointer leading-none py-1 px-2">×</button>
@@ -322,7 +324,8 @@
                 (년-월)</label>
               <input id="whFrom" type="month" class="form-input w-full py-2.5 px-3 border border-brand-border-glass rounded-lg text-brand-body-normal">
               <small id="whFromHint"
-                style="display:none; margin-top:4px; color:var(--accent-amber,#d97706); font-size:0.7rem;"></small>
+                class="block mt-1 text-[var(--accent-amber,#d97706)] text-[0.7rem]"
+                style="display:none;"></small>
             </div>
             <div>
               <label class="text-brand-body-small font-semibold block mb-1">종료
@@ -341,7 +344,7 @@
           <div>
             <div class="flex items-center justify-between mb-1">
               <label class="text-brand-body-small font-semibold">주요 역할 (선택)</label>
-              <button type="button" onclick="autofillJobDesc()" id="whAutofillBtn" class="text-[0.7rem] py-[3px] px-2 border border-brand-accent-indigo text-brand-accent-indigo rounded-md cursor-pointer" style="background:rgba(99,102,241,.08);">✨ 표준 업무 자동 채움</button>
+              <button type="button" onclick="autofillJobDesc()" id="whAutofillBtn" class="text-[0.7rem] py-[3px] px-2 border border-brand-accent-indigo text-brand-accent-indigo rounded-md cursor-pointer bg-[rgba(99,102,241,.08)]">✨ 표준 업무 자동 채움</button>
             </div>
             <textarea id="whDesc" rows="4" placeholder="간략한 업무 내용..."
               class="w-full py-2.5 px-3 border border-brand-border-glass rounded-lg text-brand-body-normal resize-none"></textarea>
@@ -356,7 +359,7 @@
     <!-- 이력서 섹션 입력 바텀시트 (학력/자격/논문 공용) -->
     <div id="resumeItemSheet" style="display:none; position:fixed; inset:0; z-index:9100;
        background:rgba(0,0,0,0.5);" onclick="if(event.target===this)closeResumeItemSheet()">
-      <div class="absolute bottom-0 left-0 right-0 max-w-[480px] mx-auto rounded-t-2xl pt-5 px-4 pb-8 max-h-[85vh] overflow-y-auto" style="background:var(--bg-card,#fff);">
+      <div class="absolute bottom-0 left-0 right-0 max-w-[480px] mx-auto rounded-t-2xl pt-5 px-4 pb-8 max-h-[85vh] overflow-y-auto bg-[var(--bg-card,#fff)]">
         <div class="flex items-center justify-between mb-3.5">
           <span class="text-brand-body-large font-semibold" id="resumeItemSheetTitle">항목 추가</span>
           <button onclick="closeResumeItemSheet()"
@@ -371,7 +374,7 @@
     <!-- 로테이션 입력 바텀시트 -->
     <div id="rotationSheet" style="display:none; position:fixed; inset:0; z-index:9100;
        background:rgba(0,0,0,0.5);" onclick="if(event.target===this)closeRotationSheet()">
-      <div class="absolute bottom-0 left-0 right-0 max-w-[480px] mx-auto rounded-t-2xl pt-5 px-4 pb-8 max-h-[85vh] overflow-y-auto" style="background:var(--bg-card,#fff);">
+      <div class="absolute bottom-0 left-0 right-0 max-w-[480px] mx-auto rounded-t-2xl pt-5 px-4 pb-8 max-h-[85vh] overflow-y-auto bg-[var(--bg-card,#fff)]">
         <div class="flex items-center justify-between mb-1.5">
           <span class="text-brand-body-large font-semibold" id="rotationSheetTitle">로테이션 추가</span>
           <button onclick="closeRotationSheet()"
@@ -399,7 +402,7 @@
           <div>
             <div class="flex items-center justify-between mb-1">
               <label class="text-brand-body-small font-semibold">수행 업무 (선택)</label>
-              <button type="button" onclick="autofillRotationTasks()" class="text-[0.7rem] py-[3px] px-2 border border-brand-accent-indigo text-brand-accent-indigo rounded-md cursor-pointer" style="background:rgba(99,102,241,.08);">✨ 표준 업무 자동 채움</button>
+              <button type="button" onclick="autofillRotationTasks()" class="text-[0.7rem] py-[3px] px-2 border border-brand-accent-indigo text-brand-accent-indigo rounded-md cursor-pointer bg-[rgba(99,102,241,.08)]">✨ 표준 업무 자동 채움</button>
             </div>
             <textarea id="rotTasks" rows="4"
               placeholder="줄바꿈으로 항목 구분&#10;예: PET-CT 검사 진행&#10;FDG 합성 보조&#10;환자 안내 및 교육"
@@ -407,7 +410,8 @@
           </div>
           <div id="rotActions" class="grid grid-cols-1 gap-2">
             <button id="rotDeleteBtn" type="button"
-              style="display:none; width:100%; padding:12px; border:1px solid var(--accent-rose,#f43f5e); color:var(--accent-rose,#f43f5e); background:transparent; border-radius:8px; font-weight:600; cursor:pointer;"
+              class="w-full py-3 px-3 border border-[var(--accent-rose,#f43f5e)] text-[var(--accent-rose,#f43f5e)] bg-transparent rounded-lg font-semibold cursor-pointer"
+              style="display:none;"
               onclick="deleteRotationEntry()">삭제</button>
             <button id="rotSaveBtn" class="btn btn-primary w-full py-3"
               onclick="saveRotationEntry()">저장</button>

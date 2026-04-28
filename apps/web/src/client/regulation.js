@@ -194,6 +194,14 @@ function loadFavorites() {
 }
 function saveFavorites(arr) {
   try { localStorage.setItem(getFavStorageKey(), JSON.stringify(arr)); } catch (e) {}
+  // Phase 8: Firestore write-through (로그인 시만, fire-and-forget)
+  if (typeof window !== 'undefined' && window.__firebaseUid) {
+    import('/src/firebase/sync/favorites-sync.js').then(m =>
+      m.writeFavorites(null, window.__firebaseUid, arr)
+    ).catch(err => {
+      console.warn('[Phase 8] favorites cloud sync 실패 (무해)', err?.message || err);
+    });
+  }
 }
 function isFavorited(articleId) {
   return loadFavorites().indexOf(articleId) !== -1;

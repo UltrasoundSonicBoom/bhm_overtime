@@ -270,7 +270,7 @@ window._bootstrapProfileTab = (function () {
   const backupSection = document.getElementById('localBackupSection');
   if (backupSection) backupSection.style.display = 'block';
 
-  // ── [Supabase Cloud Sync Callback] ──
+  // ── [Cloud Sync Callback] ──
   window.syncCloudData = function (cloudData) {
     if (!cloudData) return;
 

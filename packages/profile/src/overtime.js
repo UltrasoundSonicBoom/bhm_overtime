@@ -20,6 +20,16 @@ export const OVERTIME = {
     _saveAll(data) {
         localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
         if (window.recordLocalEdit) window.recordLocalEdit('overtimeRecords');
+
+        // Phase 8: Firestore write-through (로그인 시만, fire-and-forget)
+        if (typeof window !== 'undefined' && window.__firebaseUid) {
+            const uid = window.__firebaseUid;
+            import('/src/firebase/sync/overtime-sync.js').then(m =>
+                m.writeAllOvertime(null, uid, data)
+            ).catch(err => {
+                console.warn('[Phase 8] overtime cloud sync 실패 (무해)', err?.message || err);
+            });
+        }
     },
 
     _monthKey(year, month) {
