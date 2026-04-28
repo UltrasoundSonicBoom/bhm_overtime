@@ -1,6 +1,7 @@
 /** @type {import('tailwindcss').Config} */
-// Phase 7-1: Tailwind v3 + neo/dark token bridge.
-// design-system: ds.* color/spacing/fontSize 토큰 추가 (primitive→semantic 참조).
+// Phase 7-1: Tailwind v3 + neo/dark token bridge (legacy `brand-*` utilities).
+// design-system Slice 2: ds.* color/spacing/fontSize/ring tokens added (primitive→semantic).
+// Two namespaces coexist: `ds.*` for new tokens, `brand.*` for Phase 7 backward compat.
 export default {
   content: ['./src/**/*.{astro,html,js,ts,jsx,tsx}'],
   darkMode: ['selector', 'html[data-theme="dark"]'],
@@ -64,6 +65,12 @@ export default {
           'gradient-info': 'var(--gradient-info)',
         },
       },
+      // Design System spacing — 4px grid via CSS vars (px units intentional).
+      // These keys override Tailwind defaults at numeric positions (1, 2, ..., 20). Project-wide
+      // px convention (matches existing globals.css, supports browser page-zoom which scales px).
+      // For accessibility text-size zoom, users should rely on browser default page-zoom rather
+      // than font-size override. Tailwind defaults at non-extended keys (1.5, 2.5, 7, 9, etc.)
+      // remain rem-based — avoid mixing those with our px-based ds spacing.
       spacing: {
         '0':  'var(--space-0)',
         '1':  'var(--space-1)',
@@ -89,7 +96,8 @@ export default {
         'ds-body-sm': ['var(--font-size-body-sm)', { lineHeight: 'var(--line-height-normal)' }],
         'ds-label':   ['var(--font-size-label)',   { lineHeight: 'var(--line-height-snug)',  fontWeight: 'var(--font-weight-medium)' }],
         'ds-caption': ['var(--font-size-caption)', { lineHeight: 'var(--line-height-snug)' }],
-        // Legacy
+        // Legacy fontSize keys — bare strings (no lineHeight). Backward-compat with Phase 7;
+        // new code should use ds-* keys which include lineHeight + fontWeight.
         'brand-amount-huge': 'var(--text-amount-huge)',
         'brand-amount-large': 'var(--text-amount-large)',
         'brand-title-large': 'var(--text-title-large)',
