@@ -1,7 +1,7 @@
 // Phase 8 Task 4 — 암호화 화이트리스트 + path 매칭 검증
 import { describe, it, expect } from 'vitest';
 import { ENCRYPTED_FIELDS, fieldsForPath, pathFromFullPath }
-  from '../../../firebase/sync/_encrypted-fields.js';
+  from '../../../apps/web/src/firebase/sync/_encrypted-fields.js';
 
 describe('ENCRYPTED_FIELDS — SPEC §18.2 화이트리스트', () => {
   it('필수 path 모두 등록', () => {

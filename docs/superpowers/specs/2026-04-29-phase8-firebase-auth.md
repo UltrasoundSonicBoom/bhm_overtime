@@ -7,6 +7,7 @@
 
 > **v2 변경점 요약** (2026-04-29 사용자 승인, blueprint: `~/.claude/plans/agile-chasing-stardust.md`):
 > - **Auth 1차 변경**: Email/Password + Google + 카카오 1차 통합 (Plan A/B 분리 폐기)
+> - **카카오 OIDC** (2026-04-29 추가): 사용자가 Firebase Authentication 에 OpenID Connect 연결 + handler URL `https://snuhmate.firebaseapp.com/__/auth/handler` 카카오 콘솔 등록 완료. **Phase 10 으로 분리** — Phase 5 는 Email + Google 만 (카카오는 OIDC native 라 Cloud Function 불필요, 단 1차 출시 속도 + 디버깅 surface 최소화 위해 별도 phase).
 > - **신규 §18 암호화 레이어**: 민감 필드 AES-GCM (uid 파생 키), 평문 인덱싱 필드는 보존 (Hybrid)
 > - **신규 §19 Supabase 잔여물 정리**: 별도 phase
 > - **데이터 보존**: 10년 누적 비전 유지 (자동 삭제 0)

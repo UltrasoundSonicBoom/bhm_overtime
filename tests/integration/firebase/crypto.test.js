@@ -40,7 +40,7 @@ beforeAll(async () => {
 
 describe('crypto — deriveKey', () => {
   it('동일 uid → 동일 key (결정론적)', async () => {
-    const { deriveKey, encryptValue, decryptValue } = await import('../../../firebase/crypto.js');
+    const { deriveKey, encryptValue, decryptValue } = await import('../../../apps/web/src/firebase/crypto.js');
     const k1 = await deriveKey('alice');
     const k2 = await deriveKey('alice');
     // CryptoKey 객체는 직접 비교 못 함 → encrypt/decrypt 라운드트립으로 동등성 검증
@@ -50,7 +50,7 @@ describe('crypto — deriveKey', () => {
   });
 
   it('다른 uid → 다른 key (alice 로 암호화 → bob 으로 복호화 실패)', async () => {
-    const { deriveKey, encryptValue, decryptValue } = await import('../../../firebase/crypto.js');
+    const { deriveKey, encryptValue, decryptValue } = await import('../../../apps/web/src/firebase/crypto.js');
     const aliceKey = await deriveKey('alice');
     const bobKey = await deriveKey('bob');
     const blob = await encryptValue('secret', aliceKey);
@@ -61,21 +61,21 @@ describe('crypto — deriveKey', () => {
 
 describe('crypto — encryptValue / decryptValue 라운드트립', () => {
   it('문자열', async () => {
-    const { deriveKey, encryptValue, decryptValue } = await import('../../../firebase/crypto.js');
+    const { deriveKey, encryptValue, decryptValue } = await import('../../../apps/web/src/firebase/crypto.js');
     const key = await deriveKey('u1');
     const blob = await encryptValue('김간호', key);
     expect(await decryptValue(blob, key)).toBe('김간호');
   });
 
   it('숫자', async () => {
-    const { deriveKey, encryptValue, decryptValue } = await import('../../../firebase/crypto.js');
+    const { deriveKey, encryptValue, decryptValue } = await import('../../../apps/web/src/firebase/crypto.js');
     const key = await deriveKey('u1');
     const blob = await encryptValue(15000, key);
     expect(await decryptValue(blob, key)).toBe(15000);
   });
 
   it('객체 (parsedFields 시나리오)', async () => {
-    const { deriveKey, encryptValue, decryptValue } = await import('../../../firebase/crypto.js');
+    const { deriveKey, encryptValue, decryptValue } = await import('../../../apps/web/src/firebase/crypto.js');
     const key = await deriveKey('u1');
     const obj = { 기본급: 5000000, 직무수당: 200000, 연장근로수당: 150000 };
     const blob = await encryptValue(obj, key);
@@ -83,7 +83,7 @@ describe('crypto — encryptValue / decryptValue 라운드트립', () => {
   });
 
   it('배열', async () => {
-    const { deriveKey, encryptValue, decryptValue } = await import('../../../firebase/crypto.js');
+    const { deriveKey, encryptValue, decryptValue } = await import('../../../apps/web/src/firebase/crypto.js');
     const key = await deriveKey('u1');
     const arr = [1, 2, { hours: 8.5 }];
     const blob = await encryptValue(arr, key);
@@ -91,7 +91,7 @@ describe('crypto — encryptValue / decryptValue 라운드트립', () => {
   });
 
   it('null', async () => {
-    const { deriveKey, encryptValue, decryptValue } = await import('../../../firebase/crypto.js');
+    const { deriveKey, encryptValue, decryptValue } = await import('../../../apps/web/src/firebase/crypto.js');
     const key = await deriveKey('u1');
     const blob = await encryptValue(null, key);
     expect(await decryptValue(blob, key)).toBe(null);
@@ -100,7 +100,7 @@ describe('crypto — encryptValue / decryptValue 라운드트립', () => {
 
 describe('crypto — IV 랜덤성', () => {
   it('동일 평문 + 동일 키 → 다른 ciphertext (IV 매번 다름)', async () => {
-    const { deriveKey, encryptValue } = await import('../../../firebase/crypto.js');
+    const { deriveKey, encryptValue } = await import('../../../apps/web/src/firebase/crypto.js');
     const key = await deriveKey('u1');
     const a = await encryptValue('same', key);
     const b = await encryptValue('same', key);
@@ -109,7 +109,7 @@ describe('crypto — IV 랜덤성', () => {
   });
 
   it('암호문 형태: { _v: 1, iv: <base64>, c: <base64> }', async () => {
-    const { deriveKey, encryptValue } = await import('../../../firebase/crypto.js');
+    const { deriveKey, encryptValue } = await import('../../../apps/web/src/firebase/crypto.js');
     const key = await deriveKey('u1');
     const blob = await encryptValue('x', key);
     expect(blob._v).toBe(1);
@@ -122,13 +122,13 @@ describe('crypto — IV 랜덤성', () => {
 
 describe('crypto — _v 버전 관리', () => {
   it('잘못된 _v → throw', async () => {
-    const { deriveKey, decryptValue } = await import('../../../firebase/crypto.js');
+    const { deriveKey, decryptValue } = await import('../../../apps/web/src/firebase/crypto.js');
     const key = await deriveKey('u1');
     await expect(decryptValue({ _v: 99, iv: 'AAAAAAAAAAAAAAAA', c: 'AA==' }, key)).rejects.toBeDefined();
   });
 
   it('null/undefined → null', async () => {
-    const { deriveKey, decryptValue } = await import('../../../firebase/crypto.js');
+    const { deriveKey, decryptValue } = await import('../../../apps/web/src/firebase/crypto.js');
     const key = await deriveKey('u1');
     expect(await decryptValue(null, key)).toBe(null);
     expect(await decryptValue(undefined, key)).toBe(null);
@@ -137,7 +137,7 @@ describe('crypto — _v 버전 관리', () => {
 
 describe('crypto — encryptDoc / decryptDoc 화이트리스트', () => {
   it('암호화 필드만 변환, 평문 필드 보존', async () => {
-    const { deriveKey, encryptDoc, decryptDoc } = await import('../../../firebase/crypto.js');
+    const { deriveKey, encryptDoc, decryptDoc } = await import('../../../apps/web/src/firebase/crypto.js');
     const key = await deriveKey('u1');
     const doc = {
       payMonth: '2026-04',
@@ -160,7 +160,7 @@ describe('crypto — encryptDoc / decryptDoc 화이트리스트', () => {
   });
 
   it('암호화 대상 필드 누락 시 그대로 통과', async () => {
-    const { deriveKey, encryptDoc, decryptDoc } = await import('../../../firebase/crypto.js');
+    const { deriveKey, encryptDoc, decryptDoc } = await import('../../../apps/web/src/firebase/crypto.js');
     const key = await deriveKey('u1');
     const doc = { payMonth: '2026-04' };
     const enc = await encryptDoc(doc, ['parsedFields'], key);  // doc 에 parsedFields 없음
@@ -169,7 +169,7 @@ describe('crypto — encryptDoc / decryptDoc 화이트리스트', () => {
   });
 
   it('null/undefined 필드는 암호화 안 함 (필드 자체가 없는 것과 동일)', async () => {
-    const { deriveKey, encryptDoc, decryptDoc } = await import('../../../firebase/crypto.js');
+    const { deriveKey, encryptDoc, decryptDoc } = await import('../../../apps/web/src/firebase/crypto.js');
     const key = await deriveKey('u1');
     const doc = { name: null, employeeId: undefined, department: '내과' };
     const enc = await encryptDoc(doc, ['name', 'employeeId', 'department'], key);
@@ -184,7 +184,7 @@ describe('crypto — encryptDoc / decryptDoc 화이트리스트', () => {
 
 describe('crypto — entries[].field 패턴 (overtime/leave)', () => {
   it('entries 배열의 특정 필드만 암호화', async () => {
-    const { deriveKey, encryptDoc, decryptDoc } = await import('../../../firebase/crypto.js');
+    const { deriveKey, encryptDoc, decryptDoc } = await import('../../../apps/web/src/firebase/crypto.js');
     const key = await deriveKey('u1');
     const doc = {
       lastEditAt: 1,

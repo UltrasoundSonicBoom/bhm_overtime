@@ -15,6 +15,26 @@
 //   <label for="backupFileInput"> 패턴 절대 건들지 않음.
 ---
 <div class="tab-content" id="tab-settings">
+  <!-- 👤 계정 (Phase 8) — Email + Google 로그인 / 게스트 모드 보존 -->
+  <div class="card max-w-[600px] mx-auto" id="snuhmateAuthCard">
+    <div class="card-title text-brand-body-large">
+      <span class="icon indigo">👤</span> 계정
+    </div>
+    <div class="flex items-center gap-3">
+      <span id="snuhmateAuthPill" class="badge cursor-pointer" data-signed-in="0"
+        style="background: var(--bg-elevated); padding: 6px 12px; border-radius: 999px; cursor: pointer;">
+        로그인
+      </span>
+      <button type="button" id="snuhmateLogoutBtn"
+        class="btn btn-outline text-brand-body-normal py-1.5 px-3 hidden">
+        로그아웃
+      </button>
+    </div>
+    <p class="text-brand-body-normal text-brand-text-muted mt-3 leading-normal">
+      로그인 시 다기기 동기화 + 클라우드 백업 활성. 로그인 안 해도 100% 사용 가능합니다.
+    </p>
+  </div>
+
   <!-- 🔒 앱 잠금 -->
   <div class="card max-w-[600px] mx-auto" id="appLockSettingsCard">
     <div class="card-title text-brand-body-large">
@@ -128,3 +148,39 @@
     </div>
   </div>
 </div>
+
+<script>
+  // Phase 8 Task 5 — Auth UI mount (Settings 탭)
+  // SDK 가 gstatic CDN ESM 이라 빌드 후에도 외부 import 유지 — Vite 가 처리하지 않도록 dynamic import.
+  // firebaseConfig.apiKey 가 없으면 (env vars 미설정) Firebase 비활성 — pill 클릭 시 무해 알림.
+  document.addEventListener('DOMContentLoaded', async () => {
+    const pill = document.getElementById('snuhmateAuthPill');
+    const logoutBtn = document.getElementById('snuhmateLogoutBtn');
+    if (!pill) return;
+
+    try {
+      // config.js 의 firebaseConfig 로 초기화 가능 여부 체크
+      const { firebaseConfig } = await import('../../client/config.js');
+      if (!firebaseConfig?.apiKey) {
+        pill.textContent = '로그인 (env 미설정)';
+        pill.dataset.signedIn = '0';
+        return;
+      }
+
+      const { openAuthDialog, bindAuthPill, logout } = await import('../../firebase/auth-ui.js');
+      bindAuthPill(pill);
+      pill.addEventListener('click', () => {
+        if (pill.dataset.signedIn === '0') openAuthDialog();
+      });
+      logoutBtn?.addEventListener('click', () => logout());
+
+      // pill 상태 변화 → logout 버튼 표시 토글
+      window.addEventListener('app:auth-changed', () => {
+        if (pill.dataset.signedIn === '1') logoutBtn?.classList.remove('hidden');
+        else logoutBtn?.classList.add('hidden');
+      });
+    } catch (e) {
+      console.warn('[Phase 8] auth UI init 실패 (무해, 게스트 모드 유지)', e?.message || e);
+    }
+  });
+</script>

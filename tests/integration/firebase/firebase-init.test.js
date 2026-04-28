@@ -63,7 +63,7 @@ const cfg = {
 
 describe('firebase-init', () => {
   it('initFirebase(cfg) → { app, auth, db, authMod, firestoreMod }', async () => {
-    const { initFirebase } = await import('../../../firebase/firebase-init.js');
+    const { initFirebase } = await import('../../../apps/web/src/firebase/firebase-init.js');
     const r = await initFirebase(cfg);
     expect(r.app).toBeDefined();
     expect(r.app.name).toBe('[DEFAULT]');
@@ -76,7 +76,7 @@ describe('firebase-init', () => {
   });
 
   it('두 번째 호출은 동일 인스턴스 (싱글톤)', async () => {
-    const { initFirebase } = await import('../../../firebase/firebase-init.js');
+    const { initFirebase } = await import('../../../apps/web/src/firebase/firebase-init.js');
     const a = await initFirebase(cfg);
     const b = await initFirebase(cfg);
     expect(a.app).toBe(b.app);
@@ -84,7 +84,7 @@ describe('firebase-init', () => {
   });
 
   it('Firestore 가 offline persistence + multi-tab manager 옵션으로 초기화', async () => {
-    const { initFirebase } = await import('../../../firebase/firebase-init.js');
+    const { initFirebase } = await import('../../../apps/web/src/firebase/firebase-init.js');
     const r = await initFirebase(cfg);
     expect(r.db._options).toBeDefined();
     expect(r.db._options.localCache).toBeDefined();
@@ -105,13 +105,13 @@ describe('firebase-init', () => {
     vi.doMock('https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js', () => ({
       getAuth: vi.fn((app) => ({ app })),
     }));
-    const { initFirebase } = await import('../../../firebase/firebase-init.js');
+    const { initFirebase } = await import('../../../apps/web/src/firebase/firebase-init.js');
     const r = await initFirebase(cfg);
     expect(r.db._fallback).toBe(true);
   });
 
   it('resetFirebaseForTest() 후 새 인스턴스', async () => {
-    const { initFirebase, resetFirebaseForTest } = await import('../../../firebase/firebase-init.js');
+    const { initFirebase, resetFirebaseForTest } = await import('../../../apps/web/src/firebase/firebase-init.js');
     const a = await initFirebase(cfg);
     resetFirebaseForTest();
     const b = await initFirebase(cfg);
