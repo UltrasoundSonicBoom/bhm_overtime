@@ -1,7 +1,11 @@
 ---
 /**
  * Modal — 사용자 확인 / 입력 / 알림 대화창.
- * role="dialog" + aria-modal="true" + aria-labelledby 으로 a11y.
+ * role="dialog" + aria-modal="true" + aria-labelledby (title 있을 때) | aria-label (없을 때)
+ *
+ * Stacking context: legacy `.modal-overlay { z-index: 200 }` (globals.css) — z-utility 미사용.
+ * Display: legacy `.modal-overlay.active { display: flex }` 가 winning. open=false 시 `hidden` 클래스로 숨김.
+ *
  * Legacy CSS class: .modal-overlay, .modal-content, .modal-header, .modal-body (호환).
  */
 interface Props {
@@ -13,14 +17,20 @@ interface Props {
 const { id, size = 'md', title, open = false } = Astro.props;
 const sizeClass = { sm: 'max-w-md', md: 'max-w-lg', lg: 'max-w-2xl' }[size];
 const titleId = id + '-title';
-const overlayClasses = ['modal-overlay', 'fixed', 'inset-0', 'z-[1000]', 'flex', 'items-center', 'justify-center', 'p-4', 'bg-black/50', open ? 'active' : 'hidden'].filter(Boolean).join(' ');
+const overlayClasses = [
+  'modal-overlay', 'fixed', 'inset-0',
+  open ? 'flex' : '',
+  'items-center', 'justify-center', 'p-4', 'bg-black/50',
+  open ? 'active' : 'hidden',
+].filter(Boolean).join(' ');
 ---
 <div
   id={id}
   class={overlayClasses}
   role="dialog"
   aria-modal="true"
-  aria-labelledby={titleId}
+  aria-labelledby={title ? titleId : undefined}
+  aria-label={title ? undefined : '대화창'}
   data-ds-modal
 >
   <div class={`modal-content w-full ${sizeClass} bg-ds-bg-surface border border-ds-border-default rounded-brand-lg p-6 shadow-brand-lg`}>
