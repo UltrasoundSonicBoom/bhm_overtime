@@ -23,6 +23,12 @@ describe('Primitive tokens', () => {
     expect(primitive).toMatch(/--amber-500:\s*#/);
     expect(primitive).toMatch(/--emerald-500:\s*#/);
   });
+  it('white/black + dark-* 정의', () => {
+    expect(primitive).toMatch(/--white:\s*#ffffff/i);
+    expect(primitive).toMatch(/--black:\s*#000000/i);
+    expect(primitive).toMatch(/--dark-950:\s*#/);
+    expect(primitive).toMatch(/--dark-850:\s*#/);
+  });
 });
 
 describe('Semantic tokens', () => {
@@ -42,6 +48,31 @@ describe('Semantic tokens', () => {
   it('semantic 토큰은 primitive var() 를 참조한다', () => {
     expect(semantic).toMatch(/--color-text-primary:\s*var\(--gray-\d+\)|--color-text-primary:\s*var\(--neo-ink/);
     expect(semantic).toMatch(/--color-brand-primary:\s*var\(--blue-\d+\)/);
+  });
+});
+
+describe('Semantic tokens — no raw hex (2-tier discipline)', () => {
+  it('semantic.css 안 raw hex 값 사용 0건 (var() 만 허용)', () => {
+    // 주석 제거 후 검사
+    const noComments = semantic.replace(/\/\*[\s\S]*?\*\//g, '');
+    const matches = noComments.match(/#[0-9a-fA-F]{3,8}\b/g) || [];
+    expect(matches).toEqual([]);
+  });
+  it('html[data-theme="dark"] block 존재 + 핵심 토큰 override', () => {
+    const darkBlockMatch = semantic.match(/html\[data-theme="dark"\]\s*\{([\s\S]*?)^\}/m);
+    expect(darkBlockMatch).toBeTruthy();
+    const darkBlock = darkBlockMatch[1];
+    // 핵심 토큰들이 dark 에서 모두 override 되어야 함
+    for (const t of [
+      '--color-text-primary', '--color-text-secondary', '--color-text-muted',
+      '--color-bg-page', '--color-bg-surface', '--color-bg-elevated',
+      '--color-border-default', '--color-border-strong',
+      '--color-text-link',
+      '--color-status-success-bg', '--color-status-warning-bg',
+      '--color-status-error-bg', '--color-status-info-bg',
+    ]) {
+      expect(darkBlock).toContain(t);
+    }
   });
 });
 
@@ -68,6 +99,13 @@ describe('Typography scale', () => {
     expect(typography).toMatch(/--font-weight-bold:\s*700/);
     expect(typography).toMatch(/--line-height-tight:/);
     expect(typography).toMatch(/--line-height-normal:/);
+  });
+  it('font-family-mono 가 실제 monospace 스택', () => {
+    expect(typography).toMatch(/--font-family-mono:[^;]*monospace/);
+    expect(typography).not.toMatch(/--font-family-mono:[^;]*Space Grotesk/);
+  });
+  it('font-family-numeric 별도 정의 (Space Grotesk display 용)', () => {
+    expect(typography).toMatch(/--font-family-numeric:/);
   });
 });
 

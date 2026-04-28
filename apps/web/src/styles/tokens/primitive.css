@@ -40,6 +40,21 @@
   --emerald-500: #10b981;
   --emerald-600: #059669;
 
+  /* Pure */
+  --white: #ffffff;
+  --black: #000000;
+
+  /* Dark surfaces (for dark theme) */
+  --dark-950: #09090b;
+  --dark-900: #0f0f11;
+  --dark-850: #141416;
+  --dark-800: #1c1c1e;
+
+  /* Dark text scale (for dark theme) */
+  --dark-text-primary:   #ececef;
+  --dark-text-secondary: #a0a0ab;
+  --dark-text-muted:     #63636e;
+
   /* Neo cream (legacy palette — alias only) */
   --neo-cream-50:  #FFFDF5;
   --neo-cream-100: #FFF8E7;

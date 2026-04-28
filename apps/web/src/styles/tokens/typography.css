@@ -25,6 +25,7 @@
   --line-height-relaxed:  1.6;
 
   /* Font family */
-  --font-family-sans: 'Inter', 'Noto Sans KR', -apple-system, sans-serif;
-  --font-family-mono: 'Space Grotesk', 'Menlo', monospace;
+  --font-family-sans:    'Inter', 'Noto Sans KR', -apple-system, sans-serif;
+  --font-family-numeric: 'Space Grotesk', 'Inter', -apple-system, sans-serif;
+  --font-family-mono:    'JetBrains Mono', 'Menlo', 'Consolas', 'Courier New', monospace;
 }
