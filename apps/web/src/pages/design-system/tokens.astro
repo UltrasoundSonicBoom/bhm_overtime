@@ -1,0 +1,74 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Container from '../../components/layout/Container.astro';
+import Section from '../../components/layout/Section.astro';
+import PageHeader from '../../components/patterns/PageHeader.astro';
+
+const colorGroups = [
+  { title: 'Text', tokens: ['--color-text-primary', '--color-text-secondary', '--color-text-muted', '--color-text-inverse', '--color-text-link'] },
+  { title: 'Background', tokens: ['--color-bg-page', '--color-bg-surface', '--color-bg-elevated', '--color-bg-muted', '--color-bg-hover'] },
+  { title: 'Border', tokens: ['--color-border-default', '--color-border-strong', '--color-border-focus'] },
+  { title: 'Brand', tokens: ['--color-brand-primary', '--color-brand-primary-hover', '--color-brand-secondary'] },
+  { title: 'Status', tokens: ['--color-status-success', '--color-status-warning', '--color-status-error', '--color-status-info'] },
+];
+const typographyTokens = ['display', 'h1', 'h2', 'h3', 'h4', 'body-lg', 'body-md', 'body-sm', 'label', 'caption'];
+const spacingTokens = [0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20];
+const radiusTokens = ['sm', 'md', 'lg', 'xl', 'full'];
+---
+<BaseLayout title="Tokens — Design System" showFooterNav={false}>
+  <main class="min-h-screen bg-ds-bg-page py-8">
+    <Container>
+      <PageHeader title="Foundation Tokens" description="primitive (raw value) → semantic (UI 의미별 alias) 2-tier" />
+
+      <Section title="Color" level={2}>
+        {colorGroups.map(g => (
+          <div class="mb-6">
+            <h3 class="text-ds-h4 text-ds-text-primary mb-2">{g.title}</h3>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {g.tokens.map(t => (
+                <div class="border border-ds-border-default rounded-brand-md p-3">
+                  <div class="w-full h-12 rounded-brand-sm mb-2" style={`background:var(${t})`}></div>
+                  <code class="text-ds-caption text-ds-text-muted block">{t}</code>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </Section>
+
+      <Section title="Typography" level={2}>
+        <div class="space-y-3">
+          {typographyTokens.map(t => (
+            <div class="flex items-baseline gap-4 border-b border-ds-border-default pb-3">
+              <code class="text-ds-caption text-ds-text-muted w-32 flex-shrink-0">{`--font-size-${t}`}</code>
+              <span class={`text-ds-${t} text-ds-text-primary`}>The quick brown fox · 빠른 갈색 여우</span>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      <Section title="Spacing" level={2}>
+        <div class="space-y-2">
+          {spacingTokens.map(s => (
+            <div class="flex items-center gap-3">
+              <code class="text-ds-caption text-ds-text-muted w-24">{`--space-${s}`}</code>
+              <div class="bg-ds-brand-primary h-6" style={`width:var(--space-${s})`}></div>
+              <span class="text-ds-body-sm text-ds-text-muted">{`var(--space-${s})`}</span>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      <Section title="Radius" level={2}>
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          {radiusTokens.map(r => (
+            <div class="border border-ds-border-default p-3 text-center">
+              <div class={`w-16 h-16 bg-ds-bg-muted mx-auto mb-2 rounded-brand-${r}`}></div>
+              <code class="text-ds-caption text-ds-text-muted">{`--radius-${r}`}</code>
+            </div>
+          ))}
+        </div>
+      </Section>
+    </Container>
+  </main>
+</BaseLayout>
