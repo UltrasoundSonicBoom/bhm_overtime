@@ -16,7 +16,7 @@ const registry = JSON.parse(
 );
 
 // Phase 2-B: data.js 는 ESM.
-import { DATA } from '../../data.js';
+import { DATA } from '@snuhmate/data';
 
 function getPath(obj, pathStr) {
   return pathStr.split('.').reduce((acc, key) => (acc == null ? undefined : acc[key]), obj);

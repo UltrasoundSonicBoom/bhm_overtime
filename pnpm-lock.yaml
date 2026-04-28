@@ -11,6 +11,21 @@ importers:
       '@playwright/test':
         specifier: ^1.59.1
         version: 1.59.1
+      '@snuhmate/calculators':
+        specifier: workspace:*
+        version: link:packages/calculators
+      '@snuhmate/data':
+        specifier: workspace:*
+        version: link:packages/data
+      '@snuhmate/profile':
+        specifier: workspace:*
+        version: link:packages/profile
+      '@snuhmate/regulation-constants':
+        specifier: workspace:*
+        version: link:packages/regulation-constants
+      '@snuhmate/shared-utils':
+        specifier: workspace:*
+        version: link:packages/shared-utils
       eslint:
         specifier: ^10.2.1
         version: 10.2.1

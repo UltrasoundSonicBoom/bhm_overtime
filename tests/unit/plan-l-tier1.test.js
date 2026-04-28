@@ -1,7 +1,7 @@
 // Plan L Tier 1 — D9 (캘린더) + D11 (단수계산) 단위 테스트
 import { describe, it, expect } from 'vitest';
-import { DATA } from '../../data.js';
-import { CALC } from '../../calculators.js';
+import { DATA } from '@snuhmate/data';
+import { CALC } from '@snuhmate/calculators';
 
 describe('Plan L T1 D9 — 병원 자체 유급휴일 (제35조 + <2015.05>·<2025.10>)', () => {
   it('HOLIDAYS.hospitalHolidays 에 조합설립일 (8/1) + 개원기념일 (10/15) + 근로자의 날 존재', () => {

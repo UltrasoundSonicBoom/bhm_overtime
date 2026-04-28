@@ -39,6 +39,11 @@
   "homepage": "https://snuhmate.com",
   "devDependencies": {
     "@playwright/test": "^1.59.1",
+    "@snuhmate/calculators": "workspace:*",
+    "@snuhmate/data": "workspace:*",
+    "@snuhmate/profile": "workspace:*",
+    "@snuhmate/regulation-constants": "workspace:*",
+    "@snuhmate/shared-utils": "workspace:*",
     "eslint": "^10.2.1",
     "globals": "^17.5.0",
     "jsdom": "^29.1.0",

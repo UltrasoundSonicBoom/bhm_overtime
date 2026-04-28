@@ -3,8 +3,8 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 
 // Phase 2-B: data.js + calculators.js 모두 ESM (Layer 0+1 통합 마이그레이션).
-import { DATA } from '../../data.js';
-import { CALC } from '../../calculators.js';
+import { DATA } from '@snuhmate/data';
+import { CALC } from '@snuhmate/calculators';
 
 describe('CALC.calcOvertimePay', () => {
   // hourlyRate=10000, 연장 1h (150%) = 15000
