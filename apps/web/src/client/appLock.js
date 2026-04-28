@@ -31,7 +31,7 @@ export const AppLock = (function () {
   var _unlocked = false;
 
   // ── 로컬 UID (auth 독립) ──
-  // AppLock 은 기기 로컬 잠금 기능이므로 Google/Neon/Supabase 신원에 의존하지 않는다.
+  // AppLock 은 기기 로컬 잠금 기능이므로 Firebase 등 외부 인증 신원에 의존하지 않는다.
   // WebAuthn user.id 등에 사용할 안정적 식별자가 필요할 때만 호출.
   function _getLocalUid() {
     var uid = null;

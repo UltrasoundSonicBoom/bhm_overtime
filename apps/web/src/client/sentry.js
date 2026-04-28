@@ -1,7 +1,6 @@
 // ============================================
 // sentry.js — 클라이언트 텔레메트리 (Sentry browser SDK)
 // ============================================
-// Supabase Telemetry 대체 (2026-04-19).
 //
 // 설정 방법:
 //   1. https://sentry.io 에서 무료 계정 생성 → Browser JavaScript 프로젝트
@@ -10,7 +9,7 @@
 //   4. CSP connect-src에 https://*.sentry.io 이미 등록됨 (index.html:23)
 //
 // DSN 미설정 시: 조용히 no-op (앱 정상 동작)
-// 호환 API: window.Telemetry.{track,error} — 기존 SupabaseTelemetry 시그니처 유지
+// 공용 API: window.Telemetry.{track,error}
 
 (function () {
   'use strict';
@@ -59,8 +58,7 @@
     }
   }
 
-  // ── 호환 API: window.Telemetry ──
-  // 기존 SupabaseTelemetry 시그니처를 따라 호출 지점 변경 최소화.
+  // ── 공용 API: window.Telemetry ──
   window.Telemetry = {
     track: function (eventType, payload) {
       if (!window.Sentry || !SENTRY_DSN) return;
@@ -79,17 +77,6 @@
         });
       } catch (e) { /* swallow */ }
     }
-  };
-
-  // ── 호환 shim ──
-  // 구 SupabaseSync / SupabaseTelemetry 호출이 어딘가 남아있어도 깨지지 않도록 no-op.
-  window.SupabaseTelemetry = { track: window.Telemetry.track, error: window.Telemetry.error };
-  window.SupabaseSync = {
-    pushCloudData: function () {},
-    deleteCloudRecord: function () {},
-    fetchCloudData: function () { return Promise.resolve(null); },
-    signInWithGoogle: function () {},
-    signOut: function () {}
   };
 
   // 전역 오류 자동 보고 (Sentry SDK 자체에도 같은 기능이 있지만 명시)

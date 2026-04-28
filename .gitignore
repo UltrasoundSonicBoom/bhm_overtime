@@ -40,3 +40,4 @@ tmp/
 .env.vercel.tmp
 .env*
 firestore-debug.log
+firebase-debug.log
