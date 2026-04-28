@@ -94,8 +94,16 @@ function deleteRotation(parentId, rotId) {
 
 export function _saveWorkHistory(list) {
   localStorage.setItem(_whKey(), JSON.stringify(list));
-  // bhm_lastEdit_<key> 도 갱신 — 향후 서버 sync 재도입 시 충돌 비교용
   localStorage.setItem('bhm_lastEdit_' + _whKey(), new Date().toISOString());
+
+  // Phase 8: Firestore write-through (로그인 시만, fire-and-forget)
+  if (typeof window !== 'undefined' && window.__firebaseUid) {
+    import('/src/firebase/sync/work-history-sync.js').then(m =>
+      m.writeAllWorkHistory(null, window.__firebaseUid, list)
+    ).catch(err => {
+      console.warn('[Phase 8] work_history cloud sync 실패 (무해)', err?.message || err);
+    });
+  }
 }
 
 function _fmtYm(iso) {

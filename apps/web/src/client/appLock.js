@@ -87,6 +87,14 @@ export const AppLock = (function () {
     var s = _loadSettings();
     Object.assign(s, patch);
     localStorage.setItem('snuhmate_settings', JSON.stringify(s));
+    // Phase 8: Firestore write-through (로그인 시만, fire-and-forget)
+    if (typeof window !== 'undefined' && window.__firebaseUid) {
+      import('/src/firebase/sync/settings-sync.js').then(function(m) {
+        return m.writeSettings(null, window.__firebaseUid, s);
+      }).catch(function(err) {
+        console.warn('[Phase 8] settings cloud sync 실패 (무해)', err?.message || err);
+      });
+    }
   }
 
   // ── SHA-256 (WebCrypto) ──

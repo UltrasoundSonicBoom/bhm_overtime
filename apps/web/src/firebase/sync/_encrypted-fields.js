@@ -29,8 +29,8 @@ export const ENCRYPTED_FIELDS = {
   'settings/app': ['appLockPin', 'customNotes'],
   // Reference favorites — items 자체는 ID 배열이라 평문 OK (식별성 X)
   'settings/reference': [],
-  // Work history — employer/position/notes/salary (date 평문)
-  'work_history/*': ['employer', 'position', 'notes', 'salary'],
+  // Work history — dept/role/desc (실제 스키마 필드명, workplace/from/to/source 평문)
+  'work_history/*': ['dept', 'role', 'desc'],
 };
 
 // path 와 wildcard 패턴 매칭
