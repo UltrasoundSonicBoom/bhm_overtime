@@ -16,8 +16,9 @@ import { ENCRYPTED_FIELDS } from './_encrypted-fields.js';
 const COLLECTION = (uid) => `users/${uid}/payslips`;
 const ENC_FIELDS = ENCRYPTED_FIELDS['payslips/*'];
 
-export async function writePayslip(dbOrNull, uid, payMonth, data) {
+export async function writePayslip(dbOrNull, uid, payMonth, data, driveFileId) {
   // payMonth: 'YYYY-MM', data: { workStats, overtimeItems, hourlyRate, ... }
+  // driveFileId: optional — Google Drive 파일 ID (Phase 9)
   const key = await deriveKey(uid);
   const { db, firestoreMod } = dbOrNull
     ? { db: dbOrNull, firestoreMod: _mockMod() }
@@ -25,6 +26,7 @@ export async function writePayslip(dbOrNull, uid, payMonth, data) {
 
   const { savedAt, ...rest } = data || {};
   const docData = { parsedFields: rest, payMonth, lastEditAt: Date.now() };
+  if (driveFileId) docData.driveFileId = driveFileId;  // 평문 — 식별성 없음
   const encrypted = await encryptDoc(docData, ENC_FIELDS, key);
   const ref = firestoreMod.doc(db, `${COLLECTION(uid)}/${payMonth}`);
   await firestoreMod.setDoc(ref, encrypted);
