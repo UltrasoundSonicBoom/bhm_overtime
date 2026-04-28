@@ -85,7 +85,11 @@ describe('Switch', () => {
     expect(src).toMatch(/role=["']switch["']/);
     expect(src).toMatch(/aria-checked=\{[^}]*\?\s*['"]true['"]\s*:\s*['"]false['"]\}/);
   });
-  it('peer-checked 활성 색상', () => {
+  it('input 이 sr-only peer 클래스 (track 의 peer 소스)', () => {
+    expect(src).toMatch(/class=["']sr-only peer["']/);
+  });
+  it('peer-checked 활성 색상 (track) + after: pseudo 로 thumb 이동 (peer 형제 제약 우회)', () => {
     expect(src).toMatch(/peer-checked:bg-ds-brand-primary/);
+    expect(src).toMatch(/peer-checked:after:translate-x-4/);
   });
 });

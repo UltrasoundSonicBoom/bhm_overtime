@@ -1,7 +1,9 @@
 ---
 /**
- * Switch — visual on/off toggle. Underlying <input type="checkbox" class="sr-only peer">
- * with a styled track/thumb that responds to peer-checked: state.
+ * Switch — visual on/off toggle.
+ * Hidden <input type="checkbox" class="sr-only peer"> drives state.
+ * Track + thumb is a single span using the `after:` pseudo-element so
+ * peer-checked: animations actually work (Tailwind peer requires siblings).
  */
 interface Props {
   id?: string;
@@ -9,7 +11,7 @@ interface Props {
   checked?: boolean;
   disabled?: boolean;
   label?: string;
-  /** @internal XSS surface — validate before use */
+  /** Accessible label when no visible label is present */
   ariaLabel?: string;
 }
 const { id, name, checked, disabled, label, ariaLabel } = Astro.props;
@@ -20,9 +22,7 @@ const { id, name, checked, disabled, label, ariaLabel } = Astro.props;
     role="switch"
     aria-checked={checked ? 'true' : 'false'}
     aria-label={ariaLabel}
-    class="relative w-10 h-6 bg-ds-bg-muted rounded-brand-full transition-colors peer-checked:bg-ds-brand-primary peer-disabled:opacity-50"
-  >
-    <span class="absolute top-0.5 left-0.5 w-5 h-5 bg-ds-bg-surface rounded-brand-full shadow-brand-sm transition-transform peer-checked:translate-x-4"></span>
-  </span>
+    class="relative w-10 h-6 bg-ds-bg-muted rounded-brand-full transition-colors peer-checked:bg-ds-brand-primary peer-disabled:opacity-50 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:w-5 after:h-5 after:bg-ds-bg-surface after:rounded-brand-full after:shadow-brand-sm after:transition-transform peer-checked:after:translate-x-4"
+  ></span>
   {label && <span class="text-ds-body-md text-ds-text-primary">{label}</span>}
 </label>

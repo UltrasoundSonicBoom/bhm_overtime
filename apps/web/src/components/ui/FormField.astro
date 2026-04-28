@@ -1,9 +1,17 @@
 ---
 /**
  * FormField — Input/Select/Textarea wrapper
- * label + helper + error + required 표시 일관성.
+ * label + helper + error + required 표시 일관성. Legacy CSS class: .form-group.
  *
- * Legacy CSS class: .form-group (호환).
+ * NOTE: Astro slots cannot pass props down. The consumer must wire `aria-describedby`
+ * on the inner field manually:
+ *   - When `error` is set: ariaDescribedBy={`${id}-error`}
+ *   - When `helper` is set (no error): ariaDescribedBy={`${id}-helper`}
+ *
+ * Example:
+ *   <FormField label="이름" error={error} id="name">
+ *     <Input id="name" ariaDescribedBy={error ? 'name-error' : undefined} />
+ *   </FormField>
  */
 interface Props {
   label?: string;
@@ -20,7 +28,7 @@ const helperId = fieldId ? fieldId + '-helper' : undefined;
 ---
 <div class="form-group flex flex-col gap-1 mb-4">
   {label && (
-    <label for={htmlFor} class="block text-ds-label text-ds-text-secondary font-medium">
+    <label for={fieldId} class="block text-ds-label text-ds-text-secondary font-medium">
       {label}
       {required && <span class="text-ds-status-error ml-0.5" aria-hidden="true">*</span>}
     </label>
