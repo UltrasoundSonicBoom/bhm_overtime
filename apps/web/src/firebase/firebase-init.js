@@ -28,6 +28,12 @@ export function initFirebase(config) {
 
     const app = appMod.initializeApp(config);
     const auth = authMod.getAuth(app);
+    // 자동 로그인: 브라우저 종료 후에도 세션 유지 (Firebase 기본값이지만 명시 보장)
+    try {
+      await authMod.setPersistence(auth, authMod.browserLocalPersistence);
+    } catch (e) {
+      console.warn('[firebase-init] setPersistence 실패 — 기본값 유지', e?.message);
+    }
 
     let db;
     try {

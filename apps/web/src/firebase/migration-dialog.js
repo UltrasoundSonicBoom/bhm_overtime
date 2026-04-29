@@ -13,6 +13,23 @@
 // Non-pushy UX: URL 자동 오픈 없음, 명시적 사용자 액션으로만 트리거.
 
 const FLAG_KEY = 'snuhmate_migration_done_v1';
+const SNOOZE_KEY = 'snuhmate_migration_snooze_v1';
+const SNOOZE_DURATION_MS = 24 * 60 * 60 * 1000;
+
+const GUEST_FLAT_KEYS = [
+  'snuhmate_hr_profile_guest',
+  'overtimeRecords_guest',
+  'snuhmate_work_history_guest',
+  'snuhmate_reg_favorites_guest',
+  'leaveRecords',
+];
+
+function _clearAllGuestData() {
+  for (const k of GUEST_FLAT_KEYS) localStorage.removeItem(k);
+  for (const k of Object.keys(localStorage)) {
+    if (/^payslip_guest_\d{4}_\d{2}(_.+)?$/.test(k)) localStorage.removeItem(k);
+  }
+}
 
 // ── 카테고리 정의 ──────────────────────────────────────────────────────────
 const CATEGORIES = [
@@ -58,6 +75,12 @@ const CATEGORIES = [
     desc: '찾아보기 탭 규정 즐겨찾기',
     guestKey: () => 'snuhmate_reg_favorites_guest',
   },
+  {
+    id: 'payslip',
+    label: '급여명세서 (로컬 정리만)',
+    desc: '명세서는 클라우드 미동기화. 보관하려면 미리 백업 후 다시 업로드 필요',
+    guestKey: () => null,
+  },
 ];
 
 // ── 게스트 데이터 존재 여부 체크 ──────────────────────────────────────────
@@ -70,7 +93,7 @@ function _hasGuestData() {
       'snuhmate_reg_favorites_guest',
       'leaveRecords',
     ];
-    return checks.some(k => {
+    const hasFlatGuest = checks.some(k => {
       const v = localStorage.getItem(k);
       if (!v) return false;
       try {
@@ -80,6 +103,8 @@ function _hasGuestData() {
         return !!parsed;
       } catch { return !!v; }
     });
+    if (hasFlatGuest) return true;
+    return Object.keys(localStorage).some(k => /^payslip_guest_\d{4}_\d{2}(_.+)?$/.test(k));
   } catch { return false; }
 }
 
@@ -174,6 +199,16 @@ export async function uploadCategories(uid, selectedIds) {
     });
   }
 
+  if (selectedIds.includes('payslip')) {
+    syncTasks.push({
+      label: '급여명세서',
+      run: async () => {
+        const guestKeys = Object.keys(localStorage).filter(k => /^payslip_guest_\d{4}_\d{2}(_.+)?$/.test(k));
+        for (const k of guestKeys) localStorage.removeItem(k);
+      },
+    });
+  }
+
   const settled = await Promise.allSettled(syncTasks.map(t => t.run()));
   const ok = [];
   const failed = [];
@@ -186,7 +221,11 @@ export async function uploadCategories(uid, selectedIds) {
     }
   }
 
-  localStorage.setItem(FLAG_KEY, new Date().toISOString());
+  if (failed.length === 0) {
+    localStorage.setItem(FLAG_KEY, new Date().toISOString());
+    localStorage.removeItem(SNOOZE_KEY);
+    _clearAllGuestData();
+  }
   return { ok, failed };
 }
 
@@ -226,11 +265,11 @@ export async function openMigrationDialog(uid) {
 
   const s1Desc = document.createElement('p');
   s1Desc.className = 'text-sm text-[var(--text-secondary)] text-center mt-0 mb-2 leading-relaxed';
-  s1Desc.textContent = '핸드폰에 저장된 내용 전체를 클라우드에 동기화하시겠습니까?';
+  s1Desc.textContent = '게스트로 입력한 데이터를 클라우드에 동기화하시겠습니까?';
 
   const s1Hint = document.createElement('p');
   s1Hint.className = 'text-xs text-[var(--text-muted)] text-center mt-0 mb-6';
-  s1Hint.textContent = '모든 데이터는 암호화되어 전송됩니다.';
+  s1Hint.textContent = '동기화 후 로컬 게스트 데이터는 정리됩니다. 명세서는 별도 백업 권장.';
 
   const s1Actions = document.createElement('div');
   s1Actions.className = 'grid grid-cols-2 gap-2.5';
@@ -281,7 +320,7 @@ export async function openMigrationDialog(uid) {
 
   const s2Desc = document.createElement('p');
   s2Desc.className = 'text-sm text-[var(--text-muted)] mt-2 mb-5 leading-relaxed';
-  s2Desc.textContent = '동기화할 항목을 선택하세요. 모든 데이터는 암호화되어 전송됩니다.';
+  s2Desc.textContent = '동기화 후 게스트 데이터는 정리됩니다. 선택하지 않은 항목은 업로드되지 않고 그대로 정리됩니다.';
 
   const checkboxes = {};
   const listEl = document.createElement('div');
