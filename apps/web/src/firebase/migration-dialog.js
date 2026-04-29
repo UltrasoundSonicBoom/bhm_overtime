@@ -14,6 +14,7 @@
 
 const FLAG_KEY = 'snuhmate_migration_done_v1';
 const SNOOZE_KEY = 'snuhmate_migration_snooze_v1';
+// Used by Task 2 ('나중에' / '×' 버튼이 24h snooze 적용)
 const SNOOZE_DURATION_MS = 24 * 60 * 60 * 1000;
 
 const GUEST_FLAT_KEYS = [
@@ -24,11 +25,12 @@ const GUEST_FLAT_KEYS = [
   'leaveRecords',
 ];
 
+const PAYSLIP_GUEST_KEY_RE = /^payslip_guest_\d{4}_\d{2}(_.+)?$/;
+
 function _clearAllGuestData() {
   for (const k of GUEST_FLAT_KEYS) localStorage.removeItem(k);
-  for (const k of Object.keys(localStorage)) {
-    if (/^payslip_guest_\d{4}_\d{2}(_.+)?$/.test(k)) localStorage.removeItem(k);
-  }
+  const payslipKeys = Object.keys(localStorage).filter(k => PAYSLIP_GUEST_KEY_RE.test(k));
+  for (const k of payslipKeys) localStorage.removeItem(k);
 }
 
 // ── 카테고리 정의 ──────────────────────────────────────────────────────────
@@ -75,25 +77,12 @@ const CATEGORIES = [
     desc: '찾아보기 탭 규정 즐겨찾기',
     guestKey: () => 'snuhmate_reg_favorites_guest',
   },
-  {
-    id: 'payslip',
-    label: '급여명세서 (로컬 정리만)',
-    desc: '명세서는 클라우드 미동기화. 보관하려면 미리 백업 후 다시 업로드 필요',
-    guestKey: () => null,
-  },
 ];
 
 // ── 게스트 데이터 존재 여부 체크 ──────────────────────────────────────────
 function _hasGuestData() {
   try {
-    const checks = [
-      'snuhmate_hr_profile_guest',
-      'overtimeRecords_guest',
-      'snuhmate_work_history_guest',
-      'snuhmate_reg_favorites_guest',
-      'leaveRecords',
-    ];
-    const hasFlatGuest = checks.some(k => {
+    const hasFlatGuest = GUEST_FLAT_KEYS.some(k => {
       const v = localStorage.getItem(k);
       if (!v) return false;
       try {
@@ -104,7 +93,7 @@ function _hasGuestData() {
       } catch { return !!v; }
     });
     if (hasFlatGuest) return true;
-    return Object.keys(localStorage).some(k => /^payslip_guest_\d{4}_\d{2}(_.+)?$/.test(k));
+    return Object.keys(localStorage).some(k => PAYSLIP_GUEST_KEY_RE.test(k));
   } catch { return false; }
 }
 
@@ -199,16 +188,6 @@ export async function uploadCategories(uid, selectedIds) {
     });
   }
 
-  if (selectedIds.includes('payslip')) {
-    syncTasks.push({
-      label: '급여명세서',
-      run: async () => {
-        const guestKeys = Object.keys(localStorage).filter(k => /^payslip_guest_\d{4}_\d{2}(_.+)?$/.test(k));
-        for (const k of guestKeys) localStorage.removeItem(k);
-      },
-    });
-  }
-
   const settled = await Promise.allSettled(syncTasks.map(t => t.run()));
   const ok = [];
   const failed = [];
@@ -268,8 +247,17 @@ export async function openMigrationDialog(uid) {
   s1Desc.textContent = '게스트로 입력한 데이터를 클라우드에 동기화하시겠습니까?';
 
   const s1Hint = document.createElement('p');
-  s1Hint.className = 'text-xs text-[var(--text-muted)] text-center mt-0 mb-6';
-  s1Hint.textContent = '동기화 후 로컬 게스트 데이터는 정리됩니다. 명세서는 별도 백업 권장.';
+  s1Hint.className = 'text-xs text-[var(--text-muted)] text-center mt-0 mb-2';
+  s1Hint.textContent = '동기화 후 로컬 게스트 데이터는 정리됩니다.';
+
+  // Detect if there are guest payslip keys to surface a payslip-specific notice
+  const _hasGuestPayslip = Object.keys(localStorage).some(k => PAYSLIP_GUEST_KEY_RE.test(k));
+  let s1PayslipNote = null;
+  if (_hasGuestPayslip) {
+    s1PayslipNote = document.createElement('p');
+    s1PayslipNote.className = 'text-xs text-[var(--accent-amber,#d97706)] text-center mt-0 mb-6';
+    s1PayslipNote.textContent = '※ 급여명세서는 클라우드 미동기화입니다. 자동 정리되니 필요 시 미리 백업하세요.';
+  }
 
   const s1Actions = document.createElement('div');
   s1Actions.className = 'grid grid-cols-2 gap-2.5';
@@ -290,6 +278,7 @@ export async function openMigrationDialog(uid) {
   step1.appendChild(s1Title);
   step1.appendChild(s1Desc);
   step1.appendChild(s1Hint);
+  if (s1PayslipNote) step1.appendChild(s1PayslipNote);
   step1.appendChild(s1Actions);
 
   // ── Step 2: 카테고리 선택 패널 ───────────────────────────────────────

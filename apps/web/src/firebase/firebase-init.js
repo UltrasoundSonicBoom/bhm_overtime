@@ -32,7 +32,7 @@ export function initFirebase(config) {
     try {
       await authMod.setPersistence(auth, authMod.browserLocalPersistence);
     } catch (e) {
-      console.warn('[firebase-init] setPersistence 실패 — 기본값 유지', e?.message);
+      console.warn('[firebase-init] setPersistence 실패 — 자동 로그인이 동작하지 않을 수 있음', e?.message);
     }
 
     let db;
