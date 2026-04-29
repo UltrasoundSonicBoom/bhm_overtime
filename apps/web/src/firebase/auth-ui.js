@@ -160,10 +160,16 @@ function _buildDialog() {
     if (msg) { errEl.textContent = msg; errEl.classList.remove('hidden'); }
     else { errEl.textContent = ''; errEl.classList.add('hidden'); }
   };
+  function _validatePassword(pw) {
+    if (!pw || pw.length < 8) return '비밀번호는 8자 이상이어야 합니다';
+    if (pw.length > 12) return '비밀번호는 12자 이하여야 합니다 (기억성 우선)';
+    return null;
+  }
   const prettyErr = (e) => {
     const code = e?.code || '';
     if (code === 'auth/invalid-credential') return '이메일/비밀번호 불일치';
-    if (code === 'auth/weak-password') return '비밀번호 6자 이상';
+    if (code === 'auth/weak-password') return '비밀번호 8자 이상 12자 이하';
+    if (code === 'auth/password-does-not-meet-requirements') return '비밀번호 정책 미충족 (8~12자)';
     if (code === 'auth/email-already-in-use') return '이미 가입된 이메일 — 로그인 시도';
     if (code === 'auth/popup-closed-by-user') return '로그인 창이 닫힘';
     if (code === 'auth/invalid-email') return '이메일 형식 오류';
@@ -182,6 +188,8 @@ function _buildDialog() {
   });
   signUpBtn.addEventListener('click', async () => {
     setErr('');
+    const pwErr = _validatePassword(passIn.value);
+    if (pwErr) { setErr(pwErr); return; }
     try { await signUpWithEmail(emailIn.value.trim(), passIn.value); closeAuthDialog(); }
     catch (e) { setErr(prettyErr(e)); }
   });
