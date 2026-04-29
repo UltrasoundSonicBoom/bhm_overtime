@@ -4,11 +4,20 @@
 // 2. Anthropic Claude Vision (admin dev key, 일일 3회 한도)
 // 3. 둘 다 실패 → null 반환 → 호출자가 수동 입력 폴백 모달
 
-import { probeBackend, isDailyVisionLimitReached, incrementDailyVisionCount } from '../parse-cache.js';
+import { isDailyVisionLimitReached, incrementDailyVisionCount } from '../parse-cache.js';
 import { callVisionLLM } from './vision-client.js';
 
-const LMSTUDIO_BASE = 'http://localhost:1234/v1';
-const LMSTUDIO_MODEL = 'qwen3-vl-8b';
+const LMSTUDIO_BASE =
+  (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_LMSTUDIO_BASE) ||
+  localStorage.getItem('snuhmate_lmstudio_base') ||
+  'http://100.108.115.18:1234/v1';
+const LMSTUDIO_MODEL =
+  (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_LMSTUDIO_MODEL) ||
+  'qwen/qwen3-vl-4b';
+const LMSTUDIO_TOKEN =
+  (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_LMSTUDIO_TOKEN) ||
+  localStorage.getItem('snuhmate_lmstudio_token') ||
+  '';
 
 const ANTHROPIC_BASE = 'https://api.anthropic.com/v1';
 const ANTHROPIC_MODEL = 'claude-sonnet-4-5';
@@ -29,22 +38,26 @@ const ANTHROPIC_MODEL = 'claude-sonnet-4-5';
  * }>}
  */
 export async function routeVision({ imageBase64, mimeType = 'image/png', hints = {}, opts = {} }) {
-  // 1. 로컬 LM Studio 시도 (백엔드가 있으면 LM Studio도 있을 가능성 큼)
-  const backend = await probeBackend();
+  // 1. 로컬/Tailscale LM Studio 직접 접근 시도
   let lmStudioReachable = false;
-  if (backend) {
-    try {
-      const ctl = new AbortController();
-      const tid = setTimeout(() => ctl.abort(), 1500);
-      const resp = await fetch(`${LMSTUDIO_BASE}/models`, { signal: ctl.signal });
-      clearTimeout(tid);
-      if (resp.ok) {
-        const data = await resp.json();
-        const ids = (data?.data || []).map(m => m.id);
-        lmStudioReachable = ids.some(id => id.toLowerCase().includes('vl') || id === LMSTUDIO_MODEL);
-      }
-    } catch (_e) { /* LM Studio not reachable */ }
-  }
+  try {
+    const ctl = new AbortController();
+    const tid = setTimeout(() => ctl.abort(), 2000);
+    const resp = await fetch(`${LMSTUDIO_BASE}/models`, {
+      signal: ctl.signal,
+      ...(LMSTUDIO_TOKEN ? { headers: { Authorization: `Bearer ${LMSTUDIO_TOKEN}` } } : {}),
+    });
+    clearTimeout(tid);
+    if (resp.ok) {
+      const data = await resp.json();
+      const ids = (data?.data || []).map(m => m.id);
+      lmStudioReachable = ids.some(id =>
+        id === LMSTUDIO_MODEL ||
+        id.toLowerCase().includes('vl') ||
+        id.toLowerCase().replace(/^[^/]+\//, '') === LMSTUDIO_MODEL.replace(/^[^/]+\//, '')
+      );
+    }
+  } catch (_e) { /* Tailscale LM Studio not reachable — Anthropic 폴백 */ }
 
   if (lmStudioReachable) {
     try {
@@ -52,6 +65,7 @@ export async function routeVision({ imageBase64, mimeType = 'image/png', hints =
         imageBase64, mimeType,
         baseURL: LMSTUDIO_BASE,
         model: LMSTUDIO_MODEL,
+        apiKey: LMSTUDIO_TOKEN,
         hints,
         timeout: 60000,
       });
