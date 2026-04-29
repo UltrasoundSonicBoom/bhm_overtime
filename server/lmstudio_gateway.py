@@ -16,6 +16,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, ValidationError
 
 from lmstudio_schemas import (
+    EmployeeSchedule,
+    ExtractedSchedule,
     ExtractedTable,
     KNOWN_SCHEDULE_CODES,
     NormalizedPayslip,
@@ -24,6 +26,8 @@ from lmstudio_schemas import (
     ParseRequest,
     ReviewDecisionRequest,
     ReviewRecord,
+    ScheduleEntry,
+    SchedulePeriod,
     SchedulePipelineResult,
     ScheduleReviewRecord,
     ValidationIssue,
@@ -33,7 +37,7 @@ from lmstudio_schemas import (
 
 LMSTUDIO_BASE_URL = os.getenv("LMSTUDIO_BASE_URL", "http://127.0.0.1:1234/v1").rstrip("/")
 QWEN_VL_MODEL = os.getenv("SNUHMATE_QWEN_VL_MODEL", "qwen/qwen3-vl-8b")
-GEMMA_MODEL = os.getenv("SNUHMATE_GEMMA_MODEL", "google/gemma-4-26b-a4b")
+GEMMA_MODEL = os.getenv("SNUHMATE_GEMMA_MODEL", "google/gemma-4-e4b")
 REVIEW_STORE = Path(os.getenv("SNUHMATE_LMSTUDIO_REVIEW_STORE", "data/lmstudio-review-queue.json"))
 SCHEDULE_REVIEW_STORE = Path(os.getenv("SNUHMATE_SCHEDULE_REVIEW_STORE", "data/schedule-review-queue.json"))
 REQUEST_TIMEOUT_SECONDS = int(os.getenv("LMSTUDIO_TIMEOUT_SECONDS", "180"))
@@ -102,18 +106,28 @@ def _extract_json_object(text: str) -> dict[str, Any]:
         raise
 
 
-def _chat_completion(model: str, messages: list[dict[str, Any]], temperature: float = 0.1) -> str:
+def _chat_completion(
+    model: str,
+    messages: list[dict[str, Any]],
+    temperature: float = 0.1,
+    max_tokens: int = 2200,
+) -> str:
     response = _lmstudio_request(
         "/chat/completions",
         {
             "model": model,
             "messages": messages,
             "temperature": temperature,
-            "max_tokens": 2200,
+            "max_tokens": max_tokens,
             "stream": False,
         },
     )
-    return response.get("choices", [{}])[0].get("message", {}).get("content", "")
+    msg = response.get("choices", [{}])[0].get("message", {})
+    content = msg.get("content", "") or ""
+    if content.strip():
+        return content
+    # 추론 모델 (gemma-4-e4b 등): content 가 비면 reasoning_content 반환
+    return msg.get("reasoning_content", "") or ""
 
 
 def _is_markdown_heading(line: str) -> str | None:
@@ -487,30 +501,31 @@ def decide_review(review_id: str, decision: ReviewDecisionRequest) -> dict[str, 
 
 # ── Schedule pipeline ─────────────────────────────────────────────────────────
 
-def _run_qwen_schedule_extract(request: ParseRequest) -> NormalizedSchedule:
-    prompt = """이 근무표 이미지에서 모든 직원의 날짜별 근무 코드를 추출하세요.
-반드시 JSON만 반환하세요 (설명 없이):
+def _run_qwen_schedule_table_extract(request: ParseRequest) -> ExtractedSchedule:
+    """Stage 1: 이미지 → raw 표 셀 (직원/헤더/셀 텍스트). 정규화는 Stage 2 에서."""
+    prompt = """이 근무표 이미지의 표 구조를 그대로 raw JSON으로 추출하세요.
+설명 없이 JSON만 반환:
 {
-  "period": {"year": 2026, "month": 4, "label": "2026년 4월"},
-  "employees": [
+  "document_type": "schedule",
+  "period_label": "2026년 4월" 또는 null,
+  "header_dates": ["1", "2", "3", ...],
+  "rows": [
     {
-      "name": "이름",
-      "employee_id": null,
-      "role": "직책 또는 null",
-      "entries": [
-        {"date": "YYYY-MM-DD", "code": "D", "confidence": 0.95}
-      ]
+      "employee_label": "직원 이름 또는 라벨",
+      "role_label": "직책 또는 null",
+      "cells": [
+        {"row_idx": 0, "col_idx": 0, "text": "셀 텍스트 그대로", "confidence": 0.95}
+      ],
+      "confidence": 0.9
     }
   ],
-  "codes_found": ["D", "E", "N", "OFF", "AL"],
   "warnings": [],
-  "notes": []
+  "raw_text": "표 짧은 요약"
 }
 규칙:
-- 코드는 대문자로 정규화 (d→D, e→E, n→N, off→OFF, al→AL, rd→RD)
-- 날짜가 불분명하면 confidence 0.7 미만으로 설정
-- 이름 칸이 비어있으면 name을 null로
-- 표에 없는 날짜는 entries에 포함하지 말 것"""
+- 셀 텍스트는 보이는 그대로 (정규화 금지)
+- 빈 셀은 text=""
+- 흐림/잘림은 confidence 0.7 미만"""
     if request.prompt_context:
         prompt += f"\n운영자 추가 힌트: {request.prompt_context}\n"
 
@@ -526,11 +541,140 @@ def _run_qwen_schedule_extract(request: ParseRequest) -> NormalizedSchedule:
             }
         ],
         temperature=0.05,
+        max_tokens=8000,
     )
     try:
-        return NormalizedSchedule.model_validate(_extract_json_object(content))
+        return ExtractedSchedule.model_validate(_extract_json_object(content))
     except (json.JSONDecodeError, ValidationError) as exc:
-        raise HTTPException(status_code=502, detail=f"Qwen schedule extraction returned unusable JSON: {exc}") from exc
+        raise HTTPException(status_code=502, detail=f"Qwen schedule table extraction returned unusable JSON: {exc}") from exc
+
+
+def _compact_extracted_for_gemma(extracted: ExtractedSchedule) -> str:
+    """ExtractedSchedule → CSV-like 압축 (gemma-4-e4b 4k context 제약)."""
+    lines = [
+        f"period={extracted.period_label or '?'}",
+        f"header={','.join(extracted.header_dates)}",
+    ]
+    for ri, row in enumerate(extracted.rows):
+        cell_texts = ["" for _ in range(len(extracted.header_dates))]
+        for c in row.cells:
+            if 0 <= c.col_idx < len(cell_texts):
+                cell_texts[c.col_idx] = c.text or ""
+        lines.append(f"r{ri}|{row.employee_label}|{','.join(cell_texts)}")
+    return "\n".join(lines)
+
+
+_HEADER_LIKE_LABELS = {"HPPD 총책", "HPPD 총족", "HPPD", "간호사", "내", "이름", ""}
+
+
+def _run_gemma_schedule_normalize(extracted: ExtractedSchedule) -> NormalizedSchedule:
+    """Stage 2: gemma-4 추론 모델로 헤더/날짜 매핑 + 코드 정규화."""
+    compact = _compact_extracted_for_gemma(extracted)
+    prompt = f"""근무표 정규화. CSV-like 입출력 (4k 컨텍스트 제약).
+
+출력 (이 형식만, 다른 설명 금지):
+PERIOD: YYYY-MM
+DATES: YYYY-MM-DD,YYYY-MM-DD,...   (각 col_idx 의 날짜)
+ROWS:
+r0|<정규화된이름 또는 SKIP>|코드1,코드2,...
+r1|...
+
+코드 정규화: 데이/d→D, 이브닝/e→E, 나이트/n→N, 오프/o/off→OFF, 연차/al→AL, 리커버리/rd→RD, 빈셀→"-", 알수없음→원문 유지
+헤더성 라벨 (HPPD/간호사/이름) 은 SKIP
+
+입력:
+{compact}
+"""
+    content = _chat_completion(
+        GEMMA_MODEL,
+        [{"role": "user", "content": prompt}],
+        temperature=0.05,
+        max_tokens=2000,
+    )
+    return _parse_gemma_compact_output(content, extracted)
+
+
+def _parse_gemma_compact_output(text: str, extracted: ExtractedSchedule) -> NormalizedSchedule:
+    """gemma CSV-like 응답 → NormalizedSchedule. reasoning_content 도 처리."""
+    text = (text or "").strip()
+    if text.startswith("```"):
+        text = text.strip("`")
+        nl = text.find("\n")
+        if nl > 0 and text[:nl].strip().lower() in {"text", "csv", "json"}:
+            text = text[nl + 1 :]
+
+    period_year: int | None = None
+    period_month: int | None = None
+    period_label: str | None = None
+    dates: list[str] = []
+    rows_data: dict[str, tuple[str, list[str]]] = {}
+
+    in_rows = False
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        upper = line.upper()
+        if upper.startswith("PERIOD:"):
+            v = line.split(":", 1)[1].strip()
+            m = re.match(r"(\d{4})-(\d{1,2})", v)
+            if m:
+                period_year = int(m.group(1))
+                period_month = int(m.group(2))
+                period_label = v
+            in_rows = False
+        elif upper.startswith("DATES:"):
+            v = line.split(":", 1)[1].strip()
+            dates = [d.strip() for d in v.split(",") if d.strip()]
+            in_rows = False
+        elif upper.startswith("ROWS"):
+            in_rows = True
+        elif in_rows and "|" in line:
+            parts = line.split("|", 2)
+            if len(parts) == 3:
+                row_id, name, codes_csv = parts
+                rows_data[row_id.strip()] = (name.strip(), [c.strip() for c in codes_csv.split(",")])
+
+    employees: list[EmployeeSchedule] = []
+    codes_found: set[str] = set()
+    warnings: list[str] = []
+
+    for ri, row in enumerate(extracted.rows):
+        row_id = f"r{ri}"
+        gemma_data = rows_data.get(row_id)
+        name = (gemma_data[0] if gemma_data else row.employee_label) or ""
+        if name.upper() == "SKIP" or name in _HEADER_LIKE_LABELS:
+            continue
+        codes = gemma_data[1] if gemma_data else []
+        entries: list[ScheduleEntry] = []
+        for ci, code in enumerate(codes):
+            if not code or code == "-":
+                continue
+            if ci >= len(dates):
+                warnings.append(f"{name} col {ci} has no mapped date")
+                continue
+            try:
+                entry = ScheduleEntry(date=dates[ci], code=code, confidence=0.85)
+                entries.append(entry)
+                codes_found.add(entry.code)
+            except ValidationError as exc:
+                warnings.append(f"{name} {dates[ci]} {code}: {exc.errors()[0]['msg']}")
+        if entries:
+            employees.append(EmployeeSchedule(name=name, entries=entries))
+
+    if not employees:
+        raise HTTPException(
+            status_code=502,
+            detail="Gemma schedule normalization yielded no employees (compact output unparseable)",
+        )
+
+    return NormalizedSchedule(
+        period=SchedulePeriod(year=period_year, month=period_month, label=period_label),
+        employees=employees,
+        codes_found=sorted(codes_found),
+        warnings=warnings,
+        notes=[],
+    )
 
 
 def validate_schedule(normalized: NormalizedSchedule) -> ValidationResult:
@@ -602,10 +746,13 @@ def _append_schedule_review(result: SchedulePipelineResult) -> ScheduleReviewRec
 
 @app.post("/api/lmstudio/schedule/parse")
 def parse_schedule(request: ParseRequest) -> dict[str, Any]:
-    normalized = _run_qwen_schedule_extract(request)
+    extracted = _run_qwen_schedule_table_extract(request)
+    normalized = _run_gemma_schedule_normalize(extracted)
     validation = validate_schedule(normalized)
     result = SchedulePipelineResult(
         qwen_model=QWEN_VL_MODEL,
+        gemma_model=GEMMA_MODEL,
+        extracted=extracted,
         normalized=normalized,
         validation=validation,
         review_status="pending" if validation.manual_review_required else "approved",

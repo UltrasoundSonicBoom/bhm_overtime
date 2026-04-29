@@ -188,6 +188,33 @@ class EmployeeSchedule(BaseModel):
     entries: list[ScheduleEntry] = Field(default_factory=list)
 
 
+# ── Stage 1: qwen3-vl raw cell extraction ────────────────────────────────────
+
+class ExtractedScheduleCell(BaseModel):
+    row_idx: int = Field(ge=0)
+    col_idx: int = Field(ge=0)
+    text: str = ""
+    confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+
+
+class ExtractedScheduleRow(BaseModel):
+    employee_label: str = ""
+    role_label: str | None = None
+    cells: list[ExtractedScheduleCell] = Field(default_factory=list)
+    confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+
+
+class ExtractedSchedule(BaseModel):
+    document_type: str = "schedule"
+    period_label: str | None = None
+    header_dates: list[str] = Field(default_factory=list)
+    rows: list[ExtractedScheduleRow] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+    raw_text: str = ""
+
+
+# ── Stage 2: gemma normalization ─────────────────────────────────────────────
+
 class NormalizedSchedule(BaseModel):
     period: SchedulePeriod = Field(default_factory=SchedulePeriod)
     employees: list[EmployeeSchedule] = Field(default_factory=list)
@@ -206,6 +233,8 @@ class SchedulePipelineResult(BaseModel):
     id: str = Field(default_factory=lambda: f"sch-{uuid4().hex[:12]}")
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     qwen_model: str
+    gemma_model: str
+    extracted: ExtractedSchedule
     normalized: NormalizedSchedule
     validation: ValidationResult
     review_status: ReviewStatus = "pending"
