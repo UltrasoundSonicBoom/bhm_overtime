@@ -1,0 +1,511 @@
+from __future__ import annotations
+
+import json
+import os
+from decimal import Decimal
+from pathlib import Path
+from typing import Any
+from urllib.error import URLError
+from urllib.request import Request, urlopen
+
+import uvicorn
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import ValidationError
+
+from lmstudio_schemas import (
+    ExtractedTable,
+    KNOWN_SCHEDULE_CODES,
+    NormalizedPayslip,
+    NormalizedSchedule,
+    ParsePipelineResult,
+    ParseRequest,
+    ReviewDecisionRequest,
+    ReviewRecord,
+    SchedulePipelineResult,
+    ScheduleReviewRecord,
+    ValidationIssue,
+    ValidationResult,
+)
+
+
+LMSTUDIO_BASE_URL = os.getenv("LMSTUDIO_BASE_URL", "http://127.0.0.1:1234/v1").rstrip("/")
+QWEN_VL_MODEL = os.getenv("SNUHMATE_QWEN_VL_MODEL", "qwen/qwen3-vl-8b")
+GEMMA_MODEL = os.getenv("SNUHMATE_GEMMA_MODEL", "google/gemma-4-26b-a4b")
+REVIEW_STORE = Path(os.getenv("SNUHMATE_LMSTUDIO_REVIEW_STORE", "data/lmstudio-review-queue.json"))
+SCHEDULE_REVIEW_STORE = Path(os.getenv("SNUHMATE_SCHEDULE_REVIEW_STORE", "data/schedule-review-queue.json"))
+REQUEST_TIMEOUT_SECONDS = int(os.getenv("LMSTUDIO_TIMEOUT_SECONDS", "180"))
+
+
+app = FastAPI(title="SNUH Mate LM Studio Gateway", version="0.1.0")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
+)
+
+
+def _json_default(value: Any) -> Any:
+    if isinstance(value, Decimal):
+        return int(value) if value == value.to_integral() else float(value)
+    raise TypeError(f"{type(value).__name__} is not JSON serializable")
+
+
+def _lmstudio_request(path: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
+    url = f"{LMSTUDIO_BASE_URL}{path}"
+    data = None
+    method = "GET"
+    headers = {"Content-Type": "application/json"}
+    if payload is not None:
+        data = json.dumps(payload, default=_json_default).encode("utf-8")
+        method = "POST"
+    request = Request(url, data=data, headers=headers, method=method)
+    try:
+        with urlopen(request, timeout=REQUEST_TIMEOUT_SECONDS) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except URLError as exc:
+        raise HTTPException(status_code=503, detail=f"LM Studio is not reachable at {url}: {exc}") from exc
+    except TimeoutError as exc:
+        raise HTTPException(status_code=504, detail=f"LM Studio request timed out at {url}") from exc
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=502, detail=f"LM Studio returned invalid JSON from {url}") from exc
+
+
+def _extract_json_object(text: str) -> dict[str, Any]:
+    cleaned = text.strip()
+    if cleaned.startswith("```"):
+        cleaned = cleaned.strip("`")
+        if cleaned.startswith("json"):
+            cleaned = cleaned[4:].strip()
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        start = cleaned.find("{")
+        end = cleaned.rfind("}")
+        if start >= 0 and end > start:
+            return json.loads(cleaned[start : end + 1])
+        raise
+
+
+def _chat_completion(model: str, messages: list[dict[str, Any]], temperature: float = 0.1) -> str:
+    response = _lmstudio_request(
+        "/chat/completions",
+        {
+            "model": model,
+            "messages": messages,
+            "temperature": temperature,
+            "max_tokens": 2200,
+            "stream": False,
+        },
+    )
+    return response.get("choices", [{}])[0].get("message", {}).get("content", "")
+
+
+def _run_qwen_table_extract(request: ParseRequest) -> ExtractedTable:
+    prompt = f"""
+You are extracting a Korean hospital payslip image into machine-readable table rows.
+Return JSON only with this shape:
+{{
+  "document_type": "{request.document_type}",
+  "rows": [
+    {{"label": "항목명", "value": "원문 값", "unit": "원|시간|일|null", "confidence": 0.0}}
+  ],
+  "warnings": ["uncertain OCR or layout issue"],
+  "raw_text": "short OCR-like text summary"
+}}
+Rules:
+- Preserve Korean labels exactly when visible.
+- Do not invent missing money values.
+- Set confidence below 0.7 for cropped, blurry, or ambiguous cells.
+"""
+    if request.prompt_context:
+        prompt += f"\nAdditional context from operator: {request.prompt_context}\n"
+
+    content = _chat_completion(
+        QWEN_VL_MODEL,
+        [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
+                    {"type": "image_url", "image_url": {"url": request.as_data_url()}},
+                ],
+            }
+        ],
+    )
+    try:
+        return ExtractedTable.model_validate(_extract_json_object(content))
+    except (json.JSONDecodeError, ValidationError) as exc:
+        raise HTTPException(status_code=502, detail=f"Qwen table extraction returned unusable JSON: {exc}") from exc
+
+
+def _run_gemma_normalize(extracted: ExtractedTable) -> NormalizedPayslip:
+    prompt = f"""
+Normalize these extracted Korean payslip rows into SNUH Mate DB-ready JSON.
+Return JSON only with this exact shape:
+{{
+  "employee": {{"name": null, "employee_id": null, "department": null, "role": null}},
+  "period": {{"year": null, "month": null, "label": null}},
+  "earnings": [{{"code": "base_pay", "label": "기본급", "amount": 0, "confidence": 0.0, "source_label": "기본급"}}],
+  "deductions": [{{"code": "income_tax", "label": "소득세", "amount": 0, "confidence": 0.0, "source_label": "소득세"}}],
+  "totals": {{"gross_pay": null, "total_deductions": null, "net_pay": null}},
+  "notes": [],
+  "source_document_type": "{extracted.document_type}"
+}}
+Rules:
+- Use numbers only for amounts, without comma separators.
+- Classify 지급/수당 as earnings and 공제/세금/보험 as deductions.
+- If a total row is visible, put it in totals instead of duplicating it as a line item.
+- If uncertain, keep the item but lower confidence and add a note.
+
+Extracted rows:
+{extracted.model_dump_json(indent=2)}
+"""
+    content = _chat_completion(GEMMA_MODEL, [{"role": "user", "content": prompt}])
+    try:
+        return NormalizedPayslip.model_validate(_extract_json_object(content))
+    except (json.JSONDecodeError, ValidationError) as exc:
+        raise HTTPException(status_code=502, detail=f"Gemma normalization returned unusable JSON: {exc}") from exc
+
+
+def validate_payslip(normalized: NormalizedPayslip) -> ValidationResult:
+    issues: list[ValidationIssue] = []
+    earning_sum = sum((item.amount for item in normalized.earnings), Decimal("0"))
+    deduction_sum = sum((item.amount for item in normalized.deductions), Decimal("0"))
+
+    if normalized.totals.gross_pay is not None and earning_sum and normalized.totals.gross_pay != earning_sum:
+        issues.append(
+            ValidationIssue(
+                severity="warning",
+                code="gross_mismatch",
+                message="지급 합계와 항목 합산이 일치하지 않습니다.",
+                path="totals.gross_pay",
+                expected=str(earning_sum),
+                actual=str(normalized.totals.gross_pay),
+            )
+        )
+    if normalized.totals.total_deductions is not None and deduction_sum and normalized.totals.total_deductions != deduction_sum:
+        issues.append(
+            ValidationIssue(
+                severity="warning",
+                code="deduction_mismatch",
+                message="공제 합계와 항목 합산이 일치하지 않습니다.",
+                path="totals.total_deductions",
+                expected=str(deduction_sum),
+                actual=str(normalized.totals.total_deductions),
+            )
+        )
+    if (
+        normalized.totals.gross_pay is not None
+        and normalized.totals.total_deductions is not None
+        and normalized.totals.net_pay is not None
+    ):
+        expected_net = normalized.totals.gross_pay - normalized.totals.total_deductions
+        if expected_net != normalized.totals.net_pay:
+            issues.append(
+                ValidationIssue(
+                    severity="error",
+                    code="net_pay_mismatch",
+                    message="실지급액이 지급총액-공제총액과 일치하지 않습니다.",
+                    path="totals.net_pay",
+                    expected=str(expected_net),
+                    actual=str(normalized.totals.net_pay),
+                )
+            )
+
+    low_confidence = [
+        item for item in [*normalized.earnings, *normalized.deductions] if item.confidence < 0.72
+    ]
+    if low_confidence:
+        issues.append(
+            ValidationIssue(
+                severity="warning",
+                code="low_confidence_items",
+                message=f"신뢰도 0.72 미만 항목이 {len(low_confidence)}개 있습니다.",
+                path="earnings,deductions",
+            )
+        )
+
+    if normalized.period.year is None or normalized.period.month is None:
+        issues.append(
+            ValidationIssue(
+                severity="warning",
+                code="missing_period",
+                message="급여 귀속 연월을 확정하지 못했습니다.",
+                path="period",
+            )
+        )
+
+    confidence_values = [item.confidence for item in [*normalized.earnings, *normalized.deductions]]
+    confidence = sum(confidence_values) / len(confidence_values) if confidence_values else 0.0
+    manual_review_required = any(issue.severity in {"warning", "error"} for issue in issues) or confidence < 0.8
+    return ValidationResult(
+        ok=not any(issue.severity == "error" for issue in issues),
+        manual_review_required=manual_review_required,
+        confidence=max(0.0, min(1.0, confidence)),
+        issues=issues,
+    )
+
+
+def _read_reviews() -> list[ReviewRecord]:
+    if not REVIEW_STORE.exists():
+        return []
+    raw = json.loads(REVIEW_STORE.read_text(encoding="utf-8"))
+    return [ReviewRecord.model_validate(item) for item in raw]
+
+
+def _write_reviews(records: list[ReviewRecord]) -> None:
+    REVIEW_STORE.parent.mkdir(parents=True, exist_ok=True)
+    REVIEW_STORE.write_text(
+        json.dumps([record.model_dump(mode="json") for record in records], ensure_ascii=False, indent=2, default=_json_default),
+        encoding="utf-8",
+    )
+
+
+def _append_review(result: ParsePipelineResult) -> ReviewRecord:
+    records = _read_reviews()
+    record = ReviewRecord.model_validate(result.model_dump())
+    records.insert(0, record)
+    _write_reviews(records[:200])
+    return record
+
+
+@app.get("/api/lmstudio/health")
+def health() -> dict[str, Any]:
+    models_payload = _lmstudio_request("/models")
+    model_ids = [item.get("id") for item in models_payload.get("data", [])]
+    return {
+        "ok": QWEN_VL_MODEL in model_ids and GEMMA_MODEL in model_ids,
+        "base_url": LMSTUDIO_BASE_URL,
+        "required_models": {
+            "qwen_vl": QWEN_VL_MODEL,
+            "gemma": GEMMA_MODEL,
+        },
+        "available_models": model_ids,
+    }
+
+
+@app.post("/api/lmstudio/validate")
+def validate_only(payload: dict[str, Any]) -> dict[str, Any]:
+    try:
+        normalized = NormalizedPayslip.model_validate(payload)
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=exc.errors()) from exc
+    return {
+        "normalized": normalized.model_dump(mode="json"),
+        "validation": validate_payslip(normalized).model_dump(mode="json"),
+    }
+
+
+@app.post("/api/lmstudio/payslip/parse")
+def parse_payslip(request: ParseRequest) -> dict[str, Any]:
+    extracted = _run_qwen_table_extract(request)
+    normalized = _run_gemma_normalize(extracted)
+    validation = validate_payslip(normalized)
+    result = ParsePipelineResult(
+        qwen_model=QWEN_VL_MODEL,
+        gemma_model=GEMMA_MODEL,
+        extracted=extracted,
+        normalized=normalized,
+        validation=validation,
+        review_status="pending" if validation.manual_review_required else "approved",
+    )
+    if request.create_review or validation.manual_review_required:
+        record = _append_review(result)
+        return record.model_dump(mode="json")
+    return result.model_dump(mode="json")
+
+
+@app.get("/api/admin/lmstudio/reviews")
+def list_reviews(status: str | None = None) -> dict[str, Any]:
+    records = _read_reviews()
+    if status:
+        records = [record for record in records if record.review_status == status]
+    return {"items": [record.model_dump(mode="json") for record in records]}
+
+
+@app.post("/api/admin/lmstudio/reviews/{review_id}/decision")
+def decide_review(review_id: str, decision: ReviewDecisionRequest) -> dict[str, Any]:
+    records = _read_reviews()
+    for index, record in enumerate(records):
+        if record.id != review_id:
+            continue
+        normalized = record.normalized
+        if decision.normalized_override:
+            normalized = NormalizedPayslip.model_validate(decision.normalized_override)
+            record.normalized = normalized
+            record.validation = validate_payslip(normalized)
+        record.review_status = decision.status
+        record.reviewer = decision.reviewer
+        record.reviewer_note = decision.note
+        from datetime import datetime, timezone
+
+        record.reviewed_at = datetime.now(timezone.utc).isoformat()
+        records[index] = record
+        _write_reviews(records)
+        return record.model_dump(mode="json")
+    raise HTTPException(status_code=404, detail="review not found")
+
+
+# ── Schedule pipeline ─────────────────────────────────────────────────────────
+
+def _run_qwen_schedule_extract(request: ParseRequest) -> NormalizedSchedule:
+    prompt = """이 근무표 이미지에서 모든 직원의 날짜별 근무 코드를 추출하세요.
+반드시 JSON만 반환하세요 (설명 없이):
+{
+  "period": {"year": 2026, "month": 4, "label": "2026년 4월"},
+  "employees": [
+    {
+      "name": "이름",
+      "employee_id": null,
+      "role": "직책 또는 null",
+      "entries": [
+        {"date": "YYYY-MM-DD", "code": "D", "confidence": 0.95}
+      ]
+    }
+  ],
+  "codes_found": ["D", "E", "N", "OFF", "AL"],
+  "warnings": [],
+  "notes": []
+}
+규칙:
+- 코드는 대문자로 정규화 (d→D, e→E, n→N, off→OFF, al→AL, rd→RD)
+- 날짜가 불분명하면 confidence 0.7 미만으로 설정
+- 이름 칸이 비어있으면 name을 null로
+- 표에 없는 날짜는 entries에 포함하지 말 것"""
+    if request.prompt_context:
+        prompt += f"\n운영자 추가 힌트: {request.prompt_context}\n"
+
+    content = _chat_completion(
+        QWEN_VL_MODEL,
+        [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
+                    {"type": "image_url", "image_url": {"url": request.as_data_url()}},
+                ],
+            }
+        ],
+        temperature=0.05,
+    )
+    try:
+        return NormalizedSchedule.model_validate(_extract_json_object(content))
+    except (json.JSONDecodeError, ValidationError) as exc:
+        raise HTTPException(status_code=502, detail=f"Qwen schedule extraction returned unusable JSON: {exc}") from exc
+
+
+def validate_schedule(normalized: NormalizedSchedule) -> ValidationResult:
+    issues: list[ValidationIssue] = []
+
+    for emp in normalized.employees:
+        for entry in emp.entries:
+            if entry.code not in KNOWN_SCHEDULE_CODES:
+                issues.append(ValidationIssue(
+                    severity="warning",
+                    code="unknown_code",
+                    message=f"알 수 없는 근무 코드: {entry.code!r} (직원: {emp.name})",
+                    path=f"employees[{emp.name}].entries",
+                    actual=entry.code,
+                ))
+
+    low_conf = [
+        e for emp in normalized.employees for e in emp.entries if e.confidence < 0.7
+    ]
+    if low_conf:
+        issues.append(ValidationIssue(
+            severity="warning",
+            code="low_confidence_cells",
+            message=f"신뢰도 0.7 미만 셀 {len(low_conf)}개",
+            path="employees[*].entries",
+        ))
+
+    if normalized.period.year is None or normalized.period.month is None:
+        issues.append(ValidationIssue(
+            severity="warning",
+            code="missing_period",
+            message="귀속 연월을 확정하지 못했습니다.",
+            path="period",
+        ))
+
+    all_conf = [e.confidence for emp in normalized.employees for e in emp.entries]
+    avg_conf = sum(all_conf) / len(all_conf) if all_conf else 0.0
+    manual = any(i.severity in {"warning", "error"} for i in issues) or avg_conf < 0.8
+    return ValidationResult(
+        ok=not any(i.severity == "error" for i in issues),
+        manual_review_required=manual,
+        confidence=max(0.0, min(1.0, avg_conf)),
+        issues=issues,
+    )
+
+
+def _read_schedule_reviews() -> list[ScheduleReviewRecord]:
+    if not SCHEDULE_REVIEW_STORE.exists():
+        return []
+    raw = json.loads(SCHEDULE_REVIEW_STORE.read_text(encoding="utf-8"))
+    return [ScheduleReviewRecord.model_validate(item) for item in raw]
+
+
+def _write_schedule_reviews(records: list[ScheduleReviewRecord]) -> None:
+    SCHEDULE_REVIEW_STORE.parent.mkdir(parents=True, exist_ok=True)
+    SCHEDULE_REVIEW_STORE.write_text(
+        json.dumps([r.model_dump(mode="json") for r in records], ensure_ascii=False, indent=2, default=_json_default),
+        encoding="utf-8",
+    )
+
+
+def _append_schedule_review(result: SchedulePipelineResult) -> ScheduleReviewRecord:
+    records = _read_schedule_reviews()
+    record = ScheduleReviewRecord.model_validate(result.model_dump())
+    records.insert(0, record)
+    _write_schedule_reviews(records[:200])
+    return record
+
+
+@app.post("/api/lmstudio/schedule/parse")
+def parse_schedule(request: ParseRequest) -> dict[str, Any]:
+    normalized = _run_qwen_schedule_extract(request)
+    validation = validate_schedule(normalized)
+    result = SchedulePipelineResult(
+        qwen_model=QWEN_VL_MODEL,
+        normalized=normalized,
+        validation=validation,
+        review_status="pending" if validation.manual_review_required else "approved",
+    )
+    if request.create_review or validation.manual_review_required:
+        record = _append_schedule_review(result)
+        return record.model_dump(mode="json")
+    return result.model_dump(mode="json")
+
+
+@app.get("/api/admin/lmstudio/schedule-reviews")
+def list_schedule_reviews(status: str | None = None) -> dict[str, Any]:
+    records = _read_schedule_reviews()
+    if status:
+        records = [r for r in records if r.review_status == status]
+    return {"items": [r.model_dump(mode="json") for r in records]}
+
+
+@app.post("/api/admin/lmstudio/schedule-reviews/{review_id}/decision")
+def decide_schedule_review(review_id: str, decision: ReviewDecisionRequest) -> dict[str, Any]:
+    records = _read_schedule_reviews()
+    for index, record in enumerate(records):
+        if record.id != review_id:
+            continue
+        if decision.normalized_override:
+            record.normalized = NormalizedSchedule.model_validate(decision.normalized_override)
+            record.validation = validate_schedule(record.normalized)
+        record.review_status = decision.status
+        record.reviewer = decision.reviewer
+        record.reviewer_note = decision.note
+        from datetime import datetime, timezone
+        record.reviewed_at = datetime.now(timezone.utc).isoformat()
+        records[index] = record
+        _write_schedule_reviews(records)
+        return record.model_dump(mode="json")
+    raise HTTPException(status_code=404, detail="schedule review not found")
+
+
+if __name__ == "__main__":
+    uvicorn.run(app, host=os.getenv("HOST", "127.0.0.1"), port=int(os.getenv("PORT", "3001")))
