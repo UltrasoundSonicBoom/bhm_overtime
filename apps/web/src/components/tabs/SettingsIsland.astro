@@ -177,7 +177,8 @@
         else logoutBtn?.classList.add('hidden');
       });
     } catch (e) {
-      console.warn('[Phase 8] auth UI init 실패 (무해, 게스트 모드 유지)', e?.message || e);
+      const message = e instanceof Error ? e.message : String(e);
+      console.warn('[Phase 8] auth UI init 실패 (무해, 게스트 모드 유지)', message);
     }
   });
 </script>

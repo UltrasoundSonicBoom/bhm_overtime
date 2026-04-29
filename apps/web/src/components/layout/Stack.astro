@@ -3,6 +3,7 @@
  * Stack — flex 기반 row/column 레이아웃 + gap.
  * gap 은 ds spacing scale (4px grid: 0..6, 8, 10, 12, 16, 20).
  */
+type StackTag = 'div' | 'nav' | 'section' | 'article' | 'ul' | 'ol';
 interface Props {
   direction?: 'row' | 'column';
   /** Spacing token (4px grid: 0..6, 8, 10, 12, 16, 20) */
@@ -10,9 +11,9 @@ interface Props {
   align?: 'start' | 'center' | 'end' | 'stretch';
   justify?: 'start' | 'center' | 'end' | 'between' | 'around';
   wrap?: boolean;
-  as?: string;
+  as?: StackTag;
 }
-const { direction = 'column', gap = 4, align, justify, wrap = false, as: Tag = 'div' } = Astro.props;
+const { direction = 'column', gap = 4, align, justify, wrap = false, as: Tag = 'div' } = Astro.props as Props;
 
 // Spacing scale (Slice 2 tailwind.config): 0,1,2,3,4,5,6,8,10,12,16,20.
 // Tailwind JIT 가 dynamic ${} 보간을 스캔하지 못하므로 explicit map 으로 매핑.
@@ -24,8 +25,21 @@ const gapMap: Record<number, string> = {
 const gapClass = gapMap[gap] ?? 'gap-4';
 
 const dirClass = direction === 'row' ? 'flex-row' : 'flex-col';
-const alignClass = align ? { start: 'items-start', center: 'items-center', end: 'items-end', stretch: 'items-stretch' }[align] : '';
-const justifyClass = justify ? { start: 'justify-start', center: 'justify-center', end: 'justify-end', between: 'justify-between', around: 'justify-around' }[justify] : '';
+const alignMap: Record<NonNullable<Props['align']>, string> = {
+  start: 'items-start',
+  center: 'items-center',
+  end: 'items-end',
+  stretch: 'items-stretch',
+};
+const justifyMap: Record<NonNullable<Props['justify']>, string> = {
+  start: 'justify-start',
+  center: 'justify-center',
+  end: 'justify-end',
+  between: 'justify-between',
+  around: 'justify-around',
+};
+const alignClass = align ? alignMap[align] : '';
+const justifyClass = justify ? justifyMap[justify] : '';
 const wrapClass = wrap ? 'flex-wrap' : '';
 const classList = ['flex', dirClass, gapClass, alignClass, justifyClass, wrapClass].filter(Boolean).join(' ');
 ---

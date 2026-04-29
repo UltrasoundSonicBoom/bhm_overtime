@@ -10,8 +10,14 @@ interface Props {
   as?: 'div' | 'section' | 'article';
   ariaLabel?: string;
 }
-const { elevated = false, padding = 'md', as: Tag = 'div', ariaLabel } = Astro.props;
-const padClass = { none: 'p-0', sm: 'p-3', md: 'p-6', lg: 'p-8' }[padding];
+const { elevated = false, padding = 'md', as: Tag = 'div', ariaLabel } = Astro.props as Props;
+const paddingMap: Record<NonNullable<Props['padding']>, string> = {
+  none: 'p-0',
+  sm: 'p-3',
+  md: 'p-6',
+  lg: 'p-8',
+};
+const padClass = paddingMap[padding];
 const shadowClass = elevated ? 'shadow-brand-md' : '';
 const classList = ['card', 'bg-ds-bg-surface', 'border', 'border-ds-border-default', 'rounded-brand-md', 'transition-colors', 'hover:border-ds-border-strong', padClass, shadowClass].filter(Boolean).join(' ');
 ---

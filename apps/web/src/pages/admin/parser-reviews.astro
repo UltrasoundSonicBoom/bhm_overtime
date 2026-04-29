@@ -45,7 +45,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       return null;
     }
 
-    function makeIcon(cls, emoji) {
+    function makeIcon(cls: string, emoji: string) {
       const span = document.createElement('span');
       span.className = `icon ${cls}`;
       span.textContent = emoji;
@@ -111,7 +111,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         list.textContent = '';
         const p = document.createElement('p');
         p.className = 'text-brand-text-muted';
-        p.textContent = `로드 실패: ${e?.message?.slice(0, 100)}`;
+        const message = e instanceof Error ? e.message : String(e);
+        p.textContent = `로드 실패: ${message.slice(0, 100)}`;
         list.appendChild(p);
       }
     }

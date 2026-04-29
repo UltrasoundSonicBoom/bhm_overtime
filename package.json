@@ -1,15 +1,16 @@
 {
   "name": "snuhmate",
   "version": "1.0.0",
-  "description": "SNUH Mate — 서울대병원 노조 직원용 급여/시간외/휴가/근무이력/규정 PWA",
+  "description": "SNUH Mate — 서울대병원 직원용 급여, 시간외, 휴가, 근무표, 규정, 팀 운영 도구",
   "main": "app.js",
   "private": true,
+  "packageManager": "pnpm@10.33.2",
   "directories": {
     "doc": "docs",
     "test": "tests"
   },
   "scripts": {
-    "test": "npm run test:unit && npm run test:integration && npm run test:smoke",
+    "test": "pnpm test:unit && pnpm test:integration && pnpm test:smoke",
     "test:unit": "vitest run tests/unit",
     "test:unit:watch": "vitest tests/unit",
     "test:integration": "vitest run tests/integration",
@@ -18,11 +19,15 @@
     "check:paytable": "node scripts/check-paytable.cjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "dev": "vite",
-    "preview": "vite preview",
-    "build": "vite build",
+    "dev": "pnpm --filter @snuhmate/web dev",
+    "build": "pnpm --filter @snuhmate/web build",
+    "preview": "pnpm --filter @snuhmate/web preview",
+    "check": "pnpm --filter @snuhmate/web check",
     "web:dev": "pnpm --filter @snuhmate/web dev",
     "web:build": "pnpm --filter @snuhmate/web build",
+    "web:check": "pnpm --filter @snuhmate/web check",
+    "backend:dev": "cd backend && poetry run uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload",
+    "backend:test": "cd backend && poetry run pytest",
     "turbo:build": "turbo run build"
   },
   "repository": {
