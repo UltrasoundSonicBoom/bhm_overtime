@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import os
+import re
+import time
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
@@ -11,7 +13,7 @@ from urllib.request import Request, urlopen
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import ValidationError
+from pydantic import BaseModel, Field, ValidationError
 
 from lmstudio_schemas import (
     ExtractedTable,
@@ -35,6 +37,18 @@ GEMMA_MODEL = os.getenv("SNUHMATE_GEMMA_MODEL", "google/gemma-4-26b-a4b")
 REVIEW_STORE = Path(os.getenv("SNUHMATE_LMSTUDIO_REVIEW_STORE", "data/lmstudio-review-queue.json"))
 SCHEDULE_REVIEW_STORE = Path(os.getenv("SNUHMATE_SCHEDULE_REVIEW_STORE", "data/schedule-review-queue.json"))
 REQUEST_TIMEOUT_SECONDS = int(os.getenv("LMSTUDIO_TIMEOUT_SECONDS", "180"))
+
+
+class MarkdownFormatRequest(BaseModel):
+    title: str = "PDF Markdown 변환"
+    source_text: str = Field(min_length=1)
+    source_file: str | None = None
+
+
+class MarkdownFormatResponse(BaseModel):
+    title: str
+    markdown: str
+    metrics: dict[str, Any]
 
 
 app = FastAPI(title="SNUH Mate LM Studio Gateway", version="0.1.0")
@@ -100,6 +114,112 @@ def _chat_completion(model: str, messages: list[dict[str, Any]], temperature: fl
         },
     )
     return response.get("choices", [{}])[0].get("message", {}).get("content", "")
+
+
+def _is_markdown_heading(line: str) -> str | None:
+    compact = re.sub(r"\s+", " ", line.strip())
+    if re.fullmatch(r"제\s*\d+\s*장\s+.+", compact):
+        return f"# {compact}"
+    if re.fullmatch(r"제\d+조\(.+\).*", compact):
+        return f"## {compact}"
+    if re.fullmatch(r"<\d{4}\.\d{2}>\s*.+", compact):
+        return f"### {compact}"
+    if re.fullmatch(r"<.+>", compact):
+        return f"## {compact}"
+    return None
+
+
+def _is_paragraph_breaker(line: str) -> bool:
+    compact = line.strip()
+    return bool(
+        _is_markdown_heading(compact)
+        or re.match(r"^\(?\d+\)|^①|^②|^③|^④|^⑤|^⑥|^⑦|^⑧|^⑨|^⑩", compact)
+        or re.match(r"^[-*•▶▣]\s*", compact)
+    )
+
+
+def _normalize_pdf_text_to_markdown(title: str, source_text: str, source_file: str | None = None) -> str:
+    pages = source_text.replace("\r\n", "\n").replace("\r", "\n").split("\f")
+    output: list[str] = [f"# {title.strip() or 'PDF Markdown 변환'}", ""]
+    if source_file:
+        output.extend([f"> 원본: `{source_file}`", ""])
+
+    def flush_paragraph(paragraph: list[str]) -> None:
+        if not paragraph:
+            return
+        text = " ".join(part.strip() for part in paragraph if part.strip())
+        text = re.sub(r"\s+", " ", text).strip()
+        if text:
+            output.append(text)
+            output.append("")
+        paragraph.clear()
+
+    for page_index, page in enumerate(pages, start=1):
+        paragraph: list[str] = []
+        page_had_content = False
+        for raw_line in page.splitlines():
+            line = raw_line.strip()
+            if not line:
+                flush_paragraph(paragraph)
+                continue
+
+            footer_match = re.fullmatch(r"-\s*(\d+)\s*-", line)
+            if footer_match:
+                flush_paragraph(paragraph)
+                output.append(f"<!-- PDF page {page_index}, source page {footer_match.group(1)} -->")
+                output.append("")
+                continue
+
+            heading = _is_markdown_heading(line)
+            if heading:
+                flush_paragraph(paragraph)
+                output.append(heading)
+                output.append("")
+                page_had_content = True
+                continue
+
+            if _is_paragraph_breaker(line):
+                flush_paragraph(paragraph)
+                if re.match(r"^[-*•▶▣]\s*", line):
+                    output.append(re.sub(r"^[-*•▶▣]\s*", "- ", line))
+                else:
+                    output.append(line)
+                output.append("")
+                page_had_content = True
+                continue
+
+            paragraph.append(line)
+            page_had_content = True
+        flush_paragraph(paragraph)
+        if page_had_content and page_index != len(pages):
+            output.append("---")
+            output.append("")
+
+    return "\n".join(output).strip() + "\n"
+
+
+def _markdown_quality_metrics(source_text: str, markdown: str, elapsed_seconds: float) -> dict[str, Any]:
+    source_compact = re.sub(r"\s+", "", source_text)
+    markdown_compact = re.sub(r"\s+", "", markdown)
+    source_articles = re.findall(r"제\d+조\(", source_text)
+    markdown_articles = re.findall(r"제\d+조\(", markdown)
+    source_agreements = re.findall(r"<\d{4}\.\d{2}>", source_text)
+    markdown_agreements = re.findall(r"<\d{4}\.\d{2}>", markdown)
+    source_pages = len([page for page in source_text.split("\f") if page.strip()])
+    retention_ratio = len(markdown_compact) / len(source_compact) if source_compact else 0.0
+    return {
+        "elapsed_seconds": round(elapsed_seconds, 3),
+        "source_pages": source_pages,
+        "source_chars": len(source_text),
+        "markdown_chars": len(markdown),
+        "nonspace_retention_ratio": round(retention_ratio, 3),
+        "source_article_count": len(source_articles),
+        "markdown_article_count": len(markdown_articles),
+        "article_count_match": len(source_articles) == len(markdown_articles),
+        "source_agreement_date_count": len(source_agreements),
+        "markdown_agreement_date_count": len(markdown_agreements),
+        "agreement_date_count_match": len(source_agreements) == len(markdown_agreements),
+    }
 
 
 def _run_qwen_table_extract(request: ParseRequest) -> ExtractedTable:
@@ -296,6 +416,23 @@ def validate_only(payload: dict[str, Any]) -> dict[str, Any]:
         "normalized": normalized.model_dump(mode="json"),
         "validation": validate_payslip(normalized).model_dump(mode="json"),
     }
+
+
+@app.post("/api/lmstudio/pdf/markdown")
+def format_pdf_markdown(request: MarkdownFormatRequest) -> dict[str, Any]:
+    started = time.perf_counter()
+    markdown = _normalize_pdf_text_to_markdown(
+        title=request.title,
+        source_text=request.source_text,
+        source_file=request.source_file,
+    )
+    elapsed = time.perf_counter() - started
+    response = MarkdownFormatResponse(
+        title=request.title,
+        markdown=markdown,
+        metrics=_markdown_quality_metrics(request.source_text, markdown, elapsed),
+    )
+    return response.model_dump(mode="json")
 
 
 @app.post("/api/lmstudio/payslip/parse")
