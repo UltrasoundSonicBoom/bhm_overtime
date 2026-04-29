@@ -43,30 +43,62 @@ export const RetirementEngine = (function () {
   const CUT2015 = new Date('2015-06-30');
 
   // ── localStorage 접근 ──────────────────────────────────────
-  function profileKey() {
-    return window.getUserStorageKey
-      ? window.getUserStorageKey('bhm_hr_profile')
-      : 'bhm_hr_profile';
+  function scopedKey(base) {
+    return window.getUserStorageKey ? window.getUserStorageKey(base) : base;
   }
   function loadProfile() {
-    try { return JSON.parse(localStorage.getItem(profileKey())) || {}; }
+    const keys = [
+      scopedKey('snuhmate_hr_profile'),
+      scopedKey('bhm_hr_profile'),
+      'snuhmate_hr_profile',
+      'bhm_hr_profile'
+    ];
+    try {
+      for (const key of [...new Set(keys)]) {
+        const raw = localStorage.getItem(key);
+        if (raw) return JSON.parse(raw) || {};
+      }
+      return {};
+    }
     catch { return {}; }
   }
+  function currentPayslipUid() {
+    try {
+      const settings = JSON.parse(localStorage.getItem('snuhmate_settings') || '{}');
+      return settings.googleSub || 'guest';
+    } catch {
+      return 'guest';
+    }
+  }
+  function parsePayslipKey(key) {
+    let m = key.match(/^payslip_(.+)_(\d{4})_(\d{2})(?:_(.+))?$/);
+    if (m) {
+      return { uid: m[1], year: +m[2], month: +m[3], type: m[4] || '급여', key };
+    }
+    m = key.match(/^payslip_(\d{4})_(\d{2})(?:_(.+))?$/);
+    if (m) {
+      return { uid: null, year: +m[1], month: +m[2], type: m[3] || '급여', key };
+    }
+    return null;
+  }
   function getLatestWage() {
+    const uid = currentPayslipUid();
     const entries = [];
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
       if (!k || !k.startsWith('payslip_')) continue;
-      const m = k.match(/payslip_(\d{4})_(\d{2})(?:_(.+))?$/);
-      if (m) entries.push({ year: +m[1], month: +m[2], type: m[3] || '급여', key: k });
+      const parsed = parsePayslipKey(k);
+      if (!parsed) continue;
+      if (parsed.uid && parsed.uid !== uid && parsed.uid !== 'guest') continue;
+      entries.push(parsed);
     }
     entries.sort((a, b) => b.year - a.year || b.month - a.month
-      || (a.type === '급여' ? -1 : 1));
+      || (a.type === '급여' ? -1 : b.type === '급여' ? 1 : 0));
     for (const e of entries) {
       try {
         const d = JSON.parse(localStorage.getItem(e.key));
         if (d?.summary?.grossPay > 0)
-          return { wage: d.summary.grossPay, source: `${e.year}년 ${e.month}월 명세서` };
+          return { wage: d.summary.grossPay, source: `${e.year}년 ${e.month}월 ${e.type} 명세서` };
       } catch {}
     }
     return null;

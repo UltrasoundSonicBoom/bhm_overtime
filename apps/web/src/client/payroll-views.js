@@ -102,6 +102,9 @@ import { PROFILE } from '@snuhmate/profile/profile';
     if (name === 'pay-payslip') renderPayPayslip();
     else if (name === 'pay-calc') { PAYROLL.init(); }
     else if (name === 'pay-qa') { PAYROLL.init(); }
+    else if (name === 'pay-retirement' && typeof window.initRetirementTab === 'function') {
+      window.initRetirementTab(true);
+    }
   };
 
   // ══════════════════════════════════════════════

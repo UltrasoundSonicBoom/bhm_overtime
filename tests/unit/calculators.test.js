@@ -183,3 +183,46 @@ describe('CALC.calcNightShiftBonus 시설직 분기 (Bug #6)', () => {
     expect(recovery).toBe(1);
   });
 });
+
+describe('RetirementEngine 급여명세서 자동 입력', () => {
+  it('uid가 포함된 최신 급여명세서 키를 퇴직금 자동 입력에 반영한다', async () => {
+    const originalWindow = globalThis.window;
+    const originalLocalStorage = globalThis.localStorage;
+    const store = new Map([
+      ['snuhmate_settings', JSON.stringify({ googleSub: 'guest' })],
+      ['snuhmate_hr_profile_guest', JSON.stringify({
+        hireDate: '2020-01-01',
+        birthDate: '1965-01-01',
+        name: '테스트'
+      })],
+      ['payslip_guest_2026_03', JSON.stringify({ summary: { grossPay: 4900000 } })],
+      ['payslip_guest_2026_04', JSON.stringify({ summary: { grossPay: 5200000 } })],
+      ['payslip_other_2026_05', JSON.stringify({ summary: { grossPay: 9900000 } })],
+    ]);
+    globalThis.localStorage = {
+      get length() { return store.size; },
+      key(index) { return Array.from(store.keys())[index] || null; },
+      getItem(key) { return store.has(key) ? store.get(key) : null; },
+      setItem(key, value) { store.set(key, String(value)); },
+      removeItem(key) { store.delete(key); },
+    };
+    globalThis.window = {
+      DATA,
+      getUserStorageKey: (base) => base + '_guest'
+    };
+
+    try {
+      const { RetirementEngine } = await import('../../packages/calculators/src/retirement-engine.js');
+      const inputs = RetirementEngine.autoLoad();
+
+      expect(inputs.wage).toBe(5200000);
+      expect(inputs.wageSource).toBe('2026년 4월 급여 명세서');
+      expect(inputs.hireDate).toBe('2020-01-01');
+      expect(inputs.birthDate).toBe('1965-01-01');
+      expect(inputs.isComplete).toBe(true);
+    } finally {
+      globalThis.window = originalWindow;
+      globalThis.localStorage = originalLocalStorage;
+    }
+  });
+});

@@ -1099,6 +1099,12 @@ export const SALARY_PARSER = (() => {
     return (type && type !== '급여') ? base + '_' + type : base;
   }
 
+  function emitPayslipChanged(detail) {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('payslipChanged', { detail }));
+    }
+  }
+
   function saveMonthlyData(year, month, data, type, overwrite = false) {
     const key = storageKey(year, month, type);
 
@@ -1113,6 +1119,7 @@ export const SALARY_PARSER = (() => {
     if (typeof window.recordLocalEdit === 'function') {
       try { window.recordLocalEdit(key); } catch (e) { /* noop */ }
     }
+    emitPayslipChanged({ key, year, month, type: type || '급여' });
 
     // 사번 자동 채움: 프로필에 사번이 비어 있고 payslip에서 추출된 사번이 있으면 저장
     var empNum = merged && merged.employeeInfo && merged.employeeInfo.employeeNumber;
@@ -1200,11 +1207,13 @@ export const SALARY_PARSER = (() => {
   function replaceMonthlyData(year, month, data, type) {
     const key = storageKey(year, month, type);
     localStorage.setItem(key, JSON.stringify({ ...data, savedAt: new Date().toISOString() }));
+    emitPayslipChanged({ key, year, month, type: type || '급여' });
   }
 
   function deleteMonthlyData(year, month, type) {
     const key = storageKey(year, month, type);
     localStorage.removeItem(key);
+    emitPayslipChanged({ key, year, month, type: type || '급여', deleted: true });
   }
 
   // ── 기간 문자열에서 연/월 파싱 ──

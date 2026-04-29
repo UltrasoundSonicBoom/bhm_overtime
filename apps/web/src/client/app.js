@@ -1372,7 +1372,85 @@ function calcScenarioEmbedded(silent) {
 
 // 퇴직금 탭 초기화 (자동 프로필 로드 + 지급률표 빌드)
 var _retInitDone = false;
-function initRetirementTab() {
+function retNormalizeDateInput(value) {
+  if (!value) return '';
+  return String(value).replace(/\./g, '-').replace(/(\d{4})-(\d{1,2})-(\d{1,2})/, function(_, y, m, d) {
+    return y + '-' + m.padStart(2, '0') + '-' + d.padStart(2, '0');
+  });
+}
+
+function retSetInputValue(id, value, force) {
+  var el = document.getElementById(id);
+  if (!el || value === undefined || value === null || value === '') return;
+  if (force || !el.value) el.value = value;
+}
+
+function retSyncScenarioInputs(force) {
+  var w = document.getElementById('retAvgWage')?.value;
+  var h = document.getElementById('retHireDate')?.value;
+  var b = document.getElementById('retBirthDate')?.value;
+  retSetInputValue('retScWage', w, force);
+  retSetInputValue('retScHireDate', h, force);
+  retSetInputValue('retScBirthDate', b, force);
+
+  var scH = document.getElementById('retScHireDate');
+  var scB = document.getElementById('retScBirthDate');
+  if (scH && scB && scH.value && scB.value) {
+    var hire = new Date(scH.value);
+    var birth = new Date(scB.value);
+    var peakEnd = retGetLegalRetirementDate(birth);
+    var peak = retAddYears(peakEnd, -1);
+    renderRetSimTimeline(hire, peak, peakEnd);
+  }
+}
+
+function refreshRetirementInputs(force) {
+  if (typeof PROFILE === 'undefined') return false;
+  var profile = PROFILE.load();
+  if (!profile) return false;
+
+  retSetInputValue('retHireDate', retNormalizeDateInput(profile.hireDate), force);
+  retSetInputValue('retBirthDate', retNormalizeDateInput(profile.birthDate), force);
+
+  if (typeof CALC === 'undefined') return false;
+  var wageResult = PROFILE.calcWage ? PROFILE.calcWage(profile) : null;
+  if (!wageResult) return false;
+  var monthlyWage = wageResult.monthlyWage;
+  var avg = null;
+  try { avg = CALC.calcAverageWage(monthlyWage, 3); } catch(e) {}
+  var avgWageToUse = avg ? avg.monthlyAvgWage : monthlyWage;
+  retSetInputValue('retAvgWage', avgWageToUse, force);
+
+  var banner = document.getElementById('retAutoLoadBanner');
+  var detail = document.getElementById('retAutoLoadDetail');
+  var srcLabel = document.getElementById('retWageSourceLabel');
+  if (banner && detail) {
+    banner.style.display = 'block';
+    var lines = ['통상임금: ' + monthlyWage.toLocaleString('ko-KR') + '원'];
+    if (avg && avg.totalOtPay > 0) {
+      lines.push('시간외 수당 (최근 3개월): +' + avg.totalOtPay.toLocaleString('ko-KR') + '원');
+      lines.push('월 평균임금 (↑OT 반영): ' + avgWageToUse.toLocaleString('ko-KR') + '원');
+    } else {
+      lines.push('월 평균임금: ' + avgWageToUse.toLocaleString('ko-KR') + '원');
+    }
+    if (profile.hireDate) lines.push('입사일: ' + profile.hireDate);
+    if (profile.birthDate) lines.push('생년월일: ' + profile.birthDate);
+    detail.textContent = lines.join(' | ');
+    if (srcLabel) srcLabel.textContent = avg && avg.totalOtPay > 0 ? '✓ 자동계산 (통상임금 + OT 반영)' : '✓ 자동계산 (통상임금 기준)';
+  }
+
+  retUpdateQuickDates();
+  retSyncScenarioInputs(force);
+  var activeRetTab = document.querySelector('#retTabs .ret-bookmark-tab.active');
+  if (force && activeRetTab && activeRetTab.dataset.tab === 'peak') {
+    var scW = document.getElementById('retScWage');
+    var scH = document.getElementById('retScHireDate');
+    if (scW && scH && scW.value && scH.value) calcScenarioEmbedded(true);
+  }
+  return true;
+}
+
+function initRetirementTab(forceReload) {
   // 지급률 테이블은 한 번만 빌드
   var tbody = document.getElementById('retRateTableBody');
   if (tbody && !tbody.hasChildNodes()) {
@@ -1441,47 +1519,9 @@ function initRetirementTab() {
   }
 
   // 프로필 자동 로드
-  if (_retInitDone) return;
+  if (_retInitDone && !forceReload) return;
   _retInitDone = true;
-  if (typeof PROFILE === 'undefined') return;
-  var profile = PROFILE.load();
-  if (!profile) return;
-  if (profile.hireDate) {
-    var hireDateInput = document.getElementById('retHireDate');
-    if (hireDateInput && !hireDateInput.value) {
-      var parsed = profile.hireDate.replace(/\./g, '-').replace(/(\d{4})-(\d{1,2})-(\d{1,2})/, function(_, y, m, d) {
-        return y + '-' + m.padStart(2, '0') + '-' + d.padStart(2, '0');
-      });
-      hireDateInput.value = parsed;
-    }
-  }
-  if (typeof CALC === 'undefined') return;
-  var wageResult = PROFILE.calcWage ? PROFILE.calcWage(profile) : null;
-  if (!wageResult) return;
-  var monthlyWage = wageResult.monthlyWage;
-  var avg = null;
-  try { avg = CALC.calcAverageWage(monthlyWage, 3); } catch(e) {}
-  var avgWageToUse = avg ? avg.monthlyAvgWage : monthlyWage;
-  var wageInput = document.getElementById('retAvgWage');
-  if (wageInput && !wageInput.value) wageInput.value = avgWageToUse;
-  var banner = document.getElementById('retAutoLoadBanner');
-  var detail = document.getElementById('retAutoLoadDetail');
-  var srcLabel = document.getElementById('retWageSourceLabel');
-  if (banner && detail) {
-    banner.style.display = 'block';
-    var lines = ['통상임금: ' + monthlyWage.toLocaleString('ko-KR') + '원'];
-    if (avg && avg.totalOtPay > 0) {
-      lines.push('시간외 수당 (최근 3개월): +' + avg.totalOtPay.toLocaleString('ko-KR') + '원');
-      lines.push('월 평균임금 (↑OT 반영): ' + avgWageToUse.toLocaleString('ko-KR') + '원');
-    } else {
-      lines.push('월 평균임금: ' + avgWageToUse.toLocaleString('ko-KR') + '원');
-    }
-    if (profile.hireDate) lines.push('입사일: ' + profile.hireDate);
-    detail.textContent = lines.join(' | ');
-    if (srcLabel) srcLabel.textContent = avg && avg.totalOtPay > 0 ? '✓ 자동계산 (통상임금 + OT 반영)' : '✓ 자동계산 (통상임금 기준)';
-  }
-  // 입사일 채워졌으니 빠른 날짜 버튼 업데이트
-  retUpdateQuickDates();
+  refreshRetirementInputs(!!forceReload);
 }
 
 // ═══════════ 📅 연차 계산 ═══════════
@@ -4019,6 +4059,7 @@ if (typeof window !== 'undefined') {
   window.closeOtBottomSheet = closeOtBottomSheet;
   window.deleteOtRecord = deleteOtRecord;
   window.initOvertimeTab = initOvertimeTab;
+  window.initRetirementTab = initRetirementTab;
   window.noticePage = noticePage;
   window.retSelectPeakOpt = retSelectPeakOpt;
   window.retSetRetireDate = retSetRetireDate;
