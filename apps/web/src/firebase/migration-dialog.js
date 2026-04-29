@@ -36,7 +36,7 @@ function _clearAllGuestData() {
 function _humanReason(err) {
   const code = err?.code || '';
   const msg = err?.message || '';
-  if (code === 'unavailable' || /network|fetch|offline/i.test(msg)) {
+  if (code === 'unavailable' || /\b(network error|offline|failed to fetch)\b/i.test(msg)) {
     return '인터넷 연결을 확인해주세요';
   }
   if (code === 'permission-denied') return '권한 거부 — 다시 로그인해주세요';
@@ -44,7 +44,7 @@ function _humanReason(err) {
   if (code === 'resource-exhausted') return '요청 한도 초과 — 잠시 후 재시도';
   if (code === 'deadline-exceeded') return '응답 시간 초과 — 다시 시도';
   if (code === 'failed-precondition') return '데이터 충돌 — 다시 시도';
-  return msg ? `오류: ${msg.slice(0, 60)}` : '일시적 오류 — 다시 시도해주세요';
+  return msg ? `오류: ${msg.replace(/\s+/g, ' ').slice(0, 60)}` : '일시적 오류 — 다시 시도해주세요';
 }
 
 // ── 카테고리 정의 ──────────────────────────────────────────────────────────
@@ -126,7 +126,7 @@ export async function shouldShowMigration(uid) {
 }
 
 // ── 업로드 로직 ───────────────────────────────────────────────────────────
-// returns { ok: string[], failed: string[] }
+// returns { ok: string[], failed: Array<{id: string, label: string, reason: string}> }
 export async function uploadCategories(uid, selectedIds) {
   const syncTasks = [];
 
@@ -398,8 +398,12 @@ export async function openMigrationDialog(uid) {
   overlay.appendChild(step2);
   document.body.appendChild(overlay);
 
+  // ── 닫기 핸들러 헬퍼 ─────────────────────────────────────────────────
   function snoozeAndClose() {
-    try { localStorage.setItem(SNOOZE_KEY, String(Date.now() + SNOOZE_DURATION_MS)); } catch (e) {}
+    try { localStorage.setItem(SNOOZE_KEY, String(Date.now() + SNOOZE_DURATION_MS)); } catch {}
+    overlay.remove();
+  }
+  function _closeNoSnooze() {
     overlay.remove();
   }
 
@@ -410,18 +414,24 @@ export async function openMigrationDialog(uid) {
 
     const { ok, failed } = await uploadCategories(uid, selectedIds);
 
+    // 사용자가 await 중에 dialog 를 닫은 경우 — 후속 DOM 작업이 detached 노드에 닿지 않도록 즉시 종료
+    if (!overlay.isConnected) return;
+
     // 이전 fail 박스 제거 (재시도 시 중복 방지)
     const prevFailBox = overlay.querySelector('[data-role="fail-box"]');
     if (prevFailBox) prevFailBox.remove();
 
     if (failed.length === 0) {
+      // 이전 retry 에서 closeBtn 가 _closeNoSnooze 로 swap 되었을 수 있음 — 복원 (멱등)
+      closeBtn.removeEventListener('click', _closeNoSnooze);
+      closeBtn.removeEventListener('click', snoozeAndClose);
+      closeBtn.addEventListener('click', snoozeAndClose);
       activeBtn.textContent = ok.length > 0 ? `완료! (${ok.length}개)` : '완료!';
       setTimeout(() => overlay.remove(), 1200);
       return;
     }
 
     activeBtn.textContent = `완료 ${ok.length} / 실패 ${failed.length}`;
-    activeBtn.disabled = true;
 
     const failBox = document.createElement('div');
     failBox.dataset.role = 'fail-box';
@@ -460,8 +470,8 @@ export async function openMigrationDialog(uid) {
     retryBtn.className = 'btn btn-primary btn-full';
     retryBtn.textContent = '지금 재시도';
     retryBtn.addEventListener('click', () => {
-      const failedIds = failed.map(f => f.id);
-      doSync(failedIds, activeBtn);
+      retryBtn.disabled = true;
+      doSync(failed.map(f => f.id), activeBtn);
     });
 
     const closeManualBtn = document.createElement('button');
@@ -475,6 +485,10 @@ export async function openMigrationDialog(uid) {
     failBox.appendChild(btnRow);
 
     activeBtn.parentElement.appendChild(failBox);
+
+    // failBox 가 보이는 동안 '×' 도 snooze 없이 닫기 (failBox 의 '다음 로그인 자동 재시도' 약속과 일관)
+    closeBtn.removeEventListener('click', snoozeAndClose);
+    closeBtn.addEventListener('click', _closeNoSnooze);
   }
 
   // ── 이벤트 바인딩 ─────────────────────────────────────────────────────
