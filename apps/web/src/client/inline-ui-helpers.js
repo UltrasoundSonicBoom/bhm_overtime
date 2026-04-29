@@ -21,12 +21,17 @@
     return base + '_guest';
   };
 
-  // recordLocalEdit: localStorage write 시 lastEdit 메타 기록 (LWW 비교용 — Phase 8 Firestore sync)
+  // recordLocalEdit: localStorage write 시 lastEdit 메타 기록 + Firestore 자동 동기화 트리거
+  // Phase 8 Firestore sync (LWW 비교용 timestamp + auto-sync.js 가 listen 해서 write)
   window.recordLocalEdit = function (base) {
     try {
       var key = 'snuhmate_last_edit_' + base;
       localStorage.setItem(key, new Date().toISOString());
     } catch (e) { /* noop */ }
+    // 다기기 동기화: auto-sync.js 가 이 이벤트를 받아 Firestore writeXXX 호출
+    try {
+      window.dispatchEvent(new CustomEvent('app:local-edit', { detail: { base: base } }));
+    } catch (e) { /* CustomEvent 미지원 환경 — noop */ }
   };
 
   // ── (사전 반영) 테마: DOMContentLoaded 전에 즉시 적용해 flicker 방지 ──

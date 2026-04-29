@@ -59,6 +59,22 @@ export async function onAuthChanged(callback) {
         s.googleSub = user.uid;
         localStorage.setItem('snuhmate_settings', JSON.stringify(s));
       } catch (e) { /* noop */ }
+      // 다기기 동기화: Firestore → localStorage 채우기 (PC/모바일 hydration)
+      // 사용자가 다른 기기에서 입력한 데이터를 이 기기에서도 보이게 한다.
+      try {
+        const { hydrateFromFirestore } = await import('./hydrate.js');
+        const result = await hydrateFromFirestore(user.uid);
+        if (result.ok.length > 0) {
+          console.log('[auth] cloud hydrate:', result.ok.join(', '));
+        }
+        if (result.failed.length > 0) {
+          console.warn('[auth] cloud hydrate 일부 실패:', result.failed.join(', '));
+        }
+      } catch (e) { console.warn('[auth] hydrate 실패', e?.message); }
+      // 자동 동기화 listener 등록 — 이후 로컬 편집 시 자동 Firestore write
+      try {
+        await import('./auto-sync.js');
+      } catch (e) { /* auto-sync 미존재 — 무해 */ }
       // 마이그레이션 다이얼로그 hook (Phase 8 에서 모듈 추가 시 활성, 미존재 무해)
       try {
         const mig = await import('./migration-dialog.js');

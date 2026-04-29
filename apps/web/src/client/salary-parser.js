@@ -1109,6 +1109,11 @@ export const SALARY_PARSER = (() => {
 
     localStorage.setItem(key, JSON.stringify({ ...merged, savedAt: new Date().toISOString() }));
 
+    // 다기기 동기화: auto-sync.js 가 'payslip_<uid>_YYYY_MM' 키를 인식해서 Firestore write
+    if (typeof window.recordLocalEdit === 'function') {
+      try { window.recordLocalEdit(key); } catch (e) { /* noop */ }
+    }
+
     // 사번 자동 채움: 프로필에 사번이 비어 있고 payslip에서 추출된 사번이 있으면 저장
     var empNum = merged && merged.employeeInfo && merged.employeeInfo.employeeNumber;
     if (empNum) {
