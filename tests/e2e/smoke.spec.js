@@ -26,14 +26,16 @@ test.describe('SNUH Mate 구조 스모크', () => {
       }
     });
 
-    await page.goto('/index.html?app=1');
+    await page.goto('/app');
     await page.waitForFunction(() => typeof window.switchTab === 'function' && typeof window.loadTab === 'function');
 
     // 초기 home 탭 렌더 대기
+    // Phase 6 이후 Astro Island 가 서버 사이드 렌더 → data-loaded flag 없이도 콘텐츠 존재.
+    // 둘 중 하나만 만족하면 OK (JS lazy-load 또는 Astro pre-render).
     await expect.poll(async () => {
       return await page.evaluate(() => {
         const el = document.getElementById('tab-home');
-        return el && el.dataset.loaded === '1';
+        return el && (el.dataset.loaded === '1' || el.children.length > 0);
       });
     }, { timeout: 3000 }).toBe(true);
 
@@ -51,7 +53,8 @@ test.describe('SNUH Mate 구조 스모크', () => {
         };
       }, name);
       expect(result.active, `${name} active`).toBe(true);
-      expect(result.loaded, `${name} loaded=1`).toBe(true);
+      // Astro Island pre-render 또는 JS lazy-load 둘 중 하나만 만족하면 OK.
+      expect(result.loaded || result.childCount > 0, `${name} 콘텐츠 로드`).toBe(true);
       expect(result.childCount, `${name} 콘텐츠 주입`).toBeGreaterThan(0);
     }
 
@@ -67,7 +70,7 @@ test.describe('SNUH Mate 구조 스모크', () => {
       }
     });
 
-    await page.goto('/index.html?app=1');
+    await page.goto('/app');
     await page.waitForFunction(() => typeof window.switchTab === 'function');
 
     // payroll 탭 로드
@@ -98,7 +101,7 @@ test.describe('SNUH Mate 구조 스모크', () => {
   });
 
   test('URL 파라미터 진입 — ?tab=overtime 타이틀 반영', async ({ page }) => {
-    await page.goto('/index.html?app=1&tab=overtime');
+    await page.goto('/app?tab=overtime');
     await expect(page).toHaveTitle(/시간외/);
   });
 });

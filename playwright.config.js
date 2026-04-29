@@ -1,8 +1,9 @@
 // Playwright 설정 — SNUH Mate e2e 스모크
-// 로컬 HTTP 서버를 자동 기동 (Python ThreadingHTTPServer — Playwright 시작 시)
+// Phase 6 이후 Astro 라우팅 (/, /app, /regulation 등) 을 사용하므로
+// Astro dev 서버를 webServer 로 기동. 정적 python 서버는 Astro 라우트를 모름.
 import { defineConfig } from '@playwright/test';
 
-const PORT = 8785;
+const PORT = 4321;
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -20,9 +21,9 @@ export default defineConfig({
     { name: 'chromium', use: { browserName: 'chromium' } }
   ],
   webServer: {
-    command: `python3 -c "from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer; ThreadingHTTPServer(('127.0.0.1', ${PORT}), SimpleHTTPRequestHandler).serve_forever()"`,
-    url: `http://localhost:${PORT}/index.html`,
+    command: 'npm run -w @snuhmate/web dev',
+    url: `http://localhost:${PORT}/app`,
     reuseExistingServer: !process.env.CI,
-    timeout: 10_000
+    timeout: 60_000
   }
 });
