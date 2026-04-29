@@ -10,6 +10,15 @@ from typing import Any
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
+# .env 자동 로드 (서버 디렉토리 기준)
+_env_file = Path(__file__).parent / ".env"
+if _env_file.exists():
+    for _line in _env_file.read_text().splitlines():
+        _line = _line.strip()
+        if _line and not _line.startswith("#") and "=" in _line:
+            _k, _v = _line.split("=", 1)
+            os.environ.setdefault(_k.strip(), _v.strip())
+
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -124,6 +133,7 @@ def _chat_completion(
             "temperature": temperature,
             "max_tokens": max_tokens,
             "stream": False,
+            "enable_thinking": False,
         },
     )
     msg = response.get("choices", [{}])[0].get("message", {})
