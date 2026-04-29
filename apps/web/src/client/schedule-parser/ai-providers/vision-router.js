@@ -1,29 +1,17 @@
 // vision-router.js — Vision LLM 우선순위 라우팅.
 //
-// 1. 로컬 LM Studio (맥미니, OpenAI-compatible) — Qwen3-VL 8B
+// 1. 서버 REST API (/api/lmstudio/schedule/parse) — momo LM Link 경유
 // 2. Anthropic Claude Vision (admin dev key, 일일 3회 한도)
 // 3. 둘 다 실패 → null 반환 → 호출자가 수동 입력 폴백 모달
 
-import { isDailyVisionLimitReached, incrementDailyVisionCount } from '../parse-cache.js';
+import { probeBackend, isDailyVisionLimitReached, incrementDailyVisionCount } from '../parse-cache.js';
 import { callVisionLLM } from './vision-client.js';
-
-const LMSTUDIO_BASE =
-  (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_LMSTUDIO_BASE) ||
-  localStorage.getItem('snuhmate_lmstudio_base') ||
-  'http://127.0.0.1:1234/v1';
-const LMSTUDIO_MODEL =
-  (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_LMSTUDIO_MODEL) ||
-  'qwen/qwen3-vl-4b';
-const LMSTUDIO_TOKEN =
-  (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_LMSTUDIO_TOKEN) ||
-  localStorage.getItem('snuhmate_lmstudio_token') ||
-  '';
 
 const ANTHROPIC_BASE = 'https://api.anthropic.com/v1';
 const ANTHROPIC_MODEL = 'claude-sonnet-4-5';
 
 /**
- * Vision 파싱 — 우선순위에 따라 LM Studio → Anthropic 폴백.
+ * Vision 파싱 — 서버 REST API → Anthropic 폴백.
  * @param {Object} params
  * @param {string} params.imageBase64
  * @param {string} [params.mimeType='image/png']
@@ -38,40 +26,30 @@ const ANTHROPIC_MODEL = 'claude-sonnet-4-5';
  * }>}
  */
 export async function routeVision({ imageBase64, mimeType = 'image/png', hints = {}, opts = {} }) {
-  // 1. 로컬/Tailscale LM Studio 직접 접근 시도
-  let lmStudioReachable = false;
-  try {
-    const ctl = new AbortController();
-    const tid = setTimeout(() => ctl.abort(), 2000);
-    const resp = await fetch(`${LMSTUDIO_BASE}/models`, {
-      signal: ctl.signal,
-      ...(LMSTUDIO_TOKEN ? { headers: { Authorization: `Bearer ${LMSTUDIO_TOKEN}` } } : {}),
-    });
-    clearTimeout(tid);
-    if (resp.ok) {
-      const data = await resp.json();
-      const ids = (data?.data || []).map(m => m.id);
-      lmStudioReachable = ids.some(id =>
-        id === LMSTUDIO_MODEL ||
-        id.toLowerCase().includes('vl') ||
-        id.toLowerCase().replace(/^[^/]+\//, '') === LMSTUDIO_MODEL.replace(/^[^/]+\//, '')
-      );
-    }
-  } catch (_e) { /* Tailscale LM Studio not reachable — Anthropic 폴백 */ }
-
-  if (lmStudioReachable) {
+  // 1. 서버 REST API — momo LM Link를 통해 서버에서 LM Studio 호출
+  const backend = await probeBackend();
+  if (backend) {
     try {
-      const result = await callVisionLLM({
-        imageBase64, mimeType,
-        baseURL: LMSTUDIO_BASE,
-        model: LMSTUDIO_MODEL,
-        apiKey: LMSTUDIO_TOKEN,
-        hints,
-        timeout: 60000,
+      const ctl = new AbortController();
+      const tid = setTimeout(() => ctl.abort(), 120000);
+      const resp = await fetch(`${backend}/api/lmstudio/schedule/parse`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image_base64: imageBase64,
+          mime_type: mimeType,
+          document_type: 'schedule',
+          create_review: true,
+        }),
+        signal: ctl.signal,
       });
-      return { provider: 'lm-studio', grid: result.grid, raw: result.raw };
+      clearTimeout(tid);
+      if (resp.ok) {
+        const data = await resp.json();
+        return { provider: 'lm-studio', grid: data.normalized, raw: JSON.stringify(data.extracted) };
+      }
     } catch (e) {
-      console.warn('[vision-router] LM Studio 실패, Anthropic 폴백 시도', e?.message);
+      console.warn('[vision-router] 서버 REST API 실패, Anthropic 폴백 시도', e?.message);
     }
   }
 
@@ -89,7 +67,7 @@ export async function routeVision({ imageBase64, mimeType = 'image/png', hints =
     return {
       provider: 'none',
       grid: null,
-      error: 'AI Vision 사용 불가 (로컬 LLM 다운 + API 키 미설정). 수동 입력으로 진행하세요.',
+      error: 'AI Vision 사용 불가 (서버 다운 + API 키 미설정). 수동 입력으로 진행하세요.',
     };
   }
 
@@ -118,11 +96,9 @@ export async function routeVision({ imageBase64, mimeType = 'image/png', hints =
  * Phase 3에서 설정 탭 BYOK UI로 교체.
  */
 function _getAnthropicDevKey() {
-  // 빌드 타임 (PUBLIC_*은 클라이언트 노출되므로 admin-only 환경 한정)
   if (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_ANTHROPIC_DEV_KEY) {
     return import.meta.env.PUBLIC_ANTHROPIC_DEV_KEY;
   }
-  // localStorage (admin이 콘솔에서 직접 설정)
   if (typeof localStorage !== 'undefined') {
     return localStorage.getItem('snuhmate_anthropic_dev_key') || null;
   }
