@@ -10,7 +10,7 @@ import { callVisionLLM } from './vision-client.js';
 const LMSTUDIO_BASE =
   (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_LMSTUDIO_BASE) ||
   localStorage.getItem('snuhmate_lmstudio_base') ||
-  'http://100.108.115.18:1234/v1';
+  'http://127.0.0.1:1234/v1';
 const LMSTUDIO_MODEL =
   (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_LMSTUDIO_MODEL) ||
   'qwen/qwen3-vl-4b';
