@@ -42,3 +42,7 @@ tmp/
 firestore-debug.log
 firebase-debug.log
 .astro/
+
+# Python
+__pycache__/
+*.pyc
