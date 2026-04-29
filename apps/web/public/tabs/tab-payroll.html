@@ -203,10 +203,10 @@
 
   <!-- 퇴직금 내부 탭 네비게이션 -->
   <nav class="ret-bookmark-tabs" id="retTabs">
-    <button class="ret-bookmark-tab active" data-tab="calc">💰 퇴직금</button>
-    <button class="ret-bookmark-tab" data-tab="peak">📊 시뮬레이션</button>
-    <button class="ret-bookmark-tab" data-tab="pension">📖 종합가이드</button>
-    <button class="ret-bookmark-tab" data-tab="checklist">✅ 퇴직준비</button>
+    <button class="ret-bookmark-tab active" data-tab="calc">💰 내 예상액</button>
+    <button class="ret-bookmark-tab" data-tab="peak">📊 공로연수 비교</button>
+    <button class="ret-bookmark-tab" data-tab="pension">📖 규정·연금</button>
+    <button class="ret-bookmark-tab" data-tab="checklist">✅ 준비 체크</button>
   </nav>
   <div class="ret-tab-accent calc" id="retTabAccent"></div>
 
@@ -239,11 +239,11 @@
       <!-- D-day 카드 -->
       <div class="ret-dday-grid" id="retDdayGrid" style="display:none; margin-bottom:10px;">
         <div class="ret-dday-card">
-          <div class="ret-dday-label">법정 정년까지</div>
+          <div class="ret-dday-label">정년 1년 전까지</div>
           <div class="ret-dday-val" id="retDdayPeak">—</div>
         </div>
         <div class="ret-dday-card">
-          <div class="ret-dday-label">임금피크 연장 만료</div>
+          <div class="ret-dday-label">정년퇴직 예정일</div>
           <div class="ret-dday-val" id="retDdayRetire">—</div>
         </div>
       </div>
@@ -255,36 +255,35 @@
         <label class="ret-label">퇴직(예정)일</label>
         <div class="ret-quick-dates" id="retQuickDates" style="display:none;">
           <button class="ret-quick-btn" id="retBtnNow" onclick="retSetRetireDate('now')">지금 바로</button>
-          <button class="ret-quick-btn" id="retBtnPeakDate" onclick="retSetRetireDate('peak')">법정 정년 (만
-            60세)</button>
-          <button class="ret-quick-btn" id="retBtnPeakEndDate" onclick="retSetRetireDate('peakEnd')">임금피크 연장 만료 (만
-            61세)</button>
+          <button class="ret-quick-btn" id="retBtnPeakDate" onclick="retSetRetireDate('peak')">정년 1년 전</button>
+          <button class="ret-quick-btn" id="retBtnPeakEndDate" onclick="retSetRetireDate('peakEnd')">정년퇴직 예정일</button>
         </div>
         <input class="ret-input" type="date" id="retRetireDate">
       </div>
-      <!-- 임금피크 옵션 (만 60세 임박 시 자동 표시) -->
+      <!-- 공로연수 선택 옵션 (정년 전 1년 임박 시 자동 표시) -->
       <div id="retPeakOptSection" style="display:none; margin-bottom:4px;">
-        <label class="ret-label" style="display:block; margin-bottom:7px;">임금피크 선택 (만 60세 해당자)</label>
+        <label class="ret-label" style="display:block; margin-bottom:7px;">정년 전 1년 선택 (공로연수 여부)</label>
+        <div id="retPeakExclusionNote" class="ret-guide-note" style="display:none; margin-bottom:8px;">입사일로부터 5년 이내 정년에 도달하는 경우 공로연수 선택 적용 대상에서 제외됩니다.</div>
         <div class="ret-peak-opts">
           <label class="ret-peak-opt selected" id="retPeakOpt_none" onclick="retSelectPeakOpt(this)">
             <input type="radio" name="retPeakOpt" value="none" checked>
             <div class="ret-peak-opt-body">
               <div class="ret-peak-opt-title">해당없음 — 법정 정년(만 60세)에 퇴직</div>
-              <div class="ret-peak-opt-desc">임금피크 미신청. 입력한 월 평균임금 그대로 퇴직금 산정</div>
+              <div class="ret-peak-opt-desc">정년퇴직일 기준으로 입력한 월 평균임금 그대로 퇴직금 산정</div>
             </div>
           </label>
           <label class="ret-peak-opt" id="retPeakOpt_A" onclick="retSelectPeakOpt(this)">
             <input type="radio" name="retPeakOpt" value="A">
             <div class="ret-peak-opt-body">
-              <div class="ret-peak-opt-title">옵션 A — 공로연수 (기준임금 × 60%)</div>
-              <div class="ret-peak-opt-desc">만 60세~61세: 근무 없이 60% 수령. 퇴직금 기준임금도 60% 적용 → 감소</div>
+              <div class="ret-peak-opt-title">옵션 A — 공로연수 1년 선택 (기준 보수 × 60%)</div>
+              <div class="ret-peak-opt-desc">실제 근무지 출근 없이 규정 지급액을 수령. 퇴직금은 공로연수 전 3개월 평균임금 기준</div>
             </div>
           </label>
           <label class="ret-peak-opt" id="retPeakOpt_B" onclick="retSelectPeakOpt(this)">
             <input type="radio" name="retPeakOpt" value="B">
             <div class="ret-peak-opt-body">
-              <div class="ret-peak-opt-title">옵션 B — 계속근무 (기준임금 × 100%)</div>
-              <div class="ret-peak-opt-desc">만 60세~61세: 계속 근무 + 100% 수령. 근속 1년 추가 → 퇴직금 기준임금 유지</div>
+              <div class="ret-peak-opt-title">옵션 B — 공로연수 미선택·계속근무 (직전년도 보수 × 100%)</div>
+              <div class="ret-peak-opt-desc">1년 계속 근무. 호봉상승·임금인상분·승진·승격은 제외</div>
             </div>
           </label>
         </div>
@@ -338,10 +337,9 @@
     </div>
   </div>
 
-  <!-- 탭 2: 시뮬레이션 (임금피크 시나리오 비교) -->
+  <!-- 탭 2: 공로연수 선택 시나리오 비교 -->
   <div class="ret-panel" id="ret-panel-peak">
-    <div class="ret-info-box">🤖 <strong>AI 시나리오 분석</strong> — 지금 퇴직 vs 임금피크 옵션 A(공로연수) vs B(계속근무). 퇴직금 포함 총 패키지를
-      비교합니다.</div>
+    <div class="ret-info-box">📊 <strong>규정 기반 선택 비교</strong> — 지금 퇴직, 공로연수 1년 선택, 공로연수 미선택·계속근무를 퇴직금 포함 총액으로 비교합니다.</div>
     <!-- 숨김 입력 (JS 계산용) -->
     <div style="display:none;">
       <input type="number" id="retScWage">
@@ -352,31 +350,31 @@
     <div id="retSimTimeline" class="ret-card ret-tl-card" style="display:none; margin-bottom:12px;"></div>
     <!-- 옵션 A vs B 비교표 (AI 카드 위 고정) -->
     <div class="ret-compare-top-card">
-      <div class="ret-compare-top-title">⚖️ 옵션 A vs B 한눈에 비교</div>
+      <div class="ret-compare-top-title">⚖️ 공로연수 선택 vs 계속근무</div>
       <table class="ret-guide-table">
         <tr>
           <th>항목</th>
-          <th>옵션 A 공로연수</th>
-          <th>옵션 B 계속근무</th>
+          <th>공로연수 1년 선택</th>
+          <th>공로연수 미선택·계속근무</th>
         </tr>
         <tr>
           <td>근무 여부</td>
-          <td>불필요 (쉬는 1년)</td>
+          <td>실제 근무지 출근 없음</td>
           <td class="pos">1년 계속 근무</td>
         </tr>
         <tr>
           <td>급여 수령</td>
-          <td class="neg">기준임금 × 60%</td>
-          <td class="pos">기준임금 × 100%</td>
+          <td class="neg">기준 보수 × 60%</td>
+          <td class="pos">직전년도 보수 × 100%</td>
         </tr>
         <tr>
           <td>퇴직금 기준임금</td>
-          <td class="neg">60% 적용 → 감소</td>
-          <td class="pos">100% 유지 + 근속 +1년</td>
+          <td class="pos">공로연수 전 3개월 평균임금 적용 → 기준 보호 + 근속 +1년</td>
+          <td class="pos">공로연수 전 3개월 평균임금 적용 → 기준 보호 + 근속 +1년</td>
         </tr>
         <tr>
           <td>패키지 총액</td>
-          <td class="neg">낮음</td>
+          <td>수령액 60%만 반영</td>
           <td class="pos">대부분 최고 ★</td>
         </tr>
         <tr>
@@ -390,8 +388,8 @@
           <td>건강하고 근무 가능 시</td>
         </tr>
       </table>
-      <div class="ret-guide-note" style="margin-top:8px;">※ 금전 기준으로는 옵션 B가 유리하지만, 건강·업무 여건·개인 계획이 최종 결정 변수입니다. 자세한
-        분석은 <strong>종합가이드</strong> 탭에서 확인하세요.</div>
+      <div class="ret-guide-note" style="margin-top:8px;">※ 공로연수 선택 시에도 퇴직금 기준 평균임금은 공로연수 전 3개월 기준으로 보호됩니다. 계속근무 100% 보수에는 호봉상승, 임금인상분, 승진·승격이 제외됩니다. 자세한 근거는
+        <strong>규정·연금</strong> 탭에서 확인하세요.</div>
     </div>
     <!-- 시나리오 결과 (AI 카드 + 상세) -->
     <div id="retScenarioResult" style="display:none;"></div>
@@ -410,27 +408,27 @@
           <table class="ret-guide-table">
             <tr>
               <th>항목</th>
-              <th>옵션 A (공로연수)</th>
-              <th>옵션 B (계속근무)</th>
+              <th>공로연수 1년 선택</th>
+              <th>공로연수 미선택·계속근무</th>
             </tr>
             <tr>
               <td>근무 여부</td>
-              <td>불필요 (쉬는 1년)</td>
+              <td>실제 근무지 출근 없음</td>
               <td class="pos">1년 계속 근무</td>
             </tr>
             <tr>
               <td>급여 수령액</td>
-              <td class="neg">기준임금 × 60%</td>
-              <td class="pos">기준임금 × 100%</td>
+              <td class="neg">기준 보수 × 60%</td>
+              <td class="pos">직전년도 보수 × 100%</td>
             </tr>
             <tr>
               <td>퇴직금 기준임금</td>
-              <td class="neg">60% 적용 → 감소</td>
-              <td class="pos">100% 유지 + 근속 +1년</td>
+              <td class="pos">공로연수 전 3개월 평균임금 적용 → 기준 보호 + 근속 +1년</td>
+              <td class="pos">공로연수 전 3개월 평균임금 적용 → 기준 보호 + 근속 +1년</td>
             </tr>
             <tr>
               <td>패키지 총액</td>
-              <td class="neg">낮음</td>
+              <td>수령액 60%만 반영</td>
               <td class="pos">대부분 최고 ★</td>
             </tr>
             <tr>
@@ -440,7 +438,7 @@
             </tr>
             <tr>
               <td>유리한 상황</td>
-              <td>건강 우려 · 돌봄 · 여행 계획 시</td>
+              <td>건강 우려 · 돌봄 · 개인 계획 시</td>
               <td>건강하고 근무 지속 가능 시</td>
             </tr>
           </table>
@@ -539,7 +537,7 @@
               <td>즉시 지급</td>
             </tr>
           </table>
-          <div class="ret-guide-warn" style="margin-top:8px;">💡 임금피크 옵션 A 선택 시 기여금이 60%로 줄어 연금 수령액도 소폭 감소합니다.
+          <div class="ret-guide-warn" style="margin-top:8px;">💡 공로연수 1년 선택 시 기여금이 60% 기준으로 줄어 연금 수령액도 소폭 감소할 수 있습니다.
           </div>
           <div class="ret-guide-note">정확한 예상 수령액은 사학연금공단(tp.or.kr)에서 개인별 시뮬레이션 가능.</div>
         </div>
@@ -613,7 +611,7 @@
           </tr>
         </tbody>
       </table>
-      <div class="ret-gs-callout amber">💡 임금피크 옵션 A 선택 시 기여금이 60%로 줄어 장래 연금 수령액도 소폭 감소합니다. 옵션 선택 전 고려하세요.</div>
+      <div class="ret-gs-callout amber">💡 공로연수 1년 선택 시 기여금이 60% 기준으로 줄어 장래 연금 수령액도 소폭 감소할 수 있습니다. 선택 전 확인하세요.</div>
       <div class="ret-gs-callout blue" style="margin-top:8px;">📌 조기 수령 시 기대 수명까지 총 수령액이 기준 수령보다 적을 수 있습니다. 수명 75세
         기준 손익분기: 약 만 70세.</div>
       <a class="ret-gs-link-btn" href="https://www.tp.or.kr" target="_blank" rel="noopener noreferrer">🔗 사학연금공단 내
@@ -739,12 +737,27 @@
   <div class="ret-panel" id="ret-panel-checklist">
     <div class="ret-card">
       <div class="ret-checklist-section">
+        <div class="ret-checklist-header">🧭 정년 D-12개월 (공로연수 선택 시점)</div>
+        <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
+          <div class="ret-checklist-text"><strong>공로연수 선택 여부 결정</strong> — 공로연수 1년 선택 또는 공로연수 미선택·계속근무 중 선택</div>
+        </div>
+        <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
+          <div class="ret-checklist-text"><strong>규정 지급액 확인</strong> — 공로연수 선택 시 기준 보수 60%, 계속근무 선택 시 직전년도 보수 100% 기준 확인</div>
+        </div>
+        <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
+          <div class="ret-checklist-text"><strong>적용 제외 여부 확인</strong> — 보직자 여부와 입사 후 5년 이내 정년 도달 여부 확인</div>
+        </div>
+        <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
+          <div class="ret-checklist-text"><strong>인사과 상담</strong> — 퇴직금 기준 평균임금(공로연수 전 3개월), 사학연금 기여금, 연차수당 영향을 같이 확인</div>
+        </div>
+      </div>
+      <div class="ret-checklist-section">
         <div class="ret-checklist-header">📅 퇴직 D-90 (3개월 전)</div>
         <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
           <div class="ret-checklist-text"><strong>퇴직 의사 통보</strong> — 직속 상급자 및 부서장에게 퇴직 예정일 사전 통보</div>
         </div>
         <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
-          <div class="ret-checklist-text"><strong>임금피크 시뮬레이션 확인</strong> — 만 60세 도달 예정자는 [시뮬레이션] 탭에서 옵션 A/B 비교 후
+          <div class="ret-checklist-text"><strong>공로연수 비교 확인</strong> — 정년 도달 예정자는 [공로연수 비교] 탭에서 옵션 A/B 비교 후
             인사과 상담</div>
         </div>
         <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
@@ -802,23 +815,6 @@
       </div>
     </div>
     <div class="ret-notice">※ 세부 절차 및 서식은 인사과(내선 확인)에 문의하세요.</div>
-  </div>
-
-  <!-- E4: 퇴직 타임라인 시뮬레이터 -->
-  <div class="card" id="retirementTimelineCard" style="margin-top:16px;">
-    <div class="card-title"
-      style="font-size:var(--text-body-large);font-family:'Space Grotesk',sans-serif;font-weight:700;">
-      퇴직 최적 시기 시뮬레이션
-    </div>
-    <p style="font-size:var(--text-body-small);color:var(--text-muted);margin-bottom:12px;">
-      앞으로 12개월, 각 달 퇴직 시 예상 퇴직금을 비교합니다. 연금·세금 제외.
-    </p>
-    <div id="retirementTimelineContent">
-      <div class="empty-state" style="padding:24px 0;">
-        <p style="color:var(--text-muted);font-size:var(--text-body-normal);">입사일과 급여 정보를 먼저 입력해주세요.</p>
-        <button class="btn btn-primary" style="margin-top:10px;" onclick="switchTab('info')">개인정보 탭으로 →</button>
-      </div>
-    </div>
   </div>
 
 </div><!-- /sub-pay-retirement -->

@@ -929,6 +929,15 @@ function retFmtDate(d) {
 function retToInputDate(d) {
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
+function retGetLegalRetirementDate(birth) {
+  // 단체협약 제24조: 정년은 60세, 정년퇴직일은 12월 말일.
+  return new Date(birth.getFullYear() + 60, 11, 31);
+}
+function retAddYears(d, years) {
+  var next = new Date(d);
+  next.setFullYear(next.getFullYear() + years);
+  return next;
+}
 function retUpdateQuickDates() {
   var birthVal = document.getElementById('retBirthDate').value;
   var hireVal  = document.getElementById('retHireDate') ? document.getElementById('retHireDate').value : '';
@@ -937,9 +946,9 @@ function retUpdateQuickDates() {
 
   if (birthVal) {
     var birth = new Date(birthVal);
-    _retPeakDate = new Date(birth); _retPeakDate.setFullYear(birth.getFullYear() + 60);
-    _retPeakEndDate = new Date(birth); _retPeakEndDate.setFullYear(birth.getFullYear() + 61);
-    _retLegalRetireDate = _retPeakDate;
+    _retPeakEndDate = retGetLegalRetirementDate(birth);
+    _retPeakDate = retAddYears(_retPeakEndDate, -1);
+    _retLegalRetireDate = _retPeakEndDate;
 
     var ddayGrid = document.getElementById('retDdayGrid');
     ddayGrid.style.display = 'grid';
@@ -949,11 +958,18 @@ function retUpdateQuickDates() {
     document.getElementById('retDdayRetire').textContent = dRetire > 0 ? 'D-' + dRetire.toLocaleString('ko-KR') + ' (' + _retPeakEndDate.getFullYear() + ')' : '도달';
 
     document.getElementById('retQuickDates').style.display = 'grid';
-    document.getElementById('retBtnPeakDate').textContent    = '법정 정년 · 임금피크 시작 (' + retFmtDate(_retPeakDate) + ')';
-    document.getElementById('retBtnPeakEndDate').textContent = '임금피크 연장 만료 (' + retFmtDate(_retPeakEndDate) + ')';
+    document.getElementById('retBtnPeakDate').textContent    = '정년 1년 전 선택 시작 (' + retFmtDate(_retPeakDate) + ')';
+    document.getElementById('retBtnPeakEndDate').textContent = '정년퇴직 예정일 (' + retFmtDate(_retPeakEndDate) + ')';
 
     var yearsUntilPeak = (_retPeakDate - now) / (365.25 * 86400000);
-    document.getElementById('retPeakOptSection').style.display = yearsUntilPeak < 6 ? 'block' : 'none';
+    var hire = hireVal ? new Date(hireVal) : null;
+    var yearsFromHireToRetire = hire && !isNaN(hire) ? (_retPeakEndDate - hire) / (365.25 * 86400000) : 999;
+    var isFiveYearExclusion = yearsFromHireToRetire <= 5;
+    var peakSection = document.getElementById('retPeakOptSection');
+    peakSection.style.display = yearsUntilPeak < 6 ? 'block' : 'none';
+    peakSection.classList.toggle('ret-peak-excluded', !!isFiveYearExclusion);
+    var exclusionNote = document.getElementById('retPeakExclusionNote');
+    if (exclusionNote) exclusionNote.style.display = isFiveYearExclusion ? 'block' : 'none';
   } else {
     document.getElementById('retDdayGrid').style.display = 'none';
     document.getElementById('retQuickDates').style.display = hireVal ? 'grid' : 'none';
@@ -987,10 +1003,13 @@ function retSelectPeakOpt(label) {
   if (radio) radio.checked = true;
 }
 
-// ── 퇴직금 계산 (CALC 위임 + 임금피크 통합) ──
-function _retComputeSeverance(effectiveWage, preciseYears, hireDateVal) {
+// ── 퇴직금 계산 (CALC 위임 + 공로연수 선택 통합) ──
+function _retComputeSeverance(effectiveWage, preciseYears, hireDateVal, retireDateVal) {
   if (typeof CALC !== 'undefined' && CALC.calcSeveranceFullPay) {
-    return CALC.calcSeveranceFullPay(effectiveWage, Math.floor(preciseYears), hireDateVal);
+    return CALC.calcSeveranceFullPay(effectiveWage, preciseYears, hireDateVal, {
+      retireDate: retireDateVal,
+      roundingMode: 'union'
+    });
   }
   // 로컬 fallback
   var rate = retGetRateForYears(preciseYears);
@@ -1026,10 +1045,10 @@ function calcRetirementEmbedded() {
 
   var effectiveWage = wage;
   var peakLabel = '';
-  if (peakOpt === 'A') { effectiveWage = Math.round(wage * 0.6); peakLabel = '옵션 A (60% 적용)'; }
-  if (peakOpt === 'B') { peakLabel = '옵션 B (100% 유지)'; }
+  if (peakOpt === 'A') { peakLabel = '공로연수 1년 선택 (수령액 60%, 퇴직금 기준 보호)'; }
+  if (peakOpt === 'B') { peakLabel = '공로연수 미선택·계속근무 (수령액 100%, 퇴직금 기준 유지)'; }
 
-  var r = _retComputeSeverance(effectiveWage, totalYears, hireDateVal);
+  var r = _retComputeSeverance(effectiveWage, totalYears, hireDateVal, retireDateVal);
   var peakIncome = peakOpt === 'A' ? Math.round(wage * 0.6 * 12) : (peakOpt === 'B' ? Math.round(wage * 12) : 0);
   var totalPackage = r.퇴직금 + peakIncome;
 
@@ -1044,7 +1063,7 @@ function calcRetirementEmbedded() {
   var resultDiv = document.getElementById('retCalcResult');
   resultDiv.style.display = 'block';
   document.getElementById('retCalcResultLabel').textContent =
-    peakOpt !== 'none' ? '퇴직 패키지 총액 (임금피크 수령 포함)' : '예상 퇴직금';
+    peakOpt !== 'none' ? '퇴직 패키지 총액 (정년 전 1년 수령 포함)' : '예상 퇴직금';
   document.getElementById('retCalcResultTotal').textContent = retFmt(peakOpt !== 'none' ? totalPackage : r.퇴직금);
 
   var breakdown = document.getElementById('retCalcResultBreakdown');
@@ -1058,14 +1077,14 @@ function calcRetirementEmbedded() {
   }
   addRow('근속연수', r.근속기간 || (Math.floor(totalYears) + '년'), false);
   addRow('월 평균임금 (입력)', retFmt(wage), false);
-  if (peakOpt !== 'none') addRow('임금피크 옵션', peakLabel, false);
-  if (peakOpt === 'A')    addRow('퇴직 기준 평균임금 (60%)', retFmt(effectiveWage), false);
+  if (peakOpt !== 'none') addRow('정년 전 1년 선택', peakLabel, false);
+  if (peakOpt === 'A')    addRow('퇴직 기준 평균임금 (공로연수 전 3개월)', retFmt(wage), false);
   addRow('산정방법', r.산정방법 || '-', false);
   addRow('기본 퇴직금', retFmt(r.기본퇴직금 || 0), false);
   if (r.퇴직수당 > 0) addRow('퇴직수당', retFmt(r.퇴직수당), false);
   addRow('퇴직금 소계', retFmt(r.퇴직금), false);
   if (peakOpt !== 'none') {
-    addRow('임금피크 기간 수령 (1년)', retFmt(peakIncome), false);
+    addRow('정년 전 1년 수령액', retFmt(peakIncome), false);
     addRow('퇴직 패키지 합계', retFmt(totalPackage), true);
   } else {
     addRow('합계', retFmt(r.퇴직금), true);
@@ -1124,7 +1143,7 @@ function calcRetirementEmbedded() {
   }
 }
 
-// ── 임금피크 타임라인 시각화 ──
+// ── 공로연수 선택 타임라인 시각화 ──
 function renderRetSimTimeline(hire, peakDate, peakEndDate) {
   var el = document.getElementById('retSimTimeline');
   if (!el) return;
@@ -1135,15 +1154,20 @@ function renderRetSimTimeline(hire, peakDate, peakEndDate) {
   var peakEndStr = retFmtDate(peakEndDate);
   var normalYrs  = Math.floor((peakDate - hire) / (365.25 * 86400000));
 
-  // 비율: 시각적으로 임금피크 구간이 최소 18% 확보되도록
+  // 비율: 시각적으로 정년 전 1년 선택 구간이 최소 18% 확보되도록
   var totalMs  = peakEndDate - hire;
   var normalMs = peakDate   - hire;
   var rawPct   = normalMs / totalMs * 100;
-  var normalPct = Math.min(rawPct, 82);   // 임금피크 최소 18%
+  var normalPct = Math.min(rawPct, 82);   // 선택 구간 최소 18%
   var peakPct   = 100 - normalPct;
 
   el.innerHTML =
-    '<div class="ret-card-title" style="margin-bottom:10px;">📅 임금피크 타임라인</div>' +
+    '<div class="ret-card-title" style="margin-bottom:10px;">📅 정년 전 1년 선택 타임라인</div>' +
+    '<div class="ret-tl-keyline">' +
+      '<div><span>퇴직금 기준</span><strong>공로연수 전 3개월 평균임금</strong></div>' +
+      '<div><span>공로연수 수령</span><strong>기준 보수 60%</strong></div>' +
+      '<div><span>계속근무 수령</span><strong>직전년도 보수 100%</strong></div>' +
+    '</div>' +
 
     // ── 1. 전체 경력 바 ──
     '<div class="ret-tl-section">' +
@@ -1153,27 +1177,27 @@ function renderRetSimTimeline(hire, peakDate, peakEndDate) {
           '<span class="ret-tl-seg-text">정상 근무 (' + normalYrs + '년)</span>' +
         '</div>' +
         '<div class="ret-tl-seg ret-tl-seg-peak" style="width:' + peakPct + '%">' +
-          '<span class="ret-tl-seg-text">임금피크</span>' +
+          '<span class="ret-tl-seg-text">공로연수 선택 기간</span>' +
         '</div>' +
       '</div>' +
       '<div class="ret-tl-macro-labels">' +
         '<span>입사 ' + hireStr + '</span>' +
-        '<span>법정 정년 ' + peakStr + '</span>' +
+        '<span>정년 1년 전 ' + peakStr + '</span>' +
         '<span>' + peakEndStr + '</span>' +
       '</div>' +
     '</div>' +
 
-    // ── 2. 임금피크 기간 시나리오 ──
+    // ── 2. 정년 전 1년 선택 시나리오 ──
     '<div class="ret-tl-divider"></div>' +
-    '<div class="ret-tl-section-label" style="margin-bottom:8px;">임금피크 기간 선택 — 만 60세(법정 정년) 이후 1년</div>' +
+    '<div class="ret-tl-section-label" style="margin-bottom:8px;">정년 전 1년 선택 — 공로연수 1년 vs 계속근무</div>' +
 
     '<div class="ret-tl-sc-wrap">' +
       // 날짜 헤더
       '<div class="ret-tl-sc-header">' +
         '<div class="ret-tl-sc-label-col"></div>' +
         '<div class="ret-tl-sc-bar-col">' +
-          '<span class="ret-tl-sc-date" style="left:0">만 60세<br>' + peakStr + '</span>' +
-          '<span class="ret-tl-sc-date" style="right:0; text-align:right;">만 61세<br>' + peakEndStr + '</span>' +
+          '<span class="ret-tl-sc-date" style="left:0">정년 1년 전<br>' + peakStr + '</span>' +
+          '<span class="ret-tl-sc-date" style="right:0; text-align:right;">정년퇴직일<br>' + peakEndStr + '</span>' +
         '</div>' +
       '</div>' +
 
@@ -1200,7 +1224,7 @@ function renderRetSimTimeline(hire, peakDate, peakEndDate) {
           '<div class="ret-tl-bar-a">' +
             '<span class="ret-tl-bar-inner">미근무 · 급여 60% 수령</span>' +
           '</div>' +
-          '<span class="ret-tl-bar-exit">⬆ 만 61세 퇴직</span>' +
+            '<span class="ret-tl-bar-exit">⬆ 정년퇴직</span>' +
         '</div>' +
       '</div>' +
 
@@ -1214,7 +1238,7 @@ function renderRetSimTimeline(hire, peakDate, peakEndDate) {
           '<div class="ret-tl-bar-b">' +
             '<span class="ret-tl-bar-inner">계속 근무 · 급여 100% 유지</span>' +
           '</div>' +
-          '<span class="ret-tl-bar-exit winner">⬆ 만 61세 퇴직</span>' +
+            '<span class="ret-tl-bar-exit winner">⬆ 정년퇴직</span>' +
         '</div>' +
       '</div>' +
 
@@ -1222,9 +1246,9 @@ function renderRetSimTimeline(hire, peakDate, peakEndDate) {
 
     // ── 3. 용어 설명 ──
     '<div class="ret-tl-legend">' +
-      '<div class="ret-tl-legend-row"><span class="ret-tl-dot-a"></span><strong>공로연수 (옵션 A)</strong> — 근로 제공 없이 기준임금의 60%를 1년간 수령. 이 기간이 퇴직 직전 평균임금 계산에 포함되어 <em>퇴직금이 줄어듭니다</em>.</div>' +
-      '<div class="ret-tl-legend-row"><span class="ret-tl-dot-b"></span><strong>계속근무 (옵션 B)</strong> — 1년 추가 근무 + 기준임금 100% 유지. 근속연수 1년 추가 적용 → <em>퇴직금 기준 최고</em>.</div>' +
-      '<div class="ret-tl-legend-row"><span class="ret-tl-dot-n"></span><strong>법정퇴직 (해당없음)</strong> — 임금피크 미신청. 만 60세에 즉시 퇴직. 임금피크 기간 수령 없음.</div>' +
+      '<div class="ret-tl-legend-row ret-tl-legend-important"><span class="ret-tl-dot-a"></span><strong>공로연수 1년 선택</strong> — 실제 근무지에 출근하지 않고 기준 보수 60%를 수령합니다. 다만 퇴직금은 <em>공로연수 전 3개월 평균임금</em> 기준이라 공로연수 60% 때문에 줄지 않습니다.</div>' +
+      '<div class="ret-tl-legend-row"><span class="ret-tl-dot-b"></span><strong>공로연수 미선택·계속근무</strong> — 1년 계속 근무 + 직전년도 보수 100% 유지. 단, 호봉상승·임금인상분·승진·승격은 제외됩니다.</div>' +
+      '<div class="ret-tl-legend-row"><span class="ret-tl-dot-n"></span><strong>법정퇴직</strong> — 정년퇴직일에 퇴직. 정년 전 1년 수령액은 별도로 더하지 않습니다.</div>' +
     '</div>';
 
   el.style.display = 'block';
@@ -1243,8 +1267,8 @@ function calcScenarioEmbedded(silent) {
   var hire  = new Date(hireVal);
   var now   = new Date();
   var birth = birthVal ? new Date(birthVal) : null;
-  var peakDate = birth ? new Date(birth.getFullYear()+60, birth.getMonth(), birth.getDate()) : null;
-  var peakEnd  = birth ? new Date(birth.getFullYear()+61, birth.getMonth(), birth.getDate()) : null;
+  var peakEnd  = birth ? retGetLegalRetirementDate(birth) : null;
+  var peakDate = peakEnd ? retAddYears(peakEnd, -1) : null;
   var oneYearLater = new Date(now.getFullYear()+1, now.getMonth(), now.getDate());
 
   // 타임라인 렌더
@@ -1252,17 +1276,17 @@ function calcScenarioEmbedded(silent) {
 
   var scenarios = [
     { label:'지금 바로 퇴직', badge:'시나리오 1', retireDate: now,     wageMulti:1.0, peakIncome:0,
-      desc:'임금피크 전 퇴직. 기준임금 그대로 퇴직금 산정.' },
-    { label:'옵션 A — 공로연수 후 퇴직', badge:'시나리오 2', retireDate: peakEnd||oneYearLater, wageMulti:0.6, peakIncome: wage*0.6*12,
-      desc:'1년 공로연수(60%) 후 퇴직. 퇴직금 기준임금도 60% 적용.' },
-    { label:'옵션 B — 계속근무 후 퇴직', badge:'시나리오 3', retireDate: peakEnd||oneYearLater, wageMulti:1.0, peakIncome: wage*1.0*12,
-      desc:'1년 계속근무(100%) 후 퇴직. 퇴직금 기준임금 유지.' }
+      desc:'정년 전 1년 선택 전 퇴직. 입력 평균임금 그대로 퇴직금 산정.' },
+    { label:'옵션 A — 공로연수 후 퇴직', badge:'시나리오 2', retireDate: peakEnd||oneYearLater, wageMulti:1.0, peakIncome: wage*0.6*12,
+      desc:'공로연수 1년 선택. 수령액은 60%지만 퇴직금 기준 평균임금은 공로연수 전 3개월 기준으로 보호.' },
+    { label:'옵션 B — 공로연수 미선택·계속근무', badge:'시나리오 3', retireDate: peakEnd||oneYearLater, wageMulti:1.0, peakIncome: wage*1.0*12,
+      desc:'1년 계속근무. 직전년도 보수 100% 기준, 호봉상승·임금인상분·승진·승격 제외.' }
   ];
 
   var results = scenarios.map(function(sc) {
     var years = Math.max(0, (sc.retireDate - hire) / (365.25 * 86400000));
     var eff   = Math.round(wage * sc.wageMulti);
-    var r     = _retComputeSeverance(eff, years, hireVal);
+    var r     = _retComputeSeverance(eff, years, hireVal, sc.retireDate);
     return { sc: sc, r: r, years: years, eff: eff, total: r.퇴직금 + sc.peakIncome };
   });
 
@@ -1277,15 +1301,15 @@ function calcScenarioEmbedded(silent) {
   var bestResult = results[bestIdx];
   var diffFromBest0 = bestResult.total - results[0].total;
 
-  // ── AI 분석 요약 카드 (상단 큰 카드) ──
+  // ── 규정 기반 요약 카드 (상단 큰 카드) ──
   var summaryCard = document.createElement('div');
   summaryCard.className = 'ret-ai-card ret-sc-summary';
-  var scenarioLabels = ['지금 퇴직', '옵션 A (공로연수)', '옵션 B (계속근무)'];
+  var scenarioLabels = ['지금 퇴직', '공로연수 1년', '계속근무 1년'];
   var gainText = diffFromBest0 > 0
     ? '지금 퇴직보다 <span style="color:#86efac;font-weight:800;">' + retFmt(diffFromBest0) + ' 더</span> 받을 수 있습니다'
     : '현재 시점이 최적입니다';
   summaryCard.innerHTML =
-    '<div class="ret-ai-badge">🤖 AI 시나리오 분석 &nbsp;·&nbsp; 3가지 비교</div>' +
+    '<div class="ret-ai-badge">📊 규정 기반 비교 &nbsp;·&nbsp; 3가지 선택</div>' +
     '<div class="ret-ai-headline">최적 선택: <span style="color:#86efac;">' + bestResult.sc.label + '</span><br>' + gainText + '</div>' +
     '<div class="ret-ai-sub">' + bestResult.sc.desc + '</div>' +
     // 막대 차트
@@ -1303,7 +1327,7 @@ function calcScenarioEmbedded(silent) {
     }).join('') +
     '</div>' +
     '<div class="ret-ai-target-date">📅 퇴직 예정일: <strong>' +
-      (peakEnd ? retFmtDate(peakEnd) + ' (만 61세 기준)' : '입력된 날짜 기준') +
+      (peakEnd ? retFmtDate(peakEnd) + ' (정년퇴직일 기준)' : '입력된 날짜 기준') +
     '</strong></div>';
   container.appendChild(summaryCard);
 
@@ -1336,10 +1360,10 @@ function calcScenarioEmbedded(silent) {
       var v = document.createElement('span'); v.style.cssText = 'font-weight:' + (hi?'700':'600') + '; color:' + (hi?'#059669':'inherit') + ';'; v.textContent = val;
       row.appendChild(l); row.appendChild(v); card.appendChild(row);
     }
-    scRow('근속', Math.floor(res.years) + '년', false);
-    scRow('기준 평균임금', retFmt(res.eff), false);
+    scRow('근속', res.r.근속기간 || (Math.floor(res.years) + '년'), false);
+    scRow('퇴직금 기준 평균임금', retFmt(res.eff), false);
     scRow('퇴직금', retFmt(res.r.퇴직금), false);
-    if (res.sc.peakIncome > 0) scRow('임금피크 1년 수령', retFmt(res.sc.peakIncome), false);
+    if (res.sc.peakIncome > 0) scRow('정년 전 1년 수령', retFmt(res.sc.peakIncome), false);
     scRow('패키지 합계', retFmt(res.total), isWinner);
 
     container.appendChild(card);
@@ -1400,8 +1424,8 @@ function initRetirementTab() {
         if (scH.value && scB.value) {
           var _hire  = new Date(scH.value);
           var _birth = new Date(scB.value);
-          var _peak  = new Date(_birth.getFullYear()+60, _birth.getMonth(), _birth.getDate());
-          var _peakE = new Date(_birth.getFullYear()+61, _birth.getMonth(), _birth.getDate());
+          var _peakE = retGetLegalRetirementDate(_birth);
+          var _peak  = retAddYears(_peakE, -1);
           renderRetSimTimeline(_hire, _peak, _peakE);
         }
         // 자동 계산 or 안내 메시지
@@ -1458,126 +1482,6 @@ function initRetirementTab() {
   }
   // 입사일 채워졌으니 빠른 날짜 버튼 업데이트
   retUpdateQuickDates();
-
-  // E4: 퇴직 타임라인 렌더
-  _renderRetirementTimeline(profile, avgWageToUse);
-}
-
-function _renderRetirementTimeline(profile, avgWage) {
-  var container = document.getElementById('retirementTimelineContent');
-  if (!container) return;
-
-  var hasProfile = profile && profile.hireDate && avgWage > 0;
-  while (container.firstChild) container.removeChild(container.firstChild);
-
-  if (!hasProfile) {
-    var empty = document.createElement('div');
-    empty.className = 'empty-state';
-    empty.style.padding = '24px 0';
-    var emptyMsg = document.createElement('p');
-    emptyMsg.textContent = '입사일과 급여 정보를 먼저 입력해주세요.';
-    emptyMsg.style.cssText = 'color:var(--text-muted);font-size:var(--text-body-normal);';
-    var emptyBtn = document.createElement('button');
-    emptyBtn.textContent = '개인정보 탭으로 →';
-    emptyBtn.className = 'btn btn-primary';
-    emptyBtn.style.marginTop = '10px';
-    emptyBtn.onclick = function() { switchTab('info'); };
-    empty.appendChild(emptyMsg);
-    empty.appendChild(emptyBtn);
-    container.appendChild(empty);
-    return;
-  }
-
-  var hireDateStr = profile.hireDate.replace(/\./g, '-').replace(/(\d{4})-(\d{1,2})-(\d{1,2})/, function(_, y, m, d) {
-    return y + '-' + m.padStart(2,'0') + '-' + d.padStart(2,'0');
-  });
-  var now = new Date();
-  var results = [];
-
-  for (var i = 0; i < 12; i++) {
-    var retYear = now.getFullYear();
-    var retMonth = now.getMonth() + i;
-    if (retMonth >= 12) { retYear += Math.floor(retMonth / 12); retMonth = retMonth % 12; }
-    var retDate = new Date(retYear, retMonth + 1, 0); // last day of month
-
-    var retDateStr = retDate.getFullYear() + '-' +
-      String(retDate.getMonth() + 1).padStart(2,'0') + '-' +
-      String(retDate.getDate()).padStart(2,'0');
-
-    var ret = null;
-    try {
-      // Plan F Bug #3: CALC.calcRetirement 미존재 → calcSeveranceFullPay 로 교체
-      if (typeof CALC !== 'undefined' && CALC.calcSeveranceFullPay) {
-        var svcYears = Math.floor((retDate - new Date(hireDateStr)) / (1000 * 60 * 60 * 24 * 365.25));
-        ret = CALC.calcSeveranceFullPay(avgWage, svcYears, hireDateStr);
-      }
-    } catch(e) {}
-
-    results.push({
-      year: retYear,
-      month: retMonth + 1,
-      label: (retMonth + 1) + '월',
-      amount: ret ? (ret.total || ret.severancePay || 0) : 0,
-      isCurrentMonth: i === 0
-    });
-  }
-
-  var validAmounts = results.map(function(r) { return r.amount; }).filter(function(a) { return a > 0; });
-  if (validAmounts.length === 0) {
-    var errMsg = document.createElement('p');
-    errMsg.textContent = '퇴직금 계산 정보가 부족합니다.';
-    errMsg.style.cssText = 'color:var(--text-muted);padding:16px 0;text-align:center;';
-    container.appendChild(errMsg);
-    return;
-  }
-  var maxAmt = Math.max.apply(null, validAmounts);
-  var minAmt = Math.min.apply(null, validAmounts);
-  var maxIdx = results.findIndex(function(r) { return r.amount === maxAmt; });
-  var minIdx = results.findIndex(function(r) { return r.amount === minAmt; });
-
-  // Summary chips
-  var chipRow = document.createElement('div');
-  chipRow.style.cssText = 'display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;';
-  function makeChip(text, bg, color) {
-    var chip = document.createElement('span');
-    chip.textContent = text;
-    chip.style.cssText = 'padding:4px 12px;border-radius:20px;font-size:var(--text-body-small);font-weight:600;background:' + bg + ';color:' + color + ';';
-    return chip;
-  }
-  chipRow.appendChild(makeChip('★ 최고 ' + results[maxIdx].label + ': ' + Math.round(maxAmt / 10000) + '만원', 'rgba(245,158,11,0.12)', 'var(--accent-amber,#f59e0b)'));
-  chipRow.appendChild(makeChip('▼ 최저 ' + results[minIdx].label + ': ' + Math.round(minAmt / 10000) + '만원', 'rgba(244,63,94,0.08)', 'var(--accent-rose,#f43f5e)'));
-  container.appendChild(chipRow);
-
-  // 12-month grid
-  var grid = document.createElement('div');
-  grid.style.cssText = 'display:grid;grid-template-columns:repeat(2,1fr);gap:8px;';
-
-  results.forEach(function(r, idx) {
-    var cell = document.createElement('div');
-    var isMax = idx === maxIdx, isMin = idx === minIdx, isCur = r.isCurrentMonth;
-    var borderColor = isMax ? 'var(--accent-amber,#f59e0b)' : isMin ? 'var(--accent-rose,#f43f5e)' : isCur ? 'var(--accent-indigo,#6366f1)' : 'var(--border-glass,rgba(0,0,0,0.1))';
-    cell.style.cssText = 'padding:10px;border-radius:10px;border:2px solid ' + borderColor + ';text-align:center;' +
-      (isMax ? 'background:rgba(245,158,11,0.06);' : isMin ? 'background:rgba(244,63,94,0.04);' : '');
-
-    var monthLabel = document.createElement('div');
-    monthLabel.textContent = (isMax ? '★ ' : '') + r.year + '년 ' + r.label;
-    monthLabel.style.cssText = 'font-size:0.75rem;color:var(--text-muted);margin-bottom:4px;' + (isMax ? 'font-weight:600;' : '');
-
-    var amtLabel = document.createElement('div');
-    amtLabel.textContent = r.amount > 0 ? Math.round(r.amount / 10000) + '만원' : '—';
-    amtLabel.style.cssText = 'font-size:var(--text-body-normal);font-weight:' + (isMax ? '700' : '500') + ';' +
-      'color:' + (isMax ? 'var(--accent-amber,#f59e0b)' : isMin ? 'var(--accent-rose,#f43f5e)' : 'var(--text-primary)') + ';';
-
-    cell.appendChild(monthLabel);
-    cell.appendChild(amtLabel);
-    grid.appendChild(cell);
-  });
-  container.appendChild(grid);
-
-  var note = document.createElement('p');
-  note.textContent = '연금·세금 제외 계산 (v2에서 추가 예정)';
-  note.style.cssText = 'font-size:0.72rem;color:var(--text-muted);margin-top:10px;text-align:center;';
-  container.appendChild(note);
 }
 
 // ═══════════ 📅 연차 계산 ═══════════
