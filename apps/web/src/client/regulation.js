@@ -1045,7 +1045,7 @@ function renderCalcBlock(question) {
   var result = calcFn(_cachedProfile, _cachedWage);
   if (!result) {
     return '<div class="reg-box-calc reg-box-calc-empty">'
-      + '📊 <a href="index.html#profile">내 정보</a>를 입력하면 실제 금액을 계산해드립니다.'
+      + '📊 <a href="/app?tab=profile">내 정보</a>를 입력하면 실제 금액을 계산해드립니다.'
       + '</div>';
   }
 

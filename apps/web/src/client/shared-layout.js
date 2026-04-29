@@ -1,6 +1,6 @@
 // ============================================================
 // shared-layout.js — Header & Footer 공유 컴포넌트
-// index.html, regulation.html 등에서 동일한 헤더/푸터 사용
+// /, /app, /regulation 등에서 동일한 헤더/푸터 사용
 // ============================================================
 
 (function () {
@@ -11,7 +11,7 @@
   var isApp = CURRENT_PATH === '/app';
   var isRegulation = CURRENT_PATH === '/regulation';
   var isCardNews = CURRENT_PATH === '/cardnews';
-  var isOnboarding = CURRENT_PATH === '' || CURRENT_PATH === '/';
+  var isOnboarding = CURRENT_PATH === '/';
   var isStandalone = !isApp && !isRegulation && !isOnboarding;
 
   function homeHref(tab) {
@@ -61,7 +61,7 @@
     var inner = el('div', { className: 'header-inner' });
     var topRow = el('div', { className: 'header-top-row' });
 
-    // Logo — index: switchTab('home'), regulation/standalone: link
+    // Logo — app: switchTab('home'), regulation/standalone: link
     var logo;
     if (isRegulation || isStandalone) {
       logo = el('a', { className: 'logo', href: homeHref('home') });
