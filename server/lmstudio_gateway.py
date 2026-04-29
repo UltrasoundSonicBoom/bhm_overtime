@@ -36,8 +36,10 @@ from lmstudio_schemas import (
 
 
 LMSTUDIO_BASE_URL = os.getenv("LMSTUDIO_BASE_URL", "http://127.0.0.1:1234/v1").rstrip("/")
+LMSTUDIO_API_TOKEN = os.getenv("LMSTUDIO_API_TOKEN", "")
 QWEN_VL_MODEL = os.getenv("SNUHMATE_QWEN_VL_MODEL", "qwen/qwen3-vl-8b")
 GEMMA_MODEL = os.getenv("SNUHMATE_GEMMA_MODEL", "google/gemma-4-e4b")
+EMBEDDING_MODEL = os.getenv("SNUHMATE_EMBEDDING_MODEL", "text-embedding-embeddinggemma-300m")
 REVIEW_STORE = Path(os.getenv("SNUHMATE_LMSTUDIO_REVIEW_STORE", "data/lmstudio-review-queue.json"))
 SCHEDULE_REVIEW_STORE = Path(os.getenv("SNUHMATE_SCHEDULE_REVIEW_STORE", "data/schedule-review-queue.json"))
 REQUEST_TIMEOUT_SECONDS = int(os.getenv("LMSTUDIO_TIMEOUT_SECONDS", "180"))
@@ -75,6 +77,8 @@ def _lmstudio_request(path: str, payload: dict[str, Any] | None = None) -> dict[
     data = None
     method = "GET"
     headers = {"Content-Type": "application/json"}
+    if LMSTUDIO_API_TOKEN:
+        headers["Authorization"] = f"Bearer {LMSTUDIO_API_TOKEN}"
     if payload is not None:
         data = json.dumps(payload, default=_json_default).encode("utf-8")
         method = "POST"
@@ -416,6 +420,10 @@ def health() -> dict[str, Any]:
             "qwen_vl": QWEN_VL_MODEL,
             "gemma": GEMMA_MODEL,
         },
+        "optional_models": {
+            "embedding": EMBEDDING_MODEL,
+        },
+        "embedding_available": EMBEDDING_MODEL in model_ids,
         "available_models": model_ids,
     }
 
@@ -789,6 +797,35 @@ def decide_schedule_review(review_id: str, decision: ReviewDecisionRequest) -> d
         _write_schedule_reviews(records)
         return record.model_dump(mode="json")
     raise HTTPException(status_code=404, detail="schedule review not found")
+
+
+class EmbedRequest(BaseModel):
+    input: str | list[str]
+    model: str | None = None
+
+
+class EmbedResponse(BaseModel):
+    model: str
+    embeddings: list[list[float]]
+    input_count: int
+
+
+@app.post("/api/lmstudio/embed")
+def embed(request: EmbedRequest) -> dict[str, Any]:
+    model = request.model or EMBEDDING_MODEL
+    inputs = request.input if isinstance(request.input, list) else [request.input]
+    response = _lmstudio_request(
+        "/embeddings",
+        {"model": model, "input": inputs},
+    )
+    data = response.get("data", [])
+    embeddings = [item.get("embedding", []) for item in data]
+    result = EmbedResponse(
+        model=model,
+        embeddings=embeddings,
+        input_count=len(inputs),
+    )
+    return result.model_dump(mode="json")
 
 
 if __name__ == "__main__":
