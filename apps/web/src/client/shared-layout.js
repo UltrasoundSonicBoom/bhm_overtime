@@ -6,14 +6,16 @@
 (function () {
   'use strict';
 
-  var CURRENT_PAGE = location.pathname.split('/').pop() || 'index.html';
-  var isIndex = CURRENT_PAGE === 'index.html';
-  var isRegulation = CURRENT_PAGE === 'regulation.html';
-  var isCardNews = CURRENT_PAGE === 'cardnews.html';
-  var isStandalone = !isIndex && !isRegulation;
+  // Phase 6 이후 라우팅: / = onboarding, /app = SPA, /regulation = 규정 페이지
+  var CURRENT_PATH = location.pathname.replace(/\/$/, '') || '/';
+  var isApp = CURRENT_PATH === '/app';
+  var isRegulation = CURRENT_PATH === '/regulation';
+  var isCardNews = CURRENT_PATH === '/cardnews';
+  var isOnboarding = CURRENT_PATH === '' || CURRENT_PATH === '/';
+  var isStandalone = !isApp && !isRegulation && !isOnboarding;
 
   function homeHref(tab) {
-    return 'index.html?app=1&tab=' + tab;
+    return '/app?tab=' + tab;
   }
 
   function el(tag, attrs) {
@@ -91,7 +93,7 @@
     // Settings button (헤더 ⚙️) — 채널톡 자리 대체
     var settingsBtn = el('button', { className: 'theme-toggle-btn', title: '설정', textContent: '⚙️' });
     settingsBtn.onclick = function () {
-      if (isIndex && window.switchTab) {
+      if (isApp && window.switchTab) {
         var settingsContent = document.getElementById('tab-settings');
         var isSettingsActive = settingsContent && settingsContent.classList.contains('active');
         switchTab(isSettingsActive ? 'home' : 'settings');
@@ -141,7 +143,7 @@
     ];
 
     items.forEach(function (item) {
-      if (isIndex && item.tab) {
+      if (isApp && item.tab) {
         var btn = el('button', { className: 'nav-tab' });
         btn.dataset.tab = item.tab;
         addTabContent(btn, item.icon, item.text);
