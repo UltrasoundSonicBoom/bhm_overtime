@@ -52,6 +52,13 @@ export async function onAuthChanged(callback) {
   return authMod.onAuthStateChanged(auth, async (user) => {
     if (user) {
       window.__firebaseUid = user.uid;
+      // salary-parser._payslipUid() 가 snuhmate_settings.googleSub 를 읽으므로
+      // 로그인 시 동기화해야 payslip localStorage 키가 uid 기반으로 전환됨
+      try {
+        const s = JSON.parse(localStorage.getItem('snuhmate_settings') || '{}');
+        s.googleSub = user.uid;
+        localStorage.setItem('snuhmate_settings', JSON.stringify(s));
+      } catch (e) { /* noop */ }
       // 마이그레이션 다이얼로그 hook (Phase 8 에서 모듈 추가 시 활성, 미존재 무해)
       try {
         const mig = await import('./migration-dialog.js');
@@ -61,6 +68,12 @@ export async function onAuthChanged(callback) {
       } catch (e) { /* migration-dialog 미존재 — Phase 8 미완 시점 무해 */ }
     } else {
       delete window.__firebaseUid;
+      // 로그아웃 시 googleSub 제거 → payslip 키 guest 로 복귀
+      try {
+        const s = JSON.parse(localStorage.getItem('snuhmate_settings') || '{}');
+        delete s.googleSub;
+        localStorage.setItem('snuhmate_settings', JSON.stringify(s));
+      } catch (e) { /* noop */ }
     }
     window.dispatchEvent(new CustomEvent('app:auth-changed', { detail: { user } }));
     if (typeof callback === 'function') callback(user);
