@@ -25,6 +25,8 @@ export const ENCRYPTED_FIELDS = {
   'overtime/*': ['entries[].hours', 'entries[].duration', 'entries[].notes'],
   // Leave — entries 의 duration/notes (date 평문)
   'leave/*': ['entries[].duration', 'entries[].notes'],
+  // Schedule — entries 의 duty/memo (date 평문, 팀원 이름은 평문)
+  'schedule/*': ['entries[].duty', 'entries[].memo'],
   // Settings — appLockPin, customNotes (theme 등 일반 설정 평문)
   'settings/app': ['appLockPin', 'customNotes'],
   // Reference favorites — items 자체는 ID 배열이라 평문 OK (식별성 X)

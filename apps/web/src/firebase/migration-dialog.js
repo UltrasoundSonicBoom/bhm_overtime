@@ -166,6 +166,20 @@ export async function uploadCategories(uid, selectedIds) {
     });
   }
 
+  if (selectedIds.includes('schedule') || selectedIds.includes('overtime')) {
+    // 근무표는 overtime 항목과 함께 마이그레이션 (자동 레코드 의존성 때문에)
+    const raw = localStorage.getItem('snuhmate_schedule_records');
+    if (raw) {
+      try {
+        const data = JSON.parse(raw);
+        const { writeAllSchedule } = await import('/src/firebase/sync/schedule-sync.js');
+        tasks.push(writeAllSchedule(null, uid, data));
+      } catch (e) {
+        console.warn('[migration] schedule sync 실패', e?.message);
+      }
+    }
+  }
+
   if (selectedIds.includes('workHistory')) {
     syncTasks.push({
       id: 'workHistory',

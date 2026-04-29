@@ -226,7 +226,8 @@ export const OVERTIME = {
     },
 
     // ── 전체 기록 생성 (입력 → 계산 → 저장) ──
-    createRecord(date, startTime, endTime, type, hourlyRate, isHoliday, memo) {
+    // metadata: { source, sourceMonth } — 자동입력 추적용 옵셔널 필드
+    createRecord(date, startTime, endTime, type, hourlyRate, isHoliday, memo, metadata) {
         let breakdown;
         let totalHours;
         let estimatedPay;
@@ -278,7 +279,38 @@ export const OVERTIME = {
             hourlyRate,
         };
 
+        // 자동입력 메타데이터 (idempotency용)
+        if (metadata && typeof metadata === 'object') {
+            if (metadata.source) record.source = metadata.source;
+            if (metadata.sourceMonth) record.sourceMonth = metadata.sourceMonth;
+        }
+
         return this.addRecord(record);
+    },
+
+    // ── source 태그로 레코드 검색 (근무표 자동입력 idempotency) ──
+    getRecordsBySource(source, sourceMonth) {
+        if (!source) return [];
+        const all = this._loadAll();
+        const result = [];
+        for (const monthKey of Object.keys(all)) {
+            for (const rec of all[monthKey] || []) {
+                if (rec.source !== source) continue;
+                if (sourceMonth && rec.sourceMonth !== sourceMonth) continue;
+                result.push({ ...rec, _yyyymm: monthKey });
+            }
+        }
+        return result;
+    },
+
+    // ── source별 일괄 삭제 (재업로드 시 기존 자동입력 제거) ──
+    deleteRecordsBySource(source, sourceMonth) {
+        const records = this.getRecordsBySource(source, sourceMonth);
+        let deleted = 0;
+        for (const rec of records) {
+            if (this.deleteRecord(rec.id)) deleted++;
+        }
+        return deleted;
     },
 
     // ── 기록 수정 (재계산 포함) ──

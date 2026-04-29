@@ -15,7 +15,11 @@
     "@snuhmate/profile": "workspace:*",
     "@snuhmate/regulation-constants": "workspace:*",
     "@snuhmate/shared-utils": "workspace:*",
-    "astro": "^4.16.18"
+    "astro": "^4.16.18",
+    "ical.js": "^2.2.1",
+    "papaparse": "^5.5.3",
+    "xlsx": "^0.18.5",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.4",

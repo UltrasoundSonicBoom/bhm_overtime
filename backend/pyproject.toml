@@ -1,0 +1,32 @@
+[tool.poetry]
+name = "snuhmate-backend"
+version = "0.1.0"
+description = "SNUH Mate 근무표 파싱 로컬 백엔드 (Mac mini M4 Pro)"
+authors = ["SNUH Mate Team"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.115.0"
+uvicorn = {extras = ["standard"], version = "^0.32.0"}
+pydantic = "^2.9.0"
+openpyxl = "^3.1.5"
+pandas = "^2.2.3"
+sqlmodel = "^0.0.22"
+requests = "^2.32.0"
+python-multipart = "^0.0.12"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.0"
+pytest-asyncio = "^0.24.0"
+httpx = "^0.27.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+pythonpath = ["."]
+testpaths = ["tests"]

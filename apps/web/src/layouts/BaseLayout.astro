@@ -26,6 +26,10 @@ const {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content={description} />
   <title>{title}</title>
+  <!-- Firebase CDN 사전 연결 — 로그인 버튼 클릭 전 DNS+TCP 준비 -->
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
+  <link rel="dns-prefetch" href="https://www.gstatic.com" />
+  <link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin />
   <link rel="manifest" href="/manifest.json" />
   <link rel="apple-touch-icon" href="/snuhmaterect.png" />
   <link rel="icon" type="image/png" sizes="32x32" href="/snuhmaterect.png" />
@@ -40,5 +44,15 @@ const {
   <header id="sharedHeader" class="block w-full"></header>
   <slot />
   {showFooterNav && <nav id="sharedFooter" class="block w-full"></nav>}
+  <script type="module">
+    // Firebase SDK 백그라운드 초기화 — 로그인 버튼 클릭 전 SDK 준비
+    // singleton(_initPromise)이므로 실제 로그인 시점엔 이미 로드됨
+    import('/src/client/config.js').then(({ firebaseConfig }) => {
+      if (!firebaseConfig?.apiKey) return;
+      import('/src/firebase/firebase-init.js').then(({ initFirebase }) => {
+        initFirebase(firebaseConfig).catch(() => {});
+      }).catch(() => {});
+    }).catch(() => {});
+  </script>
 </body>
 </html>

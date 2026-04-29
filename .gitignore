@@ -27,6 +27,14 @@ credentials.md
 
 node_modules/
 dist/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Astro 캐시
+.astro/
 .gstack/
 .worktrees/
 .playwright-mcp/
@@ -41,8 +49,3 @@ tmp/
 .env*
 firestore-debug.log
 firebase-debug.log
-.astro/
-
-# Python
-__pycache__/
-*.pyc

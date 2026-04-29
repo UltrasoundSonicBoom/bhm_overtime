@@ -20,7 +20,7 @@
   'use strict';
 
   var ALLOWED_TABS = [
-    'home', 'payroll', 'overtime', 'leave',
+    'home', 'payroll', 'overtime', 'leave', 'schedule',
     'reference', 'profile', 'settings', 'feedback'
   ];
 

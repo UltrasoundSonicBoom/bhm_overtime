@@ -44,6 +44,7 @@ import '@snuhmate/profile/work-history';
 import './pay-estimation.js';
 import './payslip-tab.js';
 import './leave-tab.js';
+import './schedule-tab.js';
 // app.js 이후 로드되던 것들도 통합 (HTML <script src=...> 24~28번)
 import './settings-ui.js';
 import './inline-ui-helpers.js';
@@ -503,6 +504,11 @@ function switchTab(tabName) {
   }
   if (tabName === 'leave') {
     _afterLoad('leave', function () { applyProfileToLeave(); initLeaveTab(); });
+  }
+  if (tabName === 'schedule') {
+    _afterLoad('schedule', function () {
+      if (typeof window.initScheduleTab === 'function') window.initScheduleTab();
+    });
   }
   if (tabName === 'reference') {
     _afterLoad('reference', function () {

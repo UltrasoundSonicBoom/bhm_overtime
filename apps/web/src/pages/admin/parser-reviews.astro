@@ -1,0 +1,121 @@
+---
+// admin/parser-reviews.astro — 파싱 결과 리뷰 큐 (admin only)
+//
+// 백엔드 /admin/reviews 엔드포인트에서 confidence < 0.9 케이스 가져와 표시.
+// 관리자가 수동 보정 후 "검증된 코퍼스"로 저장.
+//
+// 인증: Firebase Auth admin claim 필요 (Phase 3에 강화).
+// 현재는 dev 환경 한정으로 admin URL 직접 접근.
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Parser Reviews — Admin"
+  description="근무표 파싱 결과 리뷰 큐 (관리자 전용)"
+  showFooterNav={false}
+>
+  <main class="main p-4">
+    <div class="card">
+      <div class="card-title">
+        <span class="icon amber">🔍</span>
+        <span>파싱 리뷰 큐 (confidence &lt; 0.9)</span>
+      </div>
+
+      <div id="reviewBackendStatus" class="info-note-banner mt-3" style="display:none;"></div>
+
+      <div id="reviewList" class="mt-3">
+        <p class="text-brand-text-muted">로드 중...</p>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const BACKEND_CANDIDATES = ['http://localhost:8001'];
+
+    async function probeBackend() {
+      for (const url of BACKEND_CANDIDATES) {
+        try {
+          const ctl = new AbortController();
+          const tid = setTimeout(() => ctl.abort(), 1500);
+          const r = await fetch(`${url}/health`, { signal: ctl.signal });
+          clearTimeout(tid);
+          if (r.ok) return url;
+        } catch (_e) { /* next */ }
+      }
+      return null;
+    }
+
+    function makeIcon(cls, emoji) {
+      const span = document.createElement('span');
+      span.className = `icon ${cls}`;
+      span.textContent = emoji;
+      return span;
+    }
+
+    async function load() {
+      const list = document.getElementById('reviewList');
+      const banner = document.getElementById('reviewBackendStatus');
+      if (!list || !banner) return;
+
+      const url = await probeBackend();
+      if (!url) {
+        banner.style.display = '';
+        banner.textContent = '⚠️ 로컬 백엔드(LM Studio + FastAPI)가 실행되지 않았습니다. backend/README.md를 참고하세요.';
+        list.textContent = '';
+        return;
+      }
+
+      banner.style.display = '';
+      banner.textContent = `백엔드 연결됨: ${url}`;
+
+      try {
+        const r = await fetch(`${url}/admin/reviews`, { method: 'GET' });
+        if (r.status === 404) {
+          list.textContent = '';
+          const p = document.createElement('p');
+          p.className = 'text-brand-text-muted';
+          p.textContent = '리뷰 큐 API가 아직 구현되지 않았습니다. (backend/app/review/admin_router.py — Phase 2.5)';
+          list.appendChild(p);
+          return;
+        }
+        if (!r.ok) {
+          throw new Error(`HTTP ${r.status}`);
+        }
+        const data = await r.json();
+        const items = data?.reviews || [];
+        list.textContent = '';
+        if (items.length === 0) {
+          const p = document.createElement('p');
+          p.className = 'text-brand-text-muted text-center p-6';
+          p.textContent = '리뷰 대기 중인 케이스가 없습니다. ✨';
+          list.appendChild(p);
+          return;
+        }
+        for (const it of items) {
+          const card = document.createElement('div');
+          card.className = 'card mt-2';
+          const title = document.createElement('div');
+          title.className = 'card-title';
+          title.appendChild(makeIcon('rose', '📋'));
+          const titleText = document.createElement('span');
+          titleText.textContent = `${it.id || '?'} — confidence ${Math.round((it.confidence || 0) * 100)}%`;
+          title.appendChild(titleText);
+          card.appendChild(title);
+          const pre = document.createElement('pre');
+          pre.style.cssText = 'white-space:pre-wrap; font-family:ui-monospace,monospace; font-size:11px; padding:8px; background:rgba(0,0,0,0.04); border-radius:8px; max-height:400px; overflow:auto;';
+          pre.textContent = JSON.stringify(it, null, 2);
+          card.appendChild(pre);
+          list.appendChild(card);
+        }
+      } catch (e) {
+        list.textContent = '';
+        const p = document.createElement('p');
+        p.className = 'text-brand-text-muted';
+        p.textContent = `로드 실패: ${e?.message?.slice(0, 100)}`;
+        list.appendChild(p);
+      }
+    }
+
+    load();
+  </script>
+</BaseLayout>

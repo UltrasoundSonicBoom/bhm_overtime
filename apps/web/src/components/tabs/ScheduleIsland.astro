@@ -1,0 +1,844 @@
+---
+// ScheduleIsland.astro — 근무 탭
+// A3 디자인 시스템 매치: ICU 로스터 그리드 + HPPD + 통계 + 경고 + 다음 근무.
+// schedule-tab.js가 동적 콘텐츠를 채움. 디자인 시스템 클래스만 사용 (ds-*, .card, .badge, .icon).
+---
+<div class="tab-content" id="tab-schedule">
+
+  <!-- 안내 배너 -->
+  <div class="info-note-banner">
+    <span>🗓️</span>
+    <span>병동 근무표를 업로드하면 듀티(D/E/N)·연차(AL)·리커버리(RD)가 캘린더에 자동 입력됩니다.</span>
+  </div>
+
+  <!-- ═══════ 헤더: 부서·월 + 업로드 버튼 + 다음 근무 ═══════ -->
+  <div class="card mt-3 sch-header-card">
+    <div class="flex items-center gap-3 flex-wrap">
+      <div class="card-title m-0 flex-1">
+        <span class="icon indigo">🏥</span>
+        <span>
+          <span id="schDeptName">중환자실(ICU)</span>
+          <span class="text-brand-text-muted font-normal"> — </span>
+          <span id="schPeriodLabel">2026년 4월</span>
+        </span>
+      </div>
+
+      <!-- 근무표 업로드 (이전 월간/주간 자리) -->
+      <button class="btn btn-primary flex items-center gap-2 flex-shrink-0" data-action="openSchUpload">
+        <span>📤</span><span>근무표 업로드</span>
+      </button>
+    </div>
+
+    <!-- 다음 근무 -->
+    <div class="sch-next-row mt-3" id="schNextDutyWrap" style="display:none;">
+      <div class="sch-next-card">
+        <span class="sch-next-label">📅 다음 근무</span>
+        <span class="sch-next-date" id="schNextDate">—</span>
+        <span class="sch-next-duty" id="schNextDuty">—</span>
+        <span class="sch-next-time" id="schNextTime">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ 통합 카드: 뷰 선택 + 캘린더/로스터 ═══════ -->
+  <div class="card mt-3 p-0 sch-main-card">
+
+    <!-- 토글 바 -->
+    <div class="sch-toggle-bar">
+      <div class="sch-seg">
+        <button class="sch-seg-btn active" data-action="setSchView" data-view="mine" id="schViewMineBtn">👤 내 스케줄</button>
+        <button class="sch-seg-btn" data-action="setSchView" data-view="team" id="schViewTeamBtn">👥 부서 전체</button>
+      </div>
+      <div class="sch-seg" id="schPeriodSeg">
+        <button class="sch-seg-btn active" data-action="setSchPeriod" data-period="month" id="schPeriodMonthBtn">월간</button>
+        <button class="sch-seg-btn" data-action="setSchPeriod" data-period="week" id="schPeriodWeekBtn">주간</button>
+      </div>
+    </div>
+    <p id="schPeriodHint" style="display:none;"></p>
+
+    <!-- 내 스케줄 — 월간 캘린더 -->
+    <div class="p-3" id="schMineCalendarCard">
+      <div id="schMineCalendar"></div>
+      <div class="sch-legend">
+        <span class="sch-legend-item"><span class="sch-legend-chip sch-duty-D">D</span>데이</span>
+        <span class="sch-legend-item"><span class="sch-legend-chip sch-duty-E">E</span>이브닝</span>
+        <span class="sch-legend-item"><span class="sch-legend-chip sch-duty-N">N</span>나이트</span>
+        <span class="sch-legend-item"><span class="sch-legend-chip sch-duty-O">O</span>오프</span>
+        <span class="sch-legend-item"><span class="sch-legend-chip sch-duty-AL">AL</span>연차</span>
+        <span class="sch-legend-item"><span class="sch-legend-chip sch-duty-RD">RD</span>리커버리</span>
+        <span class="sch-legend-item sch-legend-holiday"><span class="sch-legend-dot-holiday">●</span>공휴일</span>
+      </div>
+    </div>
+
+    <!-- 부서 전체 — ICU 로스터 그리드 (월간/주간) -->
+    <div id="schRosterCard" style="display:none;">
+      <div class="sch-week-nav" id="schWeekNav" style="display:none;">
+        <button class="cal-nav-btn" data-action="schNavWeek" data-nav-delta="-1" aria-label="이전 주">◀</button>
+        <span class="sch-week-label" id="schWeekLabel">주</span>
+        <button class="cal-nav-btn" data-action="schNavWeek" data-nav-delta="1" aria-label="다음 주">▶</button>
+      </div>
+      <div class="sch-roster-scroll">
+        <div id="schRoster" class="sch-roster"></div>
+      </div>
+      <div class="sch-legend">
+        <span class="sch-legend-item"><span class="sch-legend-chip sch-duty-D">D</span>데이</span>
+        <span class="sch-legend-item"><span class="sch-legend-chip sch-duty-E">E</span>이브닝</span>
+        <span class="sch-legend-item"><span class="sch-legend-chip sch-duty-N">N</span>나이트</span>
+        <span class="sch-legend-item"><span class="sch-legend-chip sch-duty-O">O</span>오프</span>
+        <span class="sch-legend-item"><span class="sch-legend-chip sch-duty-AL">AL</span>연차</span>
+        <span class="sch-legend-item"><span class="sch-legend-chip sch-duty-RD">RD</span>리커버리</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════ 통계 스트립 ═══════ -->
+  <div class="card mt-3" id="schStatsCard">
+    <div class="card-title">
+      <span class="icon emerald">📊</span>
+      <span>이번 달 한눈에</span>
+    </div>
+    <div class="sch-stats-grid" id="schStatsGrid"></div>
+    <div class="sch-warn-row mt-2" id="schWarnRow"></div>
+  </div>
+
+  <!-- ═══════ 선택일 상세 ═══════ -->
+  <div class="card mt-3" id="schDayDetailCard" style="display:none;">
+    <div class="card-title">
+      <span class="icon indigo">📌</span>
+      <span id="schDayDetailTitle">날짜 상세</span>
+    </div>
+    <div id="schDayDetailBody" class="text-brand-body-large"></div>
+  </div>
+
+  <!-- ═══════ 업로드 바텀시트 ═══════ -->
+  <div id="schUploadOverlay" class="ot-bottom-sheet-overlay" data-action="closeSchUpload"></div>
+  <div id="schUploadSheet" class="ot-bottom-sheet">
+    <div class="ot-sheet-handle"></div>
+    <div class="flex justify-between items-center mb-2">
+      <span class="font-bold text-brand-title-large text-brand-text-primary">근무표 업로드</span>
+      <button class="btn btn-icon p-1 text-brand-title-large bg-none border-none cursor-pointer" data-action="closeSchUpload">
+        <span class="text-brand-text-muted">✕</span>
+      </button>
+    </div>
+
+    <p class="text-brand-text-muted text-brand-body-large mb-3">
+      병동 근무표를 업로드하면 본인 행만 자동 추출됩니다.
+    </p>
+
+    <!-- 입력 소스 선택 — 큰 카드형 라디오 (세로 스택) -->
+    <div class="sch-source-cards" role="radiogroup" aria-label="입력 소스 선택">
+      <button class="sch-source-card active" data-action="setSchSource" data-source="file" type="button" role="radio" aria-checked="true">
+        <span class="sch-source-icon" aria-hidden="true">📄</span>
+        <span class="sch-source-text-wrap">
+          <span class="sch-source-title">파일 업로드</span>
+          <span class="sch-source-desc">PDF · 이미지 · Excel · CSV</span>
+        </span>
+        <span class="sch-source-radio-dot" aria-hidden="true"></span>
+      </button>
+      <button class="sch-source-card" data-action="setSchSource" data-source="ics" type="button" role="radio" aria-checked="false">
+        <span class="sch-source-icon" aria-hidden="true">📅</span>
+        <span class="sch-source-text-wrap">
+          <span class="sch-source-title">캘린더 파일</span>
+          <span class="sch-source-desc">.ics (Google · Naver · Outlook)</span>
+        </span>
+        <span class="sch-source-radio-dot" aria-hidden="true"></span>
+      </button>
+      <button class="sch-source-card" data-action="setSchSource" data-source="url" type="button" role="radio" aria-checked="false">
+        <span class="sch-source-icon" aria-hidden="true">🔗</span>
+        <span class="sch-source-text-wrap">
+          <span class="sch-source-title">캘린더 URL</span>
+          <span class="sch-source-desc">공개 ICS 주소 (Google 공유 링크)</span>
+        </span>
+        <span class="sch-source-radio-dot" aria-hidden="true"></span>
+      </button>
+    </div>
+
+    <!-- 파일/이미지/PDF/Excel 입력 -->
+    <div class="sch-source-pane" data-source-pane="file">
+      <label for="schFileInput" class="block">
+        <div class="sch-dropzone">
+          <div class="text-4xl mb-2">📄</div>
+          <div class="font-semibold text-brand-text-primary mb-1">파일을 선택하거나 끌어 놓으세요</div>
+          <div class="text-brand-text-muted text-brand-body-small">PDF · PNG · JPG · XLSX · CSV (최대 10MB)</div>
+        </div>
+        <input type="file" id="schFileInput"
+          accept=".pdf,.png,.jpg,.jpeg,.xlsx,.xls,.csv" class="hidden" />
+      </label>
+    </div>
+
+    <!-- .ics 파일 입력 -->
+    <div class="sch-source-pane" data-source-pane="ics" style="display:none;">
+      <label for="schIcsFileInput" class="block">
+        <div class="sch-dropzone">
+          <div class="text-4xl mb-2">📅</div>
+          <div class="font-semibold text-brand-text-primary mb-1">.ics 파일을 선택하세요</div>
+          <div class="text-brand-text-muted text-brand-body-small">Google · Naver · Outlook 캘린더 export</div>
+        </div>
+        <input type="file" id="schIcsFileInput"
+          accept=".ics,text/calendar" class="hidden" />
+      </label>
+      <p class="text-brand-text-muted text-brand-body-small mt-2">
+        💡 Google 캘린더 → 설정 → 캘린더 내보내기 → .ics 다운로드 → 여기에 업로드
+      </p>
+    </div>
+
+    <!-- 캘린더 URL 입력 -->
+    <div class="sch-source-pane" data-source-pane="url" style="display:none;">
+      <label class="block text-brand-body-large font-semibold text-brand-text-primary mb-1.5">
+        공개 ICS 링크
+      </label>
+      <input type="url" id="schIcsUrl" placeholder="https://calendar.google.com/.../basic.ics"
+        class="sch-name-select" />
+      <button class="btn btn-outline mt-2 w-full" data-action="fetchSchIcsUrl" type="button">
+        🔗 가져오기
+      </button>
+      <p class="text-brand-text-muted text-brand-body-small mt-2">
+        💡 Google 캘린더 → 설정 → 내 캘린더 → 비밀 주소(ICS)를 복사해 붙여넣으세요.
+        공개·비공개 모두 지원합니다.
+      </p>
+    </div>
+
+    <div id="schUploadStatus" class="mt-3" style="display:none;">
+      <div class="sch-upload-status">
+        <div class="flex items-center gap-2 mb-1">
+          <span id="schUploadIcon">⏳</span>
+          <span id="schUploadFileName" class="font-semibold text-brand-text-primary">-</span>
+        </div>
+        <div id="schUploadMessage" class="text-brand-text-muted text-brand-body-small">파일 분석 준비 중...</div>
+      </div>
+    </div>
+
+    <div id="schNameMatch" class="mt-3" style="display:none;">
+      <label class="block text-brand-body-large font-semibold text-brand-text-primary mb-1.5">
+        근무표에서 본인 이름 선택
+      </label>
+      <select id="schNameSelect" class="sch-name-select">
+        <option value="">— 선택 —</option>
+      </select>
+      <p class="text-brand-text-muted text-brand-body-small mt-1.5">
+        💡 <a class="text-brand-accent-indigo cursor-pointer" data-action="goToProfileFromSch">개인정보 탭</a>의 이름과 자동 매칭됩니다.
+      </p>
+
+      <!-- 코퍼스 기여 동의 (default OFF) -->
+      <label class="sch-consent-row mt-3">
+        <input type="checkbox" id="schCorpusConsent" />
+        <span class="sch-consent-text">
+          익명화 후 파서 개선에 도움 주기 (선택)
+          <span class="sch-consent-hint">
+            이름·일자·부서명이 익명화된 듀티 패턴만 저장됩니다. 원본 이미지·이름·근무 일자는 저장되지 않습니다. 언제든 끌 수 있어요.
+          </span>
+        </span>
+      </label>
+    </div>
+
+    <div class="flex flex-row mt-4 gap-3">
+      <button class="btn btn-outline flex-1 p-3.5 justify-center rounded-xl" data-action="closeSchUpload">취소</button>
+      <button id="schUploadConfirmBtn"
+        class="btn btn-primary flex-1 text-brand-title-large p-3.5 justify-center rounded-xl"
+        data-action="confirmSchUpload" disabled>
+        캘린더에 반영
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════ 탭 내부 한정 스타일 ═══════ -->
+  <style is:global>
+    /* 헤더 카드 */
+    #tab-schedule .sch-header-card { padding: 12px 16px; }
+
+    /* 통합 카드 — 토글 바 */
+    #tab-schedule .sch-main-card {
+      /* overflow:hidden 은 position:sticky 를 깨뜨림 → clip 사용 */
+      overflow: clip;
+    }
+    #tab-schedule .sch-toggle-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-glass);
+      flex-wrap: wrap;
+    }
+
+    /* segmented control */
+    #tab-schedule .sch-seg {
+      display: inline-flex;
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      background: var(--bg-glass);
+    }
+    #tab-schedule .sch-seg-btn {
+      border: 0;
+      background: transparent;
+      padding: 6px 14px;
+      font-weight: 600;
+      font-size: var(--text-body-normal);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    #tab-schedule .sch-seg-btn.active {
+      background: var(--accent-indigo);
+      color: #fff;
+    }
+    #tab-schedule .sch-seg-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* 다음 근무 */
+    #tab-schedule .sch-next-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    #tab-schedule .sch-next-card {
+      flex: 1 1 200px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      background: rgba(99, 102, 241, 0.08);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      border-radius: var(--radius-sm);
+      min-height: 44px;
+    }
+    #tab-schedule .sch-next-card-alt {
+      background: rgba(16, 185, 129, 0.08);
+      border-color: rgba(16, 185, 129, 0.2);
+    }
+    #tab-schedule .sch-next-label {
+      font-size: var(--text-body-small);
+      font-weight: 600;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+    #tab-schedule .sch-next-date {
+      font-weight: 700;
+      color: var(--text-primary);
+      font-size: var(--text-body-large);
+    }
+    #tab-schedule .sch-next-duty {
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: var(--radius-sm);
+      font-size: var(--text-body-normal);
+    }
+    #tab-schedule .sch-next-time {
+      font-size: var(--text-body-small);
+      color: var(--text-muted);
+      margin-left: auto;
+    }
+
+    /* 주간 이동 헤더 */
+    #tab-schedule .sch-week-nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border-glass);
+    }
+    #tab-schedule .sch-week-label {
+      font-weight: 700;
+      color: var(--text-primary);
+      font-size: var(--text-body-large);
+    }
+
+    /* mine 캘린더 — 듀티 칩 강조 */
+    #tab-schedule .sch-cal-day {
+      cursor: pointer;
+      min-height: 56px;
+    }
+    #tab-schedule .sch-cal-badge {
+      display: block;
+      margin-top: 4px;
+      padding: 3px 6px;
+      border-radius: var(--radius-sm);
+      font-weight: 800;
+      font-size: 11px;
+      text-align: center;
+    }
+    #tab-schedule .sch-cal-holiday {
+      display: block;
+      margin-top: 2px;
+      font-size: 8px;
+      font-weight: 600;
+      color: var(--accent-rose);
+      text-align: center;
+      line-height: 1.2;
+      word-break: keep-all;
+      overflow-wrap: break-word;
+    }
+
+    /* 로스터 — 가로 스크롤 컨테이너 */
+    #tab-schedule .sch-roster-scroll {
+      overflow-x: auto;
+      padding: 12px 0; /* 좌우 0 → sticky left/right 셀이 각 엣지에 정확히 붙음 */
+      -webkit-overflow-scrolling: touch;
+    }
+    #tab-schedule .sch-roster {
+      display: grid;
+      gap: 0;
+      align-items: stretch;
+      min-width: max-content;
+      /* grid-template-columns 는 JS가 일수에 따라 동적 설정 */
+    }
+    /* 주간: 1fr 컬럼이므로 min-width 제거해 모바일 스크롤 불필요 */
+    #tab-schedule .sch-roster[data-period="week"] {
+      min-width: 0;
+      width: 100%;
+    }
+
+    /* 근무자 첫 번째 컬럼 고정 — 불투명 배경 필수 (스크롤 시 뒤 셀 가림) */
+    #tab-schedule .sch-nurse-head,
+    #tab-schedule .sch-hppd-label,
+    #tab-schedule .sch-nurse-cell {
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      background: var(--bg-card, #ffffff);
+    }
+    #tab-schedule .sch-nurse-head {
+      z-index: 3;
+    }
+
+    /* 합계 마지막 컬럼 오른쪽 고정 — box-shadow로 좌측 2px 틈 가림 */
+    #tab-schedule .sch-total-head,
+    #tab-schedule .sch-hppd-total,
+    #tab-schedule .sch-total-cell {
+      position: sticky;
+      right: 0;
+      z-index: 2;
+      background: var(--bg-card, #ffffff);
+      box-shadow: -2px 0 0 var(--bg-card, #ffffff);
+    }
+    #tab-schedule .sch-total-head {
+      z-index: 3;
+    }
+
+    /* 컬럼 헤더 */
+    #tab-schedule .sch-col-head {
+      text-align: center;
+      padding: 6px 0;
+      font-weight: 600;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border-glass);
+      line-height: 1.3;
+      font-size: 11px;
+    }
+    #tab-schedule .sch-col-head.weekend-sat { color: var(--accent-blue); background: rgba(59,130,246,0.05); }
+    #tab-schedule .sch-col-head.weekend-sun { color: var(--accent-rose); background: rgba(244,63,94,0.05); }
+    #tab-schedule .sch-col-head.holiday    { color: var(--accent-rose); background: rgba(244,63,94,0.08); }
+    #tab-schedule .sch-col-head .dow { display: block; font-size: 10px; color: var(--text-muted); }
+    #tab-schedule .sch-col-head .dom { display: block; font-weight: 700; font-size: 12px; }
+    #tab-schedule .sch-col-head.today .dom { color: var(--accent-indigo); }
+
+    #tab-schedule .sch-nurse-head, #tab-schedule .sch-total-head {
+      padding: 8px 10px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border-glass);
+      font-size: 12px;
+    }
+    #tab-schedule .sch-total-head { text-align: center; padding: 6px 0; }
+
+    /* HPPD 행 */
+    #tab-schedule .sch-hppd-label {
+      font-size: 11px;
+      padding: 6px 10px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-glass);
+      align-self: center;
+    }
+    #tab-schedule .sch-hppd-cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-bottom: 1px solid var(--border-glass);
+      padding: 4px 0;
+    }
+    #tab-schedule .sch-hppd-cell .sch-hppd-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent-emerald);
+    }
+    #tab-schedule .sch-hppd-cell.alert .sch-hppd-dot {
+      background: var(--accent-amber);
+    }
+
+    /* 간호사 행 */
+    #tab-schedule .sch-nurse-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-bottom: 1px solid var(--border-glass);
+    }
+    /* 본인 행 강조 — tint(gradient) + 불투명 베이스 (sticky 스크롤 시 뒤 내용 가림) */
+    #tab-schedule .sch-nurse-cell.is-mine {
+      background:
+        linear-gradient(rgba(99, 102, 241, 0.13), rgba(99, 102, 241, 0.13))
+        var(--bg-card, #ffffff);
+      border-left: 3px solid var(--accent-indigo);
+    }
+    #tab-schedule .sch-total-cell.is-mine-total {
+      background:
+        linear-gradient(rgba(99, 102, 241, 0.08), rgba(99, 102, 241, 0.08))
+        var(--bg-card, #ffffff);
+    }
+
+    /* 팀원 행 — 클릭 커서 */
+    #tab-schedule .sch-nurse-cell:not(.is-mine) {
+      cursor: pointer;
+    }
+
+    /* 선택된 팀원 행 강조 — tint(gradient) + 불투명 베이스 */
+    #tab-schedule .sch-nurse-cell.is-selected-nurse {
+      background:
+        linear-gradient(rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.15))
+        var(--bg-card, #ffffff);
+      border-left: 3px solid var(--accent-emerald, #10b981);
+    }
+    #tab-schedule .sch-total-cell.is-selected-nurse {
+      background:
+        linear-gradient(rgba(16, 185, 129, 0.10), rgba(16, 185, 129, 0.10))
+        var(--bg-card, #ffffff);
+    }
+    #tab-schedule .sch-avatar {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      color: #fff;
+      font-weight: 700;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #tab-schedule .sch-avatar.c1 { background: #ef4444; }
+    #tab-schedule .sch-avatar.c2 { background: var(--accent-amber); }
+    #tab-schedule .sch-avatar.c3 { background: var(--accent-emerald); }
+    #tab-schedule .sch-avatar.c4 { background: var(--accent-cyan, #06b6d4); }
+    #tab-schedule .sch-avatar.c5 { background: var(--accent-indigo); }
+    #tab-schedule .sch-avatar.c6 { background: var(--accent-violet, #8b5cf6); }
+    #tab-schedule .sch-avatar.c7 { background: var(--accent-rose); }
+    #tab-schedule .sch-avatar.c8 { background: #14b8a6; }
+    #tab-schedule .sch-avatar.is-mine { box-shadow: 0 0 0 2px var(--accent-indigo); }
+
+    #tab-schedule .sch-nurse-info {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.2;
+      min-width: 0;
+    }
+    #tab-schedule .sch-nurse-name {
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #tab-schedule .sch-nurse-tags {
+      display: flex;
+      gap: 3px;
+      margin-top: 2px;
+      flex-wrap: wrap;
+    }
+    #tab-schedule .sch-mini-tag {
+      font-size: 9px;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-weight: 600;
+      background: rgba(0, 0, 0, 0.06);
+      color: var(--text-muted);
+    }
+    #tab-schedule .sch-mini-tag.role { background: rgba(99,102,241,0.12); color: var(--accent-indigo); }
+    #tab-schedule .sch-mini-tag.skill { background: rgba(16,185,129,0.12); color: var(--accent-emerald); }
+
+    /* 듀티 셀 */
+    #tab-schedule .sch-duty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      height: 26px;
+      margin: 2px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    #tab-schedule .sch-duty:hover { transform: translateY(-1px); }
+    #tab-schedule .sch-duty.is-mine.is-clickable:hover { box-shadow: 0 0 0 2px var(--accent-indigo); }
+
+    #tab-schedule .sch-duty-D  { background: rgba(14, 165, 233, 0.22); color: #0c4a6e; }
+    #tab-schedule .sch-duty-E  { background: rgba(245, 158, 11, 0.22); color: #92400e; }
+    #tab-schedule .sch-duty-N  { background: rgba(99, 102, 241, 0.45); color: #1e1b4b; }
+    #tab-schedule .sch-duty-O  { background: rgba(148, 163, 184, 0.15); color: #64748b; font-size: 9px; }
+    #tab-schedule .sch-duty-AL { background: rgba(244, 63, 94, 0.20); color: #881337; }
+    #tab-schedule .sch-duty-RD { background: rgba(16, 185, 129, 0.22); color: #065f46; }
+    #tab-schedule .sch-duty-empty { background: transparent; color: transparent; cursor: default; }
+
+    /* 합계 */
+    #tab-schedule .sch-total-cell {
+      text-align: center;
+      padding: 6px 0;
+      font-weight: 800;
+      font-size: 14px;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-glass);
+    }
+    #tab-schedule .sch-total-cell .lbl {
+      display: block;
+      font-size: 10px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* 범례 */
+    #tab-schedule .sch-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 8px 16px 12px;
+      border-top: 1px solid var(--border-glass);
+      font-size: var(--text-body-small);
+    }
+    #tab-schedule .sch-legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-muted);
+    }
+    #tab-schedule .sch-legend-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 22px;
+      border-radius: var(--radius-sm);
+      font-weight: 800;
+      font-size: 10px;
+    }
+    #tab-schedule .sch-legend-holiday { color: var(--accent-rose); }
+    #tab-schedule .sch-legend-dot-holiday { font-size: 10px; }
+
+    /* 통계 그리드 */
+    #tab-schedule .sch-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+    }
+    #tab-schedule .sch-stat-card {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 10px 12px;
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-sm);
+      background: var(--bg-glass);
+    }
+    #tab-schedule .sch-stat-card .num {
+      font-size: 22px;
+      font-weight: 800;
+      line-height: 1;
+      color: var(--text-primary);
+    }
+    #tab-schedule .sch-stat-card .lbl {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    #tab-schedule .sch-stat-card.D  { border-color: rgba(99,102,241,0.4); }
+    #tab-schedule .sch-stat-card.E  { border-color: rgba(245,158,11,0.4); }
+    #tab-schedule .sch-stat-card.N  { border-color: rgba(99,102,241,0.6); background: rgba(99,102,241,0.06); }
+    #tab-schedule .sch-stat-card.AL { border-color: rgba(244,63,94,0.4); }
+    #tab-schedule .sch-stat-card.RD { border-color: rgba(16,185,129,0.4); }
+
+    /* 경고 행 */
+    #tab-schedule .sch-warn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    #tab-schedule .sch-warn-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+      font-size: var(--text-body-small);
+      font-weight: 600;
+    }
+    #tab-schedule .sch-warn-chip.amber { background: rgba(245,158,11,0.12); color: var(--accent-amber-text); }
+    #tab-schedule .sch-warn-chip.rose  { background: rgba(244,63,94,0.12); color: var(--accent-rose); }
+
+    /* 코퍼스 동의 */
+    #tab-schedule .sch-consent-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 10px 12px;
+      background: rgba(99, 102, 241, 0.06);
+      border: 1px solid rgba(99, 102, 241, 0.18);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+    }
+    #tab-schedule .sch-consent-row input[type="checkbox"] {
+      flex-shrink: 0;
+      margin-top: 2px;
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent-indigo);
+    }
+    #tab-schedule .sch-consent-text {
+      font-size: var(--text-body-small);
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.4;
+    }
+    #tab-schedule .sch-consent-hint {
+      display: block;
+      font-weight: 400;
+      color: var(--text-muted);
+      font-size: 11px;
+      margin-top: 4px;
+    }
+
+    /* 입력 소스 카드 — 좌측 아이콘 + 우측 텍스트 (세로 스택) */
+    #tab-schedule .sch-source-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    #tab-schedule .sch-source-card {
+      display: flex !important;
+      flex-direction: row !important;
+      align-items: center;
+      gap: 14px;
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid var(--border-glass);
+      border-radius: var(--radius-md);
+      background: var(--bg-surface, #fff);
+      cursor: pointer;
+      text-align: left;
+      font-family: inherit;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+    }
+    #tab-schedule .sch-source-card:hover:not(.active) {
+      border-color: rgba(99, 102, 241, 0.4);
+      transform: translateY(-1px);
+    }
+    #tab-schedule .sch-source-card.active {
+      border-color: var(--accent-indigo);
+      background: rgba(99, 102, 241, 0.08);
+    }
+    #tab-schedule .sch-source-icon {
+      font-size: 28px;
+      line-height: 1;
+      flex-shrink: 0;
+      width: 40px;
+      text-align: center;
+    }
+    #tab-schedule .sch-source-title {
+      display: block;
+      font-size: var(--text-body-large);
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+    #tab-schedule .sch-source-desc {
+      display: block;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+      line-height: 1.3;
+      margin-top: 2px;
+    }
+    #tab-schedule .sch-source-card .sch-source-text-wrap {
+      flex: 1;
+      min-width: 0;
+    }
+    #tab-schedule .sch-source-card.active .sch-source-title {
+      color: var(--accent-indigo);
+    }
+    #tab-schedule .sch-source-card .sch-source-radio-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid var(--border-glass);
+      flex-shrink: 0;
+      position: relative;
+    }
+    #tab-schedule .sch-source-card.active .sch-source-radio-dot {
+      border-color: var(--accent-indigo);
+    }
+    #tab-schedule .sch-source-card.active .sch-source-radio-dot::after {
+      content: '';
+      position: absolute;
+      top: 3px; left: 3px;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent-indigo);
+    }
+    /* Neo 테마 호환 */
+    html[data-theme="neo"] #tab-schedule .sch-source-card {
+      border-width: 2px;
+      border-color: #1a1a1a;
+    }
+    html[data-theme="neo"] #tab-schedule .sch-source-card.active {
+      box-shadow: 3px 3px 0 #1a1a1a;
+    }
+
+    /* 업로드 영역 */
+    #tab-schedule .sch-dropzone {
+      border-radius: var(--radius-md);
+      border: 2px dashed var(--border-glass);
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    #tab-schedule .sch-dropzone:hover {
+      background: var(--bg-glass);
+    }
+    #tab-schedule .sch-upload-status {
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      background: var(--bg-glass);
+    }
+    #tab-schedule .sch-name-select {
+      width: 100%;
+      height: 44px;
+      padding: 0 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-glass);
+      background: var(--bg-glass);
+      color: var(--text-primary);
+      font-size: var(--text-body-large);
+    }
+
+    /* Neo theme 호환 */
+    html[data-theme="neo"] #tab-schedule .sch-duty {
+      border: 2px solid #1a1a1a;
+    }
+    html[data-theme="neo"] #tab-schedule .sch-stat-card,
+    html[data-theme="neo"] #tab-schedule .sch-next-card,
+    html[data-theme="neo"] #tab-schedule .sch-warn-chip {
+      border: 2px solid #1a1a1a;
+      box-shadow: 2px 2px 0 #1a1a1a;
+    }
+    html[data-theme="neo"] #tab-schedule .sch-seg {
+      border: 2px solid #1a1a1a;
+      box-shadow: 2px 2px 0 #1a1a1a;
+    }
+  </style>
+</div>

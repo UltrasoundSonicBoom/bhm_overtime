@@ -307,6 +307,7 @@ export const DATA_STATIC = {
       { id: 'emotional_labor', label: '감정노동 특별휴가', category: 'special', isPaid: true, quota: 2, usesAnnual: false, deductType: 'none', note: '환자/보호자 폭언·폭행 피해 시 2일 이내', ref: '제31조의2 <2020.10>' },
       { id: 'military_reserve', label: '예비군/민방위', category: 'special', isPaid: true, quota: null, usesAnnual: false, deductType: 'none', note: '해당일 유급, 야간훈련 시 익일 휴가', ref: '제42조' },
       { id: 'long_service', label: '장기재직 휴가', category: 'special', isPaid: true, quota: null, usesAnnual: false, deductType: 'none', note: '10년↑ 5일, 20년↑ 7일 (2026시행)', ref: '2025.10단협' },
+      { id: 'recovery_day', label: '🔄 리커버리데이', category: 'special', isPaid: true, quota: null, usesAnnual: false, deductType: 'none', note: '월 7일↑ 야간 시 1일, 누적 15일↑ 추가 1일 (3교대 대상)', ref: '제32조 부속합의' },
 
       // ── ⬜ 기타 ──
       { id: 'unpaid', label: '기타 무급휴가', category: 'other', isPaid: false, quota: null, usesAnnual: false, deductType: 'ordinary' },

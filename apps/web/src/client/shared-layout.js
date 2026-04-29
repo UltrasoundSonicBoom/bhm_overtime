@@ -130,6 +130,7 @@
 
     var items = [
       { icon: '🏠', text: '홈', tab: 'home', href: homeHref('home') },
+      { icon: '🗓️', text: '근무', tab: 'schedule', href: homeHref('schedule') },
       { icon: '📅', text: '휴가', tab: 'leave', href: homeHref('leave') },
       { icon: '⏰', text: '시간외', tab: 'overtime', href: homeHref('overtime') },
       { icon: '💰', text: '급여', tab: 'payroll', href: homeHref('payroll') },

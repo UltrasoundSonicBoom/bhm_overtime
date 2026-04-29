@@ -252,6 +252,31 @@ export const LEAVE = {
         return false;
     },
 
+    // ── source 태그로 레코드 검색 (근무표 자동입력 idempotency) ──
+    getRecordsBySource(source, sourceMonth) {
+        if (!source) return [];
+        const all = this._loadAll();
+        const result = [];
+        for (const year of Object.keys(all)) {
+            for (const rec of all[year] || []) {
+                if (rec.source !== source) continue;
+                if (sourceMonth && rec.sourceMonth !== sourceMonth) continue;
+                result.push({ ...rec, _year: year });
+            }
+        }
+        return result;
+    },
+
+    // ── source별 일괄 삭제 (재업로드 시 기존 자동입력 제거) ──
+    deleteRecordsBySource(source, sourceMonth) {
+        const records = this.getRecordsBySource(source, sourceMonth);
+        let deleted = 0;
+        for (const rec of records) {
+            if (this.deleteRecord(rec.id)) deleted++;
+        }
+        return deleted;
+    },
+
     // ── 급여 공제 계산 ──
     // 보수규정 제7조② 기준:
     //   basePay 공제: 기본급 월액 / 30 × 일수 (생리휴가 등)
