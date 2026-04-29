@@ -33,6 +33,20 @@ function _clearAllGuestData() {
   for (const k of payslipKeys) localStorage.removeItem(k);
 }
 
+function _humanReason(err) {
+  const code = err?.code || '';
+  const msg = err?.message || '';
+  if (code === 'unavailable' || /network|fetch|offline/i.test(msg)) {
+    return '인터넷 연결을 확인해주세요';
+  }
+  if (code === 'permission-denied') return '권한 거부 — 다시 로그인해주세요';
+  if (code === 'unauthenticated') return '인증 만료 — 다시 로그인해주세요';
+  if (code === 'resource-exhausted') return '요청 한도 초과 — 잠시 후 재시도';
+  if (code === 'deadline-exceeded') return '응답 시간 초과 — 다시 시도';
+  if (code === 'failed-precondition') return '데이터 충돌 — 다시 시도';
+  return msg ? `오류: ${msg.slice(0, 60)}` : '일시적 오류 — 다시 시도해주세요';
+}
+
 // ── 카테고리 정의 ──────────────────────────────────────────────────────────
 const CATEGORIES = [
   {
@@ -101,6 +115,12 @@ export async function shouldShowMigration(uid) {
   if (!uid) return false;
   try {
     if (localStorage.getItem(FLAG_KEY)) return false;
+    const snooze = localStorage.getItem(SNOOZE_KEY);
+    if (snooze) {
+      const snoozeUntil = parseInt(snooze, 10);
+      if (Number.isFinite(snoozeUntil) && Date.now() < snoozeUntil) return false;
+      localStorage.removeItem(SNOOZE_KEY);
+    }
     return _hasGuestData();
   } catch { return false; }
 }
@@ -112,6 +132,7 @@ export async function uploadCategories(uid, selectedIds) {
 
   if (selectedIds.includes('identity') || selectedIds.includes('payroll')) {
     syncTasks.push({
+      id: 'profile',
       label: '프로필',
       run: async () => {
         const raw = localStorage.getItem('snuhmate_hr_profile_guest');
@@ -125,6 +146,7 @@ export async function uploadCategories(uid, selectedIds) {
 
   if (selectedIds.includes('overtime')) {
     syncTasks.push({
+      id: 'overtime',
       label: '시간외',
       run: async () => {
         const raw = localStorage.getItem('overtimeRecords_guest');
@@ -138,6 +160,7 @@ export async function uploadCategories(uid, selectedIds) {
 
   if (selectedIds.includes('leave')) {
     syncTasks.push({
+      id: 'leave',
       label: '휴가',
       run: async () => {
         const raw = localStorage.getItem('leaveRecords');
@@ -151,6 +174,7 @@ export async function uploadCategories(uid, selectedIds) {
 
   if (selectedIds.includes('workHistory')) {
     syncTasks.push({
+      id: 'workHistory',
       label: '근무이력',
       run: async () => {
         const raw = localStorage.getItem('snuhmate_work_history_guest');
@@ -164,6 +188,7 @@ export async function uploadCategories(uid, selectedIds) {
 
   if (selectedIds.includes('settings')) {
     syncTasks.push({
+      id: 'settings',
       label: '설정',
       run: async () => {
         const raw = localStorage.getItem('snuhmate_settings');
@@ -177,6 +202,7 @@ export async function uploadCategories(uid, selectedIds) {
 
   if (selectedIds.includes('reference')) {
     syncTasks.push({
+      id: 'reference',
       label: '즐겨찾기',
       run: async () => {
         const raw = localStorage.getItem('snuhmate_reg_favorites_guest');
@@ -190,13 +216,14 @@ export async function uploadCategories(uid, selectedIds) {
 
   const settled = await Promise.allSettled(syncTasks.map(t => t.run()));
   const ok = [];
-  const failed = [];
+  const failed = []; // [{ id, label, reason }]
   for (let i = 0; i < syncTasks.length; i++) {
     if (settled[i].status === 'fulfilled') {
       ok.push(syncTasks[i].label);
     } else {
-      failed.push(syncTasks[i].label);
-      console.warn(`[migration] ${syncTasks[i].label} sync 실패`, settled[i].reason?.message);
+      const reason = _humanReason(settled[i].reason);
+      failed.push({ id: syncTasks[i].id, label: syncTasks[i].label, reason });
+      console.warn(`[migration] ${syncTasks[i].label} sync 실패`, settled[i].reason?.message, settled[i].reason);
     }
   }
 
@@ -302,7 +329,7 @@ export async function openMigrationDialog(uid) {
   closeBtn.className = 'btn-icon';
   closeBtn.textContent = '×';
   closeBtn.setAttribute('aria-label', '닫기');
-  closeBtn.addEventListener('click', () => overlay.remove());
+  closeBtn.addEventListener('click', snoozeAndClose);
 
   hdr.appendChild(titleRow);
   hdr.appendChild(closeBtn);
@@ -352,7 +379,7 @@ export async function openMigrationDialog(uid) {
   skipBtn.type = 'button';
   skipBtn.className = 'btn btn-secondary btn-full';
   skipBtn.textContent = '나중에';
-  skipBtn.addEventListener('click', () => overlay.remove());
+  skipBtn.addEventListener('click', snoozeAndClose);
 
   const syncBtn = document.createElement('button');
   syncBtn.type = 'button';
@@ -371,6 +398,11 @@ export async function openMigrationDialog(uid) {
   overlay.appendChild(step2);
   document.body.appendChild(overlay);
 
+  function snoozeAndClose() {
+    try { localStorage.setItem(SNOOZE_KEY, String(Date.now() + SNOOZE_DURATION_MS)); } catch (e) {}
+    overlay.remove();
+  }
+
   // ── 동기화 실행 (공통) ────────────────────────────────────────────────
   async function doSync(selectedIds, activeBtn) {
     activeBtn.disabled = true;
@@ -378,13 +410,71 @@ export async function openMigrationDialog(uid) {
 
     const { ok, failed } = await uploadCategories(uid, selectedIds);
 
+    // 이전 fail 박스 제거 (재시도 시 중복 방지)
+    const prevFailBox = overlay.querySelector('[data-role="fail-box"]');
+    if (prevFailBox) prevFailBox.remove();
+
     if (failed.length === 0) {
       activeBtn.textContent = ok.length > 0 ? `완료! (${ok.length}개)` : '완료!';
-    } else {
-      activeBtn.textContent = `완료 ${ok.length} / 실패 ${failed.length}`;
-      console.warn('[migration] 실패 항목:', failed);
+      setTimeout(() => overlay.remove(), 1200);
+      return;
     }
-    setTimeout(() => overlay.remove(), 1200);
+
+    activeBtn.textContent = `완료 ${ok.length} / 실패 ${failed.length}`;
+    activeBtn.disabled = true;
+
+    const failBox = document.createElement('div');
+    failBox.dataset.role = 'fail-box';
+    failBox.className = 'mt-3 p-3 rounded-[var(--radius-sm)] bg-[var(--bg-card)] border border-[var(--border-glass)]';
+
+    const failTitle = document.createElement('div');
+    failTitle.className = 'text-xs font-semibold text-[var(--text-primary)] mb-2';
+    failTitle.textContent = '아래 항목 동기화에 실패했습니다';
+    failBox.appendChild(failTitle);
+
+    const failList = document.createElement('ul');
+    failList.className = 'text-xs text-[var(--text-muted)] m-0 mb-3 pl-4 list-disc space-y-1';
+    for (const f of failed) {
+      const li = document.createElement('li');
+      const labelSpan = document.createElement('span');
+      labelSpan.className = 'font-semibold text-[var(--text-primary)]';
+      labelSpan.textContent = f.label;
+      const reasonSpan = document.createElement('span');
+      reasonSpan.textContent = ' — ' + f.reason;
+      li.appendChild(labelSpan);
+      li.appendChild(reasonSpan);
+      failList.appendChild(li);
+    }
+    failBox.appendChild(failList);
+
+    const note = document.createElement('p');
+    note.className = 'text-xs text-[var(--text-muted)] m-0 mb-3';
+    note.textContent = '닫으면 다음 로그인 시 자동으로 다시 시도합니다.';
+    failBox.appendChild(note);
+
+    const btnRow = document.createElement('div');
+    btnRow.className = 'grid grid-cols-2 gap-2.5';
+
+    const retryBtn = document.createElement('button');
+    retryBtn.type = 'button';
+    retryBtn.className = 'btn btn-primary btn-full';
+    retryBtn.textContent = '지금 재시도';
+    retryBtn.addEventListener('click', () => {
+      const failedIds = failed.map(f => f.id);
+      doSync(failedIds, activeBtn);
+    });
+
+    const closeManualBtn = document.createElement('button');
+    closeManualBtn.type = 'button';
+    closeManualBtn.className = 'btn btn-secondary btn-full';
+    closeManualBtn.textContent = '닫기';
+    closeManualBtn.addEventListener('click', () => overlay.remove());
+
+    btnRow.appendChild(closeManualBtn);
+    btnRow.appendChild(retryBtn);
+    failBox.appendChild(btnRow);
+
+    activeBtn.parentElement.appendChild(failBox);
   }
 
   // ── 이벤트 바인딩 ─────────────────────────────────────────────────────
