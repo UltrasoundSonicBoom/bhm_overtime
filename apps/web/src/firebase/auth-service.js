@@ -83,8 +83,17 @@ export async function onAuthChanged(callback) {
         }
       } catch (e) { /* migration-dialog 미존재 — Phase 8 미완 시점 무해 */ }
     } else {
+      // 로그아웃 시 _uid_<이전 uid> 키 모두 정리 (사용자 모델: "로그아웃하면 로컬 비어있음")
+      // window.__firebaseUid 가 아직 있을 때 미리 캡처 — clearLocalUserData 호출 후 삭제.
+      const prevUid = window.__firebaseUid;
+      if (prevUid) {
+        try {
+          const { clearLocalUserData } = await import('./hydrate.js');
+          clearLocalUserData(prevUid);
+        } catch (e) { console.warn('[auth] logout cleanup 실패', e?.message); }
+      }
       delete window.__firebaseUid;
-      // 로그아웃 시 googleSub 제거 → payslip 키 guest 로 복귀
+      // googleSub 제거 → payslip 키 guest 로 복귀
       try {
         const s = JSON.parse(localStorage.getItem('snuhmate_settings') || '{}');
         delete s.googleSub;

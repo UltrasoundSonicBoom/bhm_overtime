@@ -6,7 +6,10 @@
 // 호출: auth-service.js onAuthChanged 로그인 분기에서 googleSub 설정 직후.
 // 책임: 7 카테고리 (profile/overtime/leave/payslip/work_history/settings/favorites)
 //       Firestore 에서 read → 사용자별 localStorage 키 (`_uid_<uid>` 접미)에 저장.
-// 안전: 로컬에 동일 키 데이터가 있으면 보존 (사용자가 방금 편집한 내용 보호).
+//
+// 모델: auth = real data. cloud 가 source of truth. 로그아웃 시 _uid_<uid> 키들
+//       모두 정리되므로 (clearLocalUserData), 재로그인 시 hydrate 가 cloud → 로컬
+//       을 항상 덮어쓴다 (조건부 write 아님). 로컬 데이터 충돌 위험 없음.
 
 import { readProfile } from './sync/profile-sync.js';
 import { readAllOvertime } from './sync/overtime-sync.js';
@@ -26,18 +29,37 @@ function _setLocal(key, value) {
   }
 }
 
-function _hasLocalData(key) {
+// 로그아웃 시 호출 — 로그인 사용자의 모든 _uid_<uid> 키 + 공유 키 데이터 정리.
+// 사용자 모델: "로그아웃하면 로컬에 아무 데이터가 없는 게 맞다."
+export function clearLocalUserData(uid) {
+  if (!uid) return;
+  const exactKeys = [
+    'snuhmate_hr_profile_uid_' + uid,
+    'overtimeRecords_uid_' + uid,
+    'overtimePayslipData_uid_' + uid,
+    'snuhmate_work_history_uid_' + uid,
+    'snuhmate_reg_favorites_uid_' + uid,
+    'leaveRecords', // 공유 키 (uid 접미 없음)
+  ];
+  for (const k of exactKeys) {
+    try { localStorage.removeItem(k); } catch (e) {}
+  }
+  // payslip per-month 키: 'payslip_<uid>_YYYY_MM' 패턴 모두 정리
   try {
-    const v = localStorage.getItem(key);
-    if (!v) return false;
-    const parsed = JSON.parse(v);
-    if (Array.isArray(parsed)) return parsed.length > 0;
-    if (typeof parsed === 'object' && parsed !== null) return Object.keys(parsed).length > 0;
-    return !!parsed;
-  } catch { return false; }
+    const payslipKeys = Object.keys(localStorage).filter(k =>
+      new RegExp('^payslip_' + uid + '_\\d{4}_\\d{2}').test(k)
+    );
+    for (const k of payslipKeys) localStorage.removeItem(k);
+  } catch (e) {}
+  // last_edit timestamp 도 정리 (LWW 메타)
+  try {
+    const editKeys = Object.keys(localStorage).filter(k => k.startsWith('snuhmate_last_edit_'));
+    for (const k of editKeys) localStorage.removeItem(k);
+  } catch (e) {}
 }
 
 // 로그인 사용자의 모든 카테고리를 Firestore에서 읽어 로컬에 동기화.
+// cloud 가 authoritative — 로컬에 있어도 무조건 덮어씀.
 export async function hydrateFromFirestore(uid) {
   if (!uid) return { ok: [], failed: ['no-uid'] };
 
@@ -47,8 +69,7 @@ export async function hydrateFromFirestore(uid) {
       run: async () => {
         const data = await readProfile(null, uid);
         if (!data) return;
-        const storageKey = 'snuhmate_hr_profile_uid_' + uid;
-        if (!_hasLocalData(storageKey)) _setLocal(storageKey, data);
+        _setLocal('snuhmate_hr_profile_uid_' + uid, data);
       },
     },
     {
@@ -56,8 +77,7 @@ export async function hydrateFromFirestore(uid) {
       run: async () => {
         const data = await readAllOvertime(null, uid);
         if (!data || Object.keys(data).length === 0) return;
-        const storageKey = 'overtimeRecords_uid_' + uid;
-        if (!_hasLocalData(storageKey)) _setLocal(storageKey, data);
+        _setLocal('overtimeRecords_uid_' + uid, data);
       },
     },
     {
@@ -65,8 +85,7 @@ export async function hydrateFromFirestore(uid) {
       run: async () => {
         const data = await readAllLeave(null, uid);
         if (!data || Object.keys(data).length === 0) return;
-        // leave.js 는 단일 키 'leaveRecords' 사용 (uid 접미 없음)
-        if (!_hasLocalData('leaveRecords')) _setLocal('leaveRecords', data);
+        _setLocal('leaveRecords', data);
       },
     },
     {
@@ -74,13 +93,11 @@ export async function hydrateFromFirestore(uid) {
       run: async () => {
         const data = await readAllPayslips(null, uid);
         if (!data || Object.keys(data).length === 0) return;
-        const summaryKey = 'overtimePayslipData_uid_' + uid;
-        if (!_hasLocalData(summaryKey)) _setLocal(summaryKey, data);
+        _setLocal('overtimePayslipData_uid_' + uid, data);
         for (const [payMonth, payslipData] of Object.entries(data)) {
           const m = /^(\d{4})-(\d{2})$/.exec(payMonth);
           if (!m) continue;
-          const pmKey = 'payslip_' + uid + '_' + m[1] + '_' + m[2];
-          if (!localStorage.getItem(pmKey)) _setLocal(pmKey, payslipData);
+          _setLocal('payslip_' + uid + '_' + m[1] + '_' + m[2], payslipData);
         }
       },
     },
@@ -89,8 +106,7 @@ export async function hydrateFromFirestore(uid) {
       run: async () => {
         const data = await readAllWorkHistory(null, uid);
         if (!data || data.length === 0) return;
-        const storageKey = 'snuhmate_work_history_uid_' + uid;
-        if (!_hasLocalData(storageKey)) _setLocal(storageKey, data);
+        _setLocal('snuhmate_work_history_uid_' + uid, data);
       },
     },
     {
@@ -98,9 +114,12 @@ export async function hydrateFromFirestore(uid) {
       run: async () => {
         const data = await readSettings(null, uid);
         if (!data) return;
+        // settings 는 device-local 필드 (googleSub) 가 섞여 있어 머지 필요
         try {
           const existing = JSON.parse(localStorage.getItem('snuhmate_settings') || '{}');
-          const merged = { ...data, ...existing };
+          // cloud 우선, 단 googleSub 만 로컬 보존 (device-local 식별자)
+          const merged = { ...existing, ...data };
+          if (existing.googleSub) merged.googleSub = existing.googleSub;
           _setLocal('snuhmate_settings', merged);
         } catch (e) { _setLocal('snuhmate_settings', data); }
       },
@@ -110,8 +129,7 @@ export async function hydrateFromFirestore(uid) {
       run: async () => {
         const data = await readFavorites(null, uid);
         if (!data || data.length === 0) return;
-        const storageKey = 'snuhmate_reg_favorites_uid_' + uid;
-        if (!_hasLocalData(storageKey)) _setLocal(storageKey, data);
+        _setLocal('snuhmate_reg_favorites_uid_' + uid, data);
       },
     },
   ];
