@@ -8,6 +8,10 @@
 import {
   signInWithEmail, signUpWithEmail, signInWithGoogle, signOutUser, onAuthChanged, getCurrentUser,
 } from './auth-service.js';
+import { validatePassword } from './auth-validators.js';
+
+// validatePassword 는 단위 테스트를 위해 별도 모듈에서 정의. 외부 호환을 위해 re-export.
+export { validatePassword };
 
 const DIALOG_ID = 'snuhmateAuthDialog';
 
@@ -160,11 +164,6 @@ function _buildDialog() {
     if (msg) { errEl.textContent = msg; errEl.classList.remove('hidden'); }
     else { errEl.textContent = ''; errEl.classList.add('hidden'); }
   };
-  function _validatePassword(pw) {
-    if (!pw || pw.length < 8) return '비밀번호는 8자 이상이어야 합니다';
-    if (pw.length > 12) return '비밀번호는 12자 이하여야 합니다 (기억성 우선)';
-    return null;
-  }
   const prettyErr = (e) => {
     const code = e?.code || '';
     if (code === 'auth/invalid-credential') return '이메일/비밀번호 불일치';
@@ -188,7 +187,7 @@ function _buildDialog() {
   });
   signUpBtn.addEventListener('click', async () => {
     setErr('');
-    const pwErr = _validatePassword(passIn.value);
+    const pwErr = validatePassword(passIn.value);
     if (pwErr) { setErr(pwErr); return; }
     try { await signUpWithEmail(emailIn.value.trim(), passIn.value); closeAuthDialog(); }
     catch (e) { setErr(prettyErr(e)); }

@@ -12,10 +12,18 @@
 //
 // Non-pushy UX: URL 자동 오픈 없음, 명시적 사용자 액션으로만 트리거.
 
+import { humanReason } from './migration-errors.js';
+
+// humanReason 은 단위 테스트를 위해 별도 모듈에서 정의. 외부 호환을 위해 re-export.
+export { humanReason };
+
 const FLAG_KEY = 'snuhmate_migration_done_v1';
 const SNOOZE_KEY = 'snuhmate_migration_snooze_v1';
-// Used by Task 2 ('나중에' / '×' 버튼이 24h snooze 적용)
+const FAIL_COUNT_KEY = 'snuhmate_migration_fail_count_v1';
+// '나중에' / '×' 버튼이 24h snooze 적용. 또한 N회 연속 실패 후 soft-snooze 에도 사용.
 const SNOOZE_DURATION_MS = 24 * 60 * 60 * 1000;
+// 영구 실패 (예: 권한 거부) 시 매 페이지 로드마다 dialog 가 재출현하는 pushy UX 를 막기 위한 임계값.
+const MAX_CONSECUTIVE_FAILURES = 3;
 
 const GUEST_FLAT_KEYS = [
   'snuhmate_hr_profile_guest',
@@ -31,20 +39,6 @@ function _clearAllGuestData() {
   for (const k of GUEST_FLAT_KEYS) localStorage.removeItem(k);
   const payslipKeys = Object.keys(localStorage).filter(k => PAYSLIP_GUEST_KEY_RE.test(k));
   for (const k of payslipKeys) localStorage.removeItem(k);
-}
-
-function _humanReason(err) {
-  const code = err?.code || '';
-  const msg = err?.message || '';
-  if (code === 'unavailable' || /\b(network error|offline|failed to fetch)\b/i.test(msg)) {
-    return '인터넷 연결을 확인해주세요';
-  }
-  if (code === 'permission-denied') return '권한 거부 — 다시 로그인해주세요';
-  if (code === 'unauthenticated') return '인증 만료 — 다시 로그인해주세요';
-  if (code === 'resource-exhausted') return '요청 한도 초과 — 잠시 후 재시도';
-  if (code === 'deadline-exceeded') return '응답 시간 초과 — 다시 시도';
-  if (code === 'failed-precondition') return '데이터 충돌 — 다시 시도';
-  return msg ? `오류: ${msg.replace(/\s+/g, ' ').slice(0, 60)}` : '일시적 오류 — 다시 시도해주세요';
 }
 
 // ── 카테고리 정의 ──────────────────────────────────────────────────────────
@@ -221,7 +215,7 @@ export async function uploadCategories(uid, selectedIds) {
     if (settled[i].status === 'fulfilled') {
       ok.push(syncTasks[i].label);
     } else {
-      const reason = _humanReason(settled[i].reason);
+      const reason = humanReason(settled[i].reason);
       failed.push({ id: syncTasks[i].id, label: syncTasks[i].label, reason });
       console.warn(`[migration] ${syncTasks[i].label} sync 실패`, settled[i].reason?.message, settled[i].reason);
     }
@@ -230,9 +224,22 @@ export async function uploadCategories(uid, selectedIds) {
   if (failed.length === 0) {
     localStorage.setItem(FLAG_KEY, new Date().toISOString());
     localStorage.removeItem(SNOOZE_KEY);
+    localStorage.removeItem(FAIL_COUNT_KEY);
     _clearAllGuestData();
+  } else {
+    // 실패 카운트 증가. 임계값 초과 시 호출자(doSync)가 soft-snooze 적용.
+    const prev = parseInt(localStorage.getItem(FAIL_COUNT_KEY) || '0', 10) || 0;
+    localStorage.setItem(FAIL_COUNT_KEY, String(prev + 1));
   }
   return { ok, failed };
+}
+
+// 연속 실패가 임계값 이상인지 — doSync 의 닫기 핸들러가 soft-snooze 결정에 사용.
+export function shouldSoftSnooze() {
+  try {
+    const n = parseInt(localStorage.getItem(FAIL_COUNT_KEY) || '0', 10) || 0;
+    return n >= MAX_CONSECUTIVE_FAILURES;
+  } catch { return false; }
 }
 
 // ── 마이그레이션 다이얼로그 DOM ───────────────────────────────────────────
@@ -457,9 +464,15 @@ export async function openMigrationDialog(uid) {
     }
     failBox.appendChild(failList);
 
+    // N회 연속 실패 시 soft-snooze: '다음 로그인 자동 재시도' 약속을 깨지 않으면서
+    // 매 페이지 로드 재출현 (pushy UX) 을 막는다. closeManualBtn / '×' 가 24h SNOOZE 적용.
+    const softSnooze = shouldSoftSnooze();
+
     const note = document.createElement('p');
     note.className = 'text-xs text-[var(--text-muted)] m-0 mb-3';
-    note.textContent = '닫으면 다음 로그인 시 자동으로 다시 시도합니다.';
+    note.textContent = softSnooze
+      ? '연속 실패가 누적되어, 닫으면 24시간 후 다시 안내합니다.'
+      : '닫으면 다음 로그인 시 자동으로 다시 시도합니다.';
     failBox.appendChild(note);
 
     const btnRow = document.createElement('div');
@@ -478,7 +491,7 @@ export async function openMigrationDialog(uid) {
     closeManualBtn.type = 'button';
     closeManualBtn.className = 'btn btn-secondary btn-full';
     closeManualBtn.textContent = '닫기';
-    closeManualBtn.addEventListener('click', () => overlay.remove());
+    closeManualBtn.addEventListener('click', softSnooze ? snoozeAndClose : () => overlay.remove());
 
     btnRow.appendChild(closeManualBtn);
     btnRow.appendChild(retryBtn);
@@ -486,9 +499,11 @@ export async function openMigrationDialog(uid) {
 
     activeBtn.parentElement.appendChild(failBox);
 
-    // failBox 가 보이는 동안 '×' 도 snooze 없이 닫기 (failBox 의 '다음 로그인 자동 재시도' 약속과 일관)
+    // failBox 가 보이는 동안 '×' 의 동작은 closeManualBtn 과 동일하게 일치시킴
+    // (소프트 스누즈 발동 시: snoozeAndClose / 평상시: 단순 닫기)
     closeBtn.removeEventListener('click', snoozeAndClose);
-    closeBtn.addEventListener('click', _closeNoSnooze);
+    closeBtn.removeEventListener('click', _closeNoSnooze);
+    closeBtn.addEventListener('click', softSnooze ? snoozeAndClose : _closeNoSnooze);
   }
 
   // ── 이벤트 바인딩 ─────────────────────────────────────────────────────
