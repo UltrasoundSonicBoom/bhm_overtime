@@ -30,6 +30,7 @@ export const HOLIDAYS = {
 
     // ── 정적 폴백 데이터 (공휴일 + 국경일) ──
     staticData: {
+        // staticData ↔ public/data/holidays/<year>.json 동기화 — tests/unit/holidays-static-sync.test.js 가 검증
         2025: [
             { name: '신정', date: '20250101' },
             { name: '설날', date: '20250128' },
@@ -37,6 +38,7 @@ export const HOLIDAYS = {
             { name: '설날', date: '20250130' },
             { name: '삼일절', date: '20250301' },
             { name: '대체공휴일(삼일절)', date: '20250303' },
+            { name: '근로자의 날', date: '20250501' },
             { name: '어린이날', date: '20250505' },
             { name: '부처님오신날', date: '20250505' },
             { name: '대체공휴일(부처님오신날)', date: '20250506' },
@@ -56,6 +58,7 @@ export const HOLIDAYS = {
             { name: '설날', date: '20260218' },
             { name: '삼일절', date: '20260301' },
             { name: '대체공휴일(삼일절)', date: '20260302' },
+            { name: '근로자의 날', date: '20260501' },
             { name: '어린이날', date: '20260505' },
             { name: '부처님오신날', date: '20260524' },
             { name: '대체공휴일(부처님오신날)', date: '20260525' },
@@ -79,6 +82,7 @@ export const HOLIDAYS = {
             { name: '설날', date: '20270208' },
             { name: '대체공휴일(설날)', date: '20270209' },
             { name: '삼일절', date: '20270301' },
+            { name: '근로자의 날', date: '20270501' },
             { name: '어린이날', date: '20270505' },
             { name: '부처님오신날', date: '20270513' },
             { name: '현충일', date: '20270606' },
@@ -99,6 +103,7 @@ export const HOLIDAYS = {
             { name: '설날', date: '20280127' },
             { name: '삼일절', date: '20280301' },
             { name: '제22대 국회의원선거', date: '20280412' },
+            { name: '근로자의 날', date: '20280501' },
             { name: '부처님오신날', date: '20280502' },
             { name: '어린이날', date: '20280505' },
             { name: '현충일', date: '20280606' },
@@ -113,11 +118,13 @@ export const HOLIDAYS = {
         ]
     },
 
-    // ── 병원 자체 유급휴일 (API 미제공, 취업규칙 제35조 + <2015.05>·<2025.10>) ──
+    // ── 병원 자체 유급휴일 (정부 API 미제공) ──
+    // hospitalHolidays ↔ public/data/holidays/hospital.json 동기화
+    // 출처: 단협 제32조(6) (근로자의 날 포함) + 부칙 <2015.05>·<2025.10>
     hospitalHolidays: [
-        { name: '근로자의 날', month: 5, day: 1 },
-        { name: '조합설립일', month: 8, day: 1, halfDay: true, halfDayHours: '09:00–13:00' }, // <2015.05>·<2025.10> 오전 반일 휴무
-        { name: '개원기념일', month: 10, day: 15 },
+        { name: '근로자의 날', month: 5, day: 1 }, // 단협 제32조(6) 명시
+        { name: '조합설립일', month: 8, day: 1, halfDay: true, halfDayHours: '09:00–13:00', halfDayPeriod: '오전' },
+        { name: '개원기념일', month: 10, day: 15 }, // 서울대병원 창립기념일
     ],
 
     // ── 기념일 정적 폴백 데이터 (비휴일) ──
@@ -174,7 +181,14 @@ export const HOLIDAYS = {
         this.hospitalHolidays.forEach(h => {
             const dateStr = `${year}${String(h.month).padStart(2, '0')}${String(h.day).padStart(2, '0')}`;
             if (!existingDates.has(dateStr)) {
-                merged.push({ name: h.name, date: dateStr, isHoliday: true });
+                const entry = { name: h.name, date: dateStr, isHoliday: true };
+                // 반일 휴무 (조합설립일 등) — UI/계산기가 시간대 분기에 사용
+                if (h.halfDay) {
+                    entry.halfDay = true;
+                    if (h.halfDayHours) entry.halfDayHours = h.halfDayHours;
+                    if (h.halfDayPeriod) entry.halfDayPeriod = h.halfDayPeriod;
+                }
+                merged.push(entry);
             }
         });
 

@@ -1,0 +1,27 @@
+{
+  "_meta": {
+    "year": 2028,
+    "source": "공공데이터포털 SpcdeInfoService + 단협 제32조(6) (근로자의 날 포함)",
+    "updated": "2026-04-29"
+  },
+  "holidays": [
+    { "name": "신정", "date": "20280101", "category": "법정공휴일" },
+    { "name": "설날", "date": "20280125", "category": "법정공휴일" },
+    { "name": "설날", "date": "20280126", "category": "법정공휴일" },
+    { "name": "설날", "date": "20280127", "category": "법정공휴일" },
+    { "name": "삼일절", "date": "20280301", "category": "법정공휴일" },
+    { "name": "제22대 국회의원선거", "date": "20280412", "category": "임시공휴일" },
+    { "name": "근로자의 날", "date": "20280501", "category": "법정공휴일" },
+    { "name": "부처님오신날", "date": "20280502", "category": "법정공휴일" },
+    { "name": "어린이날", "date": "20280505", "category": "법정공휴일" },
+    { "name": "현충일", "date": "20280606", "category": "법정공휴일" },
+    { "name": "광복절", "date": "20280815", "category": "법정공휴일" },
+    { "name": "추석", "date": "20281002", "category": "법정공휴일" },
+    { "name": "추석", "date": "20281003", "category": "법정공휴일" },
+    { "name": "개천절", "date": "20281003", "category": "법정공휴일" },
+    { "name": "추석", "date": "20281004", "category": "법정공휴일" },
+    { "name": "대체공휴일(개천절)", "date": "20281005", "category": "대체공휴일" },
+    { "name": "한글날", "date": "20281009", "category": "법정공휴일" },
+    { "name": "성탄절", "date": "20281225", "category": "법정공휴일" }
+  ]
+}

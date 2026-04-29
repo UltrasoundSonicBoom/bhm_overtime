@@ -1,0 +1,35 @@
+{
+  "_meta": {
+    "source": "단체협약 제32조(6) + 취업규칙 부칙 <2015.05>·<2025.10>",
+    "note": "병원 자체 유급휴일. 정부 공공데이터 API 미제공 → 매년 staticData에 자동 머지.",
+    "updated": "2026-04-29"
+  },
+  "annual": [
+    {
+      "name": "근로자의 날",
+      "month": 5,
+      "day": 1,
+      "source": "근로기준법 / 단협 제32조(6)",
+      "halfDay": false,
+      "category": "법정공휴일"
+    },
+    {
+      "name": "조합설립일",
+      "month": 8,
+      "day": 1,
+      "source": "단협 부칙 <2015.05>·<2025.10>",
+      "halfDay": true,
+      "halfDayHours": "09:00–13:00",
+      "halfDayPeriod": "오전",
+      "category": "병원유급휴일"
+    },
+    {
+      "name": "개원기념일",
+      "month": 10,
+      "day": 15,
+      "source": "서울대병원 창립기념일 (1885.04.03 제중원 → 현재 양력 10/15 시상식)",
+      "halfDay": false,
+      "category": "병원유급휴일"
+    }
+  ]
+}
