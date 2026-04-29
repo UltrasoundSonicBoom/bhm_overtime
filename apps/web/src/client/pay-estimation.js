@@ -353,7 +353,23 @@ function renderPayEstHero() {
   }
 
   const est = calcMonthEstimate(payEstYear, payEstMonth);
-  if (!est) { el.innerHTML = ''; return; }
+  if (!est) {
+    el.textContent = '';
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.style.cssText = 'text-align:center;padding:28px;';
+    const msg = document.createElement('p');
+    msg.style.cssText = 'color:var(--text-muted);margin-bottom:12px;';
+    msg.textContent = '급여 예상을 계산하려면 직종·직급·직급연차 정보가 필요합니다.';
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-primary';
+    btn.dataset.action = 'switchToProfileTab';
+    btn.textContent = '내 정보 입력하기';
+    card.appendChild(msg);
+    card.appendChild(btn);
+    el.appendChild(card);
+    return;
+  }
   const r = est.result;
   const flags = est.flags;
   const otStats = est.otStats;
@@ -441,7 +457,7 @@ function renderPayEstDetail() {
   if (!profile) { el.innerHTML = ''; return; }
 
   const est = calcMonthEstimate(payEstYear, payEstMonth);
-  if (!est) { el.innerHTML = ''; return; }
+  if (!est) { el.textContent = ''; return; }
   const r = est.result;
   const otStats = est.otStats;
 
