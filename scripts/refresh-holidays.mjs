@@ -57,6 +57,15 @@ async function fetchOperation(operation, year) {
   }));
 }
 
+// 정부 API ↔ SNUH 단협 표기 정규화 (정부 명칭 → 단협/내부 통일 명칭)
+const NAME_NORMALIZATION = {
+  '노동절': '근로자의 날', // 단협 제32조(6) 표기
+};
+
+function normalizeHolidayName(rawName) {
+  return NAME_NORMALIZATION[rawName] ?? rawName;
+}
+
 async function refreshYear(year) {
   console.log(`[${year}] fetching getRestDeInfo + getHoliDeInfo...`);
   const [rest, holi] = await Promise.all([
@@ -67,11 +76,13 @@ async function refreshYear(year) {
   const merged = new Map();
   for (const item of [...rest, ...holi]) {
     if (item.isHoliday !== false) {
-      merged.set(`${item.date}_${item.name}`, item);
+      const normalizedName = normalizeHolidayName(item.name);
+      // dedupe key 는 정규화된 이름 기준 — 정부 API 가 노동절/근로자의 날 두 가지로 보내도 1건으로 머지
+      merged.set(`${item.date}_${normalizedName}`, { ...item, name: normalizedName });
     }
   }
 
-  // 단협 제32조(6): 근로자의 날 (5/1) 정부 API 미포함 → 명시 추가
+  // 단협 제32조(6): 근로자의 날 (5/1) 정부 API 미포함 시 명시 추가 (안전망)
   const workersDay = `${year}0501`;
   if (!Array.from(merged.values()).some(h => h.date === workersDay)) {
     merged.set(`${workersDay}_근로자의 날`, {
