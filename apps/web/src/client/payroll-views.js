@@ -408,10 +408,11 @@ import { PROFILE } from '@snuhmate/profile/profile';
         type: 'file',
         id: 'payslipUploadFileInput',
         accept: '.pdf,.xlsx,.xls,.csv,.png,.jpg,.jpeg,.gif,.bmp,.webp',
+        multiple: true,
         style: { display: 'none' }
       });
       fileInput.addEventListener('change', function () {
-        if (fileInput.files && fileInput.files.length > 0) handleInlineUpload(fileInput.files[0]);
+        if (fileInput.files && fileInput.files.length > 0) handleBulkUpload(fileInput.files);
         fileInput.value = '';  // 같은 파일 재선택 가능
       });
 
@@ -510,7 +511,7 @@ import { PROFILE } from '@snuhmate/profile/profile';
   // REMOVED auth: drive sign-in helpers — 로컬 전용 앱
 
   function buildTextUploadBtn() {
-    const fileInput = el('input', { type: 'file', accept: 'application/pdf,.pdf' });
+    const fileInput = el('input', { type: 'file', accept: 'application/pdf,.pdf', multiple: true });
     fileInput.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
 
     const btn = el('button', {
@@ -524,7 +525,7 @@ import { PROFILE } from '@snuhmate/profile/profile';
 
     fileInput.addEventListener('change', function () {
       if (fileInput.files && fileInput.files.length > 0) {
-        handleInlineUpload(fileInput.files[0]);
+        handleBulkUpload(fileInput.files);
       }
     });
 
@@ -539,6 +540,61 @@ import { PROFILE } from '@snuhmate/profile/profile';
     });
     wrap.appendChild(note);
     return wrap;
+  }
+
+  async function handleBulkUpload(files) {
+    const list = Array.from(files);
+    if (list.length === 0) return;
+    if (list.length === 1) return handleInlineUpload(list[0]);
+
+    const visualEl = document.getElementById('payPayslipVisual');
+    const progWrap = el('div', { className: 'card', style: { textAlign: 'center', padding: '24px' } });
+    const progText = el('div', { style: { color: 'var(--text-muted)', fontSize: 'var(--text-body-normal)' } });
+    progText.textContent = `0 / ${list.length} 처리 중…`;
+    progWrap.appendChild(progText);
+    if (visualEl) { visualEl.textContent = ''; visualEl.appendChild(progWrap); }
+
+    let ok = 0;
+    const errors = [];
+    for (let i = 0; i < list.length; i++) {
+      const file = list[i];
+      progText.textContent = `${i + 1} / ${list.length} 처리 중… (${file.name})`;
+      try {
+        const result = await SALARY_PARSER.parseFile(file);
+        const ym = SALARY_PARSER.parsePeriodYearMonth(result);
+        if (ym) {
+          SALARY_PARSER.saveMonthlyData(ym.year, ym.month, result, ym.type);
+          if (typeof SALARY_PARSER.applyStableItemsToProfile === 'function') {
+            SALARY_PARSER.applyStableItemsToProfile(result);
+          }
+          if (typeof window._propagatePayslipToWorkHistory === 'function') {
+            window._propagatePayslipToWorkHistory(result, ym);
+          }
+          ok++;
+        } else {
+          errors.push(`${file.name}: 급여 기간 인식 불가`);
+        }
+      } catch (err) {
+        errors.push(`${file.name}: ${err.message || '처리 실패'}`);
+      }
+    }
+
+    currentPayslipIdx = 0;
+    renderPayPayslip();
+
+    try {
+      const toast = document.createElement('div');
+      toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#10b981;color:#fff;padding:10px 18px;border-radius:8px;z-index:9999;font-size:0.9rem;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,.2);max-width:90vw;text-align:center;';
+      if (errors.length === 0) {
+        toast.textContent = `💾 ${ok}개 명세서 저장 완료 — 내 정보 자동 반영됨`;
+      } else {
+        toast.style.background = '#f59e0b';
+        toast.textContent = `⚠️ ${ok}개 저장 / ${errors.length}개 실패: ${errors[0]}`;
+        console.warn('[bulk upload] 실패 목록:', errors);
+      }
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.remove(); }, 4000);
+    } catch (e) { /* noop */ }
   }
 
   async function handleInlineUpload(file) {
