@@ -963,19 +963,19 @@ function retUpdateQuickDates() {
     document.getElementById('retBtnPeakDate').textContent    = '정년 1년 전 선택 시작 (' + retFmtDate(_retPeakDate) + ')';
     document.getElementById('retBtnPeakEndDate').textContent = '정년퇴직 예정일 (' + retFmtDate(_retPeakEndDate) + ')';
 
-    var yearsUntilPeak = (_retPeakDate - now) / (365.25 * 86400000);
     var hire = hireVal ? new Date(hireVal) : null;
     var yearsFromHireToRetire = hire && !isNaN(hire) ? (_retPeakEndDate - hire) / (365.25 * 86400000) : 999;
     var isFiveYearExclusion = yearsFromHireToRetire <= 5;
+    // 재설계 2026-04-30: 공로연수 카드는 항상 노출 (Step 2 hero). 5년 이내 정년 케이스만 안내 노트.
     var peakSection = document.getElementById('retPeakOptSection');
-    peakSection.style.display = yearsUntilPeak < 6 ? 'block' : 'none';
-    peakSection.classList.toggle('ret-peak-excluded', !!isFiveYearExclusion);
+    if (peakSection) peakSection.classList.toggle('ret-peak-excluded', !!isFiveYearExclusion);
     var exclusionNote = document.getElementById('retPeakExclusionNote');
     if (exclusionNote) exclusionNote.style.display = isFiveYearExclusion ? 'block' : 'none';
   } else {
     document.getElementById('retDdayGrid').style.display = 'none';
-    document.getElementById('retQuickDates').style.display = hireVal ? 'grid' : 'none';
-    document.getElementById('retPeakOptSection').style.display = 'none';
+    var qdEl = document.getElementById('retQuickDates');
+    if (qdEl) qdEl.style.display = hireVal ? 'grid' : 'none';
+    // 재설계 2026-04-30: 공로연수 카드 항상 노출 — 숨기지 않음.
   }
 }
 function retSetRetireDate(type) {
