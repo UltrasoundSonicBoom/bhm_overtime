@@ -106,6 +106,58 @@ function retGoToPayslipUpload() {
   if (tabBtn instanceof HTMLElement) tabBtn.click();
 }
 
+/** Step 2 옵션 카드 클릭 시 즉시 Step 3 으로 이동 + 해당 시나리오로 계산 */
+function retAdvanceToStep3(/** @type {'A'|'none'} */ opt) {
+  // retRetireDate를 옵션에 따라 세팅
+  // 'A' = 공로연수 선택 → 정년 1년 전 시작이지만 퇴직금 산정은 보호조항으로 정년퇴직일 그대로
+  // 'none' = 정년 퇴직 → 정년퇴직일
+  const birthVal = /** @type {HTMLInputElement|null} */ ($('retBirthDate'))?.value;
+  const retireEl = /** @type {HTMLInputElement|null} */ ($('retRetireDate'));
+  if (birthVal && retireEl) {
+    const b = new Date(birthVal);
+    const retireDate = `${b.getFullYear() + 60}-12-31`;
+    retireEl.value = retireDate;
+  }
+  // Step 3 토글 라벨 업데이트
+  syncStep3ToggleLabels();
+  // Step 3 진입 + 토글 활성화
+  setWizStep(3);
+  setStep3Tog(opt);
+}
+
+/** Step 3 토글 라벨에 옵션 A/B 날짜 반영 */
+function syncStep3ToggleLabels() {
+  const aDateEl = $('retStep3TogADate');
+  const bDateEl = $('retStep3TogBDate');
+  const aSrc = $('retOptAStartDate');
+  const bSrc = $('retOptBRetireDate');
+  if (aDateEl && aSrc) aDateEl.textContent = aSrc.textContent || '—';
+  if (bDateEl && bSrc) bDateEl.textContent = bSrc.textContent || '—';
+}
+
+/** Step 3 토글 클릭 핸들러 (전역) — 시나리오 전환 + 재계산 */
+function setStep3Tog(/** @type {'A'|'none'} */ opt) {
+  // 토글 active 표시
+  document.querySelectorAll('.ret-step3-toggle button').forEach((b) => {
+    const el = /** @type {HTMLElement} */ (b);
+    el.classList.toggle('active', el.dataset.step3Tog === opt);
+  });
+  // Step 2 라디오 동기화 (state 일관성)
+  const matchOpt = opt === 'A' ? 'retPeakOpt_A' : 'retPeakOpt_none';
+  const targetLabel = document.getElementById(matchOpt);
+  if (targetLabel) {
+    document.querySelectorAll('.ret-peak-opt').forEach((el) => el.classList.remove('selected'));
+    targetLabel.classList.add('selected');
+    const radio = /** @type {HTMLInputElement|null} */ (targetLabel.querySelector('input[type=radio]'));
+    if (radio) radio.checked = true;
+  }
+  // 자동 계산
+  const fn = /** @type {((silent?: boolean) => boolean) | undefined} */ (
+    /** @type {{ calcRetirementEmbedded?: (silent?: boolean) => boolean }} */ (window).calcRetirementEmbedded
+  );
+  if (typeof fn === 'function') fn(false);
+}
+
 
 function setWizStep(/** @type {1|2|3} */ step) {
   wizStep = step;
@@ -162,11 +214,11 @@ function wizNext() {
       retireEl.value = `${retYear}-12-31`;
     }
     setWizStep(3);
-    // Step 3 진입 시 자동 계산
-    const fn = /** @type {((silent?: boolean) => boolean) | undefined} */ (
-      /** @type {{ calcRetirementEmbedded?: (silent?: boolean) => boolean }} */ (window).calcRetirementEmbedded
-    );
-    if (typeof fn === 'function') fn(false);
+    // Step 3 토글 라벨 동기화
+    syncStep3ToggleLabels();
+    // 현재 선택된 옵션 라디오값 → toggle 동기화
+    const checked = /** @type {HTMLInputElement|null} */ (document.querySelector('input[name="retPeakOpt"]:checked'));
+    setStep3Tog(checked && checked.value === 'A' ? 'A' : 'none');
   } else {
     // Step 3에서 '완료' → 타임라인 탭으로 이동
     const tlBtn = document.querySelector('#retTabs .ret-bookmark-tab[data-tab="timeline"]');
@@ -406,3 +458,5 @@ _w.refreshRetirementTimeline = refreshTimelineTab;
 _w.retSetMode = retSetMode;
 _w.retGoToPayslipUpload = retGoToPayslipUpload;
 _w.retRefreshAutoPayslipRows = renderAutoPayslipRows;
+_w.retAdvanceToStep3 = retAdvanceToStep3;
+_w.retSetStep3Tog = setStep3Tog;

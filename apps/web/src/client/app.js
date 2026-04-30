@@ -1028,6 +1028,11 @@ function retSelectPeakOpt(label) {
   label.classList.add('selected');
   var radio = label.querySelector('input[type=radio]');
   if (radio) radio.checked = true;
+  // 사용자 요구: 옵션 클릭 즉시 Step 3 으로 이동 + 자동 계산
+  var opt = label.dataset.opt; // 'A' or 'none'
+  if (typeof window.retAdvanceToStep3 === 'function') {
+    window.retAdvanceToStep3(opt);
+  }
 }
 
 // ── 퇴직금 계산 (CALC 위임 + 공로연수 선택 통합) ──

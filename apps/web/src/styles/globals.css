@@ -6852,3 +6852,24 @@ html[data-theme="neo"] .ot-help-a {
 }
 .ret-peak-opt.selected .ret-peak-opt-desc { opacity: 0.95; }
 .ret-peak-excluded .ret-peak-opt[data-opt="A"] { opacity: 0.45; pointer-events: none; }
+
+/* Step 3 — 공로연수 ON/OFF 토글 (Step 2 옵션 즉시 비교) */
+.ret-step3-toggle {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0;
+  border: 2px solid #1a1a1a; border-radius: 10px; overflow: hidden;
+  margin-bottom: 12px; box-shadow: 2px 2px 0 #1a1a1a;
+}
+.ret-step3-toggle button {
+  background: #fff; border: 0; padding: 10px 8px;
+  font-family: inherit; font-weight: 700;
+  cursor: pointer; color: #1a1a1a;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  transition: background 0.12s, color 0.12s;
+}
+.ret-step3-toggle button + button { border-left: 2px solid #1a1a1a; }
+.ret-step3-toggle button.active { background: #6C5CE7; color: #fff; }
+.ret-step3-toggle button .lbl { font-size: var(--text-body-normal); font-weight: 800; }
+.ret-step3-toggle button .meta {
+  font-size: var(--text-label-small); font-weight: 600;
+  font-family: 'Inter', 'Noto Sans KR', sans-serif; opacity: 0.85;
+}

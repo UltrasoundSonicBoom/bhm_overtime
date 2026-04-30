@@ -347,7 +347,19 @@
         <div class="ret-warning" id="retPre2001Warning">
           ⚠️ 2001.8.31 이전 근속분이 포함되어 있습니다. 해당 부분의 퇴직금은 인사과에 직접 문의해 주세요.
         </div>
-        <button class="ret-calc-btn" onclick="calcRetirementEmbedded()">퇴직금 계산하기</button>
+
+        <!-- 공로연수 ON/OFF 토글 — Step 3 안에서 두 옵션 즉시 비교 -->
+        <div class="ret-step3-toggle" role="tablist" aria-label="공로연수 선택 / 정년 퇴직 비교">
+          <button type="button" class="active" data-step3-tog="A" onclick="retSetStep3Tog('A')">
+            <span class="lbl">공로연수 선택</span>
+            <span class="meta" id="retStep3TogADate">—</span>
+          </button>
+          <button type="button" data-step3-tog="none" onclick="retSetStep3Tog('none')">
+            <span class="lbl">정년 퇴직</span>
+            <span class="meta" id="retStep3TogBDate">—</span>
+          </button>
+        </div>
+
         <div class="ret-result" id="retCalcResult" style="display:none;">
           <div class="ret-result-label" id="retCalcResultLabel">예상 퇴직금</div>
           <div class="ret-result-amount" id="retCalcResultTotal">0원</div>
