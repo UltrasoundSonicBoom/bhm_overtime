@@ -196,69 +196,96 @@
     <div id="qaCardsContainer"></div>
   </div><!-- /sub-pay-qa -->
 
-  <!-- ── 서브탭 5: 퇴직금 ── -->
+  <!-- ── 서브탭 5: 퇴직금 (재설계 2026-04-30) ── -->
+  <!-- plan: reactive-sprouting-sprout.md · 디자인 시안: ~/.gstack/projects/.../retirement-tab-redesign-20260430/ -->
   <div class="sub-content" id="sub-pay-retirement">
 
-    <!-- 퇴직금 내부 탭 네비게이션 -->
+    <!-- 3 서브탭 네비게이션 (4 → 3 통합) -->
     <nav class="ret-bookmark-tabs" id="retTabs">
-      <button class="ret-bookmark-tab active" data-tab="calc">💰 내 예상액</button>
-      <button class="ret-bookmark-tab" data-tab="peak">📊 공로연수 비교</button>
-      <button class="ret-bookmark-tab" data-tab="pension">📖 규정·연금</button>
-      <button class="ret-bookmark-tab" data-tab="checklist">✅ 준비 체크</button>
+      <button class="ret-bookmark-tab active" data-tab="sim">🧮 시뮬레이터</button>
+      <button class="ret-bookmark-tab" data-tab="timeline">📅 타임라인</button>
+      <button class="ret-bookmark-tab" data-tab="learn">📚 알아두기</button>
     </nav>
-    <div class="ret-tab-accent calc" id="retTabAccent"></div>
+    <div class="ret-tab-accent sim" id="retTabAccent"></div>
 
-    <div class="ret-panel active" id="ret-panel-calc">
-      <div id="retAutoLoadBanner"
-        class="mb-3 py-3 px-3.5 text-brand-body-normal leading-relaxed rounded-lg bg-[#e0e7ff] border-[2.5px] border-solid border-[#4338ca] shadow-[3px_3px_0px_#1a1a1a]"
-        style="display:none;">
-        <div class="font-bold mb-1 text-[#1e1b4b]">⚡ 내 정보 자동 반영</div>
-        <div id="retAutoLoadDetail" class="text-[#312e81]"></div>
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- Tab 1: 시뮬레이터 (Wizard 3-step) -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="ret-panel active" id="ret-panel-sim">
+
+      <!-- 🛡️ 평균임금 보호조항 hero 배너 -->
+      <div class="ret-protect-banner">
+        <span class="ico">🛡️</span>
+        <span>핵심: <b>공로연수를 선택해도 퇴직금은 동일</b>. 평균임금은 공로연수 전 3개월 기준으로 보호됩니다 (제52조).</span>
       </div>
-      <div class="ret-card">
-        <div class="ret-card-title">📋 기본 정보 입력</div>
-        <div class="ret-form-row">
-          <label class="ret-label">월 평균임금 (원) <span class="text-[11px] text-brand-text-muted font-normal ml-1" id="retWageSourceLabel"></span></label>
-          <input class="ret-input" type="number" id="retAvgWage"
-            placeholder="급여명세서가 저장되어 있으면 퇴직 예정일 기준 3개월 평균임금으로 자동계산, 없을 시 수동 입력해주세요" min="0" step="10000">
-          <div class="text-[11px] text-brand-text-muted leading-[1.7] mt-1">
-            • 근로자퇴직급여보장법 제8조: 퇴직금 = 1일 평균임금 × 30 × 계속근로연수<br>
-            • 근로기준법 제2조 제1항 6호: 평균임금 = 퇴직 전 3개월간 지급된 임금 총액 ÷ 역일수<br>
-            • 근로기준법 제2조 제2항: 평균임금이 통상임금보다 낮으면 → 통상임금으로 계산 (보호 조항)
+
+      <!-- Wizard 진행률 -->
+      <div class="ret-wiz-progress" id="retWizProgress">
+        <div class="ws cur" data-step="1"></div>
+        <div class="ws" data-step="2"></div>
+        <div class="ws" data-step="3"></div>
+      </div>
+      <div class="ret-wiz-step-label" id="retWizStepLabel">1 / 3 — 평균임금 입력</div>
+
+      <!-- Step 1: 평균임금 입력 -->
+      <div class="ret-wiz-step active" data-step="1">
+        <div id="retAutoLoadBanner"
+          class="mb-3 py-3 px-3.5 text-brand-body-normal leading-relaxed rounded-lg bg-[#e0e7ff] border-[2.5px] border-solid border-[#4338ca] shadow-[3px_3px_0px_#1a1a1a]"
+          style="display:none;">
+          <div class="font-bold mb-1 text-[#1e1b4b]">⚡ 내 정보 자동 반영</div>
+          <div id="retAutoLoadDetail" class="text-[#312e81]"></div>
+        </div>
+
+        <div class="ret-card">
+          <div class="ret-card-title">📋 평균임금 입력</div>
+          <div class="ret-form-row">
+            <label class="ret-label">월 평균임금 (원) <span class="text-[11px] text-brand-text-muted font-normal ml-1" id="retWageSourceLabel"></span></label>
+            <input class="ret-input" type="number" id="retAvgWage"
+              placeholder="명세서 3개월이 있으면 자동, 없으면 수동 입력" min="0" step="10000">
+            <div class="text-[11px] text-brand-text-muted leading-[1.7] mt-1">
+              • 근로기준법 제2조 제1항 6호: 평균임금 = 퇴직 전 3개월 임금 / 역일수<br>
+              • 근로기준법 제2조 제2항: 평균임금이 통상임금보다 낮으면 → 통상임금 적용 (보호 조항)
+            </div>
           </div>
         </div>
-        <div class="ret-form-row">
-          <label class="ret-label">생년월일 <span class="text-[11px] text-brand-text-muted font-normal">(D-day · 빠른 날짜 계산용)</span></label>
-          <input class="ret-input" type="date" id="retBirthDate"
-            oninput="retUpdateQuickDates(); syncBirthDateToProfile(this.value)">
-        </div>
-        <!-- D-day 카드 -->
-        <div class="ret-dday-grid mb-2.5" id="retDdayGrid" style="display:none;">
-          <div class="ret-dday-card">
-            <div class="ret-dday-label">정년 1년 전까지</div>
-            <div class="ret-dday-val" id="retDdayPeak">—</div>
+      </div>
+
+      <!-- Step 2: 조건 (날짜 + 공로연수) -->
+      <div class="ret-wiz-step" data-step="2">
+        <div class="ret-card">
+          <div class="ret-card-title">📅 날짜 정보</div>
+          <div class="ret-form-row">
+            <label class="ret-label">생년월일 <span class="text-[11px] text-brand-text-muted font-normal">(D-day · 빠른 날짜 계산용)</span></label>
+            <input class="ret-input" type="date" id="retBirthDate"
+              oninput="retUpdateQuickDates(); syncBirthDateToProfile(this.value)">
           </div>
-          <div class="ret-dday-card">
-            <div class="ret-dday-label">정년퇴직 예정일</div>
-            <div class="ret-dday-val" id="retDdayRetire">—</div>
+          <div class="ret-dday-grid mb-2.5" id="retDdayGrid" style="display:none;">
+            <div class="ret-dday-card">
+              <div class="ret-dday-label">정년 1년 전까지</div>
+              <div class="ret-dday-val" id="retDdayPeak">—</div>
+            </div>
+            <div class="ret-dday-card">
+              <div class="ret-dday-label">정년퇴직 예정일</div>
+              <div class="ret-dday-val" id="retDdayRetire">—</div>
+            </div>
+          </div>
+          <div class="ret-form-row">
+            <label class="ret-label">입사일</label>
+            <input class="ret-input" type="date" id="retHireDate" oninput="retUpdateQuickDates()">
+          </div>
+          <div class="ret-form-row">
+            <label class="ret-label">퇴직(예정)일</label>
+            <div class="ret-quick-dates" id="retQuickDates" style="display:none;">
+              <button class="ret-quick-btn" id="retBtnNow" onclick="retSetRetireDate('now')">지금 바로</button>
+              <button class="ret-quick-btn" id="retBtnPeakDate" onclick="retSetRetireDate('peak')">정년 1년 전</button>
+              <button class="ret-quick-btn" id="retBtnPeakEndDate" onclick="retSetRetireDate('peakEnd')">정년퇴직 예정일</button>
+            </div>
+            <input class="ret-input" type="date" id="retRetireDate">
           </div>
         </div>
-        <div class="ret-form-row">
-          <label class="ret-label">입사일</label>
-          <input class="ret-input" type="date" id="retHireDate" oninput="retUpdateQuickDates()">
-        </div>
-        <div class="ret-form-row">
-          <label class="ret-label">퇴직(예정)일</label>
-          <div class="ret-quick-dates" id="retQuickDates" style="display:none;">
-            <button class="ret-quick-btn" id="retBtnNow" onclick="retSetRetireDate('now')">지금 바로</button>
-            <button class="ret-quick-btn" id="retBtnPeakDate" onclick="retSetRetireDate('peak')">정년 1년 전</button>
-            <button class="ret-quick-btn" id="retBtnPeakEndDate" onclick="retSetRetireDate('peakEnd')">정년퇴직 예정일</button>
-          </div>
-          <input class="ret-input" type="date" id="retRetireDate">
-        </div>
-        <!-- 공로연수 선택 옵션 (정년 전 1년 임박 시 자동 표시) -->
-        <div id="retPeakOptSection" class="mb-1" style="display:none;">
-          <label class="ret-label block mb-[7px]">정년 전 1년 선택 (공로연수 여부)</label>
+
+        <div id="retPeakOptSection" class="ret-card" style="display:none;">
+          <div class="ret-card-title">🎓 공로연수 선택</div>
           <div id="retPeakExclusionNote" class="ret-guide-note mb-2" style="display:none;">입사일로부터 5년 이내 정년에 도달하는 경우 공로연수 선택 적용 대상에서 제외됩니다.</div>
           <div class="ret-peak-opts">
             <label class="ret-peak-opt selected" id="retPeakOpt_none" onclick="retSelectPeakOpt(this)">
@@ -272,7 +299,7 @@
               <input type="radio" name="retPeakOpt" value="A">
               <div class="ret-peak-opt-body">
                 <div class="ret-peak-opt-title">옵션 A — 공로연수 1년 선택 (기준 보수 × 60%)</div>
-                <div class="ret-peak-opt-desc">실제 근무지 출근 없이 규정 지급액을 수령. 퇴직금은 공로연수 전 3개월 평균임금 기준</div>
+                <div class="ret-peak-opt-desc">실제 근무지 출근 없이 규정 지급액을 수령. 퇴직금은 공로연수 전 3개월 평균임금 기준 보호 → <b>퇴직금 동일</b></div>
               </div>
             </label>
             <label class="ret-peak-opt" id="retPeakOpt_B" onclick="retSelectPeakOpt(this)">
@@ -283,391 +310,335 @@
               </div>
             </label>
           </div>
+          <label class="ret-checkbox-row" id="retSeveranceCheckRow" style="display:none;">
+            <input type="checkbox" id="retSeveranceCheck" checked>
+            <span class="ret-checkbox-label">퇴직수당 포함 계산 (2015.6.30 이전 입사자)</span>
+          </label>
         </div>
-        <label class="ret-checkbox-row" id="retSeveranceCheckRow" style="display:none;">
-          <input type="checkbox" id="retSeveranceCheck" checked>
-          <span class="ret-checkbox-label">퇴직수당 포함 계산 (2015.6.30 이전 입사자)</span>
-        </label>
+
+        <div class="ret-protect-banner">
+          <span class="ico">🛡️</span>
+          <span>어느 옵션을 골라도 <b>퇴직금 산정 평균임금은 동일</b>. 보수 차이는 <b>재직 중 1년치 급여</b> 차이일 뿐입니다.</span>
+        </div>
+      </div>
+
+      <!-- Step 3: 결과 -->
+      <div class="ret-wiz-step" data-step="3">
+        <div class="ret-warning" id="retPre2001Warning">
+          ⚠️ 2001.8.31 이전 근속분이 포함되어 있습니다. 해당 부분의 퇴직금은 인사과에 직접 문의해 주세요.
+        </div>
         <button class="ret-calc-btn" onclick="calcRetirementEmbedded()">퇴직금 계산하기</button>
-      </div>
-      <div class="ret-warning" id="retPre2001Warning">
-        ⚠️ 2001.8.31 이전 근속분이 포함되어 있습니다. 해당 부분의 퇴직금은 인사과에 직접 문의해 주세요.
-      </div>
-      <div class="ret-result" id="retCalcResult" style="display:none;">
-        <div class="ret-result-label" id="retCalcResultLabel">예상 퇴직금</div>
-        <div class="ret-result-amount" id="retCalcResultTotal">0원</div>
-        <div class="ret-result-breakdown" id="retCalcResultBreakdown"></div>
-      </div>
-      <div id="retAiSuggestion" style="display:none;"></div>
-      <p class="ret-notice">※ 실제 금액은 개인별 수당, 급여 조정, 세금 공제에 따라 달라집니다. 최종 확인은 인사과에 문의하세요.</p>
-      <div class="ret-card ret-rate-card mt-1" id="retRateCard">
-        <div class="ret-card-title ret-rate-toggle cursor-pointer flex justify-between items-center select-none" onclick="retToggleRateCard()">
-          <span>📊 근속연수별 퇴직금 지급률</span>
-          <span class="ret-rate-chevron text-xs text-brand-text-muted transition-transform duration-200" id="retRateChevron">▲</span>
+        <div class="ret-result" id="retCalcResult" style="display:none;">
+          <div class="ret-result-label" id="retCalcResultLabel">예상 퇴직금</div>
+          <div class="ret-result-amount" id="retCalcResultTotal">0원</div>
+          <div class="ret-result-breakdown" id="retCalcResultBreakdown"></div>
         </div>
-        <div id="retRateCardBody">
-          <div class="overflow-x-auto">
-            <table class="w-full border-collapse text-brand-body-normal">
-              <thead>
-                <tr class="border-b-2 border-b-[#1a1a1a] bg-[rgba(129,140,248,0.12)]">
-                  <th class="p-2 text-center">근속</th>
-                  <th class="p-2 text-center">지급률(월)</th>
-                  <th class="p-2 text-center">근속</th>
-                  <th class="p-2 text-center">지급률(월)</th>
-                </tr>
-              </thead>
-              <tbody id="retRateTableBody"></tbody>
-            </table>
+        <div id="retAiSuggestion" style="display:none;"></div>
+        <p class="ret-notice">※ 실제 금액은 개인별 수당·세금 공제에 따라 달라집니다. 최종 확인은 인사과에 문의하세요.</p>
+
+        <div class="ret-protect-banner">
+          <span class="ico">🛡️</span>
+          <span><b>퇴직금은 두 시나리오 모두 동일</b>. 평균임금은 공로연수 전 기준 보호 → <b>📅 타임라인 탭</b>에서 직접 비교 가능.</span>
+        </div>
+
+        <div class="ret-card ret-rate-card mt-1" id="retRateCard">
+          <div class="ret-card-title ret-rate-toggle cursor-pointer flex justify-between items-center select-none" onclick="retToggleRateCard()">
+            <span>📊 근속연수별 퇴직금 지급률</span>
+            <span class="ret-rate-chevron text-xs text-brand-text-muted transition-transform duration-200" id="retRateChevron">▲</span>
           </div>
-          <div class="text-[11px] text-brand-text-muted mt-2.5 leading-[1.8]">
-            <div>📌 <strong>위 표는 2001.8.31 이전 입사자에게 적용되는 누진배수</strong>입니다.</div>
-            <div class="mt-0.5">• <strong>2001.9.1 이후 입사자</strong>: 법정 퇴직금 = 월 평균임금 × 근속연수 (1개월/년)</div>
-            <div>• <strong>2015.6.30 이전 입사자</strong>: 위 기본 퇴직금에 퇴직수당(제53조) 별도 가산</div>
-            <div class="mt-0.5 pl-3">퇴직수당 = 월 평균임금 × 근속연수 × 비율 (1~5년:10% / 5~10년:35% /
-              10~15년:45% / 15~20년:50% / 20년+:60%)</div>
-            <div class="mt-0.5">• <strong>만 60세 이후 퇴직자</strong>: 만 60세 직전의 평균임금 기준 적용 (제53조 2항)</div>
+          <div id="retRateCardBody">
+            <div class="overflow-x-auto">
+              <table class="w-full border-collapse text-brand-body-normal">
+                <thead>
+                  <tr class="border-b-2 border-b-[#1a1a1a] bg-[rgba(129,140,248,0.12)]">
+                    <th class="p-2 text-center">근속</th>
+                    <th class="p-2 text-center">지급률(월)</th>
+                    <th class="p-2 text-center">근속</th>
+                    <th class="p-2 text-center">지급률(월)</th>
+                  </tr>
+                </thead>
+                <tbody id="retRateTableBody"></tbody>
+              </table>
+            </div>
+            <div class="text-[11px] text-brand-text-muted mt-2.5 leading-[1.8]">
+              <div>📌 <strong>위 표는 2001.8.31 이전 입사자에게 적용되는 누진배수</strong>입니다.</div>
+              <div class="mt-0.5">• <strong>2001.9.1 이후 입사자</strong>: 법정 퇴직금 = 월 평균임금 × 근속연수 (1개월/년)</div>
+              <div>• <strong>2015.6.30 이전 입사자</strong>: 위 기본 퇴직금에 퇴직수당(제53조) 별도 가산</div>
+              <div class="mt-0.5">• <strong>만 60세 이후 퇴직자</strong>: 만 60세 직전의 평균임금 기준 적용 (제53조 2항)</div>
+            </div>
           </div>
         </div>
+      </div>
+
+      <!-- Wizard 네비게이션 -->
+      <div class="ret-wiz-nav" id="retWizNav">
+        <button class="prev" id="retWizPrev" disabled>← 이전</button>
+        <button class="next" id="retWizNext">다음 →</button>
       </div>
     </div>
 
-    <!-- 탭 2: 공로연수 선택 시나리오 비교 -->
-    <div class="ret-panel" id="ret-panel-peak">
-      <div class="ret-info-box">📊 <strong>규정 기반 선택 비교</strong> — 지금 퇴직, 공로연수 1년 선택, 공로연수 미선택·계속근무를 퇴직금 포함 총액으로 비교합니다.</div>
-      <!-- 숨김 입력 (JS 계산용) -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- Tab 2: 타임라인 (세로 듀얼 spine + 시나리오 토글 + 동일 비교) -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="ret-panel" id="ret-panel-timeline">
+      <!-- 숨김 입력 (JS 계산용 — app.js retSyncScenarioInputs 와 호환) -->
       <div style="display:none;">
         <input type="number" id="retScWage">
         <input type="date" id="retScHireDate">
         <input type="date" id="retScBirthDate">
       </div>
-      <!-- 타임라인 시각화 -->
-      <div id="retSimTimeline" class="ret-card ret-tl-card mb-3" style="display:none;"></div>
-      <!-- 옵션 A vs B 비교표 (AI 카드 위 고정) -->
-      <div class="ret-compare-top-card">
-        <div class="ret-compare-top-title">⚖️ 공로연수 선택 vs 계속근무</div>
-        <table class="ret-guide-table">
-          <tr>
-            <th>항목</th>
-            <th>공로연수 1년 선택</th>
-            <th>공로연수 미선택·계속근무</th>
-          </tr>
-          <tr>
-            <td>근무 여부</td>
-            <td>실제 근무지 출근 없음</td>
-            <td class="pos">1년 계속 근무</td>
-          </tr>
-          <tr>
-            <td>급여 수령</td>
-            <td class="neg">기준 보수 × 60%</td>
-            <td class="pos">직전년도 보수 × 100%</td>
-          </tr>
-          <tr>
-            <td>퇴직금 기준임금</td>
-            <td class="pos">공로연수 전 3개월 평균임금 적용 → 기준 보호 + 근속 +1년</td>
-            <td class="pos">공로연수 전 3개월 평균임금 적용 → 기준 보호 + 근속 +1년</td>
-          </tr>
-          <tr>
-            <td>패키지 총액</td>
-            <td>수령액 60%만 반영</td>
-            <td class="pos">대부분 최고 ★</td>
-          </tr>
-          <tr>
-            <td>사학연금 기여금</td>
-            <td class="neg">60% 기준 → 연금 감소</td>
-            <td class="pos">100% 기준 유지</td>
-          </tr>
-          <tr>
-            <td>유리한 상황</td>
-            <td>건강 우려·돌봄 필요 시</td>
-            <td>건강하고 근무 가능 시</td>
-          </tr>
-        </table>
-        <div class="ret-guide-note mt-2">※ 공로연수 선택 시에도 퇴직금 기준 평균임금은 공로연수 전 3개월 기준으로 보호됩니다. 계속근무 100% 보수에는 호봉상승, 임금인상분, 승진·승격이 제외됩니다. 자세한 근거는
-          <strong>규정·연금</strong> 탭에서 확인하세요.</div>
+
+      <!-- 🛡️ Hero 배너 -->
+      <div class="ret-protect-banner">
+        <span class="ico">🛡️</span>
+        <span>가장 중요한 한 줄: <b>공로연수를 선택해도 퇴직금은 동일</b>. 평균임금은 공로연수 전 3개월 기준으로 보호됩니다.</span>
       </div>
-      <!-- 시나리오 결과 (AI 카드 + 상세) -->
-      <div id="retScenarioResult" style="display:none;"></div>
-      <!-- [종합 가이드는 📖 종합가이드 탭으로 이동] -->
-      <div class="ret-card ret-sim-guide mt-1" style="display:none;">
-        <div class="ret-card-title">📚 퇴직 설계 종합 가이드</div>
-        <div class="text-[11px] text-brand-text-muted mb-3">시나리오 1·2·3 외에 놓치기 쉬운 변수와 전략을 정리했습니다.</div>
 
-        <!-- 1. 옵션 A vs B -->
-        <div class="ret-guide-item">
-          <div class="ret-guide-hdr" onclick="this.parentNode.classList.toggle('open')">
-            <span>⚖️ 옵션 A vs B 장단점 비교</span><span class="ret-guide-chev">▸</span>
+      <!-- 데이터 미입력 안내 -->
+      <div id="retTlEmpty" class="ret-info-box" style="display:none;">💡 <strong>시뮬레이터 탭</strong>에서 월 평균임금·입사일·생년월일을 입력하면 타임라인이 자동으로 표시됩니다.</div>
+
+      <!-- 세로 듀얼 spine 카드 -->
+      <div class="ret-card" id="retTlSpineCard" style="display:none;">
+        <div class="ret-tl-section-head">📅 시간 흐름</div>
+        <div class="ret-v-grid">
+          <div class="ret-v-col">
+            <h4><span class="ret-v-dot-on"></span> 공로연수 선택</h4>
+            <div class="ret-v-spine" id="retTlSpineOn"></div>
           </div>
-          <div class="ret-guide-body">
-            <table class="ret-guide-table">
-              <tr>
-                <th>항목</th>
-                <th>공로연수 1년 선택</th>
-                <th>공로연수 미선택·계속근무</th>
-              </tr>
-              <tr>
-                <td>근무 여부</td>
-                <td>실제 근무지 출근 없음</td>
-                <td class="pos">1년 계속 근무</td>
-              </tr>
-              <tr>
-                <td>급여 수령액</td>
-                <td class="neg">기준 보수 × 60%</td>
-                <td class="pos">직전년도 보수 × 100%</td>
-              </tr>
-              <tr>
-                <td>퇴직금 기준임금</td>
-                <td class="pos">공로연수 전 3개월 평균임금 적용 → 기준 보호 + 근속 +1년</td>
-                <td class="pos">공로연수 전 3개월 평균임금 적용 → 기준 보호 + 근속 +1년</td>
-              </tr>
-              <tr>
-                <td>패키지 총액</td>
-                <td>수령액 60%만 반영</td>
-                <td class="pos">대부분 최고 ★</td>
-              </tr>
-              <tr>
-                <td>사학연금 기여금</td>
-                <td class="neg">60% 기준 납부 → 연금 소폭 감소</td>
-                <td class="pos">100% 기준 유지</td>
-              </tr>
-              <tr>
-                <td>유리한 상황</td>
-                <td>건강 우려 · 돌봄 · 개인 계획 시</td>
-                <td>건강하고 근무 지속 가능 시</td>
-              </tr>
-            </table>
-            <div class="ret-guide-note">※ 금전 기준으로는 옵션 B가 유리하지만, 건강·업무 여건·개인 계획이 최종 결정 변수입니다.</div>
+          <div class="ret-v-col">
+            <h4><span class="ret-v-dot-off"></span> 미선택</h4>
+            <div class="ret-v-spine" id="retTlSpineOff"></div>
           </div>
         </div>
+      </div>
 
-        <!-- 2. 중간정산 -->
-        <div class="ret-guide-item">
-          <div class="ret-guide-hdr" onclick="this.parentNode.classList.toggle('open')">
-            <span>💰 퇴직금 중간정산 — 신중히!</span><span class="ret-guide-chev">▸</span>
+      <!-- 시나리오 토글 카드 (미니막대 X, stats만) -->
+      <div class="ret-scenario-card" id="retTlScenarioCard" style="display:none;">
+        <div class="head">
+          <span class="scope-tag">⚖️ 시나리오 비교</span>
+          <span class="ret-toggle-pill" id="retTlToggle">
+            <button class="active" data-tog="on">ON 공로연수</button>
+            <button data-tog="off">OFF</button>
+          </span>
+        </div>
+        <div id="retTlScenarioStats"></div>
+        <div class="ret-scenario-note" id="retTlScenarioNote"></div>
+      </div>
+
+      <!-- 핵심 비교: 두 시나리오 퇴직금 = 동일 -->
+      <div class="ret-compare-pair-card" id="retTlComparePair" style="display:none;">
+        <div class="text-[11px] uppercase tracking-wider text-brand-text-muted font-bold mb-2">📌 두 시나리오 직접 비교</div>
+        <div class="ret-compare-pair">
+          <div class="cell">
+            <div class="label">선택 시 퇴직금</div>
+            <div class="v" id="retCmpOn">—</div>
           </div>
-          <div class="ret-guide-body">
-            <div class="ret-guide-warn">⚠️ 중간정산 시 퇴직금 기산일이 리셋됩니다. 누진배수(2001.8.31 이전 입사) 대상자는 큰 손해!</div>
-            <div class="ret-guide-row"><strong>원칙:</strong> 2012년 이후 원칙적으로 불가 (근로자퇴직급여보장법 제8조)</div>
-            <div class="ret-guide-row mt-1.5"><strong>예외적 허용 사유:</strong></div>
-            <ul class="ret-guide-ul">
-              <li>무주택자의 본인 명의 주택 구입·전세 보증금</li>
-              <li>본인·배우자·부양가족 6개월 이상 요양비</li>
-              <li>개인회생·파산 신청</li>
-              <li>DC형 퇴직연금으로 전환 시</li>
-              <li>재난·재해로 인한 피해 복구</li>
-            </ul>
-            <div class="ret-guide-note">→ 중간정산 전 반드시 인사과 상담. 장기 근속자일수록 절대 경솔히 하지 마세요.</div>
+          <div class="vs">=</div>
+          <div class="cell">
+            <div class="label">미선택 시 퇴직금</div>
+            <div class="v" id="retCmpOff">—</div>
           </div>
         </div>
-
-        <!-- 3. 퇴직연금 DB/IRP -->
-        <div class="ret-guide-item">
-          <div class="ret-guide-hdr" onclick="this.parentNode.classList.toggle('open')">
-            <span>🏦 퇴직연금 DB · IRP · 세금</span><span class="ret-guide-chev">▸</span>
-          </div>
-          <div class="ret-guide-body">
-            <div class="ret-guide-row"><strong>서울대병원: DB형 (확정급여형)</strong></div>
-            <div class="ret-guide-subrow">최종 3개월 평균임금 × 근속연수로 사용자가 지급 책임. 임금이 꾸준히 오를수록 DB가 유리.</div>
-            <div class="ret-guide-row mt-2"><strong>IRP (개인형 퇴직연금) 절세 전략</strong></div>
-            <div class="ret-guide-subrow">퇴직금은 IRP 계좌로 의무 이전 → 55세 이후 연금으로 분할 수령 시 퇴직소득세 30~40% 감면. 일시금 수령보다 절세 효과
-              큼.</div>
-            <div class="ret-guide-row mt-2"><strong>퇴직소득세</strong></div>
-            <div class="ret-guide-subrow">장기 근속일수록 근속연수 공제가 커서 실효세율 낮아짐. IRP 이전 후 연금 수령이 일시금 수령 대비 유리한지 계산 필요.</div>
-            <table class="ret-guide-table mt-2">
-              <tr>
-                <th>수령 방식</th>
-                <th>세율</th>
-                <th>비고</th>
-              </tr>
-              <tr>
-                <td>일시금 수령</td>
-                <td class="neg">퇴직소득세 전액</td>
-                <td>즉시 과세</td>
-              </tr>
-              <tr>
-                <td>IRP → 연금 수령</td>
-                <td class="pos">30~40% 감면</td>
-                <td>55세 이후, 10년+ 분할</td>
-              </tr>
-            </table>
-          </div>
+        <div class="ret-compare-protect-msg">⛨ 퇴직금 동일 — 평균임금 보호 (제52조)</div>
+        <div class="mt-2 pt-2 border-t border-dashed border-brand-text-muted text-[11px] text-brand-text-secondary leading-relaxed">
+          차이는 <b>재직 중 1년치 보수</b>입니다 — 60% 적용 시 약 <span id="retCmpDiff">—</span> 적게 받음. 퇴직금 산식에는 영향 없음.
         </div>
+      </div>
 
-        <!-- 4. 사학연금 -->
-        <div class="ret-guide-item">
-          <div class="ret-guide-hdr" onclick="this.parentNode.classList.toggle('open')">
-            <span>🏫 사학연금 — 몇 살부터?</span><span class="ret-guide-chev">▸</span>
-          </div>
-          <div class="ret-guide-body">
-            <table class="ret-guide-table">
-              <tr>
-                <th>수령 유형</th>
-                <th>가능 연령</th>
-                <th>비고</th>
-              </tr>
-              <tr>
-                <td><strong>기본 수령</strong></td>
-                <td class="pos">만 65세</td>
-                <td>기준 수령 연령</td>
-              </tr>
-              <tr>
-                <td>조기 수령 (1년 일찍)</td>
-                <td>만 64세</td>
-                <td>6% 감액</td>
-              </tr>
-              <tr>
-                <td>조기 수령 (3년 일찍)</td>
-                <td>만 62세</td>
-                <td>18% 감액</td>
-              </tr>
-              <tr>
-                <td>최대 조기 수령</td>
-                <td>만 60세</td>
-                <td class="neg">30% 감액 (최대)</td>
-              </tr>
-              <tr>
-                <td>유족연금</td>
-                <td>재직 중 사망 시</td>
-                <td>즉시 지급</td>
-              </tr>
-            </table>
-            <div class="ret-guide-warn mt-2">💡 공로연수 1년 선택 시 기여금이 60% 기준으로 줄어 연금 수령액도 소폭 감소할 수 있습니다.
-            </div>
-            <div class="ret-guide-note">정확한 예상 수령액은 사학연금공단(tp.or.kr)에서 개인별 시뮬레이션 가능.</div>
-          </div>
-        </div>
-
-        <!-- 5. 기타 변수 -->
-        <div class="ret-guide-item border-b-0">
-          <div class="ret-guide-hdr" onclick="this.parentNode.classList.toggle('open')">
-            <span>🔍 놓치기 쉬운 변수들</span><span class="ret-guide-chev">▸</span>
-          </div>
-          <div class="ret-guide-body">
-            <div class="ret-guide-row">📅 <strong>미사용 연차수당</strong> — 잔여 연차는 연차수당으로 보상 (통상임금 × 잔여 일수). 퇴직 전 반드시 확인.
-            </div>
-            <div class="ret-guide-row">🩺 <strong>건강보험 임의계속가입</strong> — 퇴직 후 최대 36개월 직장 보험료 수준 유지 가능. 지역가입자보다 저렴할 수
-              있음.</div>
-            <div class="ret-guide-row">💼 <strong>실업급여</strong> — 정년퇴직도 수급 가능 (비자발적). 피보험 기간·연령에 따라 최대 270일. 퇴직 전
-              고용센터 확인.</div>
-            <div class="ret-guide-row">🧾 <strong>IRP 세액공제</strong> — 재직 중 IRP 추가 납입 시 연간 최대 900만 원 세액공제 (16.5%). 퇴직
-              전 마지막 해 활용.</div>
-          </div>
-        </div>
-
-      </div><!-- /ret-sim-guide -->
+      <!-- 기존 retScenarioResult (app.js calcScenarioEmbedded 호환 보존, 접힘) -->
+      <details class="ret-card mt-2">
+        <summary class="cursor-pointer font-bold text-brand-body-normal">📊 상세 시나리오 분석 (기존 비교)</summary>
+        <div id="retScenarioResult" style="display:none;margin-top:8px"></div>
+        <div id="retSimTimeline" class="ret-tl-card mt-2" style="display:none;"></div>
+      </details>
     </div>
 
-    <!-- 탭 3: 종합가이드 -->
-    <div class="ret-panel" id="ret-panel-pension">
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- Tab 3: 알아두기 (Layered Infographic) -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="ret-panel" id="ret-panel-learn">
 
-      <!-- ① 사학연금 -->
-      <div class="ret-gs-card">
-        <div class="ret-gs-head">
-          <div class="ret-gs-icon-wrap bg-[#e0e7ff]">🏫</div><!-- 색상 보존 (gs-card brand color) -->
-          <div>
-            <div class="ret-gs-title">사학연금 — 몇 살부터?</div>
-            <div class="ret-gs-sub">서울대병원 직원은 국민연금 대신 사학연금 적용</div>
-          </div>
-        </div>
-        <table class="ret-gs-table">
-          <thead>
-            <tr>
-              <th>수령 유형</th>
-              <th>가능 연령</th>
-              <th>비고</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><strong>기본 수령</strong></td>
-              <td><span class="ret-gs-chip green">만 65세</span></td>
-              <td>기준 수령 연령</td>
-            </tr>
-            <tr>
-              <td>조기 수령 (1년 일찍)</td>
-              <td>만 64세</td>
-              <td>6% 감액</td>
-            </tr>
-            <tr>
-              <td>조기 수령 (3년 일찍)</td>
-              <td>만 62세</td>
-              <td>18% 감액</td>
-            </tr>
-            <tr>
-              <td>최대 조기 수령 (5년)</td>
-              <td><span class="ret-gs-chip red">만 60세</span></td>
-              <td>30% 감액 — 신중히!</td>
-            </tr>
-            <tr>
-              <td>유족·장해연금</td>
-              <td>재직 중 발생 시</td>
-              <td>즉시 지급</td>
-            </tr>
-          </tbody>
-        </table>
-        <div class="ret-gs-callout amber">💡 공로연수 1년 선택 시 기여금이 60% 기준으로 줄어 장래 연금 수령액도 소폭 감소할 수 있습니다. 선택 전 확인하세요.</div>
-        <div class="ret-gs-callout blue mt-2">📌 조기 수령 시 기대 수명까지 총 수령액이 기준 수령보다 적을 수 있습니다. 수명 75세
-          기준 손익분기: 약 만 70세.</div>
-        <a class="ret-gs-link-btn" href="https://www.tp.or.kr" target="_blank" rel="noopener noreferrer">🔗 사학연금공단 내
-          연금 시뮬레이션</a>
+      <!-- Layer 0: 🛡️ 보호조항 -->
+      <div class="ret-protect-banner">
+        <span class="ico">🛡️</span>
+        <span>가장 중요한 한 줄: <b>공로연수를 선택해도 퇴직금은 동일</b>. 평균임금은 공로연수 전 기준으로 보호됨.</span>
       </div>
 
-      <!-- ② 퇴직연금 DB · IRP -->
-      <div class="ret-gs-card">
-        <div class="ret-gs-head">
-          <div class="ret-gs-icon-wrap bg-[#d1fae5]">🏦</div>
+      <!-- Layer 1: 한 장 요약 -->
+      <div class="ret-summary-card">
+        <div class="text-[11px] uppercase tracking-wider text-brand-text-muted font-bold mb-2">📌 핵심 한 장</div>
+        <div class="ret-summary-row">
+          <span class="ico">💰</span>
+          <span class="body"><b>퇴직금</b> = 평균임금 × 근속년수</span>
+          <span class="src">제52조</span>
+        </div>
+        <div class="ret-summary-row">
+          <span class="ico">📜</span>
+          <span class="body"><b>퇴직수당</b> = 2015.6.30 이전 입사자만</span>
+          <span class="src">제53조</span>
+        </div>
+        <div class="ret-summary-row">
+          <span class="ico">🎓</span>
+          <span class="body"><b>공로연수</b> = 정년 직전 1년 60% 보수</span>
+          <span class="src">2019.11</span>
+        </div>
+      </div>
+
+      <!-- Layer 2: 3 개념 인포그래픽 카드 -->
+      <div class="ret-sec-title">개념 자세히</div>
+
+      <div class="ret-info-card">
+        <div class="head">
+          <div class="ret-info-icon ind">💰</div>
           <div>
-            <div class="ret-gs-title">퇴직연금 DB · IRP · 절세</div>
-            <div class="ret-gs-sub">IRP 이전 후 연금 수령 시 퇴직소득세 30~40% 절감</div>
+            <h4>퇴직금</h4>
+            <div class="ret-info-src">단체협약 제52조</div>
           </div>
         </div>
+        <div class="ret-eq">
+          <span class="pill amt">평균임금</span>
+          <span class="op">×</span>
+          <span class="pill">근속년수</span>
+          <span class="op">=</span>
+          <span class="pill res">퇴직금</span>
+        </div>
+        <div class="ret-info-desc">1년에 1개월분이 기본. 2001.8.31 이전 근속분은 누진(10년 15.5월 / 20년 33.0월 / 30년 52.5월).</div>
+      </div>
+
+      <div class="ret-info-card">
+        <div class="head">
+          <div class="ret-info-icon amb">📜</div>
+          <div>
+            <h4>퇴직수당</h4>
+            <div class="ret-info-src">단체협약 제53조 · 2015.6.30 이전 입사자 한정</div>
+          </div>
+        </div>
+        <div class="ret-mini-bars">
+          <div class="row"><span class="lbl">1~5년</span><span class="bar-track"><span class="bar-fill" style="--bar-w:10%"></span></span><span class="v">10%</span></div>
+          <div class="row"><span class="lbl">5~10년</span><span class="bar-track"><span class="bar-fill" style="--bar-w:35%"></span></span><span class="v">35%</span></div>
+          <div class="row"><span class="lbl">10~15년</span><span class="bar-track"><span class="bar-fill" style="--bar-w:45%"></span></span><span class="v">45%</span></div>
+          <div class="row"><span class="lbl">15~20년</span><span class="bar-track"><span class="bar-fill" style="--bar-w:50%"></span></span><span class="v">50%</span></div>
+          <div class="row"><span class="lbl">20년+</span><span class="bar-track"><span class="bar-fill bar-fill--peak" style="--bar-w:60%"></span></span><span class="v">60%</span></div>
+        </div>
+        <div class="ret-info-desc">2015.6.30 이전 근무기간에 위 비율 적용해 추가 지급. 2015.7.1 이후 입사자는 해당 없음.</div>
+      </div>
+
+      <div class="ret-info-card">
+        <div class="head">
+          <div class="ret-info-icon eme">🎓</div>
+          <div>
+            <h4>공로연수</h4>
+            <div class="ret-info-src">2019.11 합의 · 2022.12 100% 옵션 추가</div>
+          </div>
+        </div>
+        <div class="ret-mini-tl">
+          <div class="spine"></div>
+          <div class="seg"></div>
+          <div class="nd" style="--x:6%"></div>
+          <div class="nd now" style="--x:78%"></div>
+          <div class="nd" style="--x:90%"></div>
+          <div class="nd fin" style="--x:97%"></div>
+          <div class="lbl lbl--bottom" style="--x:6%">입사</div>
+          <div class="lbl lbl--bottom lbl--now" style="--x:78%">현재</div>
+          <div class="lbl lbl--bottom" style="--x:97%">정년 ★</div>
+          <div class="lbl lbl--peak" style="--xr:8%">60% · 1년</div>
+        </div>
+        <div class="ret-info-desc">정년 직전 <b>1년 보수 60%</b>. 입사 5년 이내 정년자 제외. <b>퇴직금 산정 평균임금은 공로연수 전 3개월 기준 보호</b> → 퇴직금 영향 없음.</div>
+      </div>
+
+      <!-- Layer 3: Q/A -->
+      <div class="ret-sec-title">자주 묻는 질문</div>
+
+      <div class="ret-qa-card">
+        <div class="q"><span class="Q">Q1</span>공로연수 안하면 손해?</div>
+        <div class="a"><span class="A">A</span><b>아니에요.</b> 퇴직금은 동일합니다. 차이는 <b>재직 중 1년치 보수</b>(60% vs 100%)뿐. 100% 옵션도 있으니 시뮬레이터에서 시나리오 비교를 해보세요.</div>
+      </div>
+
+      <div class="ret-qa-card">
+        <div class="q"><span class="Q">Q2</span>중간정산 받았는데 퇴직금 또 받나?</div>
+        <div class="a"><span class="A">A</span>중간정산 이후 근속분만 새로 계산됩니다. 누진배수 대상자(2001.8.31 이전 입사)에게는 큰 손해일 수 있으니 사전 인사과 상담 필수.</div>
+      </div>
+
+      <div class="ret-qa-card">
+        <div class="q"><span class="Q">Q3</span>평균임금은 어느 시점 기준?</div>
+        <div class="a"><span class="A">A</span>퇴직 직전 <b>3개월</b> (근로기준법 제2조). 만60세 이후 퇴직자는 만60세 직전 평균임금. 공로연수 선택해도 그 전 평균이 보호됩니다.</div>
+      </div>
+
+      <div class="ret-qa-card">
+        <div class="q"><span class="Q">Q4</span>퇴직수당은 누가 받나?</div>
+        <div class="a"><span class="A">A</span><b>2015.6.30 이전 입사자</b>만 받습니다. 그 이전 근무기간에 비율(1~5년 10% / 20년+ 60%)을 적용해 추가 지급.</div>
+      </div>
+
+      <div class="ret-qa-card">
+        <div class="q"><span class="Q">Q5</span>정년 전 자발 퇴직 시 차이는?</div>
+        <div class="a"><span class="A">A</span>법정 퇴직금(평균임금 × 근속년수)은 동일하게 받습니다. 단, 공로연수 옵션은 정년 직전 1년에만 적용되므로 자발 퇴직자는 해당 없음.</div>
+      </div>
+
+      <!-- 사학연금·IRP·중간정산 (기존 pension 탭 콘텐츠를 접힘으로) -->
+      <div class="ret-sec-title">사학연금 · 퇴직연금 · 절세</div>
+
+      <details class="ret-gs-card">
+        <summary class="cursor-pointer">
+          <div class="ret-gs-head ret-gs-head--flush">
+            <div class="ret-gs-icon-wrap bg-[#e0e7ff]">🏫</div>
+            <div>
+              <div class="ret-gs-title">사학연금 — 몇 살부터?</div>
+              <div class="ret-gs-sub">서울대병원 직원은 국민연금 대신 사학연금 적용</div>
+            </div>
+          </div>
+        </summary>
+        <table class="ret-gs-table">
+          <thead><tr><th>수령 유형</th><th>가능 연령</th><th>비고</th></tr></thead>
+          <tbody>
+            <tr><td><strong>기본 수령</strong></td><td><span class="ret-gs-chip green">만 65세</span></td><td>기준 수령 연령</td></tr>
+            <tr><td>조기 수령 (1년 일찍)</td><td>만 64세</td><td>6% 감액</td></tr>
+            <tr><td>조기 수령 (3년 일찍)</td><td>만 62세</td><td>18% 감액</td></tr>
+            <tr><td>최대 조기 수령 (5년)</td><td><span class="ret-gs-chip red">만 60세</span></td><td>30% 감액 — 신중히!</td></tr>
+            <tr><td>유족·장해연금</td><td>재직 중 발생 시</td><td>즉시 지급</td></tr>
+          </tbody>
+        </table>
+        <div class="ret-gs-callout amber">💡 공로연수 1년 선택 시 기여금이 60% 기준으로 줄어 장래 연금 수령액도 소폭 감소할 수 있습니다.</div>
+        <div class="ret-gs-callout blue mt-2">📌 조기 수령 시 기대 수명까지 총 수령액이 기준 수령보다 적을 수 있습니다. 수명 75세 기준 손익분기: 약 만 70세.</div>
+        <a class="ret-gs-link-btn" href="https://www.tp.or.kr" target="_blank" rel="noopener noreferrer">🔗 사학연금공단 내 연금 시뮬레이션</a>
+      </details>
+
+      <details class="ret-gs-card">
+        <summary class="cursor-pointer">
+          <div class="ret-gs-head ret-gs-head--flush">
+            <div class="ret-gs-icon-wrap bg-[#d1fae5]">🏦</div>
+            <div>
+              <div class="ret-gs-title">퇴직연금 DB · IRP · 절세</div>
+              <div class="ret-gs-sub">IRP 이전 후 연금 수령 시 퇴직소득세 30~40% 절감</div>
+            </div>
+          </div>
+        </summary>
         <div class="ret-gs-row-group">
           <div class="ret-gs-row-item">
             <div class="ret-gs-row-title">서울대병원 — DB형 (확정급여형)</div>
-            <div class="ret-gs-row-desc">사용자 책임으로 최종 3개월 평균임금 × 근속연수 지급. 임금이 꾸준히 오를수록 유리. 투자 위험 없음.</div>
+            <div class="ret-gs-row-desc">사용자 책임으로 최종 3개월 평균임금 × 근속연수 지급. 임금이 꾸준히 오를수록 유리.</div>
           </div>
           <div class="ret-gs-row-item">
             <div class="ret-gs-row-title">IRP (개인형 퇴직연금) 절세 전략</div>
-            <div class="ret-gs-row-desc">퇴직금은 IRP 계좌로 의무 이전 → 55세 이후 연금으로 분할 수령하면 퇴직소득세 <strong
-                class="text-[#059669]">30~40% 감면</strong>.</div>
+            <div class="ret-gs-row-desc">퇴직금은 IRP 계좌로 의무 이전 → 55세 이후 연금으로 분할 수령하면 퇴직소득세 <strong class="text-[#059669]">30~40% 감면</strong>.</div>
           </div>
           <div class="ret-gs-row-item">
             <div class="ret-gs-row-title">재직 중 IRP 추가 납입</div>
-            <div class="ret-gs-row-desc">연간 최대 900만 원 세액공제 (16.5%). 퇴직 전 마지막 해에 납입하면 절세 효과가 가장 큼.</div>
+            <div class="ret-gs-row-desc">연간 최대 900만 원 세액공제 (16.5%). 퇴직 전 마지막 해 활용.</div>
           </div>
         </div>
-        <table class="ret-gs-table mt-3">
-          <thead>
-            <tr>
-              <th>수령 방식</th>
-              <th>세율 효과</th>
-              <th>조건</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>일시금 수령</td>
-              <td><span class="ret-gs-chip red">퇴직소득세 전액</span></td>
-              <td>즉시 과세</td>
-            </tr>
-            <tr>
-              <td>IRP → 연금 수령</td>
-              <td><span class="ret-gs-chip green">30~40% 감면</span></td>
-              <td>55세 이후, 10년+ 분할</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      </details>
 
-      <!-- ③ 퇴직금 중간정산 -->
-      <div class="ret-gs-card">
-        <div class="ret-gs-head">
-          <div class="ret-gs-icon-wrap bg-[#fee2e2]">⚠️</div>
-          <div>
-            <div class="ret-gs-title">퇴직금 중간정산</div>
-            <div class="ret-gs-sub">2012년 이후 원칙적 불가 — 예외 사유 확인 필수</div>
+      <details class="ret-gs-card">
+        <summary class="cursor-pointer">
+          <div class="ret-gs-head ret-gs-head--flush">
+            <div class="ret-gs-icon-wrap bg-[#fee2e2]">⚠️</div>
+            <div>
+              <div class="ret-gs-title">퇴직금 중간정산</div>
+              <div class="ret-gs-sub">2012년 이후 원칙적 불가 — 예외 사유 확인 필수</div>
+            </div>
           </div>
-        </div>
-        <div class="ret-gs-callout red">🚫 중간정산 시 퇴직금 기산일이 리셋됩니다. 누진배수 적용 대상자(2001.8.31 이전 입사)는 수천만 원 손해 가능!</div>
+        </summary>
+        <div class="ret-gs-callout red">🚫 중간정산 시 퇴직금 기산일이 리셋됩니다. 누진배수 대상자(2001.8.31 이전 입사)는 수천만 원 손해 가능!</div>
         <div class="ret-gs-row-item mt-2.5">
           <div class="ret-gs-row-title">예외적 허용 사유 (근로자퇴직급여보장법 제8조)</div>
           <ul class="ret-gs-list">
@@ -678,138 +649,64 @@
             <li>재난·재해 피해 복구</li>
           </ul>
         </div>
-        <div class="ret-gs-callout amber mt-2">💡 중간정산 전 반드시 인사과 상담. 장기 근속자일수록 절대 경솔히 결정하지 마세요.
-        </div>
-      </div>
+        <div class="ret-gs-callout amber mt-2">💡 중간정산 전 반드시 인사과 상담.</div>
+      </details>
 
-      <!-- ④ 기타 놓치기 쉬운 변수 -->
-      <div class="ret-gs-card mb-0">
-        <div class="ret-gs-head">
-          <div class="ret-gs-icon-wrap bg-[#f3f4f6]">🔍</div>
-          <div>
-            <div class="ret-gs-title">놓치기 쉬운 변수들</div>
-            <div class="ret-gs-sub">퇴직금 외에 챙겨야 할 항목들</div>
-          </div>
-        </div>
-        <div class="ret-gs-checklist">
-          <div class="ret-gs-check-item">
-            <div class="ret-gs-check-icon">📅</div>
-            <div>
-              <div class="ret-gs-check-title">미사용 연차수당</div>
-              <div class="ret-gs-check-desc">잔여 연차는 통상임금 × 잔여 일수로 보상. 소멸 전 확인 필수.</div>
-            </div>
-          </div>
-          <div class="ret-gs-check-item">
-            <div class="ret-gs-check-icon">🩺</div>
-            <div>
-              <div class="ret-gs-check-title">건강보험 임의계속가입</div>
-              <div class="ret-gs-check-desc">퇴직 후 최대 36개월 직장 보험료 수준 유지. 지역가입자보다 저렴할 수 있음.</div>
-            </div>
-          </div>
-          <div class="ret-gs-check-item">
-            <div class="ret-gs-check-icon">💼</div>
-            <div>
-              <div class="ret-gs-check-title">고용보험 실업급여</div>
-              <div class="ret-gs-check-desc">정년퇴직도 수급 가능 (비자발적 퇴직). 피보험 기간·연령에 따라 최대 270일.</div>
-            </div>
-          </div>
-          <div class="ret-gs-check-item border-b-0">
-            <div class="ret-gs-check-icon">📋</div>
-            <div>
-              <div class="ret-gs-check-title">국민연금 이력 확인</div>
-              <div class="ret-gs-check-desc">사학연금 전환 이전 납부 이력은 국민연금공단에서 별도 확인 가능.</div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <!-- 퇴직 D-12개월 체크리스트 (기존 4번째 탭 콘텐츠 보존, 접힘) -->
+      <div class="ret-sec-title">퇴직 준비</div>
 
-      <div class="ret-notice mt-3">※ 사학연금 관련 세부 사항은 사학연금공단 (1588-4321) 또는 원내 인사과에 문의하세요.</div>
-    </div>
-
-    <!-- 탭 4: 퇴직 준비 체크리스트 -->
-    <div class="ret-panel" id="ret-panel-checklist">
-      <div class="ret-card">
-        <div class="ret-checklist-section">
+      <details class="ret-card">
+        <summary class="cursor-pointer font-bold text-brand-body-large">🗂 퇴직 D-12개월 준비 체크리스트</summary>
+        <div class="ret-checklist-section mt-3">
           <div class="ret-checklist-header">🧭 정년 D-12개월 (공로연수 선택 시점)</div>
-          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
-            <div class="ret-checklist-text"><strong>공로연수 선택 여부 결정</strong> — 공로연수 1년 선택 또는 공로연수 미선택·계속근무 중 선택</div>
-          </div>
-          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
-            <div class="ret-checklist-text"><strong>규정 지급액 확인</strong> — 공로연수 선택 시 기준 보수 60%, 계속근무 선택 시 직전년도 보수 100% 기준 확인</div>
-          </div>
-          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
-            <div class="ret-checklist-text"><strong>적용 제외 여부 확인</strong> — 보직자 여부와 입사 후 5년 이내 정년 도달 여부 확인</div>
-          </div>
-          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
-            <div class="ret-checklist-text"><strong>인사과 상담</strong> — 퇴직금 기준 평균임금(공로연수 전 3개월), 사학연금 기여금, 연차수당 영향을 같이 확인</div>
-          </div>
+          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span><div class="ret-checklist-text"><strong>공로연수 선택 여부 결정</strong> — 옵션 A/B/미선택</div></div>
+          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span><div class="ret-checklist-text"><strong>규정 지급액 확인</strong> — 60% / 100% 기준 확인</div></div>
+          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span><div class="ret-checklist-text"><strong>적용 제외 여부 확인</strong> — 보직자 여부와 입사 후 5년 이내 정년 도달 여부</div></div>
+          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span><div class="ret-checklist-text"><strong>인사과 상담</strong> — 퇴직금 기준 평균임금, 사학연금 기여금, 연차수당 영향</div></div>
         </div>
         <div class="ret-checklist-section">
           <div class="ret-checklist-header">📅 퇴직 D-90 (3개월 전)</div>
-          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
-            <div class="ret-checklist-text"><strong>퇴직 의사 통보</strong> — 직속 상급자 및 부서장에게 퇴직 예정일 사전 통보</div>
-          </div>
-          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
-            <div class="ret-checklist-text"><strong>공로연수 비교 확인</strong> — 정년 도달 예정자는 [공로연수 비교] 탭에서 옵션 A/B 비교 후
-              인사과 상담</div>
-          </div>
-          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
-            <div class="ret-checklist-text"><strong>사학연금 수령 방식 확인</strong> — 연금 vs 일시금 비교 검토 (사학연금공단 상담)</div>
-          </div>
-          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
-            <div class="ret-checklist-text"><strong>미사용 연차 확인</strong> — 잔여 연차 일수 및 연차수당 지급 여부 확인</div>
-          </div>
+          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span><div class="ret-checklist-text"><strong>퇴직 의사 통보</strong> — 직속 상급자 및 부서장에게 사전 통보</div></div>
+          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span><div class="ret-checklist-text"><strong>공로연수 옵션 비교</strong> — 시뮬레이터 + 타임라인 탭에서 확인</div></div>
+          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span><div class="ret-checklist-text"><strong>사학연금 수령 방식 결정</strong> — 연금 vs 일시금 (사학연금공단 상담)</div></div>
+          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span><div class="ret-checklist-text"><strong>미사용 연차 확인</strong></div></div>
         </div>
         <div class="ret-checklist-section">
           <div class="ret-checklist-header">📋 퇴직 D-30 (1개월 전)</div>
-          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
-            <div class="ret-checklist-text"><strong>인사과 퇴직 서류 수령</strong> — 퇴직원, 퇴직금 신청서 등 서식 확인</div>
-          </div>
-          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
-            <div class="ret-checklist-text"><strong>퇴직금 계산 확인</strong> — 예상 퇴직금 사전 문의 (2001.8.31 이전 근속분 포함 시 필수)
-            </div>
-          </div>
-          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
-            <div class="ret-checklist-text"><strong>업무 인수인계 계획 수립</strong> — 담당 업무 인수자 확정 및 인수인계서 작성 시작</div>
-          </div>
-          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
-            <div class="ret-checklist-text"><strong>건강보험 전환 준비</strong> — 퇴직 후 지역가입자 전환 또는 임의계속가입 확인</div>
-          </div>
+          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span><div class="ret-checklist-text"><strong>인사과 퇴직 서류 수령</strong></div></div>
+          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span><div class="ret-checklist-text"><strong>퇴직금 계산 확인</strong> — 2001.8.31 이전 근속분 포함 시 필수</div></div>
+          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span><div class="ret-checklist-text"><strong>업무 인수인계 계획 수립</strong></div></div>
+          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span><div class="ret-checklist-text"><strong>건강보험 전환 준비</strong></div></div>
         </div>
         <div class="ret-checklist-section">
           <div class="ret-checklist-header">✅ 퇴직 D-7 (1주일 전)</div>
-          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
-            <div class="ret-checklist-text"><strong>퇴직 서류 제출</strong> — 퇴직원, 개인정보 말소 동의서 등 인사과 제출</div>
-          </div>
-          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
-            <div class="ret-checklist-text"><strong>사원증 · 의료기기 · 열쇠 반납 목록 확인</strong></div>
-          </div>
-          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
-            <div class="ret-checklist-text"><strong>퇴직금 입금 계좌 확인</strong> — 인사과에 퇴직금 수령 계좌 신고</div>
-          </div>
-          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
-            <div class="ret-checklist-text"><strong>개인 물품 정리</strong> — 사무용품, 개인 파일 백업 (병원 시스템 접근 제한됨)</div>
-          </div>
+          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span><div class="ret-checklist-text"><strong>퇴직 서류 제출</strong></div></div>
+          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span><div class="ret-checklist-text"><strong>사원증·의료기기·열쇠 반납 목록 확인</strong></div></div>
+          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span><div class="ret-checklist-text"><strong>퇴직금 입금 계좌 신고</strong></div></div>
+          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span><div class="ret-checklist-text"><strong>개인 물품 정리 · 파일 백업</strong></div></div>
         </div>
         <div class="ret-checklist-section">
           <div class="ret-checklist-header">🏁 퇴직 후</div>
-          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
-            <div class="ret-checklist-text"><strong>퇴직금 수령 확인</strong> — 퇴직일로부터 14일 이내 지급 (근로기준법 제36조)</div>
-          </div>
-          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
-            <div class="ret-checklist-text"><strong>고용보험 실업급여 신청</strong> — 고용센터 방문 또는 워크넷 온라인 신청 (비자발적 퇴직 시)</div>
-          </div>
-          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
-            <div class="ret-checklist-text"><strong>건강보험 전환 처리</strong> — 퇴직 후 14일 이내 지역가입자 전환 자동 처리</div>
-          </div>
-          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span>
-            <div class="ret-checklist-text"><strong>경력증명서 발급</strong> — 필요 시 인사과에 경력증명서 발급 신청</div>
-          </div>
+          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span><div class="ret-checklist-text"><strong>퇴직금 수령 확인</strong> — 14일 이내 (근로기준법 제36조)</div></div>
+          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span><div class="ret-checklist-text"><strong>고용보험 실업급여 신청</strong></div></div>
+          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span><div class="ret-checklist-text"><strong>건강보험 전환 처리</strong></div></div>
+          <div class="ret-checklist-item"><span class="ret-checklist-check">☐</span><div class="ret-checklist-text"><strong>경력증명서 발급</strong></div></div>
         </div>
-      </div>
-      <div class="ret-notice">※ 세부 절차 및 서식은 인사과(내선 확인)에 문의하세요.</div>
-    </div>
+      </details>
 
+      <details class="ret-card">
+        <summary class="cursor-pointer font-bold text-brand-body-large">📖 노조규정 원문 인용 (제52조 · 제53조)</summary>
+        <div class="mt-3 text-brand-body-normal text-brand-text-secondary leading-relaxed">
+          <div><b>제52조 (퇴직금)</b> — 상여금, 연월차수당, 기타 지급된 임금전액을 합산한 평균임금으로 계속 근로년수 1년에 대하여 1월분의 퇴직금을 지급. 2001.8.31 이전 근속분은 별표 지급률 적용 (10년 15.5월, 20년 33.0월, 30년 52.5월). 만60세 이후 퇴직자는 만60세 직전 평균임금 적용.</div>
+          <div class="mt-3"><b>제53조 (퇴직수당)</b> — 2015.6.30 현재 재직자가 퇴직 시 입사일~2015.6.30 근무기간에 대해: 1~5년 미만 10% / 5~10년 35% / 10~15년 45% / 15~20년 50% / 20년 이상 60%.</div>
+          <div class="mt-3"><b>2019.11 합의 (공로연수)</b> — (1) 단체협약 공로연수 1년. (2) 적용기간은 정년 이전 1년, 보수의 60% 지급. (3) 입사일로부터 5년 이내 정년 도달자는 미적용.</div>
+          <div class="mt-3"><b>2022.12 합의</b> — 공로연수 미부여 시 직전년도 보수 100% 지급 옵션 추가.</div>
+          <div class="mt-3 p-2 bg-[#F5F0E1] border-l-4 border-[#00B894]"><b>⛨ 보호조항 (병원 운영지침)</b> — 공로연수 선택 시에도 퇴직금 기준 평균임금은 공로연수 전 3개월 기준으로 보호됨.</div>
+        </div>
+      </details>
+
+      <div class="ret-notice mt-3">※ 세부 절차 및 서식은 인사과(내선 확인)에 문의하세요.</div>
+    </div>
   </div><!-- /sub-pay-retirement -->
 
 </div>
