@@ -96,7 +96,7 @@ if (tabName === 'feedback') _afterLoad('feedback', function () {});
    - 내부에서 `PROFILE.load()` → 필드 merge → `PROFILE.save()` 실행 (`salary-parser.js:1213`)
    - `PROFILE.save()` 는 반드시 `profileChanged` 이벤트를 발행 (`profile.js:56`)
 4. `_propagatePayslipToWorkHistory(parsed, ym)` 호출 (`app.js:3632`):
-   - `bhm_work_history_<uid>` localStorage에 월별 근무이력 엔트리 추가 (`app.js:3436~3477`)
+   - `snuhmate_work_history_<uid>` localStorage에 월별 근무이력 엔트리 추가 (`app.js:3436~3477`)
    - 같은 부서·같은 월 엔트리가 이미 있으면 skip (중복 방지)
 5. `renderWorkHistory()` → 프로필 탭 근무이력 카드 갱신 (app.js:3829, work-history.js:96)
 
@@ -114,7 +114,7 @@ if (tabName === 'feedback') _afterLoad('feedback', function () {});
 - `work-history.js:414, 433, 720, 736` (근무이력 CRUD 직후)
 - `app.js:3829` (급여명세서 업로드 완료 후)
 
-시드 플래그 키: `bhm_work_history_seeded_<uid>` (app.js:3827).
+시드 플래그 키: `snuhmate_work_history_seeded_<uid>` (app.js:3827).
 
 **알려진 패턴:** 급여명세서 업로드로 새 부서·입사일이 들어오면 `_propagatePayslipToWorkHistory` 가 직접 localStorage에 엔트리를 push. 별도 시드 플래그 리셋 없이 중복 체크(overlap)로 처리.
 
@@ -135,17 +135,17 @@ if (tabName === 'feedback') _afterLoad('feedback', function () {});
 
 | 용도 | 키 base | 실제 키 패턴 | 사용처 |
 |------|---------|------------|--------|
-| 프로필 | `bhm_hr_profile` | `getUserStorageKey('bhm_hr_profile')` | profile.js:7 |
+| 프로필 | `snuhmate_hr_profile` | `getUserStorageKey('snuhmate_hr_profile')` | profile.js:7 |
 | 시간외 기록 | `overtimeRecords` | `getUserStorageKey('overtimeRecords')` | overtime.js:8 |
 | 시간외 명세서 캐시 | `overtimePayslipData` | `getUserStorageKey('overtimePayslipData')` | overtime.js:481 |
 | 휴가 기록 | `leaveRecords` | 고정키 `leaveRecords` (사용자 구분 없음) | leave.js:9 |
-| 근무이력 | `bhm_work_history` | `getUserStorageKey('bhm_work_history')` | work-history.js:5, app.js:3441 |
-| 근무이력 시드 플래그 | `bhm_work_history_seeded` | `getUserStorageKey('bhm_work_history_seeded')` | work-history.js:8, app.js:3827 |
+| 근무이력 | `snuhmate_work_history` | `getUserStorageKey('snuhmate_work_history')` | work-history.js:5, app.js:3441 |
+| 근무이력 시드 플래그 | `snuhmate_work_history_seeded` | `getUserStorageKey('snuhmate_work_history_seeded')` | work-history.js:8, app.js:3827 |
 | 급여명세서 (월별) | `payslip_<uid>_<YYYY>_<MM>` | 직접 uid 삽입 (getUserStorageKey 미사용) | salary-parser.js:1092 |
 | 수동 시급 | `otManualHourly` | `getUserStorageKey('otManualHourly')` | app.js:2004, 2358 |
 | 즐겨찾기 (찾아보기) | `snuhmate_reg_favorites` | `getUserStorageKey('snuhmate_reg_favorites')` | regulation.js:161 |
 | 테마 | `theme` | 고정키 (사용자 구분 없음) | regulation.js:72 |
-| 데모 모드 | `bhm_demo_mode` | 고정키 | inline-ui-helpers.js:58 |
+| 데모 모드 | `snuhmate_demo_mode` | 고정키 | inline-ui-helpers.js:58 |
 
 **특이 발견:** `leaveRecords` 키는 `getUserStorageKey` 를 사용하지 않고 고정 문자열. 다중 사용자 환경에서 휴가 기록이 공유될 수 있음 (leave.js:9).
 

@@ -1,7 +1,7 @@
 # 데이터 Lifecycle 정책 — 회귀 패턴의 본질 분석
 
 > 작성: 2026-04-27 (Phase 5-followup)
-> 범위: bhm_overtime SPA 의 localStorage 데이터 lifecycle 통합 정책
+> 범위: SNUH Mate repo SPA 의 localStorage 데이터 lifecycle 통합 정책
 > 동기: 동일 회귀 패턴 5+ 회 반복 → 근본 원인 정리 + 영구 차단 정책
 
 ---
@@ -13,7 +13,7 @@
 - **사용자 인지**: "심각한 보안 에러" — 다른 사람이 쓸 때 흔적 노출
 - **근본 원인**:
   1. 새 도메인 키 추가 시 USER_DATA_PATTERNS 갱신 누락 (drift)
-  2. `bhm_settings` 같은 KEEP 대상에 PII 저장
+  2. `snuhmate_settings` 같은 KEEP 대상에 PII 저장
   3. 다른 namespace 키 (`*_<uid>`, `*_demo`) 매칭 누락
   4. 외부 sync (Google Drive/Calendar) 가 wipe 후 cloud 에서 복원
   5. 사용자가 같은 파일을 다시 업로드 → "부활" 로 인식
@@ -73,27 +73,27 @@
 export const STORAGE_REGISTRY = {
   // 사용자 도메인 데이터 — wipe 대상
   user: [
-    /^bhm_hr_profile/,
+    /^snuhmate_hr_profile/,
     /^overtimeRecords/,
     /^leaveRecords/,
-    /^bhm_work_history/,
+    /^snuhmate_work_history/,
     /^payslip_/,
     /^otManualHourly/,
     /^overtimePayslipData/,
-    /^bhm_lastEdit_/,
+    /^snuhmate_last_edit_/,
     /^_orphan_/,
     /^snuhmate_reg_favorites/,
     /^payroll_compare_history/,    // ← 누락 fix
     /^cardnews\./,                  // ← 누락 fix (사용자 위젯 설정)
-    /^bhm_demo_mode$/,
+    /^snuhmate_demo_mode$/,
     /^hwBannerDismissed$/,
   ],
   // 시스템 메타 — KEEP
   keep: new Set([
-    'bhm_local_uid', 'bhm_deviceId', 'bhm_anon_id',
+    'snuhmate_local_uid', 'snuhmate_device_id', 'snuhmate_anon_id',
     'theme', 'snuhmate-theme',
-    'bhm_leave_migrated_v1', 'bhm_debug_parser',
-    // bhm_settings 는 별도 처리 (PII 필드만 wipe)
+    'snuhmate_leave_migrated_v1', 'snuhmate_debug_parser',
+    // snuhmate_settings 는 별도 처리 (PII 필드만 wipe)
   ]),
   // 외부 캐시 — KEEP (재로드 가능)
   cache: [
@@ -102,7 +102,7 @@ export const STORAGE_REGISTRY = {
     /^Channel\./,
     /^onboarding_(seen|count)/,
   ],
-  // bhm_settings 안에서 wipe 할 PII 필드
+  // snuhmate_settings 안에서 wipe 할 PII 필드
   settingsWipeFields: ['googleSub', 'driveEnabled', 'calendarEnabled', 'cachedProfile', 'lastSync'],
 };
 ```
@@ -139,7 +139,7 @@ save(data) {
 1. 명세서 업로드 → 자동 PROFILE 저장 검증
 2. saveProfile 호출 시 빈 form 필드가 existing 명세서 값 덮어쓰기 X 검증
 3. clearProfile → STORAGE_REGISTRY.user 모든 패턴 wipe 검증 + KEEP 보존
-4. clearProfile → bhm_settings 의 PII 필드만 wipe / driveEnabled 등 보존
+4. clearProfile → snuhmate_settings 의 PII 필드만 wipe / driveEnabled 등 보존
 5. wipe 후 잔존 키 0건 (`payroll_compare_history` 등 새 키 추가 시 자동 검출)
 
 ---
@@ -150,7 +150,7 @@ save(data) {
 |---|---|---|
 | 1. PROFILE.save 빈 값 보호 (정책 B) | profile.js | 🔴 즉시 (이슈 4) |
 | 2. USER_DATA_PATTERNS 보강 + payroll_compare_history (정책 A 부분) | profile-tab.js | 🔴 즉시 (이슈 2) |
-| 3. bhm_settings PII 셀렉티브 wipe | profile-tab.js | 🟡 보안 |
+| 3. snuhmate_settings PII 셀렉티브 wipe | profile-tab.js | 🟡 보안 |
 | 4. 명세서 업로드 자동 저장 status UX (정책 C) | salary-parser.js / app.js | 🟡 UX (이슈 3) |
 | 5. STORAGE_REGISTRY 신규 모듈 (정책 A 완전) | shared/ | 🟢 Phase 6 마이그레이션 |
 | 6. 회귀 가드 통합 테스트 (정책 D) | tests/integration/ | 🔴 즉시 (회귀 차단) |

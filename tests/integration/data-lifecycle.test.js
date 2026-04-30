@@ -4,7 +4,7 @@
 // 검증 시나리오:
 // 1. PROFILE.save 빈 값 보호 — form 의 빈 input 이 명세서로 채워진 값 덮어쓰기 X
 // 2. clearProfile 후 payroll_compare_history 등 사용자 키 0 잔존
-// 3. clearProfile 후 bhm_settings PII 필드만 wipe / 사용자 설정 보존
+// 3. clearProfile 후 snuhmate_settings PII 필드만 wipe / 사용자 설정 보존
 // 4. clearProfile 후 KEEP 메타 (deviceId/anonId/onboarding) 보존
 
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
@@ -105,12 +105,12 @@ describe('이슈 4 회귀 가드 — PROFILE.save 빈 값 보호', () => {
 describe('이슈 2 회귀 가드 — clearProfile 데이터 wipe scope', () => {
   beforeEach(() => {
     // 사용자 도메인 데이터 (모두 wipe 대상)
-    localStorage.setItem('bhm_hr_profile', JSON.stringify({ name: '홍길동' }));
-    localStorage.setItem('bhm_hr_profile_uid123', JSON.stringify({ name: 'Other UID' }));
+    localStorage.setItem('snuhmate_hr_profile', JSON.stringify({ name: '홍길동' }));
+    localStorage.setItem('snuhmate_hr_profile_uid123', JSON.stringify({ name: 'Other UID' }));
     localStorage.setItem('overtimeRecords', '{}');
     localStorage.setItem('overtimeRecords_uid123', '{}');
     localStorage.setItem('leaveRecords', '{}');
-    localStorage.setItem('bhm_work_history_guest', '[]');
+    localStorage.setItem('snuhmate_work_history_guest', '[]');
     localStorage.setItem('payslip_guest_2026_04', '{}');
     localStorage.setItem('payslip_guest_2026_03', '{}');
     localStorage.setItem('otManualHourly', '50000');
@@ -120,18 +120,18 @@ describe('이슈 2 회귀 가드 — clearProfile 데이터 wipe scope', () => {
     localStorage.setItem('cardnews.settings', '{}');
     localStorage.setItem('snuhmate_reg_favorites_guest', '[]');
     localStorage.setItem('_orphan_overtimeRecords_2025', '{}');
-    localStorage.setItem('bhm_lastEdit_overtimeRecords_uid', 'now');
+    localStorage.setItem('snuhmate_last_edit_overtimeRecords_uid', 'now');
 
     // 시스템 메타 (KEEP 대상)
-    localStorage.setItem('bhm_local_uid', 'uid-1');
-    localStorage.setItem('bhm_deviceId', 'dev-1');
-    localStorage.setItem('bhm_anon_id', 'anon-1');
+    localStorage.setItem('snuhmate_local_uid', 'uid-1');
+    localStorage.setItem('snuhmate_device_id', 'dev-1');
+    localStorage.setItem('snuhmate_anon_id', 'anon-1');
     localStorage.setItem('theme', 'neo');
-    localStorage.setItem('bhm_leave_migrated_v1', '1');
+    localStorage.setItem('snuhmate_leave_migrated_v1', '1');
     localStorage.setItem('onboarding_seen_v2', 'true');
 
-    // bhm_settings — PII 필드만 wipe, 사용자 설정 보존
-    localStorage.setItem('bhm_settings', JSON.stringify({
+    // snuhmate_settings — PII 필드만 wipe, 사용자 설정 보존
+    localStorage.setItem('snuhmate_settings', JSON.stringify({
       googleSub: 'sub-123',
       googleEmail: 'test@example.com',
       cachedProfile: { name: '캐시된이름' },
@@ -143,19 +143,19 @@ describe('이슈 2 회귀 가드 — clearProfile 데이터 wipe scope', () => {
 
   it('clearProfile → 모든 사용자 도메인 키 wipe (payroll_compare_history / cardnews 포함)', async () => {
     seedProfileForm();
-    window.__bhmReloadHook = () => {};
-    window.__bhmConfirmClearForTest = () => true;
+    window.__snuhmateReloadHook = () => {};
+    window.__snuhmateConfirmClearForTest = () => true;
 
     await import('../../apps/web/src/client/profile-tab.js');
     window.clearProfile();
 
     // 모든 USER_DATA_PATTERNS 매칭 키 → null
-    expect(localStorage.getItem('bhm_hr_profile')).toBeNull();
-    expect(localStorage.getItem('bhm_hr_profile_uid123')).toBeNull();
+    expect(localStorage.getItem('snuhmate_hr_profile')).toBeNull();
+    expect(localStorage.getItem('snuhmate_hr_profile_uid123')).toBeNull();
     expect(localStorage.getItem('overtimeRecords')).toBeNull();
     expect(localStorage.getItem('overtimeRecords_uid123')).toBeNull();
     expect(localStorage.getItem('leaveRecords')).toBeNull();
-    expect(localStorage.getItem('bhm_work_history_guest')).toBeNull();
+    expect(localStorage.getItem('snuhmate_work_history_guest')).toBeNull();
     expect(localStorage.getItem('payslip_guest_2026_04')).toBeNull();
     expect(localStorage.getItem('payslip_guest_2026_03')).toBeNull();
     expect(localStorage.getItem('otManualHourly')).toBeNull();
@@ -165,40 +165,40 @@ describe('이슈 2 회귀 가드 — clearProfile 데이터 wipe scope', () => {
     expect(localStorage.getItem('cardnews.settings')).toBeNull();
     expect(localStorage.getItem('snuhmate_reg_favorites_guest')).toBeNull();
     expect(localStorage.getItem('_orphan_overtimeRecords_2025')).toBeNull();
-    expect(localStorage.getItem('bhm_lastEdit_overtimeRecords_uid')).toBeNull();
+    expect(localStorage.getItem('snuhmate_last_edit_overtimeRecords_uid')).toBeNull();
 
-    delete window.__bhmReloadHook;
-    delete window.__bhmConfirmClearForTest;
+    delete window.__snuhmateReloadHook;
+    delete window.__snuhmateConfirmClearForTest;
   });
 
   it('KEEP 메타 (deviceId/anonId/theme/onboarding/migration) 보존', async () => {
     seedProfileForm();
-    window.__bhmReloadHook = () => {};
-    window.__bhmConfirmClearForTest = () => true;
+    window.__snuhmateReloadHook = () => {};
+    window.__snuhmateConfirmClearForTest = () => true;
 
     await import('../../apps/web/src/client/profile-tab.js');
     window.clearProfile();
 
-    expect(localStorage.getItem('bhm_local_uid')).toBe('uid-1');
-    expect(localStorage.getItem('bhm_deviceId')).toBe('dev-1');
-    expect(localStorage.getItem('bhm_anon_id')).toBe('anon-1');
+    expect(localStorage.getItem('snuhmate_local_uid')).toBe('uid-1');
+    expect(localStorage.getItem('snuhmate_device_id')).toBe('dev-1');
+    expect(localStorage.getItem('snuhmate_anon_id')).toBe('anon-1');
     expect(localStorage.getItem('theme')).toBe('neo');
-    expect(localStorage.getItem('bhm_leave_migrated_v1')).toBe('1');
+    expect(localStorage.getItem('snuhmate_leave_migrated_v1')).toBe('1');
     expect(localStorage.getItem('onboarding_seen_v2')).toBe('true');
 
-    delete window.__bhmReloadHook;
-    delete window.__bhmConfirmClearForTest;
+    delete window.__snuhmateReloadHook;
+    delete window.__snuhmateConfirmClearForTest;
   });
 
-  it('bhm_settings PII 셀렉티브 wipe — 사용자 설정 보존', async () => {
+  it('snuhmate_settings PII 셀렉티브 wipe — 사용자 설정 보존', async () => {
     seedProfileForm();
-    window.__bhmReloadHook = () => {};
-    window.__bhmConfirmClearForTest = () => true;
+    window.__snuhmateReloadHook = () => {};
+    window.__snuhmateConfirmClearForTest = () => true;
 
     await import('../../apps/web/src/client/profile-tab.js');
     window.clearProfile();
 
-    const settings = JSON.parse(localStorage.getItem('bhm_settings'));
+    const settings = JSON.parse(localStorage.getItem('snuhmate_settings'));
     // PII 필드 wipe
     expect(settings.googleSub).toBeUndefined();
     expect(settings.googleEmail).toBeUndefined();
@@ -208,7 +208,7 @@ describe('이슈 2 회귀 가드 — clearProfile 데이터 wipe scope', () => {
     expect(settings.calendarEnabled).toBe(false);
     expect(settings.pinNudgeDismissed).toBe(true);
 
-    delete window.__bhmReloadHook;
-    delete window.__bhmConfirmClearForTest;
+    delete window.__snuhmateReloadHook;
+    delete window.__snuhmateConfirmClearForTest;
   });
 });

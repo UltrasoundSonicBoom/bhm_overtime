@@ -15,7 +15,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   <script is:inline>
     // FOUC 방지: PIN 활성화 시 body 숨김 (appLock.js가 오버레이 렌더 후 복원)
-    (function(){try{var s=JSON.parse(localStorage.getItem('bhm_settings')||'{}');if(s.pinEnabled){document.documentElement.style.visibility='hidden';}}catch(e){}})();
+    (function(){try{var s=JSON.parse(localStorage.getItem('snuhmate_settings')||'{}');if(s.pinEnabled){document.documentElement.style.visibility='hidden';}}catch(e){}})();
   </script>
 
   <nav class="reg-bookmark-tabs" id="regSubTabs" style="display:none;">

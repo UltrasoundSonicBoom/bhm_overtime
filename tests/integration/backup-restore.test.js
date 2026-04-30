@@ -33,7 +33,7 @@ describe('uploadBackup v1.0 형식 복원 (legacy)', () => {
   it('profile/overtime/leave 3 필드 → localStorage 저장', async () => {
     await import('../../apps/web/src/client/profile-tab.js');
     const reloads = [];
-    window.__bhmReloadHook = () => reloads.push('reload');
+    window.__snuhmateReloadHook = () => reloads.push('reload');
 
     const v1Content = JSON.stringify({
       version: '1.0',
@@ -46,31 +46,31 @@ describe('uploadBackup v1.0 형식 복원 (legacy)', () => {
 
     await window.uploadBackup({ target: { files: [file], value: '' } });
 
-    const profile = JSON.parse(localStorage.getItem('bhm_hr_profile'));
+    const profile = JSON.parse(localStorage.getItem('snuhmate_hr_profile'));
     expect(profile.name).toBe('김계환');
     expect(profile.department).toBe('핵의학과');
     const overtime = JSON.parse(localStorage.getItem('overtimeRecords'));
     expect(overtime['2026-04'][0].id).toBe('ot1');
     expect(reloads.length).toBe(1);
 
-    delete window.__bhmReloadHook;
+    delete window.__snuhmateReloadHook;
   });
 });
 
 describe('uploadBackup v2.0 형식 복원 (full)', () => {
   it('keys object 의 모든 사용자 도메인 키 일괄 복원', async () => {
     await import('../../apps/web/src/client/profile-tab.js');
-    window.__bhmReloadHook = () => {};
+    window.__snuhmateReloadHook = () => {};
 
     const v2Content = JSON.stringify({
       version: '2.0',
       exportDate: '2026-04-27T00:00:00Z',
       exportType: 'full',
       keys: {
-        'bhm_hr_profile': JSON.stringify({ name: '복원자', employeeNumber: '99999' }),
+        'snuhmate_hr_profile': JSON.stringify({ name: '복원자', employeeNumber: '99999' }),
         'overtimeRecords': JSON.stringify({ '2026-04': [{ id: 'a' }] }),
         'leaveRecords': JSON.stringify({ '2026': [{ id: 'b' }] }),
-        'bhm_work_history_guest': JSON.stringify([{ id: 'wh1', dept: '핵의학과' }]),
+        'snuhmate_work_history_guest': JSON.stringify([{ id: 'wh1', dept: '핵의학과' }]),
         'payslip_guest_2026_04': JSON.stringify({ summary: { netPay: 5000000 } }),
         'payslip_guest_2026_03': JSON.stringify({ summary: { netPay: 4900000 } }),
         'payroll_compare_history': JSON.stringify([{ year: 2026, month: 4 }]),
@@ -80,16 +80,16 @@ describe('uploadBackup v2.0 형식 복원 (full)', () => {
 
     await window.uploadBackup({ target: { files: [file], value: '' } });
 
-    expect(JSON.parse(localStorage.getItem('bhm_hr_profile')).name).toBe('복원자');
+    expect(JSON.parse(localStorage.getItem('snuhmate_hr_profile')).name).toBe('복원자');
     expect(JSON.parse(localStorage.getItem('overtimeRecords'))['2026-04'][0].id).toBe('a');
     expect(JSON.parse(localStorage.getItem('leaveRecords'))['2026'][0].id).toBe('b');
     // namespace 매핑 — getUserStorageKey 없으면 canonical base 키로 저장
-    expect(JSON.parse(localStorage.getItem('bhm_work_history'))[0].dept).toBe('핵의학과');
+    expect(JSON.parse(localStorage.getItem('snuhmate_work_history'))[0].dept).toBe('핵의학과');
     expect(JSON.parse(localStorage.getItem('payslip_guest_2026_04')).summary.netPay).toBe(5000000);
     expect(JSON.parse(localStorage.getItem('payslip_guest_2026_03')).summary.netPay).toBe(4900000);
     expect(JSON.parse(localStorage.getItem('payroll_compare_history'))[0].year).toBe(2026);
 
-    delete window.__bhmReloadHook;
+    delete window.__snuhmateReloadHook;
   });
 });
 
@@ -97,20 +97,20 @@ describe('uploadBackup 잘못된 형식 거부', () => {
   it('이미지 파일명 → 차단', async () => {
     await import('../../apps/web/src/client/profile-tab.js');
     let reloadCalled = false;
-    window.__bhmReloadHook = () => { reloadCalled = true; };
+    window.__snuhmateReloadHook = () => { reloadCalled = true; };
 
     const file = { name: 'photo.jpg', type: 'image/jpeg', text: async () => '' };
     await window.uploadBackup({ target: { files: [file], value: '' } });
     expect(reloadCalled).toBe(false);
-    expect(localStorage.getItem('bhm_hr_profile')).toBeNull();
+    expect(localStorage.getItem('snuhmate_hr_profile')).toBeNull();
 
-    delete window.__bhmReloadHook;
+    delete window.__snuhmateReloadHook;
   });
 
   it('PDF/Excel 파일명 → 차단', async () => {
     await import('../../apps/web/src/client/profile-tab.js');
     let reloadCalled = false;
-    window.__bhmReloadHook = () => { reloadCalled = true; };
+    window.__snuhmateReloadHook = () => { reloadCalled = true; };
 
     const pdfFile = { name: 'doc.pdf', type: 'application/pdf', text: async () => '' };
     await window.uploadBackup({ target: { files: [pdfFile], value: '' } });
@@ -118,34 +118,34 @@ describe('uploadBackup 잘못된 형식 거부', () => {
     await window.uploadBackup({ target: { files: [xlsFile], value: '' } });
 
     expect(reloadCalled).toBe(false);
-    expect(localStorage.getItem('bhm_hr_profile')).toBeNull();
+    expect(localStorage.getItem('snuhmate_hr_profile')).toBeNull();
 
-    delete window.__bhmReloadHook;
+    delete window.__snuhmateReloadHook;
   });
 
   it('잘못된 JSON 구조 → 거부 + 데이터 보존', async () => {
     await import('../../apps/web/src/client/profile-tab.js');
-    localStorage.setItem('bhm_hr_profile', JSON.stringify({ name: '기존' }));
-    window.__bhmReloadHook = () => {};
+    localStorage.setItem('snuhmate_hr_profile', JSON.stringify({ name: '기존' }));
+    window.__snuhmateReloadHook = () => {};
 
     const badContent = JSON.stringify({ foo: 'bar', notBackup: true });
     const file = makeFakeFile('something.json', badContent);
     await window.uploadBackup({ target: { files: [file], value: '' } });
 
     // 기존 데이터 보존
-    expect(JSON.parse(localStorage.getItem('bhm_hr_profile')).name).toBe('기존');
+    expect(JSON.parse(localStorage.getItem('snuhmate_hr_profile')).name).toBe('기존');
 
-    delete window.__bhmReloadHook;
+    delete window.__snuhmateReloadHook;
   });
 });
 
 describe('uploadBackup namespace 매핑 (다른 디바이스 호환)', () => {
   it('window.getUserStorageKey 존재 시 → 현재 namespace 키로 매핑', async () => {
     // 시뮬: 사용자가 Google 로그인 — uid suffix 적용
-    window.getUserStorageKey = (base) => base + '_user-uid-123';
+    window.getUserStorageKey = (base) => base + '_uid_user-uid-123';
 
     await import('../../apps/web/src/client/profile-tab.js');
-    window.__bhmReloadHook = () => {};
+    window.__snuhmateReloadHook = () => {};
 
     const v1Content = JSON.stringify({
       version: '1.0',
@@ -157,19 +157,19 @@ describe('uploadBackup namespace 매핑 (다른 디바이스 호환)', () => {
     await window.uploadBackup({ target: { files: [file], value: '' } });
 
     // 매핑된 키에 저장
-    expect(localStorage.getItem('bhm_hr_profile_user-uid-123')).not.toBeNull();
-    expect(localStorage.getItem('overtimeRecords_user-uid-123')).not.toBeNull();
-    expect(JSON.parse(localStorage.getItem('bhm_hr_profile_user-uid-123')).name).toBe('복원');
+    expect(localStorage.getItem('snuhmate_hr_profile_uid_user-uid-123')).not.toBeNull();
+    expect(localStorage.getItem('overtimeRecords_uid_user-uid-123')).not.toBeNull();
+    expect(JSON.parse(localStorage.getItem('snuhmate_hr_profile_uid_user-uid-123')).name).toBe('복원');
 
     delete window.getUserStorageKey;
-    delete window.__bhmReloadHook;
+    delete window.__snuhmateReloadHook;
   });
 });
 
 describe('FileReader fallback (구형 모바일 webview)', () => {
   it('file.text() 미지원 → FileReader.readAsText 사용', async () => {
     await import('../../apps/web/src/client/profile-tab.js');
-    window.__bhmReloadHook = () => {};
+    window.__snuhmateReloadHook = () => {};
 
     // file.text 없는 객체 (구형 안드로이드 webview)
     const v1Content = JSON.stringify({
@@ -188,6 +188,6 @@ describe('FileReader fallback (구형 모바일 webview)', () => {
     // 이 테스트는 코드 path 존재만 검증 — 실제 FileReader 동작은 e2e 에서 검증
     expect(typeof window.uploadBackup).toBe('function');
 
-    delete window.__bhmReloadHook;
+    delete window.__snuhmateReloadHook;
   });
 });

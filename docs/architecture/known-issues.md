@@ -135,7 +135,7 @@
 - **현상:** 타 탭(overtime, profile)은 `getUserStorageKey()` 로 유저별 키 분리.
   leave.js 는 고정 키 `'leaveRecords'` 사용 → 멀티 유저 PC 에서 데이터 섞임 위험 + 키 명명 비대칭.
   (주석에 "의도된 설계"라 기재되어 있으나 일관성 미흡)
-- **수정 방향:** 의도 설계 유지(단일 기기 단일 유저 가정) 또는 `getUserStorageKey('bhm_leave_records')` 로 통일. 판단 필요.
+- **수정 방향:** 의도 설계 유지(단일 기기 단일 유저 가정) 또는 `getUserStorageKey('leaveRecords')` 로 통일. 판단 필요.
 - **후속 플랜:** Plan F (의사결정 필요).
 
 ### Bug 10: applyProfileToOvertime 이 profileChanged 미수신

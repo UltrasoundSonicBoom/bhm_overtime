@@ -21,7 +21,7 @@ describe('work-history migration: source 필드', () => {
       from: '2020-01', to: '', role: '', desc: '',
       rotations: [], updatedAt: 'now'
     };
-    localStorage.setItem('bhm_work_history_guest', JSON.stringify([oldRec]));
+    localStorage.setItem('snuhmate_work_history_guest', JSON.stringify([oldRec]));
     await import('@snuhmate/profile/work-history');
     const loaded = window._loadWorkHistory();
     expect(loaded[0].source).toBe('user');
@@ -45,7 +45,7 @@ describe('work-history migration: source 필드', () => {
       from: '2020-01', to: '', role: '', desc: '',
       rotations: [], source: 'auto', updatedAt: 'now'
     };
-    localStorage.setItem('bhm_work_history_guest', JSON.stringify([autoRec]));
+    localStorage.setItem('snuhmate_work_history_guest', JSON.stringify([autoRec]));
     await import('@snuhmate/profile/work-history');
     const loaded = window._loadWorkHistory();
     expect(loaded[0].source).toBe('auto');

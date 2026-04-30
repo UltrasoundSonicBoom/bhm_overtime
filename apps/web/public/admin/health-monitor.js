@@ -6,12 +6,13 @@
 (function () {
   'use strict';
 
-  // ── localStorage 키 탐색 (supabaseClient.js:15-19 와 동일 로직) ──
+  // ── localStorage 키 탐색: snuhmate_* + _guest/_uid_{uid} 계약 ──
   function getUserKey(baseKey) {
     try {
-      var s = JSON.parse(localStorage.getItem('bhm_settings') || '{}');
-      var uid = s.googleSub || 'guest';
-      return baseKey + '_' + uid;
+      if (baseKey === 'leaveRecords' || baseKey === 'snuhmate_settings') return baseKey;
+      var s = JSON.parse(localStorage.getItem('snuhmate_settings') || '{}');
+      var uid = s.googleSub;
+      return uid ? baseKey + '_uid_' + uid : baseKey + '_guest';
     } catch (_) {
       return baseKey + '_guest';
     }
@@ -43,7 +44,7 @@
   // ══════════════════════════════════════════
 
   function checkProfile() {
-    var profile = readJSON(getUserKey('bhm_hr_profile'));
+    var profile = readJSON(getUserKey('snuhmate_hr_profile'));
     if (!profile) {
       return { status: 'error', score: 0, total: PROFILE_REQUIRED_FIELDS.length + PROFILE_OPTIONAL_FIELDS.length, filled: 0, missing: PROFILE_REQUIRED_FIELDS.slice(), label: '프로필 없음' };
     }
@@ -144,13 +145,13 @@
   }
 
   function checkSync() {
-    var keys = ['overtimeRecords', 'bhm_hr_profile', 'overtimePayslipData', 'leaveRecords'];
+    var keys = ['overtimeRecords', 'snuhmate_hr_profile', 'overtimePayslipData', 'leaveRecords'];
     var latestEdit = null;
     var checkedKeys = 0;
 
     keys.forEach(function (base) {
       var localKey = getUserKey(base);
-      var editKey = 'bhm_lastEdit_' + localKey;
+      var editKey = 'snuhmate_last_edit_' + base;
       var ts = localStorage.getItem(editKey);
       if (ts) {
         checkedKeys++;

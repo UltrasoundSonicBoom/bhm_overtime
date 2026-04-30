@@ -14,7 +14,7 @@ beforeEach(() => {
 });
 
 // salary-parser.js 의 storageKey 와 동일 패턴: payslip_<uid>_<yyyy>_<mm>(_type)
-// uid: bhm_settings.googleSub 또는 'guest'
+// uid: snuhmate_settings.googleSub 또는 'guest'
 function seedPayslip(year, month, dept, jobType, payGrade, type) {
   const key = 'payslip_guest_' + year + '_' + String(month).padStart(2, '0') + (type && type !== '급여' ? '_' + type : '');
   localStorage.setItem(key, JSON.stringify({

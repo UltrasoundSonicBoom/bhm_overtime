@@ -42,7 +42,7 @@
 ## 3. 구조 (예상)
 
 ```
-bhm_overtime/
+SNUH Mate repo/
 ├── apps/
 │   └── web/
 │       ├── src/
@@ -89,7 +89,7 @@ bhm_overtime/
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <title>BHM Overtime</title>
+  <title>SNUH Mate</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -106,7 +106,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import HomeTab from '../components/HomeTab.astro';
 import ProfileTab from '../components/ProfileTab.astro';
 ---
-<BaseLayout title="BHM Overtime">
+<BaseLayout title="SNUH Mate">
   <HomeTab client:load />
   <ProfileTab client:idle />
 </BaseLayout>

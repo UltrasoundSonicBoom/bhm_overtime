@@ -100,36 +100,36 @@ describe('Issue 1: initProfileTab — 명세서 업로드 후 form 자동 반영
 describe('Issue 2: clearProfile — 전체 사용자 데이터 wipe', () => {
   beforeEach(() => {
     // 각 도메인 데이터 시드
-    localStorage.setItem('bhm_hr_profile', JSON.stringify({ name: '홍길동' }));
+    localStorage.setItem('snuhmate_hr_profile', JSON.stringify({ name: '홍길동' }));
     localStorage.setItem('overtimeRecords', JSON.stringify({ '2026-04': [{ id: 'a' }] }));
     localStorage.setItem('leaveRecords', JSON.stringify({ '2026': [{ id: 'b' }] }));
-    localStorage.setItem('bhm_work_history_guest', JSON.stringify([{ id: 'c' }]));
+    localStorage.setItem('snuhmate_work_history_guest', JSON.stringify([{ id: 'c' }]));
     localStorage.setItem('payslip_guest_2026_04', JSON.stringify({ summary: { netPay: 5000000 } }));
     localStorage.setItem('payslip_guest_2026_03', JSON.stringify({ summary: { netPay: 4900000 } }));
     localStorage.setItem('otManualHourly', '50000');
     localStorage.setItem('overtimePayslipData', JSON.stringify({}));
     // KEEP 대상 (사용자 데이터 아님)
     localStorage.setItem('theme', 'neo');
-    localStorage.setItem('bhm_settings', JSON.stringify({ googleSub: null }));
-    localStorage.setItem('bhm_local_uid', 'uid-123');
+    localStorage.setItem('snuhmate_settings', JSON.stringify({ googleSub: null }));
+    localStorage.setItem('snuhmate_local_uid', 'uid-123');
   });
 
   it('clearProfile 호출 → 모든 사용자 도메인 데이터 삭제 (KEEP 항목 제외)', async () => {
     seedProfileForm();
     let reloadCalled = false;
-    window.__bhmReloadHook = () => { reloadCalled = true; };
+    window.__snuhmateReloadHook = () => { reloadCalled = true; };
     // Phase 5-followup: clearProfile 가 modal 띄움 — 테스트 hook 으로 자동 confirm
-    window.__bhmConfirmClearForTest = () => true;
+    window.__snuhmateConfirmClearForTest = () => true;
 
     await import('../../apps/web/src/client/profile-tab.js');
     expect(typeof window.clearProfile).toBe('function');
     window.clearProfile();
 
     // 사용자 데이터 모두 삭제
-    expect(localStorage.getItem('bhm_hr_profile')).toBeNull();
+    expect(localStorage.getItem('snuhmate_hr_profile')).toBeNull();
     expect(localStorage.getItem('overtimeRecords')).toBeNull();
     expect(localStorage.getItem('leaveRecords')).toBeNull();
-    expect(localStorage.getItem('bhm_work_history_guest')).toBeNull();
+    expect(localStorage.getItem('snuhmate_work_history_guest')).toBeNull();
     expect(localStorage.getItem('payslip_guest_2026_04')).toBeNull();
     expect(localStorage.getItem('payslip_guest_2026_03')).toBeNull();
     expect(localStorage.getItem('otManualHourly')).toBeNull();
@@ -137,25 +137,25 @@ describe('Issue 2: clearProfile — 전체 사용자 데이터 wipe', () => {
 
     // KEEP — 시스템 메타 보존
     expect(localStorage.getItem('theme')).toBe('neo');
-    expect(localStorage.getItem('bhm_settings')).not.toBeNull();
-    expect(localStorage.getItem('bhm_local_uid')).toBe('uid-123');
+    expect(localStorage.getItem('snuhmate_settings')).not.toBeNull();
+    expect(localStorage.getItem('snuhmate_local_uid')).toBe('uid-123');
 
     // reload 호출됨 (메모리 상태 초기화)
     expect(reloadCalled).toBe(true);
-    delete window.__bhmReloadHook;
-    delete window.__bhmConfirmClearForTest;
+    delete window.__snuhmateReloadHook;
+    delete window.__snuhmateConfirmClearForTest;
   });
 
   it('취소 (confirm hook=false) → modal 띄우고 자동 클릭 X → 데이터 보존', async () => {
     seedProfileForm();
     let reloadCalled = false;
-    window.__bhmReloadHook = () => { reloadCalled = true; };
-    window.__bhmConfirmClearForTest = () => false;
+    window.__snuhmateReloadHook = () => { reloadCalled = true; };
+    window.__snuhmateConfirmClearForTest = () => false;
 
     await import('../../apps/web/src/client/profile-tab.js');
     window.clearProfile();
 
-    expect(localStorage.getItem('bhm_hr_profile')).not.toBeNull();
+    expect(localStorage.getItem('snuhmate_hr_profile')).not.toBeNull();
     expect(localStorage.getItem('overtimeRecords')).not.toBeNull();
     expect(localStorage.getItem('payslip_guest_2026_04')).not.toBeNull();
     expect(reloadCalled).toBe(false);
@@ -164,7 +164,7 @@ describe('Issue 2: clearProfile — 전체 사용자 데이터 wipe', () => {
     const modal = document.getElementById('clearProfileModal');
     if (modal) modal.remove();
 
-    delete window.__bhmReloadHook;
-    delete window.__bhmConfirmClearForTest;
+    delete window.__snuhmateReloadHook;
+    delete window.__snuhmateConfirmClearForTest;
   });
 });

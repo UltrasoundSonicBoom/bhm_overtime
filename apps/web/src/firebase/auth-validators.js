@@ -1,7 +1,7 @@
 // firebase/auth-validators.js — 순수 검증 함수 (DOM/Firebase 의존성 없음)
 //
 // 별도 모듈인 이유: vitest 단위 테스트가 auth-ui.js 를 import 하면 config.js 의
-// `window.BHM_CONFIG` 모듈 최상위 코드가 실행되어 ReferenceError. 순수 함수만
+// `window.SNUHMATE_CONFIG` 모듈 최상위 코드가 실행되어 ReferenceError. 순수 함수만
 // 분리하면 node 환경에서 직접 import 가능.
 
 // 비밀번호 8~12자 클라이언트 검증 (signUp 만 적용; signIn 은 legacy 호환)

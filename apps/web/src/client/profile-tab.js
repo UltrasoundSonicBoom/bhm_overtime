@@ -291,7 +291,7 @@ window._bootstrapProfileTab = (function () {
     // 클라우드에 이미 데이터가 있으면 클라우드 우선, guest 데이터는 폐기.
     // 어느 쪽이든 로그인 후에는 _guest 키를 삭제해 공용 기기 개인정보 방치를 방지.
     const GUEST_KEYS = {
-      profile: 'bhm_hr_profile_guest',
+      profile: 'snuhmate_hr_profile_guest',
       overtime: 'overtimeRecords_guest',
       leave: 'leaveRecords_guest',
       manual: 'otManualHourly_guest'
@@ -592,13 +592,11 @@ function saveProfile() {
 // 4) 페이지 새로고침 (메모리 상태도 초기화)
 // 단일 진실 원천 — 사용자 도메인 데이터 키 패턴
 // 새 키 추가 시 이 목록 갱신 PR 필수 (docs/superpowers/specs/2026-04-27-data-lifecycle-policy.md)
-// Phase 5-followup: bhm_* / snuhmate_* 양쪽 prefix 매칭 (lazy migration 기간 호환)
 const USER_DATA_PATTERNS = [
-  /^(bhm|snuhmate)_hr_profile/,        // PROFILE
+  /^snuhmate_hr_profile/,              // PROFILE
   /^overtimeRecords/,                   // OVERTIME (prefix 없음)
   /^leaveRecords/,                      // LEAVE
-  /^(bhm|snuhmate)_work_history/,       // 근무이력
-  /^(bhm|snuhmate)_lastEdit_/,          // sync 메타 (legacy)
+  /^snuhmate_work_history/,             // 근무이력
   /^snuhmate_last_edit_/,               // 새 snake_case
   /^payslip_/,                          // 급여명세서
   /^otManualHourly/,                    // 수동 시급
@@ -607,30 +605,28 @@ const USER_DATA_PATTERNS = [
   /^snuhmate_reg_favorites/,            // 규정 즐겨찾기
   /^payroll_compare_history/,
   /^cardnews\./,                        // 카드뉴스 사용자 위젯 설정
-  /^(bhm|snuhmate)_demo_mode$/,
+  /^snuhmate_demo_mode$/,
   /^hwBannerDismissed$/,
 ];
 
 // 시스템 메타 — KEEP (디바이스 / 마이그레이션 / 테마 / 온보딩 진행상태)
-// 양쪽 prefix 모두 KEEP (마이그레이션 race 방지)
 const CLEAR_KEEP_KEYS = new Set([
-  'bhm_local_uid', 'snuhmate_local_uid',
-  'bhm_deviceId', 'snuhmate_device_id',
-  'bhm_anon_id', 'snuhmate_anon_id',
+  'snuhmate_local_uid',
+  'snuhmate_device_id',
+  'snuhmate_anon_id',
   'theme', 'snuhmate-theme',
-  'bhm_leave_migrated_v1', 'snuhmate_leave_migrated_v1',
-  'bhm_debug_parser', 'snuhmate_debug_parser',
+  'snuhmate_leave_migrated_v1',
+  'snuhmate_debug_parser',
   'onboarding_seen_v2',
   'onboarding_count',
-  // bhm_settings / snuhmate_settings 는 PII 필드만 셀렉티브 wipe (_wipeSettingsPII)
+  // snuhmate_settings 는 PII 필드만 셀렉티브 wipe (_wipeSettingsPII)
 ]);
 
-// bhm_settings 안에서 PII 만 wipe — 사용자 설정 (driveEnabled 등) 은 보존
+// snuhmate_settings 안에서 PII 만 wipe — 사용자 설정 (driveEnabled 등) 은 보존
 const SETTINGS_PII_FIELDS = ['googleSub', 'googleEmail', 'cachedProfile', 'lastSync', 'pinHash', 'displayName'];
 
 function _wipeSettingsPII() {
-  // 양쪽 키 모두 처리 (lazy migration 기간 호환)
-  ['snuhmate_settings', 'bhm_settings'].forEach(key => {
+  ['snuhmate_settings'].forEach(key => {
     try {
       const raw = localStorage.getItem(key);
       if (!raw) return;
@@ -685,7 +681,7 @@ function _downloadFullBackup() {
 
 function _executeFullClear(keys) {
   keys.forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
-  // bhm_settings 의 PII 필드 셀렉티브 wipe (계정 설정은 보존)
+  // snuhmate_settings 의 PII 필드 셀렉티브 wipe (계정 설정은 보존)
   _wipeSettingsPII();
   Object.values(PROFILE_FIELDS).forEach(id => {
     const el = document.getElementById(id);
@@ -696,8 +692,8 @@ function _executeFullClear(keys) {
     else el.value = '';
   });
   updateProfileTitle('');
-  if (typeof window.__bhmReloadHook === 'function') {
-    window.__bhmReloadHook();
+  if (typeof window.__snuhmateReloadHook === 'function') {
+    window.__snuhmateReloadHook();
   } else {
     setTimeout(() => window.location.reload(), 100);
   }
@@ -820,7 +816,7 @@ function clearProfile() {
     return;
   }
   // 테스트 hook: 자동 confirm + 즉시 wipe (modal 우회)
-  if (typeof window.__bhmConfirmClearForTest === 'function' && window.__bhmConfirmClearForTest()) {
+  if (typeof window.__snuhmateConfirmClearForTest === 'function' && window.__snuhmateConfirmClearForTest()) {
     _executeFullClear(keys);
     return;
   }
@@ -986,7 +982,7 @@ function downloadBackup() {
 
   const totalKeys = Object.keys(data.keys).length;
   const payslipCount = Object.keys(data.keys).filter(k => /^payslip_/.test(k)).length;
-  const workHistoryCount = Object.keys(data.keys).filter(k => /^bhm_work_history/.test(k)).length;
+  const workHistoryCount = Object.keys(data.keys).filter(k => /^snuhmate_work_history/.test(k)).length;
 
   const toast = document.getElementById('otToast');
   const msg = `백업 다운로드됨 (총 ${totalKeys}개 항목 — 명세서 ${payslipCount}, 근무이력 ${workHistoryCount}) 📥`;
@@ -1011,7 +1007,7 @@ function downloadBackup() {
 // canonical key 매핑 — 다른 디바이스/브라우저에서 복원 시 현재 namespace 로 변환
 function _restoreKeyForCurrent(key) {
   // _<uid> / _guest / _demo suffix 제거 → 현재 환경의 same-base 키로
-  const KNOWN_BASES = ['bhm_hr_profile', 'overtimeRecords', 'leaveRecords', 'bhm_work_history', 'otManualHourly', 'overtimePayslipData'];
+  const KNOWN_BASES = ['snuhmate_hr_profile', 'overtimeRecords', 'leaveRecords', 'snuhmate_work_history', 'otManualHourly', 'overtimePayslipData'];
   const getKey = (typeof window.getUserStorageKey === 'function') ? window.getUserStorageKey : null;
   for (const base of KNOWN_BASES) {
     if (key === base || key.startsWith(base + '_')) {
@@ -1085,7 +1081,7 @@ async function uploadBackup(event) {
     } else {
       // v1.0: profile/overtime/leave 3개만 (namespace 매핑)
       const v1Map = [
-        ['bhm_hr_profile', data.profile],
+        ['snuhmate_hr_profile', data.profile],
         ['overtimeRecords', data.overtime],
         ['leaveRecords', data.leave],
       ];
@@ -1107,8 +1103,8 @@ async function uploadBackup(event) {
     }
 
     alert(`✅ 데이터가 성공적으로 복원되었습니다! (${restoredCount}개 항목)\n앱을 새로고침합니다.`);
-    if (typeof window.__bhmReloadHook === 'function') {
-      window.__bhmReloadHook();
+    if (typeof window.__snuhmateReloadHook === 'function') {
+      window.__snuhmateReloadHook();
     } else {
       window.location.reload();
     }

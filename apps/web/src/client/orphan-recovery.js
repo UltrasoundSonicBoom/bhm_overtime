@@ -8,7 +8,7 @@ import { PROFILE } from '@snuhmate/profile/profile';
   var TYPE_LABELS = {
     overtimeRecords: '시간외 기록',
     leaveRecords: '휴가 기록',
-    bhm_hr_profile: '프로필',
+    snuhmate_hr_profile: '프로필',
     otManualHourly: '수동 시급'
   };
   function _guessType(key) {
@@ -102,7 +102,7 @@ import { PROFILE } from '@snuhmate/profile/profile';
             localStorage.setItem(activeKey + '_orphan_' + stamp + '_before_restore', current);
           }
           localStorage.setItem(activeKey, localStorage.getItem(oKey));
-          localStorage.setItem('bhm_lastEdit_' + activeKey, new Date().toISOString());
+          localStorage.setItem('snuhmate_last_edit_' + activeKey, new Date().toISOString());
           localStorage.removeItem(oKey);
           if (window.OT && window.OT.renderList) window.OT.renderList();
           if (LEAVE && LEAVE.renderList) LEAVE.renderList();

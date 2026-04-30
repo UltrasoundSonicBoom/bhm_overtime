@@ -421,7 +421,7 @@
     var p = _profile();
     if (!p) return;
     var wh;
-    var _rhK = window.getUserStorageKey ? window.getUserStorageKey('bhm_work_history') : 'bhm_work_history_guest';
+    var _rhK = window.getUserStorageKey ? window.getUserStorageKey('snuhmate_work_history') : 'snuhmate_work_history_guest';
     try { wh = JSON.parse(localStorage.getItem(_rhK) || '[]'); } catch (e) { wh = []; }
     (wh || []).forEach(function (it) { if (!Array.isArray(it.rotations)) it.rotations = []; });
 

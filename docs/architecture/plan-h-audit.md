@@ -15,7 +15,7 @@
 | 5 | AppLock PIN 설정/변경/해제 + 생체 | ✅ **모듈 노출** | `AppLock` 객체 + `onAppLockSetupPin` / `onAppLockChangePin` / `updateAppLockUI` 함수 전역 노출. 헤더 ⚙️ 톱니 버튼 진입. 실제 PIN 입력 plumbing 은 사용자 상호작용 의존이라 정적 검증만 |
 | 6 | 백업 다운로드/복원 | ✅ **함수 존재** | `profile-tab.js:719 downloadBackup()` + `migration-overlay.js:41 downloadBackupAndStay()` + `OVERTIME.exportData()` / `LEAVE.exportData()` 정의 확인. 마이그레이션 모달 진입점도 별도. 실제 파일 저장은 `<a download>` blob 생성 흐름 |
 | 7 | `chrome-extension/` 확장 프로그램 | ✅ **manifest 검증** | `manifest_version: 3` / `name: "SNUH Mate Companion"` / popup.html + content-script.js + background.js + STORE_LISTING.md 갖춤. 빠른 시간외 기록 + 명세서 PDF 가져오기 용도 명시 |
-| 8 | `nurse_admin/` 서브앱 | ✅ **구조 확인** | admin.html / index.html / my-day.html / my-day.js / demo-data.js — 별도 진입점 4개. 본 앱 (bhm_overtime) 과 독립 운영 |
+| 8 | `nurse_admin/` 서브앱 | ✅ **구조 확인** | admin.html / index.html / my-day.html / my-day.js / demo-data.js — 별도 진입점 4개. 본 앱 (SNUH Mate repo) 과 독립 운영 |
 | 9 | 모바일 뷰포트/터치 (iPhone 13 mini 390×844) | ✅ | 5개 탭 (home/leave/overtime/payroll/profile) 모두 **가로 스크롤 0건**. 콘솔 에러 0건. CSS 반응형 정상 |
 
 ## 콘솔 + 테스트

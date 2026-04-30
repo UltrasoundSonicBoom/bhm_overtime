@@ -1,7 +1,7 @@
 # Phase 2 — ES Module 마이그레이션 SPEC
 
 > 작성: 2026-04-27
-> 범위: bhm_overtime SPA — 39개 .js (21,549줄) 를 ES module 로 점진 전환
+> 범위: SNUH Mate repo SPA — 39개 .js (21,549줄) 를 ES module 로 점진 전환
 > 목적: 의존성 명시화 + tree-shaking + IDE/AI rename 안전 + 향후 TypeScript 진입 발판
 > 비전: **계산 로직 안 깨짐 + UI 동작 그대로 + 모든 공개 API 와 inline onclick 보존**
 

@@ -3631,7 +3631,7 @@ function _propagatePayslipToWorkHistory(parsed, ym) {
   var ei = parsed.employeeInfo;
   if (!ei.department) return;
 
-  var whKey = window.getUserStorageKey ? window.getUserStorageKey('bhm_work_history') : 'bhm_work_history_guest';
+  var whKey = window.getUserStorageKey ? window.getUserStorageKey('snuhmate_work_history') : 'snuhmate_work_history_guest';
   var list = [];
   try { list = JSON.parse(localStorage.getItem(whKey) || '[]') || []; } catch (e) { list = []; }
   if (!Array.isArray(list)) list = [];
@@ -4019,9 +4019,9 @@ async function handleProfilePayslipUpload(file) {
     // 업로드로 부서/입사일이 새로 들어왔으면 근무이력 자동 시드 다시 시도
     // (이전에 시드 조건 불충족으로 비어 있던 상태면 플래그 해제해서 재시드 허용)
     try {
-      var _whK = window.getUserStorageKey ? window.getUserStorageKey('bhm_work_history') : 'bhm_work_history_guest';
+      var _whK = window.getUserStorageKey ? window.getUserStorageKey('snuhmate_work_history') : 'snuhmate_work_history_guest';
       var _wh = JSON.parse(localStorage.getItem(_whK) || '[]');
-      var _whSK = window.getUserStorageKey ? window.getUserStorageKey('bhm_work_history_seeded') : 'bhm_work_history_seeded_guest';
+      var _whSK = window.getUserStorageKey ? window.getUserStorageKey('snuhmate_work_history_seeded') : 'snuhmate_work_history_seeded_guest';
       if (!Array.isArray(_wh) || _wh.length === 0) localStorage.removeItem(_whSK);
       if (typeof renderWorkHistory === 'function') renderWorkHistory();
     } catch (e) {}
