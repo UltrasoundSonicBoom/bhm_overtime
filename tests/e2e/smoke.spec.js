@@ -62,7 +62,7 @@ test.describe('SNUH Mate 구조 스모크', () => {
     expect(errors, '콘솔 에러').toEqual([]);
   });
 
-  test('payroll 서브탭 4개 전부 전환 + 콘텐츠 주입', async ({ page }) => {
+  test('payroll 서브탭 4개 전부 전환 + 콘텐츠 주입 (퇴직금 내부 3탭)', async ({ page }) => {
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
     page.on('console', msg => {
@@ -94,9 +94,13 @@ test.describe('SNUH Mate 구조 스모크', () => {
       expect(activeInfo.childCount, `서브탭 ${sub} 콘텐츠`).toBeGreaterThan(0);
     }
 
-    // 퇴직금 서브탭 내부 4개 retTabs 버튼 로드 확인
+    // 퇴직금 서브탭 내부 3탭(시뮬레이터/타임라인/알아두기) 로드 확인 (재설계 2026-04-30)
     const retButtons = await page.locator('#retTabs .ret-bookmark-tab').count();
-    expect(retButtons, '퇴직금 내부 탭 버튼 수').toBe(4);
+    expect(retButtons, '퇴직금 내부 탭 버튼 수').toBe(3);
+    const retTabNames = await page.locator('#retTabs .ret-bookmark-tab').evaluateAll(
+      btns => btns.map(b => b.getAttribute('data-tab'))
+    );
+    expect(retTabNames, '퇴직금 서브탭 이름').toEqual(['sim', 'timeline', 'learn']);
 
     expect(errors, '콘솔 에러').toEqual([]);
   });
