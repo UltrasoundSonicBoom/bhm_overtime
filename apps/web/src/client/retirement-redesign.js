@@ -98,8 +98,6 @@ function retSetMode(/** @type {'auto'|'manual'} */ mode) {
   }
 }
 
-// 전역 노출 — Astro onclick="retSetMode(...)" 에서 접근
-/** @type {any} */ (window).retSetMode = retSetMode;
 
 function setWizStep(/** @type {1|2|3} */ step) {
   wizStep = step;
@@ -388,3 +386,4 @@ export function refreshTimelineTab() {
 const _w = /** @type {any} */ (window);
 _w.initRetirementRedesign = initRetirementRedesign;
 _w.refreshRetirementTimeline = refreshTimelineTab;
+_w.retSetMode = retSetMode;
