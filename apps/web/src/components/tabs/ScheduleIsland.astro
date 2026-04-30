@@ -635,31 +635,37 @@
       margin-top: 8px;
     }
     #tab-schedule .sch-stat-card {
+      --sch-stat-accent: var(--color-text-muted);
+      --sch-stat-bg: var(--color-bg-surface);
+      --sch-stat-border: var(--color-border-default);
       display: flex;
       flex-direction: column;
       align-items: flex-start;
-      padding: 10px 12px;
-      border: 1px solid var(--border-glass);
+      gap: var(--space-1);
+      min-height: 64px;
+      padding: var(--space-3);
+      border: 1px solid var(--sch-stat-border);
       border-radius: var(--radius-sm);
-      background: var(--bg-glass);
+      background: var(--sch-stat-bg);
     }
     #tab-schedule .sch-stat-card .num {
       font-size: 22px;
       font-weight: 800;
       line-height: 1;
-      color: var(--text-primary);
+      color: var(--sch-stat-accent);
     }
     #tab-schedule .sch-stat-card .lbl {
       font-size: 11px;
       font-weight: 600;
-      color: var(--text-muted);
-      margin-top: 4px;
+      color: var(--color-text-secondary);
     }
-    #tab-schedule .sch-stat-card.D  { border-color: rgba(99,102,241,0.4); }
-    #tab-schedule .sch-stat-card.E  { border-color: rgba(245,158,11,0.4); }
-    #tab-schedule .sch-stat-card.N  { border-color: rgba(99,102,241,0.6); background: rgba(99,102,241,0.06); }
-    #tab-schedule .sch-stat-card.AL { border-color: rgba(244,63,94,0.4); }
-    #tab-schedule .sch-stat-card.RD { border-color: rgba(16,185,129,0.4); }
+    #tab-schedule .sch-stat-D  { --sch-stat-accent: var(--color-duty-day);      --sch-stat-bg: var(--color-duty-day-bg);      --sch-stat-border: var(--color-duty-day); }
+    #tab-schedule .sch-stat-E  { --sch-stat-accent: var(--color-duty-evening);  --sch-stat-bg: var(--color-duty-evening-bg);  --sch-stat-border: var(--color-duty-evening); }
+    #tab-schedule .sch-stat-N  { --sch-stat-accent: var(--color-duty-night);    --sch-stat-bg: var(--color-duty-night-bg);    --sch-stat-border: var(--color-duty-night); }
+    #tab-schedule .sch-stat-O  { --sch-stat-accent: var(--color-duty-off);      --sch-stat-bg: var(--color-duty-off-bg);      --sch-stat-border: var(--color-duty-off); }
+    #tab-schedule .sch-stat-AL { --sch-stat-accent: var(--color-duty-leave);    --sch-stat-bg: var(--color-duty-leave-bg);    --sch-stat-border: var(--color-duty-leave); }
+    #tab-schedule .sch-stat-RD { --sch-stat-accent: var(--color-duty-recovery); --sch-stat-bg: var(--color-duty-recovery-bg); --sch-stat-border: var(--color-duty-recovery); }
+    #tab-schedule .sch-stat-HD { --sch-stat-accent: var(--color-duty-holiday);  --sch-stat-bg: var(--color-duty-holiday-bg);  --sch-stat-border: var(--color-duty-holiday); }
 
     /* 경고 행 */
     #tab-schedule .sch-warn-row {
@@ -833,8 +839,9 @@
     html[data-theme="neo"] #tab-schedule .sch-stat-card,
     html[data-theme="neo"] #tab-schedule .sch-next-card,
     html[data-theme="neo"] #tab-schedule .sch-warn-chip {
-      border: 2px solid #1a1a1a;
-      box-shadow: 2px 2px 0 #1a1a1a;
+      border-width: 2px;
+      border-style: solid;
+      box-shadow: var(--shadow-sm);
     }
     html[data-theme="neo"] #tab-schedule .sch-seg {
       border: 2px solid #1a1a1a;

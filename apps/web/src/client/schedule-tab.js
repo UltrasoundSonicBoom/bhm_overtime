@@ -472,17 +472,18 @@ function renderStats() {
     { cls: 'D', num: counts.D, lbl: 'D 데이' },
     { cls: 'E', num: counts.E, lbl: 'E 이브닝' },
     { cls: 'N', num: counts.N, lbl: 'N 나이트' },
-    { cls: '', num: counts.O, lbl: 'O 오프' },
+    { cls: 'O', num: counts.O, lbl: 'O 오프' },
     { cls: 'AL', num: counts.AL, lbl: 'AL 연차' },
     { cls: 'RD', num: counts.RD, lbl: 'RD 리커버리' },
   ];
   if (counts.holidayDuty > 0) {
-    cards.push({ cls: '', num: counts.holidayDuty, lbl: '🎌 공휴일 근무' });
+    cards.push({ cls: 'HD', num: counts.holidayDuty, lbl: '🎌 공휴일 근무' });
   }
 
   let html = '';
   for (const c of cards) {
-    html += `<div class="sch-stat-card ${esc(c.cls)}"><span class="num">${esc(c.num)}</span><span class="lbl">${esc(c.lbl)}</span></div>`;
+    const statClass = c.cls ? ` sch-stat-${esc(c.cls)}` : '';
+    html += `<div class="sch-stat-card${statClass}"><span class="num">${esc(c.num)}</span><span class="lbl">${esc(c.lbl)}</span></div>`;
   }
   // eslint-disable-next-line no-unsanitized/property
   grid.innerHTML = html;

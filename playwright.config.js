@@ -21,7 +21,7 @@ export default defineConfig({
     { name: 'chromium', use: { browserName: 'chromium' } }
   ],
   webServer: {
-    command: 'npm run -w @snuhmate/web dev',
+    command: 'pnpm --filter @snuhmate/web dev',
     url: `http://localhost:${PORT}/app`,
     reuseExistingServer: !process.env.CI,
     timeout: 60_000

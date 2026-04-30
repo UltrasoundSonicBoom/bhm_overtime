@@ -33,6 +33,7 @@ import { LEAVE } from '@snuhmate/profile/leave';
 import { PAYROLL } from '@snuhmate/profile/payroll';
 import { HOLIDAYS } from '@snuhmate/calculators/holidays';
 import { SALARY_PARSER } from './salary-parser.js';
+import { getRetirementPayslipWageSource, shouldAutoRefreshRetirementCalc } from './retirement-payslip-sync.js';
 import { escapeHtml } from '@snuhmate/shared-utils';
 // Layer 4 UI (큰 모듈)
 import './salary-parser.js';
@@ -1025,15 +1026,19 @@ function _retComputeSeverance(effectiveWage, preciseYears, hireDateVal, retireDa
   };
 }
 
-function calcRetirementEmbedded() {
+function calcRetirementEmbedded(silent) {
   var wage = parseFloat(document.getElementById('retAvgWage').value) || 0;
   var hireDateVal   = document.getElementById('retHireDate').value;
   var retireDateVal = document.getElementById('retRetireDate').value;
   if (!wage || !hireDateVal || !retireDateVal) {
-    alert('월 평균임금, 입사일, 퇴직일을 모두 입력해 주세요.'); return;
+    if (!silent) alert('월 평균임금, 입사일, 퇴직일을 모두 입력해 주세요.');
+    return false;
   }
   var hire = new Date(hireDateVal), retire = new Date(retireDateVal);
-  if (retire <= hire) { alert('퇴직일이 입사일보다 늦어야 합니다.'); return; }
+  if (retire <= hire) {
+    if (!silent) alert('퇴직일이 입사일보다 늦어야 합니다.');
+    return false;
+  }
 
   var totalYears = (retire - hire) / (1000 * 60 * 60 * 24 * 365.25);
   var peakOpt = (document.querySelector('input[name="retPeakOpt"]:checked') || {}).value || 'none';
@@ -1141,6 +1146,7 @@ function calcRetirementEmbedded() {
       }
     }
   }
+  return true;
 }
 
 // ── 공로연수 선택 타임라인 시각화 ──
@@ -1404,6 +1410,36 @@ function retSyncScenarioInputs(force) {
   }
 }
 
+function retCanCalculateEmbedded() {
+  var wage = parseFloat(document.getElementById('retAvgWage')?.value) || 0;
+  var hireDateVal = document.getElementById('retHireDate')?.value;
+  var retireDateVal = document.getElementById('retRetireDate')?.value;
+  if (!wage || !hireDateVal || !retireDateVal) return false;
+  return new Date(retireDateVal) > new Date(hireDateVal);
+}
+
+function retRefreshActivePanel(force) {
+  var activeRetTab = document.querySelector('#retTabs .ret-bookmark-tab.active');
+  if (activeRetTab && activeRetTab.dataset.tab === 'peak') {
+    var scW = document.getElementById('retScWage');
+    var scH = document.getElementById('retScHireDate');
+    if (force && scW && scH && scW.value && scH.value) calcScenarioEmbedded(true);
+    return;
+  }
+
+  if (activeRetTab && activeRetTab.dataset.tab !== 'calc') return;
+  var result = document.getElementById('retCalcResult');
+  var hasVisibleResult = !!(result && result.style.display !== 'none' && result.textContent.trim());
+  if (shouldAutoRefreshRetirementCalc({
+    activeTab: activeRetTab ? activeRetTab.dataset.tab : 'calc',
+    force: force,
+    hasVisibleResult: hasVisibleResult,
+    canCalculate: retCanCalculateEmbedded()
+  })) {
+    calcRetirementEmbedded(true);
+  }
+}
+
 function refreshRetirementInputs(force) {
   if (typeof PROFILE === 'undefined') return false;
   var profile = PROFILE.load();
@@ -1412,13 +1448,23 @@ function refreshRetirementInputs(force) {
   retSetInputValue('retHireDate', retNormalizeDateInput(profile.hireDate), force);
   retSetInputValue('retBirthDate', retNormalizeDateInput(profile.birthDate), force);
 
-  if (typeof CALC === 'undefined') return false;
   var wageResult = PROFILE.calcWage ? PROFILE.calcWage(profile) : null;
-  if (!wageResult) return false;
-  var monthlyWage = wageResult.monthlyWage;
+  var monthlyWage = wageResult ? (Number(wageResult.monthlyWage) || 0) : 0;
+  var payslipWage = getRetirementPayslipWageSource(SALARY_PARSER, 3);
   var avg = null;
-  try { avg = CALC.calcAverageWage(monthlyWage, 3); } catch(e) {}
-  var avgWageToUse = avg ? avg.monthlyAvgWage : monthlyWage;
+  var avgWageToUse = 0;
+  var wageSourceLabel = '✓ 자동계산 (통상임금 기준)';
+
+  if (payslipWage && payslipWage.monthlyWage > 0) {
+    avgWageToUse = payslipWage.monthlyWage;
+    wageSourceLabel = payslipWage.label;
+  } else {
+    if (typeof CALC === 'undefined' || !wageResult) return false;
+    try { avg = CALC.calcAverageWage(monthlyWage, 3); } catch(e) {}
+    avgWageToUse = avg ? avg.monthlyAvgWage : monthlyWage;
+    wageSourceLabel = avg && avg.totalOtPay > 0 ? '✓ 자동계산 (통상임금 + OT 반영)' : '✓ 자동계산 (통상임금 기준)';
+  }
+
   retSetInputValue('retAvgWage', avgWageToUse, force);
 
   var banner = document.getElementById('retAutoLoadBanner');
@@ -1426,27 +1472,29 @@ function refreshRetirementInputs(force) {
   var srcLabel = document.getElementById('retWageSourceLabel');
   if (banner && detail) {
     banner.style.display = 'block';
-    var lines = ['통상임금: ' + monthlyWage.toLocaleString('ko-KR') + '원'];
-    if (avg && avg.totalOtPay > 0) {
+    var lines = [];
+    if (payslipWage && payslipWage.monthlyWage > 0) {
+      lines.push('명세서 월평균: ' + avgWageToUse.toLocaleString('ko-KR') + '원');
+      lines.push('반영월: ' + payslipWage.periodLabel);
+      if (monthlyWage > 0) lines.push('프로필 통상임금: ' + monthlyWage.toLocaleString('ko-KR') + '원');
+    } else if (monthlyWage > 0) {
+      lines.push('통상임금: ' + monthlyWage.toLocaleString('ko-KR') + '원');
+    }
+    if (!payslipWage && avg && avg.totalOtPay > 0) {
       lines.push('시간외 수당 (최근 3개월): +' + avg.totalOtPay.toLocaleString('ko-KR') + '원');
       lines.push('월 평균임금 (↑OT 반영): ' + avgWageToUse.toLocaleString('ko-KR') + '원');
-    } else {
+    } else if (!(payslipWage && payslipWage.monthlyWage > 0)) {
       lines.push('월 평균임금: ' + avgWageToUse.toLocaleString('ko-KR') + '원');
     }
     if (profile.hireDate) lines.push('입사일: ' + profile.hireDate);
     if (profile.birthDate) lines.push('생년월일: ' + profile.birthDate);
     detail.textContent = lines.join(' | ');
-    if (srcLabel) srcLabel.textContent = avg && avg.totalOtPay > 0 ? '✓ 자동계산 (통상임금 + OT 반영)' : '✓ 자동계산 (통상임금 기준)';
+    if (srcLabel) srcLabel.textContent = wageSourceLabel;
   }
 
   retUpdateQuickDates();
   retSyncScenarioInputs(force);
-  var activeRetTab = document.querySelector('#retTabs .ret-bookmark-tab.active');
-  if (force && activeRetTab && activeRetTab.dataset.tab === 'peak') {
-    var scW = document.getElementById('retScWage');
-    var scH = document.getElementById('retScHireDate');
-    if (scW && scH && scW.value && scH.value) calcScenarioEmbedded(true);
-  }
+  retRefreshActivePanel(force);
   return true;
 }
 
