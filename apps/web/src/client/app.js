@@ -953,15 +953,24 @@ function retUpdateQuickDates() {
     _retLegalRetireDate = _retPeakEndDate;
 
     var ddayGrid = document.getElementById('retDdayGrid');
-    ddayGrid.style.display = 'grid';
+    if (ddayGrid) ddayGrid.style.display = 'grid';
     var dPeak   = Math.ceil((_retPeakDate - now) / 86400000);
     var dRetire = Math.ceil((_retPeakEndDate - now) / 86400000);
-    document.getElementById('retDdayPeak').textContent   = dPeak > 0   ? 'D-' + dPeak.toLocaleString('ko-KR')   + ' (' + _retPeakDate.getFullYear()    + ')' : '도달';
-    document.getElementById('retDdayRetire').textContent = dRetire > 0 ? 'D-' + dRetire.toLocaleString('ko-KR') + ' (' + _retPeakEndDate.getFullYear() + ')' : '도달';
+    var dPeakEl = document.getElementById('retDdayPeak');
+    var dRetireEl = document.getElementById('retDdayRetire');
+    if (dPeakEl)   dPeakEl.textContent   = dPeak > 0   ? 'D-' + dPeak.toLocaleString('ko-KR')   + ' (' + _retPeakDate.getFullYear()    + ')' : '도달';
+    if (dRetireEl) dRetireEl.textContent = dRetire > 0 ? 'D-' + dRetire.toLocaleString('ko-KR') + ' (' + _retPeakEndDate.getFullYear() + ')' : '도달';
 
-    document.getElementById('retQuickDates').style.display = 'grid';
-    document.getElementById('retBtnPeakDate').textContent    = '정년 1년 전 선택 시작 (' + retFmtDate(_retPeakDate) + ')';
-    document.getElementById('retBtnPeakEndDate').textContent = '정년퇴직 예정일 (' + retFmtDate(_retPeakEndDate) + ')';
+    // 퇴직(예정)일 — 생년월일 기준 법정 정년퇴직일로 자동 설정 (퇴직일 카드 제거 후)
+    var retireInput = document.getElementById('retRetireDate');
+    if (retireInput && _retLegalRetireDate) retireInput.value = retToInputDate(_retLegalRetireDate);
+
+    var qdEl = document.getElementById('retQuickDates');
+    if (qdEl) qdEl.style.display = 'grid';
+    var peakBtn = document.getElementById('retBtnPeakDate');
+    var peakEndBtn = document.getElementById('retBtnPeakEndDate');
+    if (peakBtn) peakBtn.textContent    = '정년 1년 전 선택 시작 (' + retFmtDate(_retPeakDate) + ')';
+    if (peakEndBtn) peakEndBtn.textContent = '정년퇴직 예정일 (' + retFmtDate(_retPeakEndDate) + ')';
 
     var hire = hireVal ? new Date(hireVal) : null;
     var yearsFromHireToRetire = hire && !isNaN(hire) ? (_retPeakEndDate - hire) / (365.25 * 86400000) : 999;
@@ -971,11 +980,27 @@ function retUpdateQuickDates() {
     if (peakSection) peakSection.classList.toggle('ret-peak-excluded', !!isFiveYearExclusion);
     var exclusionNote = document.getElementById('retPeakExclusionNote');
     if (exclusionNote) exclusionNote.style.display = isFiveYearExclusion ? 'block' : 'none';
+
+    // Step 2 옵션 카드 라벨에 D-day · 날짜 표시
+    var optAStart = document.getElementById('retOptAStartDate');
+    var optADday = document.getElementById('retOptADday');
+    var optBRetire = document.getElementById('retOptBRetireDate');
+    var optBDday = document.getElementById('retOptBDday');
+    if (optAStart) optAStart.textContent = retFmtDate(_retPeakDate) + ' 시작';
+    if (optADday) optADday.textContent = dPeak > 0 ? 'D-' + dPeak.toLocaleString('ko-KR') : '도달';
+    if (optBRetire) optBRetire.textContent = retFmtDate(_retPeakEndDate);
+    if (optBDday) optBDday.textContent = dRetire > 0 ? 'D-' + dRetire.toLocaleString('ko-KR') : '도달';
   } else {
-    document.getElementById('retDdayGrid').style.display = 'none';
+    var ddayGrid2 = document.getElementById('retDdayGrid');
+    if (ddayGrid2) ddayGrid2.style.display = 'none';
     var qdEl = document.getElementById('retQuickDates');
     if (qdEl) qdEl.style.display = hireVal ? 'grid' : 'none';
-    // 재설계 2026-04-30: 공로연수 카드 항상 노출 — 숨기지 않음.
+
+    // Step 2 옵션 카드 라벨 초기화
+    ['retOptAStartDate','retOptADday','retOptBRetireDate','retOptBDday'].forEach(function(id){
+      var el = document.getElementById(id);
+      if (el) el.textContent = '—';
+    });
   }
 }
 function retSetRetireDate(type) {
@@ -1003,6 +1028,11 @@ function retSelectPeakOpt(label) {
   label.classList.add('selected');
   var radio = label.querySelector('input[type=radio]');
   if (radio) radio.checked = true;
+  // 사용자 요구: 옵션 클릭 즉시 Step 3 으로 이동 + 자동 계산
+  var opt = label.dataset.opt; // 'A' or 'none'
+  if (typeof window.retAdvanceToStep3 === 'function') {
+    window.retAdvanceToStep3(opt);
+  }
 }
 
 // ── 퇴직금 계산 (CALC 위임 + 공로연수 선택 통합) ──
