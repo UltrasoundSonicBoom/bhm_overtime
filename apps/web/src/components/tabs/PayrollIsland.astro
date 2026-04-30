@@ -399,11 +399,7 @@
 
       <!-- 세로 듀얼 spine 카드 -->
       <div class="ret-card" id="retTlSpineCard" style="display:none;">
-        <div class="flex items-center gap-2 mb-2">
-          <span class="ret-summary-row" style="border:0;padding:0">
-            <span class="body" style="font-weight:700;font-size:var(--text-body-normal)">📅 시간 흐름</span>
-          </span>
-        </div>
+        <div class="ret-tl-section-head">📅 시간 흐름</div>
         <div class="ret-v-grid">
           <div class="ret-v-col">
             <h4><span class="ret-v-dot-on"></span> 공로연수 선택</h4>
@@ -518,11 +514,11 @@
           </div>
         </div>
         <div class="ret-mini-bars">
-          <div class="row"><span class="lbl">1~5년</span><span class="bar-track"><span class="bar-fill" style="width:10%"></span></span><span class="v">10%</span></div>
-          <div class="row"><span class="lbl">5~10년</span><span class="bar-track"><span class="bar-fill" style="width:35%"></span></span><span class="v">35%</span></div>
-          <div class="row"><span class="lbl">10~15년</span><span class="bar-track"><span class="bar-fill" style="width:45%"></span></span><span class="v">45%</span></div>
-          <div class="row"><span class="lbl">15~20년</span><span class="bar-track"><span class="bar-fill" style="width:50%"></span></span><span class="v">50%</span></div>
-          <div class="row"><span class="lbl">20년+</span><span class="bar-track"><span class="bar-fill" style="width:60%;background:#00B894"></span></span><span class="v">60%</span></div>
+          <div class="row"><span class="lbl">1~5년</span><span class="bar-track"><span class="bar-fill" style="--bar-w:10%"></span></span><span class="v">10%</span></div>
+          <div class="row"><span class="lbl">5~10년</span><span class="bar-track"><span class="bar-fill" style="--bar-w:35%"></span></span><span class="v">35%</span></div>
+          <div class="row"><span class="lbl">10~15년</span><span class="bar-track"><span class="bar-fill" style="--bar-w:45%"></span></span><span class="v">45%</span></div>
+          <div class="row"><span class="lbl">15~20년</span><span class="bar-track"><span class="bar-fill" style="--bar-w:50%"></span></span><span class="v">50%</span></div>
+          <div class="row"><span class="lbl">20년+</span><span class="bar-track"><span class="bar-fill bar-fill--peak" style="--bar-w:60%"></span></span><span class="v">60%</span></div>
         </div>
         <div class="ret-info-desc">2015.6.30 이전 근무기간에 위 비율 적용해 추가 지급. 2015.7.1 이후 입사자는 해당 없음.</div>
       </div>
@@ -538,14 +534,14 @@
         <div class="ret-mini-tl">
           <div class="spine"></div>
           <div class="seg"></div>
-          <div class="nd" style="left:6%"></div>
-          <div class="nd now" style="left:78%"></div>
-          <div class="nd" style="left:90%"></div>
-          <div class="nd fin" style="left:97%"></div>
-          <div class="lbl" style="left:6%; top:24px">입사</div>
-          <div class="lbl" style="left:78%; top:24px; color:#ef4444">현재</div>
-          <div class="lbl" style="left:97%; top:24px">정년 ★</div>
-          <div class="lbl" style="right:8%; top:-14px; color:#00B894">60% · 1년</div>
+          <div class="nd" style="--x:6%"></div>
+          <div class="nd now" style="--x:78%"></div>
+          <div class="nd" style="--x:90%"></div>
+          <div class="nd fin" style="--x:97%"></div>
+          <div class="lbl lbl--bottom" style="--x:6%">입사</div>
+          <div class="lbl lbl--bottom lbl--now" style="--x:78%">현재</div>
+          <div class="lbl lbl--bottom" style="--x:97%">정년 ★</div>
+          <div class="lbl lbl--peak" style="--xr:8%">60% · 1년</div>
         </div>
         <div class="ret-info-desc">정년 직전 <b>1년 보수 60%</b>. 입사 5년 이내 정년자 제외. <b>퇴직금 산정 평균임금은 공로연수 전 3개월 기준 보호</b> → 퇴직금 영향 없음.</div>
       </div>
@@ -583,7 +579,7 @@
 
       <details class="ret-gs-card">
         <summary class="cursor-pointer">
-          <div class="ret-gs-head" style="margin:0">
+          <div class="ret-gs-head ret-gs-head--flush">
             <div class="ret-gs-icon-wrap bg-[#e0e7ff]">🏫</div>
             <div>
               <div class="ret-gs-title">사학연금 — 몇 살부터?</div>
@@ -608,7 +604,7 @@
 
       <details class="ret-gs-card">
         <summary class="cursor-pointer">
-          <div class="ret-gs-head" style="margin:0">
+          <div class="ret-gs-head ret-gs-head--flush">
             <div class="ret-gs-icon-wrap bg-[#d1fae5]">🏦</div>
             <div>
               <div class="ret-gs-title">퇴직연금 DB · IRP · 절세</div>
@@ -634,7 +630,7 @@
 
       <details class="ret-gs-card">
         <summary class="cursor-pointer">
-          <div class="ret-gs-head" style="margin:0">
+          <div class="ret-gs-head ret-gs-head--flush">
             <div class="ret-gs-icon-wrap bg-[#fee2e2]">⚠️</div>
             <div>
               <div class="ret-gs-title">퇴직금 중간정산</div>

@@ -6666,17 +6666,27 @@ html[data-theme="neo"] .ot-help-a {
   height: 14px; border: 1.5px solid #1a1a1a; border-radius: 4px;
   background: #fff; overflow: hidden;
 }
-.ret-mini-bars .row .bar-fill { height: 100%; background: #6C5CE7; }
+.ret-mini-bars .row .bar-fill { height: 100%; background: #6C5CE7; width: var(--bar-w, 0); }
+.ret-mini-bars .row .bar-fill.bar-fill--peak { background: #00B894; }
 .ret-mini-bars .row .v { text-align: right; font-weight: 700; }
 
 /* 공로연수 미니 가로 타임라인 */
 .ret-mini-tl { position: relative; height: 38px; margin: 8px 4px 16px; }
 .ret-mini-tl .spine { position: absolute; top: 50%; left: 4px; right: 4px; height: 3px; background: #1a1a1a; transform: translateY(-50%); border-radius: 2px; }
 .ret-mini-tl .seg { position: absolute; top: 50%; right: 4px; width: 22%; height: 14px; transform: translateY(-50%); border: 2px solid #1a1a1a; border-radius: 4px; background: #00B894; }
-.ret-mini-tl .nd { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 2px solid #1a1a1a; }
+.ret-mini-tl .nd { position: absolute; top: 50%; left: var(--x, 0); transform: translate(-50%, -50%); width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 2px solid #1a1a1a; }
 .ret-mini-tl .nd.now { background: #ef4444; }
 .ret-mini-tl .nd.fin { background: #6C5CE7; }
 .ret-mini-tl .lbl { position: absolute; font-size: 9px; font-weight: 700; white-space: nowrap; }
+.ret-mini-tl .lbl.lbl--bottom { left: var(--x, 0); top: 24px; }
+.ret-mini-tl .lbl.lbl--now { color: #ef4444; }
+.ret-mini-tl .lbl.lbl--peak { right: var(--xr, 0); top: -14px; color: #00B894; }
+
+/* Tab 2 타임라인 카드 섹션 헤더 */
+.ret-tl-section-head { font-weight: 700; font-size: var(--text-body-normal); margin-bottom: 8px; }
+
+/* details > summary 안에서 ret-gs-head 가 자체 마진 갖지 않도록 */
+.ret-gs-head.ret-gs-head--flush { margin: 0; }
 
 /* Q/A 카드 (Tab 3 Layer 3) */
 .ret-qa-card {
