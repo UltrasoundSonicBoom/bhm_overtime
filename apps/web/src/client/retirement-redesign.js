@@ -32,6 +32,8 @@ function renderAutoPayslipRows() {
   const summaryEl = $('retAvgSummary');
   const autoDisplayEl = $('retAvgDisplayAuto');
   const srcLabelEl = $('retWageSourceLabel');
+  const emptyCta = $('retPayslipEmpty');
+  const filledBox = $('retPayslipFilled');
   if (!rowsEl) return;
 
   const parser = /** @type {{ getRecent?: (n: number) => Array<{ym: string, total: number}> } | undefined} */ (
@@ -41,14 +43,16 @@ function renderAutoPayslipRows() {
 
   while (rowsEl.firstChild) rowsEl.removeChild(rowsEl.firstChild);
 
+  // 0건 → 업로드 CTA 노출, payslip block 숨김
   if (!rows || rows.length === 0) {
-    const empty = document.createElement('div');
-    empty.className = 'text-[12px] text-brand-text-muted py-2 italic';
-    empty.textContent = '급여명세서를 등록하면 자동 계산됩니다.';
-    rowsEl.appendChild(empty);
+    if (emptyCta) emptyCta.style.display = '';
+    if (filledBox) filledBox.style.display = 'none';
     if (summaryEl) summaryEl.style.display = 'none';
     return;
   }
+
+  if (emptyCta) emptyCta.style.display = 'none';
+  if (filledBox) filledBox.style.display = '';
 
   rows.forEach((r) => {
     const row = document.createElement('div');
@@ -65,8 +69,9 @@ function renderAutoPayslipRows() {
   });
 
   const avg = Math.round(rows.reduce((s, r) => s + r.total, 0) / rows.length);
+  // 자동 모드면 항상 평균값을 우선 채움 (수동 입력 흔적 덮어쓰기)
   const wageEl = /** @type {HTMLInputElement|null} */ ($('retAvgWage'));
-  if (wageEl && !wageEl.value) wageEl.value = String(avg);
+  if (wageEl && retMode === 'auto') wageEl.value = String(avg);
 
   if (summaryEl) summaryEl.style.display = '';
   if (autoDisplayEl) autoDisplayEl.textContent = avg.toLocaleString('ko-KR') + '원';
@@ -77,25 +82,28 @@ function renderAutoPayslipRows() {
 function retSetMode(/** @type {'auto'|'manual'} */ mode) {
   retMode = mode;
   const autoSection = $('retAutoSection');
-  const wageHint = $('retWageHint');
-  const wageLabel = $('retWageLabel');
+  const manualSection = $('retManualSection');
   const autoBtn = $('retModeAutoBtn');
   const manualBtn = $('retModeManualBtn');
 
   if (mode === 'auto') {
     if (autoSection) autoSection.style.display = '';
-    if (wageHint) wageHint.style.display = 'none';
-    if (wageLabel) wageLabel.textContent = '월 평균임금 (원)';
+    if (manualSection) manualSection.style.display = 'none';
     if (autoBtn) autoBtn.classList.add('active');
     if (manualBtn) manualBtn.classList.remove('active');
     renderAutoPayslipRows();
   } else {
     if (autoSection) autoSection.style.display = 'none';
-    if (wageHint) wageHint.style.display = '';
-    if (wageLabel) wageLabel.textContent = '월 평균임금 (원) — 수동 입력';
+    if (manualSection) manualSection.style.display = '';
     if (autoBtn) autoBtn.classList.remove('active');
     if (manualBtn) manualBtn.classList.add('active');
   }
+}
+
+/** Step 1 자동 모드에서 명세서 0건일 때 — 급여명세서 관리 서브탭으로 이동 */
+function retGoToPayslipUpload() {
+  const tabBtn = document.querySelector('.pay-bookmark-tab[data-subtab="pay-payslip"]');
+  if (tabBtn instanceof HTMLElement) tabBtn.click();
 }
 
 
@@ -129,13 +137,22 @@ function setWizStep(/** @type {1|2|3} */ step) {
 function wizNext() {
   if (wizStep === 1) {
     const wage = parseFloat(/** @type {HTMLInputElement} */ ($('retAvgWage'))?.value || '0');
-    if (!wage) { alert('월 평균임금을 입력해 주세요.'); return; }
+    if (!wage) {
+      if (retMode === 'auto') alert('급여명세서를 업로드하거나 수동 입력 모드로 전환해 주세요.');
+      else alert('월 평균임금을 입력해 주세요.');
+      return;
+    }
+    const hire = /** @type {HTMLInputElement} */ ($('retHireDate'))?.value;
+    const birth = /** @type {HTMLInputElement} */ ($('retBirthDate'))?.value;
+    if (!hire || !birth) {
+      if (retMode === 'auto') alert('개인정보 탭에서 생년월일·입사일을 먼저 등록하거나 수동 입력 모드로 전환해 주세요.');
+      else alert('생년월일과 입사일을 입력해 주세요.');
+      return;
+    }
     setWizStep(2);
   } else if (wizStep === 2) {
-    const hire = /** @type {HTMLInputElement} */ ($('retHireDate'))?.value;
-    if (!hire) { alert('입사일을 입력해 주세요. (1단계에서 입력)'); return; }
     // retRetireDate는 생년월일 입력 시 retUpdateQuickDates()가 자동 세팅.
-    // 만약 아직 비어 있으면 생년월일에서 직접 계산해 채운다.
+    // Step 2 옵션은 informational, 실제 retRetireDate는 정년퇴직일 그대로.
     const retireEl = /** @type {HTMLInputElement|null} */ ($('retRetireDate'));
     if (retireEl && !retireEl.value) {
       const birthVal = /** @type {HTMLInputElement|null} */ ($('retBirthDate'))?.value;
@@ -387,3 +404,5 @@ const _w = /** @type {any} */ (window);
 _w.initRetirementRedesign = initRetirementRedesign;
 _w.refreshRetirementTimeline = refreshTimelineTab;
 _w.retSetMode = retSetMode;
+_w.retGoToPayslipUpload = retGoToPayslipUpload;
+_w.retRefreshAutoPayslipRows = renderAutoPayslipRows;

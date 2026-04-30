@@ -980,11 +980,27 @@ function retUpdateQuickDates() {
     if (peakSection) peakSection.classList.toggle('ret-peak-excluded', !!isFiveYearExclusion);
     var exclusionNote = document.getElementById('retPeakExclusionNote');
     if (exclusionNote) exclusionNote.style.display = isFiveYearExclusion ? 'block' : 'none';
+
+    // Step 2 옵션 카드 라벨에 D-day · 날짜 표시
+    var optAStart = document.getElementById('retOptAStartDate');
+    var optADday = document.getElementById('retOptADday');
+    var optBRetire = document.getElementById('retOptBRetireDate');
+    var optBDday = document.getElementById('retOptBDday');
+    if (optAStart) optAStart.textContent = retFmtDate(_retPeakDate) + ' 시작';
+    if (optADday) optADday.textContent = dPeak > 0 ? 'D-' + dPeak.toLocaleString('ko-KR') : '도달';
+    if (optBRetire) optBRetire.textContent = retFmtDate(_retPeakEndDate);
+    if (optBDday) optBDday.textContent = dRetire > 0 ? 'D-' + dRetire.toLocaleString('ko-KR') : '도달';
   } else {
     var ddayGrid2 = document.getElementById('retDdayGrid');
     if (ddayGrid2) ddayGrid2.style.display = 'none';
     var qdEl = document.getElementById('retQuickDates');
     if (qdEl) qdEl.style.display = hireVal ? 'grid' : 'none';
+
+    // Step 2 옵션 카드 라벨 초기화
+    ['retOptAStartDate','retOptADday','retOptBRetireDate','retOptBDday'].forEach(function(id){
+      var el = document.getElementById(id);
+      if (el) el.textContent = '—';
+    });
   }
 }
 function retSetRetireDate(type) {

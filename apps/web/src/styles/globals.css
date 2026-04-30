@@ -6781,3 +6781,74 @@ html[data-theme="neo"] .ot-help-a {
 .ret-avg-lbl { font-size: var(--text-label-small); opacity: 0.85; }
 .ret-avg-val { font-size: 22px; font-weight: 800; font-family: 'Inter', sans-serif; letter-spacing: -0.5px; }
 .ret-avg-src { font-size: 11px; opacity: 0.75; margin-left: 4px; }
+
+/* D-day 정보 그리드 (정년 1년 전 / 정년퇴직 예정일) */
+.ret-dday-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  margin-bottom: 10px;
+}
+.ret-dday-card {
+  background: #F5F0E1; border: 1.5px solid #1a1a1a; border-radius: 8px;
+  padding: 10px 12px; box-shadow: 1px 1px 0 #1a1a1a;
+}
+.ret-dday-label { font-size: var(--text-label-small); color: var(--text-muted); font-weight: 600; margin-bottom: 4px; }
+.ret-dday-val { font-size: var(--text-body-large); font-weight: 800; color: #1a1a1a; font-family: 'Inter', sans-serif; }
+
+/* 명세서 업로드 CTA (Step 1 auto 모드 — 명세서 0건일 때) */
+.ret-pay-upload-cta {
+  width: 100%;
+  background: #FFF8E7; border: 2px dashed #1a1a1a; border-radius: 10px;
+  padding: 18px 14px; margin: 4px 0 6px;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  cursor: pointer; font-family: inherit; color: #1a1a1a;
+  transition: background 0.12s;
+}
+.ret-pay-upload-cta:hover { background: #FDCB6E; }
+.ret-pay-upload-cta .ico { font-size: 26px; }
+.ret-pay-upload-cta .title { font-size: var(--text-body-large); font-weight: 800; }
+.ret-pay-upload-cta .sub { font-size: var(--text-label-small); color: var(--text-secondary); text-align: center; line-height: 1.5; }
+
+/* Step 2 옵션 카드 — board-tab1.html .opt-card 디자인 (label-radio 패턴) */
+.ret-peak-opts { display: flex; flex-direction: column; gap: 8px; }
+.ret-peak-opt {
+  width: 100%; text-align: left; padding: 12px;
+  border: 2px solid #1a1a1a; border-radius: 8px;
+  font-family: inherit; font-size: var(--text-body-normal); font-weight: 700;
+  cursor: pointer; box-shadow: 2px 2px 0 #1a1a1a;
+  display: flex; align-items: flex-start; gap: 10px;
+  background: #fff; color: #1a1a1a;
+  transition: background 0.12s, color 0.12s;
+}
+.ret-peak-opt input[type="radio"] {
+  position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0;
+}
+.ret-peak-opt::before {
+  content: ''; flex: 0 0 18px; width: 18px; height: 18px; border-radius: 50%;
+  border: 2px solid #1a1a1a; background: #fff; margin-top: 2px;
+  display: inline-block;
+}
+.ret-peak-opt.selected { background: #00B894; color: #fff; }
+.ret-peak-opt.selected::before {
+  background: #fff;
+  box-shadow: inset 0 0 0 4px #00B894;
+}
+.ret-peak-opt-body { flex: 1; min-width: 0; }
+.ret-peak-opt-title { font-size: var(--text-body-large); font-weight: 800; line-height: 1.3; }
+.ret-peak-opt-meta {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px;
+  font-size: var(--text-label-small); font-weight: 700;
+  font-family: 'Inter', 'Noto Sans KR', sans-serif;
+}
+.ret-peak-opt-meta .dday {
+  background: rgba(255,255,255,0.18); padding: 2px 6px; border-radius: 4px;
+}
+.ret-peak-opt:not(.selected) .ret-peak-opt-meta .dday {
+  background: #F5F0E1; border: 1px solid #1a1a1a;
+}
+.ret-peak-opt-desc {
+  display: block; font-size: var(--text-label-small);
+  font-weight: 500; margin-top: 6px; line-height: 1.5;
+  opacity: 0.9;
+}
+.ret-peak-opt.selected .ret-peak-opt-desc { opacity: 0.95; }
+.ret-peak-excluded .ret-peak-opt[data-opt="A"] { opacity: 0.45; pointer-events: none; }

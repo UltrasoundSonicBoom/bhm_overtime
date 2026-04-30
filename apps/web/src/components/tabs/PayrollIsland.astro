@@ -227,62 +227,67 @@
       </div>
       <div class="ret-wiz-step-label" id="retWizStepLabel">1 / 3 — 평균임금 입력</div>
 
-      <!-- Step 1: 평균임금 (자동/수동 토글) + 생년월일·입사일 -->
+      <!-- Step 1: 평균임금 (자동/수동 토글) -->
       <div class="ret-wiz-step active" data-step="1">
         <div class="ret-card">
-          <div class="ret-card-title">📋 평균임금</div>
+          <div class="ret-card-title">📋 평균임금을 어떻게 입력할까요?</div>
 
           <!-- 자동 / 수동 모드 토글 -->
           <div class="ret-mode-toggle">
-            <button id="retModeAutoBtn" class="active" onclick="retSetMode('auto')">📄 명세서 자동</button>
-            <button id="retModeManualBtn" onclick="retSetMode('manual')">✍️ 수동 입력</button>
+            <button id="retModeAutoBtn" type="button" class="active" onclick="retSetMode('auto')">📄 명세서 자동</button>
+            <button id="retModeManualBtn" type="button" onclick="retSetMode('manual')">✍️ 수동 입력</button>
           </div>
 
-          <!-- 자동 모드: 명세서 행 + 3개월 평균 요약 -->
+          <!-- 자동 모드: 명세서 행 + 3개월 평균 요약 OR 업로드 CTA -->
           <div id="retAutoSection">
-            <div class="text-[11px] text-brand-text-muted mt-0.5 mb-1">최근 3개월 (자동 평균)</div>
-            <div id="retPayslipRows">
-              <div class="text-[12px] text-brand-text-muted py-2 italic">급여명세서를 등록하면 자동 계산됩니다.</div>
+            <div id="retPayslipEmpty" class="ret-pay-upload-cta" style="display:none;" onclick="retGoToPayslipUpload()">
+              <span class="ico">📄</span>
+              <span class="title">급여명세서를 업로드하세요</span>
+              <span class="sub">최근 3개월 명세서를 자동으로 평균 내어 평균임금으로 사용합니다.<br/>여기를 누르면 <b>급여명세서 관리</b> 탭으로 이동합니다.</span>
             </div>
-            <div class="ret-avg-summary" id="retAvgSummary" style="display:none;">
-              <div class="ret-avg-lbl">3개월 평균 <span class="ret-avg-src" id="retWageSourceLabel"></span></div>
-              <div class="ret-avg-val" id="retAvgDisplayAuto">—</div>
+            <div id="retPayslipFilled" style="display:none;">
+              <div class="text-[11px] text-brand-text-muted mt-0.5 mb-1">최근 3개월 (자동 평균)</div>
+              <div id="retPayslipRows"></div>
+              <div class="ret-avg-summary" id="retAvgSummary" style="display:none;">
+                <div class="ret-avg-lbl">3개월 평균 <span class="ret-avg-src" id="retWageSourceLabel"></span></div>
+                <div class="ret-avg-val" id="retAvgDisplayAuto">—</div>
+              </div>
             </div>
           </div>
 
-          <!-- 임금 입력 (수동 모드에서 전면 노출, 자동 모드에서도 표시) -->
-          <div class="ret-form-row" id="retWageInputRow">
-            <label class="ret-label" id="retWageLabel">월 평균임금 (원)</label>
-            <input class="ret-input" type="number" id="retAvgWage"
-              placeholder="직접 입력" min="0" step="10000">
-            <div class="text-[11px] text-brand-text-muted leading-[1.7] mt-1" id="retWageHint" style="display:none;">
-              • 근로기준법 제2조 제1항 6호: 평균임금 = 퇴직 전 3개월 임금 / 역일수<br>
-              • 근로기준법 제2조 제2항: 평균임금이 통상임금보다 낮으면 → 통상임금 적용 (보호 조항)
+          <!-- 수동 모드: 평균임금 + 생년월일 + 입사일 (3 inputs) -->
+          <div id="retManualSection" style="display:none;">
+            <div class="ret-form-row">
+              <label class="ret-label" for="retAvgWage">월 평균임금 (원)</label>
+              <input class="ret-input" type="number" id="retAvgWage"
+                placeholder="예: 5,200,000" min="0" step="10000">
+              <div class="text-[11px] text-brand-text-muted leading-[1.7] mt-1">
+                • 근로기준법 제2조 제1항 6호: 평균임금 = 퇴직 전 3개월 임금 / 역일수<br/>
+                • 통상임금보다 낮으면 통상임금 적용 (보호 조항)
+              </div>
+            </div>
+            <div class="ret-form-row">
+              <label class="ret-label" for="retBirthDate">생년월일 <span class="text-[11px] text-brand-text-muted font-normal">(정년 계산용 · 개인정보 동기화)</span></label>
+              <input class="ret-input" type="date" id="retBirthDate"
+                oninput="retUpdateQuickDates(); syncBirthDateToProfile(this.value)">
+            </div>
+            <div class="ret-form-row">
+              <label class="ret-label" for="retHireDate">입사일 <span class="text-[11px] text-brand-text-muted font-normal">(개인정보 동기화)</span></label>
+              <input class="ret-input" type="date" id="retHireDate"
+                oninput="retUpdateQuickDates(); syncHireDateToProfile(this.value)">
             </div>
           </div>
         </div>
 
-        <div class="ret-card">
-          <div class="ret-card-title">🗓️ 생년월일·입사일</div>
-          <div class="ret-form-row">
-            <label class="ret-label">생년월일 <span class="text-[11px] text-brand-text-muted font-normal">(정년 계산 · 개인정보 동기화)</span></label>
-            <input class="ret-input" type="date" id="retBirthDate"
-              oninput="retUpdateQuickDates(); syncBirthDateToProfile(this.value)">
+        <!-- 정년 D-day 미리보기 (생년월일이 있으면 항상 표시) -->
+        <div class="ret-dday-grid" id="retDdayGrid" style="display:none;">
+          <div class="ret-dday-card">
+            <div class="ret-dday-label">정년 1년 전까지</div>
+            <div class="ret-dday-val" id="retDdayPeak">—</div>
           </div>
-          <div class="ret-dday-grid mb-2.5" id="retDdayGrid" style="display:none;">
-            <div class="ret-dday-card">
-              <div class="ret-dday-label">정년 1년 전까지</div>
-              <div class="ret-dday-val" id="retDdayPeak">—</div>
-            </div>
-            <div class="ret-dday-card">
-              <div class="ret-dday-label">정년퇴직 예정일</div>
-              <div class="ret-dday-val" id="retDdayRetire">—</div>
-            </div>
-          </div>
-          <div class="ret-form-row">
-            <label class="ret-label">입사일 <span class="text-[11px] text-brand-text-muted font-normal">(개인정보 동기화)</span></label>
-            <input class="ret-input" type="date" id="retHireDate"
-              oninput="retUpdateQuickDates(); syncHireDateToProfile(this.value)">
+          <div class="ret-dday-card">
+            <div class="ret-dday-label">정년퇴직 예정일</div>
+            <div class="ret-dday-val" id="retDdayRetire">—</div>
           </div>
         </div>
 
@@ -292,28 +297,36 @@
         </div>
       </div>
 
-      <!-- Step 2: 공로연수 선택 (2 options: 선택 / 미선택) -->
+      <!-- Step 2: 퇴직 시점 선택 (공로연수 선택 vs 정년 퇴직) -->
       <div class="ret-wiz-step" data-step="2">
         <!-- 퇴직(예정)일: 생년월일 기반 자동 계산 (hidden) -->
         <input type="hidden" id="retRetireDate">
 
         <div class="ret-card">
-          <div class="ret-card-title">🎓 공로연수, 어떻게 할까요?</div>
-          <div class="text-[12px] text-brand-text-secondary leading-relaxed mb-2">정년 직전 1년 보수 옵션. 노조 합의 2019.11 기준.</div>
+          <div class="ret-card-title">🎓 언제 퇴직할까요?</div>
+          <div class="text-[12px] text-brand-text-secondary leading-relaxed mb-2">정년 직전 1년 공로연수(60% 보수) 또는 만 60세 정년 퇴직 중 선택. 노조 합의 2019.11 기준.</div>
           <div id="retPeakExclusionNote" class="ret-guide-note mb-2" style="display:none;">⚠️ 입사일로부터 5년 이내 정년에 도달하는 경우 공로연수 선택 적용 대상에서 제외됩니다.</div>
           <div class="ret-peak-opts" id="retPeakOptSection">
-            <label class="ret-peak-opt" id="retPeakOpt_A" onclick="retSelectPeakOpt(this)">
+            <label class="ret-peak-opt" id="retPeakOpt_A" data-opt="A" onclick="retSelectPeakOpt(this)">
               <input type="radio" name="retPeakOpt" value="A">
               <div class="ret-peak-opt-body">
-                <div class="ret-peak-opt-title">공로연수 선택 (기준 보수 × 60%)</div>
+                <div class="ret-peak-opt-title">공로연수 선택 <span class="text-[11px] font-normal opacity-80">(기준 보수 × 60%)</span></div>
+                <div class="ret-peak-opt-meta">
+                  <span class="dday" id="retOptAStartDate">—</span>
+                  <span class="dday" id="retOptADday">—</span>
+                </div>
                 <div class="ret-peak-opt-desc">정년 직전 1년, 출근 없이 60% 지급. 퇴직금은 공로연수 전 3개월 평균임금 기준 보호 → <b>퇴직금 동일</b></div>
               </div>
             </label>
-            <label class="ret-peak-opt selected" id="retPeakOpt_none" onclick="retSelectPeakOpt(this)">
+            <label class="ret-peak-opt selected" id="retPeakOpt_none" data-opt="none" onclick="retSelectPeakOpt(this)">
               <input type="radio" name="retPeakOpt" value="none" checked>
               <div class="ret-peak-opt-body">
-                <div class="ret-peak-opt-title">미선택 — 법정 정년(만 60세)에 퇴직</div>
-                <div class="ret-peak-opt-desc">정년퇴직일까지 계속 근무. 입력한 월 평균임금 그대로 퇴직금 산정</div>
+                <div class="ret-peak-opt-title">정년 퇴직 <span class="text-[11px] font-normal opacity-80">(만 60세)</span></div>
+                <div class="ret-peak-opt-meta">
+                  <span class="dday" id="retOptBRetireDate">—</span>
+                  <span class="dday" id="retOptBDday">—</span>
+                </div>
+                <div class="ret-peak-opt-desc">법정 정년퇴직일까지 계속 근무. 입력한 월 평균임금 그대로 퇴직금 산정</div>
               </div>
             </label>
           </div>
