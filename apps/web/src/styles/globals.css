@@ -6663,10 +6663,11 @@ html[data-theme="neo"] .ot-help-a {
 }
 .ret-mini-bars .row .lbl { font-weight: 700; }
 .ret-mini-bars .row .bar-track {
+  display: block;
   height: 14px; border: 1.5px solid #1a1a1a; border-radius: 4px;
   background: #fff; overflow: hidden;
 }
-.ret-mini-bars .row .bar-fill { height: 100%; background: #6C5CE7; width: var(--bar-w, 0); }
+.ret-mini-bars .row .bar-fill { display: block; height: 100%; background: #6C5CE7; width: var(--bar-w, 0); }
 .ret-mini-bars .row .bar-fill.bar-fill--peak { background: #00B894; }
 .ret-mini-bars .row .v { text-align: right; font-weight: 700; }
 

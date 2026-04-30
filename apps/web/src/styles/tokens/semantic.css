@@ -38,8 +38,8 @@
   --color-status-info-bg:    var(--blue-50);
 
   /* Duty / schedule status */
-  --color-duty-day:         var(--blue-500);
-  --color-duty-day-bg:      var(--blue-50);
+  --color-duty-day:         var(--sky-500);
+  --color-duty-day-bg:      var(--sky-50);
   --color-duty-evening:     var(--amber-500);
   --color-duty-evening-bg:  var(--amber-50);
   --color-duty-night:       var(--blue-700);
@@ -86,7 +86,7 @@ html[data-theme="dark"] {
   --color-status-error-bg:   rgba(239, 68, 68, 0.15);
   --color-status-info-bg:    rgba(99, 102, 241, 0.15);
 
-  --color-duty-day-bg:      rgba(99, 102, 241, 0.15);
+  --color-duty-day-bg:      rgba(14, 165, 233, 0.18);
   --color-duty-evening-bg:  rgba(245, 158, 11, 0.15);
   --color-duty-night-bg:    rgba(79, 70, 229, 0.22);
   --color-duty-off-bg:      rgba(255, 255, 255, 0.06);
