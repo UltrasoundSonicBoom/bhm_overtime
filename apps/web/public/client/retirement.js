@@ -150,8 +150,8 @@ import { RetirementEngine } from './retirement-engine.js';
     // 금액 표시
     var amtEl = el('div', 'rt-hero-amount', E.fmtFull(sev.퇴직금));
     var labelEl = el('div', 'rt-hero-label',
-      state.timing === 'before_peak' ? '임금피크 전 퇴직 시 예상 퇴직금' :
-      state.timing === 'after_peak'  ? '정년(만 61세) 퇴직 시 예상 퇴직금' :
+      state.timing === 'before_peak' ? '정년 1년 전 퇴직 시 예상 퇴직금' :
+      state.timing === 'after_peak'  ? '정년퇴직일 기준 예상 퇴직금' :
                                        '지금 퇴직 시 예상 퇴직금');
     app(out, labelEl);
     app(out, amtEl);
@@ -192,7 +192,7 @@ import { RetirementEngine } from './retirement-engine.js';
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  //  탭 2: 임금피크 시뮬레이터 렌더링
+  //  탭 2: 공로연수 선택 비교 렌더링
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   function renderTab2() {
     if (!state.result) return;
@@ -231,10 +231,10 @@ import { RetirementEngine } from './retirement-engine.js';
     if (el1) el1.textContent = (midEffect >= 0 ? '+' : '') + E.fmt(midEffect);
     if (el2) {
       el2.textContent = midEffect > 0
-        ? '옵션 A를 선택할 경우, 중간정산하면 이만큼 더 받을 수 있어요.'
-        : '옵션 B는 중간정산 효과가 크지 않습니다.';
+        ? '공로연수 선택 시에도 퇴직금 기준 평균임금은 보호됩니다. 중간정산 효과는 별도 비교값입니다.'
+        : '공로연수 60% 수령액은 퇴직금 기준 평균임금을 낮추지 않습니다.';
     }
-    if (el3) el3.textContent = '임금피크 시작: ' + E.fmtDate(peakStart) + ' (만 60세)';
+    if (el3) el3.textContent = '정년 1년 전 선택 시작: ' + E.fmtDate(peakStart);
   }
 
   // 바 차트 한 줄
@@ -355,10 +355,10 @@ import { RetirementEngine } from './retirement-engine.js';
     addLine('가장 유리한 선택: ' + best.label, true);
 
     if (midEffect > 0) {
-      addLine('옵션 A 선택 예정이라면: 임금피크 전 중간정산이 ' + E.fmt(midEffect) + ' 더 유리합니다.');
-      addLine('이유: 퇴직금이 \"마지막 3개월 평균임금 × 근속연수\" 구조이므로, 임금이 60%로 줄기 전에 정산해야 전체 근속분을 100% 기준으로 확보할 수 있습니다.');
+      addLine('중간정산 비교: ' + E.fmt(midEffect) + ' 차이입니다.');
+      addLine('이유: 제52조(4)·제53조(2)에 따라 만60세 이후 퇴직자는 만60세 직전 평균임금 기준으로 산정되어, 공로연수 60% 수령액이 퇴직금 기준 평균임금을 낮추지 않습니다.');
     } else {
-      addLine('옵션 A에서 중간정산 효과: ' + E.fmt(midEffect));
+      addLine('중간정산 비교값: ' + E.fmt(midEffect));
     }
 
     var optBDiff = optB_no.total - optA_mid.total;

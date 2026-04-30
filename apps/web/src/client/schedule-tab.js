@@ -469,21 +469,21 @@ function renderStats() {
   const counts = calcMonthlyDutyCounts(data.mine || {}, holidaySet);
 
   const cards = [
-    { cls: 'D', num: counts.D, lbl: 'D 데이' },
-    { cls: 'E', num: counts.E, lbl: 'E 이브닝' },
-    { cls: 'N', num: counts.N, lbl: 'N 나이트' },
-    { cls: 'O', num: counts.O, lbl: 'O 오프' },
-    { cls: 'AL', num: counts.AL, lbl: 'AL 연차' },
-    { cls: 'RD', num: counts.RD, lbl: 'RD 리커버리' },
+    { cls: 'D', code: 'D', num: counts.D, lbl: '데이' },
+    { cls: 'E', code: 'E', num: counts.E, lbl: '이브닝' },
+    { cls: 'N', code: 'N', num: counts.N, lbl: '나이트' },
+    { cls: 'O', code: 'O', num: counts.O, lbl: '오프' },
+    { cls: 'AL', code: 'AL', num: counts.AL, lbl: '연차' },
+    { cls: 'RD', code: 'RD', num: counts.RD, lbl: '리커버리' },
   ];
   if (counts.holidayDuty > 0) {
-    cards.push({ cls: 'HD', num: counts.holidayDuty, lbl: '🎌 공휴일 근무' });
+    cards.push({ cls: 'HD', code: 'HD', num: counts.holidayDuty, lbl: '공휴일 근무' });
   }
 
   let html = '';
   for (const c of cards) {
     const statClass = c.cls ? ` sch-stat-${esc(c.cls)}` : '';
-    html += `<div class="sch-stat-card${statClass}"><span class="num">${esc(c.num)}</span><span class="lbl">${esc(c.lbl)}</span></div>`;
+    html += `<div class="sch-stat-card${statClass}" data-duty="${esc(c.cls)}"><span class="sch-stat-code">${esc(c.code)}</span><span class="num">${esc(c.num)}</span><span class="lbl">${esc(c.lbl)}</span></div>`;
   }
   // eslint-disable-next-line no-unsanitized/property
   grid.innerHTML = html;

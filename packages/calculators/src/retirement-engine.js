@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════
-//  RetirementEngine — 임금피크 × 중간정산 계산 엔진
+//  RetirementEngine — 공로연수 선택 × 중간정산 계산 엔진
 //  side-effect 없는 순수 계산 모듈. data.js / calculators.js 불필요.
 // ══════════════════════════════════════════════════════════════
 export const RetirementEngine = (function () {
@@ -119,14 +119,54 @@ export const RetirementEngine = (function () {
   // ── 날짜 계산 ──────────────────────────────────────────────
   function calcPeakDates(birthDateStr) {
     const b = new Date(birthDateStr);
+    const legalRetirement = new Date(b.getFullYear() + 60, 11, 31);
+    const decisionStart = new Date(legalRetirement);
+    decisionStart.setFullYear(decisionStart.getFullYear() - 1);
     return {
-      peakStart: new Date(b.getFullYear() + 60, b.getMonth(), b.getDate()),
-      peakEnd:   new Date(b.getFullYear() + 61, b.getMonth(), b.getDate())
+      peakStart: decisionStart,
+      peakEnd: legalRetirement
     };
   }
-  function dStr(d) { return d.toISOString().slice(0, 10); }
+  function dStr(d) {
+    if (!d) return '';
+    const dt = typeof d === 'string' ? new Date(d) : d;
+    if (isNaN(dt)) return '';
+    const y = dt.getFullYear();
+    const m = String(dt.getMonth() + 1).padStart(2, '0');
+    const day = String(dt.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
   function diffDays(a, b) {
     return Math.max(0, Math.floor((new Date(b) - new Date(a)) / 86400000));
+  }
+  function diffCalendarMonths(start, end) {
+    let months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+    if (end.getDate() < start.getDate()) months -= 1;
+    return Math.max(0, months);
+  }
+  function calcUnionService(hireDateStr, retireDateStr) {
+    const hire = new Date(hireDateStr);
+    const retire = new Date(retireDateStr);
+    const days = diffDays(hireDateStr, retireDateStr);
+    const precise = days / 365.25;
+    const serviceMonths = (!isNaN(hire) && !isNaN(retire)) ? diffCalendarMonths(hire, retire) : 0;
+    const wholeYears = Math.floor(serviceMonths / 12);
+    const remainderMonths = serviceMonths % 12;
+    const calculationYears = serviceMonths >= 12
+      ? (remainderMonths >= 6 ? wholeYears + 1 : wholeYears + remainderMonths / 12)
+      : precise;
+    const yearsDisplay = serviceMonths < 12
+      ? '1년 미만'
+      : (remainderMonths >= 6
+        ? `${wholeYears}년 ${remainderMonths}개월 -> ${wholeYears + 1}년 산정`
+        : `${wholeYears}년 ${remainderMonths}개월`);
+    return {
+      precise,
+      serviceMonths,
+      calculationYears,
+      calculationYearsInt: Math.floor(calculationYears),
+      yearsDisplay
+    };
   }
 
   // ── 퇴직금 계산 핵심 (retireDate 명시) ────────────────────
@@ -135,9 +175,9 @@ export const RetirementEngine = (function () {
   //   retireDateStr: 퇴직(예정)일 YYYY-MM-DD
   function calcSev(wage, hireDateStr, retireDateStr) {
     const hire    = new Date(hireDateStr);
-    const days    = diffDays(hireDateStr, retireDateStr);
-    const precise = days / 365;
-    const years   = Math.floor(precise);
+    const service = calcUnionService(hireDateStr, retireDateStr);
+    const precise = service.calculationYears;
+    const years   = service.calculationYearsInt;
 
     if (precise < 1) return { 퇴직금: 0, 기본퇴직금: 0, 퇴직수당: 0,
       yearsDisplay: '1년 미만', precise, isPre2001: hire <= CUT2001, isPre2015: hire <= CUT2015 };
@@ -157,13 +197,11 @@ export const RetirementEngine = (function () {
       if (sp) addon = Math.round(wage * precise * sp.rate);
     }
 
-    const yrs = Math.floor(precise);
-    const mos = Math.floor((precise % 1) * 12);
     return {
       퇴직금:   base + addon,
       기본퇴직금: base,
       퇴직수당:  addon,
-      yearsDisplay: `${yrs}년 ${mos}개월`,
+      yearsDisplay: service.yearsDisplay,
       precise, method,
       isPre2001: hire <= CUT2001,
       isPre2015: hire <= CUT2015
@@ -184,13 +222,13 @@ export const RetirementEngine = (function () {
     const w60 = Math.round(wage * 0.6);
 
     const list = [
-      // ① 임금피크 전 퇴직 (만 59세)
+      // ① 정년 전 1년 선택 전 퇴직
       (function () {
         const sev = calcSev(wage, hireDateStr, ps);
         return {
           id: 'before_peak',
-          label: '임금피크 전 퇴직',
-          sublabel: '만 59세, 임금피크 전날 퇴직',
+          label: '정년 전 1년 선택 전 퇴직',
+          sublabel: '공로연수 선택 시작 전 퇴직',
           tag: '비교 기준',
           tagColor: '#64748b',
           midSettlement: false,
@@ -205,14 +243,14 @@ export const RetirementEngine = (function () {
 
       // ② 옵션 A — 중간정산 없이
       (function () {
-        const sev = calcSev(w60, hireDateStr, pe);
+        const sev = calcSev(wage, hireDateStr, pe);
         const pi  = Math.round(w60 * 12);
         return {
           id: 'optA_no_mid',
           label: '옵션 A — 중간정산 없이',
-          sublabel: '공로연수(60%) 1년, 퇴직금도 60% 기준',
-          tag: '가장 불리',
-          tagColor: '#ef4444',
+          sublabel: '공로연수 수령액만 60%, 퇴직금 기준 평균임금은 보호',
+          tag: '퇴직금 보호',
+          tagColor: '#f59e0b',
           midSettlement: false,
           sev, midSev: null, finalSev: null,
           peakIncome: pi, peakRate: 0.6,
@@ -222,21 +260,21 @@ export const RetirementEngine = (function () {
           ],
           totalSev: sev.퇴직금,
           total: sev.퇴직금 + pi,
-          retireAge: '만 61세'
+          retireAge: '정년퇴직'
         };
       })(),
 
       // ③ 옵션 A — 중간정산 후
       (function () {
         const midSev   = calcSev(wage, hireDateStr, ps);   // N년 × 100%
-        const finalSev = calcFinalAfterMid(w60);            // 1년 × 60%
+        const finalSev = calcFinalAfterMid(wage);           // 공로연수 1년치도 만60세 직전 평균임금 기준
         const pi       = Math.round(w60 * 12);
         const totalSev = midSev.퇴직금 + finalSev.퇴직금;
         return {
           id: 'optA_mid',
           label: '옵션 A — 중간정산 후',
-          sublabel: '임금피크 전 중간정산 + 공로연수(60%) 1년',
-          tag: '중간정산 추천',
+          sublabel: '중간정산 비교용. 공로연수 기간도 퇴직금 기준 평균임금은 보호',
+          tag: '비교용',
           tagColor: '#00B894',
           midSettlement: true,
           sev: midSev, midSev, finalSev,
@@ -248,13 +286,13 @@ export const RetirementEngine = (function () {
           ],
           totalSev,
           total: totalSev + pi,
-          retireAge: '만 61세'
+          retireAge: '정년퇴직'
         };
       })(),
 
       // ④ 옵션 B — 중간정산 없이
       (function () {
-        const sev = calcSev(wage, hireDateStr, pe);   // N+1년 × 100%
+        const sev = calcSev(wage, hireDateStr, pe);   // 정년퇴직일까지 100%
         const pi  = Math.round(wage * 12);
         return {
           id: 'optB_no_mid',
@@ -271,7 +309,7 @@ export const RetirementEngine = (function () {
           ],
           totalSev: sev.퇴직금,
           total: sev.퇴직금 + pi,
-          retireAge: '만 61세'
+          retireAge: '정년퇴직'
         };
       })(),
 
@@ -284,7 +322,7 @@ export const RetirementEngine = (function () {
         return {
           id: 'optB_mid',
           label: '옵션 B — 중간정산 후',
-          sublabel: '임금피크 전 중간정산 + 계속근무(100%) 1년',
+          sublabel: '정년 전 1년 선택 전 중간정산 + 계속근무(100%) 1년',
           tag: '비교용',
           tagColor: '#74B9FF',
           midSettlement: true,
@@ -297,7 +335,7 @@ export const RetirementEngine = (function () {
           ],
           totalSev,
           total: totalSev + pi,
-          retireAge: '만 61세'
+          retireAge: '정년퇴직'
         };
       })()
     ];
@@ -340,9 +378,9 @@ export const RetirementEngine = (function () {
 
   // ── 3개월 평균임금 계산 (R20) ─────────────────────────────
   // 사용: getThreeMonthAverage([{grossPay: 3000000}, ...]) 최신순 정렬 배열
-  // 반환: { average, months, warning: null | 'insufficient_data' | 'wage_peak_protection' }
+  // 반환: { average, months, warning: null | 'insufficient_data' | 'service_year_pay_floor' }
   // 근거: 근로기준법 제2조 평균임금 3개월 원칙
-  // 임금피크 보호 기준: 최저임금(2026: 9,860원) × 209h × 1.2 = 2,472,120원 이상이면 정상
+  // 공로연수 60% 선택 보호 기준: 최저임금(2026: 9,860원) × 209h × 1.2 = 2,472,120원 이상이면 정상
   function getThreeMonthAverage(payslips) {
     if (!payslips || payslips.length < 3) {
       return {
@@ -353,9 +391,9 @@ export const RetirementEngine = (function () {
     }
     const recent3 = payslips.slice(0, 3);
     const avg = Math.floor(recent3.reduce(function (s, p) { return s + p.grossPay; }, 0) / 3);
-    // 운영기능직 임금피크 보호: 최저임금 9,860원 × 209h × 1.2 (2026 기준)
-    const wagePeakThreshold = Math.floor(9860 * 209 * 1.2); // 2,472,120원
-    const warning = avg < wagePeakThreshold ? 'wage_peak_protection' : null;
+    // 운영기능직 공로연수 60% 적용 보호: 최저임금 9,860원 × 209h × 1.2 (2026 기준)
+    const serviceYearThreshold = Math.floor(9860 * 209 * 1.2); // 2,472,120원
+    const warning = avg < serviceYearThreshold ? 'service_year_pay_floor' : null;
     return { average: avg, months: 3, warning };
   }
 

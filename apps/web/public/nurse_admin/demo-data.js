@@ -17156,10 +17156,10 @@ window.__NURSE_ADMIN_FIXTURES = {
           102,
           103
         ],
-        "retirement_and_wage_peak": {
+        "retirement_and_service_year": {
           "retirement_age": 60,
-          "retirement_effective_date": "해당 월의 말일",
-          "wage_peak_rate": 0.6,
+          "retirement_effective_date": "해당 연도 12월 말일",
+          "service_year_pay_rate": 0.6,
           "protection_floor": "운영기능직 최저임금 120%",
           "merit_training_leave_years": 1
         },

@@ -21,7 +21,7 @@
     "year_in_grade": 8,
     "is_shift_worker": true,
     "shift_type": "3교대",
-    "wage_peak_applied": false
+    "public_service_training_selected": false
   },
   "family_info": {
     "spouse": {

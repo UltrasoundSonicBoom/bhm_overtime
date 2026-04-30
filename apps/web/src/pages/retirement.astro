@@ -6,14 +6,14 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 <BaseLayout
-  title="퇴직금 · 임금피크 분석 — SNUH 메이트"
-  description="퇴직금 · 임금피크 분석"
+  title="퇴직금 · 공로연수 분석 — SNUH 메이트"
+  description="퇴직금 · 공로연수 분석"
   showFooterNav={false}
 >
   <!-- ── 헤더 ──────────────────────────────────────────────── -->
   <header class="rt-header">
     <a href="/" class="rt-back" title="돌아가기">←</a>
-    <span class="rt-header-title">퇴직금 · 임금피크 분석</span>
+    <span class="rt-header-title">퇴직금 · 공로연수 분석</span>
   </header>
 
   <div class="rt-page">
@@ -49,7 +49,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <!-- ── 탭 네비게이션 ───────────────────────────────────── -->
     <nav class="rt-tab-nav" id="rtTabNav">
       <button class="rt-tab active" data-tab="calc">💰 퇴직금</button>
-      <button class="rt-tab" data-tab="peak">📊 임금피크</button>
+      <button class="rt-tab" data-tab="peak">📊 공로연수</button>
       <button class="rt-tab" data-tab="checklist">✅ 준비</button>
     </nav>
 
@@ -61,8 +61,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <!-- 타이밍 pill -->
       <div class="rt-pills">
         <button class="rt-pill active" data-timing="now">지금 바로</button>
-        <button class="rt-pill" data-timing="before_peak">임금피크 전</button>
-        <button class="rt-pill" data-timing="after_peak">정년(만 61세)</button>
+        <button class="rt-pill" data-timing="before_peak">정년 1년 전</button>
+        <button class="rt-pill" data-timing="after_peak">정년퇴직일</button>
       </div>
 
       <!-- 결과 히어로 카드 -->
@@ -76,7 +76,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     </div>
 
     <!-- ════════════════════════════════════════════════════════
-       탭 2: 임금피크 시뮬레이터
+       탭 2: 공로연수 선택 비교
   ════════════════════════════════════════════════════════ -->
     <div class="rt-panel" id="rt-panel-peak">
 
@@ -85,33 +85,33 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <div class="rt-db-title">Q. 서울대병원 퇴직금은 DB형인가요, DC형인가요?</div>
         <div class="rt-db-row">
           <span class="rt-db-badge">DB형</span>
-          <span class="rt-db-text">퇴직 직전 3개월 평균임금 × 근속연수 → 마지막 임금이 낮으면 퇴직금도 낮아짐</span>
+          <span class="rt-db-text">월 평균임금 × 근속연수. 단, 만60세 이후 퇴직자는 만60세 직전 평균임금 기준</span>
         </div>
         <div class="rt-db-row">
           <span class="rt-db-badge">DC형</span>
-          <span class="rt-db-text">매년 임금 기준으로 적립 → 임금피크 영향 최소화</span>
+          <span class="rt-db-text">매년 임금 기준으로 적립 → 병원 퇴직금 산정 방식과 다름</span>
         </div>
         <div class="rt-db-row">
           <span class="rt-db-badge snuh">SNUH</span>
-          <span class="rt-db-text">사학연금 + 단체협약 퇴직금. 퇴직금은 <strong>DB형과 동일한 구조</strong>로 마지막 평균임금 기준으로 계산됩니다.</span>
+          <span class="rt-db-text">사학연금 + 단체협약 퇴직금. 공로연수 선택 시에도 <strong>공로연수 전 3개월 평균임금</strong> 기준으로 보호됩니다.</span>
         </div>
       </div>
 
-      <!-- 임금피크 함정 설명 -->
+      <!-- 공로연수 60% 선택 영향 설명 -->
       <div class="rt-trap-box">
-        <div class="rt-trap-title">⚠️ 임금피크제의 퇴직금 함정</div>
+        <div class="rt-trap-title">✅ 핵심: 공로연수 60%는 퇴직금 기준임금을 낮추지 않습니다</div>
         <div class="rt-trap-body">
-          임금피크(60%) 적용 후 퇴직하면, 지난 <strong>30년치 퇴직금이 전부 60% 임금 기준</strong>으로 계산됩니다.
+          공로연수 1년을 선택하면 실제 근무지에 출근하지 않고 기준 보수 60%를 받습니다. 하지만 단체협약 제52조(4)·제53조(2)에 따라 만60세 이후 퇴직자는 만60세 직전 평균임금 기준으로 계산합니다.
           <br /><br />
-          예시: 월 500만원 → 임금피크 후 300만원 수령 → 퇴직 시 평균임금 300만원 → 30년치 퇴직금이 40% 감소
+          예시: 공로연수 전 평균임금 500만원 → 공로연수 기간 수령액 300만원 → 퇴직금 기준 평균임금은 500만원 유지
           <br /><br />
-          <strong>해결책:</strong> 임금피크 전날에 중간정산 → 30년치를 100% 기준으로 확보하고, 이후 1년치만 60% 기준으로 계산
+          <strong>비교 포인트:</strong> 퇴직금 감소가 아니라 정년 전 1년 수령액 60% vs 100%, 출근 여부, 사학연금 기여금 영향을 같이 확인
         </div>
       </div>
 
       <!-- 중간정산 효과 배너 -->
       <div class="rt-mid-effect-box">
-        <div class="rt-mid-effect-label">옵션 A에서의 중간정산 효과</div>
+        <div class="rt-mid-effect-label">중간정산 비교</div>
         <div class="rt-mid-effect-amount" id="rtMidEffectAmount">—</div>
         <div class="rt-mid-effect-desc" id="rtMidEffectDesc">시뮬레이션 결과가 여기에 표시됩니다.</div>
         <div class="rt-peak-start-date" id="rtPeakStartDate"></div>
@@ -135,7 +135,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           </div>
           <div class="rt-legend-item">
             <div class="rt-legend-dot" style="background:#FDCB6E"></div>
-            <span>임금피크 수령</span>
+            <span>정년 전 1년 수령</span>
           </div>
         </div>
       </div>
@@ -162,15 +162,28 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <div class="rt-panel" id="rt-panel-checklist">
 
       <div class="rt-check-section">
+        <div class="rt-check-header">🧭 정년 D-12개월 (공로연수 선택 시점)</div>
+        <div class="rt-check-item"><span class="rt-check-box">☐</span>
+          <div><strong>공로연수 선택 여부 결정</strong> — 공로연수 1년 선택 또는 공로연수 미선택·계속근무 중 선택</div>
+        </div>
+        <div class="rt-check-item"><span class="rt-check-box">☐</span>
+          <div><strong>규정 지급액 확인</strong> — 공로연수 선택 시 기준 보수 60%, 계속근무 선택 시 직전년도 보수 100% 기준 확인</div>
+        </div>
+        <div class="rt-check-item"><span class="rt-check-box">☐</span>
+          <div><strong>적용 제외 여부 확인</strong> — 보직자 여부와 입사 후 5년 이내 정년 도달 여부 확인</div>
+        </div>
+      </div>
+
+      <div class="rt-check-section">
         <div class="rt-check-header">📅 퇴직 D-90 (3개월 전)</div>
         <div class="rt-check-item"><span class="rt-check-box">☐</span>
           <div><strong>퇴직 의사 통보</strong> — 직속 상급자 및 부서장에게 퇴직 예정일 사전 통보</div>
         </div>
         <div class="rt-check-item"><span class="rt-check-box">☐</span>
-          <div><strong>임금피크제 선택</strong> — 만 60세 도달 예정자는 인사과 상담 후 옵션 A/B 선택</div>
+          <div><strong>공로연수 선택 여부</strong> — 공로연수 1년 선택 또는 공로연수 미선택·계속근무 중 선택</div>
         </div>
         <div class="rt-check-item"><span class="rt-check-box">☐</span>
-          <div><strong>중간정산 상담</strong> — 임금피크 전 중간정산 가능 여부 인사과에 확인, 유리한 시점 결정</div>
+          <div><strong>중간정산 상담</strong> — 공로연수 전 3개월 평균임금 기준과 중간정산 필요 여부를 인사과에 확인</div>
         </div>
         <div class="rt-check-item"><span class="rt-check-box">☐</span>
           <div><strong>사학연금 수령 방식 확인</strong> — 연금 vs 일시금 비교 (사학연금공단 1588-4321)</div>
@@ -588,7 +601,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     margin-top: 14px;
   }
 
-  /* ── 탭 2: 임금피크 시뮬레이터 ── */
+  /* ── 탭 2: 공로연수 선택 비교 ── */
 
   /* 함정 설명 박스 */
   .rt-trap-box {
