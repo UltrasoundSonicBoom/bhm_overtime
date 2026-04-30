@@ -14,11 +14,16 @@
 //   - 'collection-by-yyyymm' : entries 배열 → yyyymm 별 doc split
 //   - 'collection-by-yyyy'   : entries 배열 → yyyy 별 doc split (4-seg path)
 //   - 'collection-by-id'     : 배열 → entryId 별 doc split
+//
+// localScope:
+//   - 'user'   : localStorage 에서 base_uid_<uid> / base_guest 로 분리
+//   - 'shared' : 기기 단위 shared key (settings/theme 처럼 일부 device-local 필드와 병존)
 
 export const KEY_REGISTRY = {
   // ── Profile (SPEC §3.4) — identity / payroll 분리 ──
   'snuhmate_hr_profile': {
     scope: 'sync',
+    localScope: 'user',
     shape: 'split-identity-payroll',
     firestorePath: (uid) => `users/${uid}/profile/identity`,
     payrollPath: (uid) => `users/${uid}/profile/payroll`,
@@ -26,54 +31,54 @@ export const KEY_REGISTRY = {
   },
   // ── Work history (SPEC §3.4) ──
   'snuhmate_work_history': {
-    scope: 'sync', shape: 'collection-by-id',
+    scope: 'sync', localScope: 'user', shape: 'collection-by-id',
     firestorePath: (uid) => `users/${uid}/work_history`,
     category: 'workHistory',
   },
   'snuhmate_work_history_seeded': {
-    scope: 'sync', shape: 'doc-merge',
+    scope: 'sync', localScope: 'user', shape: 'doc-merge',
     firestorePath: (uid) => `users/${uid}/profile/identity`,
     fieldName: 'workHistorySeeded',
     category: 'workHistory',
   },
   // ── Overtime (SPEC §3.2) ──
   'overtimeRecords': {
-    scope: 'sync', shape: 'collection-by-yyyymm',
+    scope: 'sync', localScope: 'user', shape: 'collection-by-yyyymm',
     firestorePath: (uid) => `users/${uid}/overtime`,
     category: 'overtime',
   },
   'otManualHourly': {
-    scope: 'sync', shape: 'doc-merge',
+    scope: 'sync', localScope: 'user', shape: 'doc-merge',
     firestorePath: (uid) => `users/${uid}/profile/payroll`,
     fieldName: 'manualHourly',
     category: 'payroll',
   },
   'overtimePayslipData': {
-    scope: 'sync', shape: 'collection-by-id',
+    scope: 'sync', localScope: 'user', shape: 'collection-by-id',
     firestorePath: (uid) => `users/${uid}/payslips`,
     category: 'payroll',
   },
   // ── Leave (SPEC §3.3) — 4-seg path (leave/{yyyy} doc) ──
   'leaveRecords': {
-    scope: 'sync', shape: 'collection-by-yyyy',
+    scope: 'sync', localScope: 'user', shape: 'collection-by-yyyy',
     firestorePath: (uid) => `users/${uid}/leave`,
     category: 'leave',
   },
   // ── Settings (SPEC §3.6) ──
   'snuhmate_settings': {
-    scope: 'sync', shape: 'doc',
+    scope: 'sync', localScope: 'shared', shape: 'doc',
     firestorePath: (uid) => `users/${uid}/settings/app`,
     category: 'settings',
   },
   'theme': {
-    scope: 'sync', shape: 'doc-merge',
+    scope: 'sync', localScope: 'shared', shape: 'doc-merge',
     firestorePath: (uid) => `users/${uid}/settings/app`,
     fieldName: 'theme',
     category: 'settings',
   },
   // ── Reference (SPEC §3.5) ──
   'snuhmate_reg_favorites': {
-    scope: 'sync', shape: 'doc',
+    scope: 'sync', localScope: 'user', shape: 'doc',
     firestorePath: (uid) => `users/${uid}/settings/reference`,
     category: 'reference',
   },
@@ -84,6 +89,7 @@ export const KEY_REGISTRY = {
   'snuhmate_demo_mode': { scope: 'device-local' },
   'snuhmate_debug_parser': { scope: 'device-local' },
   'snuhmate_leave_migrated_v1': { scope: 'device-local' },  // legacy migration flag
+  'snuhmate_leave_scope_migrated_v2': { scope: 'device-local' },
 };
 
 export const CATEGORIES = ['identity', 'payroll', 'overtime', 'leave', 'workHistory', 'settings', 'reference'];
@@ -108,6 +114,25 @@ export function firestorePathFor(baseKey, uid) {
   const def = KEY_REGISTRY[baseKey];
   if (!def || def.scope !== 'sync' || !def.firestorePath) return null;
   return def.firestorePath(uid);
+}
+
+export function localScopeOf(baseKey) {
+  return KEY_REGISTRY[baseKey]?.localScope ?? null;
+}
+
+export function localKeyFor(baseKey, uid) {
+  const def = KEY_REGISTRY[baseKey];
+  if (!def) return null;
+  if (def.scope === 'device-local' || def.localScope === 'shared') return baseKey;
+  const cleanUid = (typeof uid === 'string' && uid.length > 0) ? uid : null;
+  return cleanUid ? `${baseKey}_uid_${cleanUid}` : `${baseKey}_guest`;
+}
+
+export function guestLocalKeyFor(baseKey) {
+  const def = KEY_REGISTRY[baseKey];
+  if (!def) return null;
+  if (def.scope === 'device-local' || def.localScope === 'shared') return baseKey;
+  return `${baseKey}_guest`;
 }
 
 export function categoryOf(baseKey) {

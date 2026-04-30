@@ -2515,6 +2515,9 @@ function onOtHourlyInput() {
 
   if (!hasProfileWage) {
     localStorage.setItem(window.getUserStorageKey ? window.getUserStorageKey('otManualHourly') : 'otManualHourly', val.toString());
+    if (typeof window.recordLocalEdit === 'function') {
+      try { window.recordLocalEdit('otManualHourly'); } catch (e) {}
+    }
     hint.textContent = val > 0 ? '✏️ 수동 입력값 (자동저장)' : '⬅ 시급을 입력하세요';
   }
 
@@ -4057,6 +4060,27 @@ if (typeof window.prefetchTabs === 'function') {
       try { window[fnName](); } catch (e) { console.warn('[live-sync]', fnName, e); }
     }
   };
+  const refreshActiveTab = () => {
+    if (isActive('home')) safeCall('initHomeTab');
+    if (isActive('overtime')) {
+      safeCall('applyProfileToOvertime');
+      safeCall('initOvertimeTab');
+    }
+    if (isActive('leave')) {
+      safeCall('applyProfileToLeave');
+      safeCall('initLeaveTab');
+    }
+    if (isActive('payroll')) {
+      safeCall('applyProfileToPayroll');
+      safeCall('initPayrollTab');
+    }
+    if (isActive('profile')) {
+      safeCall('_bootstrapProfileTab');
+      safeCall('initProfileTab');
+    }
+    if (isActive('reference')) safeCall('initRegulationFragment');
+    if (isActive('schedule')) safeCall('initScheduleTab');
+  };
 
   // 프로필 변경 → 모든 의존 탭 라이브 갱신
   window.addEventListener('profileChanged', () => {
@@ -4088,6 +4112,10 @@ if (typeof window.prefetchTabs === 'function') {
     if (isActive('overtime')) safeCall('initOvertimeTab');
     if (isActive('payroll')) safeCall('initPayrollTab');
   });
+
+  window.addEventListener('app:cloud-hydrated', refreshActiveTab);
+  window.addEventListener('app:auth-changed', refreshActiveTab);
+  window.addEventListener('app:auth-data-reset', refreshActiveTab);
 })();
 
 

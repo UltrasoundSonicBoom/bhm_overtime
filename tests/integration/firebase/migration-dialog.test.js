@@ -16,14 +16,24 @@ const mockWriteAllOvertime = vi.fn();
 const mockWriteAllLeave = vi.fn();
 const mockWriteAllWorkHistory = vi.fn();
 const mockWriteSettings = vi.fn();
+const mockWriteManualHourly = vi.fn();
 const mockWriteFavorites = vi.fn();
+const mockWritePayslip = vi.fn();
+const mockWriteAllPayslips = vi.fn();
 
 vi.mock('/src/firebase/sync/profile-sync.js', () => ({ writeProfile: mockWriteProfile }));
 vi.mock('/src/firebase/sync/overtime-sync.js', () => ({ writeAllOvertime: mockWriteAllOvertime }));
 vi.mock('/src/firebase/sync/leave-sync.js', () => ({ writeAllLeave: mockWriteAllLeave }));
 vi.mock('/src/firebase/sync/work-history-sync.js', () => ({ writeAllWorkHistory: mockWriteAllWorkHistory }));
-vi.mock('/src/firebase/sync/settings-sync.js', () => ({ writeSettings: mockWriteSettings }));
+vi.mock('/src/firebase/sync/settings-sync.js', () => ({
+  writeSettings: mockWriteSettings,
+  writeManualHourly: mockWriteManualHourly,
+}));
 vi.mock('/src/firebase/sync/favorites-sync.js', () => ({ writeFavorites: mockWriteFavorites }));
+vi.mock('/src/firebase/sync/payslip-sync.js', () => ({
+  writePayslip: mockWritePayslip,
+  writeAllPayslips: mockWriteAllPayslips,
+}));
 
 beforeAll(async () => {
   const dom = new JSDOM('<!DOCTYPE html>', { url: 'http://localhost/' });
@@ -40,7 +50,10 @@ beforeEach(() => {
   mockWriteAllLeave.mockResolvedValue();
   mockWriteAllWorkHistory.mockResolvedValue();
   mockWriteSettings.mockResolvedValue();
+  mockWriteManualHourly.mockResolvedValue();
   mockWriteFavorites.mockResolvedValue();
+  mockWritePayslip.mockResolvedValue();
+  mockWriteAllPayslips.mockResolvedValue();
 });
 
 describe('shouldShowMigration', () => {
@@ -102,6 +115,24 @@ describe('uploadCategories', () => {
     await uploadCategories('uid1', ['identity']);
     expect(localStorage.getItem('snuhmate_migration_done_v1')).toBeTruthy();
     expect(await shouldShowMigration('uid1')).toBe(false);
+  });
+
+  it('payroll 선택 → 수동 시급과 typed 급여명세서도 동기화', async () => {
+    localStorage.setItem('otManualHourly_guest', '17500');
+    localStorage.setItem('payslip_guest_2026_04_상여', JSON.stringify({ summary: { grossPay: 7000000 } }));
+
+    const { uploadCategories } = await import('../../../apps/web/src/firebase/migration-dialog.js');
+    await uploadCategories('uid1', ['payroll']);
+
+    expect(mockWriteManualHourly).toHaveBeenCalledWith(null, 'uid1', 17500);
+    expect(mockWritePayslip).toHaveBeenCalledWith(
+      null,
+      'uid1',
+      '2026-04',
+      { summary: { grossPay: 7000000 } },
+      undefined,
+      '상여'
+    );
   });
 
   it('빈 카테고리 배열 → sync 호출 0 + FLAG 설정', async () => {

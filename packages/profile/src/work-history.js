@@ -73,7 +73,11 @@ function deleteRotation(parentId, rotId) {
 
 export function _saveWorkHistory(list) {
   localStorage.setItem(_whKey(), JSON.stringify(list));
-  localStorage.setItem('snuhmate_last_edit_snuhmate_work_history', new Date().toISOString());
+  if (window.recordLocalEdit) {
+    window.recordLocalEdit('snuhmate_work_history');
+  } else {
+    localStorage.setItem('snuhmate_last_edit_snuhmate_work_history', new Date().toISOString());
+  }
 
   // Phase 8: Firestore write-through (로그인 시만, fire-and-forget)
   if (typeof window !== 'undefined' && window.__firebaseUid) {

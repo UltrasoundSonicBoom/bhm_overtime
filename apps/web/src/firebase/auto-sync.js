@@ -14,10 +14,11 @@
 import { writeProfile } from './sync/profile-sync.js';
 import { writeOvertimeMonth } from './sync/overtime-sync.js';
 import { writeLeaveYear } from './sync/leave-sync.js';
-import { writePayslip } from './sync/payslip-sync.js';
+import { writePayslip, writeAllPayslips } from './sync/payslip-sync.js';
 import { writeAllWorkHistory } from './sync/work-history-sync.js';
-import { writeSettings } from './sync/settings-sync.js';
+import { writeManualHourly, writeSettings } from './sync/settings-sync.js';
 import { writeFavorites } from './sync/favorites-sync.js';
+import { localKeyFor } from './key-registry.js';
 
 const DEBOUNCE_MS = 200;
 const _timers = new Map();
@@ -39,11 +40,11 @@ function _localValue(key) {
 
 const HANDLERS = {
   'snuhmate_hr_profile': (uid) => {
-    const data = _localValue('snuhmate_hr_profile_uid_' + uid);
+    const data = _localValue(localKeyFor('snuhmate_hr_profile', uid));
     if (data) return writeProfile(null, uid, data);
   },
   'overtimeRecords': (uid) => {
-    const all = _localValue('overtimeRecords_uid_' + uid) || {};
+    const all = _localValue(localKeyFor('overtimeRecords', uid)) || {};
     return Promise.all(
       Object.entries(all).map(([yyyymm, records]) =>
         writeOvertimeMonth(null, uid, yyyymm, records)
@@ -51,15 +52,26 @@ const HANDLERS = {
     );
   },
   'leaveRecords': (uid) => {
-    const all = _localValue('leaveRecords') || {};
+    const all = _localValue(localKeyFor('leaveRecords', uid)) || {};
     return Promise.all(
       Object.entries(all).map(([year, records]) =>
         writeLeaveYear(null, uid, String(year), records)
       )
     );
   },
+  'otManualHourly': (uid) => {
+    const raw = localStorage.getItem(localKeyFor('otManualHourly', uid));
+    if (raw !== null) {
+      const num = Number(raw);
+      return writeManualHourly(null, uid, Number.isFinite(num) ? num : raw);
+    }
+  },
+  'overtimePayslipData': (uid) => {
+    const all = _localValue(localKeyFor('overtimePayslipData', uid)) || {};
+    if (Object.keys(all).length > 0) return writeAllPayslips(null, uid, all, 'overtimePayslipData');
+  },
   'snuhmate_work_history': (uid) => {
-    const arr = _localValue('snuhmate_work_history_uid_' + uid);
+    const arr = _localValue(localKeyFor('snuhmate_work_history', uid));
     if (Array.isArray(arr) && arr.length > 0) {
       return writeAllWorkHistory(null, uid, arr);
     }
@@ -69,12 +81,12 @@ const HANDLERS = {
     if (data) return writeSettings(null, uid, data);
   },
   'snuhmate_reg_favorites': (uid) => {
-    const arr = _localValue('snuhmate_reg_favorites_uid_' + uid);
+    const arr = _localValue(localKeyFor('snuhmate_reg_favorites', uid));
     if (Array.isArray(arr)) return writeFavorites(null, uid, arr);
   },
 };
 
-const PAYSLIP_KEY_RE = /^payslip_([^_]+)_(\d{4})_(\d{2})$/;
+const PAYSLIP_KEY_RE = /^payslip_(.+)_(\d{4})_(\d{2})(?:_(.+))?$/;
 
 function _onLocalEdit(e) {
   const uid = window.__firebaseUid;
@@ -86,9 +98,10 @@ function _onLocalEdit(e) {
   const pm = PAYSLIP_KEY_RE.exec(base);
   if (pm && pm[1] === uid) {
     const payMonth = pm[2] + '-' + pm[3];
+    const type = pm[4] || '급여';
     const data = _localValue(base);
     if (data) {
-      _debounce('payslip:' + payMonth, () => writePayslip(null, uid, payMonth, data));
+      _debounce('payslip:' + payMonth + ':' + type, () => writePayslip(null, uid, payMonth, data, undefined, type));
     }
     return;
   }

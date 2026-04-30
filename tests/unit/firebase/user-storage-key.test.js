@@ -33,6 +33,7 @@ describe('window.getUserStorageKey — Phase 8 Task 0.1', () => {
     await import('../../../apps/web/src/client/inline-ui-helpers.js');
     expect(window.getUserStorageKey('snuhmate_hr_profile')).toBe('snuhmate_hr_profile_guest');
     expect(window.getUserStorageKey('overtimeRecords')).toBe('overtimeRecords_guest');
+    expect(window.getUserStorageKey('leaveRecords')).toBe('leaveRecords_guest');
   });
 
   it('로그인 (window.__firebaseUid 설정) 시 base + "_uid_<uid>" 반환', async () => {
@@ -40,6 +41,7 @@ describe('window.getUserStorageKey — Phase 8 Task 0.1', () => {
     window.__firebaseUid = 'abc123';
     expect(window.getUserStorageKey('snuhmate_hr_profile')).toBe('snuhmate_hr_profile_uid_abc123');
     expect(window.getUserStorageKey('overtimeRecords')).toBe('overtimeRecords_uid_abc123');
+    expect(window.getUserStorageKey('leaveRecords')).toBe('leaveRecords_uid_abc123');
   });
 
   it('uid 변경 시 즉시 반영 (call-time read)', async () => {

@@ -11,6 +11,7 @@ import { initFirebase } from '../firebase-init.js';
 import { firebaseConfig } from '../../client/config.js';
 import { deriveKey, encryptDoc, decryptDoc } from '../crypto.js';
 import { ENCRYPTED_FIELDS } from './_encrypted-fields.js';
+import { stripDeviceLocalSettings } from '../sync-lifecycle.js';
 
 const SETTINGS_PATH = (uid) => `users/${uid}/settings/app`;
 const PAYROLL_PATH = (uid) => `users/${uid}/profile/payroll`;
@@ -22,7 +23,7 @@ export async function writeSettings(dbOrNull, uid, settings) {
     ? { db: dbOrNull, firestoreMod: _mockMod() }
     : await _f();
 
-  const docData = { ...settings, lastEditAt: Date.now() };
+  const docData = { ...stripDeviceLocalSettings(settings), lastEditAt: Date.now() };
   const encrypted = await encryptDoc(docData, ENC_FIELDS, key);
   const ref = firestoreMod.doc(db, SETTINGS_PATH(uid));
   await firestoreMod.setDoc(ref, encrypted, { merge: true });

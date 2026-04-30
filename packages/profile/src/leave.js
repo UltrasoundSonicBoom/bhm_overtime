@@ -8,50 +8,45 @@ import { DATA } from '@snuhmate/data';
 import { PROFILE } from './profile.js';
 
 export const LEAVE = {
-    // 로컬 단독 저장. auth 독립이므로 namespace 없이 단일 키 사용.
-    STORAGE_KEY: 'leaveRecords',
+    // 휴가는 로그인/게스트 active state 를 명확히 분리한다.
+    // 게스트: leaveRecords_guest, 로그인: leaveRecords_uid_<uid>
+    get STORAGE_KEY() {
+        return window.getUserStorageKey ? window.getUserStorageKey('leaveRecords') : 'leaveRecords_guest';
+    },
 
     // ── 구버전 키 마이그레이션 ──
-    // 과거에는 `leaveRecords_<uid>` / `leaveRecords_guest` 처럼
-    // 사용자별 접미사가 붙은 키를 썼다. 로컬 단독으로 전환하면서 단일 키로 병합한다.
-    // 최초 로드 시 1회만 실행되어 기존 데이터 유실 방지.
+    // `leaveRecords` 공유 키는 더 이상 active key 로 쓰지 않는다.
+    // 현재 사용자/게스트 scoped key 가 비어 있을 때 1회성 legacy source 로만 흡수한다.
     _migrateLegacyKeys() {
         try {
-            if (localStorage.getItem('snuhmate_leave_migrated_v1')) return;
+            const targetKey = this.STORAGE_KEY;
+            if (!targetKey || targetKey === 'leaveRecords') return;
+
+            const rawLegacy = localStorage.getItem('leaveRecords');
+            if (!rawLegacy) return;
 
             const merged = (() => {
-                try { return JSON.parse(localStorage.getItem('leaveRecords')) || {}; }
+                try { return JSON.parse(localStorage.getItem(targetKey)) || {}; }
+                catch { return {}; }
+            })();
+            const legacy = (() => {
+                try { return JSON.parse(rawLegacy) || {}; }
                 catch { return {}; }
             })();
 
-            const legacyKeys = [];
-            for (let i = 0; i < localStorage.length; i++) {
-                const k = localStorage.key(i);
-                if (k && k.startsWith('leaveRecords_')) legacyKeys.push(k);
+            for (const [year, records] of Object.entries(legacy)) {
+                if (!Array.isArray(records)) continue;
+                if (!merged[year]) merged[year] = [];
+                const existingIds = new Set(merged[year].map(r => r && r.id));
+                records.forEach(r => {
+                    if (r && r.id && !existingIds.has(r.id)) merged[year].push(r);
+                });
             }
 
-            legacyKeys.forEach(key => {
-                let data;
-                try { data = JSON.parse(localStorage.getItem(key)); }
-                catch { return; }
-                if (!data || typeof data !== 'object') return;
-
-                for (const [year, records] of Object.entries(data)) {
-                    if (!Array.isArray(records)) continue;
-                    if (!merged[year]) merged[year] = [];
-                    const existingIds = new Set(merged[year].map(r => r && r.id));
-                    records.forEach(r => {
-                        if (r && r.id && !existingIds.has(r.id)) merged[year].push(r);
-                    });
-                }
-            });
-
-            if (legacyKeys.length > 0) {
-                localStorage.setItem('leaveRecords', JSON.stringify(merged));
-                legacyKeys.forEach(k => localStorage.removeItem(k));
-                console.log('[LEAVE] 구버전 키 ' + legacyKeys.length + '개 → leaveRecords 단일 키로 병합');
-            }
-            localStorage.setItem('snuhmate_leave_migrated_v1', '1');
+            localStorage.setItem(targetKey, JSON.stringify(merged));
+            localStorage.removeItem('leaveRecords');
+            localStorage.setItem('snuhmate_leave_scope_migrated_v2', '1');
+            console.log('[LEAVE] legacy leaveRecords → ' + targetKey + ' 이전');
         } catch (e) {
             console.warn('[LEAVE] 레거시 키 마이그레이션 실패:', e);
         }
