@@ -12,6 +12,12 @@ describe('Card.astro', () => {
   it('legacy .card 클래스 출력', () => {
     expect(src).toMatch(/\bcard\b/);
   });
+  it('id / class pass-through 지원', () => {
+    expect(src).toMatch(/id\?:\s*string/);
+    expect(src).toMatch(/class\?:\s*string/);
+    expect(src).toMatch(/<Tag id=\{id\}/);
+    expect(src).toMatch(/extraClass/);
+  });
   it('elevated boolean prop', () => {
     expect(src).toMatch(/elevated\?:\s*boolean/);
   });

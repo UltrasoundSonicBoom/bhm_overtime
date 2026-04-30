@@ -38,6 +38,9 @@ describe('/design-system route', () => {
     expect(existsSync('docs/design-system/usage.md')).toBe(true);
     const u = readFileSync('docs/design-system/usage.md', 'utf-8');
     expect(u).toMatch(/체크리스트|checklist/i);
+    expect(u).toContain('동적 DOM');
+    expect(u).toContain('bg-ds-*');
+    expect(u).toContain('getComputedStyle()');
   });
   it('docs/design-system/components.md 존재', () => {
     expect(existsSync('docs/design-system/components.md')).toBe(true);

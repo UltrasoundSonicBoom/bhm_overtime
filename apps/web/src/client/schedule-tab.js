@@ -42,6 +42,23 @@ const VIOLATION_LABELS = {
   monthly_night_overflow: (v) => `⚠️ 월 야간 ${v.count}일 — 시간외수당 처리 대상`,
 };
 
+const SCH_STAT_BASE = {
+  card: 'sch-stat-card border border-ds-border-default border-l-4 rounded-brand-md p-3 text-ds-text-primary transition-colors',
+  code: 'sch-stat-code badge inline-flex items-center justify-center rounded-brand-full px-2 py-0.5 text-ds-caption font-semibold text-ds-text-inverse',
+  num: 'num text-ds-h3 font-bold leading-none',
+  label: 'lbl text-ds-caption text-ds-text-secondary font-semibold',
+};
+
+const SCH_STAT_TONE = {
+  D:  { card: 'bg-ds-duty-day-bg border-l-ds-duty-day', code: 'bg-ds-duty-day', num: 'text-ds-duty-day' },
+  E:  { card: 'bg-ds-duty-evening-bg border-l-ds-duty-evening', code: 'bg-ds-duty-evening', num: 'text-ds-duty-evening' },
+  N:  { card: 'bg-ds-duty-night-bg border-l-ds-duty-night', code: 'bg-ds-duty-night', num: 'text-ds-duty-night' },
+  O:  { card: 'bg-ds-duty-off-bg border-l-ds-duty-off', code: 'bg-ds-duty-off', num: 'text-ds-duty-off' },
+  AL: { card: 'bg-ds-duty-leave-bg border-l-ds-duty-leave', code: 'bg-ds-duty-leave', num: 'text-ds-duty-leave' },
+  RD: { card: 'bg-ds-duty-recovery-bg border-l-ds-duty-recovery', code: 'bg-ds-duty-recovery', num: 'text-ds-duty-recovery' },
+  HD: { card: 'bg-ds-duty-holiday-bg border-l-ds-duty-holiday', code: 'bg-ds-duty-holiday', num: 'text-ds-duty-holiday' },
+};
+
 const SAMPLE_TEAM = [
   { name: '김지원', cls: 'c1', tags: [['role', '책임'], ['skill', '중환자']] },
   { name: '박서연', cls: 'c2', tags: [['skill', 'ACLS']] },
@@ -483,7 +500,8 @@ function renderStats() {
   let html = '';
   for (const c of cards) {
     const statClass = c.cls ? ` sch-stat-${esc(c.cls)}` : '';
-    html += `<div class="sch-stat-card${statClass}" data-duty="${esc(c.cls)}"><span class="sch-stat-code">${esc(c.code)}</span><span class="num">${esc(c.num)}</span><span class="lbl">${esc(c.lbl)}</span></div>`;
+    const tone = SCH_STAT_TONE[c.cls] || { card: '', code: 'bg-ds-bg-muted text-ds-text-secondary', num: 'text-ds-text-primary' };
+    html += `<div class="${SCH_STAT_BASE.card} ${tone.card}${statClass}" data-duty="${esc(c.cls)}"><span class="${SCH_STAT_BASE.code} ${tone.code}">${esc(c.code)}</span><span class="${SCH_STAT_BASE.num} ${tone.num}">${esc(c.num)}</span><span class="${SCH_STAT_BASE.label}">${esc(c.lbl)}</span></div>`;
   }
   // eslint-disable-next-line no-unsanitized/property
   grid.innerHTML = html;

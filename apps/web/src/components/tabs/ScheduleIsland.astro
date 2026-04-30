@@ -1,4 +1,6 @@
 ---
+import Card from '../ui/Card.astro';
+
 // ScheduleIsland.astro — 근무 탭
 // A3 디자인 시스템 매치: ICU 로스터 그리드 + HPPD + 통계 + 경고 + 다음 근무.
 // schedule-tab.js가 동적 콘텐츠를 채움. 디자인 시스템 클래스만 사용 (ds-*, .card, .badge, .icon).
@@ -93,14 +95,14 @@
   </div>
 
   <!-- ═══════ 통계 스트립 ═══════ -->
-  <div class="card mt-3" id="schStatsCard">
-    <div class="card-title">
+  <Card id="schStatsCard" as="section" class="mt-3" ariaLabel="이번 달 근무 통계">
+    <span slot="header" class="inline-flex items-center gap-2">
       <span class="icon emerald">📊</span>
       <span>이번 달 한눈에</span>
-    </div>
+    </span>
     <div class="sch-stats-grid" id="schStatsGrid"></div>
     <div class="sch-warn-row mt-2" id="schWarnRow"></div>
-  </div>
+  </Card>
 
   <!-- ═══════ 선택일 상세 ═══════ -->
   <div class="card mt-3" id="schDayDetailCard" style="display:none;">
@@ -635,67 +637,19 @@
       margin-top: 8px;
     }
     #tab-schedule .sch-stat-card {
-      --sch-stat-accent: var(--color-text-muted);
-      --sch-stat-bg: var(--color-bg-surface);
-      --sch-stat-border: var(--color-border-default);
-      position: relative;
       display: grid;
       grid-template-columns: auto minmax(0, 1fr);
       align-items: center;
       column-gap: var(--space-2);
       row-gap: 2px;
-      overflow: hidden;
       min-height: 64px;
-      padding: var(--space-3);
-      padding-left: calc(var(--space-3) + 5px);
-      border: 1px solid var(--sch-stat-border);
-      border-radius: var(--radius-sm);
-      background: var(--sch-stat-bg);
-    }
-    #tab-schedule .sch-stat-card::before {
-      content: "";
-      position: absolute;
-      inset: 0 auto 0 0;
-      width: 5px;
-      background: var(--sch-stat-accent);
     }
     #tab-schedule .sch-stat-code {
-      z-index: 1;
       grid-row: 1 / span 2;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
       min-width: 34px;
       height: 28px;
-      padding: 0 var(--space-2);
-      border-radius: var(--radius-sm);
-      background: var(--sch-stat-accent);
-      color: var(--color-text-inverse);
-      font-size: var(--font-size-caption);
-      font-weight: var(--font-weight-bold);
-      line-height: 1;
       letter-spacing: 0;
     }
-    #tab-schedule .sch-stat-card .num {
-      z-index: 1;
-      font-size: 22px;
-      font-weight: 800;
-      line-height: 1;
-      color: var(--sch-stat-accent);
-    }
-    #tab-schedule .sch-stat-card .lbl {
-      z-index: 1;
-      font-size: var(--font-size-caption);
-      font-weight: var(--font-weight-semibold);
-      color: var(--color-text-secondary);
-    }
-    #tab-schedule .sch-stat-D  { --sch-stat-accent: var(--color-duty-day);      --sch-stat-bg: var(--color-duty-day-bg);      --sch-stat-border: var(--color-duty-day); }
-    #tab-schedule .sch-stat-E  { --sch-stat-accent: var(--color-duty-evening);  --sch-stat-bg: var(--color-duty-evening-bg);  --sch-stat-border: var(--color-duty-evening); }
-    #tab-schedule .sch-stat-N  { --sch-stat-accent: var(--color-duty-night);    --sch-stat-bg: var(--color-duty-night-bg);    --sch-stat-border: var(--color-duty-night); }
-    #tab-schedule .sch-stat-O  { --sch-stat-accent: var(--color-duty-off);      --sch-stat-bg: var(--color-duty-off-bg);      --sch-stat-border: var(--color-duty-off); }
-    #tab-schedule .sch-stat-AL { --sch-stat-accent: var(--color-duty-leave);    --sch-stat-bg: var(--color-duty-leave-bg);    --sch-stat-border: var(--color-duty-leave); }
-    #tab-schedule .sch-stat-RD { --sch-stat-accent: var(--color-duty-recovery); --sch-stat-bg: var(--color-duty-recovery-bg); --sch-stat-border: var(--color-duty-recovery); }
-    #tab-schedule .sch-stat-HD { --sch-stat-accent: var(--color-duty-holiday);  --sch-stat-bg: var(--color-duty-holiday-bg);  --sch-stat-border: var(--color-duty-holiday); }
 
     /* 경고 행 */
     #tab-schedule .sch-warn-row {
@@ -866,10 +820,17 @@
     html[data-theme="neo"] #tab-schedule .sch-duty {
       border: 2px solid #1a1a1a;
     }
-    html[data-theme="neo"] #tab-schedule .sch-stat-card,
     html[data-theme="neo"] #tab-schedule .sch-next-card,
     html[data-theme="neo"] #tab-schedule .sch-warn-chip {
       border-width: 2px;
+      border-style: solid;
+      box-shadow: var(--shadow-sm);
+    }
+    html[data-theme="neo"] #tab-schedule .sch-stat-card {
+      border-top-width: 2px;
+      border-right-width: 2px;
+      border-bottom-width: 2px;
+      border-left-width: 4px;
       border-style: solid;
       box-shadow: var(--shadow-sm);
     }

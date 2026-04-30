@@ -5,6 +5,14 @@ import { test, expect } from '@playwright/test';
 const MAIN_TABS = ['home', 'payroll', 'overtime', 'leave', 'schedule', 'reference', 'profile', 'settings', 'feedback'];
 const PAYROLL_SUBS = ['pay-payslip', 'pay-calc', 'pay-qa', 'pay-retirement'];
 const SCHEDULE_STAT_CODES = ['D', 'E', 'N', 'O', 'AL', 'RD'];
+const SCHEDULE_STAT_DS = {
+  D:  { cardBg: 'bg-ds-duty-day-bg',      border: 'border-l-ds-duty-day',      codeBg: 'bg-ds-duty-day',      num: 'text-ds-duty-day' },
+  E:  { cardBg: 'bg-ds-duty-evening-bg',  border: 'border-l-ds-duty-evening',  codeBg: 'bg-ds-duty-evening',  num: 'text-ds-duty-evening' },
+  N:  { cardBg: 'bg-ds-duty-night-bg',    border: 'border-l-ds-duty-night',    codeBg: 'bg-ds-duty-night',    num: 'text-ds-duty-night' },
+  O:  { cardBg: 'bg-ds-duty-off-bg',      border: 'border-l-ds-duty-off',      codeBg: 'bg-ds-duty-off',      num: 'text-ds-duty-off' },
+  AL: { cardBg: 'bg-ds-duty-leave-bg',    border: 'border-l-ds-duty-leave',    codeBg: 'bg-ds-duty-leave',    num: 'text-ds-duty-leave' },
+  RD: { cardBg: 'bg-ds-duty-recovery-bg', border: 'border-l-ds-duty-recovery', codeBg: 'bg-ds-duty-recovery', num: 'text-ds-duty-recovery' },
+};
 
 // 기존 코드에 선재하는(pre-existing) CSP 경고 — localhost:3001 backend 부재가 원인.
 // 테스트 목적과 무관하므로 검증 시 제외.
@@ -114,20 +122,30 @@ test.describe('SNUH Mate 구조 스모크', () => {
     await page.goto('/app?tab=schedule');
     await page.waitForFunction(() => document.querySelectorAll('#schStatsGrid .sch-stat-card').length >= 6);
 
+    const shellClass = await page.locator('#schStatsCard').getAttribute('class');
+    expect(shellClass).toContain('card');
+    expect(shellClass).toContain('bg-ds-bg-surface');
+    expect(shellClass).toContain('border-ds-border-default');
+    expect(shellClass).toContain('rounded-brand-md');
+
     const stats = await page.evaluate(() => {
       return Array.from(document.querySelectorAll('#schStatsGrid .sch-stat-card')).map((el) => {
         const style = getComputedStyle(el);
         const code = el.querySelector('.sch-stat-code');
+        const label = el.querySelector('.lbl');
         const num = el.querySelector('.num');
         const codeStyle = code ? getComputedStyle(code) : null;
         const numStyle = num ? getComputedStyle(num) : null;
         return {
           className: el.className,
+          codeClass: code?.className || '',
+          numClass: num?.className || '',
+          labelClass: label?.className || '',
           code: code?.textContent?.trim() || '',
           text: el.textContent?.trim().replace(/\s+/g, ' ') || '',
           cardBg: style.backgroundColor,
-          cardBorder: style.borderTopColor,
-          tokenAccent: style.getPropertyValue('--sch-stat-accent').trim(),
+          cardBorderLeft: style.borderLeftColor,
+          cardBorderLeftWidth: style.borderLeftWidth,
           codeBg: codeStyle?.backgroundColor || '',
           numColor: numStyle?.color || ''
         };
@@ -138,14 +156,26 @@ test.describe('SNUH Mate 구조 스모크', () => {
     expect(codes).toEqual(expect.arrayContaining(SCHEDULE_STAT_CODES));
 
     const dutyStats = stats.filter((stat) => SCHEDULE_STAT_CODES.includes(stat.code));
-    expect(new Set(dutyStats.map((stat) => stat.tokenAccent)).size, 'duty token 다양성').toBeGreaterThanOrEqual(5);
     expect(new Set(dutyStats.map((stat) => stat.codeBg)).size, '코드 pill 배경색 다양성').toBeGreaterThanOrEqual(5);
 
     for (const stat of dutyStats) {
+      const expected = SCHEDULE_STAT_DS[stat.code];
       expect(stat.className, `${stat.code} duty class`).toContain(`sch-stat-${stat.code}`);
+      expect(stat.className, `${stat.code} card bg utility`).toContain(expected.cardBg);
+      expect(stat.className, `${stat.code} left border utility`).toContain(expected.border);
+      expect(stat.className, `${stat.code} default border utility`).toContain('border-ds-border-default');
+      expect(stat.className, `${stat.code} radius utility`).toContain('rounded-brand-md');
+      expect(stat.codeClass, `${stat.code} badge base`).toContain('badge');
+      expect(stat.codeClass, `${stat.code} code bg utility`).toContain(expected.codeBg);
+      expect(stat.codeClass, `${stat.code} code text utility`).toContain('text-ds-caption');
+      expect(stat.numClass, `${stat.code} number typography utility`).toContain('text-ds-h3');
+      expect(stat.numClass, `${stat.code} number color utility`).toContain(expected.num);
+      expect(stat.labelClass, `${stat.code} label utility`).toContain('text-ds-text-secondary');
       expect(stat.codeBg, `${stat.code} code chip background`).not.toBe('rgba(0, 0, 0, 0)');
       expect(stat.codeBg, `${stat.code} code chip background`).not.toBe(stat.cardBg);
       expect(stat.numColor, `${stat.code} number color`).not.toBe('rgb(17, 24, 39)');
+      expect(stat.cardBorderLeftWidth, `${stat.code} left border width`).toBe('4px');
+      expect(stat.cardBorderLeft, `${stat.code} left border color`).toBe(stat.numColor);
     }
   });
 });
