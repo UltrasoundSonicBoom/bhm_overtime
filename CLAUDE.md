@@ -5,7 +5,7 @@
 
 ### 실행 규약
 1. 스모크 필요 시 사용자에게 "확인 부탁합니다" 대신 `browser_navigate` → `browser_snapshot`/`browser_take_screenshot` 로 시작
-2. 로컬 HTTP 서버가 필요하면 background로 실행 후 테스트 (`python3 -m http.server 8080 &`)
+2. 로컬 HTTP 서버가 필요하면 Astro dev server로 실행 후 테스트 (`pnpm --filter @snuhmate/web dev`)
 3. 각 탭 전환 후 `browser_console_messages` 로 에러 0건 확인
 4. 완료 후 `browser_close`로 브라우저 종료
 5. 스크린샷은 /tmp 에 저장 → 필요 시 사용자에게 경로 제공
@@ -33,6 +33,64 @@
 시스템 Chrome + allowed-origins 와일드카드로 전환. **Claude Code 재시작 필요** (MCP 서버 재초기화).
 
 재시작 전에는 수동 스모크 (사용자가 개인 Chrome으로 열람)로 폴백.
+
+## 자체 검증 루프
+
+수정 후 "완료"라고 말하기 전에 변경 범위에 맞는 검증을 직접 실행한다.
+
+### 기본 명령
+- `pnpm lint` — ESLint. 브라우저 전역, 모듈 경계, accidental undefined 확인.
+- `pnpm check` — `apps/web` Astro/TypeScript check.
+- `pnpm test:unit` — 계산기, 파서, 순수 로직 Vitest.
+- `pnpm test:integration` — Firebase sync, CSP, build, data lifecycle, 브라우저형 계약.
+- `pnpm test:smoke` — Playwright. `playwright.config.js`의 Astro dev server 사용.
+- `pnpm verify:data` — 단협/호봉표 drift 확인.
+- `pnpm verify` — lint + check + 전체 테스트 + build.
+
+### 변경 유형별 최소 검증
+- 계산/급여/퇴직금/공휴일/파서 변경: `pnpm test:unit`
+- Firebase Auth, Firestore, localStorage, hydrate/write-through 변경: `pnpm test:integration`
+- Astro page, CSS, 탭, 브라우저 UI 변경: `pnpm check && pnpm build && pnpm test:smoke`
+- 규정/호봉표/public data/generated mirror 변경: `pnpm verify:data`
+- `backend/` FastAPI 변경: `pnpm backend:test`
+
+UI 변경은 유닛 테스트만으로 끝내지 않는다. Playwright MCP 또는 Codex in-app browser로
+`http://localhost:4321/app`을 열고, 변경된 route/control을 실제로 클릭한 뒤 콘솔 에러 0건을 확인한다.
+이 repo는 Astro route가 기준이므로 `python3 -m http.server`로 대체하지 않는다.
+
+명령이 실패하면 실패 원인을 수정하고 같은 명령을 다시 실행한다. 실패를 알고도 완료라고 보고하지 않는다.
+
+## 코드 인텔리전스
+
+Claude Code에서는 다음 플러그인을 기본값으로 사용한다.
+
+```text
+/plugin install typescript-lsp@claude-plugins-official
+/plugin install pyright-lsp@claude-plugins-official
+```
+
+로컬 바이너리도 필요하다.
+
+```bash
+npm install -g typescript-language-server typescript pyright
+```
+
+TypeScript/JavaScript/Astro 쪽은 `typescript-language-server`, `backend/` Python 쪽은 `pyright`를
+사용한다. Rust/Go/C#/Java 계열 LSP는 현재 repo 런타임이 아니므로 기본 설치 대상에서 제외한다.
+
+## CLI 우선 원칙
+
+GitHub/JSON/검색 작업은 가능한 한 CLI를 먼저 쓴다. MCP 서버보다 컨텍스트 비용이 작고,
+실패 지점도 명확하다.
+
+```bash
+gh pr view --json statusCheckRollup,reviews,comments | jq .
+gh pr checks
+gh issue list --json number,title,state,labels | jq .
+rg "검색어"
+```
+
+처음 보는 CLI는 `<tool> --help`를 읽고, 가장 작은 read-only 명령부터 실행한다.
 
 ## Skill routing
 

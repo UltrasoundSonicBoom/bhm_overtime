@@ -1,6 +1,6 @@
 # Tests
 
-자동화된 회귀 방지 스위트. 리팩토링 전후 `npm test`로 무결성 확인.
+자동화된 회귀 방지 스위트. 리팩토링 전후 `pnpm verify` 또는 변경 범위별 명령으로 무결성 확인.
 
 ## 구성
 
@@ -18,17 +18,20 @@ tests/
 최초 셋업:
 
 ```bash
-npm install
-npx playwright install chromium  # 브라우저 바이너리 1회 설치
+pnpm install
+pnpm exec playwright install chromium  # 브라우저 바이너리 1회 설치
 ```
 
 평상시:
 
 ```bash
-npm test                 # 단위 + 스모크 순차 실행
-npm run test:unit        # Vitest 단독 (<1s)
-npm run test:smoke       # Playwright 단독 (~5s, 로컬 서버 자동 기동)
-npm run test:unit:watch  # 개발 중 watch 모드
+pnpm test                # unit + integration + Playwright smoke
+pnpm test:unit           # Vitest unit
+pnpm test:integration    # Vitest integration
+pnpm test:smoke          # Playwright smoke, Astro dev server 자동 기동
+pnpm verify:data         # regulation/paytable drift checks
+pnpm verify              # lint + check + full tests + build
+pnpm test:unit:watch     # 개발 중 watch 모드
 ```
 
 ## 새 테스트 추가

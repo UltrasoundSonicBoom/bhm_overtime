@@ -37,6 +37,22 @@
   --color-status-error-bg:   var(--red-50);
   --color-status-info-bg:    var(--blue-50);
 
+  /* Duty / schedule status */
+  --color-duty-day:         var(--blue-500);
+  --color-duty-day-bg:      var(--blue-50);
+  --color-duty-evening:     var(--amber-500);
+  --color-duty-evening-bg:  var(--amber-50);
+  --color-duty-night:       var(--blue-700);
+  --color-duty-night-bg:    var(--blue-100);
+  --color-duty-off:         var(--gray-500);
+  --color-duty-off-bg:      var(--gray-100);
+  --color-duty-leave:       var(--red-500);
+  --color-duty-leave-bg:    var(--red-50);
+  --color-duty-recovery:    var(--emerald-500);
+  --color-duty-recovery-bg: var(--emerald-50);
+  --color-duty-holiday:     var(--red-600);
+  --color-duty-holiday-bg:  var(--red-50);
+
   /* Focus ring */
   --focus-ring-color:  var(--blue-500);
   --focus-ring-width:  2px;
@@ -69,4 +85,12 @@ html[data-theme="dark"] {
   --color-status-warning-bg: rgba(245, 158, 11, 0.15);
   --color-status-error-bg:   rgba(239, 68, 68, 0.15);
   --color-status-info-bg:    rgba(99, 102, 241, 0.15);
+
+  --color-duty-day-bg:      rgba(99, 102, 241, 0.15);
+  --color-duty-evening-bg:  rgba(245, 158, 11, 0.15);
+  --color-duty-night-bg:    rgba(79, 70, 229, 0.22);
+  --color-duty-off-bg:      rgba(255, 255, 255, 0.06);
+  --color-duty-leave-bg:    rgba(239, 68, 68, 0.15);
+  --color-duty-recovery-bg: rgba(16, 185, 129, 0.15);
+  --color-duty-holiday-bg:  rgba(239, 68, 68, 0.18);
 }

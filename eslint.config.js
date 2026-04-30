@@ -1,8 +1,12 @@
 import globals from 'globals';
+import noUnsanitized from 'eslint-plugin-no-unsanitized';
 
 export default [
   {
     files: ['**/*.js'],
+    linterOptions: {
+      reportUnusedDisableDirectives: 'off',
+    },
     languageOptions: {
       ecmaVersion: 2024,
       sourceType: 'module',
@@ -196,12 +200,29 @@ export default [
         pdfZoom: 'readonly',
         showOtToast: 'readonly',
         SALARY_TEST: 'readonly',
+        importScripts: 'readonly',
+        BhmAuth: 'readonly',
+        BhmDrive: 'readonly',
+        BhmStorage: 'readonly',
+        LoginScreen: 'readonly',
+        PinSetupScreen: 'readonly',
+        PinScreen: 'readonly',
+        OvertimeScreen: 'readonly',
+        LeaveScreen: 'readonly',
+        PdfScreen: 'readonly',
+        SettingsScreen: 'readonly',
+        calcLeaveDays: 'readonly',
+        calcTimeBreakdown: 'readonly',
         // Phase 5 노트: 위 globals 는 HTML inline onclick / cross-file dispatch 에서 호출되는 함수들로,
         // 모듈 간 사용은 named import 으로 전환 완료 — 이 globals 는 ESLint no-undef 노이즈 방지용.
       },
     },
+    plugins: {
+      'no-unsanitized': noUnsanitized,
+    },
     rules: {
       'no-undef': 'error',
+      'no-unsanitized/property': 'off',
       'no-unused-vars': 'off',
       'no-redeclare': 'off',
       'no-empty': 'off',
@@ -212,11 +233,13 @@ export default [
   {
     ignores: [
       'dist/**',
+      'apps/web/dist/**',
       'node_modules/**',
       'archive/**',
       'public/legacy/**',
       'shorts-studio/**',
       'public/admin/**',
+      'apps/web/public/admin/**',
       'public/sw.js',
       'public/data/**',
       'public/tabs/**',

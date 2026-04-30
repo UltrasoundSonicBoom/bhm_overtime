@@ -30,7 +30,7 @@ import { safeValidateDutyGrid, accuracyTier } from './validate.js';
  * @typedef {Object} ParseResult
  * @property {Object|null} grid       - 검증된 DutyGrid 또는 null
  * @property {boolean} fromCache      - 캐시 hit 여부
- * @property {string} provider        - 'cache' | 'excel' | 'csv' | 'lm-studio' | 'anthropic' | 'none'
+ * @property {string} provider        - 'cache' | 'excel' | 'csv' | 'ical' | 'openai' | 'anthropic' | 'none'
  * @property {string} [error]         - 에러 메시지
  * @property {boolean} [blocked]      - (dept, month) 차단 여부
  * @property {string} [tier]          - 'auto' | 'review-required' | 'manual-fallback'
