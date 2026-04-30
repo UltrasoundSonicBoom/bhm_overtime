@@ -32,6 +32,9 @@ importers:
       eslint:
         specifier: ^10.2.1
         version: 10.2.1(jiti@1.21.7)
+      eslint-plugin-no-unsanitized:
+        specifier: ^4.1.5
+        version: 4.1.5(eslint@10.2.1(jiti@1.21.7))
       firebase-tools:
         specifier: ^15.15.0
         version: 15.15.0(@types/node@25.6.0)(typescript@5.9.3)
@@ -2578,6 +2581,11 @@ packages:
     resolution: {integrity: sha512-2NlIDTwUWJN0mRPQOdtQBzbUHvdGY2P1VXSyU83Q3xKxM7WHX2Ql8dKq782Q9TgQUNOLEzEYu9bzLNj1q88I5w==}
     engines: {node: '>=6.0'}
     hasBin: true
+
+  eslint-plugin-no-unsanitized@4.1.5:
+    resolution: {integrity: sha512-MSB4hXPVFQrI8weqzs6gzl7reP2k/qSjtCoL2vUMSDejIIq9YL1ZKvq5/ORBXab/PvfBBrWO2jWviYpL+4Ghfg==}
+    peerDependencies:
+      eslint: ^9 || ^10
 
   eslint-scope@9.1.2:
     resolution: {integrity: sha512-xS90H51cKw0jltxmvmHy2Iai1LIqrfbw57b79w/J7MfvDfkIkFZ+kj6zC3BjtUwh150HsSSdxXZcsuv72miDFQ==}
@@ -7877,6 +7885,10 @@ snapshots:
       esutils: 2.0.3
     optionalDependencies:
       source-map: 0.6.1
+
+  eslint-plugin-no-unsanitized@4.1.5(eslint@10.2.1(jiti@1.21.7)):
+    dependencies:
+      eslint: 10.2.1(jiti@1.21.7)
 
   eslint-scope@9.1.2:
     dependencies:

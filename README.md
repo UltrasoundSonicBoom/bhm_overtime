@@ -74,9 +74,13 @@ pnpm test:unit          # unit tests
 pnpm test:integration   # integration tests
 pnpm test:smoke         # Playwright smoke
 pnpm lint               # ESLint
+pnpm verify             # lint + check + all tests + build
+pnpm verify:data        # regulation/paytable drift checks
 pnpm check:regulation   # 단협 원문 링크/값 검증
 pnpm check:paytable     # 호봉표 drift 검증
 ```
+
+PR과 `main` push에서는 GitHub Actions `CI`가 같은 검증 루프를 실행합니다.
 
 ## 로컬 백엔드
 

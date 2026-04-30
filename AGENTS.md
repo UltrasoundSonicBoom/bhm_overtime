@@ -18,3 +18,44 @@ Key routing rules:
 - Architecture review → invoke plan-eng-review
 - Save progress, checkpoint, resume → invoke checkpoint
 - Code quality, health check → invoke health
+
+## Testing and verification
+
+When changing code, run the smallest relevant checks first, then run the full gate
+before claiming completion.
+
+Baseline commands:
+- `pnpm lint` — ESLint guard for browser globals, module boundaries, and accidental undefineds.
+- `pnpm check` — Astro/TypeScript project check for `apps/web`.
+- `pnpm test:unit` — fast Vitest coverage for calculators, parsers, and pure client logic.
+- `pnpm test:integration` — Vitest integration coverage for build, Firebase sync, CSP, data lifecycle, and browser-like contracts.
+- `pnpm test:smoke` — Playwright smoke against the Astro dev server defined in `playwright.config.js`.
+- `pnpm verify:data` — regulation/paytable source-of-truth drift checks.
+- `pnpm verify` — full local pre-ship gate: lint, check, all tests, and build.
+
+Change-specific minimums:
+- Calculators, payroll, retirement, holidays, parsers: `pnpm test:unit`.
+- Firebase/Auth/Firestore/localStorage sync: `pnpm test:integration`.
+- Astro pages, CSS, tabs, navigation, browser-visible UI: `pnpm check && pnpm build && pnpm test:smoke`.
+- Regulation, paytable, public data, generated mirrors: `pnpm verify:data`.
+- Backend/FastAPI parsing service: `pnpm backend:test`.
+
+For UI changes, do not stop at unit tests. Open the running app with browser
+automation, interact with the changed route, and check browser console errors.
+The current app server is Astro via `pnpm --filter @snuhmate/web dev`; do not use
+`python3 -m http.server` for Astro routes.
+
+If a command fails, fix the failure and rerun the failing command. Do not report
+completion with known failing checks unless the user explicitly asks for a partial
+state report.
+
+## CLI workflow
+
+Prefer local CLI tools for repository facts before reaching for heavier MCP context:
+- `gh pr view --json ... | jq ...` for PR metadata, checks, comments, and review state.
+- `gh issue list --json ... | jq ...` for issue triage.
+- `rg` for code search.
+- `jq` for JSON inspection.
+
+If a task needs an unfamiliar CLI, read `<tool> --help` first and use the smallest
+safe command that answers the question.
