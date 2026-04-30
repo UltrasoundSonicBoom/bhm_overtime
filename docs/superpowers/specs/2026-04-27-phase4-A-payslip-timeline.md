@@ -33,7 +33,7 @@
 - **모듈화 영향 0**: Vite 번들/엔트리 변경 없음. 기존 3 ESM 모듈의 기능 개선만.
 - **Cross-module 호출**: Phase 3-F 학습대로 신규 함수도 `window.X` 호환층 노출 (KEEP allowlist 보강).
 - **데이터 손실 0**: source='user' 마커가 핵심 보호 정책. migration 시 기존 record 모두 'user' 기본값.
-- **localStorage 키 변경 0**: `bhm_work_history` 그대로.
+- **localStorage 키 변경 0**: `snuhmate_work_history` 그대로.
 
 ## 3. 비기능 요구사항
 

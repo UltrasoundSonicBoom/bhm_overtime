@@ -15,7 +15,7 @@ import { _loadWorkHistory, _saveWorkHistory, renderWorkHistory, _showWorkHistory
 export const SALARY_PARSER = (() => {
   'use strict';
 
-  // ── DEBUG 플래그 — localStorage.bhm_debug_parser = '1' 설정 시 trace 활성화 ──
+  // ── DEBUG 플래그 — localStorage.snuhmate_debug_parser = '1' 설정 시 trace 활성화 ──
   const DEBUG = (function () {
     try { return localStorage.getItem('snuhmate_debug_parser') === '1'; }
     catch (e) { return false; }

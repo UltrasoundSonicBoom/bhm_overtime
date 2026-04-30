@@ -79,7 +79,7 @@ export const AppLock = (function () {
     return e;
   }
 
-  // ── bhm_settings 유틸 ──
+  // ── snuhmate_settings 유틸 ──
   function _loadSettings() {
     try { return JSON.parse(localStorage.getItem('snuhmate_settings') || '{}'); } catch (e) { return {}; }
   }

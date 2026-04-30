@@ -5,7 +5,7 @@
 // 설정 방법:
 //   1. https://sentry.io 에서 무료 계정 생성 → Browser JavaScript 프로젝트
 //   2. DSN 복사 (https://<key>@<org>.ingest.sentry.io/<project_id>)
-//   3. config.js 의 BHM_CONFIG에 sentryDsn 추가
+//   3. config.js 의 SNUHMATE_CONFIG에 sentryDsn 추가
 //   4. CSP connect-src에 https://*.sentry.io 이미 등록됨 (index.html:23)
 //
 // DSN 미설정 시: 조용히 no-op (앱 정상 동작)
@@ -14,7 +14,7 @@
 (function () {
   'use strict';
 
-  var CONFIG = window.BHM_CONFIG || {};
+  var CONFIG = window.SNUHMATE_CONFIG || {};
   var SENTRY_DSN = CONFIG.sentryDsn || '';
   var APP_VERSION = window.APP_VERSION || 'dev';
 

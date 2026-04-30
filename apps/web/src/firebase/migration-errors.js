@@ -1,7 +1,7 @@
 // firebase/migration-errors.js — 순수 error 매핑 (DOM/Firebase 의존성 없음)
 //
 // 별도 모듈인 이유: vitest 단위 테스트가 migration-dialog.js 를 import 하면
-// 의존 체인의 config.js (`window.BHM_CONFIG`) 가 node 환경에서 ReferenceError.
+// 의존 체인의 config.js (`window.SNUHMATE_CONFIG`) 가 node 환경에서 ReferenceError.
 // 순수 함수만 분리하면 직접 import 가능.
 
 // Firestore error code → 한국어 사용자 메시지.

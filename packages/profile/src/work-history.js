@@ -7,35 +7,14 @@ function _getSALARY_PARSER() { return (typeof window !== 'undefined') ? window.S
 
 // ── E1: 근무이력 ──────────────────────────────────────────────────
 var _whEditId = null;
-// Phase 5-followup: bhm_work_history → snuhmate_work_history lazy migration
 function _whKey() {
   return window.getUserStorageKey ? window.getUserStorageKey('snuhmate_work_history') : 'snuhmate_work_history_guest';
-}
-function _whLegacyKey() {
-  return window.getUserStorageKey ? window.getUserStorageKey('bhm_work_history') : 'bhm_work_history_guest';
 }
 function _whSeedKey() {
   return window.getUserStorageKey ? window.getUserStorageKey('snuhmate_work_history_seeded') : 'snuhmate_work_history_seeded_guest';
 }
-function _whLegacySeedKey() {
-  return window.getUserStorageKey ? window.getUserStorageKey('bhm_work_history_seeded') : 'bhm_work_history_seeded_guest';
-}
-function _migrateWorkHistory() {
-  try {
-    const pairs = [[_whLegacyKey(), _whKey()], [_whLegacySeedKey(), _whSeedKey()]];
-    for (const [oldK, newK] of pairs) {
-      if (oldK === newK) continue;
-      const v = localStorage.getItem(oldK);
-      if (v !== null && localStorage.getItem(newK) === null) {
-        localStorage.setItem(newK, v);
-        localStorage.removeItem(oldK);
-      }
-    }
-  } catch (e) { /* noop */ }
-}
 
 export function _loadWorkHistory() {
-  _migrateWorkHistory();
   try {
     var list = JSON.parse(localStorage.getItem(_whKey()) || '[]');
     // lazy 마이그레이션
@@ -94,7 +73,11 @@ function deleteRotation(parentId, rotId) {
 
 export function _saveWorkHistory(list) {
   localStorage.setItem(_whKey(), JSON.stringify(list));
-  if (window.recordLocalEdit) window.recordLocalEdit('snuhmate_work_history');
+  if (window.recordLocalEdit) {
+    window.recordLocalEdit('snuhmate_work_history');
+  } else {
+    localStorage.setItem('snuhmate_last_edit_snuhmate_work_history', new Date().toISOString());
+  }
 
   // Phase 8: Firestore write-through (로그인 시만, fire-and-forget)
   if (typeof window !== 'undefined' && window.__firebaseUid) {

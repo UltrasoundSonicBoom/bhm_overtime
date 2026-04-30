@@ -1,6 +1,6 @@
 # SNUH Mate — DB 스키마 정의서 + 데이터 흐름 ERD
 
-> 기준일: 2026-04-29 / Phase 8 (Firebase Auth + Firestore E2E 암호화)
+> 기준일: 2026-04-30 / Phase 8 (Firebase Auth + Firestore E2E 암호화)
 
 ---
 
@@ -130,6 +130,10 @@
 ---
 
 ## 3. localStorage 키 정의서
+
+> Legacy unsupported: old BHM-prefixed localStorage keys are no longer read,
+> written, or migrated. Runtime storage is limited to `snuhmate_*`, `_guest`,
+> and `_uid_{uid}` scoped keys.
 
 ### 동기화 대상 (Firestore ↔ localStorage)
 

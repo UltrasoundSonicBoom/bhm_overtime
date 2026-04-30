@@ -77,7 +77,7 @@
 
 - **역할:** 스키마/예시 템플릿 (버전 1.0).
 - **로드:** **런타임 미사용** (`.js`/`.html` grep 결과 0건 확인).
-- **실사용자 프로필 저장소:** `localStorage['bhm_hr_profile_<uid>']` (data.js 의 DATA 아님).
+- **실사용자 프로필 저장소:** `localStorage['snuhmate_hr_profile_<uid>']` (data.js 의 DATA 아님).
 - **현재 크기:** 1,586 bytes / 62 lines
 
 ### API `http://localhost:3001/api/data/bundle`

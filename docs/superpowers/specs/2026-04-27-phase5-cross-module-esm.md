@@ -192,7 +192,7 @@ export default [
 
 ### D7. Worktree
 - branch: `feat/phase5-cross-module-esm`
-- worktree: `../bhm_overtime-phase5`
+- worktree: `../SNUH Mate repo-phase5`
 - main 직접 변경 0 → 한 번에 머지
 
 ---

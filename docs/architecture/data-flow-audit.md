@@ -13,7 +13,7 @@
 
 | # | 영역 | 흐름 | 결과 | 비고 |
 |---|------|------|------|------|
-| 1 | **개인** | `PROFILE.save()` → localStorage `bhm_hr_profile_<uid>` 기록 → `profileChanged` 이벤트 발행 | ✅ | 이벤트 1회 발행 확인 |
+| 1 | **개인** | `PROFILE.save()` → localStorage `snuhmate_hr_profile_<uid>` 기록 → `profileChanged` 이벤트 발행 | ✅ | 이벤트 1회 발행 확인 |
 | 2 | **개인 → calcWage** | 프로필 로드 → `PROFILE.calcWage()` → 통상임금 6,493,759원 / 시급 31,071원 | ✅ | breakdown 18개 항목 정상 |
 | 3 | **개인 → 연차** | 11년차 → `CALC.calcAnnualLeave()` → 20일 (15+2년마다 1일) | ✅ | 제36조 일치 |
 | 4 | **개인 → 장기재직** | `CALC.calcLongServiceLeave(11)` → 5일 | ✅ | <2025.10> 10~19년 5일 일치 |

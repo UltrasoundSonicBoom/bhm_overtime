@@ -24,7 +24,7 @@ import FeedbackIsland from '../components/tabs/FeedbackIsland.astro';
 >
   <script is:inline>
     // AppLock FOUC Guard: pinEnabled 확인 후 body 즉시 숨겨서 잠금 전 콘텐츠 노출 방지.
-    // NOTE: snuhmate_settings (Plan 2 산출 — bhm_settings 에서 변경)
+    // NOTE: snuhmate_settings (Plan 2 산출)
     (function () { try { var s = JSON.parse(localStorage.getItem('snuhmate_settings') || '{}'); if (s.pinEnabled) { document.documentElement.style.visibility = 'hidden'; } } catch (e) { } })();
   </script>
 

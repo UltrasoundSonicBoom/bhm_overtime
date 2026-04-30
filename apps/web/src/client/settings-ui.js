@@ -7,7 +7,7 @@ import { AppLock } from './appLock.js';
 function updateAppLockUI() {
   if (!AppLock) return;
   var enabled = AppLock.isEnabled();
-  // bhm_settings 직접 로드 (appLock.js 가 사용하는 동일 키).
+  // snuhmate_settings 직접 로드 (appLock.js 가 사용하는 동일 키).
   // window.loadSettings 헬퍼는 미정의 — 직접 읽기로 변경 (Bug 수정).
   var settings = {};
   try { settings = JSON.parse(localStorage.getItem('snuhmate_settings') || '{}'); }

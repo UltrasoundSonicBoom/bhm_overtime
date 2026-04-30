@@ -49,9 +49,7 @@ export const RetirementEngine = (function () {
   function loadProfile() {
     const keys = [
       scopedKey('snuhmate_hr_profile'),
-      scopedKey('bhm_hr_profile'),
-      'snuhmate_hr_profile',
-      'bhm_hr_profile'
+      'snuhmate_hr_profile'
     ];
     try {
       for (const key of [...new Set(keys)]) {

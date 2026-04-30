@@ -2,7 +2,7 @@
 // config.js — 로컬 전용 앱 설정
 // ============================================================
 
-window.BHM_CONFIG = {
+window.SNUHMATE_CONFIG = {
   env: 'production',
 
   // Sentry 텔레메트리 (선택)

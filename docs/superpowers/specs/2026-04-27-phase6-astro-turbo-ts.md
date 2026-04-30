@@ -12,7 +12,7 @@
 ### Phase 5/5-followup 완료 후 현 상태
 - 30+ ESM 모듈 모두 명시 import (cross-module bare 0)
 - ESLint no-undef strict (회귀 차단)
-- localStorage 키 SNUH Mate 일관 (snuhmate_* + bhm_* lazy migration)
+- localStorage 키 SNUH Mate 일관 (snuhmate_* 전용, old BHM-prefixed keys unsupported)
 - Design tokens: neo :root default, dark 옵션 로드
 - 9 entry HTML + Vite multi-page + tab-loader fragment
 
@@ -157,7 +157,7 @@ snuhmate/                              ← repo root
 - SEO meta 단일화 (onboarding = 첫 접속 사용자, app = 가입자)
 
 ### D5. **localStorage / SW 호환**
-- 키 변경 0 (snuhmate_* lazy migration 이미 완료)
+- 키 변경 0 (snuhmate_* 전용 저장 계약 이미 완료)
 - SW: Astro PWA integration (Workbox) 또는 기존 sw.js 그대로 (apps/web/public/)
 - IndexedDB / Cache Storage 모두 origin 기준 → snuhmate.com 도메인 유지하면 호환
 
