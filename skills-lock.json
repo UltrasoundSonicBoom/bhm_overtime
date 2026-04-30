@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "skills": {
+    "codeprobe": {
+      "source": "nishilbhave/codeprobe",
+      "sourceType": "github",
+      "skillPath": "skills/codeprobe/SKILL.md",
+      "computedHash": "d4119fbd52620dc37bee1129be7093cda90cb44311b41e8623efb1d8915d0eb6"
+    },
+    "codeprobe-architecture": {
+      "source": "nishilbhave/codeprobe",
+      "sourceType": "github",
+      "skillPath": "skills/codeprobe-architecture/SKILL.md",
+      "computedHash": "4c052be05dd72cf128caf98156f3886e866ea6e9dcc0dc016f6938f76330f31e"
+    },
+    "codeprobe-code-smells": {
+      "source": "nishilbhave/codeprobe",
+      "sourceType": "github",
+      "skillPath": "skills/codeprobe-code-smells/SKILL.md",
+      "computedHash": "ee7537f412ddc02e6184b38b37ba55546f40f188f4aded960886380156c88302"
+    },
+    "codeprobe-error-handling": {
+      "source": "nishilbhave/codeprobe",
+      "sourceType": "github",
+      "skillPath": "skills/codeprobe-error-handling/SKILL.md",
+      "computedHash": "fbca7ca9d86fffe010106e8763695dd19d1134d33094fdfc7a0110664225a256"
+    },
+    "codeprobe-framework": {
+      "source": "nishilbhave/codeprobe",
+      "sourceType": "github",
+      "skillPath": "skills/codeprobe-framework/SKILL.md",
+      "computedHash": "ad8a55e5fe1857a2c6bc1482b9269fbfbc48eef9b0c6d85a842138bd4c78a4b6"
+    },
+    "codeprobe-patterns": {
+      "source": "nishilbhave/codeprobe",
+      "sourceType": "github",
+      "skillPath": "skills/codeprobe-patterns/SKILL.md",
+      "computedHash": "d12f544d554bce1bb1e39bfbfc65e9ad29934b90ded464cc07a0618ee1da8b98"
+    },
+    "codeprobe-performance": {
+      "source": "nishilbhave/codeprobe",
+      "sourceType": "github",
+      "skillPath": "skills/codeprobe-performance/SKILL.md",
+      "computedHash": "e2e59147552fd62ea574e947f68ad5024e2fcc19dd50ee58afb9f483006113a7"
+    },
+    "codeprobe-security": {
+      "source": "nishilbhave/codeprobe",
+      "sourceType": "github",
+      "skillPath": "skills/codeprobe-security/SKILL.md",
+      "computedHash": "16ebdebf3e6aa0c433416f4623a84227665e2cd23572b46940734171db2a7738"
+    },
+    "codeprobe-solid": {
+      "source": "nishilbhave/codeprobe",
+      "sourceType": "github",
+      "skillPath": "skills/codeprobe-solid/SKILL.md",
+      "computedHash": "0ad3618fb2609e1d6e8dc79274475b5fc04f7d4857643d1124b59f9b1deff035"
+    },
+    "codeprobe-testing": {
+      "source": "nishilbhave/codeprobe",
+      "sourceType": "github",
+      "skillPath": "skills/codeprobe-testing/SKILL.md",
+      "computedHash": "d86772a8dfd07b64bf01a6bb99772f2899b48ad437fc6a97fcf80f0c64147a5a"
+    }
+  }
+}

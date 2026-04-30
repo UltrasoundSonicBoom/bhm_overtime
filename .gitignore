@@ -17,8 +17,18 @@ Thumbs.db
 *.swp
 *.swo
 
-# Claude/AI
-.claude/
+# Claude/AI — 로컬 전용 (커밋 제외)
+.claude/settings.local.json
+.claude/worktrees/
+.claude/review-session-files.txt
+.claude/.review-in-progress
+
+# AI 에디터 전용 디렉토리 (로컬 전용)
+.trae/
+.windsurf/
+.continue/
+.agents/
+skills/
 
 credentials.md
 
