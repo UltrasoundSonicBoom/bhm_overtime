@@ -34,6 +34,7 @@ import { PAYROLL } from '@snuhmate/profile/payroll';
 import { HOLIDAYS } from '@snuhmate/calculators/holidays';
 import { SALARY_PARSER } from './salary-parser.js';
 import { getRetirementPayslipWageSource, shouldAutoRefreshRetirementCalc } from './retirement-payslip-sync.js';
+import { initRetirementRedesign, refreshTimelineTab } from './retirement-redesign.js';
 import { escapeHtml } from '@snuhmate/shared-utils';
 // Layer 4 UI (큰 모듈)
 import './salary-parser.js';
@@ -1420,18 +1421,21 @@ function retCanCalculateEmbedded() {
 
 function retRefreshActivePanel(force) {
   var activeRetTab = document.querySelector('#retTabs .ret-bookmark-tab.active');
-  if (activeRetTab && activeRetTab.dataset.tab === 'peak') {
+  // 재설계: tab=timeline (구 'peak') — 시나리오 + 새 dual-spine 동시 갱신
+  if (activeRetTab && activeRetTab.dataset.tab === 'timeline') {
     var scW = document.getElementById('retScWage');
     var scH = document.getElementById('retScHireDate');
-    if (force && scW && scH && scW.value && scH.value) calcScenarioEmbedded(true);
+    if (force && scW && scH && scW.value && scH.value && typeof calcScenarioEmbedded === 'function') calcScenarioEmbedded(true);
+    try { refreshTimelineTab(); } catch (_) { /* noop */ }
     return;
   }
 
-  if (activeRetTab && activeRetTab.dataset.tab !== 'calc') return;
+  // tab=sim (구 'calc') 외 다른 탭이면 자동 갱신 스킵
+  if (activeRetTab && activeRetTab.dataset.tab !== 'sim') return;
   var result = document.getElementById('retCalcResult');
   var hasVisibleResult = !!(result && result.style.display !== 'none' && result.textContent.trim());
   if (shouldAutoRefreshRetirementCalc({
-    activeTab: activeRetTab ? activeRetTab.dataset.tab : 'calc',
+    activeTab: activeRetTab ? activeRetTab.dataset.tab : 'sim',
     force: force,
     hasVisibleResult: hasVisibleResult,
     canCalculate: retCanCalculateEmbedded()
@@ -1533,38 +1537,32 @@ function initRetirementTab(forceReload) {
       document.querySelectorAll('#retTabs .ret-bookmark-tab').forEach(function(b) { b.classList.remove('active'); });
       document.querySelectorAll('#sub-pay-retirement .ret-panel').forEach(function(p) { p.classList.remove('active'); });
       btn.classList.add('active');
-      document.getElementById('ret-panel-' + tab).classList.add('active');
+      var panel = document.getElementById('ret-panel-' + tab);
+      if (panel) panel.classList.add('active');
       if (accent) accent.className = 'ret-tab-accent ' + tab;
-      // Tab 2로 전환 시 Tab 1 입력값 자동 복사
-      if (tab === 'peak') {
-        var w = document.getElementById('retAvgWage').value;
-        var h = document.getElementById('retHireDate').value;
-        var b = document.getElementById('retBirthDate').value;
+      // 재설계: tab=timeline 진입 시 Tab 1 입력값 자동 복사 + 타임라인 렌더
+      if (tab === 'timeline') {
+        var w = document.getElementById('retAvgWage');
+        var h = document.getElementById('retHireDate');
+        var b = document.getElementById('retBirthDate');
         var scW = document.getElementById('retScWage');
         var scH = document.getElementById('retScHireDate');
         var scB = document.getElementById('retScBirthDate');
-        if (w && !scW.value) scW.value = w;
-        if (h && !scH.value) scH.value = h;
-        if (b && !scB.value) scB.value = b;
-        // 타임라인 즉시 표시
-        if (scH.value && scB.value) {
-          var _hire  = new Date(scH.value);
-          var _birth = new Date(scB.value);
-          var _peakE = retGetLegalRetirementDate(_birth);
-          var _peak  = retAddYears(_peakE, -1);
-          renderRetSimTimeline(_hire, _peak, _peakE);
-        }
-        // 자동 계산 or 안내 메시지
-        if (scW.value && scH.value) {
+        if (w && scW && w.value && !scW.value) scW.value = w.value;
+        if (h && scH && h.value && !scH.value) scH.value = h.value;
+        if (b && scB && b.value && !scB.value) scB.value = b.value;
+        // 자동 계산 (legacy 호환)
+        if (scW && scH && scW.value && scH.value && typeof calcScenarioEmbedded === 'function') {
           calcScenarioEmbedded(true);
-        } else {
-          var r = document.getElementById('retScenarioResult');
-          r.style.display = 'block';
-          r.innerHTML = '<div class="ret-info-box" style="margin:0 0 4px;">💡 <strong>퇴직금</strong> 탭에서 월 평균임금·입사일·생년월일을 입력하면 시나리오가 자동으로 표시됩니다.</div>';
         }
+        // 새 모듈로 dual spine + 동일비교 렌더
+        try { refreshTimelineTab(); } catch (_) { /* noop */ }
       }
     });
   }
+
+  // 재설계 모듈 wiring (Wizard nav + scenario toggle)
+  try { initRetirementRedesign(); } catch (_) { /* noop */ }
 
   // 프로필 자동 로드
   if (_retInitDone && !forceReload) return;
