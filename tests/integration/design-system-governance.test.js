@@ -37,6 +37,11 @@ describe('Tailwind config — design system extensions', () => {
     expect(cfg).toMatch(/'status-error':\s*'var\(--color-status-error\)'/);
     expect(cfg).toMatch(/'border-focus':\s*'var\(--color-border-focus\)'/);
   });
+  it('theme.extend.colors.ds 안 duty 토큰을 Tailwind 유틸로 노출', () => {
+    for (const k of ['duty-day', 'duty-day-bg', 'duty-evening', 'duty-evening-bg', 'duty-night', 'duty-night-bg', 'duty-off', 'duty-off-bg', 'duty-leave', 'duty-leave-bg', 'duty-recovery', 'duty-recovery-bg', 'duty-holiday', 'duty-holiday-bg']) {
+      expect(cfg).toMatch(new RegExp("'" + k + "':\\s*'var\\(--color-" + k + "\\)'"));
+    }
+  });
   it('기존 brand-* 키 유지 (호환)', () => {
     expect(cfg).toContain("'bg-primary': 'var(--bg-primary)'");
     expect(cfg).toContain("'accent-indigo': 'var(--accent-indigo)'");

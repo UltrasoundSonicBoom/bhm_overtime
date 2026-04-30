@@ -5,12 +5,14 @@
  * Legacy CSS class: .card, .card-title (호환).
  */
 interface Props {
+  id?: string;
+  class?: string;
   elevated?: boolean;
   padding?: 'none' | 'sm' | 'md' | 'lg';
   as?: 'div' | 'section' | 'article';
   ariaLabel?: string;
 }
-const { elevated = false, padding = 'md', as: Tag = 'div', ariaLabel } = Astro.props as Props;
+const { id, class: extraClass = '', elevated = false, padding = 'md', as: Tag = 'div', ariaLabel } = Astro.props as Props;
 const paddingMap: Record<NonNullable<Props['padding']>, string> = {
   none: 'p-0',
   sm: 'p-3',
@@ -19,9 +21,9 @@ const paddingMap: Record<NonNullable<Props['padding']>, string> = {
 };
 const padClass = paddingMap[padding];
 const shadowClass = elevated ? 'shadow-brand-md' : '';
-const classList = ['card', 'bg-ds-bg-surface', 'border', 'border-ds-border-default', 'rounded-brand-md', 'transition-colors', 'hover:border-ds-border-strong', padClass, shadowClass].filter(Boolean).join(' ');
+const classList = ['card', 'bg-ds-bg-surface', 'border', 'border-ds-border-default', 'rounded-brand-md', 'transition-colors', 'hover:border-ds-border-strong', padClass, shadowClass, extraClass].filter(Boolean).join(' ');
 ---
-<Tag class={classList} aria-label={ariaLabel}>
+<Tag id={id} class={classList} aria-label={ariaLabel}>
   {Astro.slots.has('header') && (
     <header class="card-title text-ds-h4 text-ds-text-primary mb-3">
       <slot name="header" />

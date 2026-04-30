@@ -39,6 +39,11 @@
 - [ ] inline `style="..."` 안 raw 값을 사용하지 않았는가?
 - [ ] 새 컴포넌트가 필요하면 `components/ui/` 또는 `components/patterns/` 에 추가하고 `/design-system` 쇼케이스에 등록했는가?
 
+### 동적 DOM
+- [ ] JS에서 `innerHTML`로 생성하는 카드/배지도 literal `bg-ds-*`, `border-ds-*`, `text-ds-*`, `rounded-brand-*` 클래스맵을 사용했는가?
+- [ ] 새 의미 색상이 필요하면 먼저 `--color-*` semantic token을 만들고 `tailwind.config.js`의 `ds` namespace에 노출했는가?
+- [ ] 동적 UI는 Playwright에서 실제 DOM class와 `getComputedStyle()`을 함께 검증하는가?
+
 ## 컴포넌트 선택 트리
 
 ```
