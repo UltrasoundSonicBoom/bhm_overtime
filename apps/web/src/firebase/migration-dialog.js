@@ -30,7 +30,10 @@ const GUEST_FLAT_KEYS = [
   'overtimeRecords_guest',
   'snuhmate_work_history_guest',
   'snuhmate_reg_favorites_guest',
+  'leaveRecords_guest',
   'leaveRecords',
+  'otManualHourly_guest',
+  'overtimePayslipData_guest',
 ];
 
 const PAYSLIP_GUEST_KEY_RE = /^payslip_guest_\d{4}_\d{2}(_.+)?$/;
@@ -65,7 +68,7 @@ const CATEGORIES = [
     id: 'leave',
     label: '휴가 기록',
     desc: '연차·병가·청원 휴가 사용 내역',
-    guestKey: () => 'leaveRecords',
+    guestKey: () => 'leaveRecords_guest',
   },
   {
     id: 'workHistory',
@@ -130,10 +133,20 @@ export async function uploadCategories(uid, selectedIds) {
       label: '프로필',
       run: async () => {
         const raw = localStorage.getItem('snuhmate_hr_profile_guest');
-        if (!raw) return;
-        const profile = JSON.parse(raw);
-        const { writeProfile } = await import('/src/firebase/sync/profile-sync.js');
-        await writeProfile(null, uid, profile);
+        if (raw) {
+          const profile = JSON.parse(raw);
+          const { writeProfile } = await import('/src/firebase/sync/profile-sync.js');
+          await writeProfile(null, uid, profile);
+        }
+
+        if (selectedIds.includes('payroll')) {
+          const rawManual = localStorage.getItem('otManualHourly_guest');
+          if (rawManual !== null) {
+            const { writeManualHourly } = await import('/src/firebase/sync/settings-sync.js');
+            const num = Number(rawManual);
+            await writeManualHourly(null, uid, Number.isFinite(num) ? num : rawManual);
+          }
+        }
       },
     });
   }
@@ -157,7 +170,7 @@ export async function uploadCategories(uid, selectedIds) {
       id: 'leave',
       label: '휴가',
       run: async () => {
-        const raw = localStorage.getItem('leaveRecords');
+        const raw = localStorage.getItem('leaveRecords_guest') || localStorage.getItem('leaveRecords');
         if (!raw) return;
         const data = JSON.parse(raw);
         const { writeAllLeave } = await import('/src/firebase/sync/leave-sync.js');
@@ -168,16 +181,17 @@ export async function uploadCategories(uid, selectedIds) {
 
   if (selectedIds.includes('schedule') || selectedIds.includes('overtime')) {
     // 근무표는 overtime 항목과 함께 마이그레이션 (자동 레코드 의존성 때문에)
-    const raw = localStorage.getItem('snuhmate_schedule_records');
-    if (raw) {
-      try {
+    syncTasks.push({
+      id: 'schedule',
+      label: '근무표',
+      run: async () => {
+        const raw = localStorage.getItem('snuhmate_schedule_records');
+        if (!raw) return;
         const data = JSON.parse(raw);
         const { writeAllSchedule } = await import('/src/firebase/sync/schedule-sync.js');
-        tasks.push(writeAllSchedule(null, uid, data));
-      } catch (e) {
-        console.warn('[migration] schedule sync 실패', e?.message);
-      }
-    }
+        await writeAllSchedule(null, uid, data);
+      },
+    });
   }
 
   if (selectedIds.includes('workHistory')) {
@@ -204,6 +218,28 @@ export async function uploadCategories(uid, selectedIds) {
         const settings = JSON.parse(raw);
         const { writeSettings } = await import('/src/firebase/sync/settings-sync.js');
         await writeSettings(null, uid, settings);
+      },
+    });
+  }
+
+  if (selectedIds.includes('payroll')) {
+    syncTasks.push({
+      id: 'payslips',
+      label: '급여명세서',
+      run: async () => {
+        const { writePayslip, writeAllPayslips } = await import('/src/firebase/sync/payslip-sync.js');
+        const keys = Object.keys(localStorage).filter(k => PAYSLIP_GUEST_KEY_RE.test(k));
+        await Promise.all(keys.map(async (key) => {
+          const m = /^payslip_guest_(\d{4})_(\d{2})(?:_(.+))?$/.exec(key);
+          if (!m) return;
+          const data = JSON.parse(localStorage.getItem(key) || '{}');
+          await writePayslip(null, uid, `${m[1]}-${m[2]}`, data, undefined, m[3] || '급여');
+        }));
+
+        const rawCross = localStorage.getItem('overtimePayslipData_guest');
+        if (rawCross) {
+          await writeAllPayslips(null, uid, JSON.parse(rawCross), 'overtimePayslipData');
+        }
       },
     });
   }
@@ -304,7 +340,7 @@ export async function openMigrationDialog(uid) {
   if (_hasGuestPayslip) {
     s1PayslipNote = document.createElement('p');
     s1PayslipNote.className = 'text-xs text-[var(--accent-amber,#d97706)] text-center mt-0 mb-6';
-    s1PayslipNote.textContent = '※ 급여명세서는 클라우드 미동기화입니다. 자동 정리되니 필요 시 미리 백업하세요.';
+    s1PayslipNote.textContent = '※ 급여명세서도 급여 정보와 함께 클라우드에 동기화됩니다.';
   }
 
   const s1Actions = document.createElement('div');

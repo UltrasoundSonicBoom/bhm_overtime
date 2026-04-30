@@ -21,6 +21,9 @@ const mockSignUp = vi.fn();
 const mockSignInWithPopup = vi.fn();
 const mockSignOut = vi.fn();
 const mockOnAuthStateChanged = vi.fn();
+const mockHydrateFromFirestore = vi.fn();
+const mockShouldShowMigration = vi.fn();
+const mockOpenMigrationDialog = vi.fn();
 
 const mockAuth = { currentUser: null };
 
@@ -41,6 +44,17 @@ vi.mock('../../../apps/web/src/firebase/firebase-init.js', () => ({
   })),
 }));
 
+vi.mock('../../../apps/web/src/firebase/hydrate.js', () => ({
+  hydrateFromFirestore: mockHydrateFromFirestore,
+}));
+
+vi.mock('../../../apps/web/src/firebase/auto-sync.js', () => ({}));
+
+vi.mock('../../../apps/web/src/firebase/migration-dialog.js', () => ({
+  shouldShowMigration: mockShouldShowMigration,
+  openMigrationDialog: mockOpenMigrationDialog,
+}));
+
 // firebaseConfig mock
 vi.mock('../../../apps/web/src/client/config.js', () => ({
   firebaseConfig: {
@@ -57,6 +71,7 @@ beforeAll(() => {
   const dom = new JSDOM('<!DOCTYPE html>', { url: 'http://localhost/' });
   global.window = dom.window;
   global.document = dom.window.document;
+  global.localStorage = dom.window.localStorage;
   global.CustomEvent = dom.window.CustomEvent;
 });
 
@@ -67,6 +82,12 @@ beforeEach(() => {
   mockSignInWithPopup.mockReset();
   mockSignOut.mockReset();
   mockOnAuthStateChanged.mockReset();
+  mockHydrateFromFirestore.mockReset();
+  mockHydrateFromFirestore.mockResolvedValue({ ok: ['profile'], failed: [] });
+  mockShouldShowMigration.mockReset();
+  mockShouldShowMigration.mockResolvedValue(false);
+  mockOpenMigrationDialog.mockReset();
+  localStorage.clear();
   delete window.__firebaseUid;
   mockAuth.currentUser = null;
 });
@@ -142,6 +163,8 @@ describe('auth-service — onAuthChanged', () => {
     const fakeUser = { uid: 'abc123', email: 'a@b.c' };
     await capturedCallback(fakeUser);
     expect(window.__firebaseUid).toBe('abc123');
+    expect(mockHydrateFromFirestore).toHaveBeenCalledWith('abc123');
+    expect(JSON.parse(localStorage.getItem('snuhmate_settings')).googleSub).toBe('abc123');
     expect(userCb).toHaveBeenCalledWith(fakeUser);
     expect(eventCb).toHaveBeenCalled();
   });
@@ -154,10 +177,18 @@ describe('auth-service — onAuthChanged', () => {
     });
     const { onAuthChanged } = await import('../../../apps/web/src/firebase/auth-service.js');
     window.__firebaseUid = 'abc123';
+    localStorage.setItem('snuhmate_hr_profile_uid_abc123', JSON.stringify({ name: 'current' }));
+    localStorage.setItem('snuhmate_hr_profile_uid_other', JSON.stringify({ name: 'other' }));
+    localStorage.setItem('leaveRecords_guest', JSON.stringify({ '2026': [] }));
+    localStorage.setItem('snuhmate_settings', JSON.stringify({ googleSub: 'abc123', theme: 'neo' }));
     const userCb = vi.fn();
     await onAuthChanged(userCb);
     await capturedCallback(null);
     expect(window.__firebaseUid).toBeUndefined();
+    expect(localStorage.getItem('snuhmate_hr_profile_uid_abc123')).toBeNull();
+    expect(localStorage.getItem('snuhmate_hr_profile_uid_other')).not.toBeNull();
+    expect(localStorage.getItem('leaveRecords_guest')).not.toBeNull();
+    expect(JSON.parse(localStorage.getItem('snuhmate_settings'))).toEqual({ theme: 'neo' });
     expect(userCb).toHaveBeenCalledWith(null);
   });
 

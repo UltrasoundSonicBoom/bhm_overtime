@@ -8,7 +8,9 @@ import {
   KEY_REGISTRY, CATEGORIES,
   allBaseKeys, syncKeys, deviceLocalKeys,
   firestorePathFor, categoryOf, syncKeysByCategory,
+  localKeyFor, localScopeOf,
 } from '../../../apps/web/src/firebase/key-registry.js';
+import { assertSyncKeyCoverage } from '../../../apps/web/src/firebase/sync-lifecycle.js';
 
 describe('KEY_REGISTRY — SPEC §3 인벤토리', () => {
   it('필수 sync 키 모두 등록', () => {
@@ -36,7 +38,7 @@ describe('KEY_REGISTRY — SPEC §3 인벤토리', () => {
     const required = [
       'snuhmate_local_uid', 'snuhmate_anon_id', 'snuhmate_device_id',
       'snuhmate_demo_mode', 'snuhmate_debug_parser',
-      'snuhmate_leave_migrated_v1',
+      'snuhmate_leave_migrated_v1', 'snuhmate_leave_scope_migrated_v2',
     ];
     for (const k of required) {
       expect(KEY_REGISTRY[k]).toBeDefined();
@@ -94,6 +96,24 @@ describe('helper 함수', () => {
     expect(identity).toContain('snuhmate_hr_profile');
     const overtime = syncKeysByCategory('overtime');
     expect(overtime).toContain('overtimeRecords');
+  });
+
+  it('localKeyFor — user-scoped 키와 shared 키를 registry 기준으로 해석', () => {
+    expect(localKeyFor('snuhmate_hr_profile', 'abc')).toBe('snuhmate_hr_profile_uid_abc');
+    expect(localKeyFor('leaveRecords', 'abc')).toBe('leaveRecords_uid_abc');
+    expect(localKeyFor('leaveRecords')).toBe('leaveRecords_guest');
+    expect(localKeyFor('snuhmate_settings', 'abc')).toBe('snuhmate_settings');
+    expect(localScopeOf('snuhmate_settings')).toBe('shared');
+  });
+
+  it('모든 sync domain 이 local key resolver 와 Firestore path 를 가진다', () => {
+    const rows = assertSyncKeyCoverage();
+    expect(rows).toHaveLength(syncKeys().length);
+    for (const row of rows) {
+      expect(row.localKey).toBeTruthy();
+      expect(row.firestorePath).toMatch(/^users\/UID\//);
+      expect(row.category).toBeTruthy();
+    }
   });
 });
 

@@ -1088,6 +1088,7 @@ export const SALARY_PARSER = (() => {
 
   // ── localStorage 월별 저장/불러오기 ──
   function _payslipUid() {
+    if (typeof window !== 'undefined' && window.__firebaseUid) return window.__firebaseUid;
     var settings = {};
     try { settings = JSON.parse(localStorage.getItem('snuhmate_settings') || '{}'); } catch (e) {}
     return settings.googleSub || 'guest';
@@ -1207,12 +1208,18 @@ export const SALARY_PARSER = (() => {
   function replaceMonthlyData(year, month, data, type) {
     const key = storageKey(year, month, type);
     localStorage.setItem(key, JSON.stringify({ ...data, savedAt: new Date().toISOString() }));
+    if (typeof window.recordLocalEdit === 'function') {
+      try { window.recordLocalEdit(key); } catch (e) { /* noop */ }
+    }
     emitPayslipChanged({ key, year, month, type: type || '급여' });
   }
 
   function deleteMonthlyData(year, month, type) {
     const key = storageKey(year, month, type);
     localStorage.removeItem(key);
+    if (typeof window.recordLocalEdit === 'function') {
+      try { window.recordLocalEdit(key); } catch (e) { /* noop */ }
+    }
     emitPayslipChanged({ key, year, month, type: type || '급여', deleted: true });
   }
 

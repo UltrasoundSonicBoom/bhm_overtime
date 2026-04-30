@@ -570,6 +570,16 @@ export const OVERTIME = {
 
     _savePayslipAll(data) {
         localStorage.setItem(this.PAYSLIP_STORAGE_KEY, JSON.stringify(data));
+        if (window.recordLocalEdit) window.recordLocalEdit('overtimePayslipData');
+
+        if (typeof window !== 'undefined' && window.__firebaseUid) {
+            const uid = window.__firebaseUid;
+            import('/src/firebase/sync/payslip-sync.js').then(m =>
+                m.writeAllPayslips(null, uid, data, 'overtimePayslipData')
+            ).catch(err => {
+                console.warn('[Phase 8] overtime payslip cloud sync 실패 (무해)', err?.message || err);
+            });
+        }
     },
 
     /**

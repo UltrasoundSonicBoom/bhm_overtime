@@ -16,7 +16,20 @@ import { ENCRYPTED_FIELDS } from './_encrypted-fields.js';
 const COLLECTION = (uid) => `users/${uid}/payslips`;
 const ENC_FIELDS = ENCRYPTED_FIELDS['payslips/*'];
 
-export async function writePayslip(dbOrNull, uid, payMonth, data, driveFileId) {
+function _docId(payMonth, type) {
+  if (!type || type === '급여') return payMonth;
+  return `${payMonth}__${encodeURIComponent(type)}`;
+}
+
+function _decodeDocId(id) {
+  const [payMonth, encodedType] = String(id || '').split('__');
+  return {
+    payMonth,
+    type: encodedType ? (() => { try { return decodeURIComponent(encodedType); } catch { return encodedType; } })() : '급여',
+  };
+}
+
+export async function writePayslip(dbOrNull, uid, payMonth, data, driveFileId, type = '급여') {
   // payMonth: 'YYYY-MM', data: { workStats, overtimeItems, hourlyRate, ... }
   // driveFileId: optional — Google Drive 파일 ID (Phase 9)
   const key = await deriveKey(uid);
@@ -24,36 +37,39 @@ export async function writePayslip(dbOrNull, uid, payMonth, data, driveFileId) {
     ? { db: dbOrNull, firestoreMod: _mockMod() }
     : await _f();
 
-  const { savedAt, ...rest } = data || {};
-  const docData = { parsedFields: rest, payMonth, lastEditAt: Date.now() };
+  const normalizedType = type || data?.type || '급여';
+  const { savedAt, payMonth: _payMonth, type: _type, ...rest } = data || {};
+  const docData = { parsedFields: rest, payMonth, type: normalizedType, lastEditAt: Date.now() };
   if (driveFileId) docData.driveFileId = driveFileId;  // 평문 — 식별성 없음
   const encrypted = await encryptDoc(docData, ENC_FIELDS, key);
-  const ref = firestoreMod.doc(db, `${COLLECTION(uid)}/${payMonth}`);
+  const ref = firestoreMod.doc(db, `${COLLECTION(uid)}/${_docId(payMonth, normalizedType)}`);
   await firestoreMod.setDoc(ref, encrypted);
 }
 
-export async function writeAllPayslips(dbOrNull, uid, allData) {
+export async function writeAllPayslips(dbOrNull, uid, allData, defaultType = '급여') {
   // allData: { 'YYYY-MM': payslipData }
   const entries = Object.entries(allData || {});
   if (entries.length === 0) return;
-  await Promise.all(entries.map(([payMonth, data]) =>
-    writePayslip(dbOrNull, uid, payMonth, data)
-  ));
+  await Promise.all(entries.map(([entryKey, data]) => {
+    const payMonth = data?.payMonth || entryKey.split('__')[0];
+    const type = data?.type || (entryKey.includes('__') ? entryKey.split('__').slice(1).join('__') : defaultType);
+    return writePayslip(dbOrNull, uid, payMonth, data, undefined, type);
+  }));
 }
 
-export async function readPayslip(dbOrNull, uid, payMonth) {
+export async function readPayslip(dbOrNull, uid, payMonth, type = '급여') {
   const key = await deriveKey(uid);
   const { db, firestoreMod } = dbOrNull
     ? { db: dbOrNull, firestoreMod: _mockMod() }
     : await _f();
 
-  const ref = firestoreMod.doc(db, `${COLLECTION(uid)}/${payMonth}`);
+  const ref = firestoreMod.doc(db, `${COLLECTION(uid)}/${_docId(payMonth, type)}`);
   const snap = await firestoreMod.getDoc(ref);
   if (!snap.exists()) return null;
 
   const dec = await decryptDoc(snap.data(), ENC_FIELDS, key);
   const { parsedFields, lastEditAt, ...meta } = dec;
-  return { ...(parsedFields || {}), payMonth: meta.payMonth || payMonth };
+  return { ...(parsedFields || {}), payMonth: meta.payMonth || payMonth, type: meta.type || type || '급여' };
 }
 
 export async function readAllPayslips(dbOrNull, uid) {
@@ -70,8 +86,11 @@ export async function readAllPayslips(dbOrNull, uid) {
   await Promise.all(snap.docs.map(async (d) => {
     const dec = await decryptDoc(d.data(), ENC_FIELDS, key);
     const { parsedFields, lastEditAt, ...meta } = dec;
-    const payMonth = meta.payMonth || d.id || d._path.split('/').pop();
-    result[payMonth] = parsedFields || {};
+    const fallback = _decodeDocId(d.id || d._path.split('/').pop());
+    const payMonth = meta.payMonth || fallback.payMonth;
+    const type = meta.type || fallback.type || '급여';
+    const resultKey = type && type !== '급여' ? `${payMonth}__${type}` : payMonth;
+    result[resultKey] = { ...(parsedFields || {}), payMonth, type };
   }));
   return result;
 }

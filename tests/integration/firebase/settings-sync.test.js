@@ -41,13 +41,31 @@ describe('settings-sync — writeSettings / readSettings', () => {
       await import('../../../apps/web/src/firebase/sync/settings-sync.js');
     const db = _createMockDb();
     await writeSettings(db, 'uid1', { appLockPin: '9876', theme: 'linear' });
-    const raw = JSON.stringify(db._store);
+    const raw = JSON.stringify(db._store['users/uid1/settings/app']);
     expect(raw).not.toContain('9876');
     const doc = db._store['users/uid1/settings/app'];
     expect(typeof doc.appLockPin).toBe('object');
     expect(doc.appLockPin._v).toBe(1);
     // theme 은 평문
     expect(doc.theme).toBe('linear');
+  });
+
+  it('googleSub 같은 auth bridge 필드는 cloud payload 에 쓰지 않는다', async () => {
+    const { writeSettings, readSettings } =
+      await import('../../../apps/web/src/firebase/sync/settings-sync.js');
+    const db = _createMockDb();
+    await writeSettings(db, 'uid1', {
+      theme: 'neo',
+      googleSub: 'uid1',
+      googleEmail: 'a@b.c',
+      cachedProfile: { name: 'A' },
+    });
+    const raw = JSON.stringify(db._store['users/uid1/settings/app']);
+    expect(raw).not.toContain('uid1');
+    expect(raw).not.toContain('a@b.c');
+    const restored = await readSettings(db, 'uid1');
+    expect(restored.theme).toBe('neo');
+    expect(restored.googleSub).toBeUndefined();
   });
 
   it('doc 없으면 null 반환', async () => {

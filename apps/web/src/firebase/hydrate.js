@@ -18,6 +18,12 @@ import { readAllPayslips } from './sync/payslip-sync.js';
 import { readAllWorkHistory } from './sync/work-history-sync.js';
 import { readSettings } from './sync/settings-sync.js';
 import { readFavorites } from './sync/favorites-sync.js';
+import {
+  clearActiveUserLocalData,
+  emitDomainRefresh,
+  mergeCloudSettingsForLocal,
+} from './sync-lifecycle.js';
+import { localKeyFor } from './key-registry.js';
 
 function _setLocal(key, value) {
   try {
@@ -29,33 +35,25 @@ function _setLocal(key, value) {
   }
 }
 
-// 로그아웃 시 호출 — 로그인 사용자의 모든 _uid_<uid> 키 + 공유 키 데이터 정리.
-// 사용자 모델: "로그아웃하면 로컬에 아무 데이터가 없는 게 맞다."
+function _payslipLocalKey(uid, payMonth, type) {
+  const [year, month] = String(payMonth || '').split('-');
+  if (!year || !month) return null;
+  const base = `payslip_${uid}_${year}_${month}`;
+  return type && type !== '급여' ? `${base}_${type}` : base;
+}
+
+function _isCrossCheckPayslip(data) {
+  return !!(data && (
+    Array.isArray(data.workStats) ||
+    Array.isArray(data.overtimeItems) ||
+    typeof data.hourlyRate === 'number'
+  ));
+}
+
+// 로그아웃 시 호출 — 현재 로그인 uid 의 user-scoped active state 만 정리한다.
+// 다른 uid 백업, guest 데이터, device-local 설정은 보존한다.
 export function clearLocalUserData(uid) {
-  if (!uid) return;
-  const exactKeys = [
-    'snuhmate_hr_profile_uid_' + uid,
-    'overtimeRecords_uid_' + uid,
-    'overtimePayslipData_uid_' + uid,
-    'snuhmate_work_history_uid_' + uid,
-    'snuhmate_reg_favorites_uid_' + uid,
-    'leaveRecords', // 공유 키 (uid 접미 없음)
-  ];
-  for (const k of exactKeys) {
-    try { localStorage.removeItem(k); } catch (e) {}
-  }
-  // payslip per-month 키: 'payslip_<uid>_YYYY_MM' 패턴 모두 정리
-  try {
-    const payslipKeys = Object.keys(localStorage).filter(k =>
-      new RegExp('^payslip_' + uid + '_\\d{4}_\\d{2}').test(k)
-    );
-    for (const k of payslipKeys) localStorage.removeItem(k);
-  } catch (e) {}
-  // last_edit timestamp 도 정리 (LWW 메타)
-  try {
-    const editKeys = Object.keys(localStorage).filter(k => k.startsWith('snuhmate_last_edit_'));
-    for (const k of editKeys) localStorage.removeItem(k);
-  } catch (e) {}
+  return clearActiveUserLocalData(uid);
 }
 
 // 로그인 사용자의 모든 카테고리를 Firestore에서 읽어 로컬에 동기화.
@@ -69,7 +67,10 @@ export async function hydrateFromFirestore(uid) {
       run: async () => {
         const data = await readProfile(null, uid);
         if (!data) return;
-        _setLocal('snuhmate_hr_profile_uid_' + uid, data);
+        _setLocal(localKeyFor('snuhmate_hr_profile', uid), data);
+        if (data.manualHourly != null) {
+          _setLocal(localKeyFor('otManualHourly', uid), String(data.manualHourly));
+        }
       },
     },
     {
@@ -77,7 +78,7 @@ export async function hydrateFromFirestore(uid) {
       run: async () => {
         const data = await readAllOvertime(null, uid);
         if (!data || Object.keys(data).length === 0) return;
-        _setLocal('overtimeRecords_uid_' + uid, data);
+        _setLocal(localKeyFor('overtimeRecords', uid), data);
       },
     },
     {
@@ -85,7 +86,7 @@ export async function hydrateFromFirestore(uid) {
       run: async () => {
         const data = await readAllLeave(null, uid);
         if (!data || Object.keys(data).length === 0) return;
-        _setLocal('leaveRecords', data);
+        _setLocal(localKeyFor('leaveRecords', uid), data);
       },
     },
     {
@@ -93,11 +94,18 @@ export async function hydrateFromFirestore(uid) {
       run: async () => {
         const data = await readAllPayslips(null, uid);
         if (!data || Object.keys(data).length === 0) return;
-        _setLocal('overtimePayslipData_uid_' + uid, data);
-        for (const [payMonth, payslipData] of Object.entries(data)) {
-          const m = /^(\d{4})-(\d{2})$/.exec(payMonth);
-          if (!m) continue;
-          _setLocal('payslip_' + uid + '_' + m[1] + '_' + m[2], payslipData);
+        const crossCheckData = {};
+        for (const [entryKey, payslipData] of Object.entries(data)) {
+          const payMonth = payslipData?.payMonth || entryKey.split('__')[0];
+          const type = payslipData?.type || (entryKey.includes('__') ? entryKey.split('__').slice(1).join('__') : '급여');
+          const localKey = _payslipLocalKey(uid, payMonth, type);
+          if (localKey) _setLocal(localKey, payslipData);
+          if (_isCrossCheckPayslip(payslipData) && payMonth) {
+            crossCheckData[payMonth] = payslipData;
+          }
+        }
+        if (Object.keys(crossCheckData).length > 0) {
+          _setLocal(localKeyFor('overtimePayslipData', uid), crossCheckData);
         }
       },
     },
@@ -106,7 +114,7 @@ export async function hydrateFromFirestore(uid) {
       run: async () => {
         const data = await readAllWorkHistory(null, uid);
         if (!data || data.length === 0) return;
-        _setLocal('snuhmate_work_history_uid_' + uid, data);
+        _setLocal(localKeyFor('snuhmate_work_history', uid), data);
       },
     },
     {
@@ -114,14 +122,10 @@ export async function hydrateFromFirestore(uid) {
       run: async () => {
         const data = await readSettings(null, uid);
         if (!data) return;
-        // settings 는 device-local 필드 (googleSub) 가 섞여 있어 머지 필요
         try {
           const existing = JSON.parse(localStorage.getItem('snuhmate_settings') || '{}');
-          // cloud 우선, 단 googleSub 만 로컬 보존 (device-local 식별자)
-          const merged = { ...existing, ...data };
-          if (existing.googleSub) merged.googleSub = existing.googleSub;
-          _setLocal('snuhmate_settings', merged);
-        } catch (e) { _setLocal('snuhmate_settings', data); }
+          _setLocal('snuhmate_settings', mergeCloudSettingsForLocal(existing, data));
+        } catch (e) { _setLocal('snuhmate_settings', mergeCloudSettingsForLocal({}, data)); }
       },
     },
     {
@@ -129,7 +133,7 @@ export async function hydrateFromFirestore(uid) {
       run: async () => {
         const data = await readFavorites(null, uid);
         if (!data || data.length === 0) return;
-        _setLocal('snuhmate_reg_favorites_uid_' + uid, data);
+        _setLocal(localKeyFor('snuhmate_reg_favorites', uid), data);
       },
     },
   ];
@@ -146,7 +150,7 @@ export async function hydrateFromFirestore(uid) {
     }
   }
 
-  window.dispatchEvent(new CustomEvent('app:cloud-hydrated', { detail: { ok, failed, uid } }));
+  emitDomainRefresh({ reason: 'hydrate', ok, failed, uid });
 
   return { ok, failed };
 }

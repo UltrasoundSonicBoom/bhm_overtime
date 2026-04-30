@@ -92,6 +92,25 @@ describe('payslip-sync — 라운드트립', () => {
     expect(restored['2026-04'].hourlyRate).toBe(15000);
   });
 
+  it('typed payslip key 는 같은 월 급여 명세서와 다른 doc 으로 보존', async () => {
+    const { writePayslip, readPayslip, readAllPayslips } =
+      await import('../../../apps/web/src/firebase/sync/payslip-sync.js');
+    const db = _createMockDb();
+    await writePayslip(db, 'uid1', '2026-04', { summary: { grossPay: 5000000 } });
+    await writePayslip(db, 'uid1', '2026-04', { summary: { grossPay: 7000000 } }, undefined, '상여');
+
+    expect(db._store['users/uid1/payslips/2026-04']).toBeDefined();
+    expect(db._store['users/uid1/payslips/2026-04__%EC%83%81%EC%97%AC']).toBeDefined();
+
+    const typed = await readPayslip(db, 'uid1', '2026-04', '상여');
+    expect(typed.summary.grossPay).toBe(7000000);
+    expect(typed.type).toBe('상여');
+
+    const all = await readAllPayslips(db, 'uid1');
+    expect(all['2026-04'].summary.grossPay).toBe(5000000);
+    expect(all['2026-04__상여'].summary.grossPay).toBe(7000000);
+  });
+
   it('존재하지 않는 월 → null', async () => {
     const { readPayslip } =
       await import('../../../apps/web/src/firebase/sync/payslip-sync.js');

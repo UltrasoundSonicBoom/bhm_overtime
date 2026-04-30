@@ -194,6 +194,9 @@ function loadFavorites() {
 }
 function saveFavorites(arr) {
   try { localStorage.setItem(getFavStorageKey(), JSON.stringify(arr)); } catch (e) {}
+  if (typeof window.recordLocalEdit === 'function') {
+    try { window.recordLocalEdit('snuhmate_reg_favorites'); } catch (e) {}
+  }
   // Phase 8: Firestore write-through (로그인 시만, fire-and-forget)
   if (typeof window !== 'undefined' && window.__firebaseUid) {
     import('/src/firebase/sync/favorites-sync.js').then(m =>
@@ -1192,4 +1195,3 @@ registerActions({
 
 // Phase 2-regression: inline onclick window 노출 (ESM 모듈 스코프 회복)
 // Phase 3-F 에서 KEEP/REMOVE 결정 — regulation.js 동적 markup onclick (handleFavClick/openPdfForRef/toggleArticle) 잔존
-
