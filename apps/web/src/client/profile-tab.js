@@ -836,22 +836,51 @@ function syncBirthDateToRetirement(val) {
 }
 
 /**
- * 퇴직금 탭 retBirthDate → 개인정보 탭 pfBirthDate 동기화 + localStorage 저장
+ * 퇴직금 탭 retBirthDate ↔ 개인정보 탭 pfBirthDate 양방향 동기화 + localStorage 직접 저장.
+ * PROFILE.save() 대신 직접 저장해 profileChanged 이벤트를 발행하지 않음
+ * → initPayrollTab() 재호출로 Wizard 상태가 초기화되는 문제 방지.
  */
 function syncBirthDateToProfile(val) {
   const pfEl = document.getElementById('pfBirthDate');
   if (pfEl && pfEl.value !== val) pfEl.value = val;
 
-  // 다른 퇴직금 필드도 동기화
   ['retBirthDate', 'retScBirthDate'].forEach(id => {
     const el = document.getElementById(id);
     if (el && el.value !== val) el.value = val;
   });
 
-  // profile localStorage에 즉시 반영
-  const saved = PROFILE.load() || {};
-  saved.birthDate = val;
-  PROFILE.save(saved);
+  try {
+    const key = PROFILE.STORAGE_KEY;
+    const saved = JSON.parse(localStorage.getItem(key) || '{}');
+    if (saved.birthDate !== val) {
+      saved.birthDate = val;
+      saved.savedAt = new Date().toISOString();
+      localStorage.setItem(key, JSON.stringify(saved));
+    }
+  } catch (_) { /* silent */ }
+}
+
+/**
+ * 퇴직금 탭 retHireDate ↔ 개인정보 탭 pfHireDate 양방향 동기화 + localStorage 직접 저장.
+ */
+function syncHireDateToProfile(val) {
+  const pfEl = document.getElementById('pfHireDate');
+  if (pfEl && pfEl.value !== val) pfEl.value = val;
+
+  ['retHireDate', 'retScHireDate'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.value !== val) el.value = val;
+  });
+
+  try {
+    const key = PROFILE.STORAGE_KEY;
+    const saved = JSON.parse(localStorage.getItem(key) || '{}');
+    if (saved.hireDate !== val) {
+      saved.hireDate = val;
+      saved.savedAt = new Date().toISOString();
+      localStorage.setItem(key, JSON.stringify(saved));
+    }
+  } catch (_) { /* silent */ }
 }
 
 // ═══════════ 호봉 자동 제안 ═══════════
@@ -1341,5 +1370,6 @@ if (typeof window !== 'undefined') {
   window._suggestYear = _suggestYear;
   // PayrollIsland.astro retBirthDate oninput 에서 호출
   window.syncBirthDateToProfile = syncBirthDateToProfile;
+  window.syncHireDateToProfile = syncHireDateToProfile;
 }
 export {};

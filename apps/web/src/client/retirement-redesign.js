@@ -24,6 +24,82 @@ function fmtDate(d) { return E.fmtDate ? E.fmtDate(d) : (d ? new Date(d).toLocal
 // ─── Tab 1 Wizard ────────────────────────────────────────────────
 /** @type {1|2|3} */
 let wizStep = 1;
+/** @type {'auto'|'manual'} */
+let retMode = 'auto';
+
+function renderAutoPayslipRows() {
+  const rowsEl = $('retPayslipRows');
+  const summaryEl = $('retAvgSummary');
+  const autoDisplayEl = $('retAvgDisplayAuto');
+  const srcLabelEl = $('retWageSourceLabel');
+  if (!rowsEl) return;
+
+  const parser = /** @type {{ getRecent?: (n: number) => Array<{ym: string, total: number}> } | undefined} */ (
+    /** @type {any} */ (window).SALARY_PARSER
+  );
+  const rows = parser && typeof parser.getRecent === 'function' ? parser.getRecent(3) : [];
+
+  while (rowsEl.firstChild) rowsEl.removeChild(rowsEl.firstChild);
+
+  if (!rows || rows.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'text-[12px] text-brand-text-muted py-2 italic';
+    empty.textContent = '급여명세서를 등록하면 자동 계산됩니다.';
+    rowsEl.appendChild(empty);
+    if (summaryEl) summaryEl.style.display = 'none';
+    return;
+  }
+
+  rows.forEach((r) => {
+    const row = document.createElement('div');
+    row.className = 'ret-payslip-row';
+    const yr = document.createElement('span');
+    yr.className = 'yr';
+    yr.textContent = String(r.ym).replace(/(\d{4})(\d{2})/, '$1.$2');
+    const v = document.createElement('span');
+    v.className = 'v';
+    v.textContent = Math.round(r.total).toLocaleString('ko-KR') + '원';
+    row.appendChild(yr);
+    row.appendChild(v);
+    rowsEl.appendChild(row);
+  });
+
+  const avg = Math.round(rows.reduce((s, r) => s + r.total, 0) / rows.length);
+  const wageEl = /** @type {HTMLInputElement|null} */ ($('retAvgWage'));
+  if (wageEl && !wageEl.value) wageEl.value = String(avg);
+
+  if (summaryEl) summaryEl.style.display = '';
+  if (autoDisplayEl) autoDisplayEl.textContent = avg.toLocaleString('ko-KR') + '원';
+  const srcText = rows.length < 3 ? `(${rows.length}개월 평균)` : '';
+  if (srcLabelEl) srcLabelEl.textContent = srcText;
+}
+
+function retSetMode(/** @type {'auto'|'manual'} */ mode) {
+  retMode = mode;
+  const autoSection = $('retAutoSection');
+  const wageHint = $('retWageHint');
+  const wageLabel = $('retWageLabel');
+  const autoBtn = $('retModeAutoBtn');
+  const manualBtn = $('retModeManualBtn');
+
+  if (mode === 'auto') {
+    if (autoSection) autoSection.style.display = '';
+    if (wageHint) wageHint.style.display = 'none';
+    if (wageLabel) wageLabel.textContent = '월 평균임금 (원)';
+    if (autoBtn) autoBtn.classList.add('active');
+    if (manualBtn) manualBtn.classList.remove('active');
+    renderAutoPayslipRows();
+  } else {
+    if (autoSection) autoSection.style.display = 'none';
+    if (wageHint) wageHint.style.display = '';
+    if (wageLabel) wageLabel.textContent = '월 평균임금 (원) — 수동 입력';
+    if (autoBtn) autoBtn.classList.remove('active');
+    if (manualBtn) manualBtn.classList.add('active');
+  }
+}
+
+// 전역 노출 — Astro onclick="retSetMode(...)" 에서 접근
+/** @type {any} */ (window).retSetMode = retSetMode;
 
 function setWizStep(/** @type {1|2|3} */ step) {
   wizStep = step;
@@ -59,8 +135,17 @@ function wizNext() {
     setWizStep(2);
   } else if (wizStep === 2) {
     const hire = /** @type {HTMLInputElement} */ ($('retHireDate'))?.value;
-    const retire = /** @type {HTMLInputElement} */ ($('retRetireDate'))?.value;
-    if (!hire || !retire) { alert('입사일과 퇴직(예정)일을 입력해 주세요.'); return; }
+    if (!hire) { alert('입사일을 입력해 주세요. (1단계에서 입력)'); return; }
+    // retRetireDate는 생년월일 입력 시 retUpdateQuickDates()가 자동 세팅.
+    // 만약 아직 비어 있으면 생년월일에서 직접 계산해 채운다.
+    const retireEl = /** @type {HTMLInputElement|null} */ ($('retRetireDate'));
+    if (retireEl && !retireEl.value) {
+      const birthVal = /** @type {HTMLInputElement|null} */ ($('retBirthDate'))?.value;
+      if (!birthVal) { alert('생년월일을 입력해 주세요. (1단계에서 입력)'); return; }
+      const b = new Date(birthVal);
+      const retYear = b.getFullYear() + 60;
+      retireEl.value = `${retYear}-12-31`;
+    }
     setWizStep(3);
     // Step 3 진입 시 자동 계산
     const fn = /** @type {((silent?: boolean) => boolean) | undefined} */ (
@@ -292,6 +377,7 @@ export function initRetirementRedesign() {
   wireWizard();
   wireScenarioToggle();
   setWizStep(1);
+  retSetMode('auto');
 }
 
 export function refreshTimelineTab() {

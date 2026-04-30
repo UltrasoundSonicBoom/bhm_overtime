@@ -6771,3 +6771,13 @@ html[data-theme="neo"] .ot-help-a {
   margin-top: 10px; padding: 10px 12px; background: #F5F0E1;
   border: 1.5px solid #1a1a1a; border-radius: 8px; box-shadow: 1px 1px 0 #1a1a1a;
 }
+/* 자동 평균 요약 배너 */
+.ret-avg-summary {
+  margin-top: 10px; padding: 10px 14px;
+  background: linear-gradient(135deg, #6C5CE7 0%, #4834d4 100%);
+  border: 2px solid #1a1a1a; border-radius: 8px; box-shadow: 2px 2px 0 #1a1a1a;
+  color: #fff; display: flex; flex-direction: column; gap: 2px;
+}
+.ret-avg-lbl { font-size: var(--text-label-small); opacity: 0.85; }
+.ret-avg-val { font-size: 22px; font-weight: 800; font-family: 'Inter', sans-serif; letter-spacing: -0.5px; }
+.ret-avg-src { font-size: 11px; opacity: 0.75; margin-left: 4px; }
