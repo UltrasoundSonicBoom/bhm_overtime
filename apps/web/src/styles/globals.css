@@ -5426,7 +5426,7 @@ html[data-theme="neo"] .ret-input:focus { box-shadow: 3px 3px 0px var(--accent-i
 .ret-quick-btn.active { background: var(--accent-indigo); border-color: var(--accent-indigo); color: #fff; font-weight: 700; }
 html[data-theme="neo"] .ret-quick-btn { border: 2px solid #1a1a1a; border-radius: 6px; }
 html[data-theme="neo"] .ret-quick-btn.active { background: #1a1a1a; color: #fff; box-shadow: 2px 2px 0px var(--accent-indigo); }
-/* 3번째 버튼(임금피크 연장 만료)은 2열에서 가득 차게 */
+/* 3번째 버튼(정년퇴직 예정일)은 2열에서 가득 차게 */
 .ret-quick-dates .ret-quick-btn:last-child { grid-column: 1 / -1; }
 
 .ret-result {
@@ -5622,8 +5622,35 @@ html[data-theme="neo"] .ret-sc-winner { border: 2.5px solid #059669 !important; 
 /* 시뮬레이션 요약 카드 마진 */
 .ret-sc-summary { margin-bottom: 14px; }
 
-/* ══════════ 임금피크 타임라인 ══════════ */
+/* ══════════ 공로연수 선택 타임라인 ══════════ */
 .ret-tl-card { padding: 16px 16px 14px; }
+.ret-tl-keyline {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 12px;
+}
+.ret-tl-keyline > div {
+  border: 1.5px solid rgba(26,26,26,0.14);
+  border-radius: 8px;
+  background: #fff;
+  padding: 8px 10px;
+}
+.ret-tl-keyline span {
+  display: block;
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+.ret-tl-keyline strong {
+  display: block;
+  font-size: 11px;
+  color: var(--text-primary);
+  line-height: 1.35;
+}
+@media (max-width: 520px) {
+  .ret-tl-keyline { grid-template-columns: 1fr; }
+}
 
 /* 섹션 레이블 */
 .ret-tl-section { margin-bottom: 4px; }
@@ -5690,6 +5717,12 @@ html[data-theme="neo"] .ret-sc-winner { border: 2.5px solid #059669 !important; 
 /* 용어 설명 */
 .ret-tl-legend { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border-glass); display: flex; flex-direction: column; gap: 6px; }
 .ret-tl-legend-row { font-size: 11px; color: var(--text-secondary); line-height: 1.6; display: flex; gap: 8px; align-items: flex-start; }
+.ret-tl-legend-important {
+  background: #eef2ff;
+  border: 1.5px solid #818cf8;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
 .ret-tl-legend-row em { color: var(--accent-indigo); font-style: normal; font-weight: 700; }
 .ret-tl-dot-a, .ret-tl-dot-b, .ret-tl-dot-n {
   display: inline-block; width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; margin-top: 3px;
@@ -5700,6 +5733,8 @@ html[data-theme="neo"] .ret-sc-winner { border: 2.5px solid #059669 !important; 
 
 /* neo 테마 오버라이드 */
 html[data-theme="neo"] .ret-tl-macro-bar  { border: 2px solid #1a1a1a; border-radius: 4px; }
+html[data-theme="neo"] .ret-tl-keyline > div { border: 2px solid #1a1a1a; border-radius: 6px; box-shadow: 2px 2px 0 #1a1a1a; }
+html[data-theme="neo"] .ret-tl-legend-important { border: 2px solid #4338ca; border-radius: 6px; }
 html[data-theme="neo"] .ret-tl-seg-normal { background: #4338ca; }
 html[data-theme="neo"] .ret-tl-bar-a { border: 2px solid #f59e0b; border-radius: 4px; }
 html[data-theme="neo"] .ret-tl-bar-b { border: 2px solid #059669; border-radius: 4px; }

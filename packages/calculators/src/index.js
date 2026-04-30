@@ -480,52 +480,68 @@ export const CALC = {
      * 퇴직금 통합 계산 (2001.08.31 이전 입사자 누진배수 + 2015.06.30 이전 퇴직수당 포함)
      * 법정 퇴직금 공식: 1일 평균임금 × 30 × (총 근속일수 / 365)
      *
-     * roundingMode (D11 단수계산 — 보수규정 미명시, 일반 병원회계 관행):
+     * roundingMode (단체협약 제52조/제53조 단수계산):
      *   'precise' (기본): 일 단위 정밀 (현행 동작 유지)
-     *   'lenient': 6개월 이상 → 1년으로 환산 / 6개월 미만 → 월할
-     *              근로기준법·사학연금 시행령에서 채택하는 보수적 기준
+     *   'union'|'lenient': 6개월 이상 → 1년 / 6개월 미만 → 월할
      *
      * @param {number} avgMonthlyPay - 월 평균임금 (= 1일 평균임금 × 30)
-     * @param {number} totalYearsInt - 총 근속연수 (정수, 누진배수/퇴직수당 구간 판정용)
+     * @param {number} totalYearsInt - 총 근속연수 fallback (정수 또는 소수)
      * @param {string} hireDateStr - 입사일 문자열 (YYYY-MM-DD)
-     * @param {object} [opts] - { roundingMode: 'precise'|'lenient' }
+     * @param {object} [opts] - { roundingMode: 'precise'|'union'|'lenient', retireDate: 'YYYY-MM-DD'|Date }
      * @returns {object}
      */
     calcSeveranceFullPay(avgMonthlyPay, totalYearsInt, hireDateStr, opts = {}) {
         const roundingMode = opts.roundingMode || 'precise';
         const hireDate = hireDateStr ? new Date(hireDateStr) : null;
+        const retireDate = opts.retireDate ? new Date(opts.retireDate) : new Date();
 
-        // 정밀 근속연수 계산 (일 단위)
-        let preciseYears = totalYearsInt;
+        function diffCalendarMonths(start, end) {
+            let months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+            if (end.getDate() < start.getDate()) months -= 1;
+            return Math.max(0, months);
+        }
+
+        // 정밀 근속연수 계산. retireDate가 전달되면 화면의 퇴직예정일을 기준으로 계산한다.
+        let preciseYears = Number(totalYearsInt) || 0;
+        let calculationYears = preciseYears;
         let totalDays = 0;
-        if (hireDate && !isNaN(hireDate)) {
-            const now = new Date();
-            totalDays = Math.floor((now - hireDate) / (1000 * 60 * 60 * 24));
-            preciseYears = totalDays / 365;
+        let serviceMonths = 0;
+        let yearsDisplay = `${Math.floor(preciseYears)}년`;
+        if (hireDate && !isNaN(hireDate) && retireDate && !isNaN(retireDate)) {
+            totalDays = Math.floor((retireDate - hireDate) / (1000 * 60 * 60 * 24));
+            serviceMonths = diffCalendarMonths(hireDate, retireDate);
+            preciseYears = totalDays / 365.25;
+            calculationYears = preciseYears;
+            const displayYears = Math.floor(serviceMonths / 12);
+            const displayMonths = serviceMonths % 12;
+            yearsDisplay = `${displayYears}년 ${displayMonths}개월`;
         }
 
-        // D11: lenient 모드 — 6개월↑ 1년 / 6개월 미만 월할 (보수적 산정)
-        if (roundingMode === 'lenient' && preciseYears >= 1) {
-            const wholeYears = Math.floor(preciseYears);
-            const fractionalYear = preciseYears - wholeYears;
-            preciseYears = fractionalYear >= 0.5 ? (wholeYears + 1) : wholeYears + Math.floor(fractionalYear * 12) / 12;
+        // 단체협약 제52조/제53조: 1년 미만은 제외, 단수 6개월 이상은 1년, 6개월 미만은 월할.
+        if ((roundingMode === 'union' || roundingMode === 'lenient') && serviceMonths >= 12) {
+            const wholeYears = Math.floor(serviceMonths / 12);
+            const remainderMonths = serviceMonths % 12;
+            calculationYears = remainderMonths >= 6
+                ? wholeYears + 1
+                : wholeYears + remainderMonths / 12;
+            yearsDisplay = remainderMonths >= 6
+                ? `${wholeYears}년 ${remainderMonths}개월 -> ${wholeYears + 1}년 산정`
+                : `${wholeYears}년 ${remainderMonths}개월`;
         }
 
-        if (preciseYears < 1) return { 퇴직금: 0, note: '근속 1년 미만 해당없음' };
+        if (calculationYears < 1) return { 퇴직금: 0, note: '근속 1년 미만 해당없음', 근속기간: '1년 미만' };
 
         const cutoff2001 = new Date('2001-08-31');
         const cutoff2015 = new Date('2015-06-30');
+        const calculationYearsInt = Math.floor(calculationYears);
 
         // 기본 퇴직금: 월 평균임금 × (총 근속일수 / 365)
-        let baseSeverance = Math.round(avgMonthlyPay * preciseYears);
-        const yearsDisplay = totalDays > 0
-            ? `${Math.floor(preciseYears)}년 ${Math.floor((preciseYears % 1) * 12)}개월`
-            : `${totalYearsInt}년`;
+        let baseSeverance = Math.round(avgMonthlyPay * calculationYears);
         let method = `법정 퇴직금 (평균임금 × ${yearsDisplay})`;
 
         // 2001.08.31 이전 입사자: 누진배수 적용 (정수 연수로 구간 판정)
         if (hireDate && hireDate <= cutoff2001) {
-            const row = DATA.severanceMultipliersPre2001.find(r => totalYearsInt >= r.min);
+            const row = DATA.severanceMultipliersPre2001.find(r => calculationYearsInt >= r.min);
             if (row) {
                 baseSeverance = Math.round(avgMonthlyPay * row.multiplier);
                 method = `누진배수 적용 (×${row.multiplier}, 2001년 이전 입사자)`;
@@ -536,9 +552,9 @@ export const CALC = {
         let addon = 0;
         let addonNote = '해당없음';
         if (hireDate && hireDate <= cutoff2015) {
-            const sp = DATA.severancePay.find(s => totalYearsInt >= s.min);
+            const sp = DATA.severancePay.find(s => calculationYearsInt >= s.min);
             if (sp) {
-                addon = Math.round(avgMonthlyPay * preciseYears * sp.rate);
+                addon = Math.round(avgMonthlyPay * calculationYears * sp.rate);
                 addonNote = `퇴직수당 ${sp.rate * 100}% 가산 (2015년 이전 입사자)`;
             }
         }

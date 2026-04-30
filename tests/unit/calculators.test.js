@@ -184,7 +184,57 @@ describe('CALC.calcNightShiftBonus 시설직 분기 (Bug #6)', () => {
   });
 });
 
-describe('RetirementEngine 급여명세서 자동 입력', () => {
+describe('CALC.calcSeveranceFullPay 단체협약 퇴직금 산정', () => {
+  it('퇴직예정일을 기준으로 근속기간을 산정한다', () => {
+    const r = CALC.calcSeveranceFullPay(1000000, 99, '2020-01-01', {
+      retireDate: '2024-07-01',
+      roundingMode: 'union'
+    });
+
+    expect(r.기본퇴직금).toBe(5000000);
+    expect(r.퇴직금).toBe(5000000);
+    expect(r.근속기간).toBe('4년 6개월 -> 5년 산정');
+  });
+
+  it('6개월 미만 단수는 월할 계산한다', () => {
+    const r = CALC.calcSeveranceFullPay(1000000, 0, '2020-01-01', {
+      retireDate: '2024-05-01',
+      roundingMode: 'union'
+    });
+
+    expect(r.기본퇴직금).toBe(4333333);
+    expect(r.퇴직금).toBe(4333333);
+    expect(r.근속기간).toBe('4년 4개월');
+  });
+
+  it('근속 1년 미만은 퇴직금 대상에서 제외한다', () => {
+    const r = CALC.calcSeveranceFullPay(1000000, 0, '2024-01-01', {
+      retireDate: '2024-11-30',
+      roundingMode: 'union'
+    });
+
+    expect(r.퇴직금).toBe(0);
+    expect(r.근속기간).toBe('1년 미만');
+  });
+});
+
+describe('RetirementEngine 공로연수 퇴직금 기준 보호', () => {
+  it('공로연수 60% 수령액은 퇴직금 기준 평균임금을 낮추지 않는다', async () => {
+    const originalWindow = globalThis.window;
+    globalThis.window = { DATA };
+    const { RetirementEngine } = await import('../../packages/calculators/src/retirement-engine.js');
+
+    const result = RetirementEngine.calcAllScenarios(1000000, '2020-01-01', '1965-01-01');
+    const optionA = result.scenarios.find(s => s.id === 'optA_no_mid');
+    const optionB = result.scenarios.find(s => s.id === 'optB_no_mid');
+
+    expect(optionA.sev.기본퇴직금).toBe(optionB.sev.기본퇴직금);
+    expect(optionA.peakIncome).toBe(7200000);
+    expect(optionB.peakIncome).toBe(12000000);
+
+    globalThis.window = originalWindow;
+  });
+
   it('uid가 포함된 최신 급여명세서 키를 퇴직금 자동 입력에 반영한다', async () => {
     const originalWindow = globalThis.window;
     const originalLocalStorage = globalThis.localStorage;
