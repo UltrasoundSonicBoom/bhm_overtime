@@ -22,6 +22,14 @@
   --blue-600: #5558e6;
   --blue-700: #4f46e5;
 
+  /* Sky (D 데이 듀티 — 하늘색) */
+  --sky-50:  #f0f9ff;
+  --sky-100: #e0f2fe;
+  --sky-300: #7dd3fc;
+  --sky-500: #0ea5e9;
+  --sky-600: #0284c7;
+  --sky-700: #0369a1;
+
   /* Status — red */
   --red-50:  #fef2f2;
   --red-300: #fca5a5;
