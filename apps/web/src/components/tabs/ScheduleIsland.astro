@@ -638,25 +638,55 @@
       --sch-stat-accent: var(--color-text-muted);
       --sch-stat-bg: var(--color-bg-surface);
       --sch-stat-border: var(--color-border-default);
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: var(--space-1);
+      position: relative;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: center;
+      column-gap: var(--space-2);
+      row-gap: 2px;
+      overflow: hidden;
       min-height: 64px;
       padding: var(--space-3);
+      padding-left: calc(var(--space-3) + 5px);
       border: 1px solid var(--sch-stat-border);
       border-radius: var(--radius-sm);
       background: var(--sch-stat-bg);
     }
+    #tab-schedule .sch-stat-card::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 5px;
+      background: var(--sch-stat-accent);
+    }
+    #tab-schedule .sch-stat-code {
+      z-index: 1;
+      grid-row: 1 / span 2;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 34px;
+      height: 28px;
+      padding: 0 var(--space-2);
+      border-radius: var(--radius-sm);
+      background: var(--sch-stat-accent);
+      color: var(--color-text-inverse);
+      font-size: var(--font-size-caption);
+      font-weight: var(--font-weight-bold);
+      line-height: 1;
+      letter-spacing: 0;
+    }
     #tab-schedule .sch-stat-card .num {
+      z-index: 1;
       font-size: 22px;
       font-weight: 800;
       line-height: 1;
       color: var(--sch-stat-accent);
     }
     #tab-schedule .sch-stat-card .lbl {
-      font-size: 11px;
-      font-weight: 600;
+      z-index: 1;
+      font-size: var(--font-size-caption);
+      font-weight: var(--font-weight-semibold);
       color: var(--color-text-secondary);
     }
     #tab-schedule .sch-stat-D  { --sch-stat-accent: var(--color-duty-day);      --sch-stat-bg: var(--color-duty-day-bg);      --sch-stat-border: var(--color-duty-day); }

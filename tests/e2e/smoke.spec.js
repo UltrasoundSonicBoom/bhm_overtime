@@ -1,9 +1,10 @@
-// Playwright e2e 스모크 — 8개 탭 + 4개 payroll 서브탭 + 콘솔 에러 0건
+// Playwright e2e 스모크 — 9개 탭 + 4개 payroll 서브탭 + 콘솔 에러 0건
 // 실행: npm run test:smoke
 import { test, expect } from '@playwright/test';
 
-const MAIN_TABS = ['home', 'payroll', 'overtime', 'leave', 'reference', 'profile', 'settings', 'feedback'];
+const MAIN_TABS = ['home', 'payroll', 'overtime', 'leave', 'schedule', 'reference', 'profile', 'settings', 'feedback'];
 const PAYROLL_SUBS = ['pay-payslip', 'pay-calc', 'pay-qa', 'pay-retirement'];
+const SCHEDULE_STAT_CODES = ['D', 'E', 'N', 'O', 'AL', 'RD'];
 
 // 기존 코드에 선재하는(pre-existing) CSP 경고 — localhost:3001 backend 부재가 원인.
 // 테스트 목적과 무관하므로 검증 시 제외.
@@ -17,7 +18,7 @@ function isIgnorableError(msg) {
 }
 
 test.describe('SNUH Mate 구조 스모크', () => {
-  test('페이지 로드 + 8개 메인 탭 lazy-load + 콘솔 에러 0건', async ({ page }) => {
+  test('페이지 로드 + 9개 메인 탭 lazy-load + 콘솔 에러 0건', async ({ page }) => {
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
     page.on('console', msg => {
@@ -39,7 +40,7 @@ test.describe('SNUH Mate 구조 스모크', () => {
       });
     }, { timeout: 3000 }).toBe(true);
 
-    // 8개 메인 탭 순회
+    // 9개 메인 탭 순회
     for (const name of MAIN_TABS) {
       const result = await page.evaluate(async (tab) => {
         window.switchTab(tab);
@@ -103,5 +104,44 @@ test.describe('SNUH Mate 구조 스모크', () => {
   test('URL 파라미터 진입 — ?tab=overtime 타이틀 반영', async ({ page }) => {
     await page.goto('/app?tab=overtime');
     await expect(page).toHaveTitle(/시간외/);
+  });
+
+  test('근무 통계 카드가 duty design token 색을 실제 DOM에 반영', async ({ page }) => {
+    await page.goto('/app?tab=schedule');
+    await page.waitForFunction(() => document.querySelectorAll('#schStatsGrid .sch-stat-card').length >= 6);
+
+    const stats = await page.evaluate(() => {
+      return Array.from(document.querySelectorAll('#schStatsGrid .sch-stat-card')).map((el) => {
+        const style = getComputedStyle(el);
+        const code = el.querySelector('.sch-stat-code');
+        const num = el.querySelector('.num');
+        const codeStyle = code ? getComputedStyle(code) : null;
+        const numStyle = num ? getComputedStyle(num) : null;
+        return {
+          className: el.className,
+          code: code?.textContent?.trim() || '',
+          text: el.textContent?.trim().replace(/\s+/g, ' ') || '',
+          cardBg: style.backgroundColor,
+          cardBorder: style.borderTopColor,
+          tokenAccent: style.getPropertyValue('--sch-stat-accent').trim(),
+          codeBg: codeStyle?.backgroundColor || '',
+          numColor: numStyle?.color || ''
+        };
+      });
+    });
+
+    const codes = stats.map((stat) => stat.code);
+    expect(codes).toEqual(expect.arrayContaining(SCHEDULE_STAT_CODES));
+
+    const dutyStats = stats.filter((stat) => SCHEDULE_STAT_CODES.includes(stat.code));
+    expect(new Set(dutyStats.map((stat) => stat.tokenAccent)).size, 'duty token 다양성').toBeGreaterThanOrEqual(5);
+    expect(new Set(dutyStats.map((stat) => stat.codeBg)).size, '코드 pill 배경색 다양성').toBeGreaterThanOrEqual(5);
+
+    for (const stat of dutyStats) {
+      expect(stat.className, `${stat.code} duty class`).toContain(`sch-stat-${stat.code}`);
+      expect(stat.codeBg, `${stat.code} code chip background`).not.toBe('rgba(0, 0, 0, 0)');
+      expect(stat.codeBg, `${stat.code} code chip background`).not.toBe(stat.cardBg);
+      expect(stat.numColor, `${stat.code} number color`).not.toBe('rgb(17, 24, 39)');
+    }
   });
 });
