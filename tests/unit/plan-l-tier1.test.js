@@ -34,11 +34,12 @@ describe('Plan L T1 D11 — 퇴직금 단수계산 옵션 (보수규정 + 일반
   });
 
   it('lenient 모드: 6개월 미만은 월할 유지', () => {
-    // 입사 2010-12-01 → 15년 4개월 (.33) → lenient → 15.33...
-    const r1 = CALC.calcSeveranceFullPay(avgPay, 15, '2010-12-01', { roundingMode: 'lenient' });
-    const r2 = CALC.calcSeveranceFullPay(avgPay, 15, '2010-12-01', { roundingMode: 'precise' });
-    // lenient (15.25) vs precise (15.41) — lenient 가 작음
-    expect(r1.퇴직금).toBeLessThanOrEqual(r2.퇴직금);
+    // 2010-12-01 → 2026-03-01: 15년 3개월 (< 6 → 반올림 안 됨, 월할 유지)
+    const r1 = CALC.calcSeveranceFullPay(avgPay, 15, '2010-12-01', { roundingMode: 'lenient', retireDate: '2026-03-01' });
+    // 2010-12-01 → 2026-08-01: 15년 8개월 (>= 6 → 16년으로 반올림)
+    const r2 = CALC.calcSeveranceFullPay(avgPay, 15, '2010-12-01', { roundingMode: 'lenient', retireDate: '2026-08-01' });
+    // 6개월 미만 월할 유지 → 반올림 케이스보다 퇴직금이 작아야 함
+    expect(r1.퇴직금).toBeLessThan(r2.퇴직금);
   });
 
   it('하위 호환: opts 없이 호출 시 precise 동작', () => {
