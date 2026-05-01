@@ -29,6 +29,7 @@ Thumbs.db
 .continue/
 .agents/
 skills/
+!.claude/skills/
 
 credentials.md
 
