@@ -65,13 +65,29 @@ ls apps/web/public/tabs/tab-tools.html 2>/dev/null
 >   TDD 원칙 — 실패 테스트 먼저, 구현, 통과 확인.
 >   `smate-pii-patterns` 스킬을 ground truth 로 import.
 
-산출물 보고를 받은 후:
+**Phase 3 완료 검증 (4-step):**
 
 ```bash
+# 1. Unit Test
 cd backend && poetry run pytest tests/masking/ -v
+
+# 2. 생성 파일·JSON 확인
+ls -la backend/app/masking/          # 모듈 파일들 존재 확인
+ls -la backend/tests/masking/fixtures/ # fixture 파일 존재 확인
+# 파이프라인 출력 JSON shape 확인 (구현 후):
+# echo '{"text":"홍길동 010-1234-5678"}' | python -m backend.app.masking.pipeline | jq 'keys'
+
+# 3. Endpoint 연결 확인
+# 서버 기동 후:
+curl -s -X POST http://localhost:8000/api/mask \
+  -H "Content-Type: multipart/form-data" \
+  -F "file=@backend/tests/masking/fixtures/sample.csv" | jq .status
+
+# 4. Smoke — 이 Phase는 백엔드 전용이므로 단위 회귀만
+cd backend && poetry run pytest tests/masking/ -v --tb=short
 ```
 
-통과 확인.
+결과를 `_workspace/phase3_check.md`에 기록. 모두 ✅ 후 Phase 4 진행.
 
 ### Phase 4: 프런트엔드 변경 (필요 시)
 
@@ -80,6 +96,30 @@ UI 변경이 있다면:
 - `apps/web/public/tabs/tab-tools.html`, `apps/web/src/client/masking-panel.js` 수정
 - **HTML 직접 주입 금지** — `textContent` + DOM 구성만 (XSS 방지). 사용자 입력·서버 응답을 HTML 문자열로 DOM 에 넣지 않는다.
 - `@smate-ds-guard` 호출해 토큰·인라인 룰 검증
+
+**Phase 4 완료 검증 (4-step):**
+
+```bash
+# 1. Unit Test (프런트 변경이면)
+pnpm test:unit
+
+# 2. 생성 파일 확인
+ls -la apps/web/public/tabs/tab-tools.html
+ls -la apps/web/src/client/masking-panel.js
+# 디자인시스템 토큰 확인 (@smate-ds-guard 결과로 대체 가능):
+grep -c "var(--" apps/web/public/tabs/tab-tools.html  # 0이면 하드코딩 의심
+
+# 3. Endpoint 연결 확인 (백엔드와 연동 동작 확인)
+cd backend && poetry run uvicorn app.main:app --port 8000 &
+curl -s http://localhost:8000/api/mask -X OPTIONS | jq .   # CORS 헤더 확인
+kill %1
+
+# 4. Smoke
+pnpm --filter @snuhmate/web build 2>&1 | tail -5  # 빌드 에러 0건
+pnpm test:smoke 2>&1 | grep -E "passed|failed|error"
+```
+
+결과를 `_workspace/phase4_check.md`에 기록.
 
 ### Phase 5: E2E 검증
 
@@ -103,12 +143,41 @@ pnpm test:smoke -- tests/e2e/masking.spec.js 2>&1 | tee _workspace/b6_e2e.log
 cd backend && poetry run pytest tests/masking/test_e2e_samples.py -v
 ```
 
+**Phase 5 완료 검증 (4-step):**
+
+```bash
+# 1. Unit Test (전체 회귀)
+cd backend && poetry run pytest tests/masking/ -v
+pnpm test:unit
+
+# 2. 생성 파일·DB·JSON 확인
+ls -la _workspace/b6_e2e.log          # E2E 로그 파일 존재
+# 마스킹 결과 파일 다운로드 확인 (E2E에서 생성한 파일):
+ls -la /tmp/masked_output.* 2>/dev/null || echo "E2E 출력 파일 없음 — Playwright 시나리오 확인"
+
+# 3. Endpoint 연결 확인
+curl -s -X POST http://localhost:8000/api/mask \
+  -H "Content-Type: multipart/form-data" \
+  -F "file=@backend/tests/masking/fixtures/sample_pii.csv" | jq '{status: .status, masked_count: .stats.masked_count}'
+
+# 4. Smoke (E2E 전체)
+pnpm test:smoke -- tests/e2e/masking.spec.js 2>&1 | grep -E "✓|✗|passed|failed"
+```
+
+결과를 `_workspace/phase5_check.md`에 기록. 4개 모두 ✅이면 Phase 6 (PR) 진행.
+
 ### Phase 6: PR 게이트 (`smate-pr-ops` 에 위임)
 
 `/smate-pr-ops` 호출. 변경 의도: "B6 마스킹 \<영역\>". 리뷰어 게이트 → ship-it 자동 머지.
 
 ## 통과 조건
 
+**Phase별:**
+- Phase 3: Unit ✅ + 모듈 파일 존재 ✅ + `/api/mask` 200 응답 ✅
+- Phase 4: Unit ✅ + 빌드 에러 0건 ✅ + CORS 헤더 확인 ✅ + 탭 렌더링 ✅
+- Phase 5: Unit ✅ + E2E 로그 ✅ + `/api/mask` 마스킹 결과 JSON ✅ + Smoke ✅
+
+**전체 사이클:**
 - `backend/tests/masking/` 전체 통과
 - E2E 시나리오 통과 (CSV → 마스킹 → 다운로드)
 - fixture 5종 회귀 0건
