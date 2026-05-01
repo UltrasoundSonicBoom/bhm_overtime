@@ -52,14 +52,31 @@ poetry run pytest
 ## 데이터 위치
 - 캐시 + 코퍼스 + 리뷰: `~/.snuhmate-backend/data.db` (SQLite)
 
+## Admin review auth
+
+`GET /admin/reviews` and `POST /admin/reviews/{id}/status` require:
+
+```bash
+export SNUHMATE_ADMIN_TOKEN="replace-with-long-random-token"
+curl -H "Authorization: Bearer $SNUHMATE_ADMIN_TOKEN" http://localhost:8001/admin/reviews
+```
+
+If `SNUHMATE_ADMIN_TOKEN` is not set, admin routes fail closed with HTTP 503.
+
+## Corpus policy
+
+`POST /corpus/submit` is the only supported corpus submission path. The backend validates the payload, removes direct identifiers and free-form raw text, and stores only the sanitized allowlisted fields in SQLite. Do not write `anonymous_corpus` as a top-level Firestore collection.
+
 ## API 엔드포인트
 | Path | 설명 |
 |------|------|
-| `GET  /health` | LM Studio + DB 헬스체크 |
+| `GET  /health` | LM Studio + SQLite ping 헬스체크 |
 | `POST /parse/excel` | .xlsx/.xls → DutyGrid (multipart) |
 | `POST /parse/csv` | CSV 텍스트 → DutyGrid |
-| `POST /parse/vision` | 이미지 base64 → DutyGrid (Qwen3-VL → Gemma 정규화) |
 | `GET  /cache/get?hash=...` | sha256 캐시 조회 |
-| `POST /cache/put` | 캐시 저장 |
-| `POST /corpus/submit` | 익명화된 코퍼스 저장 |
-| `GET  /admin/reviews` | confidence < 0.9 리뷰 큐 (Firebase admin claim 필요) |
+| `POST /cache/put` | sha256 + DutyGrid JSON 검증 후 캐시 저장 |
+| `GET  /cache/dept-month-status` | 부서·월 LLM 호출 카운터 조회 |
+| `POST /cache/dept-month-increment` | 부서·월 LLM 호출 카운터 증가 |
+| `POST /corpus/submit` | 익명화된 코퍼스 검증·정제 후 저장 |
+| `GET  /admin/reviews` | admin bearer token 필요, confidence < 0.9 리뷰 큐 |
+| `POST /admin/reviews/{id}/status` | admin bearer token 필요, 리뷰 상태 변경 |

@@ -8,10 +8,12 @@
 - GET  /health       : 헬스체크
 """
 from contextlib import asynccontextmanager
+import re
 from typing import Optional
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import ValidationError
 
 from app.cache.sqlite import (
     DEPT_MONTH_CALL_LIMIT,
@@ -22,6 +24,7 @@ from app.cache.sqlite import (
     init_db,
     is_dept_month_blocked,
     normalize_title,
+    ping_db,
     put_cache,
 )
 from app.corpus.store import (
@@ -30,8 +33,28 @@ from app.corpus.store import (
     list_pending_reviews,
     update_review_status,
 )
+from app.corpus.validation import sanitize_corpus_payload
 from app.parsers.excel import parse_csv_text, parse_excel_bytes
 from app.schemas.schedule import DutyGrid, HealthResponse
+from app.security import require_admin_token
+
+
+SHA256_RE = re.compile(r"^[0-9a-fA-F]{64}$")
+MAX_FORM_TEXT_BYTES = 2 * 1024 * 1024
+
+
+def _validate_sha256(value: str) -> str:
+    if not SHA256_RE.fullmatch(value or ""):
+        raise HTTPException(
+            status_code=422,
+            detail="hash must be a 64-character sha256 hex string",
+        )
+    return value.lower()
+
+
+def _reject_large_text(value: str, label: str) -> None:
+    if len(value.encode("utf-8")) > MAX_FORM_TEXT_BYTES:
+        raise HTTPException(status_code=413, detail=f"{label} too large")
 
 
 @asynccontextmanager
@@ -80,7 +103,8 @@ async def health() -> HealthResponse:
     except Exception:
         pass
 
-    return HealthResponse(ok=True, lm_studio=lm_ok, models=models, db=True)
+    db_ok = ping_db()
+    return HealthResponse(ok=db_ok, lm_studio=lm_ok, models=models, db=db_ok)
 
 
 @app.post("/parse/excel", response_model=DutyGrid)
@@ -127,8 +151,15 @@ async def cache_put(
     grid_json: str = Form(...),
 ):
     """캐시 저장."""
-    grid = DutyGrid.model_validate_json(grid_json)
-    put_cache(hash, grid, normalize_title(title))
+    sha256 = _validate_sha256(hash)
+    _reject_large_text(grid_json, "grid_json")
+    try:
+        grid = DutyGrid.model_validate_json(grid_json)
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=400, detail=f"invalid grid_json: {e.errors()[0]['msg']}"
+        )
+    put_cache(sha256, grid, normalize_title(title))
     return {"ok": True}
 
 
@@ -162,30 +193,30 @@ async def corpus_submit(corpus_json: str = Form(...)):
     """익명화된 코퍼스 항목 저장. confidence < 0.9면 자동으로 리뷰 큐에도 추가."""
     import json as _json
 
+    _reject_large_text(corpus_json, "corpus_json")
     try:
         payload = _json.loads(corpus_json)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"invalid corpus_json: {e}")
 
-    # 화이트리스트 검증 (이중 안전망 — 클라이언트 anonymize.js와 별개)
-    dept = payload.get("deptCategory")
-    allowed = {"ICU", "CCU", "NICU", "응급실", "병동", "수술실", "외래", "기타"}
-    if dept and dept not in allowed:
-        raise HTTPException(status_code=400, detail=f"deptCategory not allowed: {dept}")
-
+    payload = sanitize_corpus_payload(payload)
     cid = add_corpus_entry(payload)
     return {"ok": True, "id": cid}
 
 
 @app.get("/admin/reviews")
-async def admin_reviews():
-    """confidence < 0.9 리뷰 큐. (Phase 3에서 Firebase admin claim 검증 추가)"""
+async def admin_reviews(_admin: None = Depends(require_admin_token)):
+    """confidence < 0.9 리뷰 큐."""
     items = list_pending_reviews(limit=50)
     return {"reviews": items}
 
 
 @app.post("/admin/reviews/{review_id}/status")
-async def admin_review_update(review_id: int, status: str = Form(...)):
+async def admin_review_update(
+    review_id: int,
+    status: str = Form(...),
+    _admin: None = Depends(require_admin_token),
+):
     """리뷰 상태 변경 (verified/rejected)."""
     try:
         ok = update_review_status(review_id, status)

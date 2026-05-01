@@ -70,6 +70,16 @@ def init_db(db_path: Optional[Path] = None) -> None:
         )
 
 
+def ping_db(db_path: Optional[Path] = None) -> bool:
+    """Return True when SQLite is reachable and can execute a simple query."""
+    try:
+        with _conn(db_path) as conn:
+            conn.execute("SELECT 1").fetchone()
+        return True
+    except (sqlite3.Error, OSError):
+        return False
+
+
 def normalize_title(title: Optional[str]) -> str:
     """제목 정규화 — 공백·확장자·특수문자 제거 후 lowercase."""
     if not title:

@@ -278,6 +278,10 @@ users/{userId}/**
 - Public read 없음
 - UID 기반 완전 격리
 
+### 7-1. Anonymous Corpus Policy
+
+`anonymous_corpus`는 현재 Firestore 컬렉션으로 운영하지 않는다. 브라우저는 익명화된 근무표 코퍼스를 로컬 FastAPI 백엔드 `POST /corpus/submit`으로만 제출하고, Firestore rules는 `users/{uid}/**` 밖의 top-level write를 의도적으로 차단한다.
+
 ---
 
 ## 8. LM Studio Gateway 스키마

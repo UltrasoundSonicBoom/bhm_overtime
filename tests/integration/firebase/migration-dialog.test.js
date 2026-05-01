@@ -17,6 +17,7 @@ const mockWriteAllLeave = vi.fn();
 const mockWriteAllWorkHistory = vi.fn();
 const mockWriteSettings = vi.fn();
 const mockWriteFavorites = vi.fn();
+const mockWriteAllSchedule = vi.fn();
 
 vi.mock('/src/firebase/sync/profile-sync.js', () => ({ writeProfile: mockWriteProfile }));
 vi.mock('/src/firebase/sync/overtime-sync.js', () => ({ writeAllOvertime: mockWriteAllOvertime }));
@@ -24,6 +25,9 @@ vi.mock('/src/firebase/sync/leave-sync.js', () => ({ writeAllLeave: mockWriteAll
 vi.mock('/src/firebase/sync/work-history-sync.js', () => ({ writeAllWorkHistory: mockWriteAllWorkHistory }));
 vi.mock('/src/firebase/sync/settings-sync.js', () => ({ writeSettings: mockWriteSettings }));
 vi.mock('/src/firebase/sync/favorites-sync.js', () => ({ writeFavorites: mockWriteFavorites }));
+vi.mock('/src/firebase/sync/schedule-sync.js', () => ({
+  writeAllSchedule: mockWriteAllSchedule,
+}));
 
 beforeAll(async () => {
   const dom = new JSDOM('<!DOCTYPE html>', { url: 'http://localhost/' });
@@ -41,6 +45,7 @@ beforeEach(() => {
   mockWriteAllWorkHistory.mockResolvedValue();
   mockWriteSettings.mockResolvedValue();
   mockWriteFavorites.mockResolvedValue();
+  mockWriteAllSchedule.mockResolvedValue();
 });
 
 describe('shouldShowMigration', () => {
@@ -86,6 +91,30 @@ describe('uploadCategories', () => {
     const { uploadCategories } = await import('../../../apps/web/src/firebase/migration-dialog.js');
     await uploadCategories('uid1', ['overtime']);
     expect(mockWriteAllOvertime).toHaveBeenCalled();
+  });
+
+  it('overtime 선택 + 근무표 데이터 존재 → writeAllSchedule 호출하고 FLAG 설정', async () => {
+    localStorage.setItem('overtimeRecords_guest', JSON.stringify({ '2026-04': [{ id: 'ot1', totalHours: 3 }] }));
+    localStorage.setItem('snuhmate_schedule_records', JSON.stringify({
+      '2026-04': {
+        mine: { 1: 'D', 2: 'E' },
+        team: { '김지원': { 1: 'N' } },
+      },
+    }));
+
+    const { uploadCategories } = await import('../../../apps/web/src/firebase/migration-dialog.js');
+    const result = await uploadCategories('uid1', ['overtime']);
+
+    expect(mockWriteAllOvertime).toHaveBeenCalled();
+    expect(mockWriteAllSchedule).toHaveBeenCalledWith(null, 'uid1', {
+      '2026-04': {
+        mine: { 1: 'D', 2: 'E' },
+        team: { '김지원': { 1: 'N' } },
+      },
+    });
+    expect(result.failed).toEqual([]);
+    expect(result.ok).toContain('근무표');
+    expect(localStorage.getItem('snuhmate_migration_done_v1')).toBeTruthy();
   });
 
   it('미선택 카테고리 sync 호출 0', async () => {

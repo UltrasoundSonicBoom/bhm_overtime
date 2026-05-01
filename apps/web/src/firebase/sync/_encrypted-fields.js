@@ -14,10 +14,12 @@
 export const ENCRYPTED_FIELDS = {
   // Profile (identity ↔ payroll 분리 — SPEC §3.4)
   'profile/identity': [
-    'name', 'employeeId', 'department', 'position', 'hireDate', 'jobLevel', 'rank',
+    'name', 'employeeId', 'employeeNumber', 'department', 'position', 'hireDate',
+    'jobType', 'grade', 'year', 'jobLevel', 'rank',
   ],
   'profile/payroll': [
-    'hourlyWage', 'annualSalary', 'manualHourly', 'allowancePolicy', 'paymentDay', 'baseHours',
+    'hourlyWage', 'annualSalary', 'manualHourly', 'allowancePolicy',
+    'paymentDay', 'baseHours', 'weeklyHours',
   ],
   // Payslips — parsedFields 전체 (PDF 파싱 항목별 금액)
   'payslips/*': ['parsedFields'],

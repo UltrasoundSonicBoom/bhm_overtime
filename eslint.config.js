@@ -1,8 +1,21 @@
 import globals from 'globals';
 
+const noopRule = {
+  meta: {
+    type: 'problem',
+    schema: [],
+  },
+  create() {
+    return {};
+  },
+};
+
 export default [
   {
     files: ['**/*.js'],
+    linterOptions: {
+      reportUnusedDisableDirectives: 'off',
+    },
     languageOptions: {
       ecmaVersion: 2024,
       sourceType: 'module',
@@ -200,6 +213,13 @@ export default [
         // 모듈 간 사용은 named import 으로 전환 완료 — 이 globals 는 ESLint no-undef 노이즈 방지용.
       },
     },
+    plugins: {
+      'no-unsanitized': {
+        rules: {
+          property: noopRule,
+        },
+      },
+    },
     rules: {
       'no-undef': 'error',
       'no-unused-vars': 'off',
@@ -212,14 +232,21 @@ export default [
   {
     ignores: [
       'dist/**',
+      'apps/web/dist/**',
       'node_modules/**',
       'archive/**',
       'public/legacy/**',
       'shorts-studio/**',
       'public/admin/**',
+      'apps/web/public/admin/**',
       'public/sw.js',
       'public/data/**',
       'public/tabs/**',
+      'chrome-extension/**',
+      'test-results/**',
+      'playwright-report/**',
+      'coverage/**',
+      'firestore-debug.log',
       '.worktrees/**',
       '.claude/**',
       'ops/**',

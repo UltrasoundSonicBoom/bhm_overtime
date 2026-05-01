@@ -59,6 +59,11 @@ export const KEY_REGISTRY = {
     firestorePath: (uid) => `users/${uid}/leave`,
     category: 'leave',
   },
+  // ── Schedule (근무표) ──
+  'snuhmate_schedule_records': {
+    scope: 'sync', shape: 'collection-by-yyyymm',
+    firestorePath: (uid) => `users/${uid}/schedule`,
+  },
   // ── Settings (SPEC §3.6) ──
   'snuhmate_settings': {
     scope: 'sync', shape: 'doc',
