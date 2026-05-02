@@ -59,3 +59,19 @@ Prefer local CLI tools for repository facts before reaching for heavier MCP cont
 
 If a task needs an unfamiliar CLI, read `<tool> --help` first and use the smallest
 safe command that answers the question.
+
+## Security operations gates
+
+Run these before any deploy that touches Firebase/Firestore, localStorage lifecycle,
+backend parser/admin, corpus, telemetry, or regulation/payroll data:
+
+- `pnpm verify:data` — regulation/paytable drift.
+- `pnpm security:rules` — Firestore emulator rules tests.
+- `pnpm verify:security` — Firebase/security integration + rules tests.
+- `pnpm security:ops` — full security/ops gate (data, security, build, smoke).
+- `pnpm backend:test` — FastAPI backend (admin token, corpus, validation).
+
+See `docs/operations/security-runbook.md` and `docs/operations/security-checklist.md`
+for the operator workflow. Security/ops harness lives at `.claude/agents/smate-*`
+(see `smate-security-ops`, `smate-firebase-security`, `smate-sync-guard`,
+`smate-runbook` once PR-N7 lands).
