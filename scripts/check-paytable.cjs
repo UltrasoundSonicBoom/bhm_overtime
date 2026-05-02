@@ -18,6 +18,22 @@ const DATA_PATH = path.join(ROOT, 'packages', 'data', 'src', 'index.js');
 const REG_PATH = path.join(ROOT, 'public', 'data', 'full_union_regulation_2026.md');
 const REPORT_PATH = path.join(ROOT, 'docs', 'architecture', 'paytable-link-report.md');
 
+function normalizeReportTimestamp(text) {
+    return text
+        .replace(/^> 생성 시각: .+$/m, '> 생성 시각: <generated>')
+        .replace(/\s+$/u, '');
+}
+
+function writeReportIfMeaningfulChange(reportPath, text) {
+    if (fs.existsSync(reportPath)) {
+        const current = fs.readFileSync(reportPath, 'utf8');
+        if (normalizeReportTimestamp(current) === normalizeReportTimestamp(text)) {
+            return;
+        }
+    }
+    fs.writeFileSync(reportPath, text);
+}
+
 // Phase 2-B 후: data 모듈은 ESM. CJS .cjs 에서 동적 import 으로 로드.
 async function loadData() {
     // Node 의 ESM 로더는 브라우저 globals 미정의 → data 모듈의 호환층
@@ -156,10 +172,10 @@ async function main() {
     } else {
         lines.push(`- ❌ ${totalDrift} 건 drift — \`data.js DATA_STATIC.payTables\` 정정 또는 \`full_union_regulation_2026.md\` 별첨 갱신 필요.`);
     }
-    lines.push('- 단협 개정 시 본 스크립트를 재실행해 drift 자동 감지: `npm run check:paytable`.');
+    lines.push('- 단협 개정 시 본 스크립트를 재실행해 drift 자동 감지: `pnpm check:paytable`.');
 
     fs.mkdirSync(path.dirname(REPORT_PATH), { recursive: true });
-    fs.writeFileSync(REPORT_PATH, lines.join('\n'));
+    writeReportIfMeaningfulChange(REPORT_PATH, lines.join('\n'));
 
     console.log(`[check-paytable] drift ${totalDrift} / ${totalCells} cells (${Math.round((totalCells - totalDrift) / totalCells * 1000) / 10}% match)`);
     console.log(`[check-paytable] 리포트: ${path.relative(ROOT, REPORT_PATH)}`);

@@ -25,6 +25,42 @@ function readText(p) {
     return fs.readFileSync(p, 'utf8');
 }
 
+function normalizeReportTimestamp(text) {
+    return text
+        .replace(/^> 생성 시각: .+$/m, '> 생성 시각: <generated>')
+        .replace(/\s+$/u, '');
+}
+
+function writeReportIfMeaningfulChange(reportPath, text) {
+    if (fs.existsSync(reportPath)) {
+        const current = fs.readFileSync(reportPath, 'utf8');
+        if (normalizeReportTimestamp(current) === normalizeReportTimestamp(text)) {
+            return;
+        }
+    }
+    fs.writeFileSync(reportPath, text);
+}
+
+function escapeRegExp(s) {
+    return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function findNextSectionEnd(regText, startIdx, fallbackChars = 5000) {
+    const nextHeaderPattern = /^(?:---\s*)?(?:#{2,4}\s+|\*\*제\d+조|\*\*<\d{4}\.\d{2}>|\*\*<\s*별\s*표\s*>|\*\*개인별|\*\*기본급|\*\*보수월액|\*\*직급보조비)/gm;
+    nextHeaderPattern.lastIndex = startIdx + 1;
+    const nextMatch = nextHeaderPattern.exec(regText);
+    return nextMatch ? nextMatch.index : Math.min(startIdx + fallbackChars, regText.length);
+}
+
+function extractByLiteralHeading(regText, article) {
+    if (!article) return null;
+    const idx = regText.indexOf(article);
+    if (idx === -1) return null;
+    const lineStart = regText.lastIndexOf('\n', idx);
+    const startIdx = lineStart === -1 ? idx : lineStart + 1;
+    return regText.slice(startIdx, findNextSectionEnd(regText, startIdx, 5000));
+}
+
 // 조항 본문 추출 — "제XX조" / "제XX조의Y" / "<YYYY.MM>" 패턴
 function extractArticleBody(regText, article) {
     const m = article.match(/제(\d+)조(?:의(\d+))?/);
@@ -144,7 +180,7 @@ function main() {
     lines.push('- 단협 개정 시 본 스크립트를 재실행해 drift 자동 감지: `npm run check:regulation`');
 
     fs.mkdirSync(path.dirname(REPORT_PATH), { recursive: true });
-    fs.writeFileSync(REPORT_PATH, lines.join('\n'));
+    writeReportIfMeaningfulChange(REPORT_PATH, `${lines.join('\n')}\n`);
 
     console.log(`[check-regulation-link] ✅ ${pass} / 🟡 ${ambiguous} / ❌ ${fail} (총 ${total})`);
     console.log(`[check-regulation-link] 리포트: ${path.relative(ROOT, REPORT_PATH)}`);

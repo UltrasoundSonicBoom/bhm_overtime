@@ -25,4 +25,4 @@
 ## 후속
 
 - ✅ 모든 보수표 셀이 별첨과 일치 — Plan L Tier 2 완료.
-- 단협 개정 시 본 스크립트를 재실행해 drift 자동 감지: `npm run check:paytable`.
+- 단협 개정 시 본 스크립트를 재실행해 drift 자동 감지: `pnpm check:paytable`.
