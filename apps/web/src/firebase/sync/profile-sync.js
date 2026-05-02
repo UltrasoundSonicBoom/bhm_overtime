@@ -14,6 +14,7 @@ import { initFirebase } from '../firebase-init.js';
 import { firebaseConfig } from '../../client/config.js';
 import { deriveKey, encryptDoc, decryptDoc } from '../crypto.js';
 import { ENCRYPTED_FIELDS } from './_encrypted-fields.js';
+import { mockFirestoreMod } from './mock-firestore.js';
 
 const IDENTITY_FIELDS = [
   'name', 'employeeId', 'department', 'position', 'hireDate',
@@ -60,7 +61,7 @@ export async function writeProfile(dbOrNull, uid, profile) {
   );
 
   const { db, firestoreMod } = dbOrNull
-    ? { db: dbOrNull, firestoreMod: _mockMod() }
+    ? { db: dbOrNull, firestoreMod: mockFirestoreMod() }
     : await _f();
 
   const idRef = firestoreMod.doc(db, `users/${uid}/profile/identity`);
@@ -74,7 +75,7 @@ export async function writeProfile(dbOrNull, uid, profile) {
 export async function readProfile(dbOrNull, uid) {
   const key = await deriveKey(uid);
   const { db, firestoreMod } = dbOrNull
-    ? { db: dbOrNull, firestoreMod: _mockMod() }
+    ? { db: dbOrNull, firestoreMod: mockFirestoreMod() }
     : await _f();
   const idRef = firestoreMod.doc(db, `users/${uid}/profile/identity`);
   const pyRef = firestoreMod.doc(db, `users/${uid}/profile/payroll`);
@@ -96,18 +97,4 @@ let _firebase = null;
 async function _f() {
   if (!_firebase) _firebase = await initFirebase(firebaseConfig);
   return { db: _firebase.db, firestoreMod: _firebase.firestoreMod };
-}
-
-// 테스트용 mock Firestore mod (in-memory store with _writeDoc / _readDoc)
-function _mockMod() {
-  return {
-    doc: (db, path) => ({ _db: db, _path: path }),
-    setDoc: async (ref, data, options) => {
-      ref._db._writeDoc(ref._path, data, options?.merge);
-    },
-    getDoc: async (ref) => {
-      const data = ref._db._readDoc(ref._path);
-      return { exists: () => data !== null, data: () => data };
-    },
-  };
 }

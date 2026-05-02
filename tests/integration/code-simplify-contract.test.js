@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 
 const REQUIRED_FILES = [
   'docs/superpowers/specs/2026-05-02-code-simplify.md',
@@ -59,6 +59,20 @@ describe('code-simplify harness contract', () => {
       expect(handler, `${name}: shared monthly save helper missing`).toContain('_savePayslipMonth(parsed, ym)');
       expect(handler, `${name}: shared propagation helper missing`).toContain('_propagatePayslipEffects(savedPayslip, ym)');
       expect(handler, `${name}: direct monthly save should stay inside helper`).not.toContain('SALARY_PARSER.saveMonthlyData');
+    }
+  });
+
+  it('keeps sync modules on the shared mock Firestore adapter', () => {
+    expect(existsSync('apps/web/src/firebase/sync/mock-firestore.js')).toBe(true);
+    const syncFiles = readdirSync('apps/web/src/firebase/sync')
+      .filter((file) => file.endsWith('-sync.js'))
+      .map((file) => `apps/web/src/firebase/sync/${file}`)
+      .filter((file) => readFileSync(file, 'utf8').includes('dbOrNull'));
+
+    for (const file of syncFiles) {
+      const source = readFileSync(file, 'utf8');
+      expect(source, `${file}: should import shared mockFirestoreMod`).toContain("import { mockFirestoreMod } from './mock-firestore.js';");
+      expect(source, `${file}: local _mockMod should not reappear`).not.toMatch(/function\s+_mockMod|_mockMod\(/);
     }
   });
 });
