@@ -1,4 +1,3 @@
-
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill
@@ -6,6 +5,7 @@ tool as your FIRST action. Do NOT answer directly, do NOT use other tools first.
 The skill has specialized workflows that produce better results than ad-hoc answers.
 
 Key routing rules:
+
 - Product ideas, "is this worth building", brainstorming → invoke office-hours
 - Bugs, errors, "why is this broken", 500 errors → invoke investigate
 - Ship, deploy, push, create PR → invoke ship
@@ -25,6 +25,7 @@ When changing code, run the smallest relevant checks first, then run the full ga
 before claiming completion.
 
 Baseline commands:
+
 - `pnpm lint` — ESLint guard for browser globals, module boundaries, and accidental undefineds.
 - `pnpm check` — Astro/TypeScript project check for `apps/web`.
 - `pnpm test:unit` — fast Vitest coverage for calculators, parsers, and pure client logic.
@@ -34,6 +35,7 @@ Baseline commands:
 - `pnpm verify` — full local pre-ship gate: lint, check, all tests, and build.
 
 Change-specific minimums:
+
 - Calculators, payroll, retirement, holidays, parsers: `pnpm test:unit`.
 - Firebase/Auth/Firestore/localStorage sync: `pnpm test:integration`.
 - Astro pages, CSS, tabs, navigation, browser-visible UI: `pnpm check && pnpm build && pnpm test:smoke`.
@@ -52,6 +54,7 @@ state report.
 ## CLI workflow
 
 Prefer local CLI tools for repository facts before reaching for heavier MCP context:
+
 - `gh pr view --json ... | jq ...` for PR metadata, checks, comments, and review state.
 - `gh issue list --json ... | jq ...` for issue triage.
 - `rg` for code search.
@@ -75,3 +78,14 @@ See `docs/operations/security-runbook.md` and `docs/operations/security-checklis
 for the operator workflow. Security/ops harness lives at `.claude/agents/smate-*`
 (see `smate-security-ops`, `smate-firebase-security`, `smate-sync-guard`,
 `smate-runbook` once PR-N7 lands).
+
+## Project harness (`.Codex/`)
+
+Security/operations work also uses the local harness in `.Codex/`:
+
+- Orchestrator: `.Codex/agents/security-ops-orchestrator.md`
+- Specialists: `.Codex/agents/firebase-security-gate.md`, `.Codex/agents/sync-qa.md`, `.Codex/agents/ops-runbook-maintainer.md`
+- Skill: `.Codex/skills/security-ops/SKILL.md`
+
+Trigger this harness for 보안, 운영 관리, Firebase/Firestore rules, localStorage sync,
+로그인/로그아웃 데이터 보존, CI 보안 게이트, runbook/checklist work.
