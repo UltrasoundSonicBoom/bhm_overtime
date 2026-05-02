@@ -11,19 +11,19 @@ const mockWriteSettings = vi.fn();
 const mockWriteManualHourly = vi.fn();
 const mockWriteFavorites = vi.fn();
 
-vi.mock('../../../apps/web/src/firebase/sync/profile-sync.js', () => ({ writeProfile: mockWriteProfile }));
-vi.mock('../../../apps/web/src/firebase/sync/overtime-sync.js', () => ({ writeOvertimeMonth: mockWriteOvertimeMonth }));
-vi.mock('../../../apps/web/src/firebase/sync/leave-sync.js', () => ({ writeLeaveYear: mockWriteLeaveYear }));
-vi.mock('../../../apps/web/src/firebase/sync/payslip-sync.js', () => ({
+vi.mock('/src/firebase/sync/profile-sync.js', () => ({ writeProfile: mockWriteProfile }));
+vi.mock('/src/firebase/sync/overtime-sync.js', () => ({ writeOvertimeMonth: mockWriteOvertimeMonth }));
+vi.mock('/src/firebase/sync/leave-sync.js', () => ({ writeLeaveYear: mockWriteLeaveYear }));
+vi.mock('/src/firebase/sync/payslip-sync.js', () => ({
   writePayslip: mockWritePayslip,
   writeAllPayslips: mockWriteAllPayslips,
 }));
-vi.mock('../../../apps/web/src/firebase/sync/work-history-sync.js', () => ({ writeAllWorkHistory: mockWriteAllWorkHistory }));
-vi.mock('../../../apps/web/src/firebase/sync/settings-sync.js', () => ({
+vi.mock('/src/firebase/sync/work-history-sync.js', () => ({ writeAllWorkHistory: mockWriteAllWorkHistory }));
+vi.mock('/src/firebase/sync/settings-sync.js', () => ({
   writeSettings: mockWriteSettings,
   writeManualHourly: mockWriteManualHourly,
 }));
-vi.mock('../../../apps/web/src/firebase/sync/favorites-sync.js', () => ({ writeFavorites: mockWriteFavorites }));
+vi.mock('/src/firebase/sync/favorites-sync.js', () => ({ writeFavorites: mockWriteFavorites }));
 
 beforeAll(async () => {
   const dom = new JSDOM('<!DOCTYPE html>', { url: 'http://localhost/' });
@@ -47,7 +47,7 @@ afterEach(() => {
 });
 
 async function flushDebounce() {
-  vi.advanceTimersByTime(250);
+  await vi.advanceTimersByTimeAsync(250);
   await Promise.resolve();
   await Promise.resolve();
 }

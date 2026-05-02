@@ -30,18 +30,79 @@ const GUEST_FLAT_KEYS = [
   'overtimeRecords_guest',
   'snuhmate_work_history_guest',
   'snuhmate_reg_favorites_guest',
-  'leaveRecords_guest',
-  'leaveRecords',
   'otManualHourly_guest',
   'overtimePayslipData_guest',
+  'overtimePayslipData',
+  'leaveRecords',
+  'leaveRecords_guest',
+  'snuhmate_schedule_records',
+  'snuhmate_settings',
 ];
 
 const PAYSLIP_GUEST_KEY_RE = /^payslip_guest_\d{4}_\d{2}(_.+)?$/;
 
-function _clearAllGuestData() {
-  for (const k of GUEST_FLAT_KEYS) localStorage.removeItem(k);
+function _parseStored(raw) {
+  if (raw == null) return null;
+  try { return JSON.parse(raw); } catch { return raw; }
+}
+
+function _isMeaningfulValue(value) {
+  if (value == null) return false;
+  if (Array.isArray(value)) return value.length > 0;
+  if (typeof value === 'object') return Object.keys(value).length > 0;
+  if (typeof value === 'number') return value !== 0;
+  if (typeof value === 'string') return value.length > 0;
+  return !!value;
+}
+
+function _snapshotHasData(snapshot) {
+  if (!snapshot) return false;
+  return Object.values(snapshot.flat || {}).some(_isMeaningfulValue) ||
+    Object.keys(snapshot.payslips || {}).length > 0;
+}
+
+function _stringifyComparable(value) {
+  try { return JSON.stringify(value); } catch { return String(value); }
+}
+
+export function captureGuestMigrationSnapshot() {
+  const flat = {};
+  const payslips = {};
+  try {
+    for (const k of GUEST_FLAT_KEYS) {
+      const raw = localStorage.getItem(k);
+      const parsed = _parseStored(raw);
+      if (_isMeaningfulValue(parsed)) flat[k] = parsed;
+    }
+    Object.keys(localStorage)
+      .filter(k => PAYSLIP_GUEST_KEY_RE.test(k))
+      .forEach(k => {
+        const parsed = _parseStored(localStorage.getItem(k));
+        if (_isMeaningfulValue(parsed)) payslips[k] = parsed;
+      });
+  } catch {}
+  return { flat, payslips, capturedAt: Date.now() };
+}
+
+function _clearAllGuestData(snapshot = null) {
+  const sharedKeys = ['leaveRecords', 'snuhmate_schedule_records', 'overtimePayslipData'];
+  for (const k of GUEST_FLAT_KEYS) {
+    if (sharedKeys.includes(k) || k === 'snuhmate_settings') continue;
+    localStorage.removeItem(k);
+  }
   const payslipKeys = Object.keys(localStorage).filter(k => PAYSLIP_GUEST_KEY_RE.test(k));
   for (const k of payslipKeys) localStorage.removeItem(k);
+
+  // leaveRecords / schedule_records / legacy overtimePayslipData 는 공유 키라서
+  // 로그인 후 hydrate 가 이미 cloud 값을 써둔 경우까지 지우면 안 된다.
+  for (const k of sharedKeys) {
+    const snapValue = snapshot?.flat?.[k];
+    if (snapValue === undefined) continue;
+    const current = _parseStored(localStorage.getItem(k));
+    if (_stringifyComparable(current) === _stringifyComparable(snapValue)) {
+      localStorage.removeItem(k);
+    }
+  }
 }
 
 // ── 카테고리 정의 ──────────────────────────────────────────────────────────
@@ -65,10 +126,22 @@ const CATEGORIES = [
     guestKey: () => 'overtimeRecords_guest',
   },
   {
+    id: 'schedule',
+    label: '근무표',
+    desc: '월별 근무표와 자동 생성 기준',
+    guestKey: () => 'snuhmate_schedule_records',
+  },
+  {
+    id: 'payslips',
+    label: '급여명세서',
+    desc: 'PDF 파싱 결과와 시간외 보충 데이터',
+    guestKey: () => null,
+  },
+  {
     id: 'leave',
     label: '휴가 기록',
     desc: '연차·병가·청원 휴가 사용 내역',
-    guestKey: () => 'leaveRecords_guest',
+    guestKey: () => 'leaveRecords',
   },
   {
     id: 'workHistory',
@@ -93,22 +166,11 @@ const CATEGORIES = [
 // ── 게스트 데이터 존재 여부 체크 ──────────────────────────────────────────
 function _hasGuestData() {
   try {
-    const hasFlatGuest = GUEST_FLAT_KEYS.some(k => {
-      const v = localStorage.getItem(k);
-      if (!v) return false;
-      try {
-        const parsed = JSON.parse(v);
-        if (Array.isArray(parsed)) return parsed.length > 0;
-        if (typeof parsed === 'object') return Object.keys(parsed).length > 0;
-        return !!parsed;
-      } catch { return !!v; }
-    });
-    if (hasFlatGuest) return true;
-    return Object.keys(localStorage).some(k => PAYSLIP_GUEST_KEY_RE.test(k));
+    return _snapshotHasData(captureGuestMigrationSnapshot());
   } catch { return false; }
 }
 
-export async function shouldShowMigration(uid) {
+export async function shouldShowMigration(uid, snapshot = null) {
   if (!uid) return false;
   try {
     if (localStorage.getItem(FLAG_KEY)) return false;
@@ -118,35 +180,136 @@ export async function shouldShowMigration(uid) {
       if (Number.isFinite(snoozeUntil) && Date.now() < snoozeUntil) return false;
       localStorage.removeItem(SNOOZE_KEY);
     }
-    return _hasGuestData();
+    return snapshot ? _snapshotHasData(snapshot) : _hasGuestData();
   } catch { return false; }
+}
+
+function _snapshotValue(snapshot, key) {
+  if (snapshot && Object.prototype.hasOwnProperty.call(snapshot.flat || {}, key)) {
+    return snapshot.flat[key];
+  }
+  return _parseStored(localStorage.getItem(key));
+}
+
+function _monthFromPayslipKey(key) {
+  const m = /^payslip_guest_(\d{4})_(\d{2})(?:_.+)?$/.exec(key);
+  return m ? `${m[1]}-${m[2]}` : null;
+}
+
+function _typeFromPayslipKey(key) {
+  const m = /^payslip_guest_\d{4}_\d{2}_(.+)$/.exec(key);
+  return m ? m[1] : '급여';
+}
+
+function _uidPayslipKey(uid, guestKey) {
+  return guestKey.replace(/^payslip_guest_/, `payslip_${uid}_`);
+}
+
+function _mergePayslipMaps(...maps) {
+  const merged = {};
+  for (const map of maps) {
+    if (!map || typeof map !== 'object' || Array.isArray(map)) continue;
+    for (const [payMonth, data] of Object.entries(map)) {
+      if (!/^\d{4}-\d{2}$/.test(payMonth)) continue;
+      merged[payMonth] = { ...(merged[payMonth] || {}), ...(data || {}) };
+    }
+  }
+  return merged;
+}
+
+function _applySnapshotToUidLocal(uid, selectedIds, snapshot) {
+  if (!uid || !snapshot) return;
+  const flat = snapshot.flat || {};
+  try {
+    if ((selectedIds.includes('identity') || selectedIds.includes('payroll')) && flat.snuhmate_hr_profile_guest) {
+      localStorage.setItem(`snuhmate_hr_profile_uid_${uid}`, JSON.stringify(flat.snuhmate_hr_profile_guest));
+    }
+    if (selectedIds.includes('payroll') && flat.otManualHourly_guest != null) {
+      localStorage.setItem(`otManualHourly_uid_${uid}`, String(flat.otManualHourly_guest));
+    }
+    if (selectedIds.includes('overtime') && flat.overtimeRecords_guest) {
+      localStorage.setItem(`overtimeRecords_uid_${uid}`, JSON.stringify(flat.overtimeRecords_guest));
+    }
+    if (selectedIds.includes('leave') && (flat.leaveRecords || flat.leaveRecords_guest)) {
+      localStorage.setItem('leaveRecords', JSON.stringify(flat.leaveRecords || flat.leaveRecords_guest));
+    }
+    if ((selectedIds.includes('schedule') || selectedIds.includes('overtime')) && flat.snuhmate_schedule_records) {
+      localStorage.setItem('snuhmate_schedule_records', JSON.stringify(flat.snuhmate_schedule_records));
+    }
+    if (selectedIds.includes('workHistory') && flat.snuhmate_work_history_guest) {
+      localStorage.setItem(`snuhmate_work_history_uid_${uid}`, JSON.stringify(flat.snuhmate_work_history_guest));
+    }
+    if (selectedIds.includes('reference') && flat.snuhmate_reg_favorites_guest) {
+      localStorage.setItem(`snuhmate_reg_favorites_uid_${uid}`, JSON.stringify(flat.snuhmate_reg_favorites_guest));
+    }
+    if (selectedIds.includes('payslips')) {
+      const supplemental = _mergePayslipMaps(flat.overtimePayslipData_guest, flat.overtimePayslipData);
+      if (Object.keys(supplemental).length > 0) {
+        localStorage.setItem(`overtimePayslipData_uid_${uid}`, JSON.stringify(supplemental));
+      }
+      for (const [guestKey, data] of Object.entries(snapshot.payslips || {})) {
+        localStorage.setItem(_uidPayslipKey(uid, guestKey), JSON.stringify(data));
+      }
+    }
+    if (selectedIds.includes('settings') && flat.snuhmate_settings) {
+      const existing = _parseStored(localStorage.getItem('snuhmate_settings')) || {};
+      localStorage.setItem('snuhmate_settings', JSON.stringify({
+        ...flat.snuhmate_settings,
+        googleSub: existing.googleSub || uid,
+      }));
+    }
+  } catch (e) {
+    console.warn('[migration] uid local mirror 실패', e?.message);
+  }
+}
+
+function _dispatchMigrationRefresh(uid, ok, failed) {
+  if (typeof window === 'undefined') return;
+  const detail = { source: 'migration', uid, ok, failed };
+  [
+    'profileChanged',
+    'overtimeChanged',
+    'leaveChanged',
+    'payslipChanged',
+    'scheduleChanged',
+    'workHistoryChanged',
+    'settingsChanged',
+    'favoritesChanged',
+  ].forEach(name => {
+    try { window.dispatchEvent(new CustomEvent(name, { detail })); } catch {}
+  });
 }
 
 // ── 업로드 로직 ───────────────────────────────────────────────────────────
 // returns { ok: string[], failed: Array<{id: string, label: string, reason: string}> }
-export async function uploadCategories(uid, selectedIds) {
+export async function uploadCategories(uid, selectedIds, snapshot = null) {
   const syncTasks = [];
+  const source = snapshot || captureGuestMigrationSnapshot();
 
   if (selectedIds.includes('identity') || selectedIds.includes('payroll')) {
     syncTasks.push({
       id: 'profile',
       label: '프로필',
       run: async () => {
-        const raw = localStorage.getItem('snuhmate_hr_profile_guest');
-        if (raw) {
-          const profile = JSON.parse(raw);
-          const { writeProfile } = await import('/src/firebase/sync/profile-sync.js');
-          await writeProfile(null, uid, profile);
-        }
+        const profile = _snapshotValue(source, 'snuhmate_hr_profile_guest');
+        if (!profile) return;
+        const { writeProfile } = await import('/src/firebase/sync/profile-sync.js');
+        await writeProfile(null, uid, profile);
+      },
+    });
+  }
 
-        if (selectedIds.includes('payroll')) {
-          const rawManual = localStorage.getItem('otManualHourly_guest');
-          if (rawManual !== null) {
-            const { writeManualHourly } = await import('/src/firebase/sync/settings-sync.js');
-            const num = Number(rawManual);
-            await writeManualHourly(null, uid, Number.isFinite(num) ? num : rawManual);
-          }
-        }
+  if (selectedIds.includes('payroll')) {
+    syncTasks.push({
+      id: 'manualHourly',
+      label: '수동 시급',
+      run: async () => {
+        const raw = _snapshotValue(source, 'otManualHourly_guest');
+        if (raw == null || raw === '') return;
+        const value = Number(raw);
+        if (!Number.isFinite(value) || value <= 0) return;
+        const { writeManualHourly } = await import('/src/firebase/sync/settings-sync.js');
+        await writeManualHourly(null, uid, value);
       },
     });
   }
@@ -156,9 +319,8 @@ export async function uploadCategories(uid, selectedIds) {
       id: 'overtime',
       label: '시간외',
       run: async () => {
-        const raw = localStorage.getItem('overtimeRecords_guest');
-        if (!raw) return;
-        const data = JSON.parse(raw);
+        const data = _snapshotValue(source, 'overtimeRecords_guest');
+        if (!data) return;
         const { writeAllOvertime } = await import('/src/firebase/sync/overtime-sync.js');
         await writeAllOvertime(null, uid, data);
       },
@@ -170,9 +332,8 @@ export async function uploadCategories(uid, selectedIds) {
       id: 'leave',
       label: '휴가',
       run: async () => {
-        const raw = localStorage.getItem('leaveRecords_guest') || localStorage.getItem('leaveRecords');
-        if (!raw) return;
-        const data = JSON.parse(raw);
+        const data = _snapshotValue(source, 'leaveRecords') || _snapshotValue(source, 'leaveRecords_guest');
+        if (!data) return;
         const { writeAllLeave } = await import('/src/firebase/sync/leave-sync.js');
         await writeAllLeave(null, uid, data);
       },
@@ -180,16 +341,36 @@ export async function uploadCategories(uid, selectedIds) {
   }
 
   if (selectedIds.includes('schedule') || selectedIds.includes('overtime')) {
-    // 근무표는 overtime 항목과 함께 마이그레이션 (자동 레코드 의존성 때문에)
     syncTasks.push({
       id: 'schedule',
       label: '근무표',
       run: async () => {
-        const raw = localStorage.getItem('snuhmate_schedule_records');
-        if (!raw) return;
-        const data = JSON.parse(raw);
+        const data = _snapshotValue(source, 'snuhmate_schedule_records');
+        if (!data) return;
         const { writeAllSchedule } = await import('/src/firebase/sync/schedule-sync.js');
         await writeAllSchedule(null, uid, data);
+      },
+    });
+  }
+
+  if (selectedIds.includes('payslips') || selectedIds.includes('payroll')) {
+    syncTasks.push({
+      id: 'payslips',
+      label: '급여명세서',
+      run: async () => {
+        const { writePayslip, writeAllPayslips } = await import('/src/firebase/sync/payslip-sync.js');
+        const supplemental = _mergePayslipMaps(
+          _snapshotValue(source, 'overtimePayslipData_guest'),
+          _snapshotValue(source, 'overtimePayslipData'),
+        );
+        if (Object.keys(supplemental).length > 0) {
+          await writeAllPayslips(null, uid, supplemental);
+        }
+        await Promise.all(Object.entries(source.payslips || {}).map(([key, data]) => {
+          const payMonth = _monthFromPayslipKey(key);
+          if (!payMonth) return Promise.resolve();
+          return writePayslip(null, uid, payMonth, data, undefined, _typeFromPayslipKey(key));
+        }));
       },
     });
   }
@@ -199,9 +380,8 @@ export async function uploadCategories(uid, selectedIds) {
       id: 'workHistory',
       label: '근무이력',
       run: async () => {
-        const raw = localStorage.getItem('snuhmate_work_history_guest');
-        if (!raw) return;
-        const entries = JSON.parse(raw);
+        const entries = _snapshotValue(source, 'snuhmate_work_history_guest');
+        if (!entries) return;
         const { writeAllWorkHistory } = await import('/src/firebase/sync/work-history-sync.js');
         await writeAllWorkHistory(null, uid, Array.isArray(entries) ? entries : []);
       },
@@ -213,33 +393,10 @@ export async function uploadCategories(uid, selectedIds) {
       id: 'settings',
       label: '설정',
       run: async () => {
-        const raw = localStorage.getItem('snuhmate_settings');
-        if (!raw) return;
-        const settings = JSON.parse(raw);
+        const settings = _snapshotValue(source, 'snuhmate_settings');
+        if (!settings) return;
         const { writeSettings } = await import('/src/firebase/sync/settings-sync.js');
         await writeSettings(null, uid, settings);
-      },
-    });
-  }
-
-  if (selectedIds.includes('payroll')) {
-    syncTasks.push({
-      id: 'payslips',
-      label: '급여명세서',
-      run: async () => {
-        const { writePayslip, writeAllPayslips } = await import('/src/firebase/sync/payslip-sync.js');
-        const keys = Object.keys(localStorage).filter(k => PAYSLIP_GUEST_KEY_RE.test(k));
-        await Promise.all(keys.map(async (key) => {
-          const m = /^payslip_guest_(\d{4})_(\d{2})(?:_(.+))?$/.exec(key);
-          if (!m) return;
-          const data = JSON.parse(localStorage.getItem(key) || '{}');
-          await writePayslip(null, uid, `${m[1]}-${m[2]}`, data, undefined, m[3] || '급여');
-        }));
-
-        const rawCross = localStorage.getItem('overtimePayslipData_guest');
-        if (rawCross) {
-          await writeAllPayslips(null, uid, JSON.parse(rawCross), 'overtimePayslipData');
-        }
       },
     });
   }
@@ -249,9 +406,8 @@ export async function uploadCategories(uid, selectedIds) {
       id: 'reference',
       label: '즐겨찾기',
       run: async () => {
-        const raw = localStorage.getItem('snuhmate_reg_favorites_guest');
-        if (!raw) return;
-        const favs = JSON.parse(raw);
+        const favs = _snapshotValue(source, 'snuhmate_reg_favorites_guest');
+        if (!favs) return;
         const { writeFavorites } = await import('/src/firebase/sync/favorites-sync.js');
         await writeFavorites(null, uid, Array.isArray(favs) ? favs : []);
       },
@@ -275,7 +431,9 @@ export async function uploadCategories(uid, selectedIds) {
     localStorage.setItem(FLAG_KEY, new Date().toISOString());
     localStorage.removeItem(SNOOZE_KEY);
     localStorage.removeItem(FAIL_COUNT_KEY);
-    _clearAllGuestData();
+    _clearAllGuestData(source);
+    _applySnapshotToUidLocal(uid, selectedIds, source);
+    _dispatchMigrationRefresh(uid, ok, failed);
   } else {
     // 실패 카운트 증가. 임계값 초과 시 호출자(doSync)가 soft-snooze 적용.
     const prev = parseInt(localStorage.getItem(FAIL_COUNT_KEY) || '0', 10) || 0;
@@ -293,7 +451,7 @@ export function shouldSoftSnooze() {
 }
 
 // ── 마이그레이션 다이얼로그 DOM ───────────────────────────────────────────
-export async function openMigrationDialog(uid) {
+export async function openMigrationDialog(uid, snapshot = null) {
   if (!uid) return;
   if (document.getElementById('snuhmate-migration-dialog')) return;
 
@@ -335,12 +493,14 @@ export async function openMigrationDialog(uid) {
   s1Hint.textContent = '동기화 후 로컬 게스트 데이터는 정리됩니다.';
 
   // Detect if there are guest payslip keys to surface a payslip-specific notice
-  const _hasGuestPayslip = Object.keys(localStorage).some(k => PAYSLIP_GUEST_KEY_RE.test(k));
+  const _hasGuestPayslip = snapshot
+    ? Object.keys(snapshot.payslips || {}).length > 0
+    : Object.keys(localStorage).some(k => PAYSLIP_GUEST_KEY_RE.test(k));
   let s1PayslipNote = null;
   if (_hasGuestPayslip) {
     s1PayslipNote = document.createElement('p');
     s1PayslipNote.className = 'text-xs text-[var(--accent-amber,#d97706)] text-center mt-0 mb-6';
-    s1PayslipNote.textContent = '※ 급여명세서도 급여 정보와 함께 클라우드에 동기화됩니다.';
+    s1PayslipNote.textContent = '※ 급여명세서도 함께 클라우드에 동기화됩니다.';
   }
 
   const s1Actions = document.createElement('div');
@@ -469,7 +629,7 @@ export async function openMigrationDialog(uid) {
     activeBtn.disabled = true;
     activeBtn.textContent = '업로드 중…';
 
-    const { ok, failed } = await uploadCategories(uid, selectedIds);
+    const { ok, failed } = await uploadCategories(uid, selectedIds, snapshot);
 
     // 사용자가 await 중에 dialog 를 닫은 경우 — 후속 DOM 작업이 detached 노드에 닿지 않도록 즉시 종료
     if (!overlay.isConnected) return;

@@ -7,15 +7,26 @@ import {
   HOLIDAY_MULTIPLIER,
 } from '@snuhmate/regulation-constants';
 
-export const DUTY_CODES = ['D', 'E', 'N', 'O', 'AL', 'RD'];
+export const DUTY_CODES = ['D', 'E', 'N', 'O', 'OFF', 'AL', 'RD', '9A'];
+
+export function normalizeDutyCode(code) {
+  const raw = String(code == null ? '' : code).trim();
+  if (!raw) return '';
+  const upper = raw.toUpperCase();
+  if (upper === 'OFF' || raw === '휴' || raw === '휴무') return 'O';
+  if (upper === '9A') return '9A';
+  return ['D', 'E', 'N', 'O', 'AL', 'RD'].includes(upper) ? upper : '';
+}
 
 export const DUTY_TIMES = {
   D:  { start: '07:00', end: '15:00', overnight: false, hours: 8 },
   E:  { start: '14:00', end: '22:00', overnight: false, hours: 8 },
   N:  { start: '22:00', end: '07:00', overnight: true,  hours: 8 },
   O:  null,
+  OFF: null,
   AL: null,
   RD: null,
+  '9A': { start: '09:00', end: '17:00', overnight: false, hours: 8 },
 };
 
 // HPPD 임계 (병동 기준값. 후속에 settings로 빼기).
@@ -37,10 +48,12 @@ export function calcMonthlyDutyCounts(mineMap, holidaySet = new Set()) {
   if (!mineMap) return counts;
 
   for (const [day, code] of Object.entries(mineMap)) {
-    if (!DUTY_CODES.includes(code)) continue;
-    counts[code]++;
+    const normalized = normalizeDutyCode(code);
+    if (!normalized) continue;
+    if (normalized === '9A') counts['9A'] = (counts['9A'] || 0) + 1;
+    else counts[normalized]++;
     // 공휴일에 D/E/N 근무 시 휴일근무 카운트
-    if (holidaySet.has(Number(day)) && (code === 'D' || code === 'E' || code === 'N')) {
+    if (holidaySet.has(Number(day)) && ['D', 'E', 'N', '9A'].includes(normalized)) {
       counts.holidayDuty++;
     }
   }
@@ -75,7 +88,8 @@ export function detectViolations(mineMap, year, month) {
   const daysInMonth = new Date(year, month, 0).getDate();
   const sortedDays = [];
   for (let d = 1; d <= daysInMonth; d++) {
-    if (mineMap[d]) sortedDays.push({ day: d, code: mineMap[d] });
+    const code = normalizeDutyCode(mineMap[d]);
+    if (code) sortedDays.push({ day: d, code });
   }
 
   // (a) consecutive_night: N이 limit일 이상 연속
@@ -107,11 +121,26 @@ export function detectViolations(mineMap, year, month) {
 
   // (b) min_rest_violation: N(d) 다음 날 D(d+1) — 휴식 7시간 (07~다음날 07)
   for (let d = 1; d < daysInMonth; d++) {
-    if (mineMap[d] === 'N' && mineMap[d + 1] === 'D') {
+    if (normalizeDutyCode(mineMap[d]) === 'N' && normalizeDutyCode(mineMap[d + 1]) === 'D') {
       violations.push({
         type: 'min_rest_violation',
         date: _ymdLocal(year, month, d + 1),
         restHours: 7,
+      });
+    }
+  }
+
+  // (b-2) night_off_day_recovery: N-O-D / N-O-9A 회복 패턴 차단
+  for (let d = 1; d <= daysInMonth - 2; d++) {
+    const first = normalizeDutyCode(mineMap[d]);
+    const second = normalizeDutyCode(mineMap[d + 1]);
+    const third = normalizeDutyCode(mineMap[d + 2]);
+    if (first === 'N' && second === 'O' && (third === 'D' || third === '9A')) {
+      violations.push({
+        type: 'night_off_day_recovery',
+        fromDate: _ymdLocal(year, month, d),
+        offDate: _ymdLocal(year, month, d + 1),
+        returnDate: _ymdLocal(year, month, d + 2),
       });
     }
   }
@@ -141,7 +170,7 @@ export function findNextDuty(mineMap, year, month, today = new Date()) {
   let startDay = (todayY === year && todayM === month) ? todayD : 1;
 
   for (let d = startDay; d <= daysInMonth; d++) {
-    const code = mineMap[d];
+    const code = normalizeDutyCode(mineMap[d]);
     if (code && code !== 'O') {
       const time = DUTY_TIMES[code];
       return {
@@ -172,8 +201,9 @@ export function calcHppdByDay(monthData, year, month) {
   for (let d = 1; d <= daysInMonth; d++) {
     let day = 0, evening = 0, night = 0;
     for (const row of allRows) {
-      const code = row[d];
+      const code = normalizeDutyCode(row[d]);
       if (code === 'D') day++;
+      else if (code === '9A') day++;
       else if (code === 'E') evening++;
       else if (code === 'N') night++;
     }
@@ -198,7 +228,7 @@ export function mineMapToRecords(mineMap, year, month, holidayDays = new Set(), 
 
   const daysInMonth = new Date(year, month, 0).getDate();
   for (let d = 1; d <= daysInMonth; d++) {
-    const code = mineMap[d];
+    const code = normalizeDutyCode(mineMap[d]);
     if (!code) continue;
     const dateStr = _ymdLocal(year, month, d);
     const isHoliday = holidayDays.has(d);
@@ -216,7 +246,7 @@ export function mineMapToRecords(mineMap, year, month, holidayDays = new Set(), 
         source: 'schedule',
         sourceMonth: ymPrefix,
       });
-    } else if ((code === 'D' || code === 'E') && isHoliday) {
+    } else if ((code === 'D' || code === 'E' || code === '9A') && isHoliday) {
       // 공휴일 D/E → 휴일근무
       const time = DUTY_TIMES[code];
       overtimeRecords.push({

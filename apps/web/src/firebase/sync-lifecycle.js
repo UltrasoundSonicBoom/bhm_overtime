@@ -4,7 +4,16 @@
 import { KEY_REGISTRY, localKeyFor, localScopeOf, syncKeys } from './key-registry.js';
 
 export const AUTH_BRIDGE_FIELDS = ['googleSub', 'googleEmail', 'cachedProfile', 'displayName'];
-export const DOMAIN_REFRESH_EVENTS = ['profileChanged', 'overtimeChanged', 'leaveChanged', 'payslipChanged'];
+export const DOMAIN_REFRESH_EVENTS = [
+  'profileChanged',
+  'overtimeChanged',
+  'leaveChanged',
+  'payslipChanged',
+  'scheduleChanged',
+  'workHistoryChanged',
+  'settingsChanged',
+  'favoritesChanged',
+];
 
 function _readSettings() {
   try { return JSON.parse(localStorage.getItem('snuhmate_settings') || '{}'); }
@@ -76,6 +85,13 @@ export function clearActiveUserLocalData(uid) {
     if (localScopeOf(baseKey) !== 'user') continue;
     const key = localKeyFor(baseKey, uid);
     if (!key) continue;
+    try {
+      if (localStorage.getItem(key) !== null) removed.push(key);
+      localStorage.removeItem(key);
+    } catch { /* noop */ }
+  }
+
+  for (const key of ['snuhmate_schedule_records']) {
     try {
       if (localStorage.getItem(key) !== null) removed.push(key);
       localStorage.removeItem(key);

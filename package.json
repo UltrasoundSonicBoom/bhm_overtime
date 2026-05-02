@@ -51,6 +51,7 @@
     "@snuhmate/data": "workspace:*",
     "@snuhmate/profile": "workspace:*",
     "@snuhmate/regulation-constants": "workspace:*",
+    "@snuhmate/scheduling": "workspace:*",
     "@snuhmate/shared-utils": "workspace:*",
     "eslint": "^10.2.1",
     "eslint-plugin-no-unsanitized": "^4.1.5",

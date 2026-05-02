@@ -52,7 +52,7 @@ describe('overtime-sync — 라운드트립', () => {
     expect(restored[0].memo).toBe('야근 메모');
   });
 
-  it('암호화 검증: memo/hours 평문 노출 없음', async () => {
+  it('암호화 검증: memo/hours/breakdown/estimatedPay 평문 노출 없음', async () => {
     const { writeOvertimeMonth } =
       await import('../../../apps/web/src/firebase/sync/overtime-sync.js');
     const db = _createMockDb();
@@ -66,6 +66,8 @@ describe('overtime-sync — 라운드트립', () => {
     expect(doc.entries[0].notes._v).toBe(1);
     // entries[0].hours 도 암호화
     expect(typeof doc.entries[0].hours).toBe('object');
+    expect(typeof doc.entries[0].breakdown).toBe('object');
+    expect(typeof doc.entries[0].estimatedPay).toBe('object');
   });
 
   it('writeAllOvertime → readAllOvertime (여러 월)', async () => {

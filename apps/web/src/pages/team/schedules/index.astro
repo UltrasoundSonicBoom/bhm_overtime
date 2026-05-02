@@ -1,0 +1,105 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Container from '../../../components/layout/Container.astro';
+import PageHeader from '../../../components/patterns/PageHeader.astro';
+import Card from '../../../components/ui/Card.astro';
+import ScheduleGrid from '../../../components/team-schedules/ScheduleGrid.astro';
+import RuleIssueBadge from '../../../components/team-schedules/RuleIssueBadge.astro';
+import { evaluateSchedule, normalizeImportSnapshot, SNUH_NURSE_MVP_RULE_PACK } from '@snuhmate/scheduling';
+
+const routes = [
+  { href: '/team/schedules/admin', label: '관리 큐', state: '대기 3' },
+  { href: '/team/schedules/import', label: '가져오기', state: '검토 중' },
+  { href: '/team/schedules/rules', label: '규칙', state: '5 rules' },
+  { href: '/team/schedules/approvals', label: '승인', state: '2건' },
+  { href: '/team/schedules/audit', label: '감사', state: '24 logs' },
+  { href: '/team/schedules/me', label: '내 근무', state: '이번 주' },
+  { href: '/team/schedules/swaps', label: '교대 요청', state: '1건' },
+];
+
+const demoTeams = [
+  { id: 'ward-101', name: '101 병동', mode: '3교대 간호팀', status: '검증 필요' },
+  { id: 'angio', name: 'Angio', mode: '평일/주말 온콜 혼합', status: '초안' },
+];
+
+const inputRows = [
+  { employeeId: 'n-101-01', employeeName: '김민지', days: { 1: 'D', 2: 'E', 3: 'N', 4: 'OFF', 5: 'D', 6: 'OFF', 7: 'D' } },
+  { employeeId: 'n-101-02', employeeName: '이서연', days: { 1: 'E', 2: 'N', 3: 'OFF', 4: 'D', 5: 'E', 6: 'N', 7: 'OFF' } },
+  { employeeId: 'n-101-03', employeeName: '박지훈', days: { 1: 'N', 2: 'OFF', 3: 'D', 4: '9A', 5: 'OFF', 6: 'D', 7: 'E' } },
+];
+
+const snapshot = normalizeImportSnapshot({
+  teamId: 'ward-101',
+  period: '2026-05',
+  source: { type: 'demo', name: 'ward-101-preview' },
+  rows: inputRows,
+});
+const validation = evaluateSchedule(snapshot, SNUH_NURSE_MVP_RULE_PACK);
+const blockCount = validation.summary?.block ?? validation.issues.filter((issue) => issue.severity === 'block').length;
+const warnCount = validation.summary?.warn ?? validation.issues.filter((issue) => issue.severity === 'warn').length;
+const gridRows = inputRows.map((row) => ({
+  employeeId: row.employeeId,
+  employeeName: row.employeeName,
+  days: row.days,
+}));
+---
+<BaseLayout title="Team Plan 팀 스케줄" description="Team Plan schedule operations" showFooterNav={false}>
+  <main class="min-h-screen bg-ds-bg-page py-8">
+    <Container size="lg">
+      <PageHeader
+        title="Team Plan 팀 스케줄"
+        description="가져오기, 검증, 오버레이, 배포까지 한 화면에서 보는 운영 초안입니다."
+      />
+
+      <nav class="mb-6 grid grid-cols-2 gap-2 md:grid-cols-4" aria-label="팀 스케줄 작업 이동">
+        {routes.map((route) => (
+          <a class="rounded-md border border-ds-border-default bg-ds-bg-surface px-3 py-2 text-sm text-ds-text-primary hover:border-ds-border-strong" href={route.href}>
+            <span class="block font-semibold">{route.label}</span>
+            <span class="text-xs text-ds-text-secondary">{route.state}</span>
+          </a>
+        ))}
+      </nav>
+
+      <section class="mb-6 grid grid-cols-1 gap-3 md:grid-cols-2" aria-label="데모 팀 선택">
+        {demoTeams.map((team) => (
+          <Card padding="md">
+            <span slot="header">{team.name}</span>
+            <p class="text-sm text-ds-text-secondary">{team.mode}</p>
+            <p class="mt-3 text-xs font-semibold text-ds-text-primary">{team.status}</p>
+          </Card>
+        ))}
+      </section>
+
+      <section class="mb-6 grid grid-cols-1 gap-3 md:grid-cols-4" aria-label="워크플로 상태">
+        {['Import', 'Validate', 'Overlay', 'Publish'].map((step, index) => (
+          <div class="rounded-md border border-ds-border-default bg-ds-bg-surface px-4 py-3">
+            <p class="text-xs font-semibold uppercase text-ds-text-secondary">{step}</p>
+            <p class="mt-1 text-sm text-ds-text-primary">
+              {index === 0 ? '샘플 업로드 완료' : index === 1 ? '규칙 검증 실행' : index === 2 ? '관리자 수정안 1건' : '배포 잠금'}
+            </p>
+          </div>
+        ))}
+      </section>
+
+      <section class="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
+        <ScheduleGrid title="101 병동 5월 초안" period="2026-05" assignments={gridRows} />
+        <Card padding="md" as="section" ariaLabel="검증 요약">
+          <span slot="header">검증 요약</span>
+          <div class="mb-4 flex flex-wrap gap-2">
+            <RuleIssueBadge severity="block" label="차단" count={blockCount} />
+            <RuleIssueBadge severity="warn" label="경고" count={warnCount} />
+            <RuleIssueBadge severity="info" label="배포 가능" count={validation.summary?.canPublish ? 1 : 0} />
+          </div>
+          <ol class="space-y-3 text-sm">
+            {validation.issues.slice(0, 4).map((issue) => (
+              <li class="rounded-md border border-ds-border-default p-3">
+                <p class="font-semibold text-ds-text-primary">{issue.ruleId}</p>
+                <p class="text-ds-text-secondary">{issue.message}</p>
+              </li>
+            ))}
+          </ol>
+        </Card>
+      </section>
+    </Container>
+  </main>
+</BaseLayout>

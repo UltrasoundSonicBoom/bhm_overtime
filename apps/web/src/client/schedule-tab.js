@@ -23,6 +23,7 @@ import {
   HPPD_THRESHOLDS,
   VIOLATION_LIMITS,
   calcMonthlyDutyCounts,
+  normalizeDutyCode,
   detectViolations,
   findNextDuty,
   calcHppdByDay,
@@ -33,12 +34,14 @@ const STORAGE_KEY = 'snuhmate_schedule_records';
 
 const DUTY_LABELS = {
   D: '데이', E: '이브닝', N: '나이트',
-  O: '오프', AL: '연차', RD: '리커버리데이',
+  O: '오프', OFF: '오프', AL: '연차', RD: '리커버리데이',
+  '9A': '9A',
 };
 
 const VIOLATION_LABELS = {
   consecutive_night: (v) => `⚠️ 야간 ${v.days}일 연속 — 단체협약 확인 필요`,
   min_rest_violation: (v) => `⚠️ 최소 휴식 미보장 (${v.date}, 약 7시간)`,
+  night_off_day_recovery: (v) => `⛔ N-O-D 회복 패턴 — ${v.returnDate} 근무 조정 필요`,
   monthly_night_overflow: (v) => `⚠️ 월 야간 ${v.count}일 — 시간외수당 처리 대상`,
 };
 
@@ -78,6 +81,7 @@ let schState = {
   parsedNames: [],
   holidayMap: {},       // { day: name }  — 최신 월의 공휴일
   hourlyRate: 0,
+  _cloudReconcileMonth: null,
 };
 
 // ── HTML escape ──
@@ -91,7 +95,8 @@ function esc(s) {
 }
 
 function safeCode(code) {
-  return DUTY_CODES.includes(code) ? code : '';
+  const normalized = normalizeDutyCode(code);
+  return DUTY_CODES.includes(normalized) ? normalized : '';
 }
 
 // "대체공휴일(부처님오신날)" → "부처님오신날(대휴)"
@@ -122,9 +127,15 @@ function _loadAll() {
     return {};
   }
 }
-function _saveAll(all) {
+function _saveAll(all, opts = {}) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+    if (opts.recordEdit !== false && typeof window.recordLocalEdit === 'function') {
+      window.recordLocalEdit(STORAGE_KEY);
+    }
+    if (opts.recordEdit !== false && typeof window !== 'undefined') {
+      try { window.dispatchEvent(new CustomEvent('scheduleChanged', { detail: { source: 'local' } })); } catch (_e) {}
+    }
   } catch (e) {
     console.warn('[schedule] localStorage save failed', e);
   }
@@ -136,10 +147,13 @@ function _getMonthData(year, month) {
   const all = _loadAll();
   return all[_yyyymm(year, month)] || { mine: {}, team: {}, lastEditAt: 0 };
 }
-function _setMonthData(year, month, data) {
+function _setMonthData(year, month, data, opts = {}) {
   const all = _loadAll();
-  all[_yyyymm(year, month)] = { ...data, lastEditAt: Date.now() };
-  _saveAll(all);
+  all[_yyyymm(year, month)] = {
+    ...data,
+    lastEditAt: opts.preserveLastEditAt ? (data.lastEditAt || Date.now()) : Date.now(),
+  };
+  _saveAll(all, { recordEdit: opts.recordEdit });
 }
 
 // ── 데모 시드 (게스트/빈 상태에서만) ──
@@ -160,7 +174,7 @@ function _seedDemoIfEmpty(year, month) {
       newData.team[name][d] = codes[(d - 1 + shift) % codes.length];
     }
   });
-  _setMonthData(year, month, newData);
+  _setMonthData(year, month, newData, { recordEdit: false });
 }
 
 // ── 공휴일 사전 조회 (월간 일괄) ──
@@ -307,7 +321,7 @@ function _renderNurseRow({ name, cls, tags, isMine, dayMap, dayStart, dayEnd, se
   // total: 전체 월 (주간 모드여도 월간 합계 보여주는 게 자연스러움 — 다만 주간 모드면 가시 범위만 카운트)
   let total = 0;
   for (let d = dayStart; d <= dayEnd; d++) {
-    const code = dutyMap[d];
+    const code = safeCode(dutyMap[d]);
     if (code && code !== 'O') total++;
   }
 
@@ -493,6 +507,9 @@ function renderStats() {
     { cls: 'AL', code: 'AL', num: counts.AL, lbl: '연차' },
     { cls: 'RD', code: 'RD', num: counts.RD, lbl: '리커버리' },
   ];
+  if (counts['9A'] > 0) {
+    cards.push({ cls: '', num: counts['9A'], lbl: '9A 근무' });
+  }
   if (counts.holidayDuty > 0) {
     cards.push({ cls: 'HD', code: 'HD', num: counts.holidayDuty, lbl: '공휴일 근무' });
   }
@@ -512,7 +529,7 @@ function renderStats() {
   for (const v of violations) {
     const fn = VIOLATION_LABELS[v.type];
     if (!fn) continue;
-    const tone = v.type === 'min_rest_violation' ? 'rose' : 'amber';
+    const tone = (v.type === 'min_rest_violation' || v.type === 'night_off_day_recovery') ? 'rose' : 'amber';
     warnHtml += `<span class="sch-warn-chip ${tone}">${esc(fn(v))}</span>`;
   }
   // eslint-disable-next-line no-unsanitized/property
@@ -740,7 +757,13 @@ async function _loadFromFirebase(year, month) {
     const { readScheduleMonth } = await import('/src/firebase/sync/schedule-sync.js');
     const remote = await readScheduleMonth(null, uid, _yyyymm(year, month));
     if (remote && Object.keys(remote.mine || {}).length > 0) {
-      _setMonthData(year, month, remote);
+      const local = _getMonthData(year, month);
+      const remoteEditAt = Number(remote.lastEditAt) || 0;
+      const localEditAt = Number(local.lastEditAt) || 0;
+      if (remoteEditAt >= localEditAt) {
+        _setMonthData(year, month, remote, { preserveLastEditAt: true, recordEdit: false });
+        schState._cloudReconcileMonth = _yyyymm(year, month);
+      }
     }
   } catch (e) {
     console.warn('[schedule] Firebase load failed', e?.message);
@@ -895,7 +918,8 @@ async function confirmSchUpload() {
       // mine map: { day: code }
       data.mine = {};
       for (const [day, code] of Object.entries(myRow.days)) {
-        if (code) data.mine[day] = code;
+        const normalized = safeCode(code);
+        if (normalized) data.mine[day] = normalized;
       }
     }
     // team map: 본인 외 모든 행
@@ -904,7 +928,8 @@ async function confirmSchUpload() {
       if (row.name === selectedName) continue;
       const dayMap = {};
       for (const [day, code] of Object.entries(row.days || {})) {
-        if (code) dayMap[day] = code;
+        const normalized = safeCode(code);
+        if (normalized) dayMap[day] = normalized;
       }
       newTeam[row.name] = dayMap;
     }
@@ -1054,6 +1079,10 @@ async function _refreshMonth() {
   const { year, month, view } = schState;
   schState.holidayMap = await _loadHolidayMap(year, month);
   schState.hourlyRate = _loadHourlyRate();
+  if (schState._cloudReconcileMonth === _yyyymm(year, month)) {
+    await reconcileMonthlyRecords(year, month);
+    schState._cloudReconcileMonth = null;
+  }
   renderPeriodLabel();
   // 뷰별로 활성 컨테이너만 렌더
   if (view === 'mine') renderMineCalendar();

@@ -52,7 +52,16 @@ export async function onAuthChanged(callback) {
   const { auth, authMod } = await _f();
   return authMod.onAuthStateChanged(auth, async (user) => {
     if (user) {
+      let migrationSnapshot = null;
       login(user);
+      // hydrate 전에 guest snapshot 을 먼저 고정한다. leave/schedule 같은 공유 키는
+      // hydrate 뒤 cloud 값으로 바뀌므로, 이후에 읽으면 guest 데이터로 오인될 수 있다.
+      try {
+        const mig = await import('./migration-dialog.js');
+        if (mig?.captureGuestMigrationSnapshot) {
+          migrationSnapshot = mig.captureGuestMigrationSnapshot();
+        }
+      } catch (e) { /* migration-dialog 미존재 — 무해 */ }
       // 다기기 동기화: Firestore → localStorage 채우기 (PC/모바일 hydration)
       // 사용자가 다른 기기에서 입력한 데이터를 이 기기에서도 보이게 한다.
       try {
@@ -71,8 +80,8 @@ export async function onAuthChanged(callback) {
       // 마이그레이션 다이얼로그 hook (Phase 8 에서 모듈 추가 시 활성, 미존재 무해)
       try {
         const mig = await import('./migration-dialog.js');
-        if (mig?.shouldShowMigration && await mig.shouldShowMigration(user.uid)) {
-          mig.openMigrationDialog(user.uid);
+        if (mig?.shouldShowMigration && await mig.shouldShowMigration(user.uid, migrationSnapshot)) {
+          mig.openMigrationDialog(user.uid, migrationSnapshot);
         }
       } catch (e) { /* migration-dialog 미존재 — Phase 8 미완 시점 무해 */ }
     } else {

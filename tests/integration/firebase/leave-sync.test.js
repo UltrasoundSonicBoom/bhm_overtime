@@ -32,7 +32,7 @@ function _createMockDb() {
 const SAMPLE_RECORDS = [
   {
     id: 'lv1', startDate: '2026-04-10', endDate: '2026-04-10',
-    type: 'annual', days: 1, hours: 0, notes: '개인 사유', isPaid: true,
+    type: 'annual', days: 1, hours: 0, notes: '개인 사유', isPaid: true, salaryImpact: -50000,
   },
   {
     id: 'lv2', startDate: '2026-04-15', endDate: '2026-04-17',
@@ -66,6 +66,7 @@ describe('leave-sync — 라운드트립', () => {
     expect(typeof doc.entries[0].notes).toBe('object');
     expect(doc.entries[0].notes._v).toBe(1);
     expect(typeof doc.entries[0].duration).toBe('object');
+    expect(typeof doc.entries[0].salaryImpact).toBe('object');
   });
 
   it('writeAllLeave → readAllLeave (여러 연도)', async () => {

@@ -1,0 +1,30 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Container from '../../../components/layout/Container.astro';
+import PageHeader from '../../../components/patterns/PageHeader.astro';
+import Card from '../../../components/ui/Card.astro';
+import ScheduleGrid from '../../../components/team-schedules/ScheduleGrid.astro';
+
+const mine = [{ employeeId: 'n-101-01', employeeName: '김민지', days: { 1: 'D', 2: 'E', 3: 'N', 4: 'OFF', 5: 'D', 6: 'OFF', 7: 'D' } }];
+---
+<BaseLayout title="내 팀 근무" showFooterNav={false}>
+  <main class="min-h-screen bg-ds-bg-page py-8" data-team-schedule-route="me">
+    <Container size="lg">
+      <PageHeader title="내 근무" description="팀 배포본에서 본인 근무와 요청 가능한 변경을 확인합니다." />
+      <section class="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
+        <ScheduleGrid title="김민지 1주차" period="2026-05" assignments={mine} />
+        <Card padding="md" as="section">
+          <span slot="header">개인 상태</span>
+          <dl class="space-y-3 text-sm">
+            <div><dt class="font-semibold">다음 근무</dt><dd class="text-ds-text-secondary">5월 1일 D</dd></div>
+            <div><dt class="font-semibold">요청 가능</dt><dd class="text-ds-text-secondary">교대 1건, 휴무 선호 2건</dd></div>
+            <div><dt class="font-semibold">알림</dt><dd class="text-ds-text-secondary">배포 전 변경 가능</dd></div>
+          </dl>
+        </Card>
+      </section>
+    </Container>
+  </main>
+  <script>
+    import '../../../client/team-schedules/member-schedule-controller.js';
+  </script>
+</BaseLayout>

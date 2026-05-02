@@ -5,11 +5,11 @@
 import re
 from typing import Optional
 
-STANDARD_CODES = ("D", "E", "N", "O", "AL", "RD")
+STANDARD_CODES = ("D", "E", "N", "O", "AL", "RD", "9A")
 
 EXACT_MAP: dict[str, str] = {
     # 영문 1글자
-    "d": "D", "e": "E", "n": "N", "o": "O",
+    "d": "D", "e": "E", "n": "N", "o": "O", "9a": "9A",
     # 한국어 1글자
     "데": "D", "이": "E", "나": "N", "오": "O",
     # 한국어 풀 명칭

@@ -1,23 +1,8 @@
 // firebase/hydrate.js — 로그인 시 Firestore → localStorage 채우기 (다기기 동기화)
 //
-// Phase 8 Task 7 의 누락된 read 흐름. 사용자가 PC 에서 입력한 데이터가
-// 휴대폰에서 안 보이던 버그의 1차 fix.
-//
-// 호출: auth-service.js onAuthChanged 로그인 분기에서 googleSub 설정 직후.
-// 책임: 7 카테고리 (profile/overtime/leave/payslip/work_history/settings/favorites)
-//       Firestore 에서 read → 사용자별 localStorage 키 (`_uid_<uid>` 접미)에 저장.
-//
-// 모델: auth = real data. cloud 가 source of truth. 로그아웃 시 _uid_<uid> 키들
-//       모두 정리되므로 (clearLocalUserData), 재로그인 시 hydrate 가 cloud → 로컬
-//       을 항상 덮어쓴다 (조건부 write 아님). 로컬 데이터 충돌 위험 없음.
+// auth = real data. cloud가 source of truth이고, 로그인 때 Firestore 값을
+// 현재 uid의 localStorage 키로 덮어써서 탭 간 계산 흐름을 즉시 재초기화한다.
 
-import { readProfile } from './sync/profile-sync.js';
-import { readAllOvertime } from './sync/overtime-sync.js';
-import { readAllLeave } from './sync/leave-sync.js';
-import { readAllPayslips } from './sync/payslip-sync.js';
-import { readAllWorkHistory } from './sync/work-history-sync.js';
-import { readSettings } from './sync/settings-sync.js';
-import { readFavorites } from './sync/favorites-sync.js';
 import {
   clearActiveUserLocalData,
   emitDomainRefresh,
@@ -25,9 +10,85 @@ import {
 } from './sync-lifecycle.js';
 import { localKeyFor } from './key-registry.js';
 
+async function _readProfile(...args) {
+  const { readProfile } = await import('./sync/profile-sync.js');
+  return readProfile(...args);
+}
+
+async function _readAllOvertime(...args) {
+  const { readAllOvertime } = await import('./sync/overtime-sync.js');
+  return readAllOvertime(...args);
+}
+
+async function _readAllLeave(...args) {
+  const { readAllLeave } = await import('./sync/leave-sync.js');
+  return readAllLeave(...args);
+}
+
+async function _readAllPayslips(...args) {
+  const { readAllPayslips } = await import('./sync/payslip-sync.js');
+  return readAllPayslips(...args);
+}
+
+async function _readAllWorkHistory(...args) {
+  const { readAllWorkHistory } = await import('./sync/work-history-sync.js');
+  return readAllWorkHistory(...args);
+}
+
+async function _readAllSchedule(...args) {
+  const { readAllSchedule } = await import('./sync/schedule-sync.js');
+  return readAllSchedule(...args);
+}
+
+async function _readSettings(...args) {
+  const { readSettings } = await import('./sync/settings-sync.js');
+  return readSettings(...args);
+}
+
+async function _readFavorites(...args) {
+  const { readFavorites } = await import('./sync/favorites-sync.js');
+  return readFavorites(...args);
+}
+
+export const HYDRATED_BASES = [
+  'snuhmate_hr_profile',
+  'snuhmate_work_history_seeded',
+  'overtimeRecords',
+  'otManualHourly',
+  'overtimePayslipData',
+  'leaveRecords',
+  'snuhmate_work_history',
+  'snuhmate_schedule_records',
+  'snuhmate_settings',
+  'theme',
+  'snuhmate_reg_favorites',
+];
+
+export const CLEARED_EXACT_BASES = [
+  'snuhmate_hr_profile',
+  'snuhmate_work_history_seeded',
+  'overtimeRecords',
+  'otManualHourly',
+  'overtimePayslipData',
+  'leaveRecords',
+  'snuhmate_work_history',
+  'snuhmate_schedule_records',
+  'snuhmate_reg_favorites',
+];
+
 function _setLocal(key, value) {
   try {
     localStorage.setItem(key, JSON.stringify(value));
+    return true;
+  } catch (e) {
+    console.warn('[hydrate] localStorage write 실패', key, e?.message);
+    return false;
+  }
+}
+
+function _setLocalRaw(key, value) {
+  try {
+    localStorage.setItem(key, String(value));
     return true;
   } catch (e) {
     console.warn('[hydrate] localStorage write 실패', key, e?.message);
@@ -65,18 +126,21 @@ export async function hydrateFromFirestore(uid) {
     {
       key: 'profile',
       run: async () => {
-        const data = await readProfile(null, uid);
+        const data = await _readProfile(null, uid);
         if (!data) return;
         _setLocal(localKeyFor('snuhmate_hr_profile', uid), data);
         if (data.manualHourly != null) {
-          _setLocal(localKeyFor('otManualHourly', uid), String(data.manualHourly));
+          _setLocalRaw(localKeyFor('otManualHourly', uid), data.manualHourly);
+        }
+        if (data.workHistorySeeded != null) {
+          _setLocalRaw(localKeyFor('snuhmate_work_history_seeded', uid), data.workHistorySeeded ? 'true' : 'false');
         }
       },
     },
     {
       key: 'overtime',
       run: async () => {
-        const data = await readAllOvertime(null, uid);
+        const data = await _readAllOvertime(null, uid);
         if (!data || Object.keys(data).length === 0) return;
         _setLocal(localKeyFor('overtimeRecords', uid), data);
       },
@@ -84,7 +148,7 @@ export async function hydrateFromFirestore(uid) {
     {
       key: 'leave',
       run: async () => {
-        const data = await readAllLeave(null, uid);
+        const data = await _readAllLeave(null, uid);
         if (!data || Object.keys(data).length === 0) return;
         _setLocal(localKeyFor('leaveRecords', uid), data);
       },
@@ -92,7 +156,7 @@ export async function hydrateFromFirestore(uid) {
     {
       key: 'payslips',
       run: async () => {
-        const data = await readAllPayslips(null, uid);
+        const data = await _readAllPayslips(null, uid);
         if (!data || Object.keys(data).length === 0) return;
         const crossCheckData = {};
         for (const [entryKey, payslipData] of Object.entries(data)) {
@@ -112,26 +176,37 @@ export async function hydrateFromFirestore(uid) {
     {
       key: 'work_history',
       run: async () => {
-        const data = await readAllWorkHistory(null, uid);
+        const data = await _readAllWorkHistory(null, uid);
         if (!data || data.length === 0) return;
         _setLocal(localKeyFor('snuhmate_work_history', uid), data);
       },
     },
     {
+      key: 'schedule',
+      run: async () => {
+        const data = await _readAllSchedule(null, uid);
+        if (!data || Object.keys(data).length === 0) return;
+        _setLocal('snuhmate_schedule_records', data);
+      },
+    },
+    {
       key: 'settings',
       run: async () => {
-        const data = await readSettings(null, uid);
+        const data = await _readSettings(null, uid);
         if (!data) return;
         try {
           const existing = JSON.parse(localStorage.getItem('snuhmate_settings') || '{}');
           _setLocal('snuhmate_settings', mergeCloudSettingsForLocal(existing, data));
-        } catch (e) { _setLocal('snuhmate_settings', mergeCloudSettingsForLocal({}, data)); }
+        } catch (e) {
+          _setLocal('snuhmate_settings', mergeCloudSettingsForLocal({}, data));
+        }
+        if (data.theme) _setLocalRaw('theme', data.theme);
       },
     },
     {
       key: 'favorites',
       run: async () => {
-        const data = await readFavorites(null, uid);
+        const data = await _readFavorites(null, uid);
         if (!data || data.length === 0) return;
         _setLocal(localKeyFor('snuhmate_reg_favorites', uid), data);
       },
@@ -151,6 +226,5 @@ export async function hydrateFromFirestore(uid) {
   }
 
   emitDomainRefresh({ reason: 'hydrate', ok, failed, uid });
-
   return { ok, failed };
 }

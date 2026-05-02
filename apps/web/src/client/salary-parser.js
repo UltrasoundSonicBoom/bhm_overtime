@@ -1114,7 +1114,8 @@ export const SALARY_PARSER = (() => {
     const existing = overwrite ? null : loadMonthlyData(year, month, type);
     const merged = existing ? mergePayslipData(existing, data) : data;
 
-    localStorage.setItem(key, JSON.stringify({ ...merged, savedAt: new Date().toISOString() }));
+    const saved = { ...merged, savedAt: new Date().toISOString() };
+    localStorage.setItem(key, JSON.stringify(saved));
 
     // 다기기 동기화: auto-sync.js 가 'payslip_<uid>_YYYY_MM' 키를 인식해서 Firestore write
     if (typeof window.recordLocalEdit === 'function') {
@@ -1133,10 +1134,13 @@ export const SALARY_PARSER = (() => {
 
     // 급여 유형 저장 완료 시 ImprovementAgent 자동 실행
     if (!type || type === '급여') {
-      if (typeof PayrollImprovementAgent !== 'undefined') {
-        setTimeout(() => PayrollImprovementAgent.runOnActualUpload(year, month), 0);
+      const agent = (typeof window !== 'undefined') ? window.PayrollImprovementAgent : null;
+      if (agent && typeof agent.runOnActualUpload === 'function') {
+        setTimeout(() => agent.runOnActualUpload(year, month), 0);
       }
     }
+
+    return saved;
   }
 
   // 같은 월 두 번째 PDF 업로드 시 항목 병합

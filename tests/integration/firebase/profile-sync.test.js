@@ -85,7 +85,8 @@ describe('profile-sync — write/read 라운드트립 (암호화 포함)', () =>
     const uid = 'user1';
     const original = {
       name: '김간호', employeeId: 'E001', department: '내과',
-      hourlyWage: 15000, annualSalary: 50000000,
+      employeeNumber: 'A1234567', jobType: '간호직', grade: 'S3', year: 7,
+      hourlyWage: 15000, annualSalary: 50000000, weeklyHours: 209,
     };
     await writeProfile(db, uid, original);
     const restored = await readProfile(db, uid);
@@ -98,8 +99,13 @@ describe('profile-sync — write/read 라운드트립 (암호화 포함)', () =>
     await writeProfile(db, 'user1', {
       name: '김간호',
       employeeId: 'E001',
+      employeeNumber: 'A1234567',
       department: '내과',
+      jobType: '간호직',
+      grade: 'S3_민감등급',
+      year: 7,
       hourlyWage: 15000,
+      weeklyHours: 209,
     });
     const identityDoc = db._readDoc('users/user1/profile/identity');
     const payrollDoc = db._readDoc('users/user1/profile/payroll');
@@ -108,12 +114,25 @@ describe('profile-sync — write/read 라운드트립 (암호화 포함)', () =>
     expect(identityDoc.name._v).toBe(1);
     expect(typeof identityDoc.employeeId).toBe('object');
     expect(identityDoc.employeeId._v).toBe(1);
+    expect(typeof identityDoc.employeeNumber).toBe('object');
+    expect(identityDoc.employeeNumber._v).toBe(1);
+    expect(typeof identityDoc.jobType).toBe('object');
+    expect(identityDoc.jobType._v).toBe(1);
+    expect(typeof identityDoc.grade).toBe('object');
+    expect(identityDoc.grade._v).toBe(1);
+    expect(typeof identityDoc.year).toBe('object');
+    expect(identityDoc.year._v).toBe(1);
     expect(typeof payrollDoc.hourlyWage).toBe('object');
     expect(payrollDoc.hourlyWage._v).toBe(1);
+    expect(typeof payrollDoc.weeklyHours).toBe('object');
+    expect(payrollDoc.weeklyHours._v).toBe(1);
     // raw JSON 안에 평문 '김간호' 안 보임
     const allRaw = JSON.stringify(db._store);
     expect(allRaw).not.toContain('김간호');
     expect(allRaw).not.toContain('E001');
+    expect(allRaw).not.toContain('A1234567');
+    expect(allRaw).not.toContain('간호직');
+    expect(allRaw).not.toContain('S3_민감등급');
   });
 
   it('lastEditAt 필드 평문 (인덱싱용)', async () => {

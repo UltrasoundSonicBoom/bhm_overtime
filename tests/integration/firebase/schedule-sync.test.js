@@ -81,14 +81,16 @@ describe('schedule-sync — 라운드트립', () => {
     expect(doc.entries[0].date).toBe('2026-04-01');
   });
 
-  it('팀원 이름은 평문 유지 (인덱스/쿼리용)', async () => {
+  it('팀 근무표는 객체 단위로 암호화한다', async () => {
     const { writeScheduleMonth } =
       await import('../../../apps/web/src/firebase/sync/schedule-sync.js');
     const db = _createMockDb();
     await writeScheduleMonth(db, 'uid1', '2026-04', SAMPLE_MONTH);
     const doc = db._store['users/uid1/schedule/2026-04'];
-    expect(doc.team).toHaveProperty('김지원');
-    expect(doc.team).toHaveProperty('박서연');
+    expect(typeof doc.team).toBe('object');
+    expect(doc.team._v).toBe(1);
+    expect(JSON.stringify(doc.team)).not.toContain('김지원');
+    expect(JSON.stringify(doc.team)).not.toContain('박서연');
   });
 
   it('writeAllSchedule → readAllSchedule (여러 월)', async () => {

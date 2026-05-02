@@ -26,6 +26,7 @@ interface Props {
   ariaLabel?: string;
   /** @internal Static string literals only. Never pass user-controlled data — XSS vector. */
   onclick?: string;
+  [key: string]: unknown;
 }
 
 const {
@@ -42,6 +43,7 @@ const {
   value,
   ariaLabel,
   onclick,
+  ...rest
 } = Astro.props;
 
 const variantClass = {
@@ -69,6 +71,7 @@ const legacyVariant = variant === 'primary'   ? 'btn-primary'
 const legacyClass = ['btn', legacyVariant, fullWidth ? 'btn-full' : ''].filter(Boolean).join(' ');
 ---
 <button
+  {...rest}
   type={type}
   id={id}
   name={name}

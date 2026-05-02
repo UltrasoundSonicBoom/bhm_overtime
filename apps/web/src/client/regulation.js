@@ -21,6 +21,7 @@ import { DATA } from '@snuhmate/data';
 import { PROFILE } from '@snuhmate/profile/profile';
 import { CALC } from '@snuhmate/calculators';
 import { escapeHtml } from '@snuhmate/shared-utils';
+import { REGULATION_HIDDEN_CHAPTERS, getVisibleRegulationChapters } from './regulation-filter.js';
 // pdf.js는 CDN — type=module HTML 에 명시 외부 로드 유지
 
 // ── handbook 조항 제목 → 계산기 매핑 (FAQ 중간 레이어 제거) ──
@@ -121,19 +122,9 @@ var CHAPTER_ICONS = {
   '별첨': '📋'
 };
 
-// ── 숨김 장(Chapter) ──
-// 실제 업무와 관련 없는 장은 찾아보기 탭에서 제외.
-// 주석처리(해당 항목 삭제)하면 해당 장이 다시 표시됨.
-var HIDDEN_CHAPTERS = {
-  '제1장 총칙': true,
-  '제2장 조합 활동': true,
-  '제3장 인사': true,
-  '제8장 단체교섭': true,
-  '제9장 노사협의회': true,
-  '제10장 부칙': true,
-  '별도 합의사항': true,
-  // '별첨': 표시됨 (보수표, 휴직제도 등 유용)
-};
+// ── 장(Chapter) 표시 정책 ──
+// 전체 단체협약을 확인할 수 있어야 하므로, 기본값은 숨김 장 없음.
+// 업무 중심 단축 보기는 검색/필터 레이어에서 따로 제공하고 원본 데이터는 모두 노출한다.
 
 // ── 조항 → 담당 부서 매핑 (DATA.contacts 키와 일치) ──
 // 장/제목 키워드 기반 휴리스틱
@@ -334,8 +325,7 @@ function tryLoadBrowseFromJson() {
           _tables: art.tables || []
         });
       });
-      // HIDDEN_CHAPTERS에 포함된 장은 렌더에서 제외 (데이터는 JSON에 그대로 있음)
-      var visibleOrder = order.filter(function(ch) { return !HIDDEN_CHAPTERS[ch]; });
+      var visibleOrder = getVisibleRegulationChapters(order, REGULATION_HIDDEN_CHAPTERS);
       DATA.handbook = visibleOrder.map(function(ch) { return byChapter[ch]; });
       var visibleArticleCount = DATA.handbook.reduce(function(s, sec) { return s + sec.articles.length; }, 0);
       console.log('[regulation.js] Loaded handbook from JSON (' + DATA.handbook.length + ' chapters visible / ' + order.length + ' total, ' + visibleArticleCount + ' articles visible / ' + articles.length + ' total)');

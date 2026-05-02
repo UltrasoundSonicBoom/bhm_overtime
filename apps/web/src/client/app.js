@@ -3696,6 +3696,10 @@ function _propagatePayslipToWorkHistory(parsed, ym) {
   list.push(entry);
   list.sort(function (a, b) { return (a.from || '') < (b.from || '') ? -1 : 1; });
   localStorage.setItem(whKey, JSON.stringify(list));
+  if (typeof window.recordLocalEdit === 'function') {
+    try { window.recordLocalEdit('snuhmate_work_history'); } catch (e) {}
+  }
+  try { window.dispatchEvent(new CustomEvent('workHistoryChanged', { detail: { source: 'payslip', ym } })); } catch (e) {}
 }
 // payroll-views.js 에서도 호출 가능하도록 노출
 window._propagatePayslipToWorkHistory = _propagatePayslipToWorkHistory;
@@ -3748,6 +3752,8 @@ function _propagatePayslipToOvertime(parsed, ym) {
   OVERTIME.savePayslipData(ymKey, { workStats, overtimeItems, hourlyRate });
   console.log(`[Overtime] 명세서 데이터 전파 완료: ${ymKey}, workStats ${workStats.length}건, 수당항목 ${overtimeItems.length}건`);
 }
+// payroll-views.js 등 다른 업로드 경로에서도 동일한 교차 검증/보정 흐름을 쓰도록 노출
+window._propagatePayslipToOvertime = _propagatePayslipToOvertime;
 
 // ── 공통 헬퍼: info 탭의 자동갱신 배너 표시 + 급여탭 링크 숨김 ──
 function _showAutoSyncBanner(ym) {
@@ -3808,11 +3814,11 @@ async function handlePayslipUpload(file) {
     const ym = SALARY_PARSER.parsePeriodYearMonth(parsed);
     if (!ym) throw new Error('급여 기간을 인식하지 못했습니다. 파일을 확인해주세요.');
 
-    SALARY_PARSER.saveMonthlyData(ym.year, ym.month, parsed, ym.type);
+    const savedPayslip = SALARY_PARSER.saveMonthlyData(ym.year, ym.month, parsed, ym.type) || parsed;
 
     // employeeInfo (이름/직종/직급/호봉/부서/입사일/사번) + 수당 항목 일괄 반영
     // (이전에 분산되어 있던 _applyPayslipEmployeeInfo 로직은 applyStableItemsToProfile 로 일원화)
-    const stableRes = SALARY_PARSER.applyStableItemsToProfile(parsed);
+    const stableRes = SALARY_PARSER.applyStableItemsToProfile(savedPayslip);
     const profileUpdated = !!(stableRes && stableRes.changed);
 
     // grade/year 자동 설정 실패 시 사용자에게 안내 — 시급 계산 전제 조건
@@ -3846,14 +3852,14 @@ async function handlePayslipUpload(file) {
     }
     _showAutoSyncBanner(ym);
 
-    renderPayslip(parsed, ym, profileUpdated, stableRes);
-    renderVerification(parsed);
+    renderPayslip(savedPayslip, ym, profileUpdated, stableRes);
+    renderVerification(savedPayslip);
 
     // ── 시간외 탭 교차 검증용 데이터 전파 ──
-    _propagatePayslipToOvertime(parsed, ym);
+    _propagatePayslipToOvertime(savedPayslip, ym);
 
     // ── 근무정보 (work_history) 자동 배치 이력 생성 ──
-    _propagatePayslipToWorkHistory(parsed, ym);
+    _propagatePayslipToWorkHistory(savedPayslip, ym);
 
     // 급여명세서 관리 뷰 갱신 (업로드한 월 선택)
     const mgmtContainer = document.getElementById('payslipMgmtView');
@@ -4045,7 +4051,9 @@ async function handleProfilePayslipUpload(file) {
       ym = { year: now.getFullYear(), month: now.getMonth() + 1 };
       console.warn('[PayslipUpload] 기간 인식 실패 — 현재 월로 저장:', ym);
     }
-    SALARY_PARSER.saveMonthlyData(ym.year, ym.month, parsed, ym.type);
+    const savedPayslip = SALARY_PARSER.saveMonthlyData(ym.year, ym.month, parsed, ym.type) || parsed;
+    _propagatePayslipToOvertime(savedPayslip, ym);
+    _propagatePayslipToWorkHistory(savedPayslip, ym);
 
     // 업로드로 부서/입사일이 새로 들어왔으면 근무이력 자동 시드 다시 시도
     // (이전에 시드 조건 불충족으로 비어 있던 상태면 플래그 해제해서 재시드 허용)
@@ -4127,11 +4135,15 @@ if (typeof window.prefetchTabs === 'function') {
   // 시간외 기록 변경 → 홈 요약 갱신
   window.addEventListener('overtimeChanged', () => {
     if (isActive('home')) safeCall('initHomeTab');
+    if (isActive('overtime')) safeCall('initOvertimeTab');
+    if (isActive('payroll')) safeCall('initPayrollTab');
   });
 
   // 휴가 기록 변경 → 홈 요약 갱신
   window.addEventListener('leaveChanged', () => {
     if (isActive('home')) safeCall('initHomeTab');
+    if (isActive('leave')) safeCall('initLeaveTab');
+    if (isActive('payroll')) safeCall('initPayrollTab');
   });
 
   // 명세서 데이터 변경 → 홈 (시간외 보충값) + 급여 탭 갱신
@@ -4139,6 +4151,21 @@ if (typeof window.prefetchTabs === 'function') {
     if (isActive('home')) safeCall('initHomeTab');
     if (isActive('overtime')) safeCall('initOvertimeTab');
     if (isActive('payroll')) safeCall('initPayrollTab');
+  });
+
+  window.addEventListener('scheduleChanged', () => {
+    if (isActive('home')) safeCall('initHomeTab');
+    if (isActive('schedule')) safeCall('initScheduleTab');
+    if (isActive('overtime')) safeCall('initOvertimeTab');
+    if (isActive('leave')) safeCall('initLeaveTab');
+    if (isActive('payroll')) safeCall('initPayrollTab');
+  });
+
+  window.addEventListener('workHistoryChanged', () => {
+    if (isActive('profile')) {
+      safeCall('_bootstrapProfileTab');
+      safeCall('initProfileTab');
+    }
   });
 
   window.addEventListener('app:cloud-hydrated', refreshActiveTab);

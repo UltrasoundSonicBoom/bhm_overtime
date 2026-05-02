@@ -182,4 +182,43 @@ test.describe('SNUH Mate 구조 스모크', () => {
       expect(stat.cardBorderLeft, `${stat.code} left border color`).toBe(stat.numColor);
     }
   });
+
+  test('reference 탭이 단체협약 전체 장을 표시한다', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+    page.on('console', msg => {
+      if (msg.type() === 'error' && !isIgnorableError(msg.text())) {
+        errors.push(msg.text());
+      }
+    });
+
+    await page.goto('/app?tab=reference');
+    await page.waitForFunction(() => typeof window.switchTab === 'function' && typeof window.loadTab === 'function');
+    await page.evaluate(async () => {
+      window.switchTab('reference');
+      await window.loadTab('reference');
+    });
+
+    const tabs = page.locator('#browseChapterTabs .reg-chapter-tab');
+    await expect(tabs).toHaveCount(13);
+    for (const label of [
+      '전체',
+      '제1장 총칙',
+      '제2장 조합 활동',
+      '제3장 인사',
+      '제4장 근로시간',
+      '제5장 임금 및 퇴직금',
+      '제6장 복리후생 및 교육훈련',
+      '제7장 안전보건, 재해보상',
+      '제8장 단체교섭',
+      '제9장 노사협의회',
+      '제10장 부칙',
+      '별도 합의사항',
+      '별첨',
+    ]) {
+      await expect(tabs.filter({ hasText: label }).first()).toBeVisible();
+    }
+    await expect(page.getByText('2026 단체협약 원문')).toBeVisible();
+    expect(errors, '콘솔 에러').toEqual([]);
+  });
 });

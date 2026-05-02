@@ -4,6 +4,7 @@
 import { defineConfig } from '@playwright/test';
 
 const PORT = 4321;
+const HOST = '127.0.0.1';
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -13,7 +14,7 @@ export default defineConfig({
   workers: 1,
   reporter: 'line',
   use: {
-    baseURL: `http://localhost:${PORT}`,
+    baseURL: `http://${HOST}:${PORT}`,
     headless: true,
     trace: 'retain-on-failure'
   },
@@ -21,9 +22,9 @@ export default defineConfig({
     { name: 'chromium', use: { browserName: 'chromium' } }
   ],
   webServer: {
-    command: 'pnpm --filter @snuhmate/web dev',
-    url: `http://localhost:${PORT}/app`,
+    command: `pnpm --filter @snuhmate/web dev --host ${HOST} --port ${PORT}`,
+    url: `http://${HOST}:${PORT}/app`,
     reuseExistingServer: !process.env.CI,
-    timeout: 60_000
+    timeout: 120_000
   }
 });

@@ -1,6 +1,16 @@
 import globals from 'globals';
 import noUnsanitized from 'eslint-plugin-no-unsanitized';
 
+const noopRule = {
+  meta: {
+    type: 'problem',
+    schema: [],
+  },
+  create() {
+    return {};
+  },
+};
+
 export default [
   {
     files: ['**/*.js'],
@@ -243,6 +253,11 @@ export default [
       'public/sw.js',
       'public/data/**',
       'public/tabs/**',
+      'chrome-extension/**',
+      'test-results/**',
+      'playwright-report/**',
+      'coverage/**',
+      'firestore-debug.log',
       '.worktrees/**',
       '.claude/**',
       'ops/**',

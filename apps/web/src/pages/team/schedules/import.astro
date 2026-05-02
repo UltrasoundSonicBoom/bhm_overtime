@@ -1,0 +1,47 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Container from '../../../components/layout/Container.astro';
+import PageHeader from '../../../components/patterns/PageHeader.astro';
+import Card from '../../../components/ui/Card.astro';
+import Button from '../../../components/ui/Button.astro';
+
+const rows = [
+  ['김민지', 'D', 'E', 'N', 'OFF'],
+  ['이서연', 'E', 'N', 'OFF', 'D'],
+  ['박지훈', 'N', 'OFF', 'D', '9A'],
+];
+---
+<BaseLayout title="팀 스케줄 가져오기" showFooterNav={false}>
+  <main class="min-h-screen bg-ds-bg-page py-8" data-team-schedule-route="import">
+    <Container size="lg">
+      <PageHeader title="가져오기 미리보기" description="파서 또는 CSV에서 들어온 원본을 배포 스냅샷으로 확정하기 전 확인합니다." />
+      <Card padding="md" as="section">
+        <span slot="header">101 병동 CSV 초안</span>
+        <div class="mb-4 flex flex-wrap gap-2 text-sm">
+          <Button variant="secondary" size="sm" data-import-action="validate">검증 실행</Button>
+          <Button variant="secondary" size="sm" data-import-action="snapshot">스냅샷 고정</Button>
+          <span id="importStatus" class="rounded-md bg-ds-bg-page px-3 py-2 text-ds-text-secondary">대기</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[520px] text-sm">
+            <thead>
+              <tr class="text-left text-xs text-ds-text-secondary">
+                <th class="py-2">멤버</th><th>1일</th><th>2일</th><th>3일</th><th>4일</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr class="border-t border-ds-border-default">
+                  {row.map((cell) => <td class="py-3">{cell}</td>)}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </Container>
+  </main>
+  <script>
+    import '../../../client/team-schedules/import-controller.js';
+  </script>
+</BaseLayout>

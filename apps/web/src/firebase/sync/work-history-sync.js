@@ -11,12 +11,24 @@ import { ENCRYPTED_FIELDS } from './_encrypted-fields.js';
 const COLLECTION = (uid) => `users/${uid}/work_history`;
 
 export async function writeAllWorkHistory(dbOrNull, uid, entries) {
-  if (!Array.isArray(entries) || entries.length === 0) return;
+  if (!Array.isArray(entries)) return;
   const key = await deriveKey(uid);
   const encFields = ENCRYPTED_FIELDS['work_history/*'];
   const { db, firestoreMod } = dbOrNull
     ? { db: dbOrNull, firestoreMod: _mockMod() }
     : await _f();
+
+  const nextIds = new Set(entries.filter(entry => entry && entry.id).map(entry => String(entry.id)));
+  const col = firestoreMod.collection(db, COLLECTION(uid));
+  const snap = await firestoreMod.getDocs(col);
+  if (!snap.empty) {
+    await Promise.all(snap.docs.map((docSnap) => {
+      const entryId = docSnap.id || docSnap._path?.split('/').pop();
+      if (!entryId || nextIds.has(String(entryId))) return Promise.resolve();
+      const ref = firestoreMod.doc(db, `${COLLECTION(uid)}/${entryId}`);
+      return firestoreMod.deleteDoc(ref);
+    }));
+  }
 
   await Promise.all(entries.map(async (entry) => {
     if (!entry || !entry.id) return;

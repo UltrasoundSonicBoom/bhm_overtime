@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Optional
 
 from app.cache.sqlite import _resolve_db_path
+from app.corpus.validation import sanitize_corpus_payload
 
 
 @contextmanager
@@ -55,6 +56,7 @@ def init_corpus_db(db_path: Optional[Path] = None) -> None:
 def add_corpus_entry(payload: dict, db_path: Optional[Path] = None) -> int:
     """코퍼스 항목 저장. confidence < 0.9면 reviews 큐에도 자동 추가."""
     init_corpus_db(db_path)
+    payload = sanitize_corpus_payload(payload)
     now = int(time.time() * 1000)
     payload_json = json.dumps(payload, ensure_ascii=False)
     confidence = payload.get("confidence", 0)

@@ -23,6 +23,8 @@ describe('KEY_REGISTRY — SPEC §3 인벤토리', () => {
       'overtimeRecords', 'otManualHourly', 'overtimePayslipData',
       // Leave
       'leaveRecords',
+      // Schedule
+      'snuhmate_schedule_records',
       // Settings
       'snuhmate_settings', 'theme',
       // Reference
@@ -47,10 +49,10 @@ describe('KEY_REGISTRY — SPEC §3 인벤토리', () => {
     }
   });
 
-  it('CATEGORIES 7개 (identity/payroll/overtime/leave/workHistory/settings/reference)', () => {
-    expect(CATEGORIES).toHaveLength(7);
+  it('CATEGORIES 8개 (identity/payroll/overtime/schedule/leave/workHistory/settings/reference)', () => {
+    expect(CATEGORIES).toHaveLength(8);
     expect(CATEGORIES).toEqual(expect.arrayContaining([
-      'identity', 'payroll', 'overtime', 'leave', 'workHistory', 'settings', 'reference',
+      'identity', 'payroll', 'overtime', 'schedule', 'leave', 'workHistory', 'settings', 'reference',
     ]));
   });
 });
@@ -87,6 +89,7 @@ describe('helper 함수', () => {
   it('categoryOf — sync 키 카테고리 반환', () => {
     expect(categoryOf('snuhmate_hr_profile')).toBe('identity');
     expect(categoryOf('overtimeRecords')).toBe('overtime');
+    expect(categoryOf('snuhmate_schedule_records')).toBe('schedule');
     expect(categoryOf('leaveRecords')).toBe('leave');
     expect(categoryOf('snuhmate_reg_favorites')).toBe('reference');
   });

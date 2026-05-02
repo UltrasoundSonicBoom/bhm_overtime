@@ -1,13 +1,8 @@
-// firebase/sync/corpus-sync.js — 익명화된 근무표 코퍼스 Firestore 저장.
+// firebase/sync/corpus-sync.js — 익명화된 근무표 코퍼스 백엔드 저장.
 //
-// 컬렉션: anonymous_corpus/{auto-id}
-// 사용자 uid 미연결 (진짜 익명).
-// Firestore 보안 규칙: write-only-no-auth (admin만 read).
-//
-// 백엔드 SQLite에도 함께 저장 (parser-reviews 큐로 활용).
+// 현재 보안 정책은 Firestore top-level write 를 허용하지 않는다.
+// 코퍼스는 로컬 FastAPI 백엔드 SQLite에만 저장하고 parser-reviews 큐에서 검수한다.
 
-import { initFirebase } from '../firebase-init.js';
-import { firebaseConfig } from '../../client/config.js';
 import { anonymize, getCorpusConsent } from '../../client/schedule-parser/anonymize.js';
 
 /**
@@ -35,18 +30,6 @@ export async function submitToCorpus({ grid, consentOverride } = {}) {
     return { submitted: false, reason: 'empty_after_anon' };
   }
 
-  // 1. Firestore 시도 (best-effort)
-  let firestoreOk = false;
-  try {
-    const { db, firestoreMod } = await _f();
-    const col = firestoreMod.collection(db, 'anonymous_corpus');
-    await firestoreMod.addDoc(col, anon);
-    firestoreOk = true;
-  } catch (e) {
-    console.warn('[corpus] Firestore write 실패 (정상 — admin 외에는 read 차단)', e?.message);
-  }
-
-  // 2. 백엔드 SQLite 시도 (best-effort)
   let backendOk = false;
   try {
     const { probeBackend } = await import('../../client/schedule-parser/parse-cache.js');
@@ -61,17 +44,10 @@ export async function submitToCorpus({ grid, consentOverride } = {}) {
     // 백엔드 없으면 silent skip
   }
 
-  const submitted = firestoreOk || backendOk;
   return {
-    submitted,
-    reason: submitted ? undefined : 'all_destinations_failed',
-    firestore: firestoreOk,
+    submitted: backendOk,
+    reason: backendOk ? undefined : 'all_destinations_failed',
+    firestore: false,
     backend: backendOk,
   };
-}
-
-let _firebase = null;
-async function _f() {
-  if (!_firebase) _firebase = await initFirebase(firebaseConfig);
-  return { db: _firebase.db, firestoreMod: _firebase.firestoreMod };
 }

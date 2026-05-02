@@ -38,11 +38,28 @@ export async function writePayslip(dbOrNull, uid, payMonth, data, driveFileId, t
     : await _f();
 
   const normalizedType = type || data?.type || '급여';
+  const ref = firestoreMod.doc(db, `${COLLECTION(uid)}/${_docId(payMonth, normalizedType)}`);
+
+  let existingFields = {};
+  try {
+    const snap = await firestoreMod.getDoc(ref);
+    if (snap.exists()) {
+      const prev = await decryptDoc(snap.data(), ENC_FIELDS, key);
+      existingFields = prev.parsedFields || {};
+    }
+  } catch (_e) {
+    existingFields = {};
+  }
+
   const { savedAt, payMonth: _payMonth, type: _type, ...rest } = data || {};
-  const docData = { parsedFields: rest, payMonth, type: normalizedType, lastEditAt: Date.now() };
+  const docData = {
+    parsedFields: { ...existingFields, ...rest },
+    payMonth,
+    type: normalizedType,
+    lastEditAt: Date.now(),
+  };
   if (driveFileId) docData.driveFileId = driveFileId;  // 평문 — 식별성 없음
   const encrypted = await encryptDoc(docData, ENC_FIELDS, key);
-  const ref = firestoreMod.doc(db, `${COLLECTION(uid)}/${_docId(payMonth, normalizedType)}`);
   await firestoreMod.setDoc(ref, encrypted);
 }
 
@@ -70,6 +87,15 @@ export async function readPayslip(dbOrNull, uid, payMonth, type = '급여') {
   const dec = await decryptDoc(snap.data(), ENC_FIELDS, key);
   const { parsedFields, lastEditAt, ...meta } = dec;
   return { ...(parsedFields || {}), payMonth: meta.payMonth || payMonth, type: meta.type || type || '급여' };
+}
+
+export async function deletePayslip(dbOrNull, uid, payMonth, type = '급여') {
+  const { db, firestoreMod } = dbOrNull
+    ? { db: dbOrNull, firestoreMod: _mockMod() }
+    : await _f();
+
+  const ref = firestoreMod.doc(db, `${COLLECTION(uid)}/${_docId(payMonth, type)}`);
+  await firestoreMod.deleteDoc(ref);
 }
 
 export async function readAllPayslips(dbOrNull, uid) {
@@ -114,5 +140,6 @@ function _mockMod() {
       const docs = col._db._queryCollection(col._path);
       return { empty: docs.length === 0, docs };
     },
+    deleteDoc: async (ref) => { ref._db._deleteDoc(ref._path); },
   };
 }

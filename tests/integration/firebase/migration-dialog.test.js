@@ -18,6 +18,7 @@ const mockWriteAllWorkHistory = vi.fn();
 const mockWriteSettings = vi.fn();
 const mockWriteManualHourly = vi.fn();
 const mockWriteFavorites = vi.fn();
+const mockWriteAllSchedule = vi.fn();
 const mockWritePayslip = vi.fn();
 const mockWriteAllPayslips = vi.fn();
 
@@ -30,6 +31,9 @@ vi.mock('/src/firebase/sync/settings-sync.js', () => ({
   writeManualHourly: mockWriteManualHourly,
 }));
 vi.mock('/src/firebase/sync/favorites-sync.js', () => ({ writeFavorites: mockWriteFavorites }));
+vi.mock('/src/firebase/sync/schedule-sync.js', () => ({
+  writeAllSchedule: mockWriteAllSchedule,
+}));
 vi.mock('/src/firebase/sync/payslip-sync.js', () => ({
   writePayslip: mockWritePayslip,
   writeAllPayslips: mockWriteAllPayslips,
@@ -52,6 +56,7 @@ beforeEach(() => {
   mockWriteSettings.mockResolvedValue();
   mockWriteManualHourly.mockResolvedValue();
   mockWriteFavorites.mockResolvedValue();
+  mockWriteAllSchedule.mockResolvedValue();
   mockWritePayslip.mockResolvedValue();
   mockWriteAllPayslips.mockResolvedValue();
 });
@@ -70,6 +75,15 @@ describe('shouldShowMigration', () => {
 
   it('게스트 프로필 데이터 있으면 true', async () => {
     localStorage.setItem('snuhmate_hr_profile_guest', JSON.stringify({ name: '테스트', hourlyWage: 12000 }));
+    const { shouldShowMigration } = await import('../../../apps/web/src/firebase/migration-dialog.js');
+    expect(await shouldShowMigration('uid1')).toBe(true);
+  });
+
+  it('게스트 급여명세서만 있어도 true', async () => {
+    localStorage.setItem('payslip_guest_2026_04', JSON.stringify({
+      salaryItems: [{ name: '기본급', amount: 3000000 }],
+      summary: { grossPay: 3000000, totalDeduction: 0, netPay: 3000000 },
+    }));
     const { shouldShowMigration } = await import('../../../apps/web/src/firebase/migration-dialog.js');
     expect(await shouldShowMigration('uid1')).toBe(true);
   });
@@ -99,6 +113,71 @@ describe('uploadCategories', () => {
     const { uploadCategories } = await import('../../../apps/web/src/firebase/migration-dialog.js');
     await uploadCategories('uid1', ['overtime']);
     expect(mockWriteAllOvertime).toHaveBeenCalled();
+  });
+
+  it('overtime 선택 + 근무표 데이터 존재 → writeAllSchedule 호출하고 FLAG 설정', async () => {
+    localStorage.setItem('overtimeRecords_guest', JSON.stringify({ '2026-04': [{ id: 'ot1', totalHours: 3 }] }));
+    localStorage.setItem('snuhmate_schedule_records', JSON.stringify({
+      '2026-04': {
+        mine: { 1: 'D', 2: 'E' },
+        team: { '김지원': { 1: 'N' } },
+      },
+    }));
+
+    const { uploadCategories } = await import('../../../apps/web/src/firebase/migration-dialog.js');
+    const result = await uploadCategories('uid1', ['overtime']);
+
+    expect(mockWriteAllOvertime).toHaveBeenCalled();
+    expect(mockWriteAllSchedule).toHaveBeenCalledWith(null, 'uid1', {
+      '2026-04': {
+        mine: { 1: 'D', 2: 'E' },
+        team: { '김지원': { 1: 'N' } },
+      },
+    });
+    expect(result.failed).toEqual([]);
+    expect(result.ok).toContain('근무표');
+    expect(localStorage.getItem('snuhmate_migration_done_v1')).toBeTruthy();
+  });
+
+  it('schedule 선택만으로 근무표를 업로드하고 uid local 상태를 유지한다', async () => {
+    const data = { '2026-04': { mine: { 1: 'D' }, team: {} } };
+    localStorage.setItem('snuhmate_schedule_records', JSON.stringify(data));
+
+    const { captureGuestMigrationSnapshot, shouldShowMigration, uploadCategories } =
+      await import('../../../apps/web/src/firebase/migration-dialog.js');
+    const snapshot = captureGuestMigrationSnapshot();
+
+    // 로그인 후 hydrate 가 다른 cloud 값을 쓴 상황을 시뮬레이션해도 snapshot 만 업로드한다.
+    localStorage.setItem('snuhmate_schedule_records', JSON.stringify({ '2026-04': { mine: { 1: 'N' }, team: {} } }));
+
+    expect(await shouldShowMigration('uid1', snapshot)).toBe(true);
+    await uploadCategories('uid1', ['schedule'], snapshot);
+
+    expect(mockWriteAllSchedule).toHaveBeenCalledWith(null, 'uid1', data);
+    expect(JSON.parse(localStorage.getItem('snuhmate_schedule_records'))).toEqual(data);
+  });
+
+  it('payslips 선택 → guest payslip과 보충 데이터를 업로드하고 uid 키로 즉시 복사한다', async () => {
+    const payslip = {
+      salaryItems: [{ name: '기본급', amount: 3000000 }],
+      summary: { grossPay: 3000000, totalDeduction: 0, netPay: 3000000 },
+    };
+    const supplement = {
+      '2026-04': { hourlyRate: 15000, overtimeItems: [{ name: '시간외수당', amount: 120000 }] },
+    };
+    localStorage.setItem('payslip_guest_2026_04', JSON.stringify(payslip));
+    localStorage.setItem('overtimePayslipData_guest', JSON.stringify(supplement));
+
+    const { captureGuestMigrationSnapshot, uploadCategories } =
+      await import('../../../apps/web/src/firebase/migration-dialog.js');
+    const snapshot = captureGuestMigrationSnapshot();
+    await uploadCategories('uid1', ['payslips'], snapshot);
+
+    expect(mockWriteAllPayslips).toHaveBeenCalledWith(null, 'uid1', supplement);
+    expect(mockWritePayslip).toHaveBeenCalledWith(null, 'uid1', '2026-04', payslip, undefined, '급여');
+    expect(localStorage.getItem('payslip_guest_2026_04')).toBeNull();
+    expect(JSON.parse(localStorage.getItem('payslip_uid1_2026_04'))).toEqual(payslip);
+    expect(JSON.parse(localStorage.getItem('overtimePayslipData_uid_uid1'))).toEqual(supplement);
   });
 
   it('미선택 카테고리 sync 호출 0', async () => {
