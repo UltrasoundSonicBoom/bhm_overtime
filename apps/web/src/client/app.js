@@ -3769,6 +3769,18 @@ function _showAutoSyncBanner(ym) {
   if (link) link.style.display = 'none';
 }
 
+function _savePayslipMonth(parsed, ym) {
+  if (!ym || !ym.year || !ym.month) {
+    throw new Error('급여 기간을 인식하지 못했습니다. 파일을 확인해주세요.');
+  }
+  return SALARY_PARSER.saveMonthlyData(ym.year, ym.month, parsed, ym.type) || parsed;
+}
+
+function _propagatePayslipEffects(savedPayslip, ym) {
+  _propagatePayslipToOvertime(savedPayslip, ym);
+  _propagatePayslipToWorkHistory(savedPayslip, ym);
+}
+
 async function handlePayslipUpload(file) {
   if (!file) return;
   const resultEl = document.getElementById('payslipResult');
@@ -3814,7 +3826,7 @@ async function handlePayslipUpload(file) {
     const ym = SALARY_PARSER.parsePeriodYearMonth(parsed);
     if (!ym) throw new Error('급여 기간을 인식하지 못했습니다. 파일을 확인해주세요.');
 
-    const savedPayslip = SALARY_PARSER.saveMonthlyData(ym.year, ym.month, parsed, ym.type) || parsed;
+    const savedPayslip = _savePayslipMonth(parsed, ym);
 
     // employeeInfo (이름/직종/직급/호봉/부서/입사일/사번) + 수당 항목 일괄 반영
     // (이전에 분산되어 있던 _applyPayslipEmployeeInfo 로직은 applyStableItemsToProfile 로 일원화)
@@ -3856,10 +3868,8 @@ async function handlePayslipUpload(file) {
     renderVerification(savedPayslip);
 
     // ── 시간외 탭 교차 검증용 데이터 전파 ──
-    _propagatePayslipToOvertime(savedPayslip, ym);
-
     // ── 근무정보 (work_history) 자동 배치 이력 생성 ──
-    _propagatePayslipToWorkHistory(savedPayslip, ym);
+    _propagatePayslipEffects(savedPayslip, ym);
 
     // 급여명세서 관리 뷰 갱신 (업로드한 월 선택)
     const mgmtContainer = document.getElementById('payslipMgmtView');
@@ -4051,9 +4061,8 @@ async function handleProfilePayslipUpload(file) {
       ym = { year: now.getFullYear(), month: now.getMonth() + 1 };
       console.warn('[PayslipUpload] 기간 인식 실패 — 현재 월로 저장:', ym);
     }
-    const savedPayslip = SALARY_PARSER.saveMonthlyData(ym.year, ym.month, parsed, ym.type) || parsed;
-    _propagatePayslipToOvertime(savedPayslip, ym);
-    _propagatePayslipToWorkHistory(savedPayslip, ym);
+    const savedPayslip = _savePayslipMonth(parsed, ym);
+    _propagatePayslipEffects(savedPayslip, ym);
 
     // 업로드로 부서/입사일이 새로 들어왔으면 근무이력 자동 시드 다시 시도
     // (이전에 시드 조건 불충족으로 비어 있던 상태면 플래그 해제해서 재시드 허용)
