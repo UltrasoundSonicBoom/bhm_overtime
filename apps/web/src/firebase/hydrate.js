@@ -10,6 +10,11 @@ import {
 } from './sync-lifecycle.js';
 import { localKeyFor } from './key-registry.js';
 
+export const LOGOUT_PRESERVED_BASES = [
+  'snuhmate_settings',
+  'theme',
+];
+
 async function _readProfile(...args) {
   const { readProfile } = await import('./sync/profile-sync.js');
   return readProfile(...args);
