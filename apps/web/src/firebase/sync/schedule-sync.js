@@ -22,6 +22,7 @@ import { initFirebase } from '../firebase-init.js';
 import { firebaseConfig } from '../../client/config.js';
 import { deriveKey, encryptDoc, decryptDoc } from '../crypto.js';
 import { ENCRYPTED_FIELDS } from './_encrypted-fields.js';
+import { mockFirestoreMod } from './mock-firestore.js';
 
 const COLLECTION = (uid) => `users/${uid}/schedule`;
 const ENC_FIELDS = ENCRYPTED_FIELDS['schedule/*'];
@@ -83,7 +84,7 @@ export async function writeScheduleMonth(dbOrNull, uid, yyyymm, monthData) {
   if (!uid) return; // guest mode → noop
   const key = await deriveKey(uid);
   const { db, firestoreMod } = dbOrNull
-    ? { db: dbOrNull, firestoreMod: _mockMod() }
+    ? { db: dbOrNull, firestoreMod: mockFirestoreMod() }
     : await _f();
 
   const docData = _toFirestore(monthData, yyyymm);
@@ -105,7 +106,7 @@ export async function readScheduleMonth(dbOrNull, uid, yyyymm) {
   if (!uid) return null;
   const key = await deriveKey(uid);
   const { db, firestoreMod } = dbOrNull
-    ? { db: dbOrNull, firestoreMod: _mockMod() }
+    ? { db: dbOrNull, firestoreMod: mockFirestoreMod() }
     : await _f();
 
   const ref = firestoreMod.doc(db, `${COLLECTION(uid)}/${yyyymm}`);
@@ -120,7 +121,7 @@ export async function readAllSchedule(dbOrNull, uid) {
   if (!uid) return {};
   const key = await deriveKey(uid);
   const { db, firestoreMod } = dbOrNull
-    ? { db: dbOrNull, firestoreMod: _mockMod() }
+    ? { db: dbOrNull, firestoreMod: mockFirestoreMod() }
     : await _f();
 
   const col = firestoreMod.collection(db, COLLECTION(uid));
@@ -140,20 +141,4 @@ let _firebase = null;
 async function _f() {
   if (!_firebase) _firebase = await initFirebase(firebaseConfig);
   return { db: _firebase.db, firestoreMod: _firebase.firestoreMod };
-}
-
-function _mockMod() {
-  return {
-    doc: (db, path) => ({ _db: db, _path: path }),
-    collection: (db, path) => ({ _db: db, _path: path }),
-    setDoc: async (ref, data) => { ref._db._writeDoc(ref._path, data, false); },
-    getDoc: async (ref) => {
-      const data = ref._db._readDoc(ref._path);
-      return { exists: () => data !== null, data: () => data };
-    },
-    getDocs: async (col) => {
-      const docs = col._db._queryCollection(col._path);
-      return { empty: docs.length === 0, docs };
-    },
-  };
 }

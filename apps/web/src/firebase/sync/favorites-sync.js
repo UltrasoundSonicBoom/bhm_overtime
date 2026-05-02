@@ -7,6 +7,7 @@ import { initFirebase } from '../firebase-init.js';
 import { firebaseConfig } from '../../client/config.js';
 import { deriveKey, encryptDoc, decryptDoc } from '../crypto.js';
 import { ENCRYPTED_FIELDS } from './_encrypted-fields.js';
+import { mockFirestoreMod } from './mock-firestore.js';
 
 const PATH = (uid) => `users/${uid}/settings/reference`;
 const ENC_FIELDS = ENCRYPTED_FIELDS['settings/reference'];
@@ -14,7 +15,7 @@ const ENC_FIELDS = ENCRYPTED_FIELDS['settings/reference'];
 export async function writeFavorites(dbOrNull, uid, favorites) {
   const key = await deriveKey(uid);
   const { db, firestoreMod } = dbOrNull
-    ? { db: dbOrNull, firestoreMod: _mockMod() }
+    ? { db: dbOrNull, firestoreMod: mockFirestoreMod() }
     : await _f();
 
   const docData = { favorites: favorites || [], lastEditAt: Date.now() };
@@ -26,7 +27,7 @@ export async function writeFavorites(dbOrNull, uid, favorites) {
 export async function readFavorites(dbOrNull, uid) {
   const key = await deriveKey(uid);
   const { db, firestoreMod } = dbOrNull
-    ? { db: dbOrNull, firestoreMod: _mockMod() }
+    ? { db: dbOrNull, firestoreMod: mockFirestoreMod() }
     : await _f();
 
   const ref = firestoreMod.doc(db, PATH(uid));
@@ -41,17 +42,4 @@ let _firebase = null;
 async function _f() {
   if (!_firebase) _firebase = await initFirebase(firebaseConfig);
   return { db: _firebase.db, firestoreMod: _firebase.firestoreMod };
-}
-
-function _mockMod() {
-  return {
-    doc: (db, path) => ({ _db: db, _path: path }),
-    setDoc: async (ref, data, options) => {
-      ref._db._writeDoc(ref._path, data, options?.merge);
-    },
-    getDoc: async (ref) => {
-      const data = ref._db._readDoc(ref._path);
-      return { exists: () => data !== null, data: () => data };
-    },
-  };
 }
