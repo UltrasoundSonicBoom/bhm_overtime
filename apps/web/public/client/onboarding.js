@@ -155,28 +155,33 @@
   const welcomeSlide = document.getElementById("ob-welcome");
   if (welcomeSlide) {
     welcomeSlide.addEventListener("slide:enter", () => {
-      const burst = welcomeSlide.querySelector(".ob-burst");
+      const check = welcomeSlide.querySelector(".ob-welcome-check");
       const grid = welcomeSlide.querySelector(".ob-app-grid");
-      if (burst) {
-        burst.style.transition = "none";
-        burst.style.transform = "scale(1.2)";
+      if (check) {
+        check.style.transition = "none";
+        check.style.transform = "scale(0.7)";
+        check.style.opacity = "0";
       }
       if (grid) {
         grid.style.transition = "none";
         grid.style.opacity = "0";
+        grid.style.transform = "translateY(10px)";
       }
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          if (burst) {
-            burst.style.transition = "transform .4s ease";
-            burst.style.transform = "scale(1)";
+          if (check) {
+            check.style.transition =
+              "transform 0.45s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s ease";
+            check.style.transform = "scale(1)";
+            check.style.opacity = "1";
           }
           setTimeout(() => {
             if (grid) {
-              grid.style.transition = "opacity .5s ease";
+              grid.style.transition = "opacity 0.5s ease, transform 0.5s ease";
               grid.style.opacity = "1";
+              grid.style.transform = "none";
             }
-          }, 400);
+          }, 300);
         });
       });
     });
@@ -184,7 +189,13 @@
 
   // ── App start ─────────────────────────────────────────────
   document.getElementById("ob-start")?.addEventListener("click", () => {
-    window.location.href = "/app";
+    const frame = document.querySelector(".ob-frame");
+    if (frame) {
+      frame.classList.add("ob-exit");
+      setTimeout(() => { window.location.href = "/app"; }, 350);
+    } else {
+      window.location.href = "/app";
+    }
   });
 
   go(0);

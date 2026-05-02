@@ -15,8 +15,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <!-- 1. 히어로 -->
         <section class="ob-slide ob-cream">
           <div class="ob-inner">
-            <div class="ob-hero-icon ob-reveal">🏥</div>
-            <div class="ob-index ob-reveal">SNUH Mate</div>
+            <img src="/snuhmatecircle.png" alt="SNUH Mate" class="ob-logo ob-reveal">
             <div class="ob-rule ob-reveal"></div>
             <h1 class="ob-display ob-reveal">내 수당,<br>내가 먼저<br>알아야죠.</h1>
             <p class="ob-sub ob-reveal">슬기로운 병원생활 메이트</p>
@@ -173,24 +172,31 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             <h2 class="ob-display ob-reveal">게스트 모드로<br>바로 시작해도 돼요.</h2>
             <p class="ob-lede ob-reveal">내 데이터는 이 핸드폰 안에만 있어요. 계정 없어도 모든 기능 다 써요.</p>
             <div class="ob-big-grid">
-              <button class="ob-tile ob-reveal" data-action="auth-pick" data-choice="local">
-                <div class="ob-tile-num">A</div>
+              <button class="ob-tile ob-reveal ob-tc-indigo" data-action="auth-pick" data-choice="local">
+                <div class="ob-tile-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L4 6v6c0 5.25 3.75 10.15 8 11.25C16.25 22.15 20 17.25 20 12V6l-8-4z"/></svg>
+                </div>
                 <div class="ob-tile-body">
-                  <div class="ob-tile-title">게스트 모드 (추천)</div>
+                  <div class="ob-chip">추천</div>
+                  <div class="ob-tile-title">게스트 모드</div>
                   <div class="ob-tile-sub">로그인 불필요 · 내 개인 핸드폰에만 저장</div>
                 </div>
                 <div class="ob-tile-arrow">→</div>
               </button>
-              <button class="ob-tile ob-reveal" data-action="auth-pick" data-choice="email">
-                <div class="ob-tile-num">B</div>
+              <button class="ob-tile ob-reveal ob-tc-emerald" data-action="auth-pick" data-choice="email">
+                <div class="ob-tile-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2zm0 2l-8 5-8-5h16zm0 12H4V9l8 5 8-5v9z"/></svg>
+                </div>
                 <div class="ob-tile-body">
                   <div class="ob-tile-title">병원 이메일로 가입</div>
                   <div class="ob-tile-sub">폰 바꿔도 기록 유지</div>
                 </div>
                 <div class="ob-tile-arrow">→</div>
               </button>
-              <button class="ob-tile ob-reveal" data-action="auth-pick" data-choice="google">
-                <div class="ob-tile-num">C</div>
+              <button class="ob-tile ob-reveal ob-tc-azure" data-action="auth-pick" data-choice="google">
+                <div class="ob-tile-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                </div>
                 <div class="ob-tile-body">
                   <div class="ob-tile-title">Google로 시작</div>
                   <div class="ob-tile-sub">폰 바꿔도 기록 유지</div>
@@ -209,16 +215,20 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             <h2 class="ob-display ob-reveal">간호사세요?</h2>
             <p class="ob-lede ob-reveal">병동 근무표를 올리면 D·E·N·연*·리2가 캘린더에 바로 들어가요. 아니라면 급여명세서로 시작해요.</p>
             <div class="ob-big-grid">
-              <button class="ob-tile ob-reveal" data-action="job-pick" data-job="nurse">
-                <div class="ob-tile-num">A</div>
+              <button class="ob-tile ob-reveal ob-tc-rose" data-action="job-pick" data-job="nurse">
+                <div class="ob-tile-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
+                </div>
                 <div class="ob-tile-body">
                   <div class="ob-tile-title">간호사</div>
                   <div class="ob-tile-sub">엑셀 근무표 → D/E/N·연*·리2 자동 입력</div>
                 </div>
                 <div class="ob-tile-arrow">→</div>
               </button>
-              <button class="ob-tile ob-reveal" data-action="job-pick" data-job="other">
-                <div class="ob-tile-num">B</div>
+              <button class="ob-tile ob-reveal ob-tc-amber" data-action="job-pick" data-job="other">
+                <div class="ob-tile-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 2l5 5h-5V4zM6 20V4h6v6h6v10H6z"/></svg>
+                </div>
                 <div class="ob-tile-body">
                   <div class="ob-tile-title">그 외 직종</div>
                   <div class="ob-tile-sub">급여명세서 PDF로 시작</div>
@@ -302,16 +312,18 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <!-- 10. 웰컴 -->
         <section class="ob-slide ob-brand" id="ob-welcome">
           <div class="ob-inner">
-            <span class="ob-burst">🎉</span>
+            <div class="ob-welcome-check">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
             <h1 class="ob-display" style="margin-top:4px">다 됐어요.<br>이제 직접<br>확인해 보세요.</h1>
             <p class="ob-lede">이번 달 시간외 수당이 맞는지, 연차가 몇 개 남았는지 — 지금 바로 볼 수 있어요.</p>
             <div class="ob-app-grid">
-              <div class="ob-app-tile">🏠</div>
-              <div class="ob-app-tile">💰</div>
-              <div class="ob-app-tile">⏰</div>
-              <div class="ob-app-tile">🌴</div>
-              <div class="ob-app-tile">📖</div>
-              <div class="ob-app-tile">⚙️</div>
+              <div class="ob-app-tile">홈</div>
+              <div class="ob-app-tile">급여</div>
+              <div class="ob-app-tile">시간외</div>
+              <div class="ob-app-tile">휴가</div>
+              <div class="ob-app-tile">찾아보기</div>
+              <div class="ob-app-tile">설정</div>
             </div>
             <button class="ob-cta-primary" id="ob-start">앱 시작 →</button>
           </div>
