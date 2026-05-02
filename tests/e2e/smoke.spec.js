@@ -219,6 +219,24 @@ test.describe('SNUH Mate 구조 스모크', () => {
       await expect(tabs.filter({ hasText: label }).first()).toBeVisible();
     }
     await expect(page.getByText('2026 단체협약 원문')).toBeVisible();
+    const fullToggle = page.locator('#fullRegulationToggle');
+    const fullPanel = page.locator('#fullRegulationPanel');
+    const fullContent = page.locator('#fullRegulationContent');
+    await expect(fullToggle).toBeVisible();
+    await expect(fullToggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(fullPanel).toBeHidden();
+
+    await fullToggle.click();
+    await expect(fullPanel).toBeVisible();
+    await expect(fullToggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(fullToggle).toHaveText('전체 규정 접기');
+    await expect(fullContent).toContainText('제1조(목적)');
+    await expect(fullContent).toContainText('리프레시 지원비 사용가능 항목');
+
+    await fullToggle.click();
+    await expect(fullPanel).toBeHidden();
+    await expect(fullToggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(fullToggle).toHaveText('전체 규정');
     expect(errors, '콘솔 에러').toEqual([]);
   });
 });
