@@ -104,6 +104,44 @@
       box-shadow: 2px 2px 0 #1a1a1a;
     }
 
+    .reg-full-toggle-wrap {
+      display: flex;
+      justify-content: flex-end;
+      max-width: 640px;
+      margin: 0 auto 10px;
+      padding: 0 16px;
+    }
+    .reg-full-toggle {
+      min-height: 36px;
+      padding: 8px 14px;
+      border: 1.5px solid var(--border-glass);
+      border-radius: var(--radius-full);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      font-size: var(--text-body-normal);
+      font-weight: 800;
+      font-family: inherit;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, transform 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .reg-full-toggle[aria-expanded="true"] {
+      border-color: var(--accent-indigo);
+      background: var(--bg-glass);
+      color: var(--accent-indigo);
+    }
+    .reg-full-toggle:active {
+      transform: translateY(1px);
+    }
+    html[data-theme="neo"] .reg-full-toggle {
+      border: 2px solid #1a1a1a;
+      box-shadow: 2px 2px 0 #1a1a1a;
+    }
+    html[data-theme="neo"] .reg-full-toggle:active {
+      transform: translate(2px, 2px);
+      box-shadow: none;
+    }
+
     /* ── 장 탭 내 개수 표시 ── */
     .reg-chapter-tab-count {
       display: inline-block;
@@ -709,6 +747,56 @@
     .reg-empty-text {
       font-size: var(--text-body-large);
       line-height: 1.6;
+    }
+
+    .reg-full-panel {
+      margin: 14px 16px 0;
+      border: 1.5px solid var(--border-glass);
+      border-radius: 14px;
+      background: var(--bg-card);
+      overflow: hidden;
+    }
+    .reg-full-panel[hidden] {
+      display: none;
+    }
+    .reg-full-panel-header {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border-glass);
+      background: var(--bg-glass);
+    }
+    .reg-full-panel-title {
+      margin: 0;
+      font-size: var(--text-heading-small);
+      font-weight: 900;
+      color: var(--text-primary);
+    }
+    .reg-full-content {
+      max-height: 70vh;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      background: var(--bg-card);
+    }
+    .reg-full-text {
+      margin: 0;
+      padding: 14px;
+      white-space: pre-wrap;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
+      color: var(--text-primary);
+      font: 12px/1.65 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+    .reg-full-loading {
+      padding: 24px 16px;
+      color: var(--text-muted);
+      text-align: center;
+      font-size: var(--text-body-normal);
+    }
+    html[data-theme="neo"] .reg-full-panel {
+      border: 2px solid #1a1a1a;
+      box-shadow: 3px 3px 0 #1a1a1a;
+    }
+    html[data-theme="neo"] .reg-full-panel-header {
+      border-bottom: 2px solid #1a1a1a;
     }
 
     /* ── PDF bottom sheet ── */

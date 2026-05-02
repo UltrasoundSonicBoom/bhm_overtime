@@ -38,6 +38,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <span style="opacity:0.8;">일부 조항 번호(예: 제13~17조, 제19~31조)는 단체협약 갱신 과정에서 <b>삭제·통합된 번호</b>이며 현행 협약에 존재하지 않습니다.</span>
       </div>
 
+      <div class="reg-full-toggle-wrap">
+        <button type="button" id="fullRegulationToggle" class="reg-full-toggle" data-action="toggleFullRegulation" aria-expanded="false" aria-controls="fullRegulationPanel">전체 규정</button>
+      </div>
+
       <!-- 📖 목차 (장 가로 스크롤 탭 + 좌우 화살표) -->
       <div class="reg-section-label">📖 목차</div>
       <div class="reg-chapter-nav-wrap">
@@ -57,6 +61,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <div>규정을 불러오는 중...</div>
         </div>
       </div>
+
+      <section id="fullRegulationPanel" class="reg-full-panel" aria-label="전체 규정 원문" hidden>
+        <div class="reg-full-panel-header">
+          <h2 class="reg-full-panel-title">전체 규정 원문</h2>
+        </div>
+        <div id="fullRegulationContent" class="reg-full-content"></div>
+      </section>
     </div>
 
   </main>

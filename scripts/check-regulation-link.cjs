@@ -25,22 +25,6 @@ function readText(p) {
     return fs.readFileSync(p, 'utf8');
 }
 
-function normalizeReportTimestamp(text) {
-    return text
-        .replace(/^> 생성 시각: .+$/m, '> 생성 시각: <generated>')
-        .replace(/\s+$/u, '');
-}
-
-function writeReportIfMeaningfulChange(reportPath, text) {
-    if (fs.existsSync(reportPath)) {
-        const current = fs.readFileSync(reportPath, 'utf8');
-        if (normalizeReportTimestamp(current) === normalizeReportTimestamp(text)) {
-            return;
-        }
-    }
-    fs.writeFileSync(reportPath, text);
-}
-
 function escapeRegExp(s) {
     return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -73,11 +57,17 @@ function extractArticleBody(regText, article) {
         const startMatch = headerPattern.exec(regText);
         if (!startMatch) return null;
         const startIdx = startMatch.index;
-        const nextHeaderPattern = /\*\*제\d+조[^*]*\*\*/g;
-        nextHeaderPattern.lastIndex = startIdx + startMatch[0].length;
-        const nextMatch = nextHeaderPattern.exec(regText);
-        const endIdx = nextMatch ? nextMatch.index : Math.min(startIdx + 5000, regText.length);
-        return regText.slice(startIdx, endIdx);
+        return regText.slice(startIdx, findNextSectionEnd(regText, startIdx, 5000));
+    }
+    const dated = article.match(/<(\d{4})\.(\d{2})>\s*(.+)?/);
+    if (dated && dated[3]) {
+        const tag = `<${dated[1]}.${dated[2]}>`;
+        const rest = dated[3].trim();
+        const re = new RegExp(`${escapeRegExp(tag)}[^\\n]*${escapeRegExp(rest)}`, 'g');
+        const hit = re.exec(regText);
+        if (!hit) return null;
+        const startIdx = regText.lastIndexOf('\n', hit.index) + 1;
+        return regText.slice(startIdx, findNextSectionEnd(regText, startIdx, 5000));
     }
     const sep = article.match(/<(\d{4})\.(\d{2})>/);
     if (sep) {
@@ -86,28 +76,40 @@ function extractArticleBody(regText, article) {
         if (idx === -1) return null;
         return regText.slice(Math.max(0, idx - 200), Math.min(regText.length, idx + 1500));
     }
-    return null;
+    return extractByLiteralHeading(regText, article);
 }
 
 // 숫자 정규화
-function valueAppears(body, expected) {
-    if (body == null || expected == null) return false;
+function valueCandidates(expected, evidenceValues = []) {
+    const cands = [];
+    for (const value of evidenceValues || []) {
+        if (value != null) cands.push(String(value));
+    }
     if (typeof expected === 'number') {
         if (Number.isInteger(expected)) {
             const raw = String(expected);
             const withComma = expected.toLocaleString('en-US');
             const inMan = expected % 10000 === 0 ? `${expected / 10000}만` : null;
-            const cands = [raw, withComma, inMan].filter(Boolean);
-            return cands.some(c => body.includes(c));
+            const inCheon = expected % 1000 === 0 ? `${expected / 1000}천` : null;
+            cands.push(raw, withComma, inMan, inCheon);
+        } else {
+            cands.push(String(expected), `${Math.round(expected * 100)}%`);
+            if (expected > 1) cands.push(`${Math.round((expected - 1) * 100)}%`);
         }
-        const asPct = `${Math.round(expected * 100)}%`;
-        const asDecimal = String(expected);
-        return body.includes(asPct) || body.includes(asDecimal);
+    } else if (typeof expected === 'string') {
+        cands.push(expected);
     }
-    if (typeof expected === 'string') {
-        return body.includes(expected);
-    }
-    return false;
+    return Array.from(new Set(cands.filter(Boolean)));
+}
+
+function findMatchingValue(body, expected, evidenceValues = []) {
+    if (body == null || expected == null) return null;
+    const evidenceCandidates = Array.from(new Set((evidenceValues || []).filter(v => v != null).map(String)));
+    const evidenceHit = evidenceCandidates.find(c => body.includes(c));
+    if (evidenceHit) return { kind: 'evidence', value: evidenceHit };
+    const expectedHit = valueCandidates(expected, []).find(c => body.includes(c));
+    if (expectedHit) return { kind: 'expected', value: expectedHit };
+    return null;
 }
 
 function main() {
@@ -123,20 +125,26 @@ function main() {
             status = '❌';
             note = `${item.article} 조항 본문 미검출`;
             fail++;
-        } else if (valueAppears(body, item.expected)) {
-            status = '✅';
-            note = '본문 expected 값 일치';
-            pass++;
         } else {
-            status = '🟡';
-            note = `조항 본문 발견되었으나 expected=${item.expected} 미검출 (별첨 가능성 / 단위 불일치)`;
-            ambiguous++;
+            const match = findMatchingValue(body, item.expected, item.evidence_values);
+            if (match) {
+                status = '✅';
+                note = match.kind === 'evidence'
+                    ? `본문 evidence 값 일치 (${match.value})`
+                    : `본문 expected 값 일치 (${match.value})`;
+                pass++;
+            } else {
+                status = '🟡';
+                note = `조항 본문 발견되었으나 expected=${item.expected} 미검출 (별첨 가능성 / 단위 불일치)`;
+                ambiguous++;
+            }
         }
         rows.push({
             status,
             path: item.path,
             article: item.article,
             expected: item.expected,
+            evidence: item.evidence_values || [],
             note,
         });
     }
@@ -145,7 +153,7 @@ function main() {
     const lines = [];
     lines.push('# Registry Link Report');
     lines.push('');
-    lines.push('> 자동 생성: `scripts/check-regulation-link.js`');
+    lines.push('> 자동 생성: `scripts/check-regulation-link.cjs`');
     lines.push(`> 생성 시각: ${new Date().toISOString()}`);
     lines.push(`> 입력: \`data/calc-registry.json\` (${total} data_values) ↔ \`data/full_union_regulation_2026.md\``);
     lines.push('');
@@ -160,27 +168,29 @@ function main() {
     lines.push('');
     lines.push('## 항목별 검증');
     lines.push('');
-    lines.push('| 상태 | path | article | expected | note |');
-    lines.push('|------|------|---------|----------|------|');
+    lines.push('| 상태 | path | article | expected | evidence | note |');
+    lines.push('|------|------|---------|----------|----------|------|');
     for (const r of rows) {
         const expDisplay = typeof r.expected === 'number' ? r.expected.toLocaleString('en-US') : String(r.expected);
-        lines.push(`| ${r.status} | \`${r.path}\` | ${r.article} | ${expDisplay} | ${r.note} |`);
+        const evidenceDisplay = r.evidence.length ? r.evidence.map(String).join(', ') : '-';
+        lines.push(`| ${r.status} | \`${r.path}\` | ${r.article} | ${expDisplay} | ${evidenceDisplay} | ${r.note} |`);
     }
     lines.push('');
     lines.push('## 해석');
     lines.push('');
     lines.push('- **✅ 일치**: full_union 본문에서 해당 조항 발견 + expected 값 그대로 등장 → SoT 일치.');
-    lines.push('- **🟡 불명확**: 조항 발견되었으나 expected 값이 본문에 직접 등장 안 함. 별첨 일람표에만 기재되었거나 (예: 별첨 보수표), 단위 표기 차이 (예: "15만원" vs "150,000") 가능. **수동 확인 필요.**');
+    lines.push('- **✅ evidence 일치**: `expected` 는 런타임 계산값, `evidence` 는 원문 표기값이다. 예: 계산값 1.5 ↔ 원문 150%, 월 30,000원 ↔ 원문 연 36만원.');
+    lines.push('- **🟡 불명확**: 조항 발견되었으나 expected/evidence 값이 본문에 직접 등장 안 함. 별첨 일람표에만 기재되었거나 article 참조가 넓을 가능성. **수동 확인 필요.**');
     lines.push('- **❌ 미일치**: 조항 헤더 자체 검출 실패. 조항 번호 오타 / 별도합의 태그 형식 차이 / regulation 미반영. **즉시 수정 필요.**');
     lines.push('');
     lines.push('## 후속');
     lines.push('');
     lines.push('- 🟡 항목은 별첨 섹션 수동 확인 후 정상 처리 또는 calc-registry.json article 필드 정정.');
     lines.push('- ❌ 항목은 regulation 본문에 해당 조항 추가 또는 article 필드 오기 정정.');
-    lines.push('- 단협 개정 시 본 스크립트를 재실행해 drift 자동 감지: `npm run check:regulation`');
+    lines.push('- 단협 개정 시 본 스크립트를 재실행해 drift 자동 감지: `pnpm check:regulation`');
 
     fs.mkdirSync(path.dirname(REPORT_PATH), { recursive: true });
-    writeReportIfMeaningfulChange(REPORT_PATH, `${lines.join('\n')}\n`);
+    fs.writeFileSync(REPORT_PATH, `${lines.join('\n')}\n`);
 
     console.log(`[check-regulation-link] ✅ ${pass} / 🟡 ${ambiguous} / ❌ ${fail} (총 ${total})`);
     console.log(`[check-regulation-link] 리포트: ${path.relative(ROOT, REPORT_PATH)}`);

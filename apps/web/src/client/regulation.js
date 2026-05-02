@@ -105,6 +105,8 @@ function initTheme() {
 // ═══════════ 📖 찾아보기 ═══════════
 
 var browseActiveChapter = null; // null = "전체", 또는 장 이름 (예: "제4장 근로시간")
+var fullRegulationLoaded = false;
+var fullRegulationLoading = false;
 
 // ── 장(Chapter)별 아이콘 매핑 ──
 var CHAPTER_ICONS = {
@@ -451,6 +453,72 @@ function renderBrowseList() {
   });
 
   renderArticles(articles, container, { showCategory: !browseActiveChapter });
+}
+
+function getFullRegulationUrl() {
+  if (window.location.protocol === 'file:') {
+    return window.location.href.replace(/\/[^/]*$/, '/data/full_union_regulation_2026.md');
+  }
+  return '/data/full_union_regulation_2026.md';
+}
+
+function setFullRegulationOpen(open) {
+  var btn = document.getElementById('fullRegulationToggle');
+  var panel = document.getElementById('fullRegulationPanel');
+  if (!btn || !panel) return;
+  panel.hidden = !open;
+  btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  btn.textContent = open ? '전체 규정 접기' : '전체 규정';
+}
+
+function renderFullRegulationText(text) {
+  var target = document.getElementById('fullRegulationContent');
+  if (!target) return;
+  target.textContent = '';
+  var pre = document.createElement('pre');
+  pre.className = 'reg-full-text';
+  pre.textContent = text || '';
+  target.appendChild(pre);
+}
+
+async function ensureFullRegulationLoaded() {
+  if (fullRegulationLoaded || fullRegulationLoading) return;
+  var target = document.getElementById('fullRegulationContent');
+  if (!target) return;
+  fullRegulationLoading = true;
+  target.textContent = '';
+  var loading = document.createElement('div');
+  loading.className = 'reg-full-loading';
+  loading.textContent = '전체 규정을 불러오는 중...';
+  target.appendChild(loading);
+  try {
+    var res = await fetch(getFullRegulationUrl());
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    renderFullRegulationText(await res.text());
+    fullRegulationLoaded = true;
+  } catch (err) {
+    target.textContent = '';
+    var error = document.createElement('div');
+    error.className = 'reg-empty';
+    error.textContent = '전체 규정을 불러오지 못했습니다: ' + (err && err.message ? err.message : 'unknown');
+    target.appendChild(error);
+  } finally {
+    fullRegulationLoading = false;
+  }
+}
+
+function toggleFullRegulation() {
+  var btn = document.getElementById('fullRegulationToggle');
+  var panel = document.getElementById('fullRegulationPanel');
+  if (!btn || !panel) return;
+  var nextOpen = btn.getAttribute('aria-expanded') !== 'true';
+  setFullRegulationOpen(nextOpen);
+  if (nextOpen) {
+    ensureFullRegulationLoaded();
+    setTimeout(function() {
+      panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  }
 }
 
 // Renders article accordion from trusted DATA.handbook, with direct calculator blocks
@@ -1181,6 +1249,7 @@ registerActions({
   toggleArticle: (el) => toggleArticle(el),  // 기존: toggleArticle(this) — el 자체 전달
   handleFavClick: (el, e) => handleFavClick(e, el.dataset.articleId),
   openPdfForRef: (el) => openPdfForRef(el.dataset.pdfRef),
+  toggleFullRegulation: () => toggleFullRegulation(),
 });
 
 // Phase 2-regression: inline onclick window 노출 (ESM 모듈 스코프 회복)
