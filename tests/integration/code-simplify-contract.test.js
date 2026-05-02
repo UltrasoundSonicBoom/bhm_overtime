@@ -38,4 +38,27 @@ describe('code-simplify harness contract', () => {
     expect(agents).toContain('.Codex/agents/code-simplify-orchestrator.md');
     expect(agents).toContain('code-simplify');
   });
+
+  it('keeps payslip upload handlers on the shared save/propagate helpers', () => {
+    const app = readFileSync('apps/web/src/client/app.js', 'utf8');
+    expect(app).toContain('function _savePayslipMonth(parsed, ym)');
+    expect(app).toContain('function _propagatePayslipEffects(savedPayslip, ym)');
+
+    const payrollStart = app.indexOf('async function handlePayslipUpload');
+    const payrollEnd = app.indexOf('// ── 프로필 탭에서 급여명세서로 자동입력', payrollStart);
+    const profileStart = app.indexOf('async function handleProfilePayslipUpload');
+    const profileEnd = app.indexOf('// ═══════════ 탭 fragment', profileStart);
+
+    const payrollHandler = app.slice(payrollStart, payrollEnd);
+    const profileHandler = app.slice(profileStart, profileEnd);
+
+    for (const [name, handler] of [
+      ['handlePayslipUpload', payrollHandler],
+      ['handleProfilePayslipUpload', profileHandler],
+    ]) {
+      expect(handler, `${name}: shared monthly save helper missing`).toContain('_savePayslipMonth(parsed, ym)');
+      expect(handler, `${name}: shared propagation helper missing`).toContain('_propagatePayslipEffects(savedPayslip, ym)');
+      expect(handler, `${name}: direct monthly save should stay inside helper`).not.toContain('SALARY_PARSER.saveMonthlyData');
+    }
+  });
 });
