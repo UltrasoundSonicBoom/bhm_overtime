@@ -7,16 +7,16 @@
 //   KEY_REGISTRY 에서 users/{uid}/profile/payroll 로 doc-merge (fieldName: manualHourly)
 //   → writeManualHourly() 가 payroll doc 에 병합
 
-import { initFirebase } from "../firebase-init.js";
-import { firebaseConfig } from "../../client/config.js";
-import { deriveKey, encryptDoc, decryptDoc } from "../crypto.js";
-import { ENCRYPTED_FIELDS } from "./_encrypted-fields.js";
-import { stripDeviceLocalSettings } from "../sync-lifecycle.js";
-import { mockFirestoreMod } from "./mock-firestore.js";
+import { initFirebase } from '../firebase-init.js';
+import { firebaseConfig } from '../../client/config.js';
+import { deriveKey, encryptDoc, decryptDoc } from '../crypto.js';
+import { ENCRYPTED_FIELDS } from './_encrypted-fields.js';
+import { stripDeviceLocalSettings } from '../sync-lifecycle.js';
+import { mockFirestoreMod } from './mock-firestore.js';
 
 const SETTINGS_PATH = (uid) => `users/${uid}/settings/app`;
 const PAYROLL_PATH = (uid) => `users/${uid}/profile/payroll`;
-const ENC_FIELDS = ENCRYPTED_FIELDS["settings/app"];
+const ENC_FIELDS = ENCRYPTED_FIELDS['settings/app'];
 
 export async function writeSettings(dbOrNull, uid, settings) {
   const key = await deriveKey(uid);
@@ -50,7 +50,7 @@ export async function readSettings(dbOrNull, uid) {
 
 export async function writeManualHourly(dbOrNull, uid, value) {
   const key = await deriveKey(uid);
-  const payrollEncFields = ENCRYPTED_FIELDS["profile/payroll"];
+  const payrollEncFields = ENCRYPTED_FIELDS['profile/payroll'];
   const { db, firestoreMod } = dbOrNull
     ? { db: dbOrNull, firestoreMod: mockFirestoreMod() }
     : await _f();
