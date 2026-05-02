@@ -89,3 +89,16 @@ Security/operations work also uses the local harness in `.Codex/`:
 
 Trigger this harness for 보안, 운영 관리, Firebase/Firestore rules, localStorage sync,
 로그인/로그아웃 데이터 보존, CI 보안 게이트, runbook/checklist work.
+
+## Code simplify harness
+
+Code simplification work uses the local harness in `.Codex/`:
+
+- Orchestrator: `.Codex/agents/code-simplify-orchestrator.md`
+- Specialists: `.Codex/agents/sync-contract-guardian.md`, `.Codex/agents/payslip-lifecycle-simplifier.md`, `.Codex/agents/static-boundary-guardian.md`, `.Codex/agents/regression-test-sentinel.md`
+- Skill: `.Codex/skills/code-simplify/SKILL.md`
+
+Trigger this harness for code-simplify, 리팩터링, 코드 정리, 중복 제거, `app.js`
+분리, Firebase/Firestore sync 단순화, 급여명세서 lifecycle 정리, public/static
+mirror cleanup work. Treat sync and localStorage paths as protected contracts before
+deleting or moving code.

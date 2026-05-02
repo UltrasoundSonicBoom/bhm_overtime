@@ -7,7 +7,11 @@
 import { describe, it, expect } from 'vitest';
 import { KEY_REGISTRY, CATEGORIES, syncKeys } from '../../../apps/web/src/firebase/key-registry.js';
 import { HANDLER_BASES, SPECIAL_KEY_PATTERNS } from '../../../apps/web/src/firebase/auto-sync.js';
-import { HYDRATED_BASES, CLEARED_EXACT_BASES } from '../../../apps/web/src/firebase/hydrate.js';
+import {
+  HYDRATED_BASES,
+  CLEARED_EXACT_BASES,
+  LOGOUT_PRESERVED_BASES,
+} from '../../../apps/web/src/firebase/hydrate.js';
 import { ENCRYPTED_FIELDS, fieldsForPath } from '../../../apps/web/src/firebase/sync/_encrypted-fields.js';
 
 function pathHasEncryptedFieldsMapping(collPath) {
@@ -88,6 +92,15 @@ describe('key-registry 인벤토리 커버리지', () => {
     for (const key of required) {
       expect(HYDRATED_BASES, `${key}: hydrate 누락`).toContain(key);
       expect(CLEARED_EXACT_BASES, `${key}: logout clear 누락`).toContain(key);
+    }
+  });
+
+  it('모든 sync 키가 hydrate 경로와 명시적 logout 정책을 가진다', () => {
+    const logoutPolicy = new Set([...CLEARED_EXACT_BASES, ...LOGOUT_PRESERVED_BASES]);
+
+    for (const key of syncKeys()) {
+      expect(HYDRATED_BASES, `${key}: hydrate 정책 누락`).toContain(key);
+      expect(logoutPolicy.has(key), `${key}: logout clear/preserve 정책 누락`).toBe(true);
     }
   });
 });
