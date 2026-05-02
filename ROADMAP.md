@@ -1,118 +1,94 @@
-# 프로젝트 로드맵 (BHM Overtime)
+# 프로젝트 로드맵 (BHM Overtime / SNUH Mate Team Plan)
 
-> Last Updated: 2026-04-09
+> Last Updated: 2026-05-02
 
 ## 현재 상태 요약
 
-이미 구현되어 있는 것:
+이 저장소의 현재 기준은 정적 단일 앱이 아니라, Team Plan을 향해 정리 중인 모노레포 구조다.
 
-- 공개 웹 계산기와 규정 화면
-- `data.js` 기반 정적 fallback
-- `/api/data/bundle`, `/api/faq`, `/api/chat`
-- Supabase Family mode 로그인/동기화
-- Hono + Drizzle + Supabase/Postgres 기반 서버
-- RAG 기본 구조와 FAQ 벡터 검색
-- 관리자 권한용 `admin_users` 및 `requireAdmin` 미들웨어
+이미 구현되어 있거나 현재 체크아웃에서 기준으로 삼아야 하는 것:
 
-아직 없는 것:
+- Astro web app under `apps/web`
+- workspace packages under `packages/*`
+- Firebase Auth + Firestore optional sync
+- local FastAPI parser backend under `backend/`
+- schedule parser, sync, and review queue tests
 
-- 운영자가 직접 쓰는 Admin UI
-- `/api/admin/*` CRUD
-- 운영 콘텐츠 계층
-- revision / approval / audit 흐름
-- Preview 기반 게시 프로세스
+중요한 경계:
 
-## 방향 전환
+- 브라우저 앱은 `apps/web`의 Astro/ESM 흐름을 기준으로 한다.
+- 개인 데이터 동기화는 Firebase Auth + Firestore를 선택적 sync 계층으로 본다.
+- 근무표/급여명세서 파싱처럼 로컬 처리에 가까운 기능은 `backend/`의 FastAPI 백엔드가 맡는다.
+- Team Plan의 핵심 도메인 로직은 화면에 묶지 않고 `packages/*` 워크스페이스 패키지로 분리한다.
+- 로그인 계정과 병원/부서의 업무상 직원 정체성은 분리해서 설계한다.
 
-이제 핵심 목표는 단순 기능 추가가 아니라, 아래 운영 플랫폼으로 전환하는 것이다.
+## 제품 방향
 
-```text
-web + admin + content(md) + ai harness + preview/review/publish
-```
+가장 가까운 목표는 병원 전체 ERP가 아니라, 실제로 팔 수 있는 부서 단위 Team Plan이다.
 
-## 2트랙 우선순위
+1차 제품은 두 데모 팀을 기준으로 좁힌다.
 
-### Track A. RAG 완성 먼저
+- 3교대 간호부서: 간호사 중심의 월간 근무표, 교대 규칙, 변경/승인 흐름
+- Angio 팀: 의사, 간호사, 방사선사 중심의 평일/주말 온콜, 시간외, 팀 운영 흐름
 
-먼저 끝내야 하는 항목:
+Team Plan이 해결해야 하는 핵심 문제:
 
-- `regulation_documents`를 실제 PDF/MD 원문에서 청킹해서 넣는 ingest 파이프라인
-- 규정 원문 임베딩 생성
-- 챗봇 답변 품질 검증
-- FAQ direct match와 regulation document 검색의 실제 데이터 충만도 확인
+- 근무표 import 후 규칙 위반을 사람이 검토 가능한 형태로 보여준다.
+- 운영자 수정은 원본을 덮어쓰지 않고 overlay/change log로 남긴다.
+- 배포 가능한 근무표 버전과 승인/감사 흐름을 분리한다.
+- 개인용 급여/명세서 데이터와 팀 공유 근무/온콜 데이터의 노출 범위를 분리한다.
+- AI는 초안, 검토 보조, 이상 징후 설명을 맡고 최종 게시 결정은 사람이 한다.
 
-이 트랙이 먼저인 이유:
+## 근시일 실행 큐
 
-- 챗봇과 규정 검색은 이미 사용자에게 노출된 기능이다.
-- 스키마와 API는 있는데 실제 ingest/품질 검증이 비어 있으면 "구조만 있고 내용이 빈" 상태가 된다.
-- Admin은 이 결과물을 운영하기 위한 후속층이므로, 데이터 파이프라인이 먼저 안정돼야 한다.
+사용자가 선택한 실행 순서: `1,3,4,5,2`
 
-### Track B. Admin 운영 흐름
+1. Task 1: ROADMAP 최신화
+2. Task 3: `packages/scheduling` rule/evaluate/import-normalize 최소 엔진
+3. Task 4: Firebase real sync E2E/readiness 검증
+4. Task 5: Firestore plaintext profile/schedule migration plan
+5. Task 2: Team Plan product surface skeleton
 
-Track A와 병행 또는 후속으로 진행:
+이 순서는 "먼저 지금 방향을 고정하고, 규칙/워크플로우 엔진의 최소 계약을 만든 뒤, 동기화/데이터 안전성을 확인하고, 마지막에 사용자가 볼 Team Plan 표면을 연다"는 기준이다.
 
-- FAQ
-- Regulation Versions
-- review / publish
-- audit / revision
-- content 관리
+## 단계별 목표
 
-## 단계별 진행
+### 1. 방향과 기준선 고정
 
-### Step 0. 기준선 정리
+- 현재 런타임 구조를 문서와 코드 기준으로 맞춘다.
+- 오래된 운영 우선순위와 현재 Team Plan 우선순위를 분리한다.
+- 기존 개인 도구와 새 Team Plan 표면이 섞이지 않도록 route/package 경계를 둔다.
 
-- 실제 코드 기준으로 SPEC 정리
-- 구현 순서와 checkpoint 문서화
-- 현재 DB 연결 상태와 RAG 데이터 상태 확인
+### 2. Firebase sync readiness 검증
 
-### Step 1. Track A 시작
+- 실제 credential 없이도 브라우저에서 Firebase sync 준비 상태를 확인할 수 있는 E2E 검증을 둔다.
+- 로그인 전/후 상태, localStorage source of truth, Firestore write-through mirror 경계를 확인한다.
+- 통과한 테스트가 "실제 Firestore 운영 데이터 검증"을 의미하는지, readiness 검증인지를 명확히 표시한다.
 
-- ingest 파이프라인 작성
-- regulation 임베딩 생성
-- retrieval 품질 검증
+### 3. Firestore plaintext migration plan
 
-### Step 2. Track B 기반 구축
+- 기존 profile/schedule 데이터 중 평문으로 남아 있는 항목을 식별한다.
+- 암호화/마이그레이션/롤백/검증 순서를 문서화한다.
+- 사용자별 uid 경계, 삭제 흐름, 재동기화 흐름을 함께 점검한다.
 
-- 콘텐츠 운영용 테이블 추가
-- approval / revision / audit 로그 추가
-- Admin API 계약 정의
+### 4. Team Plan surface skeleton
 
-### Step 3. 운영 우선순위 이관
+- 새 Team Plan 표면은 `/team/schedules` 계열 route로 연다.
+- 기존 `nurse_admin` 또는 `schedule_suite`를 억지로 확장하지 않는다.
+- 관리자, import, rule review, approval, audit, 내 근무표, swap 같은 운영 화면의 뼈대를 만든다.
 
-- FAQ
-- 규정 버전
-- 공지
-- 핸드북/규정 원문
-- 보수표/수당 일부
+### 5. Scheduling domain package
 
-### Step 4. Admin MVP + Preview
-
-- Dashboard
-- FAQ
-- Regulation Versions
-- Review
-- Roles/Logs
-- preview / publish
+- `packages/scheduling`에 import-normalize, rule evaluation, overlay, availability 계산을 분리한다.
+- 원본 import snapshot은 immutable하게 유지한다.
+- 운영자 수정은 overlay로 적용하고, publish 가능한 버전과 감사 로그를 후속 단계에서 연결한다.
+- 1차 규칙은 간호부서 MVP 기준으로 작게 시작하고 Angio 규칙은 별도 rule pack으로 확장한다.
 
 ## 운영 원칙
 
-- 계산 로직은 코드에 남긴다.
-- 운영 콘텐츠는 Admin/DB/MD로 분리한다.
-- AI는 초안과 검수 보조를 맡고 게시 결정은 사람이 한다.
-- 공개 웹은 fallback을 유지해 운영 리스크를 낮춘다.
-- Preview 없는 직접 게시를 기본값으로 두지 않는다.
-
-## 다음 액션
-
-현재 다음 작업의 기준 문서는 아래다.
-
-- [`SPEC.md`](/Users/momo/Documents/GitHub/bhm_overtime/SPEC.md)
-- [`tasks/plan.md`](/Users/momo/Documents/GitHub/bhm_overtime/tasks/plan.md)
-
-다음 실제 구현 시작점은:
-
-1. RAG 기준선 확인
-2. regulation ingest 파이프라인 작성
-3. regulation embedding 생성
-4. FAQ/RAG 검색 품질 검증
-5. 그 다음 Admin 운영용 테이블과 규정/FAQ 관리 흐름 추가
+- Team Plan은 부서 단위 유료 제품을 기준으로 설계한다.
+- 데이터 모델은 login identity와 employee identity를 섞지 않는다.
+- 로컬 파싱, 브라우저 상태, Firebase sync, Team Plan 공유 데이터의 책임을 분리한다.
+- 개인정보와 팀 운영 정보는 보이는 범위부터 다르게 설계한다.
+- 테스트는 "동작함"과 "실제 운영 데이터에 연결됨"을 구분해서 기록한다.
+- 오래된 표면은 보존하되, 새 Team Plan 개발은 새 route/package 경계 안에서 진행한다.

@@ -1,0 +1,40 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Container from '../../../components/layout/Container.astro';
+import PageHeader from '../../../components/patterns/PageHeader.astro';
+import Card from '../../../components/ui/Card.astro';
+
+const logs = [
+  { at: '2026-05-02 09:10', actor: 'manager-101', event: 'import.snapshot.created', target: 'ward-101:2026-05' },
+  { at: '2026-05-02 09:18', actor: 'manager-101', event: 'overlay.change.proposed', target: 'n-101-03:03' },
+  { at: '2026-05-02 09:24', actor: 'approver-angio', event: 'oncall.swap.requested', target: 'angio:weekend' },
+];
+---
+<BaseLayout title="팀 스케줄 감사 로그" showFooterNav={false}>
+  <main class="min-h-screen bg-ds-bg-page py-8" data-team-schedule-route="audit">
+    <Container size="lg">
+      <PageHeader title="감사 로그" description="일정 변경의 행위자, 대상, 시간을 추적합니다." />
+      <Card padding="none" as="section">
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[720px] text-sm">
+            <thead>
+              <tr class="bg-ds-bg-page text-left text-xs text-ds-text-secondary">
+                <th class="px-4 py-3">시간</th><th>행위자</th><th>이벤트</th><th>대상</th>
+              </tr>
+            </thead>
+            <tbody>
+              {logs.map((log) => (
+                <tr class="border-t border-ds-border-default">
+                  <td class="px-4 py-3">{log.at}</td>
+                  <td>{log.actor}</td>
+                  <td>{log.event}</td>
+                  <td>{log.target}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </Container>
+  </main>
+</BaseLayout>

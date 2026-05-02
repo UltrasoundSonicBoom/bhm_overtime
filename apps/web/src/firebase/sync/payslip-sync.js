@@ -24,11 +24,27 @@ export async function writePayslip(dbOrNull, uid, payMonth, data, driveFileId) {
     ? { db: dbOrNull, firestoreMod: _mockMod() }
     : await _f();
 
+  const ref = firestoreMod.doc(db, `${COLLECTION(uid)}/${payMonth}`);
+
+  let existingFields = {};
+  try {
+    const snap = await firestoreMod.getDoc(ref);
+    if (snap.exists()) {
+      const prev = await decryptDoc(snap.data(), ENC_FIELDS, key);
+      existingFields = prev.parsedFields || {};
+    }
+  } catch (_e) {
+    existingFields = {};
+  }
+
   const { savedAt, ...rest } = data || {};
-  const docData = { parsedFields: rest, payMonth, lastEditAt: Date.now() };
+  const docData = {
+    parsedFields: { ...existingFields, ...rest },
+    payMonth,
+    lastEditAt: Date.now(),
+  };
   if (driveFileId) docData.driveFileId = driveFileId;  // 평문 — 식별성 없음
   const encrypted = await encryptDoc(docData, ENC_FIELDS, key);
-  const ref = firestoreMod.doc(db, `${COLLECTION(uid)}/${payMonth}`);
   await firestoreMod.setDoc(ref, encrypted);
 }
 
@@ -54,6 +70,15 @@ export async function readPayslip(dbOrNull, uid, payMonth) {
   const dec = await decryptDoc(snap.data(), ENC_FIELDS, key);
   const { parsedFields, lastEditAt, ...meta } = dec;
   return { ...(parsedFields || {}), payMonth: meta.payMonth || payMonth };
+}
+
+export async function deletePayslip(dbOrNull, uid, payMonth) {
+  const { db, firestoreMod } = dbOrNull
+    ? { db: dbOrNull, firestoreMod: _mockMod() }
+    : await _f();
+
+  const ref = firestoreMod.doc(db, `${COLLECTION(uid)}/${payMonth}`);
+  await firestoreMod.deleteDoc(ref);
 }
 
 export async function readAllPayslips(dbOrNull, uid) {
@@ -95,5 +120,6 @@ function _mockMod() {
       const docs = col._db._queryCollection(col._path);
       return { empty: docs.length === 0, docs };
     },
+    deleteDoc: async (ref) => { ref._db._deleteDoc(ref._path); },
   };
 }

@@ -23,12 +23,18 @@ export const ENCRYPTED_FIELDS = {
   ],
   // Payslips — parsedFields 전체 (PDF 파싱 항목별 금액)
   'payslips/*': ['parsedFields'],
-  // Overtime — entries 의 hours/duration/notes (date/type 은 평문)
-  'overtime/*': ['entries[].hours', 'entries[].duration', 'entries[].notes'],
-  // Leave — entries 의 duration/notes (date 평문)
-  'leave/*': ['entries[].duration', 'entries[].notes'],
-  // Schedule — entries 의 duty/memo (date 평문, 팀원 이름은 평문)
-  'schedule/*': ['entries[].duty', 'entries[].memo'],
+  // Overtime — entries 의 시간/금액/상세 (date/type 은 평문)
+  'overtime/*': [
+    'entries[].hours',
+    'entries[].duration',
+    'entries[].notes',
+    'entries[].breakdown',
+    'entries[].estimatedPay',
+  ],
+  // Leave — entries 의 기간/메모/급여 영향 (date/type 은 평문)
+  'leave/*': ['entries[].duration', 'entries[].notes', 'entries[].salaryImpact'],
+  // Schedule — entries 의 duty/memo + team 객체 (date 평문)
+  'schedule/*': ['entries[].duty', 'entries[].memo', 'team'],
   // Settings — appLockPin, customNotes (theme 등 일반 설정 평문)
   'settings/app': ['appLockPin', 'customNotes'],
   // Reference favorites — items 자체는 ID 배열이라 평문 OK (식별성 X)

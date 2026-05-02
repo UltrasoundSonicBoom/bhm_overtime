@@ -1,0 +1,30 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Container from '../../../components/layout/Container.astro';
+import PageHeader from '../../../components/patterns/PageHeader.astro';
+import Card from '../../../components/ui/Card.astro';
+import Button from '../../../components/ui/Button.astro';
+
+const approvals = [
+  { title: '101 병동 2026-05 v2 배포', requester: '김수간호사', status: '승인 대기' },
+  { title: 'Angio 주말 온콜 교체', requester: '파트장', status: '보류' },
+];
+---
+<BaseLayout title="팀 스케줄 승인" showFooterNav={false}>
+  <main class="min-h-screen bg-ds-bg-page py-8" data-team-schedule-route="approvals">
+    <Container size="lg">
+      <PageHeader title="승인 큐" description="배포, 교대, 온콜 변경 요청을 승인 상태별로 봅니다." />
+      <section class="grid grid-cols-1 gap-3">
+        {approvals.map((approval) => (
+          <Card padding="md" as="article">
+            <span slot="header">{approval.title}</span>
+            <div class="flex flex-wrap items-center justify-between gap-3 text-sm">
+              <p class="text-ds-text-secondary">{approval.requester}</p>
+              <Button variant="secondary" size="sm">{approval.status}</Button>
+            </div>
+          </Card>
+        ))}
+      </section>
+    </Container>
+  </main>
+</BaseLayout>

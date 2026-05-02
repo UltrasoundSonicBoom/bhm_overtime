@@ -1,0 +1,19 @@
+---
+interface Props {
+  severity?: 'block' | 'warn' | 'info' | string;
+  label?: string;
+  count?: number;
+}
+
+const { severity = 'info', label = '정보', count } = Astro.props as Props;
+const tone =
+  severity === 'block'
+    ? 'border-ds-status-error bg-ds-status-error-bg text-ds-status-error'
+    : severity === 'warn'
+      ? 'border-ds-status-warning bg-ds-status-warning-bg text-ds-status-warning'
+      : 'border-ds-status-info bg-ds-status-info-bg text-ds-status-info';
+---
+<span class={`inline-flex min-h-7 items-center gap-1 rounded-md border px-2 py-1 text-xs font-semibold ${tone}`}>
+  <span>{label}</span>
+  {typeof count === 'number' && <span aria-label={`${label} ${count}건`}>{count}</span>}
+</span>

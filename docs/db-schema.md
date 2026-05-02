@@ -111,7 +111,19 @@
 | `source` | string | ❌ | `manual\|seeded` |
 | `lastEditAt` | number | ❌ | Unix ms |
 
-### 2-7. `users/{uid}/settings/app`
+### 2-7. `users/{uid}/schedule/{yyyymm}`
+
+| 필드명 | 타입 | 암호화 | 설명 |
+|---|---|---|---|
+| `entries` | array | 부분 | 본인 근무표 |
+| `entries[].date` | string | ❌ | YYYY-MM-DD |
+| `entries[].duty` | string | ✅ | D/E/N/O/AL 등 근무 코드 |
+| `entries[].memo` | string | ✅ | 메모 |
+| `team` | object | ✅ | 팀원별 근무표 |
+| `sourceFile` | string | ❌ | 업로드 파일명 |
+| `lastEditAt` | number | ❌ | Unix ms |
+
+### 2-8. `users/{uid}/settings/app`
 
 | 필드명 | 타입 | 암호화 | 설명 |
 |---|---|---|---|
@@ -120,7 +132,7 @@
 | `customNotes` | string | ✅ | 사용자 메모 |
 | `lastEditAt` | number | ❌ | Unix ms |
 
-### 2-8. `users/{uid}/settings/reference`
+### 2-9. `users/{uid}/settings/reference`
 
 | 필드명 | 타입 | 암호화 | 설명 |
 |---|---|---|---|
@@ -139,6 +151,7 @@
 | `snuhmate_work_history_uid_{uid}` | ✅ | JSON array | `users/{uid}/work_history/*` |
 | `overtimeRecords_uid_{uid}` | ✅ | `{yyyymm: records[]}` | `users/{uid}/overtime/{yyyymm}` |
 | `leaveRecords` | ❌ (공유) | `{yyyy: records[]}` | `users/{uid}/leave/{yyyy}` |
+| `snuhmate_schedule_records` | ❌ (공유) | `{yyyymm: monthData}` | `users/{uid}/schedule/{yyyymm}` |
 | `overtimePayslipData_uid_{uid}` | ✅ | `{payMonth: data}` | `users/{uid}/payslips/{payMonth}` |
 | `payslip_{uid}_{yyyy}_{mm}` | ✅ | JSON object | `users/{uid}/payslips/{YYYY-MM}` |
 | `snuhmate_settings` | ❌ (기기) | JSON object | `users/{uid}/settings/app` |

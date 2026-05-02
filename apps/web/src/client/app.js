@@ -2467,6 +2467,9 @@ function onOtHourlyInput() {
 
   if (!hasProfileWage) {
     localStorage.setItem(window.getUserStorageKey ? window.getUserStorageKey('otManualHourly') : 'otManualHourly', val.toString());
+    if (typeof window.recordLocalEdit === 'function') {
+      try { window.recordLocalEdit('otManualHourly'); } catch (e) {}
+    }
     hint.textContent = val > 0 ? '✏️ 수동 입력값 (자동저장)' : '⬅ 시급을 입력하세요';
   }
 
@@ -3583,7 +3586,7 @@ function _propagatePayslipToWorkHistory(parsed, ym) {
   var ei = parsed.employeeInfo;
   if (!ei.department) return;
 
-  var whKey = window.getUserStorageKey ? window.getUserStorageKey('bhm_work_history') : 'bhm_work_history_guest';
+  var whKey = window.getUserStorageKey ? window.getUserStorageKey('snuhmate_work_history') : 'snuhmate_work_history_guest';
   var list = [];
   try { list = JSON.parse(localStorage.getItem(whKey) || '[]') || []; } catch (e) { list = []; }
   if (!Array.isArray(list)) list = [];
@@ -3617,6 +3620,10 @@ function _propagatePayslipToWorkHistory(parsed, ym) {
   list.push(entry);
   list.sort(function (a, b) { return (a.from || '') < (b.from || '') ? -1 : 1; });
   localStorage.setItem(whKey, JSON.stringify(list));
+  if (typeof window.recordLocalEdit === 'function') {
+    try { window.recordLocalEdit('snuhmate_work_history'); } catch (e) {}
+  }
+  try { window.dispatchEvent(new CustomEvent('workHistoryChanged', { detail: { source: 'payslip', ym } })); } catch (e) {}
 }
 // payroll-views.js 에서도 호출 가능하도록 노출
 window._propagatePayslipToWorkHistory = _propagatePayslipToWorkHistory;
@@ -3669,6 +3676,8 @@ function _propagatePayslipToOvertime(parsed, ym) {
   OVERTIME.savePayslipData(ymKey, { workStats, overtimeItems, hourlyRate });
   console.log(`[Overtime] 명세서 데이터 전파 완료: ${ymKey}, workStats ${workStats.length}건, 수당항목 ${overtimeItems.length}건`);
 }
+// payroll-views.js 등 다른 업로드 경로에서도 동일한 교차 검증/보정 흐름을 쓰도록 노출
+window._propagatePayslipToOvertime = _propagatePayslipToOvertime;
 
 // ── 공통 헬퍼: info 탭의 자동갱신 배너 표시 + 급여탭 링크 숨김 ──
 function _showAutoSyncBanner(ym) {
@@ -3729,11 +3738,11 @@ async function handlePayslipUpload(file) {
     const ym = SALARY_PARSER.parsePeriodYearMonth(parsed);
     if (!ym) throw new Error('급여 기간을 인식하지 못했습니다. 파일을 확인해주세요.');
 
-    SALARY_PARSER.saveMonthlyData(ym.year, ym.month, parsed, ym.type);
+    const savedPayslip = SALARY_PARSER.saveMonthlyData(ym.year, ym.month, parsed, ym.type) || parsed;
 
     // employeeInfo (이름/직종/직급/호봉/부서/입사일/사번) + 수당 항목 일괄 반영
     // (이전에 분산되어 있던 _applyPayslipEmployeeInfo 로직은 applyStableItemsToProfile 로 일원화)
-    const stableRes = SALARY_PARSER.applyStableItemsToProfile(parsed);
+    const stableRes = SALARY_PARSER.applyStableItemsToProfile(savedPayslip);
     const profileUpdated = !!(stableRes && stableRes.changed);
 
     // grade/year 자동 설정 실패 시 사용자에게 안내 — 시급 계산 전제 조건
@@ -3767,14 +3776,14 @@ async function handlePayslipUpload(file) {
     }
     _showAutoSyncBanner(ym);
 
-    renderPayslip(parsed, ym, profileUpdated, stableRes);
-    renderVerification(parsed);
+    renderPayslip(savedPayslip, ym, profileUpdated, stableRes);
+    renderVerification(savedPayslip);
 
     // ── 시간외 탭 교차 검증용 데이터 전파 ──
-    _propagatePayslipToOvertime(parsed, ym);
+    _propagatePayslipToOvertime(savedPayslip, ym);
 
     // ── 근무정보 (work_history) 자동 배치 이력 생성 ──
-    _propagatePayslipToWorkHistory(parsed, ym);
+    _propagatePayslipToWorkHistory(savedPayslip, ym);
 
     // 급여명세서 관리 뷰 갱신 (업로드한 월 선택)
     const mgmtContainer = document.getElementById('payslipMgmtView');
@@ -3966,14 +3975,16 @@ async function handleProfilePayslipUpload(file) {
       ym = { year: now.getFullYear(), month: now.getMonth() + 1 };
       console.warn('[PayslipUpload] 기간 인식 실패 — 현재 월로 저장:', ym);
     }
-    SALARY_PARSER.saveMonthlyData(ym.year, ym.month, parsed, ym.type);
+    const savedPayslip = SALARY_PARSER.saveMonthlyData(ym.year, ym.month, parsed, ym.type) || parsed;
+    _propagatePayslipToOvertime(savedPayslip, ym);
+    _propagatePayslipToWorkHistory(savedPayslip, ym);
 
     // 업로드로 부서/입사일이 새로 들어왔으면 근무이력 자동 시드 다시 시도
     // (이전에 시드 조건 불충족으로 비어 있던 상태면 플래그 해제해서 재시드 허용)
     try {
-      var _whK = window.getUserStorageKey ? window.getUserStorageKey('bhm_work_history') : 'bhm_work_history_guest';
+      var _whK = window.getUserStorageKey ? window.getUserStorageKey('snuhmate_work_history') : 'snuhmate_work_history_guest';
       var _wh = JSON.parse(localStorage.getItem(_whK) || '[]');
-      var _whSK = window.getUserStorageKey ? window.getUserStorageKey('bhm_work_history_seeded') : 'bhm_work_history_seeded_guest';
+      var _whSK = window.getUserStorageKey ? window.getUserStorageKey('snuhmate_work_history_seeded') : 'snuhmate_work_history_seeded_guest';
       if (!Array.isArray(_wh) || _wh.length === 0) localStorage.removeItem(_whSK);
       if (typeof renderWorkHistory === 'function') renderWorkHistory();
     } catch (e) {}
@@ -4009,6 +4020,23 @@ if (typeof window.prefetchTabs === 'function') {
       try { window[fnName](); } catch (e) { console.warn('[live-sync]', fnName, e); }
     }
   };
+  const refreshActiveTab = () => {
+    if (isActive('home')) safeCall('initHomeTab');
+    if (isActive('overtime')) {
+      safeCall('applyProfileToOvertime');
+      safeCall('initOvertimeTab');
+    }
+    if (isActive('leave')) {
+      safeCall('applyProfileToLeave');
+      safeCall('initLeaveTab');
+    }
+    if (isActive('payroll')) {
+      safeCall('applyProfileToPayroll');
+      safeCall('initPayrollTab');
+    }
+    if (isActive('profile')) safeCall('initProfileTab');
+    if (isActive('schedule')) safeCall('initScheduleTab');
+  };
 
   // 프로필 변경 → 모든 의존 탭 라이브 갱신
   window.addEventListener('profileChanged', () => {
@@ -4027,11 +4055,15 @@ if (typeof window.prefetchTabs === 'function') {
   // 시간외 기록 변경 → 홈 요약 갱신
   window.addEventListener('overtimeChanged', () => {
     if (isActive('home')) safeCall('initHomeTab');
+    if (isActive('overtime')) safeCall('initOvertimeTab');
+    if (isActive('payroll')) safeCall('initPayrollTab');
   });
 
   // 휴가 기록 변경 → 홈 요약 갱신
   window.addEventListener('leaveChanged', () => {
     if (isActive('home')) safeCall('initHomeTab');
+    if (isActive('leave')) safeCall('initLeaveTab');
+    if (isActive('payroll')) safeCall('initPayrollTab');
   });
 
   // 명세서 데이터 변경 → 홈 (시간외 보충값) + 급여 탭 갱신
@@ -4040,6 +4072,21 @@ if (typeof window.prefetchTabs === 'function') {
     if (isActive('overtime')) safeCall('initOvertimeTab');
     if (isActive('payroll')) safeCall('initPayrollTab');
   });
+
+  window.addEventListener('scheduleChanged', () => {
+    if (isActive('home')) safeCall('initHomeTab');
+    if (isActive('schedule')) safeCall('initScheduleTab');
+    if (isActive('overtime')) safeCall('initOvertimeTab');
+    if (isActive('leave')) safeCall('initLeaveTab');
+    if (isActive('payroll')) safeCall('initPayrollTab');
+  });
+
+  window.addEventListener('workHistoryChanged', () => {
+    if (isActive('profile')) safeCall('initProfileTab');
+  });
+
+  window.addEventListener('app:cloud-hydrated', refreshActiveTab);
+  window.addEventListener('app:auth-changed', refreshActiveTab);
 })();
 
 

@@ -98,6 +98,23 @@ function _setLocalRaw(key, value) {
   }
 }
 
+function _dispatchSyncRefresh(reason, uid, ok = [], failed = []) {
+  if (typeof window === 'undefined') return;
+  const detail = { source: reason, reason, uid, ok, failed };
+  [
+    'profileChanged',
+    'overtimeChanged',
+    'leaveChanged',
+    'payslipChanged',
+    'scheduleChanged',
+    'workHistoryChanged',
+    'settingsChanged',
+    'favoritesChanged',
+  ].forEach(name => {
+    try { window.dispatchEvent(new CustomEvent(name, { detail })); } catch {}
+  });
+}
+
 // 로그아웃 시 호출 — 로그인 사용자의 모든 _uid_<uid> 키 + 공유 키 데이터 정리.
 // 사용자 모델: "로그아웃하면 로컬에 아무 데이터가 없는 게 맞다."
 export function clearLocalUserData(uid) {
@@ -128,6 +145,8 @@ export function clearLocalUserData(uid) {
     const editKeys = Object.keys(localStorage).filter(k => k.startsWith('snuhmate_last_edit_'));
     for (const k of editKeys) localStorage.removeItem(k);
   } catch (e) {}
+
+  _dispatchSyncRefresh('logout', uid, [], []);
 }
 
 // 로그인 사용자의 모든 카테고리를 Firestore에서 읽어 로컬에 동기화.
@@ -235,6 +254,7 @@ export async function hydrateFromFirestore(uid) {
 
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('app:cloud-hydrated', { detail: { ok, failed, uid } }));
+    _dispatchSyncRefresh('cloud', uid, ok, failed);
   }
 
   return { ok, failed };

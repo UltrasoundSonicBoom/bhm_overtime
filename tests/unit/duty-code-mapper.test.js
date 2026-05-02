@@ -26,6 +26,11 @@ describe('mapDutyCode — 영문 1글자', () => {
     expect(mapDutyCode('RD')).toBe('RD');
     expect(mapDutyCode('R')).toBe('RD');
   });
+
+  it('9A 고정근무 코드도 보존한다', () => {
+    expect(mapDutyCode('9A')).toBe('9A');
+    expect(mapDutyCode('9a')).toBe('9A');
+  });
 });
 
 describe('mapDutyCode — 한국어', () => {
@@ -124,7 +129,7 @@ describe('mapDutyRow — 일괄 변환', () => {
 });
 
 describe('STANDARD_CODES', () => {
-  it('표준 6종', () => {
-    expect(STANDARD_CODES).toEqual(['D', 'E', 'N', 'O', 'AL', 'RD']);
+  it('표준 7종', () => {
+    expect(STANDARD_CODES).toEqual(['D', 'E', 'N', 'O', 'AL', 'RD', '9A']);
   });
 });

@@ -5,6 +5,7 @@
 import { PAYROLL } from '@snuhmate/profile/payroll';
 import { SALARY_PARSER } from './salary-parser.js';
 import { PROFILE } from '@snuhmate/profile/profile';
+import { OVERTIME } from '@snuhmate/profile/overtime';
 
 (function () {
   'use strict';
@@ -95,12 +96,35 @@ import { PROFILE } from '@snuhmate/profile/profile';
     return month === 1 ? { year: year - 1, month: 12 } : { year, month: month - 1 };
   }
 
+  function afterPayslipSaved(saved, ym) {
+    if (!saved || !ym) return;
+    if (typeof SALARY_PARSER.applyStableItemsToProfile === 'function') {
+      SALARY_PARSER.applyStableItemsToProfile(saved);
+    }
+    if (typeof window._propagatePayslipToOvertime === 'function') {
+      window._propagatePayslipToOvertime(saved, ym);
+    }
+    if (typeof window._propagatePayslipToWorkHistory === 'function') {
+      window._propagatePayslipToWorkHistory(saved, ym);
+    }
+  }
+
+  function deletePayslipDerivedData(year, month) {
+    const ym = year + '-' + String(month).padStart(2, '0');
+    if (OVERTIME && typeof OVERTIME.deletePayslipData === 'function') {
+      OVERTIME.deletePayslipData(ym);
+    }
+  }
+
   // ── initPayrollTab ──
   window.initPayrollTab = function () {
     const active = document.querySelector('#tab-payroll .pay-bookmark-tab.active');
     const name = active ? active.dataset.subtab : 'pay-payslip';
     if (name === 'pay-payslip') renderPayPayslip();
-    else if (name === 'pay-calc') { PAYROLL.init(); }
+    else if (name === 'pay-calc') {
+      PAYROLL.init();
+      if (typeof window.initPayEstimate === 'function') window.initPayEstimate();
+    }
     else if (name === 'pay-qa') { PAYROLL.init(); }
     else if (name === 'pay-retirement' && typeof window.initRetirementTab === 'function') {
       window.initRetirementTab(true);
@@ -566,13 +590,8 @@ import { PROFILE } from '@snuhmate/profile/profile';
         const result = await SALARY_PARSER.parseFile(file);
         const ym = SALARY_PARSER.parsePeriodYearMonth(result);
         if (ym) {
-          SALARY_PARSER.saveMonthlyData(ym.year, ym.month, result, ym.type);
-          if (typeof SALARY_PARSER.applyStableItemsToProfile === 'function') {
-            SALARY_PARSER.applyStableItemsToProfile(result);
-          }
-          if (typeof window._propagatePayslipToWorkHistory === 'function') {
-            window._propagatePayslipToWorkHistory(result, ym);
-          }
+          const saved = SALARY_PARSER.saveMonthlyData(ym.year, ym.month, result, ym.type) || result;
+          afterPayslipSaved(saved, ym);
           ok++;
         } else {
           errors.push(`${file.name}: 급여 기간 인식 불가`);
@@ -616,17 +635,9 @@ import { PROFILE } from '@snuhmate/profile/profile';
       const result = await SALARY_PARSER.parseFile(file);
       const ym = SALARY_PARSER.parsePeriodYearMonth(result);
       if (ym) {
-        SALARY_PARSER.saveMonthlyData(ym.year, ym.month, result, ym.type);
+        const saved = SALARY_PARSER.saveMonthlyData(ym.year, ym.month, result, ym.type) || result;
 
-        // 프로필 자동 반영 (grade/year/부서/입사일/직종 등) — const SALARY_PARSER 는 top-level 이라 직접 참조 가능
-        if (typeof SALARY_PARSER.applyStableItemsToProfile === 'function') {
-          SALARY_PARSER.applyStableItemsToProfile(result);
-        }
-
-        // 근무정보 자동 배치 이력 생성
-        if (typeof window._propagatePayslipToWorkHistory === 'function') {
-          window._propagatePayslipToWorkHistory(result, ym);
-        }
+        afterPayslipSaved(saved, ym);
 
         currentPayslipIdx = 0;
         renderPayPayslip();
@@ -853,6 +864,7 @@ import { PROFILE } from '@snuhmate/profile/profile';
           e.stopPropagation();
           if (!confirm(year + '년 ' + month + '월' + typeTag + ' 명세서를 삭제할까요?')) return;
           SALARY_PARSER.deleteMonthlyData(year, month, type);
+          deletePayslipDerivedData(year, month);
           const remaining = getAllMonthData();
           if (currentPayslipIdx >= remaining.length) currentPayslipIdx = Math.max(0, remaining.length - 1);
           renderPayPayslip();
@@ -1001,7 +1013,8 @@ import { PROFILE } from '@snuhmate/profile/profile';
         summary: { grossPay: gross, totalDeduction: deduct, netPay: gross - deduct },
         editedAt: new Date().toISOString()
       });
-      SALARY_PARSER.saveMonthlyData(year, month, updated, type, true);
+      const saved = SALARY_PARSER.saveMonthlyData(year, month, updated, type, true) || updated;
+      afterPayslipSaved(saved, { year, month, type });
       overlay.remove();
       renderPayPayslip();
     });

@@ -47,7 +47,10 @@
         dl.href = 'style.dark.css';
         document.head.appendChild(dl);
       }
-      if (savedTheme === 'linear') localStorage.setItem('theme', 'dark');  // 1회 마이그레이션
+      if (savedTheme === 'linear') {
+        localStorage.setItem('theme', 'dark');  // 1회 마이그레이션
+        if (window.recordLocalEdit) window.recordLocalEdit('theme');
+      }
     } else {
       document.documentElement.setAttribute('data-theme', 'neo');
     }

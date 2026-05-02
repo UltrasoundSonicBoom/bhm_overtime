@@ -90,4 +90,20 @@ describe('work-history-sync — writeAllWorkHistory / readAllWorkHistory', () =>
     const res = await readAllWorkHistory(db, 'uid3');
     expect(res).toHaveLength(0);
   });
+
+  it('writeAllWorkHistory는 사라진 항목을 원격에서도 삭제한다', async () => {
+    const { writeAllWorkHistory, readAllWorkHistory } =
+      await import('../../../apps/web/src/firebase/sync/work-history-sync.js');
+    const db = _createMockDb();
+    await writeAllWorkHistory(db, 'uid4', [
+      { id: 'wh10', dept: '내과', from: '2021-01' },
+      { id: 'wh11', dept: '외과', from: '2023-01' },
+    ]);
+    await writeAllWorkHistory(db, 'uid4', [
+      { id: 'wh11', dept: '외과', from: '2023-01' },
+    ]);
+    const after = await readAllWorkHistory(db, 'uid4');
+    expect(after).toHaveLength(1);
+    expect(after[0].dept).toBe('외과');
+  });
 });

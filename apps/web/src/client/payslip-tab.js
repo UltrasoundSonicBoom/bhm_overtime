@@ -3,6 +3,7 @@
 import { CALC } from '@snuhmate/calculators';
 import { DATA } from '@snuhmate/data';
 import { PROFILE } from '@snuhmate/profile/profile';
+import { OVERTIME } from '@snuhmate/profile/overtime';
 import { SALARY_PARSER } from './salary-parser.js';
 
 function renderPayslip(data, ym, profileUpdated, stableRes) {
@@ -804,11 +805,10 @@ function renderOvertimeAnalysis(container, data) {
 function deletePayslipMonth(year, month, type) {
   const typeLabel = type && type !== '급여' ? ` (${type})` : '';
   if (!confirm(`${year}년 ${month}월${typeLabel} 급여명세서를 삭제하시겠습니까?`)) return;
-  const settings = (() => { try { return JSON.parse(localStorage.getItem('snuhmate_settings') || '{}'); } catch(e) { return {}; } })();
-  const uid = settings.googleSub || 'guest';
-  const base = `payslip_${uid}_${year}_${String(month).padStart(2, '0')}`;
-  const key = (type && type !== '급여') ? `${base}_${type}` : base;
-  localStorage.removeItem(key);
+  SALARY_PARSER.deleteMonthlyData(year, month, type);
+  if (OVERTIME && typeof OVERTIME.deletePayslipData === 'function') {
+    OVERTIME.deletePayslipData(`${year}-${String(month).padStart(2, '0')}`);
+  }
   renderPayslipMgmt();
 }
 

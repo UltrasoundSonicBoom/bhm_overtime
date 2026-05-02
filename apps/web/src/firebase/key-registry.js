@@ -63,6 +63,7 @@ export const KEY_REGISTRY = {
   'snuhmate_schedule_records': {
     scope: 'sync', shape: 'collection-by-yyyymm',
     firestorePath: (uid) => `users/${uid}/schedule`,
+    category: 'schedule',
   },
   // ── Settings (SPEC §3.6) ──
   'snuhmate_settings': {
@@ -91,7 +92,7 @@ export const KEY_REGISTRY = {
   'snuhmate_leave_migrated_v1': { scope: 'device-local' },  // legacy migration flag
 };
 
-export const CATEGORIES = ['identity', 'payroll', 'overtime', 'leave', 'workHistory', 'settings', 'reference'];
+export const CATEGORIES = ['identity', 'payroll', 'overtime', 'schedule', 'leave', 'workHistory', 'settings', 'reference'];
 
 export function allBaseKeys() {
   return Object.keys(KEY_REGISTRY);

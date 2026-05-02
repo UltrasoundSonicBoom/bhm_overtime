@@ -570,6 +570,7 @@ export const OVERTIME = {
 
     _savePayslipAll(data) {
         localStorage.setItem(this.PAYSLIP_STORAGE_KEY, JSON.stringify(data));
+        if (window.recordLocalEdit) window.recordLocalEdit('overtimePayslipData');
     },
 
     /**
@@ -585,6 +586,15 @@ export const OVERTIME = {
         all[ym] = { ...data, savedAt: new Date().toISOString() };
         this._savePayslipAll(all);
         window.dispatchEvent(new CustomEvent('payslipChanged', { detail: { ym } }));
+    },
+
+    deletePayslipData(ym) {
+        const all = this._loadPayslipAll();
+        if (!Object.prototype.hasOwnProperty.call(all, ym)) return false;
+        delete all[ym];
+        this._savePayslipAll(all);
+        window.dispatchEvent(new CustomEvent('payslipChanged', { detail: { ym, deletedSupplement: true } }));
+        return true;
     },
 
     getPayslipData(year, month) {

@@ -26,6 +26,9 @@ importers:
       '@snuhmate/regulation-constants':
         specifier: workspace:*
         version: link:packages/regulation-constants
+      '@snuhmate/scheduling':
+        specifier: workspace:*
+        version: link:packages/scheduling
       '@snuhmate/shared-utils':
         specifier: workspace:*
         version: link:packages/shared-utils
@@ -80,6 +83,9 @@ importers:
       '@snuhmate/regulation-constants':
         specifier: workspace:*
         version: link:../../packages/regulation-constants
+      '@snuhmate/scheduling':
+        specifier: workspace:*
+        version: link:../../packages/scheduling
       '@snuhmate/shared-utils':
         specifier: workspace:*
         version: link:../../packages/shared-utils
@@ -133,6 +139,8 @@ importers:
         version: link:../shared-utils
 
   packages/regulation-constants: {}
+
+  packages/scheduling: {}
 
   packages/shared-utils: {}
 

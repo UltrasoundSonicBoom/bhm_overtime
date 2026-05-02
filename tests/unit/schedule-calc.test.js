@@ -2,6 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   calcMonthlyDutyCounts,
+  normalizeDutyCode,
   calcEstimatedNightPay,
   calcEstimatedHolidayPay,
   detectViolations,
@@ -25,6 +26,14 @@ describe('calcMonthlyDutyCounts', () => {
     const holidaySet = new Set([1, 3]); // 1일 D + 3일 N → 공휴일 근무
     const counts = calcMonthlyDutyCounts(mine, holidaySet);
     expect(counts.holidayDuty).toBe(2);
+  });
+
+  it('OFF 별칭은 O로, 9A는 근무일로 정규화해서 집계한다', () => {
+    const mine = { 1: 'OFF', 2: 'O', 3: '9A' };
+    const counts = calcMonthlyDutyCounts(mine, new Set([3]));
+    expect(counts.O).toBe(2);
+    expect(counts['9A']).toBe(1);
+    expect(counts.holidayDuty).toBe(1);
   });
 
   it('빈 mineMap에서 0 카운트 반환', () => {
@@ -96,6 +105,14 @@ describe('detectViolations', () => {
     expect(rest[0].date).toBe('2026-04-03');
   });
 
+  it('N-OFF-D 회복 패턴을 차단한다', () => {
+    const mine = { 1: 'N', 2: 'OFF', 3: 'D' };
+    const v = detectViolations(mine, 2026, 4);
+    const recovery = v.filter(x => x.type === 'night_off_day_recovery');
+    expect(recovery).toHaveLength(1);
+    expect(recovery[0].returnDate).toBe('2026-04-03');
+  });
+
   it('N 10일 → monthly_night_overflow', () => {
     const mine = {};
     for (let d = 1; d <= 10; d++) mine[d] = 'N';
@@ -121,6 +138,13 @@ describe('findNextDuty', () => {
     expect(next.date).toBe('2026-04-30');
     expect(next.code).toBe('N');
     expect(next.timeRange).toBe('22:00 ~ 익일 07:00');
+  });
+
+  it('OFF 표기는 오프로 정규화해 건너뛴다', () => {
+    const mine = { 1: 'OFF', 2: 'D' };
+    const next = findNextDuty(mine, 2026, 4, new Date('2026-04-01'));
+    expect(next.date).toBe('2026-04-02');
+    expect(next.code).toBe('D');
   });
 
   it('오늘 듀티가 있으면 오늘 반환', () => {
@@ -210,6 +234,21 @@ describe('mineMapToRecords', () => {
     expect(out.overtimeRecords[0].startTime).toBe('07:00');
   });
 
+  it('공휴일 9A → overtime 레코드로 변환한다', () => {
+    const mine = { 1: '9A' };
+    const out = mineMapToRecords(mine, 2026, 4, new Set([1]));
+    expect(out.overtimeRecords).toHaveLength(1);
+    expect(out.overtimeRecords[0].startTime).toBe('09:00');
+    expect(out.overtimeRecords[0].endTime).toBe('17:00');
+  });
+
+  it('OFF 별칭은 시간외/휴가 레코드를 만들지 않는다', () => {
+    const mine = { 1: 'OFF' };
+    const out = mineMapToRecords(mine, 2026, 4);
+    expect(out.overtimeRecords).toHaveLength(0);
+    expect(out.leaveRecords).toHaveLength(0);
+  });
+
   it('평일 D/E → 레코드 생성 안 함', () => {
     const mine = { 1: 'D', 2: 'E' };
     const out = mineMapToRecords(mine, 2026, 4);
@@ -249,6 +288,13 @@ describe('상수 export', () => {
     expect(DUTY_TIMES.D).toEqual({ start: '07:00', end: '15:00', overnight: false, hours: 8 });
     expect(DUTY_TIMES.N.overnight).toBe(true);
     expect(DUTY_TIMES.O).toBeNull();
+    expect(DUTY_TIMES['9A']).toEqual({ start: '09:00', end: '17:00', overnight: false, hours: 8 });
+  });
+
+  it('normalizeDutyCode가 OFF/휴무를 O로 통일한다', () => {
+    expect(normalizeDutyCode('OFF')).toBe('O');
+    expect(normalizeDutyCode('휴무')).toBe('O');
+    expect(normalizeDutyCode('9a')).toBe('9A');
   });
 
   it('HPPD_THRESHOLDS 임계값이 정의된다', () => {

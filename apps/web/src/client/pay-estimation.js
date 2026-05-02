@@ -4,6 +4,7 @@ import { PROFILE, PROFILE_FIELDS } from '@snuhmate/profile/profile';
 import { CALC } from '@snuhmate/calculators';
 import { DATA } from '@snuhmate/data';
 import { OVERTIME } from '@snuhmate/profile/overtime';
+import { LEAVE } from '@snuhmate/profile/leave';
 import { SALARY_PARSER } from './salary-parser.js';
 import { escapeHtml } from '@snuhmate/shared-utils';
 
@@ -161,6 +162,33 @@ function getMonthFlags(year, month) {
   return flags;
 }
 
+function calcMonthlyLeaveImpact(year, month) {
+  try {
+    return (LEAVE.getMonthRecords(year, month) || []).reduce((sum, record) => {
+      return sum + (Number(record.salaryImpact) || 0);
+    }, 0);
+  } catch (_e) {
+    return 0;
+  }
+}
+
+function applyLeaveImpact(result, leaveImpact) {
+  const amount = Math.round(Number(leaveImpact) || 0);
+  if (!amount) return;
+
+  if (amount < 0) {
+    const deduction = Math.abs(amount);
+    result.공제내역['휴가·휴직 공제'] = (result.공제내역['휴가·휴직 공제'] || 0) + deduction;
+    result.공제총액 += deduction;
+    result.실지급액 -= deduction;
+    return;
+  }
+
+  result.지급내역['휴가·휴직 보전'] = (result.지급내역['휴가·휴직 보전'] || 0) + amount;
+  result.급여총액 += amount;
+  result.실지급액 += amount;
+}
+
 // 단월 시뮬레이션 (시간외·휴가 실시간 반영)
 function calcMonthEstimate(year, month) {
   const profile = PROFILE.load();
@@ -169,6 +197,7 @@ function calcMonthEstimate(year, month) {
   const serviceYears = profile.hireDate ? PROFILE.calcServiceYears(profile.hireDate) : 0;
   const flags = getMonthFlags(year, month);
   const otStats = OVERTIME.calcMonthlyStats(year, month);
+  const leaveImpact = calcMonthlyLeaveImpact(year, month);
 
   // 시간외 기록에서 연장/야간/휴일 시간 분리
   const otRecords = OVERTIME.getMonthRecords(year, month);
@@ -231,7 +260,11 @@ function calcMonthEstimate(year, month) {
   r.급여총액 += oncallPay;
   r.실지급액 += oncallPay;
 
-  return { result: r, flags, otStats };
+  applyLeaveImpact(r, leaveImpact);
+  if (leaveImpact < 0) flags.tags.push('휴가·휴직 공제 반영');
+  if (leaveImpact > 0) flags.tags.push('휴가·휴직 보전 반영');
+
+  return { result: r, flags, otStats, leaveImpact };
 }
 
 // 12개월 시뮬레이션 (연간 요약용)
@@ -830,6 +863,9 @@ const PayrollImprovementAgent = (() => {
 
   return { record, applyToProfile, runOnActualUpload, load };
 })();
+if (typeof window !== 'undefined') {
+  window.PayrollImprovementAgent = PayrollImprovementAgent;
+}
 
 // 지급 항목별 계산 근거 설명
 function getItemDesc(name, year, month, est) {
@@ -847,6 +883,7 @@ function getItemDesc(name, year, month, est) {
   if (name === '온콜대기수당') return `온콜대기 ${est.otStats.byType.oncall_standby.count}일 × 대기수당`;
   if (name === '온콜출근수당') return `온콜출근 ${est.otStats.byType.oncall_callout.count}건 (실근무+출퇴근 인정)`;
   if (name === '야간근무가산금') return `야간근무 ${est.otStats.nightShiftCount}회 × 가산금`;
+  if (name === '휴가·휴직 보전') return '휴가/휴직 기록의 급여 영향 자동 반영';
   if (name === '급식보조비') return '비과세 한도 내 지급';
   if (name === '교통보조비') return '비과세 한도 내 지급';
   if (name === '장기근속수당') return '근속연수 기준 정액';
@@ -856,6 +893,7 @@ function getItemDesc(name, year, month, est) {
 
 // 공제 항목별 설명
 function getDeductionDesc(name, r) {
+  if (name === '휴가·휴직 공제') return '휴가/휴직 기록의 salaryImpact 기준 자동 공제';
   if (name === '국민건강보험') return `급여총액 × 3.545%`;
   if (name === '장기요양보험') return `건강보험료 × 12.95%`;
   if (name === '국민연금') return `급여총액 × 4.5%`;
@@ -887,6 +925,7 @@ function _refreshPayEstIfActive() {
 window.addEventListener('overtimeChanged', _refreshPayEstIfActive);
 window.addEventListener('leaveChanged',    _refreshPayEstIfActive);
 window.addEventListener('profileChanged',  _refreshPayEstIfActive);
+window.addEventListener('payslipChanged',  _refreshPayEstIfActive);
 
 // Phase 2-F: ESM marker — 파일을 ES module 로 표시 (side-effect IIFE 보존)
 

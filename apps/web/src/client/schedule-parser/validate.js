@@ -3,7 +3,7 @@
 
 import { z } from 'zod';
 
-export const DutyCodeSchema = z.enum(['D', 'E', 'N', 'O', 'AL', 'RD', '']);
+export const DutyCodeSchema = z.enum(['D', 'E', 'N', 'O', 'OFF', 'AL', 'RD', '9A', '']);
 
 export const ScheduleRowSchema = z.object({
   name: z.string().min(1).max(20),

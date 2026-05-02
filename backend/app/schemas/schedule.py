@@ -7,8 +7,9 @@ from typing import Dict, List, Literal, Optional
 from pydantic import BaseModel, Field, field_validator
 
 
-# 표준 듀티 코드 + 빈 셀
-DutyCode = Literal["D", "E", "N", "O", "AL", "RD", ""]
+# 표준 듀티 코드 + 빈 셀. OFF는 Team Plan 쪽 입력 호환용이며
+# 레거시 개인 근무표 파서는 계속 O로 정규화한다.
+DutyCode = Literal["D", "E", "N", "O", "OFF", "AL", "RD", "9A", ""]
 
 
 class ScheduleRow(BaseModel):

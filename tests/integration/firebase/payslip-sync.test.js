@@ -20,6 +20,7 @@ function _createMockDb() {
       store[path] = merge ? { ...(store[path] || {}), ...data } : data;
     },
     _readDoc: (path) => store[path] || null,
+    _deleteDoc: (path) => { delete store[path]; },
     _queryCollection: (colPath) => {
       const prefix = colPath.endsWith('/') ? colPath : colPath + '/';
       return Object.entries(store)
@@ -92,11 +93,42 @@ describe('payslip-sync — 라운드트립', () => {
     expect(restored['2026-04'].hourlyRate).toBe(15000);
   });
 
+  it('전체 명세서 저장 후 시간외 보충분을 써도 기존 지급/요약 필드를 보존한다', async () => {
+    const { writePayslip, readPayslip } =
+      await import('../../../apps/web/src/firebase/sync/payslip-sync.js');
+    const db = _createMockDb();
+
+    await writePayslip(db, 'uid1', '2026-04', {
+      salaryItems: [{ name: '기본급', amount: 3000000 }],
+      deductionItems: [{ name: '소득세', amount: 100000 }],
+      summary: { grossPay: 3000000, totalDeduction: 100000, netPay: 2900000 },
+      metadata: { payslipType: '급여' },
+    });
+
+    await writePayslip(db, 'uid1', '2026-04', SAMPLE_DATA);
+    const restored = await readPayslip(db, 'uid1', '2026-04');
+
+    expect(restored.salaryItems).toHaveLength(1);
+    expect(restored.summary.netPay).toBe(2900000);
+    expect(restored.hourlyRate).toBe(15000);
+    expect(restored.overtimeItems).toHaveLength(2);
+  });
+
   it('존재하지 않는 월 → null', async () => {
     const { readPayslip } =
       await import('../../../apps/web/src/firebase/sync/payslip-sync.js');
     const db = _createMockDb();
     const res = await readPayslip(db, 'uid3', '2026-01');
     expect(res).toBeNull();
+  });
+
+  it('deletePayslip → 원격 월 문서 삭제', async () => {
+    const { writePayslip, readPayslip, deletePayslip } =
+      await import('../../../apps/web/src/firebase/sync/payslip-sync.js');
+    const db = _createMockDb();
+    await writePayslip(db, 'uid4', '2026-04', SAMPLE_DATA);
+    expect(await readPayslip(db, 'uid4', '2026-04')).toBeTruthy();
+    await deletePayslip(db, 'uid4', '2026-04');
+    expect(await readPayslip(db, 'uid4', '2026-04')).toBeNull();
   });
 });

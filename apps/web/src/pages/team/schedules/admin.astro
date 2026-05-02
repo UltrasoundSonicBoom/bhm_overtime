@@ -1,0 +1,35 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Container from '../../../components/layout/Container.astro';
+import PageHeader from '../../../components/patterns/PageHeader.astro';
+import Card from '../../../components/ui/Card.astro';
+import Button from '../../../components/ui/Button.astro';
+
+const queue = [
+  { team: '101 병동', item: '5월 1주차 야간 회복 위반', owner: '수간호사', status: '검토' },
+  { team: 'Angio', item: '주말 온콜 커버리지 부족', owner: '파트장', status: '조정' },
+  { team: '101 병동', item: '신규 간호사 E-N 패턴 확인', owner: '교육전담', status: '확인' },
+];
+---
+<BaseLayout title="팀 스케줄 관리 큐" showFooterNav={false}>
+  <main class="min-h-screen bg-ds-bg-page py-8" data-team-schedule-route="admin">
+    <Container size="lg">
+      <PageHeader title="관리 큐" description="배포 전 관리자가 처리해야 할 일정 이슈를 모읍니다." />
+      <section class="grid grid-cols-1 gap-3">
+        {queue.map((row) => (
+          <Card padding="md" as="article">
+            <span slot="header">{row.team}</span>
+            <div class="grid gap-2 text-sm md:grid-cols-[1fr_160px_120px]">
+              <p class="text-ds-text-primary">{row.item}</p>
+              <p class="text-ds-text-secondary">{row.owner}</p>
+              <Button variant="secondary" size="sm" data-admin-action>{row.status}</Button>
+            </div>
+          </Card>
+        ))}
+      </section>
+    </Container>
+  </main>
+  <script>
+    import '../../../client/team-schedules/admin-controller.js';
+  </script>
+</BaseLayout>

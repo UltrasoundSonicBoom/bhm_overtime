@@ -87,6 +87,9 @@ export const AppLock = (function () {
     var s = _loadSettings();
     Object.assign(s, patch);
     localStorage.setItem('snuhmate_settings', JSON.stringify(s));
+    if (typeof window !== 'undefined' && window.recordLocalEdit) {
+      window.recordLocalEdit('snuhmate_settings');
+    }
     // Phase 8: Firestore write-through (로그인 시만, fire-and-forget)
     if (typeof window !== 'undefined' && window.__firebaseUid) {
       import('/src/firebase/sync/settings-sync.js').then(function(m) {

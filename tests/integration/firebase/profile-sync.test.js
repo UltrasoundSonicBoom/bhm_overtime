@@ -102,7 +102,7 @@ describe('profile-sync — write/read 라운드트립 (암호화 포함)', () =>
       employeeNumber: 'A1234567',
       department: '내과',
       jobType: '간호직',
-      grade: 'S3',
+      grade: 'S3_민감등급',
       year: 7,
       hourlyWage: 15000,
       weeklyHours: 209,
@@ -132,7 +132,7 @@ describe('profile-sync — write/read 라운드트립 (암호화 포함)', () =>
     expect(allRaw).not.toContain('E001');
     expect(allRaw).not.toContain('A1234567');
     expect(allRaw).not.toContain('간호직');
-    expect(allRaw).not.toContain('S3');
+    expect(allRaw).not.toContain('S3_민감등급');
   });
 
   it('lastEditAt 필드 평문 (인덱싱용)', async () => {

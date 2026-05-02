@@ -1,0 +1,36 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Container from '../../../components/layout/Container.astro';
+import PageHeader from '../../../components/patterns/PageHeader.astro';
+import Card from '../../../components/ui/Card.astro';
+import RuleIssueBadge from '../../../components/team-schedules/RuleIssueBadge.astro';
+
+const rules = [
+  { id: 'valid_duty_code', severity: 'block', label: '근무코드 허용 목록' },
+  { id: 'employee_identity_required', severity: 'block', label: '직원 식별자 필수' },
+  { id: 'no_n_off_d', severity: 'block', label: 'N-OFF-D 회복 금지' },
+  { id: 'max_consecutive_nights', severity: 'warn', label: '연속 야간 상한' },
+  { id: 'monthly_night_cap', severity: 'warn', label: '월 야간 횟수 상한' },
+];
+---
+<BaseLayout title="팀 스케줄 규칙" showFooterNav={false}>
+  <main class="min-h-screen bg-ds-bg-page py-8" data-team-schedule-route="rules">
+    <Container size="lg">
+      <PageHeader title="규칙 팩" description="운영자가 차단 규칙과 경고 규칙을 분리해서 확인합니다." />
+      <section class="grid grid-cols-1 gap-3">
+        {rules.map((rule) => (
+          <Card padding="md" as="article">
+            <span slot="header">{rule.label}</span>
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <code class="text-sm text-ds-text-secondary">{rule.id}</code>
+              <RuleIssueBadge severity={rule.severity} label={rule.severity === 'block' ? '차단' : '경고'} />
+            </div>
+          </Card>
+        ))}
+      </section>
+    </Container>
+  </main>
+  <script>
+    import '../../../client/team-schedules/rule-editor-controller.js';
+  </script>
+</BaseLayout>

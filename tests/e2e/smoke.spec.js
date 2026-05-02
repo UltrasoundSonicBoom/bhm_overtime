@@ -1,8 +1,8 @@
-// Playwright e2e 스모크 — 8개 탭 + 4개 payroll 서브탭 + 콘솔 에러 0건
+// Playwright e2e 스모크 — 9개 탭 + 4개 payroll 서브탭 + 콘솔 에러 0건
 // 실행: npm run test:smoke
 import { test, expect } from '@playwright/test';
 
-const MAIN_TABS = ['home', 'payroll', 'overtime', 'leave', 'reference', 'profile', 'settings', 'feedback'];
+const MAIN_TABS = ['home', 'payroll', 'overtime', 'leave', 'schedule', 'reference', 'profile', 'settings', 'feedback'];
 const PAYROLL_SUBS = ['pay-payslip', 'pay-calc', 'pay-qa', 'pay-retirement'];
 
 // 기존 코드에 선재하는(pre-existing) CSP 경고 — localhost:3001 backend 부재가 원인.
@@ -17,7 +17,7 @@ function isIgnorableError(msg) {
 }
 
 test.describe('SNUH Mate 구조 스모크', () => {
-  test('페이지 로드 + 8개 메인 탭 lazy-load + 콘솔 에러 0건', async ({ page }) => {
+  test('페이지 로드 + 9개 메인 탭 lazy-load + 콘솔 에러 0건', async ({ page }) => {
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
     page.on('console', msg => {
@@ -103,5 +103,44 @@ test.describe('SNUH Mate 구조 스모크', () => {
   test('URL 파라미터 진입 — ?tab=overtime 타이틀 반영', async ({ page }) => {
     await page.goto('/app?tab=overtime');
     await expect(page).toHaveTitle(/시간외/);
+  });
+
+  test('reference 탭이 단체협약 전체 장을 표시한다', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+    page.on('console', msg => {
+      if (msg.type() === 'error' && !isIgnorableError(msg.text())) {
+        errors.push(msg.text());
+      }
+    });
+
+    await page.goto('/app?tab=reference');
+    await page.waitForFunction(() => typeof window.switchTab === 'function' && typeof window.loadTab === 'function');
+    await page.evaluate(async () => {
+      window.switchTab('reference');
+      await window.loadTab('reference');
+    });
+
+    const tabs = page.locator('#browseChapterTabs .reg-chapter-tab');
+    await expect(tabs).toHaveCount(13);
+    for (const label of [
+      '전체',
+      '제1장 총칙',
+      '제2장 조합 활동',
+      '제3장 인사',
+      '제4장 근로시간',
+      '제5장 임금 및 퇴직금',
+      '제6장 복리후생 및 교육훈련',
+      '제7장 안전보건, 재해보상',
+      '제8장 단체교섭',
+      '제9장 노사협의회',
+      '제10장 부칙',
+      '별도 합의사항',
+      '별첨',
+    ]) {
+      await expect(tabs.filter({ hasText: label }).first()).toBeVisible();
+    }
+    await expect(page.getByText('2026 단체협약 원문')).toBeVisible();
+    expect(errors, '콘솔 에러').toEqual([]);
   });
 });

@@ -95,6 +95,10 @@ function deleteRotation(parentId, rotId) {
 export function _saveWorkHistory(list) {
   localStorage.setItem(_whKey(), JSON.stringify(list));
   localStorage.setItem('bhm_lastEdit_' + _whKey(), new Date().toISOString());
+  if (typeof window !== 'undefined') {
+    if (window.recordLocalEdit) window.recordLocalEdit('snuhmate_work_history');
+    try { window.dispatchEvent(new CustomEvent('workHistoryChanged', { detail: { source: 'work-history' } })); } catch (e) {}
+  }
 
   // Phase 8: Firestore write-through (로그인 시만, fire-and-forget)
   if (typeof window !== 'undefined' && window.__firebaseUid) {
@@ -783,6 +787,13 @@ function _showWorkHistoryToast(message) {
 function deleteWorkHistoryEntry(id) {
   var list = _loadWorkHistory().filter(function(i) { return i.id !== id; });
   _saveWorkHistory(list);
+  if (typeof window !== 'undefined' && window.__firebaseUid && id) {
+    import('/src/firebase/sync/work-history-sync.js').then(function(m) {
+      return m.deleteWorkHistoryEntry(null, window.__firebaseUid, id);
+    }).catch(function(err) {
+      console.warn('[Phase 8] work_history delete sync 실패 (무해)', err?.message || err);
+    });
+  }
   renderWorkHistory();
 }
 

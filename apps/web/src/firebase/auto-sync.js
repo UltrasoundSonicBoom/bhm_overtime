@@ -39,6 +39,11 @@ async function _writeAllPayslips(...args) {
   return writeAllPayslips(...args);
 }
 
+async function _deletePayslip(...args) {
+  const { deletePayslip } = await import('./sync/payslip-sync.js');
+  return deletePayslip(...args);
+}
+
 async function _writeAllWorkHistory(...args) {
   const { writeAllWorkHistory } = await import('./sync/work-history-sync.js');
   return writeAllWorkHistory(...args);
@@ -199,6 +204,20 @@ function _onPayslipChanged(e) {
   if (!uid) return;
   const key = e?.detail?.key;
   if (key) {
+    if (e?.detail?.deleted) {
+      const pm = PAYSLIP_KEY_RE.exec(key);
+      if (pm && pm[1] === uid) {
+        const payMonth = pm[2] + '-' + pm[3];
+        const prefix = 'payslip_' + uid + '_' + pm[2] + '_' + pm[3];
+        const remainingKeys = Object.keys(localStorage).filter(k => k.startsWith(prefix));
+        if (remainingKeys.length === 0) {
+          _debounce('payslip:delete:' + payMonth, () => _deletePayslip(null, uid, payMonth));
+        } else {
+          remainingKeys.forEach(remainingKey => _onLocalEdit({ detail: { base: remainingKey } }));
+        }
+      }
+      return;
+    }
     _onLocalEdit({ detail: { base: key } });
     return;
   }

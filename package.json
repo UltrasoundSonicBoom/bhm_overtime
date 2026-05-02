@@ -49,6 +49,7 @@
     "@snuhmate/data": "workspace:*",
     "@snuhmate/profile": "workspace:*",
     "@snuhmate/regulation-constants": "workspace:*",
+    "@snuhmate/scheduling": "workspace:*",
     "@snuhmate/shared-utils": "workspace:*",
     "eslint": "^10.2.1",
     "firebase-tools": "^15.15.0",

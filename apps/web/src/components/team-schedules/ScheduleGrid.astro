@@ -1,0 +1,68 @@
+---
+interface Assignment {
+  employeeId: string;
+  employeeName: string;
+  days: Record<string, string>;
+}
+
+interface Props {
+  title?: string;
+  period: string;
+  assignments: Assignment[];
+  days?: number[];
+}
+
+const { title = '근무표', period, assignments, days = [1, 2, 3, 4, 5, 6, 7] } = Astro.props as Props;
+
+const dutyClass = (duty?: string) => {
+  if (duty === 'N') return 'bg-ds-brand-primary text-ds-text-inverse border-ds-brand-primary';
+  if (duty === 'OFF' || duty === 'O') return 'bg-ds-bg-muted text-ds-text-secondary border-ds-border-default';
+  if (duty === '9A') return 'bg-ds-status-success-bg text-ds-status-success border-ds-status-success';
+  if (duty === 'D') return 'bg-ds-status-info-bg text-ds-status-info border-ds-status-info';
+  if (duty === 'E') return 'bg-ds-status-warning-bg text-ds-status-warning border-ds-status-warning';
+  return 'bg-ds-bg-surface text-ds-text-secondary border-ds-border-default';
+};
+---
+<section class="overflow-hidden rounded-md border border-ds-border-default bg-ds-bg-surface" aria-label={`${title} ${period}`}>
+  <div class="flex items-center justify-between border-b border-ds-border-default px-4 py-3">
+    <div>
+      <h2 class="text-ds-h3 text-ds-text-primary">{title}</h2>
+      <p class="text-xs text-ds-text-secondary">{period}</p>
+    </div>
+    <span class="rounded-md border border-ds-border-default px-2 py-1 text-xs text-ds-text-secondary">
+      {assignments.length}명
+    </span>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full min-w-[720px] border-collapse text-sm">
+      <thead>
+        <tr class="bg-ds-bg-page text-left text-xs text-ds-text-secondary">
+          <th class="w-36 border-b border-ds-border-default px-3 py-2 font-semibold">멤버</th>
+          {days.map((day) => (
+            <th class="border-b border-ds-border-default px-3 py-2 text-center font-semibold">{day}일</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {assignments.map((row) => (
+          <tr class="border-b border-ds-border-default last:border-b-0">
+            <th class="px-3 py-3 text-left font-semibold text-ds-text-primary">
+              <span class="block">{row.employeeName}</span>
+              <span class="block text-xs font-normal text-ds-text-secondary">{row.employeeId}</span>
+            </th>
+            {days.map((day) => {
+              const duty = row.days[String(day)] || '-';
+              return (
+                <td class="px-2 py-2 text-center">
+                  <span class={`inline-flex h-8 min-w-10 items-center justify-center rounded-md border px-2 text-xs font-semibold ${dutyClass(duty)}`}>
+                    {duty}
+                  </span>
+                </td>
+              );
+            })}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</section>

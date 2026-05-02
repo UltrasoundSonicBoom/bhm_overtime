@@ -281,8 +281,8 @@
       transition: background 0.15s, color 0.15s;
     }
     #tab-schedule .sch-seg-btn.active {
-      background: var(--accent-indigo);
-      color: #fff;
+      background: var(--color-brand-primary);
+      color: var(--color-text-inverse);
     }
     #tab-schedule .sch-seg-btn:disabled {
       opacity: 0.4;
@@ -301,14 +301,14 @@
       align-items: center;
       gap: 8px;
       padding: 10px 14px;
-      background: rgba(99, 102, 241, 0.08);
-      border: 1px solid rgba(99, 102, 241, 0.2);
+      background: var(--color-status-info-bg);
+      border: 1px solid var(--color-status-info);
       border-radius: var(--radius-sm);
       min-height: 44px;
     }
     #tab-schedule .sch-next-card-alt {
-      background: rgba(16, 185, 129, 0.08);
-      border-color: rgba(16, 185, 129, 0.2);
+      background: var(--color-status-success-bg);
+      border-color: var(--color-status-success);
     }
     #tab-schedule .sch-next-label {
       font-size: var(--text-body-small);
@@ -367,7 +367,7 @@
       margin-top: 2px;
       font-size: 8px;
       font-weight: 600;
-      color: var(--accent-rose);
+      color: var(--color-status-error);
       text-align: center;
       line-height: 1.2;
       word-break: keep-all;
@@ -400,7 +400,7 @@
       position: sticky;
       left: 0;
       z-index: 2;
-      background: var(--bg-card, #ffffff);
+      background: var(--color-bg-surface);
     }
     #tab-schedule .sch-nurse-head {
       z-index: 3;
@@ -413,8 +413,8 @@
       position: sticky;
       right: 0;
       z-index: 2;
-      background: var(--bg-card, #ffffff);
-      box-shadow: -2px 0 0 var(--bg-card, #ffffff);
+      background: var(--color-bg-surface);
+      box-shadow: -2px 0 0 var(--color-bg-surface);
     }
     #tab-schedule .sch-total-head {
       z-index: 3;
@@ -430,12 +430,12 @@
       line-height: 1.3;
       font-size: 11px;
     }
-    #tab-schedule .sch-col-head.weekend-sat { color: var(--accent-blue); background: rgba(59,130,246,0.05); }
-    #tab-schedule .sch-col-head.weekend-sun { color: var(--accent-rose); background: rgba(244,63,94,0.05); }
-    #tab-schedule .sch-col-head.holiday    { color: var(--accent-rose); background: rgba(244,63,94,0.08); }
+    #tab-schedule .sch-col-head.weekend-sat { color: var(--color-status-info); background: var(--color-status-info-bg); }
+    #tab-schedule .sch-col-head.weekend-sun { color: var(--color-status-error); background: var(--color-status-error-bg); }
+    #tab-schedule .sch-col-head.holiday    { color: var(--color-status-error); background: var(--color-status-error-bg); }
     #tab-schedule .sch-col-head .dow { display: block; font-size: 10px; color: var(--text-muted); }
     #tab-schedule .sch-col-head .dom { display: block; font-weight: 700; font-size: 12px; }
-    #tab-schedule .sch-col-head.today .dom { color: var(--accent-indigo); }
+    #tab-schedule .sch-col-head.today .dom { color: var(--color-brand-primary); }
 
     #tab-schedule .sch-nurse-head, #tab-schedule .sch-total-head {
       padding: 8px 10px;
@@ -463,10 +463,10 @@
     }
     #tab-schedule .sch-hppd-cell .sch-hppd-dot {
       width: 8px; height: 8px; border-radius: 50%;
-      background: var(--accent-emerald);
+      background: var(--color-status-success);
     }
     #tab-schedule .sch-hppd-cell.alert .sch-hppd-dot {
-      background: var(--accent-amber);
+      background: var(--color-status-warning);
     }
 
     /* 간호사 행 */
@@ -480,14 +480,14 @@
     /* 본인 행 강조 — tint(gradient) + 불투명 베이스 (sticky 스크롤 시 뒤 내용 가림) */
     #tab-schedule .sch-nurse-cell.is-mine {
       background:
-        linear-gradient(rgba(99, 102, 241, 0.13), rgba(99, 102, 241, 0.13))
-        var(--bg-card, #ffffff);
-      border-left: 3px solid var(--accent-indigo);
+        linear-gradient(var(--color-status-info-bg), var(--color-status-info-bg))
+        var(--color-bg-surface);
+      border-left: 3px solid var(--color-brand-primary);
     }
     #tab-schedule .sch-total-cell.is-mine-total {
       background:
-        linear-gradient(rgba(99, 102, 241, 0.08), rgba(99, 102, 241, 0.08))
-        var(--bg-card, #ffffff);
+        linear-gradient(var(--color-status-info-bg), var(--color-status-info-bg))
+        var(--color-bg-surface);
     }
 
     /* 팀원 행 — 클릭 커서 */
@@ -498,35 +498,35 @@
     /* 선택된 팀원 행 강조 — tint(gradient) + 불투명 베이스 */
     #tab-schedule .sch-nurse-cell.is-selected-nurse {
       background:
-        linear-gradient(rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.15))
-        var(--bg-card, #ffffff);
-      border-left: 3px solid var(--accent-emerald, #10b981);
+        linear-gradient(var(--color-status-success-bg), var(--color-status-success-bg))
+        var(--color-bg-surface);
+      border-left: 3px solid var(--color-status-success);
     }
     #tab-schedule .sch-total-cell.is-selected-nurse {
       background:
-        linear-gradient(rgba(16, 185, 129, 0.10), rgba(16, 185, 129, 0.10))
-        var(--bg-card, #ffffff);
+        linear-gradient(var(--color-status-success-bg), var(--color-status-success-bg))
+        var(--color-bg-surface);
     }
     #tab-schedule .sch-avatar {
       width: 28px; height: 28px;
       border-radius: 50%;
       flex-shrink: 0;
-      color: #fff;
+      color: var(--color-text-inverse);
       font-weight: 700;
       font-size: 13px;
       display: flex;
       align-items: center;
       justify-content: center;
     }
-    #tab-schedule .sch-avatar.c1 { background: #ef4444; }
-    #tab-schedule .sch-avatar.c2 { background: var(--accent-amber); }
-    #tab-schedule .sch-avatar.c3 { background: var(--accent-emerald); }
-    #tab-schedule .sch-avatar.c4 { background: var(--accent-cyan, #06b6d4); }
-    #tab-schedule .sch-avatar.c5 { background: var(--accent-indigo); }
-    #tab-schedule .sch-avatar.c6 { background: var(--accent-violet, #8b5cf6); }
-    #tab-schedule .sch-avatar.c7 { background: var(--accent-rose); }
-    #tab-schedule .sch-avatar.c8 { background: #14b8a6; }
-    #tab-schedule .sch-avatar.is-mine { box-shadow: 0 0 0 2px var(--accent-indigo); }
+    #tab-schedule .sch-avatar.c1 { background: var(--color-status-error); }
+    #tab-schedule .sch-avatar.c2 { background: var(--color-status-warning); }
+    #tab-schedule .sch-avatar.c3 { background: var(--color-status-success); }
+    #tab-schedule .sch-avatar.c4 { background: var(--color-status-info); }
+    #tab-schedule .sch-avatar.c5 { background: var(--color-brand-primary); }
+    #tab-schedule .sch-avatar.c6 { background: var(--color-brand-secondary); }
+    #tab-schedule .sch-avatar.c7 { background: var(--color-status-error); }
+    #tab-schedule .sch-avatar.c8 { background: var(--color-status-success); }
+    #tab-schedule .sch-avatar.is-mine { box-shadow: 0 0 0 2px var(--color-brand-primary); }
 
     #tab-schedule .sch-nurse-info {
       display: flex;
@@ -553,11 +553,11 @@
       padding: 1px 5px;
       border-radius: 3px;
       font-weight: 600;
-      background: rgba(0, 0, 0, 0.06);
+      background: var(--color-bg-muted);
       color: var(--text-muted);
     }
-    #tab-schedule .sch-mini-tag.role { background: rgba(99,102,241,0.12); color: var(--accent-indigo); }
-    #tab-schedule .sch-mini-tag.skill { background: rgba(16,185,129,0.12); color: var(--accent-emerald); }
+    #tab-schedule .sch-mini-tag.role { background: var(--color-status-info-bg); color: var(--color-status-info); }
+    #tab-schedule .sch-mini-tag.skill { background: var(--color-status-success-bg); color: var(--color-status-success); }
 
     /* 듀티 셀 */
     #tab-schedule .sch-duty {
@@ -573,14 +573,14 @@
       transition: transform 0.1s, box-shadow 0.1s;
     }
     #tab-schedule .sch-duty:hover { transform: translateY(-1px); }
-    #tab-schedule .sch-duty.is-mine.is-clickable:hover { box-shadow: 0 0 0 2px var(--accent-indigo); }
+    #tab-schedule .sch-duty.is-mine.is-clickable:hover { box-shadow: 0 0 0 2px var(--color-brand-primary); }
 
-    #tab-schedule .sch-duty-D  { background: rgba(14, 165, 233, 0.22); color: #0c4a6e; }
-    #tab-schedule .sch-duty-E  { background: rgba(245, 158, 11, 0.22); color: #92400e; }
-    #tab-schedule .sch-duty-N  { background: rgba(99, 102, 241, 0.45); color: #1e1b4b; }
-    #tab-schedule .sch-duty-O  { background: rgba(148, 163, 184, 0.15); color: #64748b; font-size: 9px; }
-    #tab-schedule .sch-duty-AL { background: rgba(244, 63, 94, 0.20); color: #881337; }
-    #tab-schedule .sch-duty-RD { background: rgba(16, 185, 129, 0.22); color: #065f46; }
+    #tab-schedule .sch-duty-D  { background: var(--color-status-info-bg); color: var(--color-status-info); }
+    #tab-schedule .sch-duty-E  { background: var(--color-status-warning-bg); color: var(--color-status-warning); }
+    #tab-schedule .sch-duty-N  { background: var(--color-brand-primary); color: var(--color-text-inverse); }
+    #tab-schedule .sch-duty-O  { background: var(--color-bg-muted); color: var(--color-text-secondary); font-size: 9px; }
+    #tab-schedule .sch-duty-AL { background: var(--color-status-error-bg); color: var(--color-status-error); }
+    #tab-schedule .sch-duty-RD { background: var(--color-status-success-bg); color: var(--color-status-success); }
     #tab-schedule .sch-duty-empty { background: transparent; color: transparent; cursor: default; }
 
     /* 합계 */
@@ -624,7 +624,7 @@
       font-weight: 800;
       font-size: 10px;
     }
-    #tab-schedule .sch-legend-holiday { color: var(--accent-rose); }
+    #tab-schedule .sch-legend-holiday { color: var(--color-status-error); }
     #tab-schedule .sch-legend-dot-holiday { font-size: 10px; }
 
     /* 통계 그리드 */
@@ -655,11 +655,11 @@
       color: var(--text-muted);
       margin-top: 4px;
     }
-    #tab-schedule .sch-stat-card.D  { border-color: rgba(99,102,241,0.4); }
-    #tab-schedule .sch-stat-card.E  { border-color: rgba(245,158,11,0.4); }
-    #tab-schedule .sch-stat-card.N  { border-color: rgba(99,102,241,0.6); background: rgba(99,102,241,0.06); }
-    #tab-schedule .sch-stat-card.AL { border-color: rgba(244,63,94,0.4); }
-    #tab-schedule .sch-stat-card.RD { border-color: rgba(16,185,129,0.4); }
+    #tab-schedule .sch-stat-card.D  { border-color: var(--color-status-info); }
+    #tab-schedule .sch-stat-card.E  { border-color: var(--color-status-warning); }
+    #tab-schedule .sch-stat-card.N  { border-color: var(--color-brand-primary); background: var(--color-status-info-bg); }
+    #tab-schedule .sch-stat-card.AL { border-color: var(--color-status-error); }
+    #tab-schedule .sch-stat-card.RD { border-color: var(--color-status-success); }
 
     /* 경고 행 */
     #tab-schedule .sch-warn-row {
@@ -676,8 +676,8 @@
       font-size: var(--text-body-small);
       font-weight: 600;
     }
-    #tab-schedule .sch-warn-chip.amber { background: rgba(245,158,11,0.12); color: var(--accent-amber-text); }
-    #tab-schedule .sch-warn-chip.rose  { background: rgba(244,63,94,0.12); color: var(--accent-rose); }
+    #tab-schedule .sch-warn-chip.amber { background: var(--color-status-warning-bg); color: var(--color-status-warning); }
+    #tab-schedule .sch-warn-chip.rose  { background: var(--color-status-error-bg); color: var(--color-status-error); }
 
     /* 코퍼스 동의 */
     #tab-schedule .sch-consent-row {
@@ -685,8 +685,8 @@
       gap: 10px;
       align-items: flex-start;
       padding: 10px 12px;
-      background: rgba(99, 102, 241, 0.06);
-      border: 1px solid rgba(99, 102, 241, 0.18);
+      background: var(--color-status-info-bg);
+      border: 1px solid var(--color-status-info);
       border-radius: var(--radius-sm);
       cursor: pointer;
     }
@@ -695,7 +695,7 @@
       margin-top: 2px;
       width: 18px;
       height: 18px;
-      accent-color: var(--accent-indigo);
+      accent-color: var(--color-brand-primary);
     }
     #tab-schedule .sch-consent-text {
       font-size: var(--text-body-small);
@@ -727,19 +727,19 @@
       padding: 14px 16px;
       border: 2px solid var(--border-glass);
       border-radius: var(--radius-md);
-      background: var(--bg-surface, #fff);
+      background: var(--color-bg-surface);
       cursor: pointer;
       text-align: left;
       font-family: inherit;
       transition: border-color 0.15s, background 0.15s, transform 0.1s;
     }
     #tab-schedule .sch-source-card:hover:not(.active) {
-      border-color: rgba(99, 102, 241, 0.4);
+      border-color: var(--color-brand-primary);
       transform: translateY(-1px);
     }
     #tab-schedule .sch-source-card.active {
-      border-color: var(--accent-indigo);
-      background: rgba(99, 102, 241, 0.08);
+      border-color: var(--color-brand-primary);
+      background: var(--color-status-info-bg);
     }
     #tab-schedule .sch-source-icon {
       font-size: 28px;
@@ -768,7 +768,7 @@
       min-width: 0;
     }
     #tab-schedule .sch-source-card.active .sch-source-title {
-      color: var(--accent-indigo);
+      color: var(--color-brand-primary);
     }
     #tab-schedule .sch-source-card .sch-source-radio-dot {
       width: 18px;
@@ -779,7 +779,7 @@
       position: relative;
     }
     #tab-schedule .sch-source-card.active .sch-source-radio-dot {
-      border-color: var(--accent-indigo);
+      border-color: var(--color-brand-primary);
     }
     #tab-schedule .sch-source-card.active .sch-source-radio-dot::after {
       content: '';
@@ -787,15 +787,15 @@
       top: 3px; left: 3px;
       width: 8px; height: 8px;
       border-radius: 50%;
-      background: var(--accent-indigo);
+      background: var(--color-brand-primary);
     }
     /* Neo 테마 호환 */
     html[data-theme="neo"] #tab-schedule .sch-source-card {
       border-width: 2px;
-      border-color: #1a1a1a;
+      border-color: var(--color-border-strong);
     }
     html[data-theme="neo"] #tab-schedule .sch-source-card.active {
-      box-shadow: 3px 3px 0 #1a1a1a;
+      box-shadow: 3px 3px 0 var(--color-border-strong);
     }
 
     /* 업로드 영역 */
@@ -828,17 +828,17 @@
 
     /* Neo theme 호환 */
     html[data-theme="neo"] #tab-schedule .sch-duty {
-      border: 2px solid #1a1a1a;
+      border: 2px solid var(--color-border-strong);
     }
     html[data-theme="neo"] #tab-schedule .sch-stat-card,
     html[data-theme="neo"] #tab-schedule .sch-next-card,
     html[data-theme="neo"] #tab-schedule .sch-warn-chip {
-      border: 2px solid #1a1a1a;
-      box-shadow: 2px 2px 0 #1a1a1a;
+      border: 2px solid var(--color-border-strong);
+      box-shadow: 2px 2px 0 var(--color-border-strong);
     }
     html[data-theme="neo"] #tab-schedule .sch-seg {
-      border: 2px solid #1a1a1a;
-      box-shadow: 2px 2px 0 #1a1a1a;
+      border: 2px solid var(--color-border-strong);
+      box-shadow: 2px 2px 0 var(--color-border-strong);
     }
   </style>
 </div>
