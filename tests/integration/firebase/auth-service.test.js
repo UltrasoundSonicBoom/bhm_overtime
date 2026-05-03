@@ -159,8 +159,8 @@ describe('auth-service — onAuthChanged', () => {
     const eventCb = vi.fn();
     window.addEventListener('app:auth-changed', eventCb);
     await onAuthChanged(userCb);
-    // Firebase 가 user 발화
-    const fakeUser = { uid: 'abc123', email: 'a@b.c' };
+    // Firebase 가 user 발화 — emailVerified=true 인증된 사용자만 hydrate 진행 (병원이메일 가입 흐름)
+    const fakeUser = { uid: 'abc123', email: 'a@b.c', emailVerified: true };
     await capturedCallback(fakeUser);
     expect(window.__firebaseUid).toBe('abc123');
     expect(mockHydrateFromFirestore).toHaveBeenCalledWith('abc123');

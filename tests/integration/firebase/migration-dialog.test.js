@@ -21,11 +21,13 @@ const mockWriteFavorites = vi.fn();
 const mockWriteAllSchedule = vi.fn();
 const mockWritePayslip = vi.fn();
 const mockWriteAllPayslips = vi.fn();
+const mockWriteAllCareerEvents = vi.fn();
 
 vi.mock('/src/firebase/sync/profile-sync.js', () => ({ writeProfile: mockWriteProfile }));
 vi.mock('/src/firebase/sync/overtime-sync.js', () => ({ writeAllOvertime: mockWriteAllOvertime }));
 vi.mock('/src/firebase/sync/leave-sync.js', () => ({ writeAllLeave: mockWriteAllLeave }));
 vi.mock('/src/firebase/sync/work-history-sync.js', () => ({ writeAllWorkHistory: mockWriteAllWorkHistory }));
+vi.mock('/src/firebase/sync/career-events-sync.js', () => ({ writeAllCareerEvents: mockWriteAllCareerEvents }));
 vi.mock('/src/firebase/sync/settings-sync.js', () => ({
   writeSettings: mockWriteSettings,
   writeManualHourly: mockWriteManualHourly,
@@ -113,6 +115,15 @@ describe('uploadCategories', () => {
     const { uploadCategories } = await import('../../../apps/web/src/firebase/migration-dialog.js');
     await uploadCategories('uid1', ['overtime']);
     expect(mockWriteAllOvertime).toHaveBeenCalled();
+  });
+
+  it('careerEvents 선택 → writeAllCareerEvents 호출', async () => {
+    const events = [{ id: 'ev1', category: 'promotion', title: 'J1 → J2', dateFrom: '2026-06' }];
+    localStorage.setItem('snuhmate_career_events_guest', JSON.stringify(events));
+    const { uploadCategories } = await import('../../../apps/web/src/firebase/migration-dialog.js');
+    const result = await uploadCategories('uid1', ['careerEvents']);
+    expect(mockWriteAllCareerEvents).toHaveBeenCalledWith(null, 'uid1', events);
+    expect(result.failed).toEqual([]);
   });
 
   it('overtime 선택 + 근무표 데이터 존재 → writeAllSchedule 호출하고 FLAG 설정', async () => {
