@@ -197,7 +197,9 @@
   modeSignupBtn?.addEventListener("click", () => {
     _signInMode = false;
     modeSignupBtn.classList.add("active");
+    modeSignupBtn.setAttribute("aria-pressed", "true");
     modeSigninBtn?.classList.remove("active");
+    modeSigninBtn?.setAttribute("aria-pressed", "false");
     if (passInput) {
       passInput.placeholder = "비밀번호 (8~12자)";
       passInput.autocomplete = "new-password";
@@ -207,7 +209,9 @@
   modeSigninBtn?.addEventListener("click", () => {
     _signInMode = true;
     modeSigninBtn.classList.add("active");
+    modeSigninBtn.setAttribute("aria-pressed", "true");
     modeSignupBtn?.classList.remove("active");
+    modeSignupBtn?.setAttribute("aria-pressed", "false");
     if (passInput) {
       passInput.placeholder = "비밀번호";
       passInput.autocomplete = "current-password";

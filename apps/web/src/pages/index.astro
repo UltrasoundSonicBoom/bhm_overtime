@@ -416,9 +416,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
             <!-- 병원 이메일 가입/로그인 패널 (data-choice="email" 선택 시 펼침) -->
             <div class="ob-auth-panel" id="obAuthEmailPanel" aria-hidden="true">
-              <div class="ob-auth-mode-row">
-                <button type="button" class="ob-auth-mode active" id="obAuthModeSignup">신규 가입</button>
-                <button type="button" class="ob-auth-mode" id="obAuthModeSignin">이미 가입함</button>
+              <div class="ob-auth-mode-row" role="group" aria-label="가입 또는 로그인 선택">
+                <button type="button" class="ob-auth-mode active" id="obAuthModeSignup" aria-pressed="true">신규 가입</button>
+                <button type="button" class="ob-auth-mode" id="obAuthModeSignin" aria-pressed="false">이미 가입함</button>
               </div>
               <input type="email" name="email" id="obAuthEmail" placeholder="병원 이메일 (예: hong@snuh.org)" autocomplete="email" list="obAuthDomainList">
               <datalist id="obAuthDomainList"></datalist>
