@@ -525,62 +525,243 @@ body {
   margin-top: 8px;
 }
 
-/* ── Profile fade fields ──────────────────────────────────── */
-.ob-pf-stack {
-  position: relative;
+/* ── Profile grouped form (필수 / 선택) ──────────────────────── */
+.ob-pf-form {
   width: 100%;
-  max-width: 460px;
-  height: 220px;
-  margin-top: 20px;
+  max-width: 520px;
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
-.ob-pf-field {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  transform: translateY(10px);
-  pointer-events: none;
-  transition:
-    opacity 0.35s ease,
-    transform 0.35s ease;
+.ob-pf-group {
+  border: none;
+  padding: 0;
+  margin: 0;
 }
-.ob-pf-field.on {
-  opacity: 1;
-  transform: none;
-  pointer-events: auto;
-}
-.ob-pf-field.done {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-.ob-pf-label {
-  font-size: 12px;
+.ob-pf-group > legend {
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  opacity: 0.6;
+  opacity: 0.62;
   margin-bottom: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
-.ob-pf-field input,
-.ob-pf-field select {
+.ob-pf-group.ob-pf-required > legend::after {
+  content: "*";
+  color: #ef4444;
+  font-size: 13px;
+}
+.ob-pf-group.ob-pf-optional > legend::after {
+  content: "선택";
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  background: rgba(0, 0, 0, 0.06);
+  color: #6b7280;
+  padding: 1px 6px;
+  border-radius: 9999px;
+  text-transform: none;
+}
+.ob-pf-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+@media (max-width: 480px) {
+  .ob-pf-grid { grid-template-columns: 1fr; }
+}
+.ob-pf-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  opacity: 0.72;
+}
+.ob-pf-grid input,
+.ob-pf-grid select {
   width: 100%;
-  padding: 12px 0;
-  font-size: 22px;
+  height: 40px;
+  padding: 0 10px;
+  font-size: 15px;
   font-family: "Noto Sans KR", "Inter", sans-serif;
   font-weight: 500;
-  border: none;
-  border-bottom: 2px solid currentColor;
-  background: transparent;
+  border: 1.5px solid rgba(0, 0, 0, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.7);
   color: inherit;
   outline: none;
-  border-radius: 0;
+  transition: border-color 0.18s ease;
+  box-sizing: border-box;
+  appearance: none;
+  -webkit-appearance: none;
 }
-.ob-pf-field input:focus {
-  border-bottom-color: #6c5ce7;
+.ob-pf-grid input[type="date"] {
+  padding-right: 6px;
 }
-.ob-pf-hint {
-  font-size: 12px;
+.ob-pf-grid select {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='none' stroke='%236b7280' stroke-width='1.5' d='M1 1l4 4 4-4'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+}
+.ob-pf-grid .ob-pf-hint {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0;
   opacity: 0.55;
+  margin-top: 2px;
+  line-height: 1.3;
+}
+.ob-pf-grid input:focus,
+.ob-pf-grid select:focus {
+  border-color: #6c5ce7;
+}
+.ob-pf-grid input:invalid:not(:placeholder-shown) {
+  border-color: #ef4444;
+}
+.ob-pf-error {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #b91c1c;
+  min-height: 16px;
+}
+
+/* ── Retirement (Step 3) mockup integration ───────────────── */
+.ret-step3-toggle-ob {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0;
+}
+.ret-step3-toggle-ob button {
+  flex: 1;
+  padding: 9px 8px;
+  border: 2px solid #e5e7eb;
+  background: #ffffff;
+  border-radius: 10px;
+  font-family: "Noto Sans KR", "Inter", sans-serif;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  text-align: left;
+}
+.ret-step3-toggle-ob button.active {
+  border-color: #6c5ce7;
+  background: rgba(108, 92, 231, 0.08);
+  color: #3730a3;
+}
+.ret-step3-toggle-ob .lbl {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.ret-step3-toggle-ob .meta {
+  display: block;
+  font-size: 10px;
+  opacity: 0.7;
+  font-family: "Space Grotesk", "Inter", sans-serif;
+}
+.ret-result-ob {
+  background: rgba(0, 0, 0, 0.035);
+  border-radius: 10px;
+  padding: 12px;
+  margin: 10px 0;
+  text-align: center;
+}
+.ret-result-ob .ret-result-label {
+  font-size: 11px;
+  color: #6b7280;
+  margin-bottom: 4px;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+.ret-result-amount {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a1a;
+  font-family: "Space Grotesk", "Inter", sans-serif;
+  letter-spacing: -0.01em;
+}
+.ret-formula-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(108, 92, 231, 0.08);
+  border: 1px solid rgba(108, 92, 231, 0.2);
+  border-radius: 8px;
+  padding: 10px;
+  margin: 10px 0;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.ret-formula-card .ico { font-size: 16px; flex-shrink: 0; }
+.ret-protect-msg {
+  background: rgba(245, 158, 11, 0.12);
+  border-left: 3px solid #f59e0b;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 12px;
   margin-top: 10px;
+  color: #92400e;
+  line-height: 1.5;
+}
+
+/* ── Auth slide — hospital email expand panel ─────────────── */
+.ob-auth-panel {
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1.5px solid rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.6);
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+}
+.ob-auth-panel.on { display: flex; }
+.ob-auth-panel input {
+  width: 100%;
+  padding: 9px 10px;
+  font-size: 15px;
+  font-family: "Noto Sans KR", "Inter", sans-serif;
+  border: 1.5px solid rgba(0, 0, 0, 0.16);
+  border-radius: 8px;
+  background: #ffffff;
+  outline: none;
+}
+.ob-auth-panel input:focus { border-color: #6c5ce7; }
+.ob-auth-panel .ob-auth-actions {
+  display: flex;
+  gap: 8px;
+}
+.ob-auth-panel .ob-auth-actions button {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: "Noto Sans KR", "Inter", sans-serif;
+}
+.ob-auth-panel .ob-auth-primary { background: #6c5ce7; color: #ffffff; }
+.ob-auth-panel .ob-auth-primary:disabled { opacity: 0.55; cursor: progress; }
+.ob-auth-panel .ob-auth-ghost { background: transparent; color: #6b7280; border: 1px solid rgba(0, 0, 0, 0.12); }
+.ob-auth-msg {
+  font-size: 12px;
+  color: #6b7280;
+  min-height: 16px;
+}
+.ob-auth-msg.error { color: #b91c1c; }
+.ob-auth-msg.ok { color: #047857; }
+.ob-auth-domains {
+  font-size: 10px;
+  opacity: 0.6;
+  letter-spacing: 0.02em;
 }
 
 /* ── CTA buttons ──────────────────────────────────────────── */
@@ -759,7 +940,7 @@ body {
   flex-direction: column;
   gap: 8px;
   width: 100%;
-  max-width: 500px;
+  max-width: 260px;
   margin-top: 14px;
 }
 .ob-sched-card {

@@ -26,6 +26,23 @@ import FeedbackIsland from '../components/tabs/FeedbackIsland.astro';
     // AppLock FOUC Guard: pinEnabled 확인 후 body 즉시 숨겨서 잠금 전 콘텐츠 노출 방지.
     // NOTE: snuhmate_settings (Plan 2 산출)
     (function () { try { var s = JSON.parse(localStorage.getItem('snuhmate_settings') || '{}'); if (s.pinEnabled) { document.documentElement.style.visibility = 'hidden'; } } catch (e) { } })();
+    // 근무 탭 jobType 게이트 — 간호직만 노출 (차후 변경 가능)
+    (function () {
+      try {
+        var uid = window.__firebaseUid;
+        var key = uid ? ('snuhmate_hr_profile_uid_' + uid) : 'snuhmate_hr_profile_guest';
+        var raw = localStorage.getItem(key);
+        if (!raw) return; // 미가입 상태에서는 모든 탭 표시 (기본값 유지)
+        var p = JSON.parse(raw);
+        var jt = p && p.jobType ? String(p.jobType) : '';
+        if (jt && jt !== '간호직') {
+          var s2 = document.createElement('style');
+          s2.id = 'scheduleTabGate';
+          s2.textContent = '#tab-schedule{display:none !important;}';
+          document.head.appendChild(s2);
+        }
+      } catch (e) { }
+    })();
   </script>
 
   <!-- Google tag (gtag.js) -->

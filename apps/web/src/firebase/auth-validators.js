@@ -12,3 +12,25 @@ export function validatePassword(pw) {
   if (pw.length > 12) return '비밀번호는 12자 이하여야 합니다 (기억성 우선)';
   return null;
 }
+
+// 병원 이메일 도메인 화이트리스트 (사용자 확정 2026-05-03)
+//   snuh.org   서울대학교병원 (본원, 어린이병원, 강남센터)
+//   brmh.org   보라매병원
+//   snubh.org  분당서울대학교병원
+//   snudh.org  서울대학교치과병원
+//   ntrh.or.kr 국립교통재활병원 (위탁운영)
+export const HOSPITAL_EMAIL_DOMAINS = [
+  'snuh.org',
+  'brmh.org',
+  'snubh.org',
+  'snudh.org',
+  'ntrh.or.kr',
+];
+
+export function isHospitalEmail(email) {
+  if (typeof email !== 'string') return false;
+  const at = email.lastIndexOf('@');
+  if (at < 0) return false;
+  const domain = email.slice(at + 1).toLowerCase();
+  return HOSPITAL_EMAIL_DOMAINS.includes(domain);
+}

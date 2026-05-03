@@ -1,5 +1,7 @@
 ---
-// Phase 6 Task 4-2: onboarding horizontal carousel (10 slides).
+// Phase 6 Task 4-2: onboarding horizontal carousel.
+// 2026-05-03 redesign: 9 slides — 히어로 → 근무 → 휴가 → 시간외 → 급여 → 퇴직금 → 규정 → 개인정보 → Auth.
+// 직종/업로드/웰컴 슬라이드 제거. 직종은 개인정보(필수)에 흡수.
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 <BaseLayout
@@ -23,57 +25,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           </div>
         </section>
 
-        <!-- 2. 시간외 -->
-        <section class="ob-slide ob-brand">
-          <div class="ob-inner">
-            <div class="ob-index ob-reveal">01 · 시간외 수당</div>
-            <div class="ob-rule ob-reveal"></div>
-            <h2 class="ob-display ob-reveal">연장 150%,<br>야간 200%,<br>온콜은 또 달라요.</h2>
-            <p class="ob-lede ob-reveal">날짜 찍으면 공휴일 자동 판별. 이브닝 22시 이후는 야간 시간 분리까지. 15분 단위 절삭도 알아서 해요.</p>
-            <div class="ob-mockup ob-reveal">
-              <div class="ob-m-head">
-                <div class="ob-m-icon indigo">⏰</div>
-                <span>4월 시간외 내역</span>
-              </div>
-              <div class="ob-ot-entry">
-                <div class="ob-ot-head">
-                  <span class="ob-ot-date">4월 28일 · 연장근무</span>
-                  <span class="ob-ot-pay">93,060원</span>
-                </div>
-                <div class="ob-ot-line">
-                  <span>1.5h × 62,040원</span>
-                  <span class="ob-badge indigo">×150%</span>
-                </div>
-              </div>
-              <div class="ob-ot-entry">
-                <div class="ob-ot-head">
-                  <span class="ob-ot-date">4월 25일 · 야간근무</span>
-                  <span class="ob-ot-pay">62,040원</span>
-                </div>
-                <div class="ob-ot-line">
-                  <span>1.0h × 62,040원</span>
-                  <span class="ob-badge rose">×200%</span>
-                </div>
-              </div>
-              <div class="ob-ot-entry">
-                <div class="ob-ot-head">
-                  <span class="ob-ot-date">4월 22일 · 휴일근무</span>
-                  <span class="ob-ot-pay">186,120원</span>
-                </div>
-                <div class="ob-ot-line">
-                  <span>3.0h × 62,040원</span>
-                  <span class="ob-badge amber">×150%</span>
-                </div>
-              </div>
-              <div class="ob-result">
-                <span class="ob-result-label">4월 예상 수당</span>
-                <span class="ob-result-val">620,400원</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- 3. 근무 (NEW) -->
+        <!-- 2. 근무 -->
         <section class="ob-slide ob-ink">
           <div class="ob-inner">
             <div class="ob-index ob-reveal">02 · 근무</div>
@@ -97,7 +49,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                     <div class="ob-dd red">화<br><small>5</small></div>
                   </div>
                   <div class="ob-dept-row me">
-                    <div class="ob-dn-cell">김계환</div>
+                    <div class="ob-dn-cell">박수민</div>
                     <div><span class="ob-sc d">D</span></div>
                     <div><span class="ob-sc e">E</span></div>
                     <div><span class="ob-sc n">N</span></div>
@@ -113,7 +65,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                     <div><span class="ob-sc e">E</span></div>
                   </div>
                   <div class="ob-dept-row">
-                    <div class="ob-dn-cell">박서연</div>
+                    <div class="ob-dn-cell">이서연</div>
                     <div><span class="ob-sc d">D</span></div>
                     <div><span class="ob-sc e">E</span></div>
                     <div><span class="ob-sc d">D</span></div>
@@ -154,7 +106,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           </div>
         </section>
 
-        <!-- 4. 휴가 -->
+        <!-- 3. 휴가 -->
         <section class="ob-slide ob-success">
           <div class="ob-inner">
             <div class="ob-index ob-reveal">03 · 휴가</div>
@@ -213,13 +165,63 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           </div>
         </section>
 
-        <!-- 4. 급여 -->
+        <!-- 4. 시간외 -->
+        <section class="ob-slide ob-brand">
+          <div class="ob-inner">
+            <div class="ob-index ob-reveal">04 · 시간외 수당</div>
+            <div class="ob-rule ob-reveal"></div>
+            <h2 class="ob-display ob-reveal">연장 150%,<br>야간 200%,<br>온콜은 또 달라요.</h2>
+            <p class="ob-lede ob-reveal">날짜 찍으면 공휴일 자동 판별. 이브닝 22시 이후는 야간 시간 분리까지. 15분 단위 절삭도 알아서 해요.</p>
+            <div class="ob-mockup ob-reveal">
+              <div class="ob-m-head">
+                <div class="ob-m-icon indigo">⏰</div>
+                <span>4월 시간외 내역</span>
+              </div>
+              <div class="ob-ot-entry">
+                <div class="ob-ot-head">
+                  <span class="ob-ot-date">4월 28일 · 연장근무</span>
+                  <span class="ob-ot-pay">93,060원</span>
+                </div>
+                <div class="ob-ot-line">
+                  <span>1.5h × 62,040원</span>
+                  <span class="ob-badge indigo">×150%</span>
+                </div>
+              </div>
+              <div class="ob-ot-entry">
+                <div class="ob-ot-head">
+                  <span class="ob-ot-date">4월 25일 · 야간근무</span>
+                  <span class="ob-ot-pay">62,040원</span>
+                </div>
+                <div class="ob-ot-line">
+                  <span>1.0h × 62,040원</span>
+                  <span class="ob-badge rose">×200%</span>
+                </div>
+              </div>
+              <div class="ob-ot-entry">
+                <div class="ob-ot-head">
+                  <span class="ob-ot-date">4월 22일 · 휴일근무</span>
+                  <span class="ob-ot-pay">186,120원</span>
+                </div>
+                <div class="ob-ot-line">
+                  <span>3.0h × 62,040원</span>
+                  <span class="ob-badge amber">×150%</span>
+                </div>
+              </div>
+              <div class="ob-result">
+                <span class="ob-result-label">4월 예상 수당</span>
+                <span class="ob-result-val">620,400원</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 5. 급여 -->
         <section class="ob-slide ob-info">
           <div class="ob-inner">
-            <div class="ob-index ob-reveal">04 · 급여</div>
+            <div class="ob-index ob-reveal">05 · 급여</div>
             <div class="ob-rule ob-reveal"></div>
             <h2 class="ob-display ob-reveal">이번 달 시간외,<br>다음 달 월급에<br>얼마 더 붙을까요?</h2>
-            <p class="ob-lede ob-reveal">시간외 수당 계산기, 예상 실수령액, 퇴직금 시뮬레이션까지. 명세서 PDF 올리면 항목별로 다 분해돼요.</p>
+            <p class="ob-lede ob-reveal">시간외 수당 계산기, 예상 실수령액, 명세서 PDF 항목 분해. 한 화면에서 끝나요.</p>
             <div class="ob-mockup ob-reveal">
               <div class="ob-m-head">
                 <div class="ob-m-icon indigo">💰</div>
@@ -241,18 +243,49 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                 <span class="ob-result-label">예상 실수령액</span>
                 <span class="ob-result-val">3,643,740원</span>
               </div>
-              <div class="ob-pay-row" style="margin-top:8px;border-top:1px solid #F5F0E1;padding-top:8px">
-                <span class="ob-pay-label">퇴직금 (현재 기준)</span>
-                <span class="ob-pay-val">18,420,000원 <span class="ob-badge amber" style="margin-left:4px">시뮬레이션</span></span>
-              </div>
             </div>
           </div>
         </section>
 
-        <!-- 5. 규정 -->
+        <!-- 6. 퇴직금 (NEW — Step 3 mockup from PayrollIsland 퇴직금 wizard) -->
+        <section class="ob-slide ob-info">
+          <div class="ob-inner">
+            <div class="ob-index ob-reveal">06 · 퇴직금</div>
+            <div class="ob-rule ob-reveal"></div>
+            <h2 class="ob-display ob-reveal">공로연수 골라도<br>퇴직금은 동일.</h2>
+            <p class="ob-lede ob-reveal">평균임금은 공로연수 전 3개월 기준으로 보호됩니다 (단협 제52조). 두 시나리오를 한 화면에서 비교해요.</p>
+            <div class="ob-mockup ob-reveal">
+              <div class="ob-m-head">
+                <div class="ob-m-icon indigo">🛡️</div>
+                <span>퇴직금 시뮬레이션 · Step 3</span>
+              </div>
+              <div class="ret-step3-toggle-ob">
+                <button type="button" class="active">
+                  <span class="lbl">공로연수 선택</span>
+                  <span class="meta">2034.04 퇴직</span>
+                </button>
+                <button type="button">
+                  <span class="lbl">정년 퇴직</span>
+                  <span class="meta">2034.06 퇴직</span>
+                </button>
+              </div>
+              <div class="ret-result-ob">
+                <div class="ret-result-label">예상 퇴직금</div>
+                <div class="ret-result-amount">52,000,000원</div>
+              </div>
+              <div class="ret-formula-card">
+                <span class="ico">📐</span>
+                <span class="txt">평균임금 <b>5,200,000원</b> × 근속 <b>10년</b> = <b>52,000,000원</b></span>
+              </div>
+              <div class="ret-protect-msg">⛨ <b>퇴직금은 두 시나리오 모두 동일</b> — 평균임금 보호 (제52조)</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 7. 규정 -->
         <section class="ob-slide ob-warn">
           <div class="ob-inner">
-            <div class="ob-index ob-reveal">05 · 단체협약</div>
+            <div class="ob-index ob-reveal">07 · 단체협약</div>
             <div class="ob-rule ob-reveal"></div>
             <h2 class="ob-display ob-reveal">종이 노조수첩<br>그만.</h2>
             <p class="ob-lede ob-reveal">2026 단체협약 원문을 핸드폰에서 바로 확인하세요. 휴직·휴가·근무·수당 조항 전체 검색, 즐겨찾기 저장.</p>
@@ -274,32 +307,88 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           </div>
         </section>
 
-        <!-- 6. AUTH (Step 1/4) -->
-        <section class="ob-slide ob-cream">
+        <!-- 8. 개인정보 (Step 1 / 2) — grouped 필수/선택 한 화면 -->
+        <section class="ob-slide ob-cream" id="ob-profile">
           <div class="ob-inner">
-            <div class="ob-index ob-reveal">Step 1 / 4 · 시작 방식</div>
+            <div class="ob-index ob-reveal">Step 1 / 2 · 개인정보</div>
             <div class="ob-rule ob-reveal"></div>
-            <h2 class="ob-display ob-reveal">게스트 모드로<br>바로 시작해도 돼요.</h2>
-            <p class="ob-lede ob-reveal">내 데이터는 이 핸드폰 안에만 있어요. 계정 없어도 모든 기능 다 써요.</p>
+            <h2 class="ob-display ob-reveal">한 화면에<br>알려주세요.</h2>
+            <form class="ob-pf-form" id="obProfileForm" novalidate>
+              <fieldset class="ob-pf-group ob-pf-required ob-reveal">
+                <legend>필수</legend>
+                <div class="ob-pf-grid">
+                  <label>이름
+                    <input type="text" name="name" required placeholder="예: 김수진" autocomplete="off">
+                  </label>
+                  <label>사번
+                    <input type="text" name="employeeNumber" required inputmode="numeric" placeholder="예: 20320" autocomplete="off">
+                  </label>
+                  <label>부서
+                    <input type="text" name="department" required placeholder="예: 101병동, 핵의학과" autocomplete="off" list="obDeptList" id="obDeptInput">
+                    <datalist id="obDeptList"></datalist>
+                  </label>
+                  <label>직종
+                    <select name="jobType" required>
+                      <option value="">선택</option>
+                      <option>간호직</option>
+                      <option>의료기술직</option>
+                      <option>보건직</option>
+                      <option>약무직</option>
+                      <option>의사직</option>
+                      <option>사무직</option>
+                      <option>기능직</option>
+                      <option>시설직</option>
+                      <option>지원직</option>
+                    </select>
+                  </label>
+                </div>
+              </fieldset>
+              <fieldset class="ob-pf-group ob-pf-optional ob-reveal">
+                <legend>선택</legend>
+                <div class="ob-pf-grid">
+                  <label>입사일
+                    <input type="date" name="hireDate">
+                    <small class="ob-pf-hint">호봉·연차 자동 계산</small>
+                  </label>
+                  <label>생년월일
+                    <input type="date" name="birthDate">
+                    <small class="ob-pf-hint">정년 산정·연령수당</small>
+                  </label>
+                  <label>성별
+                    <select name="gender">
+                      <option value="">미설정</option>
+                      <option value="F">여성</option>
+                      <option value="M">남성</option>
+                    </select>
+                    <small class="ob-pf-hint">생리휴가 노출 여부</small>
+                  </label>
+                </div>
+              </fieldset>
+              <div class="ob-pf-error" id="obProfileError" aria-live="polite"></div>
+            </form>
+            <div class="ob-cta-row">
+              <button class="ob-cta-ghost" data-action="pf-back">← 이전</button>
+              <button class="ob-cta-primary" data-action="pf-next" type="button">다음 →</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- 9. Auth (Step 2 / 2) — 병원이메일 추천 → Google → 게스트 -->
+        <section class="ob-slide ob-cream" id="ob-auth">
+          <div class="ob-inner">
+            <div class="ob-index ob-reveal">Step 2 / 2 · 시작 방식</div>
+            <div class="ob-rule ob-reveal"></div>
+            <h2 class="ob-display ob-reveal">병원 이메일로<br>시작해 주세요.</h2>
+            <p class="ob-lede ob-reveal">병원 도메인 이메일만 가입할 수 있어요. 인증 메일 한 번이면 다른 기기에서도 동일하게 보여요.</p>
             <div class="ob-big-grid">
-              <button class="ob-tile ob-reveal ob-tc-indigo" data-action="auth-pick" data-choice="local">
-                <div class="ob-tile-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L4 6v6c0 5.25 3.75 10.15 8 11.25C16.25 22.15 20 17.25 20 12V6l-8-4z"/></svg>
-                </div>
-                <div class="ob-tile-body">
-                  <div class="ob-chip">추천</div>
-                  <div class="ob-tile-title">게스트 모드</div>
-                  <div class="ob-tile-sub">로그인 불필요 · 내 개인 핸드폰에만 저장</div>
-                </div>
-                <div class="ob-tile-arrow">→</div>
-              </button>
               <button class="ob-tile ob-reveal ob-tc-emerald" data-action="auth-pick" data-choice="email">
                 <div class="ob-tile-icon">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2zm0 2l-8 5-8-5h16zm0 12H4V9l8 5 8-5v9z"/></svg>
                 </div>
                 <div class="ob-tile-body">
+                  <div class="ob-chip">추천</div>
                   <div class="ob-tile-title">병원 이메일로 가입</div>
-                  <div class="ob-tile-sub">폰 바꿔도 기록 유지</div>
+                  <div class="ob-tile-sub">@snuh.org · @brmh.org · @snubh.org · @snudh.org · @ntrh.or.kr</div>
                 </div>
                 <div class="ob-tile-arrow">→</div>
               </button>
@@ -313,129 +402,30 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                 </div>
                 <div class="ob-tile-arrow">→</div>
               </button>
-            </div>
-          </div>
-        </section>
-
-        <!-- 7. JOB (Step 2/4) -->
-        <section class="ob-slide ob-ink">
-          <div class="ob-inner">
-            <div class="ob-index ob-reveal">Step 2 / 4 · 직종</div>
-            <div class="ob-rule ob-reveal"></div>
-            <h2 class="ob-display ob-reveal">간호사세요?</h2>
-            <p class="ob-lede ob-reveal">병동 근무표를 올리면 D·E·N·연*·리2가 캘린더에 바로 들어가요. 아니라면 급여명세서로 시작해요.</p>
-            <div class="ob-big-grid">
-              <button class="ob-tile ob-reveal ob-tc-rose" data-action="job-pick" data-job="nurse">
+              <button class="ob-tile ob-reveal ob-tc-indigo" data-action="auth-pick" data-choice="local">
                 <div class="ob-tile-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L4 6v6c0 5.25 3.75 10.15 8 11.25C16.25 22.15 20 17.25 20 12V6l-8-4z"/></svg>
                 </div>
                 <div class="ob-tile-body">
-                  <div class="ob-tile-title">간호사</div>
-                  <div class="ob-tile-sub">엑셀 근무표 → D/E/N·연*·리2 자동 입력</div>
-                </div>
-                <div class="ob-tile-arrow">→</div>
-              </button>
-              <button class="ob-tile ob-reveal ob-tc-amber" data-action="job-pick" data-job="other">
-                <div class="ob-tile-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 2l5 5h-5V4zM6 20V4h6v6h6v10H6z"/></svg>
-                </div>
-                <div class="ob-tile-body">
-                  <div class="ob-tile-title">그 외 직종</div>
-                  <div class="ob-tile-sub">급여명세서 PDF로 시작</div>
+                  <div class="ob-tile-title">게스트 모드</div>
+                  <div class="ob-tile-sub">로그인 불필요 · 이 기기에만 저장</div>
                 </div>
                 <div class="ob-tile-arrow">→</div>
               </button>
             </div>
-          </div>
-        </section>
 
-        <!-- 8. 업로드 (Step 3/4) -->
-        <section class="ob-slide ob-cream" id="ob-upload">
-          <div class="ob-inner">
-            <div class="ob-index ob-reveal">Step 3 / 4 · 지금 올려도, 나중에 올려도</div>
-            <div class="ob-rule ob-reveal"></div>
-            <div data-job="nurse">
-              <h2 class="ob-display ob-reveal">이번 달<br>근무표 있으세요?</h2>
-              <p class="ob-lede ob-reveal">본인 이름이 있는 엑셀 파일 올리면 돼요. D·E·N·AL·RD가 캘린더에 자동으로 들어가요. 나중에 올려도 됩니다.</p>
-              <div class="ob-upload-zone ob-reveal">
-                <div class="ico">📅</div>
-                <div class="t">근무표 올리기</div>
-                <div class="s">.xlsx · 파일은 내 기기에만 저장, 서버 전송 없음</div>
+            <!-- 병원 이메일 가입 패널 (data-choice="email" 선택 시 펼침) -->
+            <div class="ob-auth-panel" id="obAuthEmailPanel" aria-hidden="true">
+              <input type="email" name="email" id="obAuthEmail" placeholder="병원 이메일 (예: hong@snuh.org)" autocomplete="email" list="obAuthDomainList">
+              <datalist id="obAuthDomainList"></datalist>
+              <input type="password" name="password" id="obAuthPassword" placeholder="비밀번호 (8~12자)" autocomplete="new-password">
+              <div class="ob-auth-domains">허용 도메인: snuh.org · brmh.org · snubh.org · snudh.org · ntrh.or.kr</div>
+              <div class="ob-auth-msg" id="obAuthMsg"></div>
+              <div class="ob-auth-actions">
+                <button type="button" class="ob-auth-ghost" id="obAuthCancel">취소</button>
+                <button type="button" class="ob-auth-primary" id="obAuthSubmit">인증 메일 받기</button>
               </div>
             </div>
-            <div data-job="other" style="display:none">
-              <h2 class="ob-display ob-reveal">최근 급여명세서<br>있으세요?</h2>
-              <p class="ob-lede ob-reveal">1~3개월치 PDF면 충분해요. 통상임금 계산에 쓰이고, 항목별로 분해해서 보여줘요. 나중에 올려도 됩니다.</p>
-              <div class="ob-upload-zone ob-reveal">
-                <div class="ico">📄</div>
-                <div class="t">명세서 올리기</div>
-                <div class="s">PDF 최대 3개 · 파일은 내 기기에만 저장, 서버 전송 없음</div>
-              </div>
-            </div>
-            <div class="ob-cta-row">
-              <button class="ob-cta-ghost" data-action="advance">나중에 올릴게요</button>
-              <button class="ob-cta-primary" data-action="advance">올리기 →</button>
-            </div>
-          </div>
-        </section>
-
-        <!-- 9. 개인정보 (Step 4/4) -->
-        <section class="ob-slide ob-cream" id="ob-profile">
-          <div class="ob-inner">
-            <div class="ob-index ob-reveal">Step 4 / 4 · 수당 계산에 필요해요</div>
-            <div class="ob-rule ob-reveal"></div>
-            <h2 class="ob-display ob-reveal">하나씩<br>알려주세요.</h2>
-            <div class="ob-pf-stack">
-              <div class="ob-pf-field">
-                <div class="ob-pf-label">사번</div>
-                <input type="text" inputmode="numeric" placeholder="예: 20842" autocomplete="off">
-                <div class="ob-pf-hint">호봉 자동 추정에 써요. 없으면 건너뛰어도 돼요.</div>
-              </div>
-              <div class="ob-pf-field">
-                <div class="ob-pf-label">입사일</div>
-                <input type="text" inputmode="numeric" placeholder="예: 2021-03-02">
-                <div class="ob-pf-hint">연차 일수 자동 계산에 씁니다.</div>
-              </div>
-              <div class="ob-pf-field">
-                <div class="ob-pf-label">직군</div>
-                <select>
-                  <option>간호직</option>
-                  <option>의료기술직</option>
-                  <option>사무직</option>
-                  <option>기능직</option>
-                </select>
-                <div class="ob-pf-hint">단협 호봉표가 직군마다 달라요.</div>
-              </div>
-              <div class="ob-pf-field">
-                <div class="ob-pf-label">조정급 (선택)</div>
-                <input type="number" placeholder="급여명세서에서 확인">
-                <div class="ob-pf-hint">통상임금 계산에 포함돼요. 나중에 입력해도 됩니다.</div>
-              </div>
-            </div>
-            <div class="ob-cta-row">
-              <button class="ob-cta-ghost" data-action="pf-back">← 이전</button>
-              <button class="ob-cta-primary" data-action="pf-next">다음 →</button>
-            </div>
-          </div>
-        </section>
-
-        <!-- 10. 웰컴 -->
-        <section class="ob-slide ob-brand" id="ob-welcome">
-          <div class="ob-inner">
-            <div class="ob-welcome-check">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            </div>
-            <h1 class="ob-display" style="margin-top:4px">다 됐어요.<br>이제 직접<br>확인해 보세요.</h1>
-            <p class="ob-lede">이번 달 시간외 수당이 맞는지, 연차가 몇 개 남았는지 — 지금 바로 볼 수 있어요.</p>
-            <div class="ob-app-grid">
-              <div class="ob-app-tile">홈</div>
-              <div class="ob-app-tile">급여</div>
-              <div class="ob-app-tile">시간외</div>
-              <div class="ob-app-tile">휴가</div>
-              <div class="ob-app-tile">찾아보기</div>
-              <div class="ob-app-tile">설정</div>
-            </div>
-            <button class="ob-cta-primary" id="ob-start">앱 시작 →</button>
           </div>
         </section>
 
@@ -448,8 +438,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <div class="ob-progress-track">
         <div class="ob-progress-fill" id="ob-progress"></div>
       </div>
-      <div class="ob-counter" id="ob-counter">1 / 10</div>
-      <button class="ob-skip" id="ob-skip" type="button">건너뛰기</button>
+      <div class="ob-counter" id="ob-counter">1 / 9</div>
       <button class="ob-nav-btn" id="ob-next" aria-label="다음">›</button>
     </div>
   </div><!-- /.ob-frame -->

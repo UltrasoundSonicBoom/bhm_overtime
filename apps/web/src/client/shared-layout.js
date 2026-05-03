@@ -128,9 +128,24 @@
       elem.appendChild(el('span', { className: 'nav-tab-text', textContent: text }));
     }
 
+    // 근무 탭은 간호직만 노출 (2026-05-03 — 차후 비-간호직도 사용할 수 있도록 변경 가능)
+    // jobType 은 _uid_{uid} 또는 _guest 키에 저장됨. uid 가 있으면 그쪽을, 없으면 _guest 를 읽는다.
+    function _readActiveJobType() {
+      try {
+        var uid = window.__firebaseUid;
+        var key = uid ? ('snuhmate_hr_profile_uid_' + uid) : 'snuhmate_hr_profile_guest';
+        var raw = localStorage.getItem(key);
+        if (!raw) return '';
+        var p = JSON.parse(raw);
+        return (p && p.jobType) || '';
+      } catch (e) { return ''; }
+    }
+    var _jobType = _readActiveJobType();
+    var _showSchedule = _jobType === '' || _jobType === '간호직';
+
     var items = [
       { icon: '🏠', text: '홈', tab: 'home', href: homeHref('home') },
-      { icon: '🗓️', text: '근무', tab: 'schedule', href: homeHref('schedule') },
+      { icon: '🗓️', text: '근무', tab: 'schedule', href: homeHref('schedule'), gate: 'nurse' },
       { icon: '📅', text: '휴가', tab: 'leave', href: homeHref('leave') },
       { icon: '⏰', text: '시간외', tab: 'overtime', href: homeHref('overtime') },
       { icon: '💰', text: '급여', tab: 'payroll', href: homeHref('payroll') },
@@ -141,7 +156,10 @@
       // 뉴스 탭 비활성 (차후 복구 시 주석 해제)
       // { icon: '📰', text: '뉴스', href: 'cardnews.html', active: isCardNews },
       { icon: '👤', text: 'info', tab: 'profile', href: homeHref('profile') }
-    ];
+    ].filter(function (item) {
+      if (item.gate === 'nurse' && !_showSchedule) return false;
+      return true;
+    });
 
     items.forEach(function (item) {
       if (isApp && item.tab) {
