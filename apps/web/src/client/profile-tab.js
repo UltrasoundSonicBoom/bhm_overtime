@@ -1375,6 +1375,14 @@ let _careerCurrentFilter = 'promotion'; // 기본 = 승격·승진
 
 function _careerEventStatus(ev, now) {
   if (!ev?.dateFrom) return 'future';
+  // 근무처: dateTo 가 비면 "현재까지 이어짐" → 항상 now
+  if (ev.category === 'workplace' && !ev.dateTo) return 'now';
+  // 근무처: dateTo 가 있으면 그 종료일 기준 past 판정
+  if (ev.category === 'workplace' && ev.dateTo) {
+    const [ty, tm] = ev.dateTo.split('-').map(Number);
+    const evEnd = new Date(ty, (tm || 1) - 1, 1);
+    return now > evEnd ? 'past' : 'now';
+  }
   const [y, m] = ev.dateFrom.split('-').map(Number);
   const evStart = new Date(y, (m || 1) - 1, 1);
   const monthDiff = (now.getFullYear() - evStart.getFullYear()) * 12 + (now.getMonth() - evStart.getMonth());
@@ -1705,6 +1713,8 @@ if (typeof window !== 'undefined') {
   window.syncBirthDateToProfile = syncBirthDateToProfile;
   window.syncHireDateToProfile = syncHireDateToProfile;
   // 커리어 타임라인
+  // 테스트 expose
+  window.__test_careerEventStatus = _careerEventStatus;
   window.renderCareerTimeline = renderCareerTimeline;
   window.openCareerEventSheet = openCareerEventSheet;
   window.closeCareerEventSheet = closeCareerEventSheet;
