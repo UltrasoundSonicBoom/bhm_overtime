@@ -5317,6 +5317,9 @@ html[data-theme="neo"] .pay-upload-zone {
   font-family: "Space Grotesk","Inter",sans-serif;
   color: var(--accent-indigo); font-weight: 700;
 }
+.career-next-promo-card .breakdown.is-amount {
+  color: var(--accent-indigo); font-weight: 700;
+}
 .career-badge {
   display: inline-block; font-size: var(--text-caption); font-weight: 700;
   padding: 2px 6px; border-radius: 9999px;

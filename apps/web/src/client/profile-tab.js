@@ -1488,13 +1488,12 @@ function _careerHeroStat() {
     card.appendChild(lbl);
     const title = document.createElement('div');
     title.className = 'title';
-    title.textContent = `${nextPromo.dateFrom.replace('-', '.')} · ${nextPromo.title}`;
+    // dateFrom 은 input type="month" 출력 = "YYYY-MM" 계약. slice(0,7) 로 future-proof.
+    title.textContent = `${(nextPromo.dateFrom || '').slice(0, 7).replace('-', '.')} · ${nextPromo.title}`;
     card.appendChild(title);
     if (nextPromo.amount) {
       const amt = document.createElement('div');
-      amt.className = 'breakdown';
-      amt.style.fontWeight = '700';
-      amt.style.color = 'var(--accent-indigo)';
+      amt.className = 'breakdown is-amount';
       amt.textContent = nextPromo.amount;
       card.appendChild(amt);
     }
