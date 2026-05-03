@@ -962,6 +962,27 @@ body {
 }
 .ob-lv-leg-hol { color: #ef4444; font-weight: 600; }
 
+/* ── App screenshot images (slides 3 & 4) ───────────────────── */
+.ob-screen-2up {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 480px;
+  margin-top: 16px;
+}
+.ob-screen-img {
+  width: 100%;
+  border-radius: 14px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+  display: block;
+}
+.ob-screen-2up .ob-screen-img {
+  max-height: 180px;
+  object-fit: cover;
+  object-position: top;
+}
+
 /* ── Global overrides for onboarding page ─────────────────── */
 body > #sharedHeader:empty {
   display: none;
