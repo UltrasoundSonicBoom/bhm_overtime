@@ -8,6 +8,7 @@
     ".": "./src/index.js",
     "./profile": "./src/profile.js",
     "./work-history": "./src/work-history.js",
+    "./career-events": "./src/career-events.js",
     "./overtime": "./src/overtime.js",
     "./leave": "./src/leave.js",
     "./payroll": "./src/payroll.js"

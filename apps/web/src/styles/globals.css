@@ -5093,6 +5093,158 @@ html[data-theme="neo"] .pay-upload-zone {
   margin-top: 4px;
 }
 
+/* ── 커리어 타임라인 (career-events 통합) ─────────────────── */
+.career-card { padding: 0; overflow: visible; position: relative; }
+.career-pinned {
+  position: sticky; top: 0; z-index: 30;
+  background: var(--bg-card);
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--border);
+  border-radius: var(--radius-card) var(--radius-card) 0 0;
+}
+.career-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.career-hero-stat {
+  background: var(--bg-card);
+  border: 2px solid var(--text-primary);
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: 3px 3px 0 var(--text-primary);
+}
+.career-hero-stat .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.career-hero-stat .row + .row { margin-top: 6px; }
+.career-hero-stat .lbl { font-size: var(--text-body-small); color: var(--text-muted); font-weight: 600; }
+.career-hero-stat .val { font-size: var(--text-body-normal); font-weight: 700; font-family: "Space Grotesk","Inter",sans-serif; }
+.career-hero-stat .progress {
+  height: 8px; background: rgba(0,0,0,0.06); border-radius: 9999px;
+  margin-top: 10px; position: relative; overflow: hidden;
+}
+.career-hero-stat .progress > .fill {
+  height: 100%; background: linear-gradient(90deg, var(--accent-indigo), var(--accent-emerald));
+  border-radius: 9999px;
+}
+.career-hero-stat .progress-meta {
+  margin-top: 4px; font-size: var(--text-caption); color: var(--text-muted);
+  display: flex; justify-content: space-between;
+}
+.career-filter-row {
+  display: flex; gap: 6px; margin-top: 12px;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+}
+.career-filter-row::-webkit-scrollbar { display: none; }
+.career-chip {
+  flex-shrink: 0;
+  font-size: var(--text-body-small); font-weight: 600; padding: 5px 12px;
+  border-radius: 9999px; border: 1.5px solid var(--border);
+  background: var(--bg-card); color: var(--text-muted); cursor: pointer;
+  white-space: nowrap; transition: all 0.15s ease;
+  font-family: inherit;
+}
+.career-chip:hover { border-color: var(--text-primary); }
+.career-chip.on { background: var(--text-primary); color: var(--bg-card); border-color: var(--text-primary); }
+
+.career-scroll-area { padding: 16px 16px 80px; position: relative; }
+.career-timeline { position: relative; padding-left: 24px; }
+.career-timeline::before {
+  content: ''; position: absolute; left: 8px; top: 0; bottom: 0;
+  width: 2px; background: linear-gradient(
+    to bottom,
+    var(--text-primary) 0%, var(--text-primary) 30%,
+    var(--accent-indigo) 30%, var(--accent-indigo) 32%,
+    rgba(156,163,175,0.6) 32%, rgba(156,163,175,0.6) 100%
+  );
+}
+.career-event { position: relative; margin-bottom: 14px; transition: opacity 0.18s ease; }
+.career-event::before {
+  content: ''; position: absolute; left: -20px; top: 6px;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--bg-card); border: 2px solid var(--text-primary);
+}
+.career-event.future::before { border-color: rgba(156,163,175,0.8); border-style: dashed; }
+.career-event.now::before {
+  background: var(--accent-indigo); border-color: var(--accent-indigo);
+  box-shadow: 0 0 0 4px rgba(108,92,231,0.18);
+}
+.career-event.now::after {
+  content: '지금'; position: absolute; left: 0; top: 28px;
+  background: var(--accent-indigo); color: white; font-size: var(--text-caption);
+  font-weight: 700; padding: 2px 6px; border-radius: 9999px;
+  letter-spacing: 0.04em;
+}
+.career-event-year {
+  font-family: "Space Grotesk","Inter",sans-serif;
+  font-size: var(--text-body-small); font-weight: 700; color: var(--text-muted);
+  letter-spacing: 0.06em; margin-bottom: 4px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.career-event.future .career-event-year { opacity: 0.7; }
+.career-edit-btn {
+  background: transparent; border: 1px solid transparent;
+  width: 24px; height: 24px; border-radius: 6px; cursor: pointer;
+  color: var(--text-muted); font-size: var(--text-body-small);
+  display: inline-flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.15s ease, background 0.15s ease;
+  font-family: inherit;
+}
+.career-event:hover .career-edit-btn,
+.career-event:focus-within .career-edit-btn { opacity: 0.8; }
+.career-edit-btn:hover { background: rgba(0,0,0,0.06); border-color: var(--border); opacity: 1; }
+
+/* 카드: 흰 배경 + 카테고리별 테두리 색만 (그라데이션 X) */
+.career-event-card {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: 10px; padding: 10px 12px; cursor: pointer;
+  position: relative;
+}
+.career-event.future .career-event-card { border-style: dashed; opacity: 0.92; }
+.career-event.cat-promotion .career-event-card {
+  border-color: rgba(108, 92, 231, 0.55);
+  border-width: 2px;
+}
+.career-event.cat-tenure .career-event-card { border-color: rgba(245, 166, 35, 0.55); }
+.career-event.cat-workplace .career-event-card { border-color: rgba(0, 184, 148, 0.55); }
+.career-event.cat-leave .career-event-card { border-color: rgba(253, 121, 168, 0.55); }
+.career-event-title {
+  font-size: var(--text-body-normal); font-weight: 700;
+  margin: 0 0 2px; line-height: 1.35; color: var(--text-primary);
+}
+.career-event-sub {
+  font-size: var(--text-body-small); color: var(--text-muted);
+  margin: 0; line-height: 1.45;
+}
+.career-event-amount {
+  font-size: var(--text-body-small); font-weight: 700;
+  color: var(--accent-indigo);
+  font-family: "Space Grotesk","Inter",sans-serif;
+  margin-top: 4px; display: inline-block;
+}
+.career-badge {
+  display: inline-block; font-size: var(--text-caption); font-weight: 700;
+  padding: 2px 6px; border-radius: 9999px;
+  letter-spacing: 0.04em; vertical-align: middle; margin-left: 4px;
+}
+.career-badge.indigo { background: rgba(108,92,231,0.18); color: var(--accent-indigo); }
+.career-badge.amber { background: rgba(245,166,35,0.18); color: #92580a; }
+.career-badge.emerald { background: rgba(0,184,148,0.18); color: #047857; }
+.career-badge.rose { background: rgba(253,121,168,0.18); color: #be185d; }
+.career-badge.gray { background: rgba(0,0,0,0.08); color: var(--text-muted); }
+
+.career-fab {
+  position: absolute; bottom: 20px; right: 16px;
+  width: 48px; height: 48px; border-radius: 50%;
+  background: var(--accent-indigo); color: white;
+  border: none; box-shadow: 0 4px 12px rgba(108,92,231,0.4);
+  font-size: 24px; font-weight: 300; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 25; transition: transform 0.15s ease;
+}
+.career-fab:hover { transform: scale(1.08); }
+.career-empty-msg {
+  text-align: center; padding: 30px 20px;
+  color: var(--text-muted); font-size: var(--text-body-normal); line-height: 1.5;
+}
+
 /* ── 예상 vs 실제 비교 행 (pe-cmp-*) ── */
 /* 히어로 카드 실제 모드 */
 .pe-hero-actual {

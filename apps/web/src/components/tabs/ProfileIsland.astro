@@ -277,18 +277,90 @@
   </div><!-- /profileSectionPersonal -->
 
   <div id="profileSectionWork" style="display:none;">
-    <!-- E1: 근무이력 섹션 -->
-    <div class="card max-w-[600px] mx-auto" id="workHistoryCard">
-      <div class="flex items-center justify-between mb-3">
-        <div class="card-title text-brand-body-large m-0">
-          <span class="icon indigo">💼</span> 근무이력
+    <!-- 커리어 타임라인 (근무이력 + 자동승격 + 장기근속 + 공로연수·정년 통합) -->
+    <div class="card max-w-[600px] mx-auto career-card" id="careerTimelineCard">
+      <!-- 고정 헤더: 요약 + 필터 -->
+      <div class="career-pinned">
+        <div class="career-head">
+          <div class="card-title text-brand-body-large m-0">
+            <span class="icon indigo">💼</span> 커리어 타임라인
+          </div>
         </div>
-        <button id="addWorkHistoryBtn" class="btn btn-primary py-1.5 px-3.5 text-brand-body-small"
-          onclick="openWorkHistorySheet({__newPost:true})">+ 근무지 추가</button>
+        <div class="career-hero-stat" id="careerHeroStat"></div>
+        <div class="career-filter-row" id="careerFilterRow">
+          <button class="career-chip" data-filter="all" type="button">전체</button>
+          <button class="career-chip" data-filter="workplace" type="button">근무처</button>
+          <button class="career-chip on" data-filter="promotion" type="button">승격·승진</button>
+          <button class="career-chip" data-filter="tenure" type="button">장기근속</button>
+          <button class="career-chip" data-filter="leave" type="button">연차·휴가</button>
+        </div>
       </div>
-      <!-- Phase 4-A: 명세서 시계열 → 근무이력 알림 배너 (mode='banner' 시) -->
+      <!-- 명세서 시계열 → 근무이력 알림 배너 (mode='banner' 시) -->
       <div id="workHistoryBanner" class="mb-3" style="display:none;"></div>
-      <div id="workHistoryList"></div>
+      <!-- 스크롤 타임라인 -->
+      <div class="career-scroll-area">
+        <div class="career-timeline" id="workHistoryList"></div>
+        <div class="career-empty-msg" id="careerEmptyMsg" style="display:none;">
+          해당 카테고리의 이벤트가 없어요.<br>아래 + 버튼으로 추가할 수 있어요.
+        </div>
+      </div>
+      <button class="career-fab" id="careerFabAdd" type="button" title="이벤트 추가">+</button>
+    </div>
+
+    <!-- 신규: 커리어 이벤트 편집 시트 -->
+    <div id="careerEventSheet" style="display:none; position:fixed; inset:0; z-index:9050;
+       background:rgba(0,0,0,0.5);" onclick="if(event.target===this)closeCareerEventSheet()">
+      <div class="absolute bottom-0 left-0 right-0 max-w-[480px] mx-auto rounded-t-2xl pt-5 px-4 pb-8 max-h-[85vh] overflow-y-auto bg-[var(--bg-card,#fff)]">
+        <div class="flex items-center justify-between mb-4">
+          <span class="text-brand-body-large font-semibold" id="careerSheetTitle">이벤트 추가</span>
+          <button onclick="closeCareerEventSheet()"
+            class="bg-transparent border-0 text-[1.4rem] cursor-pointer leading-none py-1 px-2">×</button>
+        </div>
+        <input type="hidden" id="ceEditId" value="">
+        <div class="flex flex-col gap-3">
+          <div>
+            <label class="text-brand-body-small font-semibold block mb-1">분류 *</label>
+            <select id="ceCategory" class="form-input w-full py-2.5 px-3 border border-brand-border-glass rounded-lg text-brand-body-normal">
+              <option value="promotion">승격·승진</option>
+              <option value="workplace">근무처</option>
+              <option value="tenure">장기근속·포상</option>
+              <option value="leave">연차·휴가</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-brand-body-small font-semibold block mb-1">제목 *</label>
+            <input id="ceTitle" type="text" placeholder="예: J2 → J3 자동승격" class="form-input w-full py-2.5 px-3 border border-brand-border-glass rounded-lg text-brand-body-normal">
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-brand-body-small font-semibold block mb-1">시작 (년-월) *</label>
+              <input id="ceDateFrom" type="month" class="form-input w-full py-2.5 px-3 border border-brand-border-glass rounded-lg text-brand-body-normal">
+            </div>
+            <div id="ceDateToWrap" style="display:none;">
+              <label class="text-brand-body-small font-semibold block mb-1">종료 (년-월)</label>
+              <input id="ceDateTo" type="month" placeholder="재직 중이면 빈칸" class="form-input w-full py-2.5 px-3 border border-brand-border-glass rounded-lg text-brand-body-normal">
+            </div>
+          </div>
+          <div>
+            <label class="text-brand-body-small font-semibold block mb-1">설명</label>
+            <textarea id="ceSub" rows="3" placeholder="상세 설명 (선택)"
+              class="w-full py-2.5 px-3 border border-brand-border-glass rounded-lg text-brand-body-normal resize-none"></textarea>
+          </div>
+          <div>
+            <label class="text-brand-body-small font-semibold block mb-1">금액 변동 <small class="text-brand-text-muted font-normal">(선택)</small></label>
+            <input id="ceAmount" type="text" placeholder="예: +₩459,300/월" class="form-input w-full py-2.5 px-3 border border-brand-border-glass rounded-lg text-brand-body-normal">
+          </div>
+          <div class="flex gap-2 mt-2">
+            <button type="button" id="ceDeleteBtn" onclick="deleteCareerEvent()"
+              class="btn py-2.5 px-3 text-brand-body-small rounded-lg border border-[rgba(220,38,38,0.25)] text-[#dc2626] bg-[rgba(220,38,38,0.08)]"
+              style="display:none">삭제</button>
+            <button type="button" onclick="closeCareerEventSheet()"
+              class="btn py-2.5 px-3 text-brand-body-small flex-1 rounded-lg border border-brand-border-glass text-brand-text-muted bg-transparent">취소</button>
+            <button type="button" onclick="saveCareerEvent()"
+              class="btn btn-primary py-2.5 px-3 text-brand-body-small flex-1">저장</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- 근무이력 입력 바텀시트 -->

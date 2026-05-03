@@ -11,6 +11,7 @@ import {
   _loadWorkHistory, _saveWorkHistory, renderWorkHistory,
   _showWorkHistoryUpdateBanner,
 } from '@snuhmate/profile/work-history';
+import { CAREER } from '@snuhmate/profile/career-events';
 
 // ── 개인정보 탭 초기화 ──
 // Phase 5-followup: 명세서 업로드 후 info 탭 재방문 시 form 비어 있음 회귀 fix.
@@ -37,7 +38,12 @@ function initProfileTab() {
   } else {
     updateProfileTitle('');
   }
-  renderWorkHistory();
+  // 커리어 타임라인: 헤더 + 필터 핸들러 바인딩 → 렌더
+  if (typeof window !== 'undefined' && window.renderWorkHistory) {
+    window.renderWorkHistory();
+  } else {
+    renderWorkHistory();
+  }
 }
 
 // ── 책갈피: 개인 정보 ↔ 근무 정보 전환 ──
@@ -59,7 +65,11 @@ function switchProfileSection(section) {
     if (accent) accent.style.background = isWork ? '#0891b2' : '#4f46e5';
   }
   if (isWork) {
-    renderWorkHistory();
+    if (typeof window !== 'undefined' && window.renderWorkHistory) {
+      window.renderWorkHistory();
+    } else {
+      renderWorkHistory();
+    }
     if (typeof renderResumeSections === 'function') renderResumeSections();
   }
 }
@@ -1359,6 +1369,244 @@ if (typeof window !== 'undefined') {
   window.toggleCollapsible = toggleCollapsible;
 }
 
+// ── 커리어 타임라인 렌더 + CRUD ──────────────────────────────
+// 단일 키 `snuhmate_career_events` 통합. work_history 와 자동승격·장기근속·공로연수·정년을 한 시점에서 본다.
+let _careerCurrentFilter = 'promotion'; // 기본 = 승격·승진
+
+function _careerEventStatus(ev, now) {
+  if (!ev?.dateFrom) return 'future';
+  const [y, m] = ev.dateFrom.split('-').map(Number);
+  const evStart = new Date(y, (m || 1) - 1, 1);
+  const monthDiff = (now.getFullYear() - evStart.getFullYear()) * 12 + (now.getMonth() - evStart.getMonth());
+  if (Math.abs(monthDiff) <= 1) return 'now';
+  return monthDiff > 0 ? 'past' : 'future';
+}
+
+function _careerFmtDate(ev, now) {
+  const [y, m] = (ev.dateFrom || '').split('-');
+  if (!y || !m) return '';
+  let s = `${y} · ${parseInt(m, 10)}월`;
+  if (ev.dateTo) {
+    const [y2, m2] = ev.dateTo.split('-');
+    s = `${y}.${m} ~ ${y2}.${m2}`;
+  } else if (ev.category === 'workplace' && _careerEventStatus(ev, now) !== 'future') {
+    s = `${y}.${m} ~ 현재`;
+  }
+  return s;
+}
+
+function _careerHeroStat() {
+  const profile = PROFILE.load();
+  const wrap = document.getElementById('careerHeroStat');
+  if (!wrap) return;
+  if (!profile?.hireDate) {
+    wrap.replaceChildren();
+    const msg = document.createElement('div');
+    msg.style.cssText = 'font-size:var(--text-body-small);color:var(--text-muted);text-align:center;padding:8px 0;';
+    msg.textContent = '입사일을 입력하면 자동승격·장기근속·정년 일정이 자동 표시됩니다.';
+    wrap.appendChild(msg);
+    return;
+  }
+  const hireYears = PROFILE.calcServiceYears(profile.hireDate);
+  const hireDateObj = new Date(PROFILE.parseDate(profile.hireDate));
+  const events = CAREER.loadEvents();
+  // 다음 자동승격 = 미래 promotion 중 첫 번째 (정년/공로연수 제외)
+  const now = new Date();
+  const nextPromo = events
+    .filter((e) => e.category === 'promotion' && !e.fixed)
+    .map((e) => ({ ...e, _start: e.dateFrom ? new Date(parseInt(e.dateFrom.slice(0, 4), 10), parseInt(e.dateFrom.slice(5, 7), 10) - 1) : null }))
+    .filter((e) => e._start && e._start > now)
+    .sort((a, b) => a._start - b._start)[0];
+  // 정년
+  const retire = events.find((e) => e.title === '정년 퇴직' || /정년/.test(e.title || ''));
+  const totalYears = retire?.dateFrom ? (parseInt(retire.dateFrom.slice(0, 4), 10) - hireDateObj.getFullYear()) : 40;
+  const pctNum = Math.min(100, Math.max(0, Math.round((hireYears / totalYears) * 100)));
+
+  wrap.replaceChildren();
+  const rows = [
+    { lbl: '근속', val: `${hireYears}년 / ${totalYears}년` },
+    { lbl: '현재 자격등급', val: `${profile.grade || '-'}${profile.year ? ` · ${profile.year}년차` : ''}` },
+    { lbl: '다음 자동승격', val: nextPromo ? `${nextPromo.dateFrom} (${(nextPromo.title || '').replace(/^.*→ /, '')})` : '없음' },
+    { lbl: '정년 예정', val: retire?.dateFrom ? `${retire.dateFrom} (만 60세)` : '미설정' },
+  ];
+  rows.forEach((r) => {
+    const row = document.createElement('div');
+    row.className = 'row';
+    const lbl = document.createElement('span');
+    lbl.className = 'lbl'; lbl.textContent = r.lbl;
+    const val = document.createElement('span');
+    val.className = 'val'; val.textContent = r.val;
+    row.appendChild(lbl); row.appendChild(val);
+    wrap.appendChild(row);
+  });
+  const prog = document.createElement('div');
+  prog.className = 'progress';
+  const fill = document.createElement('div');
+  fill.className = 'fill'; fill.style.width = pctNum + '%';
+  prog.appendChild(fill);
+  wrap.appendChild(prog);
+  const meta = document.createElement('div');
+  meta.className = 'progress-meta';
+  const left = document.createElement('span');
+  left.textContent = `${hireDateObj.getFullYear()} 입사`;
+  const right = document.createElement('span');
+  right.textContent = retire?.dateFrom ? `${retire.dateFrom.slice(0, 4)} 정년` : '';
+  meta.appendChild(left); meta.appendChild(right);
+  wrap.appendChild(meta);
+}
+
+function _careerBuildEventEl(ev, now) {
+  const el = document.createElement('div');
+  const status = _careerEventStatus(ev, now);
+  el.className = `career-event status-${status} cat-${ev.category || 'workplace'}`;
+  if (status === 'now') el.classList.add('now');
+  if (status === 'future') el.classList.add('future');
+
+  const yr = document.createElement('div');
+  yr.className = 'career-event-year';
+  const yrText = document.createElement('span');
+  yrText.textContent = _careerFmtDate(ev, now);
+  yr.appendChild(yrText);
+  const editBtn = document.createElement('button');
+  editBtn.className = 'career-edit-btn';
+  editBtn.type = 'button';
+  editBtn.textContent = '✎';
+  editBtn.title = '편집';
+  editBtn.onclick = (e) => { e.stopPropagation(); openCareerEventSheet(ev); };
+  yr.appendChild(editBtn);
+  el.appendChild(yr);
+
+  const card = document.createElement('div');
+  card.className = 'career-event-card';
+  card.onclick = () => openCareerEventSheet(ev);
+
+  const title = document.createElement('h3');
+  title.className = 'career-event-title';
+  title.appendChild(document.createTextNode(ev.title || ''));
+  if (ev.badge) {
+    const b = document.createElement('span');
+    b.className = `career-badge ${ev.badge.tone || 'gray'}`;
+    b.textContent = ev.badge.text || '';
+    title.appendChild(b);
+  }
+  card.appendChild(title);
+
+  if (ev.sub) {
+    const sub = document.createElement('p');
+    sub.className = 'career-event-sub';
+    sub.textContent = ev.sub;
+    card.appendChild(sub);
+  }
+  if (ev.amount) {
+    const amt = document.createElement('span');
+    amt.className = 'career-event-amount';
+    amt.textContent = ev.amount;
+    card.appendChild(amt);
+  }
+  el.appendChild(card);
+  return el;
+}
+
+function renderCareerTimeline() {
+  const tl = document.getElementById('workHistoryList');
+  const empty = document.getElementById('careerEmptyMsg');
+  if (!tl) return;
+  _careerHeroStat();
+  tl.replaceChildren();
+
+  const events = CAREER.loadEvents();
+  const filtered = events
+    .filter((ev) => _careerCurrentFilter === 'all' || ev.category === _careerCurrentFilter)
+    .slice()
+    .sort((a, b) => (a.dateFrom || '9999').localeCompare(b.dateFrom || '9999'));
+
+  if (filtered.length === 0) {
+    if (empty) empty.style.display = 'block';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+  const now = new Date();
+  filtered.forEach((ev) => tl.appendChild(_careerBuildEventEl(ev, now)));
+}
+
+function openCareerEventSheet(ev) {
+  const sheet = document.getElementById('careerEventSheet');
+  if (!sheet) return;
+  const isNew = !ev || !ev.id;
+  document.getElementById('careerSheetTitle').textContent = isNew ? '이벤트 추가' : '이벤트 편집';
+  document.getElementById('ceEditId').value = isNew ? '' : ev.id;
+  const cat = isNew ? (_careerCurrentFilter !== 'all' ? _careerCurrentFilter : 'promotion') : ev.category;
+  document.getElementById('ceCategory').value = cat;
+  document.getElementById('ceTitle').value = isNew ? '' : (ev.title || '');
+  document.getElementById('ceDateFrom').value = isNew ? '' : (ev.dateFrom || '');
+  document.getElementById('ceDateTo').value = isNew ? '' : (ev.dateTo || '');
+  document.getElementById('ceSub').value = isNew ? '' : (ev.sub || '');
+  document.getElementById('ceAmount').value = isNew ? '' : (ev.amount || '');
+  document.getElementById('ceDateToWrap').style.display = cat === 'workplace' ? 'block' : 'none';
+  // 단협 보호 이벤트는 삭제 차단
+  document.getElementById('ceDeleteBtn').style.display = (!isNew && !ev.fixed) ? 'inline-flex' : 'none';
+  sheet.style.display = 'block';
+}
+function closeCareerEventSheet() {
+  const sheet = document.getElementById('careerEventSheet');
+  if (sheet) sheet.style.display = 'none';
+}
+function saveCareerEvent() {
+  const id = document.getElementById('ceEditId').value;
+  const cat = document.getElementById('ceCategory').value;
+  const title = document.getElementById('ceTitle').value.trim();
+  const dateFrom = document.getElementById('ceDateFrom').value;
+  const dateTo = document.getElementById('ceDateTo').value || '';
+  const sub = document.getElementById('ceSub').value.trim();
+  const amount = document.getElementById('ceAmount').value.trim();
+  if (!title || !dateFrom) {
+    alert('제목과 시작 일자는 필수입니다.');
+    return;
+  }
+  const payload = { category: cat, title, dateFrom, dateTo: cat === 'workplace' ? dateTo : '', sub, amount };
+  if (id) {
+    CAREER.updateEvent(id, payload);
+  } else {
+    CAREER.addEvent(payload);
+  }
+  // 새 카테고리로 추가/변경된 경우 그 필터로 자동 전환
+  if (_careerCurrentFilter !== 'all' && _careerCurrentFilter !== cat) {
+    _careerCurrentFilter = cat;
+    document.querySelectorAll('.career-chip').forEach((c) =>
+      c.classList.toggle('on', c.dataset.filter === cat));
+  }
+  renderCareerTimeline();
+  closeCareerEventSheet();
+}
+function deleteCareerEvent() {
+  const id = document.getElementById('ceEditId').value;
+  if (!id) return;
+  if (!confirm('이 이벤트를 삭제할까요?')) return;
+  const ok = CAREER.deleteEvent(id);
+  if (!ok) { alert('단협 보호 이벤트는 삭제할 수 없습니다.'); return; }
+  renderCareerTimeline();
+  closeCareerEventSheet();
+}
+function _initCareerTimelineHandlers() {
+  const filterRow = document.getElementById('careerFilterRow');
+  if (filterRow && !filterRow.dataset.bound) {
+    filterRow.addEventListener('click', (e) => {
+      const btn = e.target.closest('.career-chip');
+      if (!btn) return;
+      document.querySelectorAll('.career-chip').forEach((c) => c.classList.remove('on'));
+      btn.classList.add('on');
+      _careerCurrentFilter = btn.dataset.filter;
+      renderCareerTimeline();
+    });
+    filterRow.dataset.bound = '1';
+  }
+  const fab = document.getElementById('careerFabAdd');
+  if (fab && !fab.dataset.bound) {
+    fab.addEventListener('click', () => openCareerEventSheet(null));
+    fab.dataset.bound = '1';
+  }
+}
+
 // Phase 3-regression: cross-module bare 호출 → window 호환층 복원
 if (typeof window !== 'undefined') {
   window.initProfileTab = initProfileTab;
@@ -1371,5 +1619,19 @@ if (typeof window !== 'undefined') {
   // PayrollIsland.astro retBirthDate oninput 에서 호출
   window.syncBirthDateToProfile = syncBirthDateToProfile;
   window.syncHireDateToProfile = syncHireDateToProfile;
+  // 커리어 타임라인
+  window.renderCareerTimeline = renderCareerTimeline;
+  window.openCareerEventSheet = openCareerEventSheet;
+  window.closeCareerEventSheet = closeCareerEventSheet;
+  window.saveCareerEvent = saveCareerEvent;
+  window.deleteCareerEvent = deleteCareerEvent;
+  // 기존 renderWorkHistory 콜사이트도 새 타임라인으로 라우팅 (back-compat 호환층)
+  window.renderWorkHistory = function () {
+    _initCareerTimelineHandlers();
+    renderCareerTimeline();
+  };
+  // 커리어 카드 ID 가 DOM 에 들어오는 즉시 바인딩 (탭 전환 시점)
+  if (document.readyState !== 'loading') _initCareerTimelineHandlers();
+  else document.addEventListener('DOMContentLoaded', _initCareerTimelineHandlers);
 }
 export {};
