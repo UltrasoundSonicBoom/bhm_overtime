@@ -188,7 +188,7 @@
   }
 
   // ── App start ─────────────────────────────────────────────
-  document.getElementById("ob-start")?.addEventListener("click", () => {
+  function enterApp() {
     const frame = document.querySelector(".ob-frame");
     if (frame) {
       frame.classList.add("ob-exit");
@@ -196,7 +196,9 @@
     } else {
       window.location.href = "/app";
     }
-  });
+  }
+  document.getElementById("ob-start")?.addEventListener("click", enterApp);
+  document.getElementById("ob-skip")?.addEventListener("click", enterApp);
 
   go(0);
 })();
