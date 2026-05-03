@@ -2,6 +2,7 @@
 // 단일 키(`snuhmate_career_events`)로 근무처 + 자동승격 + 장기근속 + 연차·휴가 + 공로연수·정년 통합.
 // 기존 `snuhmate_work_history` 는 신규 키 비어있을 때 1회 마이그레이션 후 그대로 보존(역방향 read 호환).
 import { PROFILE } from './profile.js';
+import { CALC } from '@snuhmate/calculators';
 
 const STORAGE_KEY_BASE = 'snuhmate_career_events';
 const LEGACY_WH_BASE = 'snuhmate_work_history';
@@ -18,6 +19,12 @@ function _legacyKey() {
 }
 function _genId(prefix) {
   return (prefix || 'ce_') + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+}
+
+function _fmtSign(n) {
+  const v = Math.round(n || 0);
+  if (v === 0) return '₩0';
+  return `${v > 0 ? '+' : '−'}₩${Math.abs(v).toLocaleString()}`;
 }
 
 // 단협 자동승격 연수 (data/index.js DATA.payTables.general.promotionRules 와 정합)
@@ -103,19 +110,35 @@ export function generateSeedEvents(profile) {
     fixed: true, autoSeed: true,
   });
 
-  // 1. 자동승격 체인
+  // 1. 자동승격 체인 — 항목별 차액을 calcOrdinaryWage 로 정확히 계산
   let cursorYM = hireYM;
+  let prevGrade = promo[0].from;
   promo.forEach((step) => {
     cursorYM = _addYears(cursorYM, step.years);
+    // 동일 호봉(year=1) 가정으로 grade 만 바꿔 차액 산출
+    const wagePrev = CALC.calcOrdinaryWage(jobType, prevGrade, 1, {});
+    const wageNext = CALC.calcOrdinaryWage(jobType, step.to, 1, {});
+    let detailTokens = null;
+    if (wagePrev && wageNext) {
+      const dBase = (wageNext.breakdown['기준기본급'] || 0) - (wagePrev.breakdown['기준기본급'] || 0);
+      const dAbil = (wageNext.breakdown['능력급'] || 0) - (wagePrev.breakdown['능력급'] || 0);
+      const dBonus = (wageNext.breakdown['상여금'] || 0) - (wagePrev.breakdown['상여금'] || 0);
+      detailTokens = [
+        { text: '기준기본급 ' }, { bold: _fmtSign(dBase) }, { text: '/월 · 능력급 ' },
+        { bold: _fmtSign(dAbil) }, { text: '/월 · 상여금 ' }, { bold: _fmtSign(dBonus) }, { text: '/월' },
+      ];
+    }
     events.push({
       id: _genId('seed_'), category: 'promotion',
       title: `${step.from} → ${step.to} 자동승격`,
       sub: `${step.from}등급 자동승격 연수 ${step.years}년 도달 (제20조)`,
       dateFrom: cursorYM,
       amount: `+₩${step.monthly.toLocaleString()} /월`,
+      detailTokens,
       badge: { text: `${step.years}년 만에`, tone: 'indigo' },
       autoSeed: true,
     });
+    prevGrade = step.to;
   });
 
   // 2. 장기근속 마일스톤

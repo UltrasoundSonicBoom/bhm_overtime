@@ -42,3 +42,28 @@ describe('_careerEventStatus', () => {
     expect(_careerEventStatus({ category: 'workplace', dateTo: '2026-05' }, NOW)).toBe('future');
   });
 });
+
+import { generateSeedEvents } from '@snuhmate/profile/career-events';
+
+describe('generateSeedEvents — 자동승격 항목별 차액', () => {
+  it('J1_J2_자동승격_이벤트는_detailTokens에_기본급_능력급_상여금_변화를_담는다', () => {
+    const events = generateSeedEvents({
+      hireDate: '2015-06-01', jobType: '간호직', grade: 'J3', year: 1,
+    });
+    const j1j2 = events.find((e) => /J1 → J2/.test(e.title));
+    expect(j1j2).toBeTruthy();
+    expect(Array.isArray(j1j2.detailTokens)).toBe(true);
+    const text = j1j2.detailTokens.map((t) => t.bold || t.text || '').join('');
+    expect(text).toMatch(/기준기본급/);
+    expect(text).toMatch(/능력급/);
+    expect(text).toMatch(/상여금/);
+  });
+  it('J3_S1_자동승격_이벤트도_detailTokens_보유', () => {
+    const events = generateSeedEvents({
+      hireDate: '2015-06-01', jobType: '간호직', grade: 'J3', year: 1,
+    });
+    const j3s1 = events.find((e) => /J3 → S1/.test(e.title));
+    expect(j3s1).toBeTruthy();
+    expect(Array.isArray(j3s1.detailTokens)).toBe(true);
+  });
+});
