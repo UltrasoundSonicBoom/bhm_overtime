@@ -34,11 +34,17 @@ const PROMO_GENERAL = [
   { from: 'J2', to: 'J3', years: 7, monthly: 459300 },
   { from: 'J3', to: 'S1', years: 8, monthly: 437500 },
 ];
-// 운영기능직 / 환경유지지원직: A·SA 동일 패턴 (4·7·7년)
-const PROMO_FACILITY = [
+// 운영기능직 — A·C grade (간호직 외, 시설/이송 분야 분기)
+const PROMO_OPERATION = [
   { from: 'A1', to: 'A2', years: 4, monthly: 200000 },
   { from: 'A2', to: 'A3', years: 7, monthly: 300000 },
   { from: 'A3', to: 'C1', years: 7, monthly: 350000 },
+];
+// 환경유지지원직 — SA·SC grade (별표 별도)
+const PROMO_SUPPORT = [
+  { from: 'SA1', to: 'SA2', years: 4, monthly: 180000 },
+  { from: 'SA2', to: 'SA3', years: 7, monthly: 260000 },
+  { from: 'SA3', to: 'SC1', years: 7, monthly: 310000 },
 ];
 
 const TENURE_MILESTONES = [
@@ -78,7 +84,8 @@ function _hireYM(profile) {
 }
 
 function _resolvePromoSequence(jobType) {
-  if (jobType === '운영기능직' || jobType === '환경유지지원직') return PROMO_FACILITY;
+  if (jobType === '환경유지지원직') return PROMO_SUPPORT;
+  if (jobType === '운영기능직') return PROMO_OPERATION;
   return PROMO_GENERAL; // 간호직·의료기술직·일반직 모두 J 패턴 사용
 }
 
@@ -119,21 +126,29 @@ export function generateSeedEvents(profile) {
     const wagePrev = CALC.calcOrdinaryWage(jobType, prevGrade, 1, {});
     const wageNext = CALC.calcOrdinaryWage(jobType, step.to, 1, {});
     let detailTokens = null;
+    let computedTotal = null;
     if (wagePrev && wageNext) {
       const dBase = (wageNext.breakdown['기준기본급'] || 0) - (wagePrev.breakdown['기준기본급'] || 0);
       const dAbil = (wageNext.breakdown['능력급'] || 0) - (wagePrev.breakdown['능력급'] || 0);
       const dBonus = (wageNext.breakdown['상여금'] || 0) - (wagePrev.breakdown['상여금'] || 0);
-      detailTokens = [
-        { text: '기준기본급 ' }, { bold: _fmtSign(dBase) }, { text: '/월 · 능력급 ' },
-        { bold: _fmtSign(dAbil) }, { text: '/월 · 상여금 ' }, { bold: _fmtSign(dBonus) }, { text: '/월' },
-      ];
+      // 차액 합계가 0 이면 (등급 매핑 누락 등 — 예: 환경유지지원직 SA grade 미정의) detailTokens 미생성.
+      if (dBase || dAbil || dBonus) {
+        computedTotal = dBase + dAbil + dBonus;
+        detailTokens = [
+          { text: '기준기본급 ' }, { bold: _fmtSign(dBase) }, { text: '/월 · 능력급 ' },
+          { bold: _fmtSign(dAbil) }, { text: '/월 · 상여금 ' }, { bold: _fmtSign(dBonus) }, { text: '/월' },
+        ];
+      }
     }
     events.push({
       id: _genId('seed_'), category: 'promotion',
       title: `${step.from} → ${step.to} 자동승격`,
       sub: `${step.from}등급 자동승격 연수 ${step.years}년 도달 (제20조)`,
       dateFrom: cursorYM,
-      amount: `+₩${step.monthly.toLocaleString()} /월`,
+      // detailTokens 가 산출됐으면 headline amount 도 breakdown 합계로 일치시킴 (사용자 신뢰성)
+      amount: computedTotal != null
+        ? `+₩${computedTotal.toLocaleString()} /월`
+        : `+₩${step.monthly.toLocaleString()} /월`,
       detailTokens,
       badge: { text: `${step.years}년 만에`, tone: 'indigo' },
       autoSeed: true,

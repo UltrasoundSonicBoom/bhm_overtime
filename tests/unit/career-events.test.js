@@ -66,4 +66,19 @@ describe('generateSeedEvents — 자동승격 항목별 차액', () => {
     expect(j3s1).toBeTruthy();
     expect(Array.isArray(j3s1.detailTokens)).toBe(true);
   });
+  it('J2_J3_자동승격_기준기본급_차액이_양수이고_명시적_숫자_포함', () => {
+    const events = generateSeedEvents({
+      hireDate: '2015-06-01', jobType: '간호직', grade: 'J3', year: 1,
+    });
+    const j2j3 = events.find((e) => /J2 → J3/.test(e.title));
+    // 정확한 값은 호봉표에 의존하지만 양의 차액이어야 한다 (J3 가 J2 보다 높음)
+    const baseToken = j2j3.detailTokens.find((t) => t.bold && /^\+₩[\d,]+$/.test(t.bold));
+    expect(baseToken).toBeTruthy();
+    // step.monthly 와 detailTokens sum 이 일치해야 한다 (Task 2 review fix)
+    const sumFromTokens = j2j3.detailTokens
+      .filter((t) => t.bold && /[\d,]+/.test(t.bold))
+      .reduce((acc, t) => acc + parseInt(t.bold.replace(/[^\d]/g, ''), 10) * (t.bold.startsWith('−') ? -1 : 1), 0);
+    const headlineNum = parseInt(j2j3.amount.replace(/[^\d]/g, ''), 10);
+    expect(sumFromTokens).toBe(headlineNum);
+  });
 });
