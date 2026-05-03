@@ -40,6 +40,11 @@ async function _readAllWorkHistory(...args) {
   return readAllWorkHistory(...args);
 }
 
+async function _readAllCareerEvents(...args) {
+  const { readAllCareerEvents } = await import('./sync/career-events-sync.js');
+  return readAllCareerEvents(...args);
+}
+
 async function _readAllSchedule(...args) {
   const { readAllSchedule } = await import('./sync/schedule-sync.js');
   return readAllSchedule(...args);
@@ -63,6 +68,7 @@ export const HYDRATED_BASES = [
   'overtimePayslipData',
   'leaveRecords',
   'snuhmate_work_history',
+  'snuhmate_career_events',
   'snuhmate_schedule_records',
   'snuhmate_settings',
   'theme',
@@ -77,6 +83,7 @@ export const CLEARED_EXACT_BASES = [
   'overtimePayslipData',
   'leaveRecords',
   'snuhmate_work_history',
+  'snuhmate_career_events',
   'snuhmate_schedule_records',
   'snuhmate_reg_favorites',
 ];
@@ -184,6 +191,14 @@ export async function hydrateFromFirestore(uid) {
         const data = await _readAllWorkHistory(null, uid);
         if (!data || data.length === 0) return;
         _setLocal(localKeyFor('snuhmate_work_history', uid), data);
+      },
+    },
+    {
+      key: 'career_events',
+      run: async () => {
+        const data = await _readAllCareerEvents(null, uid);
+        if (!data || data.length === 0) return;
+        _setLocal(localKeyFor('snuhmate_career_events', uid), data);
       },
     },
     {

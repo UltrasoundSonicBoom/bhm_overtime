@@ -41,6 +41,8 @@ export const ENCRYPTED_FIELDS = {
   'settings/reference': [],
   // Work history — dept/role/desc (실제 스키마 필드명, workplace/from/to/source 평문)
   'work_history/*': ['dept', 'role', 'desc'],
+  // Career events — 식별/금액/상세 텍스트 (id/category/dateFrom/dateTo/badge/flags 평문)
+  'careerEvents/*': ['title', 'sub', 'amount', 'detailTokens'],
 };
 
 // path 와 wildcard 패턴 매칭

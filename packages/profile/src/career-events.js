@@ -307,6 +307,12 @@ export function saveEvents(events) {
     if (typeof window !== 'undefined') {
       try { window.dispatchEvent(new CustomEvent('careerEventsChanged')); } catch {}
       if (window.recordLocalEdit) window.recordLocalEdit(STORAGE_KEY_BASE);
+      // Firebase 로그인 시 Firestore write-through (fire-and-forget, 무해)
+      if (window.__firebaseUid) {
+        import('/src/firebase/sync/career-events-sync.js').then((m) =>
+          m.writeAllCareerEvents(null, window.__firebaseUid, events)
+        ).catch((err) => console.warn('[career-events] cloud sync 실패 (무해)', err?.message || err));
+      }
     }
   } catch (e) {
     console.warn('[career-events] save 실패', e?.message);

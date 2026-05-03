@@ -41,6 +41,12 @@ export const KEY_REGISTRY = {
     fieldName: 'workHistorySeeded',
     category: 'workHistory',
   },
+  // ── Career events (커리어 타임라인 통합 모델 — workplace + tenure + leave 등) ──
+  'snuhmate_career_events': {
+    scope: 'sync', localScope: 'user', shape: 'collection-by-id',
+    firestorePath: (uid) => `users/${uid}/careerEvents`,
+    category: 'workHistory',
+  },
   // ── Overtime (SPEC §3.2) ──
   'overtimeRecords': {
     scope: 'sync', localScope: 'user', shape: 'collection-by-yyyymm',
