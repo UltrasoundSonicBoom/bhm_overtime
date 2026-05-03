@@ -29,6 +29,7 @@ const GUEST_FLAT_KEYS = [
   'snuhmate_hr_profile_guest',
   'overtimeRecords_guest',
   'snuhmate_work_history_guest',
+  'snuhmate_career_events_guest',
   'snuhmate_reg_favorites_guest',
   'otManualHourly_guest',
   'overtimePayslipData_guest',
@@ -150,6 +151,12 @@ const CATEGORIES = [
     guestKey: () => 'snuhmate_work_history_guest',
   },
   {
+    id: 'careerEvents',
+    label: '커리어 타임라인',
+    desc: '승격·장기근속·정년 등 커리어 이벤트',
+    guestKey: () => 'snuhmate_career_events_guest',
+  },
+  {
     id: 'settings',
     label: '앱 설정',
     desc: '테마, AppLock PIN 등',
@@ -239,6 +246,9 @@ function _applySnapshotToUidLocal(uid, selectedIds, snapshot) {
     if (selectedIds.includes('workHistory') && flat.snuhmate_work_history_guest) {
       localStorage.setItem(`snuhmate_work_history_uid_${uid}`, JSON.stringify(flat.snuhmate_work_history_guest));
     }
+    if (selectedIds.includes('careerEvents') && flat.snuhmate_career_events_guest) {
+      localStorage.setItem(`snuhmate_career_events_uid_${uid}`, JSON.stringify(flat.snuhmate_career_events_guest));
+    }
     if (selectedIds.includes('reference') && flat.snuhmate_reg_favorites_guest) {
       localStorage.setItem(`snuhmate_reg_favorites_uid_${uid}`, JSON.stringify(flat.snuhmate_reg_favorites_guest));
     }
@@ -273,6 +283,7 @@ function _dispatchMigrationRefresh(uid, ok, failed) {
     'payslipChanged',
     'scheduleChanged',
     'workHistoryChanged',
+    'careerEventsChanged',
     'settingsChanged',
     'favoritesChanged',
   ].forEach(name => {
@@ -384,6 +395,19 @@ export async function uploadCategories(uid, selectedIds, snapshot = null) {
         if (!entries) return;
         const { writeAllWorkHistory } = await import('/src/firebase/sync/work-history-sync.js');
         await writeAllWorkHistory(null, uid, Array.isArray(entries) ? entries : []);
+      },
+    });
+  }
+
+  if (selectedIds.includes('careerEvents')) {
+    syncTasks.push({
+      id: 'careerEvents',
+      label: '커리어 타임라인',
+      run: async () => {
+        const entries = _snapshotValue(source, 'snuhmate_career_events_guest');
+        if (!entries) return;
+        const { writeAllCareerEvents } = await import('/src/firebase/sync/career-events-sync.js');
+        await writeAllCareerEvents(null, uid, Array.isArray(entries) ? entries : []);
       },
     });
   }
