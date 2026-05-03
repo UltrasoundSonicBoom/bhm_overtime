@@ -422,9 +422,10 @@ body {
   box-shadow: var(--shadow-md, 4px 4px 0px #1a1a1a);
 }
 .ob-tile.picked {
-  background: var(--border-glass, #1a1a1a);
+  /* Picked state always uses brand ink; --border-glass flips to translucent in dark theme. */
+  background: #1a1a1a;
   color: #ffffff;
-  border-color: var(--border-glass, #1a1a1a);
+  border-color: #1a1a1a;
   box-shadow: var(--shadow-md, 4px 4px 0px #1a1a1a);
   transform: translate(-1px, -1px);
 }
@@ -590,9 +591,9 @@ body {
   font-size: 15px;
   font-family: "Noto Sans KR", "Inter", sans-serif;
   font-weight: 500;
-  border: 1.5px solid var(--border-glass, rgba(0, 0, 0, 0.16));
+  border: 1.5px solid var(--border-glass, #1a1a1a);
   border-radius: var(--radius-sm, 8px);
-  background: var(--bg-glass, rgba(255, 255, 255, 0.7));
+  background: var(--bg-glass, #F5F0E1);
   color: inherit;
   outline: none;
   transition: border-color 0.18s ease;
@@ -729,9 +730,9 @@ body {
   padding: 9px 10px;
   font-size: 15px;
   font-family: "Noto Sans KR", "Inter", sans-serif;
-  border: 1.5px solid var(--border-glass, rgba(0,0,0,0.16));
+  border: 1.5px solid var(--border-glass, #1a1a1a);
   border-radius: var(--radius-sm, 8px);
-  background: var(--bg-glass, rgba(255,255,255,0.7));
+  background: var(--bg-glass, #F5F0E1);
   outline: none;
   color: var(--text-primary, #1a1a1a);
 }
@@ -771,10 +772,11 @@ body {
 
 /* Auth mode toggle (신규 가입 / 이미 가입함) */
 .ob-auth-mode-row {
+  /* Segmented control track — pattern not in DS, hardcoded by design. */
   display: flex;
   gap: 4px;
   background: rgba(0, 0, 0, 0.05);
-  border-radius: 8px;
+  border-radius: var(--radius-sm, 8px);
   padding: 3px;
 }
 .ob-auth-mode {
