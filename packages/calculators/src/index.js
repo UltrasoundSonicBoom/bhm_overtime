@@ -6,7 +6,60 @@ import { DATA } from '@snuhmate/data';
 // 순환 의존 회피 — 함수 호출 시점 lazy resolve (Phase 6: window.OVERTIME 우회)
 function _getOVERTIME() { return (typeof window !== 'undefined') ? window.OVERTIME : null; }
 
+// ─── 라벨 정규화 + 공제 분류 (예상↔명세서 매칭, 변동/고정 그룹 분리) ─────────
+//
+// PAY_ITEM_ALIASES: 시뮬레이션 라벨 ↔ 명세서 파서 라벨이 다른 경우 canonical 한쪽으로 통일.
+//   왼쪽(키) = canonical (시뮬레이션 출력 키), 오른쪽(배열) = 동의어 (명세서 파서가 쓸 수 있는 변형).
+//   `normalizePayLabel(name)` 가 어떤 라벨이든 canonical 로 변환한다.
+const PAY_ITEM_ALIASES = {
+    '기준기본급': ['기본급', '기본기준급'],
+    '직책급': ['직책수당', '직무수당', '보직수당'],
+    '명절지원비': ['명절휴가비', '명절수당'],
+    '장기근속수당': ['정근수당', '근무수당'],
+    '휴일수당': ['법정공휴일수당', '휴일근무수당'],
+    '온콜대기수당': ['당직비', '숙직비'],
+};
+
+// 정규화 lookup table (모든 동의어 → canonical 매핑)
+const _ALIAS_LOOKUP = (() => {
+    const map = {};
+    for (const [canonical, aliases] of Object.entries(PAY_ITEM_ALIASES)) {
+        map[canonical] = canonical;
+        aliases.forEach((a) => { map[a] = canonical; });
+    }
+    return map;
+})();
+
+export const PAYROLL_DEDUCTION_GROUPS = {
+    // 변동 공제: 사용자의 이번 달 활동에 따라 달라지는 공제 (예상치에서 강조)
+    variable: ['휴가·휴직 공제', '무급휴가공제', '결근공제', '노동조합비변동'],
+    // 고정 공제: 매월 거의 동일한 4대보험·세금·식대 (예상치에서 합계로 접음)
+    fixed: [
+        '국민건강보험', '장기요양보험', '국민연금', '고용보험',
+        '식대공제',
+        '소득세(근사)', '주민세(근사)',
+        '사학연금부담금', '노동조합비',
+    ],
+};
+
 export const CALC = {
+    /** 라벨을 canonical 형식으로 정규화 (예상↔명세서 매칭) */
+    normalizePayLabel(name) {
+        if (typeof name !== 'string') return name;
+        return _ALIAS_LOOKUP[name] || name;
+    },
+
+    /** 공제 항목을 변동/고정/미분류 세 그룹으로 분리 */
+    groupDeductions(공제내역) {
+        const variable = {}, fixed = {}, other = {};
+        for (const [name, amount] of Object.entries(공제내역 || {})) {
+            if (PAYROLL_DEDUCTION_GROUPS.variable.includes(name)) variable[name] = amount;
+            else if (PAYROLL_DEDUCTION_GROUPS.fixed.includes(name)) fixed[name] = amount;
+            else other[name] = amount;
+        }
+        return { variable, fixed, other };
+    },
+
     /**
      * 통상임금 계산
      * @param {string} jobType - 세분화 직종 또는 보수표 이름
@@ -156,7 +209,9 @@ export const CALC = {
         const rates = DATA.allowances.overtimeRates;
 
         // 15분 단위 절삭
-        const roundTo15 = (h) => Math.floor(h * 4) / 4;
+        // 15분 단위 처리 — `profile/overtime.js:_minutesToHours` 와 동일하게 round 적용.
+        // 단협 <2019.11>은 "15분 단위 계산"만 명시. 두 모듈 동일 정책으로 통일 (사용자 유리하게 round).
+        const roundTo15 = (h) => Math.round(h * 4) / 4;
         extHours = roundTo15(extHours);
         nightHours = roundTo15(nightHours);
         holidayHours = roundTo15(holidayHours);
@@ -463,7 +518,9 @@ export const CALC = {
             total += fa.generalFamily * extra;
         }
 
-        // 자녀 수당: 1째 30,000 / 2째 20,000 / 3째이상 10,000
+        // 자녀 수당 (2026 단협 별도합의 인상분 반영, p.2965):
+        //   첫째 30,000 / 둘째 70,000 / 셋째이상 110,000원
+        //   실제 금액은 DATA.allowances.familyAllowance 의 child1/child2/child3Plus 참조.
         for (let i = 1; i <= numChildren; i++) {
             let amt = 0;
             if (i === 1) amt = fa.child1;
@@ -749,7 +806,11 @@ export const CALC = {
             specialPay = 0, positionPay = 0, workSupportPay = 0,
             workDays = 22, isHolidayMonth = false, isFamilySupportMonth = true,
             overtimeHours = 0, nightHours = 0, holidayWorkHours = 0,
-            nightShiftCount = 0, isExtendedNight = false
+            nightShiftCount = 0, isExtendedNight = false,
+            // 야간가산금 누적 트리거 (15회/20회 → 리커버리데이) — profile.nightShiftsUnrewarded 전달
+            prevNightShiftCumulative = 0,
+            // 무급휴가 / 결근 (변동 공제로 직접 표기)
+            unpaidLeaveDays = 0, absentDays = 0,
         } = params;
 
         // 1. 가족수당 계산
@@ -814,7 +875,7 @@ export const CALC = {
 
         // 야간근무가산금
         if (nightShiftCount > 0) {
-            const nb = this.calcNightShiftBonus(nightShiftCount, 0, jobType);
+            const nb = this.calcNightShiftBonus(nightShiftCount, prevNightShiftCumulative, jobType);
             지급내역['야간근무가산금'] = nb.야간근무가산금;
         }
 
@@ -835,6 +896,14 @@ export const CALC = {
             '고용보험': employment,
             '식대공제': mealDeduction
         };
+
+        // 변동 공제 — 무급휴가, 결근 (보수규정 제7조②: 통상임금 ÷ 30 × 일수)
+        if (unpaidLeaveDays > 0 && wage.monthlyWage > 0) {
+            공제내역['무급휴가공제'] = Math.round(wage.monthlyWage / 30 * unpaidLeaveDays);
+        }
+        if (absentDays > 0 && wage.monthlyWage > 0) {
+            공제내역['결근공제'] = Math.round(wage.monthlyWage / 30 * absentDays);
+        }
 
         // 소득세 (간이세액표 기반 근사)
         const taxableIncome = 급여총액 - pension - healthIns - longTermCare - employment;

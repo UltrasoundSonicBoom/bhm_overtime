@@ -182,6 +182,26 @@ export const PROFILE = {
     },
 
     /**
+     * 근속가산기본급 적용 대상 자동판정.
+     * 단협 p.2944: "2016.2 이전 입사자에게만 근속가산기본급 적용".
+     * 즉 2016.03.01 미만 (2016.2.29 까지 포함) 입사자가 대상.
+     *
+     * 사용자 명시 override가 있을 경우 (`profile.hasSeniority` 가 true/false)
+     * 이를 우선. 미설정(undefined/null)이면 hireDate 기반 자동판정.
+     * @param {object} profile
+     * @returns {boolean}
+     */
+    hasLegacySeniority(profile) {
+        if (!profile) return false;
+        if (profile.hasSeniority === true) return true;
+        if (profile.hasSeniority === false) return false;
+        if (!profile.hireDate) return false;
+        const parsed = this.parseDate(profile.hireDate);
+        if (!parsed) return false;
+        return new Date(parsed) < new Date('2016-03-01');
+    },
+
+    /**
      * 프로필 데이터를 폼 필드에 적용
      * @param {object} profile - 프로필 데이터
      * @param {object} fieldMap - { profileKey: elementId } 매핑

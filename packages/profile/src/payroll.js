@@ -544,7 +544,7 @@ export const PAYROLL = {
         }
 
         var serviceYears = profile.hireDate ? PROFILE.calcServiceYears(profile.hireDate) : 0;
-        var hasSeniority = profile.hireDate ? new Date(PROFILE.parseDate(profile.hireDate)) < new Date('2016-02-01') : false;
+        var hasSeniority = PROFILE.hasLegacySeniority(profile);
         var nextWage = CALC.calcOrdinaryWage(profile.jobType, nextGrade, 1, {
           hasMilitary: profile.hasMilitary, militaryMonths: profile.militaryMonths || 24,
           hasSeniority: hasSeniority, seniorityYears: hasSeniority ? serviceYears : 0,

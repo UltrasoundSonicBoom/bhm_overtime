@@ -47,11 +47,90 @@ export const OVERTIME = {
         return this.getMonthRecords(year, month).filter(r => r.date === dateStr);
     },
 
+    /**
+     * 미보상 야간근무 누적 카운트 자동 계산.
+     * 단협 제32조(2)-1 + hospital_guidelines: 누적 15일(간호)/20일(시설/이송/미화)
+     * 마다 RD 1일. 월 7회 이상 발생한 월의 7회분은 즉시 RD 지급되어 누적에서 제외.
+     *
+     * @param {string} jobType - 간호직이면 15일 단위, 시설/이송/미화는 20일 단위
+     * @param {Date|string} [startDate] - 추적 시작일 (기본: 직전 24개월)
+     * @param {Date} [endDate] - 추적 종료일 (기본: 오늘)
+     * @returns {object} { cumulative, monthlyTriggered, recoveryDaysEarned, threshold }
+     */
+    calcUnrewardedNightShifts(jobType, startDate, endDate) {
+        const end = endDate ? new Date(endDate) : new Date();
+        const start = startDate
+            ? new Date(startDate)
+            : new Date(end.getFullYear() - 2, end.getMonth(), 1);
+
+        // 시설/이송/미화는 20회 단위, 그 외(간호 등)는 15회 단위
+        const facilityJobs = ['시설직', '환경유지지원직', '환경미화직', '지원직', '운영기능직'];
+        const threshold = facilityJobs.includes(jobType) ? 20 : 15;
+        const monthlyTrigger = 7;
+
+        const all = this._loadAll();
+        let cumulative = 0;
+        let monthlyTriggered = 0;
+        let recoveryDaysEarned = 0;
+
+        // start ~ end 까지 월 순회
+        const cursor = new Date(start.getFullYear(), start.getMonth(), 1);
+        while (cursor <= end) {
+            const y = cursor.getFullYear();
+            const m = cursor.getMonth() + 1;
+            const key = this._monthKey(y, m);
+            const records = all[key] || [];
+            const monthCount = records.reduce((acc, r) => {
+                if ((r.breakdown?.night || 0) > 0) return acc + 1;
+                return acc;
+            }, 0);
+            if (monthCount >= monthlyTrigger) {
+                // 월 7회 이상: 그 7회는 즉시 RD로 보상 → 누적에서 제외
+                cumulative += (monthCount - monthlyTrigger);
+                monthlyTriggered += 1;
+                recoveryDaysEarned += 1;
+            } else {
+                cumulative += monthCount;
+            }
+            cursor.setMonth(cursor.getMonth() + 1);
+        }
+
+        // 누적 → RD 전환 (15/20회 초과분은 다시 누적 카운트로 환원)
+        const cumulativeRD = Math.floor(cumulative / threshold);
+        recoveryDaysEarned += cumulativeRD;
+        const remaining = cumulative - cumulativeRD * threshold;
+
+        return {
+            cumulative: remaining,         // 미보상 야간근무 누적 횟수
+            monthlyTriggered,              // 월 7회 트리거 발생 횟수
+            recoveryDaysEarned,            // 자동 부여된 RD 총 일수
+            threshold,                     // 직종별 RD 전환 한도
+        };
+    },
+
     addRecord(record) {
         const all = this._loadAll();
         const d = new Date(record.date);
         const key = this._monthKey(d.getFullYear(), d.getMonth() + 1);
         if (!all[key]) all[key] = [];
+
+        // 온콜 중복 방지 — 같은 날짜에 standby + callout 동시 입력 차단.
+        // 단협 제32조(9): 온콜 출근 시 대기수당과 중복 지급되지 않으므로 출근 횟수는
+        // 대기일수에서 분리되어야 한다. 입력 단계에서 이중 지급 방지.
+        if (record.type === 'oncall_standby' || record.type === 'oncall_callout') {
+            const sameDay = (all[key] || []).filter(r => r.date === record.date);
+            const conflictType = record.type === 'oncall_standby' ? 'oncall_callout' : 'oncall_standby';
+            const conflict = sameDay.find(r => r.type === conflictType);
+            if (conflict) {
+                const err = new Error(
+                    `같은 날짜(${record.date})에 이미 ${conflictType === 'oncall_standby' ? '온콜 대기' : '온콜 출근'} 기록이 있어요. ` +
+                    `단협 제32조(9)에 따라 온콜 출근 시 대기수당과 중복되지 않습니다.`
+                );
+                err.code = 'oncall/conflict';
+                err.conflict = conflict;
+                throw err;
+            }
+        }
 
         record.id = 'ot_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
         all[key].push(record);

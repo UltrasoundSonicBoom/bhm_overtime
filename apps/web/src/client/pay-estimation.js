@@ -15,6 +15,7 @@ function calculatePayroll() {
 
   if (profile) {
     const serviceYears = profile.hireDate ? PROFILE.calcServiceYears(profile.hireDate) : 0;
+    const hasLegacySeniority = PROFILE.hasLegacySeniority(profile);
     params = {
       jobType: profile.jobType,
       grade: profile.grade,
@@ -23,8 +24,8 @@ function calculatePayroll() {
       upgradeAdjustPay: parseInt(profile.upgradeAdjustPay) || 0,
       hasMilitary: profile.hasMilitary,
       militaryMonths: parseInt(profile.militaryMonths) || 24,
-      hasSeniority: profile.hasSeniority,
-      seniorityYears: profile.hasSeniority ? serviceYears : 0,
+      hasSeniority: hasLegacySeniority,
+      seniorityYears: hasLegacySeniority ? serviceYears : 0,
       longServiceYears: serviceYears,
       numFamily: parseInt(profile.numFamily) || 0,
       numChildren: parseInt(profile.numChildren) || 0,
@@ -139,7 +140,6 @@ function getMonthFlags(year, month) {
   const flags = {
     isFamilySupportMonth: true,
     isHolidayBonus: false,
-    isPerformanceBonus: false,
     isYearEndAdj: false,
     isResidentTaxExtra: false,
     tags: []
@@ -154,8 +154,9 @@ function getMonthFlags(year, month) {
   if (month === 1 || month === 2) { flags.isHolidayBonus = true; flags.isFamilySupportMonth = true; flags.tags.push('설 명절지원비'); }
   if (month === 9) { flags.isHolidayBonus = true; flags.isFamilySupportMonth = true; flags.tags.push('추석 명절지원비'); }
   if (month === 5) { flags.isHolidayBonus = true; flags.tags.push('5월 명절지원비'); }
-  if (month === 8) { flags.isPerformanceBonus = true; flags.tags.push('성과급 50%'); }
-  if (month === 11) { flags.isPerformanceBonus = true; flags.tags.push('성과급 50%'); }
+  if (month === 7) { flags.isHolidayBonus = true; flags.tags.push('7월 명절지원비'); }
+  // 성과급 — 단협 영구 규정 부재 + 안 주는 경우가 다수, 지급 시에도 30~50만원 수준.
+  // 사용자 결정으로 예상치에 미반영 (명세서 업로드 시 실제값으로만 표시).
   if (month === 2) { flags.isYearEndAdj = true; flags.tags.push('연말정산'); }
   if (month === 6) { flags.isResidentTaxExtra = true; flags.tags.push('주민세 정기분'); }
 
@@ -195,6 +196,7 @@ function calcMonthEstimate(year, month) {
   if (!profile) return null;
 
   const serviceYears = profile.hireDate ? PROFILE.calcServiceYears(profile.hireDate) : 0;
+  const hasLegacySeniority = PROFILE.hasLegacySeniority(profile);
   const flags = getMonthFlags(year, month);
   const otStats = OVERTIME.calcMonthlyStats(year, month);
   const leaveImpact = calcMonthlyLeaveImpact(year, month);
@@ -218,6 +220,18 @@ function calcMonthEstimate(year, month) {
     holHours += supp.holiday || 0;
   }
 
+  // 휴가 탭에서 이번 달 무급휴가 / 결근 일수 집계
+  let unpaidLeaveDays = 0, absentDays = 0;
+  try {
+    const records = LEAVE.getMonthRecords(year, month) || [];
+    records.forEach((rec) => {
+      const days = Number(rec.days) || 0;
+      if (!days) return;
+      if (rec.type === 'unpaid' || rec.unpaid === true) unpaidLeaveDays += days;
+      if (rec.type === 'absent' || rec.type === 'absence') absentDays += days;
+    });
+  } catch (_e) { /* LEAVE 미초기화 무해 */ }
+
   const params = {
     jobType: profile.jobType,
     grade: profile.grade,
@@ -226,8 +240,8 @@ function calcMonthEstimate(year, month) {
     upgradeAdjustPay: parseInt(profile.upgradeAdjustPay) || 0,
     hasMilitary: profile.hasMilitary,
     militaryMonths: parseInt(profile.militaryMonths) || 24,
-    hasSeniority: profile.hasSeniority,
-    seniorityYears: profile.hasSeniority ? serviceYears : 0,
+    hasSeniority: hasLegacySeniority,
+    seniorityYears: hasLegacySeniority ? serviceYears : 0,
     longServiceYears: serviceYears,
     numFamily: parseInt(profile.numFamily) || 0,
     numChildren: parseInt(profile.numChildren) || 0,
@@ -242,6 +256,23 @@ function calcMonthEstimate(year, month) {
     nightHours: nightHours,
     holidayWorkHours: holHours,
     nightShiftCount: otStats.nightShiftCount || 0,
+    // 야간가산금 누적 카운트 — 사용자 명시 override(`profile.nightShiftsUnrewarded`)가
+    // 있으면 우선, 없으면 OVERTIME 기록에서 직접 24개월치 자동 누계 (단협 제32조(2)-1).
+    prevNightShiftCumulative: (() => {
+      const manual = parseInt(profile.nightShiftsUnrewarded);
+      if (Number.isFinite(manual) && manual > 0) return manual;
+      try {
+        const auto = OVERTIME.calcUnrewardedNightShifts(
+          profile.jobType,
+          profile.hireDate ? PROFILE.parseDate(profile.hireDate) : null,
+          new Date(year, month - 1, 0) // 이번 달 직전까지의 누적
+        );
+        return auto.cumulative || 0;
+      } catch { return 0; }
+    })(),
+    // 변동 공제: 무급휴가 / 결근 일수 자동 반영
+    unpaidLeaveDays,
+    absentDays,
   };
 
   const r = CALC.calcPayrollSimulation(params);
@@ -263,6 +294,34 @@ function calcMonthEstimate(year, month) {
   applyLeaveImpact(r, leaveImpact);
   if (leaveImpact < 0) flags.tags.push('휴가·휴직 공제 반영');
   if (leaveImpact > 0) flags.tags.push('휴가·휴직 보전 반영');
+
+  // 1월 — 전년도 미사용 연차 수당 일괄 정산 (단협 제36조(4)).
+  // 평균임금(법정수당·연차보전수당·야간가산금 제외)의 100% × 미사용 일수.
+  // SNUH Mate 는 통상임금 일액 (월급/209×8) 으로 근사 — 평균임금 ≈ 통상임금 가정.
+  if (month === 1 && profile.hireDate) {
+    try {
+      const parsedHire = PROFILE.parseDate(profile.hireDate);
+      if (parsedHire) {
+        const prevYear = year - 1;
+        const prevYearEnd = new Date(prevYear, 11, 31);
+        const annual = CALC.calcAnnualLeave(new Date(parsedHire), prevYearEnd);
+        if (annual && annual.totalLeave > 0) {
+          const summary = LEAVE.calcQuotaSummary(prevYear, annual.totalLeave) || [];
+          const annualEntry = summary.find((q) => q.id === 'annual' || q.label === '연차');
+          const remaining = annualEntry?.remaining || 0;
+          if (remaining > 0 && r.통상임금 > 0) {
+            const bonus = CALC.calcAnnualLeaveBonus(remaining, r.통상임금);
+            if (bonus > 0) {
+              r.지급내역['연차수당'] = (r.지급내역['연차수당'] || 0) + bonus;
+              r.급여총액 += bonus;
+              r.실지급액 += bonus;
+              flags.tags.push(`전년도 미사용 연차 ${remaining}일 정산`);
+            }
+          }
+        }
+      }
+    } catch (_e) { /* LEAVE 미초기화 무해 */ }
+  }
 
   return { result: r, flags, otStats, leaveImpact };
 }
@@ -303,13 +362,17 @@ function getActualPayrollData(year, month) {
 // actualItems: [{name, amount}] (data.salaryItems)
 // 반환: [{name, estimated, actual, diff, isNew, isMissing, reason}]
 function buildPayComparison(estimatedItems, actualItems, year, month, flags) {
+  // 라벨을 canonical 형식으로 정규화 → "기준기본급" 과 "기본급" 같은 alias 가
+  // 한 행으로 병합되도록 처리 (명세서 vs 예상 일치율 실제로 끌어올리는 핵심 로직).
+  const norm = (name) => (CALC.normalizePayLabel ? CALC.normalizePayLabel(name) : name);
+
   const estMap = {};
   for (const [name, amount] of Object.entries(estimatedItems)) {
-    if (amount > 0) estMap[name] = amount;
+    if (amount > 0) estMap[norm(name)] = (estMap[norm(name)] || 0) + amount;
   }
   const actMap = {};
   (actualItems || []).forEach(item => {
-    if (item.amount > 0) actMap[item.name] = item.amount;
+    if (item.amount > 0) actMap[norm(item.name)] = (actMap[norm(item.name)] || 0) + item.amount;
   });
 
   const allNames = new Set([...Object.keys(estMap), ...Object.keys(actMap)]);
@@ -345,7 +408,7 @@ function buildPayComparison(estimatedItems, actualItems, year, month, flags) {
 function getComparisonReason(name, diff, year, month, flags, isNew, isMissing) {
   if (isNew) {
     if (/정산/.test(name)) return '연간 정산 항목 (연 1회 지급)';
-    if (/성과급|인센티브/.test(name)) return '성과급 지급월 (8·11월)';
+    if (/성과급|인센티브/.test(name)) return '성과급 — 명세서 실제값';
     if (/명절|설|추석/.test(name)) return '명절 지원비 지급월';
     if (/법정공휴일수당/.test(name)) return '해당 월 법정공휴일 근무 발생';
     if (/대체근무|야간근무가산/.test(name)) return '대체·야간 근무 발생';
@@ -354,7 +417,7 @@ function getComparisonReason(name, diff, year, month, flags, isNew, isMissing) {
   if (isMissing) {
     if (/가계지원비/.test(name) && [1,2,9].includes(month)) return '가계지원비 미지급월 (단, 설·추석월 제외)';
     if (/명절/.test(name)) return '명절 지원비 미지급월';
-    if (/성과급/.test(name)) return '성과급 미지급월';
+    if (/성과급/.test(name)) return '성과급 — 예상치 미반영 항목';
     if (/시간외|야간|휴일/.test(name)) return '해당 월 시간외 근무 없음';
     return '해당 월 미지급 — 예상에만 포함된 항목';
   }
@@ -517,7 +580,8 @@ function renderPayEstDetail() {
       dedRows += buildCompareRow(item, true);
     });
   } else {
-    // ── 예상 모드 (기존) ──
+    // ── 예상 모드 ──
+    // 지급내역: 명세서 라벨과 동일하게 노출 (canonical 라벨 그대로 사용)
     for (const [name, amount] of Object.entries(r.지급내역)) {
       if (amount <= 0) continue;
       payRows += `
@@ -526,13 +590,46 @@ function renderPayEstDetail() {
           <div class="pe-item-amount">${fmtW(amount)}</div>
         </div>`;
     }
-    for (const [name, amount] of Object.entries(r.공제내역)) {
-      if (amount <= 0) continue;
+
+    // 공제내역: 변동(이번 달 한정)·고정(매월 동일) 두 그룹으로 분리.
+    // 변동 = 무급휴가·결근·휴가·휴직 공제 → 사용자에게 직접 노출.
+    // 고정 = 4대보험·세금·식대 → 합계 + 펼치면 상세 (정확도는 간이세액표 근사).
+    const groups = (CALC.groupDeductions ? CALC.groupDeductions(r.공제내역) : { variable: r.공제내역, fixed: {}, other: {} });
+    const variableEntries = Object.entries(groups.variable).filter(([, v]) => v > 0);
+    const fixedEntries = Object.entries({ ...groups.fixed, ...groups.other }).filter(([, v]) => v > 0);
+    const fixedTotal = fixedEntries.reduce((a, [, v]) => a + v, 0);
+
+    if (variableEntries.length > 0) {
+      dedRows += `<div class="pe-ded-group-title">이번 달 변동 공제</div>`;
+      variableEntries.forEach(([name, amount]) => {
+        dedRows += `
+          <div class="pe-item-row">
+            <div class="pe-item-name">${escapeHtml(name)}</div>
+            <div class="pe-item-amount ded">${fmtW(amount)}</div>
+          </div>`;
+      });
+    } else {
+      dedRows += `<div class="pe-ded-empty">이번 달 변동 공제 없음 — 정상 근무 가정</div>`;
+    }
+
+    if (fixedEntries.length > 0) {
       dedRows += `
-        <div class="pe-item-row">
-          <div class="pe-item-name">${escapeHtml(name)}</div>
-          <div class="pe-item-amount ded">${fmtW(amount)}</div>
-        </div>`;
+        <details class="pe-ded-fixed">
+          <summary>
+            <span class="pe-ded-fixed-label">고정 공제 (4대보험·세금·식대)</span>
+            <span class="pe-ded-fixed-total ded">${fmtW(fixedTotal)}</span>
+          </summary>
+          <div class="pe-ded-fixed-body">`;
+      fixedEntries.forEach(([name, amount]) => {
+        dedRows += `
+          <div class="pe-item-row">
+            <div class="pe-item-name">${escapeHtml(name)}</div>
+            <div class="pe-item-amount ded">${fmtW(amount)}</div>
+          </div>`;
+      });
+      dedRows += `
+          </div>
+        </details>`;
     }
   }
 
@@ -670,7 +767,11 @@ function renderPayEstDetail() {
           <div class="pe-item-name">공제 합계</div>
           <div class="pe-item-amount ded">${fmtW(dedTotal)}</div>
         </div>
-        ${!hasActual ? `<div class="pe-ded-note">소득세·주민세는 간이세액표 기반 근사치입니다.<br>사학연금부담금, 노동조합비 등 개인별 공제는 미반영.</div>` : ''}
+        ${!hasActual ? `<div class="pe-ded-note">
+          소득세·주민세는 간이세액표 기반 <strong>근사치</strong>입니다.<br>
+          식대공제(근무일×3,000원)는 단협 외 병원 자체 운영규정.<br>
+          사학연금부담금, 노동조합비 등 개인별 공제는 명세서를 업로드하면 그대로 표시됩니다.
+        </div>` : ''}
       </div>
     </div>
     ${otSummary}
