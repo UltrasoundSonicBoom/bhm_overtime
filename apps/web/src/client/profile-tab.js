@@ -1410,24 +1410,24 @@ function _careerHeroStat() {
   const hireYears = PROFILE.calcServiceYears(profile.hireDate);
   const hireDateObj = new Date(PROFILE.parseDate(profile.hireDate));
   const events = CAREER.loadEvents();
-  // 다음 자동승격 = 미래 promotion 중 첫 번째 (정년/공로연수 제외)
   const now = new Date();
   const nextPromo = events
     .filter((e) => e.category === 'promotion' && !e.fixed)
     .map((e) => ({ ...e, _start: e.dateFrom ? new Date(parseInt(e.dateFrom.slice(0, 4), 10), parseInt(e.dateFrom.slice(5, 7), 10) - 1) : null }))
     .filter((e) => e._start && e._start > now)
     .sort((a, b) => a._start - b._start)[0];
-  // 정년
   const retire = events.find((e) => e.title === '정년 퇴직' || /정년/.test(e.title || ''));
   const totalYears = retire?.dateFrom ? (parseInt(retire.dateFrom.slice(0, 4), 10) - hireDateObj.getFullYear()) : 40;
+  const remainingYears = Math.max(0, totalYears - hireYears);
   const pctNum = Math.min(100, Math.max(0, Math.round((hireYears / totalYears) * 100)));
+  const currentYear = now.getFullYear();
 
   wrap.replaceChildren();
   const rows = [
-    { lbl: '근속', val: `${hireYears}년 / ${totalYears}년` },
+    { lbl: '근속', val: `${hireYears}년 / ${totalYears}년 (${pctNum}%)` },
     { lbl: '현재 자격등급', val: `${profile.grade || '-'}${profile.year ? ` · ${profile.year}년차` : ''}` },
     { lbl: '다음 자동승격', val: nextPromo ? `${nextPromo.dateFrom} (${(nextPromo.title || '').replace(/^.*→ /, '')})` : '없음' },
-    { lbl: '정년 예정', val: retire?.dateFrom ? `${retire.dateFrom} (만 60세)` : '미설정' },
+    { lbl: '정년까지', val: retire?.dateFrom ? `${remainingYears}년 남음 · ${retire.dateFrom.slice(0, 4)}.12` : '미설정' },
   ];
   rows.forEach((r) => {
     const row = document.createElement('div');
@@ -1439,19 +1439,34 @@ function _careerHeroStat() {
     row.appendChild(lbl); row.appendChild(val);
     wrap.appendChild(row);
   });
+
+  // 진행바 — 현재년도 tick + label
   const prog = document.createElement('div');
   prog.className = 'progress';
   const fill = document.createElement('div');
   fill.className = 'fill'; fill.style.width = pctNum + '%';
   prog.appendChild(fill);
+  // 현재 위치 마커
+  const marker = document.createElement('div');
+  marker.className = 'progress-marker';
+  marker.style.left = pctNum + '%';
+  marker.title = `${currentYear} (${pctNum}%)`;
+  prog.appendChild(marker);
   wrap.appendChild(prog);
+
+  // 진행 메타 — 입사 / 현재년도+% / 정년
   const meta = document.createElement('div');
   meta.className = 'progress-meta';
   const left = document.createElement('span');
   left.textContent = `${hireDateObj.getFullYear()} 입사`;
+  const center = document.createElement('span');
+  center.className = 'now-label';
+  center.textContent = `${currentYear} 현재 · ${pctNum}%`;
+  center.style.cssText = `position:absolute;left:${pctNum}%;transform:translateX(-50%);color:var(--accent-indigo);font-weight:700;`;
   const right = document.createElement('span');
   right.textContent = retire?.dateFrom ? `${retire.dateFrom.slice(0, 4)} 정년` : '';
-  meta.appendChild(left); meta.appendChild(right);
+  meta.style.position = 'relative';
+  meta.appendChild(left); meta.appendChild(center); meta.appendChild(right);
   wrap.appendChild(meta);
 }
 
@@ -1507,6 +1522,51 @@ function _careerBuildEventEl(ev, now) {
   return el;
 }
 
+// 과거 펼침 토글 상태 (필터별로 유지)
+const _careerPastExpanded = {};
+
+function _buildPastSummary(pastEvents, expanded) {
+  const wrap = document.createElement('div');
+  wrap.className = 'career-past-summary' + (expanded ? ' expanded' : '');
+
+  const icon = document.createElement('span');
+  icon.className = 'icon';
+  icon.textContent = '📜';
+  wrap.appendChild(icon);
+
+  const body = document.createElement('div');
+  body.className = 'summary-body';
+  const title = document.createElement('div');
+  title.className = 'summary-title';
+  // 첫 입사 ~ 최근 과거 이벤트 요약
+  const first = pastEvents[0];
+  const last = pastEvents[pastEvents.length - 1];
+  const firstYM = (first?.dateFrom || '').replace('-', '.');
+  const lastYM = (last?.dateFrom || '').replace('-', '.');
+  title.textContent = `과거 이력 ${pastEvents.length}건 · ${firstYM} ~ ${lastYM}`;
+  body.appendChild(title);
+
+  const sub = document.createElement('div');
+  sub.className = 'summary-sub';
+  // 짧은 요약 (제목들 일부)
+  const labels = pastEvents.map((e) => e.title).slice(0, 3).join(' · ');
+  sub.textContent = pastEvents.length > 3
+    ? `${labels} 외 ${pastEvents.length - 3}건` : labels;
+  body.appendChild(sub);
+  wrap.appendChild(body);
+
+  const chev = document.createElement('span');
+  chev.className = 'chev';
+  chev.textContent = '▾';
+  wrap.appendChild(chev);
+
+  wrap.onclick = () => {
+    _careerPastExpanded[_careerCurrentFilter] = !_careerPastExpanded[_careerCurrentFilter];
+    renderCareerTimeline();
+  };
+  return wrap;
+}
+
 function renderCareerTimeline() {
   const tl = document.getElementById('workHistoryList');
   const empty = document.getElementById('careerEmptyMsg');
@@ -1525,8 +1585,33 @@ function renderCareerTimeline() {
     return;
   }
   if (empty) empty.style.display = 'none';
+
+  // 과거 / 현재 / 미래 분리
   const now = new Date();
-  filtered.forEach((ev) => tl.appendChild(_careerBuildEventEl(ev, now)));
+  const past = [], present = [], future = [];
+  filtered.forEach((ev) => {
+    const s = _careerEventStatus(ev, now);
+    if (s === 'past') past.push(ev);
+    else if (s === 'now') present.push(ev);
+    else future.push(ev);
+  });
+
+  // 1. 과거 요약 카드 (있을 때만)
+  const expanded = !!_careerPastExpanded[_careerCurrentFilter];
+  if (past.length > 0) {
+    tl.appendChild(_buildPastSummary(past, expanded));
+    if (expanded) {
+      past.forEach((ev) => {
+        const el = _careerBuildEventEl(ev, now);
+        el.classList.add('is-past');
+        tl.appendChild(el);
+      });
+    }
+  }
+  // 2. 현재 (full size, 펄스)
+  present.forEach((ev) => tl.appendChild(_careerBuildEventEl(ev, now)));
+  // 3. 미래 (full size, dashed)
+  future.forEach((ev) => tl.appendChild(_careerBuildEventEl(ev, now)));
 }
 
 function openCareerEventSheet(ev) {

@@ -163,6 +163,66 @@ export function generateSeedEvents(profile) {
     });
   }
 
+  // 5. 연차·휴가 마일스톤 (제36조)
+  // 입사 후 1년: 월 1일 누적 → 1년차에 15일 발생 → 3년차부터 2년마다 +1 → 22년차에 25일 한도
+  events.push({
+    id: _genId('seed_'), category: 'leave',
+    title: '연차 사용 시작',
+    sub: '입사 후 1년간: 월 1일씩 부여 (제36조 5항)',
+    dateFrom: hireYM,
+    badge: { text: '월 1일', tone: 'rose' },
+    autoSeed: true,
+  });
+  events.push({
+    id: _genId('seed_'), category: 'leave',
+    title: '연차 15일 발생',
+    sub: '근속 1년 + 8할 출근 → 15일 (제36조 1항)',
+    dateFrom: _addYears(hireYM, 1),
+    badge: { text: '15일', tone: 'rose' },
+    autoSeed: true,
+  });
+  events.push({
+    id: _genId('seed_'), category: 'leave',
+    title: '연차 17일',
+    sub: '근속 3년차 — 2년마다 +1일 가산 시작',
+    dateFrom: _addYears(hireYM, 3),
+    badge: { text: '17일', tone: 'rose' },
+    autoSeed: true,
+  });
+  events.push({
+    id: _genId('seed_'), category: 'leave',
+    title: '연차 20일',
+    sub: '근속 9년차',
+    dateFrom: _addYears(hireYM, 9),
+    badge: { text: '20일', tone: 'rose' },
+    autoSeed: true,
+  });
+  events.push({
+    id: _genId('seed_'), category: 'leave',
+    title: '연차 25일 도달 (한도)',
+    sub: '근속 22년차 — 한도 25일 (제36조 1항)',
+    dateFrom: _addYears(hireYM, 21),
+    badge: { text: '25일 한도', tone: 'amber' },
+    autoSeed: true,
+  });
+  // 장기재직휴가 (별도합의 2024.11): 10년 5일 / 20년 7일 (각 1회)
+  events.push({
+    id: _genId('seed_'), category: 'leave',
+    title: '장기재직휴가 5일 (1회)',
+    sub: '재직 10~19년: 5일 (별도합의 2024.11)',
+    dateFrom: _addYears(hireYM, 10),
+    badge: { text: '+5일', tone: 'rose' },
+    autoSeed: true,
+  });
+  events.push({
+    id: _genId('seed_'), category: 'leave',
+    title: '장기재직휴가 7일 (1회)',
+    sub: '재직 20년+: 7일 (별도합의 2024.11)',
+    dateFrom: _addYears(hireYM, 20),
+    badge: { text: '+7일', tone: 'rose' },
+    autoSeed: true,
+  });
+
   return events;
 }
 
