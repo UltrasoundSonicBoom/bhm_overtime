@@ -80,9 +80,76 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             <div class="ob-rule ob-reveal"></div>
             <h2 class="ob-display ob-reveal">내 스케줄,<br>동료 스케줄,<br>한 화면에.</h2>
             <p class="ob-lede ob-reveal">엑셀 근무표 올리면 D·E·N이 달력에 자동 입력. 내 월간 달력과 부서 전체 시간표 모두 확인.</p>
-            <div class="ob-screen-2up ob-reveal">
-              <img src="/onboarding/schedule-personal.png" alt="내 스케줄 월간 보기" class="ob-screen-img">
-              <img src="/onboarding/schedule-dept.png" alt="부서 전체 스케줄" class="ob-screen-img">
+            <div class="ob-sched-2up ob-reveal">
+              <!-- 부서 전체 (주간) -->
+              <div class="ob-mockup ob-sched-card">
+                <div class="ob-stab-row">
+                  <span class="ob-stab">내 스케줄</span><span class="ob-stab on">부서 전체</span>
+                  <span class="ob-stab-r">주간</span>
+                </div>
+                <div class="ob-dept-tbl">
+                  <div class="ob-dept-hd-row">
+                    <div class="ob-dn-cell">간호사</div>
+                    <div class="ob-dd">금<br><small>1</small></div>
+                    <div class="ob-dd">토<br><small>2</small></div>
+                    <div class="ob-dd sun">일<br><small>3</small></div>
+                    <div class="ob-dd">월<br><small>4</small></div>
+                    <div class="ob-dd red">화<br><small>5</small></div>
+                  </div>
+                  <div class="ob-dept-row me">
+                    <div class="ob-dn-cell">김계환</div>
+                    <div><span class="ob-sc d">D</span></div>
+                    <div><span class="ob-sc e">E</span></div>
+                    <div><span class="ob-sc n">N</span></div>
+                    <div><span class="ob-sc n">N</span></div>
+                    <div><span class="ob-sc off">OFF</span></div>
+                  </div>
+                  <div class="ob-dept-row">
+                    <div class="ob-dn-cell">김지원</div>
+                    <div><span class="ob-sc n">N</span></div>
+                    <div><span class="ob-sc off">OFF</span></div>
+                    <div><span class="ob-sc off">OFF</span></div>
+                    <div><span class="ob-sc d">D</span></div>
+                    <div><span class="ob-sc e">E</span></div>
+                  </div>
+                  <div class="ob-dept-row">
+                    <div class="ob-dn-cell">박서연</div>
+                    <div><span class="ob-sc d">D</span></div>
+                    <div><span class="ob-sc e">E</span></div>
+                    <div><span class="ob-sc d">D</span></div>
+                    <div><span class="ob-sc d">D</span></div>
+                    <div><span class="ob-sc n">N</span></div>
+                  </div>
+                </div>
+              </div>
+              <!-- 내 스케줄 (월간) -->
+              <div class="ob-mockup ob-sched-card">
+                <div class="ob-stab-row">
+                  <span class="ob-stab on">내 스케줄</span><span class="ob-stab">부서 전체</span>
+                  <span class="ob-stab-r">월간</span>
+                </div>
+                <div class="ob-mcal-hd">← 2026년 5월 →</div>
+                <div class="ob-mcal">
+                  <div class="ob-mc-dow sun">일</div><div class="ob-mc-dow">월</div><div class="ob-mc-dow">화</div><div class="ob-mc-dow">수</div><div class="ob-mc-dow">목</div><div class="ob-mc-dow">금</div><div class="ob-mc-dow sat">토</div>
+                  <div class="ob-mc"></div><div class="ob-mc"></div><div class="ob-mc"></div><div class="ob-mc"></div><div class="ob-mc"></div>
+                  <div class="ob-mc hol"><span>1</span><span class="ob-sc d">D</span></div>
+                  <div class="ob-mc"><span>2</span><span class="ob-sc e">E</span></div>
+                  <div class="ob-mc today"><span>3</span><span class="ob-sc n">N</span></div>
+                  <div class="ob-mc"><span>4</span><span class="ob-sc n">N</span></div>
+                  <div class="ob-mc hol"><span>5</span><span class="ob-sc off">OFF</span></div>
+                  <div class="ob-mc"><span>6</span><span class="ob-sc off">OFF</span></div>
+                  <div class="ob-mc"><span>7</span><span class="ob-sc d">D</span></div>
+                  <div class="ob-mc"><span>8</span><span class="ob-sc e">E</span></div>
+                  <div class="ob-mc"><span>9</span><span class="ob-sc d">D</span></div>
+                  <div class="ob-mc"><span>10</span><span class="ob-sc d">D</span></div>
+                  <div class="ob-mc"><span>11</span><span class="ob-sc e">E</span></div>
+                  <div class="ob-mc"><span>12</span><span class="ob-sc n">N</span></div>
+                  <div class="ob-mc"><span>13</span><span class="ob-sc n">N</span></div>
+                  <div class="ob-mc"><span>14</span><span class="ob-sc off">OFF</span></div>
+                  <div class="ob-mc"><span>15</span><span class="ob-sc al">AL</span></div>
+                  <div class="ob-mc"><span>16</span><span class="ob-sc d">D</span></div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -94,7 +161,55 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             <div class="ob-rule ob-reveal"></div>
             <h2 class="ob-display ob-reveal">내 휴가,<br>내가 직접<br>캘린더에서.</h2>
             <p class="ob-lede ob-reveal">연차·교육·헌혈·경조휴가까지 한 달력에. 공휴일은 자동으로 표시돼요.</p>
-            <img src="/onboarding/leave-cal.png" alt="휴가 캘린더" class="ob-screen-img ob-reveal">
+            <div class="ob-mockup ob-reveal">
+              <div class="ob-lv-hd">
+                <span>◀</span>
+                <span class="ob-lv-month">2026년 5월</span>
+                <span>▶</span>
+              </div>
+              <div class="ob-lv-grid">
+                <div class="ob-lv-dow r">일</div><div class="ob-lv-dow">월</div><div class="ob-lv-dow">화</div><div class="ob-lv-dow">수</div><div class="ob-lv-dow">목</div><div class="ob-lv-dow">금</div><div class="ob-lv-dow b">토</div>
+                <div></div><div></div><div></div><div></div><div></div>
+                <div class="ob-lv-cd pk"><span class="ob-lv-dn pk">1</span><div class="ob-lv-hn">근로자</div></div>
+                <div class="ob-lv-cd"><span class="ob-lv-dn">2</span></div>
+                <div class="ob-lv-cd td"><span class="ob-lv-dn td">3</span></div>
+                <div class="ob-lv-cd"><span class="ob-lv-dn">4</span><div class="ob-lv-chip lv-an">연차</div></div>
+                <div class="ob-lv-cd pk"><span class="ob-lv-dn pk">5</span><div class="ob-lv-hn">어린이</div></div>
+                <div class="ob-lv-cd"><span class="ob-lv-dn">6</span><div class="ob-lv-chip lv-ed">보수교</div></div>
+                <div class="ob-lv-cd"><span class="ob-lv-dn">7</span></div>
+                <div class="ob-lv-cd"><span class="ob-lv-dn">8</span></div>
+                <div class="ob-lv-cd"><span class="ob-lv-dn b">9</span></div>
+                <div class="ob-lv-cd"><span class="ob-lv-dn">10</span></div>
+                <div class="ob-lv-cd"><span class="ob-lv-dn">11</span></div>
+                <div class="ob-lv-cd"><span class="ob-lv-dn">12</span></div>
+                <div class="ob-lv-cd"><span class="ob-lv-dn">13</span></div>
+                <div class="ob-lv-cd"><span class="ob-lv-dn">14</span></div>
+                <div class="ob-lv-cd"><span class="ob-lv-dn">15</span></div>
+                <div class="ob-lv-cd"><span class="ob-lv-dn b">16</span></div>
+                <div class="ob-lv-cd"><span class="ob-lv-dn">17</span></div>
+                <div class="ob-lv-cd"><span class="ob-lv-dn">18</span></div>
+                <div class="ob-lv-cd"><span class="ob-lv-dn">19</span></div>
+                <div class="ob-lv-cd"><span class="ob-lv-dn">20</span></div>
+                <div class="ob-lv-cd"><span class="ob-lv-dn">21</span><div class="ob-lv-chip lv-pt">시간차</div></div>
+                <div class="ob-lv-cd"><span class="ob-lv-dn">22</span></div>
+                <div class="ob-lv-cd"><span class="ob-lv-dn b">23</span></div>
+                <div class="ob-lv-cd pk"><span class="ob-lv-dn pk">24</span><div class="ob-lv-hn">부처님</div></div>
+                <div class="ob-lv-cd pk"><span class="ob-lv-dn pk">25</span><div class="ob-lv-hn">대체공</div></div>
+                <div class="ob-lv-cd"><span class="ob-lv-dn">26</span></div>
+                <div class="ob-lv-cd"><span class="ob-lv-dn">27</span><div class="ob-lv-chip lv-bl">헌혈휴</div></div>
+                <div class="ob-lv-cd"><span class="ob-lv-dn">28</span></div>
+                <div class="ob-lv-cd"><span class="ob-lv-dn">29</span></div>
+                <div class="ob-lv-cd"><span class="ob-lv-dn b">30</span></div>
+                <div class="ob-lv-cd"><span class="ob-lv-dn">31</span></div>
+                <div></div><div></div><div></div><div></div><div></div><div></div>
+              </div>
+              <div class="ob-lv-legend">
+                <span class="ob-lv-leg-hol">● 공휴일</span>
+                <span class="ob-lv-chip lv-an">법정</span>
+                <span class="ob-lv-chip lv-ed">건강</span>
+                <span class="ob-lv-chip lv-pt">교육</span>
+              </div>
+            </div>
           </div>
         </section>
 
