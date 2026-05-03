@@ -354,27 +354,39 @@ export function regenerateSeed() {
 
 // 동적 leave 이벤트 — LEAVE 모듈 실데이터 (calcQuotaSummary 의 올해 사용량/잔여) 를
 // 매 렌더 시 새로 계산해 leave 카테고리 이벤트로 wrapping. 정적 시드와 별개.
+//
+// `dateFrom` 은 sort 안정성을 위해 `${year}-12` 로 고정 (해당 연도의 마지막 카드로
+// 위치 — 미래 마일스톤보다 앞, 다음해 카드보다 뒤).
+// `dyn-leave-` prefix 는 동적 ID 예약 — 사용자 입력 이벤트 ID 와 충돌 안 함.
 export function computeDynamicLeaveEvents(profile, now = new Date()) {
   if (!profile?.hireDate) return [];
-  const events = [];
   const year = now.getFullYear();
   const parsed = PROFILE.parseDate(profile.hireDate);
   const annual = parsed ? CALC.calcAnnualLeave(new Date(parsed), now) : null;
-  const totalAnnual = annual?.totalLeave || 15;
+  // totalLeave 가 0/null/undefined 면 동적 이벤트 미생성 (잘못된 "잔여 15일" 회귀 차단).
+  const totalAnnual = annual?.totalLeave;
+  if (!totalAnnual || totalAnnual <= 0) return [];
+
   let summary = [];
   try { summary = LEAVE.calcQuotaSummary(year, totalAnnual) || []; } catch {}
   const annualEntry = summary.find((q) => q.id === 'annual' || q.label === '연차');
-  if (annualEntry) {
-    events.push({
-      id: `dyn-leave-${year}`, category: 'leave',
-      title: `${year}년 연차 사용 ${annualEntry.used}일 / 잔여 ${annualEntry.remaining}일`,
-      sub: `${year}년 발생 ${totalAnnual}일 — 사용 ${annualEntry.used}일 (제36조)`,
-      dateFrom: `${year}-${String(now.getMonth() + 1).padStart(2, '0')}`,
-      badge: { text: '올해', tone: 'rose' },
-      dynamic: true,
-    });
-  }
-  return events;
+  if (!annualEntry) return [];
+
+  // 잔여 음수 (= 사용량이 quota 초과) 처리: 0 으로 클램프 + "초과" 배지
+  const used = Math.max(0, annualEntry.used || 0);
+  const remainingRaw = (annualEntry.remaining != null) ? annualEntry.remaining : (totalAnnual - used);
+  const remaining = Math.max(0, remainingRaw);
+  const overshoot = remainingRaw < 0 ? Math.abs(remainingRaw) : 0;
+  const titleSuffix = overshoot > 0 ? ` · 한도 초과 ${overshoot}일` : '';
+
+  return [{
+    id: `dyn-leave-${year}`, category: 'leave',
+    title: `${year}년 연차 사용 ${used}일 / 잔여 ${remaining}일${titleSuffix}`,
+    sub: `${year}년 발생 ${totalAnnual}일 — 사용 ${used}일 (제36조)`,
+    dateFrom: `${year}-12`,
+    badge: { text: overshoot > 0 ? '초과' : '올해', tone: overshoot > 0 ? 'amber' : 'rose' },
+    dynamic: true,
+  }];
 }
 
 export const CAREER = {
