@@ -3,6 +3,7 @@
 // 기존 `snuhmate_work_history` 는 신규 키 비어있을 때 1회 마이그레이션 후 그대로 보존(역방향 read 호환).
 import { PROFILE } from './profile.js';
 import { CALC } from '@snuhmate/calculators';
+import { LEAVE } from './leave.js';
 
 const STORAGE_KEY_BASE = 'snuhmate_career_events';
 const LEGACY_WH_BASE = 'snuhmate_work_history';
@@ -351,9 +352,34 @@ export function regenerateSeed() {
   return merged;
 }
 
+// 동적 leave 이벤트 — LEAVE 모듈 실데이터 (calcQuotaSummary 의 올해 사용량/잔여) 를
+// 매 렌더 시 새로 계산해 leave 카테고리 이벤트로 wrapping. 정적 시드와 별개.
+export function computeDynamicLeaveEvents(profile, now = new Date()) {
+  if (!profile?.hireDate) return [];
+  const events = [];
+  const year = now.getFullYear();
+  const parsed = PROFILE.parseDate(profile.hireDate);
+  const annual = parsed ? CALC.calcAnnualLeave(new Date(parsed), now) : null;
+  const totalAnnual = annual?.totalLeave || 15;
+  let summary = [];
+  try { summary = LEAVE.calcQuotaSummary(year, totalAnnual) || []; } catch {}
+  const annualEntry = summary.find((q) => q.id === 'annual' || q.label === '연차');
+  if (annualEntry) {
+    events.push({
+      id: `dyn-leave-${year}`, category: 'leave',
+      title: `${year}년 연차 사용 ${annualEntry.used}일 / 잔여 ${annualEntry.remaining}일`,
+      sub: `${year}년 발생 ${totalAnnual}일 — 사용 ${annualEntry.used}일 (제36조)`,
+      dateFrom: `${year}-${String(now.getMonth() + 1).padStart(2, '0')}`,
+      badge: { text: '올해', tone: 'rose' },
+      dynamic: true,
+    });
+  }
+  return events;
+}
+
 export const CAREER = {
   loadEvents, saveEvents, addEvent, updateEvent, deleteEvent,
-  generateSeedEvents, regenerateSeed,
+  generateSeedEvents, regenerateSeed, computeDynamicLeaveEvents,
 };
 
 if (typeof window !== 'undefined') {

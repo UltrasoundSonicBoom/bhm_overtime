@@ -1630,7 +1630,14 @@ function renderCareerTimeline() {
   tl.replaceChildren();
 
   const events = CAREER.loadEvents();
-  const filtered = events
+  let dynamicLeave = [];
+  try {
+    dynamicLeave = (typeof CAREER.computeDynamicLeaveEvents === 'function')
+      ? CAREER.computeDynamicLeaveEvents(PROFILE.load(), new Date())
+      : [];
+  } catch (e) { /* leave 모듈 미초기화 무해 */ }
+  const allEvents = [...events, ...dynamicLeave];
+  const filtered = allEvents
     .filter((ev) => _careerCurrentFilter === 'all' || ev.category === _careerCurrentFilter)
     .slice()
     .sort((a, b) => (a.dateFrom || '9999').localeCompare(b.dateFrom || '9999'));
@@ -1744,6 +1751,13 @@ function _initCareerTimelineHandlers() {
   if (fab && !fab.dataset.bound) {
     fab.addEventListener('click', () => openCareerEventSheet(null));
     fab.dataset.bound = '1';
+  }
+  // LEAVE 모듈 변경 시 자동 재렌더 (실시간 동기화)
+  if (!window._careerLeaveHandlerBound) {
+    window.addEventListener('leaveChanged', () => {
+      try { renderCareerTimeline(); } catch {}
+    });
+    window._careerLeaveHandlerBound = true;
   }
 }
 
