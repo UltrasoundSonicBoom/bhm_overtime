@@ -563,11 +563,6 @@ function renderNextDuty() {
   }
 }
 
-// ── 기간 헤더 ──
-function renderPeriodLabel() {
-  const el = document.getElementById('schPeriodLabel');
-  if (el) el.textContent = `${schState.year}년 ${schState.month}월`;
-}
 
 // ── 뷰 토글 ──
 function setSchView(view) {
@@ -1083,7 +1078,6 @@ async function _refreshMonth() {
     await reconcileMonthlyRecords(year, month);
     schState._cloudReconcileMonth = null;
   }
-  renderPeriodLabel();
   // 뷰별로 활성 컨테이너만 렌더
   if (view === 'mine') renderMineCalendar();
   else renderRoster();

@@ -141,6 +141,9 @@ function initHomeTab() {
   // 프로필 미저장 힌트 배너
   const homeNudge = document.getElementById('homeProfileNudge');
   if (homeNudge) homeNudge.style.display = (!profile || !profile.jobType) ? 'block' : 'none';
+  // 프라이버시 안내 — guest(비로그인) 상태에서만 표시
+  const privacyBanner = document.querySelector('.home-privacy-banner');
+  if (privacyBanner) privacyBanner.style.display = window.__firebaseUid ? 'none' : '';
 }
 window.initHomeTab = initHomeTab;
 
