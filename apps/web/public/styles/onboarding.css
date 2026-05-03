@@ -735,6 +735,233 @@ body {
   letter-spacing: 0.05em;
 }
 
+/* ── 근무 slide ───────────────────────────────────────────── */
+.ob-sched-2up {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 500px;
+  margin-top: 14px;
+}
+.ob-sched-card {
+  margin-top: 0 !important;
+  padding: 10px 12px;
+}
+.ob-stab-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.ob-stab {
+  padding: 3px 9px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 600;
+  background: #f3f4f6;
+  color: #9ca3af;
+  font-family: "Noto Sans KR", "Inter", sans-serif;
+}
+.ob-stab.on {
+  background: #6c5ce7;
+  color: #ffffff;
+}
+.ob-stab-r {
+  margin-left: auto;
+  padding: 3px 9px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 700;
+  background: #6c5ce7;
+  color: #ffffff;
+  font-family: "Space Grotesk", "Inter", sans-serif;
+}
+/* Schedule chips */
+.ob-sc {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: "Space Grotesk", "Inter", sans-serif;
+  border: 1.5px solid;
+  flex-shrink: 0;
+}
+.ob-sc.d   { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+.ob-sc.e   { background: #ede9fe; border-color: #c4b5fd; color: #6c5ce7; }
+.ob-sc.n   { background: #3730a3; border-color: #4338ca; color: #ffffff; }
+.ob-sc.off { background: #f9fafb; border-color: #e5e7eb; color: #9ca3af; width: auto; padding: 0 4px; font-size: 9px; }
+.ob-sc.al  { background: #fce7f3; border-color: #fbcfe8; color: #db2777; }
+/* Department grid */
+.ob-dept-tbl { font-size: 11px; }
+.ob-dept-hd-row {
+  display: grid;
+  grid-template-columns: 50px repeat(5, 1fr);
+  gap: 2px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 3px;
+}
+.ob-dept-row {
+  display: grid;
+  grid-template-columns: 50px repeat(5, 1fr);
+  gap: 2px;
+  padding: 3px 2px;
+  align-items: center;
+}
+.ob-dept-row + .ob-dept-row { border-top: 1px solid #f3f4f6; }
+.ob-dept-row.me {
+  background: rgba(108, 92, 231, 0.07);
+  border-radius: 6px;
+}
+.ob-dept-row > div:not(.ob-dn-cell) {
+  display: flex;
+  justify-content: center;
+}
+.ob-dn-cell {
+  font-size: 10px;
+  font-weight: 600;
+  color: #374151;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ob-dept-hd-row .ob-dn-cell { color: #9ca3af; font-size: 9px; font-weight: 500; }
+.ob-dd {
+  text-align: center;
+  font-size: 9px;
+  font-weight: 600;
+  color: #6b7280;
+  line-height: 1.3;
+}
+.ob-dd.sun { color: #ef4444; }
+.ob-dd.red { color: #ef4444; }
+/* Personal calendar mini */
+.ob-mcal-hd {
+  font-size: 10px;
+  font-weight: 700;
+  color: #6c5ce7;
+  text-align: center;
+  margin-bottom: 5px;
+  font-family: "Space Grotesk", "Inter", sans-serif;
+}
+.ob-mcal {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+}
+.ob-mc-dow {
+  text-align: center;
+  font-size: 8px;
+  font-weight: 600;
+  color: #9ca3af;
+  padding-bottom: 2px;
+}
+.ob-mc-dow.sun { color: #ef4444; }
+.ob-mc-dow.sat { color: #3b82f6; }
+.ob-mc {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 1px 0;
+  font-size: 8px;
+  color: #6b7280;
+}
+.ob-mc > span:first-child { font-size: 8px; font-weight: 500; line-height: 1.2; }
+.ob-mc.today { background: rgba(16, 185, 129, 0.1); border-radius: 3px; }
+.ob-mc.hol   { background: rgba(239, 68, 68, 0.06); }
+.ob-mc .ob-sc {
+  width: 18px;
+  height: 18px;
+  font-size: 7px;
+  border-radius: 4px;
+  border-width: 1px;
+}
+.ob-mc .ob-sc.off { width: auto; padding: 0 2px; font-size: 6px; }
+
+/* ── 휴가 slide calendar ──────────────────────────────────── */
+.ob-lv-hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #9ca3af;
+  margin-bottom: 8px;
+}
+.ob-lv-month {
+  font-size: 14px;
+  font-weight: 700;
+  color: #00b894;
+  font-family: "Noto Sans KR", "Inter", sans-serif;
+}
+.ob-lv-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  margin-bottom: 8px;
+}
+.ob-lv-dow {
+  text-align: center;
+  font-size: 9px;
+  font-weight: 600;
+  color: #9ca3af;
+  padding: 2px 0;
+}
+.ob-lv-dow.r { color: #ef4444; }
+.ob-lv-dow.b { color: #3b82f6; }
+.ob-lv-cd {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 28px;
+  padding: 2px 1px;
+  border-radius: 3px;
+}
+.ob-lv-cd.pk { background: rgba(254, 202, 202, 0.5); }
+.ob-lv-cd.td { background: rgba(0, 184, 148, 0.1); }
+.ob-lv-dn {
+  font-size: 10px;
+  font-weight: 500;
+  color: #374151;
+  line-height: 1.2;
+}
+.ob-lv-dn.pk { color: #ef4444; font-weight: 700; }
+.ob-lv-dn.td { color: #00b894; font-weight: 700; }
+.ob-lv-dn.b  { color: #3b82f6; }
+.ob-lv-hn {
+  font-size: 7px;
+  color: #ef4444;
+  text-align: center;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+.ob-lv-chip {
+  display: inline-block;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 8px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.lv-an { background: rgba(0, 184, 148, 0.18); color: #00b894; }
+.lv-ed { background: rgba(0, 206, 201, 0.18); color: #00cec9; }
+.lv-pt { background: rgba(0, 184, 148, 0.18); color: #00b894; }
+.lv-bl { background: rgba(253, 121, 168, 0.18); color: #fd79a8; }
+.ob-lv-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 9px;
+  border-top: 1px solid #f3f4f6;
+  padding-top: 6px;
+}
+.ob-lv-leg-hol { color: #ef4444; font-weight: 600; }
+
 /* ── Global overrides for onboarding page ─────────────────── */
 body > #sharedHeader:empty {
   display: none;
