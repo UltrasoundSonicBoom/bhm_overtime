@@ -32,4 +32,13 @@ describe('_careerEventStatus', () => {
   it('promotion_dateFrom_미래는_future', () => {
     expect(_careerEventStatus({ category: 'promotion', dateFrom: '2034-06' }, NOW)).toBe('future');
   });
+  it('workplace_dateTo_가_같은달이면_now_유지', () => {
+    expect(_careerEventStatus({ category: 'workplace', dateFrom: '2020-01', dateTo: '2026-05' }, NOW)).toBe('now');
+  });
+  it('workplace_dateTo_가_지난달이면_past', () => {
+    expect(_careerEventStatus({ category: 'workplace', dateFrom: '2020-01', dateTo: '2026-04' }, NOW)).toBe('past');
+  });
+  it('dateFrom_없으면_future', () => {
+    expect(_careerEventStatus({ category: 'workplace', dateTo: '2026-05' }, NOW)).toBe('future');
+  });
 });

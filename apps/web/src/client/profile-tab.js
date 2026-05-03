@@ -1377,10 +1377,12 @@ function _careerEventStatus(ev, now) {
   if (!ev?.dateFrom) return 'future';
   // 근무처: dateTo 가 비면 "현재까지 이어짐" → 항상 now
   if (ev.category === 'workplace' && !ev.dateTo) return 'now';
-  // 근무처: dateTo 가 있으면 그 종료일 기준 past 판정
+  // 근무처: dateTo 가 있으면 그 종료월 마지막 날 기준 past 판정 — 같은 달은 'now', 다음 달부터 'past'
   if (ev.category === 'workplace' && ev.dateTo) {
     const [ty, tm] = ev.dateTo.split('-').map(Number);
-    const evEnd = new Date(ty, (tm || 1) - 1, 1);
+    // new Date(year, month, 0) → month-1 의 마지막 날 (JS 표준 트릭)
+    // 예: new Date(2026, 5, 0) → 2026-05-31
+    const evEnd = new Date(ty, tm || 1, 0);
     return now > evEnd ? 'past' : 'now';
   }
   const [y, m] = ev.dateFrom.split('-').map(Number);
