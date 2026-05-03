@@ -43,6 +43,11 @@ async function _writeAllWorkHistory(...args) {
   return writeAllWorkHistory(...args);
 }
 
+async function _writeAllCareerEvents(...args) {
+  const { writeAllCareerEvents } = await import('/src/firebase/sync/career-events-sync.js');
+  return writeAllCareerEvents(...args);
+}
+
 async function _writeSettings(...args) {
   const { writeSettings } = await import('/src/firebase/sync/settings-sync.js');
   return writeSettings(...args);
@@ -154,6 +159,10 @@ export const HANDLERS = {
   'snuhmate_work_history': (uid) => {
     const arr = _localValue(localKeyFor('snuhmate_work_history', uid));
     if (Array.isArray(arr)) return _writeAllWorkHistory(null, uid, arr);
+  },
+  'snuhmate_career_events': (uid) => {
+    const arr = _localValue(localKeyFor('snuhmate_career_events', uid));
+    if (Array.isArray(arr)) return _writeAllCareerEvents(null, uid, arr);
   },
   'snuhmate_schedule_records': (uid) => {
     const all = _localValue('snuhmate_schedule_records') || {};

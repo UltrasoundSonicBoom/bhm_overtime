@@ -303,16 +303,14 @@ export function loadEvents() {
 
 export function saveEvents(events) {
   try {
-    localStorage.setItem(_key(), JSON.stringify(events));
+    // Defense-in-depth: dynamic 이벤트 (computeDynamicLeaveEvents 결과) 는 매 렌더 재계산 — persist 금지.
+    const persistable = (Array.isArray(events) ? events : []).filter((e) => !e?.dynamic);
+    localStorage.setItem(_key(), JSON.stringify(persistable));
     if (typeof window !== 'undefined') {
       try { window.dispatchEvent(new CustomEvent('careerEventsChanged')); } catch {}
+      // auto-sync HANDLERS 에 등록됐으므로 recordLocalEdit 가 단일 채널로 debounced write-through 수행.
+      // 별도 직접 import 호출은 중복 → 제거.
       if (window.recordLocalEdit) window.recordLocalEdit(STORAGE_KEY_BASE);
-      // Firebase 로그인 시 Firestore write-through (fire-and-forget, 무해)
-      if (window.__firebaseUid) {
-        import('/src/firebase/sync/career-events-sync.js').then((m) =>
-          m.writeAllCareerEvents(null, window.__firebaseUid, events)
-        ).catch((err) => console.warn('[career-events] cloud sync 실패 (무해)', err?.message || err));
-      }
     }
   } catch (e) {
     console.warn('[career-events] save 실패', e?.message);
