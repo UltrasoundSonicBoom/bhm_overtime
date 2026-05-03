@@ -190,6 +190,31 @@
   const authSubmit = document.getElementById("obAuthSubmit");
   const authCancel = document.getElementById("obAuthCancel");
 
+  const modeSignupBtn = document.getElementById("obAuthModeSignup");
+  const modeSigninBtn = document.getElementById("obAuthModeSignin");
+  let _signInMode = false;
+
+  modeSignupBtn?.addEventListener("click", () => {
+    _signInMode = false;
+    modeSignupBtn.classList.add("active");
+    modeSigninBtn?.classList.remove("active");
+    if (passInput) {
+      passInput.placeholder = "비밀번호 (8~12자)";
+      passInput.autocomplete = "new-password";
+    }
+    if (authSubmit) authSubmit.textContent = "인증 메일 받기";
+  });
+  modeSigninBtn?.addEventListener("click", () => {
+    _signInMode = true;
+    modeSigninBtn.classList.add("active");
+    modeSignupBtn?.classList.remove("active");
+    if (passInput) {
+      passInput.placeholder = "비밀번호";
+      passInput.autocomplete = "current-password";
+    }
+    if (authSubmit) authSubmit.textContent = "로그인";
+  });
+
   // 이메일 input 타이핑 → local part 기반으로 도메인 후보 재시드
   emailInput?.addEventListener("input", () => {
     const v = emailInput.value;
@@ -260,12 +285,37 @@
   authSubmit?.addEventListener("click", async () => {
     const email = (emailInput?.value || "").trim();
     const password = passInput?.value || "";
+
     if (!email || !password) {
       setAuthMsg("이메일과 비밀번호를 입력해 주세요.", "error");
       return;
     }
+
+    if (_signInMode) {
+      // ── 로그인 흐름 (도메인 제약 없음 — 기가입자 누구나 로그인 가능) ──
+      authSubmit.disabled = true;
+      setAuthMsg("로그인 중...", null);
+      try {
+        const mod = await import("/src/firebase/auth-service.js");
+        await mod.signInWithEmail(email, password);
+        enterApp();
+      } catch (err) {
+        console.warn("[onboarding] email sign-in failed", err);
+        const code = err?.code || "";
+        let msg = "로그인 실패. 이메일/비밀번호를 확인해 주세요.";
+        if (code === "auth/invalid-credential") msg = "이메일/비밀번호가 맞지 않아요.";
+        if (code === "auth/too-many-requests") msg = "잠시 후 다시 시도해 주세요.";
+        if (code === "auth/network-request-failed") msg = "네트워크 오류. 잠시 후 다시 시도해 주세요.";
+        setAuthMsg(msg, "error");
+      } finally {
+        authSubmit.disabled = false;
+      }
+      return;
+    }
+
+    // ── 신규 가입 흐름 (병원 도메인 강제) ──
     if (!isHospitalEmail(email)) {
-      setAuthMsg("병원 도메인 이메일만 가입할 수 있어요 (snuh.org, brmh.org, snubh.org, snudh.org, ntrh.or.kr, sksh.ae).", "error");
+      setAuthMsg("병원 도메인 이메일만 가입할 수 있어요 (snuh.org, brmh.org, snubh.org, snudh.org, ntrh.or.kr).", "error");
       return;
     }
     if (password.length < 8 || password.length > 12) {
@@ -276,36 +326,14 @@
     setAuthMsg("인증 메일을 보내는 중...", null);
     try {
       const mod = await import("/src/firebase/auth-service.js");
-      // signUpWithHospitalEmail 가 createUser + sendEmailVerification 를 한 번에 처리
       await mod.signUpWithHospitalEmail(email, password);
       setAuthMsg("인증 메일을 보냈습니다. 메일함을 확인하고 인증한 뒤 이 페이지를 새로고침하면 자동으로 진입됩니다.", "ok");
-      // 사용자가 인증 후 새로고침/재방문하면 onAuthChanged 가 emailVerified === true 를
-      // 인지하고 applyOnboardingProfile 호출 + enterApp.
     } catch (err) {
       console.warn("[onboarding] hospital email signup failed", err);
       let msg = `가입 실패: ${err?.message || "다시 시도해 주세요"}`;
       if (err?.code === "auth/email-already-in-use") {
-        // 기가입자: signIn 시도 → 인증 메일 재발송
-        try {
-          const mod = await import("/src/firebase/auth-service.js");
-          const user = await mod.signInWithEmail(email, password);
-          if (user && !user.emailVerified) {
-            const fbInit = await import("/src/firebase/firebase-init.js");
-            const cfg = (await import("/src/client/config.js")).firebaseConfig;
-            const fb = await fbInit.initFirebase(cfg);
-            if (fb?.authMod?.sendEmailVerification) {
-              await fb.authMod.sendEmailVerification(user);
-            }
-            setAuthMsg("이미 가입된 이메일입니다. 인증 메일을 다시 보냈어요. 메일을 확인해 주세요.", "ok");
-            return;
-          }
-          if (user?.emailVerified) {
-            setAuthMsg("이미 인증된 계정입니다. 잠시 후 자동 진입돼요.", "ok");
-            return;
-          }
-        } catch (e) {
-          msg = "이미 가입된 이메일입니다. 비밀번호가 다르면 인증 메일이 도착하지 않을 수 있어요.";
-        }
+        msg = '이미 가입된 이메일이에요. "이미 가입함" 탭에서 로그인해 주세요.';
+        modeSigninBtn?.click();
       }
       if (err?.code === "auth/weak-password") msg = "비밀번호가 너무 약해요. 8자 이상으로 만들어 주세요.";
       if (err?.code === "auth/invalid-email") msg = "이메일 형식이 올바르지 않아요.";
