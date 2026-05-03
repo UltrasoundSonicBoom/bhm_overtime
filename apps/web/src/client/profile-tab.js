@@ -1478,6 +1478,38 @@ function _careerHeroStat() {
   meta.style.position = 'relative';
   meta.appendChild(left); meta.appendChild(center); meta.appendChild(right);
   wrap.appendChild(meta);
+
+  if (nextPromo) {
+    const card = document.createElement('div');
+    card.className = 'career-next-promo-card';
+    const lbl = document.createElement('div');
+    lbl.className = 'label';
+    lbl.textContent = '다음 자동승격';
+    card.appendChild(lbl);
+    const title = document.createElement('div');
+    title.className = 'title';
+    title.textContent = `${nextPromo.dateFrom.replace('-', '.')} · ${nextPromo.title}`;
+    card.appendChild(title);
+    if (nextPromo.amount) {
+      const amt = document.createElement('div');
+      amt.className = 'breakdown';
+      amt.style.fontWeight = '700';
+      amt.style.color = 'var(--accent-indigo)';
+      amt.textContent = nextPromo.amount;
+      card.appendChild(amt);
+    }
+    if (Array.isArray(nextPromo.detailTokens) && nextPromo.detailTokens.length) {
+      const bd = document.createElement('div');
+      bd.className = 'breakdown';
+      nextPromo.detailTokens.forEach((tok) => {
+        if (tok.bold != null) {
+          const b = document.createElement('b'); b.textContent = tok.bold; bd.appendChild(b);
+        } else if (tok.text != null) bd.appendChild(document.createTextNode(tok.text));
+      });
+      card.appendChild(bd);
+    }
+    wrap.appendChild(card);
+  }
 }
 
 function _careerBuildEventEl(ev, now) {
@@ -1527,6 +1559,20 @@ function _careerBuildEventEl(ev, now) {
     amt.className = 'career-event-amount';
     amt.textContent = ev.amount;
     card.appendChild(amt);
+  }
+  if (Array.isArray(ev.detailTokens) && ev.detailTokens.length) {
+    const dg = document.createElement('div');
+    dg.className = 'career-event-detail-grid';
+    ev.detailTokens.forEach((tok) => {
+      if (tok.bold != null) {
+        const b = document.createElement('b');
+        b.textContent = tok.bold;
+        dg.appendChild(b);
+      } else if (tok.text != null) {
+        dg.appendChild(document.createTextNode(tok.text));
+      }
+    });
+    card.appendChild(dg);
   }
   el.appendChild(card);
   return el;

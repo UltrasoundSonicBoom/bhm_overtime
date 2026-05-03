@@ -5286,6 +5286,37 @@ html[data-theme="neo"] .pay-upload-zone {
   font-family: "Space Grotesk","Inter",sans-serif;
   margin-top: 4px; display: inline-block;
 }
+.career-event-detail-grid {
+  margin-top: 6px; padding: 6px 8px;
+  background: rgba(0,0,0,0.03); border-radius: 6px;
+  font-size: var(--text-caption); color: var(--text-primary); line-height: 1.5;
+}
+.career-event-detail-grid b {
+  font-family: "Space Grotesk","Inter",sans-serif;
+  color: var(--accent-indigo); font-weight: 700;
+}
+.career-next-promo-card {
+  margin-top: 10px; padding: 10px 12px;
+  border: 2px solid var(--accent-indigo);
+  border-radius: 10px; background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+.career-next-promo-card .label {
+  font-size: var(--text-caption); font-weight: 700;
+  letter-spacing: 0.06em; color: var(--accent-indigo);
+}
+.career-next-promo-card .title {
+  font-size: var(--text-body-normal); font-weight: 700;
+  margin: 2px 0; color: var(--text-primary);
+}
+.career-next-promo-card .breakdown {
+  font-size: var(--text-caption); color: var(--text-muted);
+  line-height: 1.5; margin-top: 4px;
+}
+.career-next-promo-card .breakdown b {
+  font-family: "Space Grotesk","Inter",sans-serif;
+  color: var(--accent-indigo); font-weight: 700;
+}
 .career-badge {
   display: inline-block; font-size: var(--text-caption); font-weight: 700;
   padding: 2px 6px; border-radius: 9999px;
