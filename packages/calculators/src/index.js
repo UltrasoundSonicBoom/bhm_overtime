@@ -435,13 +435,7 @@ export const CALC = {
     checkOvertimeLimit({ daily = 0, weekly = 0 } = {}) {
         const exceedsDaily = false; // 제34조에 일 한도 규정 없음
         const exceedsWeekly = weekly > 12;
-        const isOverFlex = !exceedsWeekly && weekly > 10;
-        let warning = null;
-        if (exceedsWeekly) {
-            warning = '⚠️ 주 12시간 법정 상한 초과 (제34조(1) 위반)';
-        } else if (isOverFlex) {
-            warning = 'ℹ️ 주 10시간 초과 — 부득이한 경우만 허용 (주 12시간 상한)';
-        }
+        const warning = exceedsWeekly ? '⚠️ 주 12시간 법정 상한 초과 (제34조(1) 위반)' : null;
         return { exceedsDaily, exceedsWeekly, warning };
     },
 

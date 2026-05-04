@@ -49,11 +49,10 @@ describe('M2-8 연장근로 한도 검증 (제34조(1)) — 주간 기준만 적
     expect(r.warning).toContain('주 12시간');
   });
 
-  it('주 10~12시간: 부득이한 경우 (안내성)', () => {
+  it('주 10~12시간: 위반 아님 — 경고 없음', () => {
     const r = CALC.checkOvertimeLimit({ daily: 2, weekly: 11 });
     expect(r.exceedsWeekly).toBe(false);
-    expect(r.exceedsDaily).toBe(false);
-    expect(r.warning).toContain('부득이');
+    expect(r.warning).toBe(null);
   });
 
   it('일 2 / 주 0: 정상', () => {
