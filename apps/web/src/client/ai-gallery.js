@@ -1,10 +1,9 @@
 // ai-gallery.js — AI 에이전트 갤러리 (탭 진입 시 dynamic import)
-// GET /ai/agents → 카드 렌더 → 필터 → 실행 폼 → POST /ai/agent/run (SSE)
+// 카탈로그: /data/ai-agents.json (정적, 항상 로드)
+// 실행: POST /ai/agent/run → Cloudflare Worker (DeepSeek 키 서버사이드 보관)
 
-const AI_API_URL = (
-  (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_AI_API_URL) ||
-  'https://snuhmate-ai-gateway.kgh1379.workers.dev'
-).replace(/\/$/, '');
+const CATALOG_URL = '/data/ai-agents.json';
+const WORKER_URL = 'https://snuhmate-ai-gateway.kgh1379.workers.dev';
 
 let _catalog = null;
 let _activeAgentId = null;
@@ -21,11 +20,11 @@ export async function initAIGallery() {
   _bindRunPanel();
 }
 
-// ── 카탈로그 fetch ─────────────────────────────────────────────
+// ── 카탈로그 fetch (정적 JSON — 서버 없어도 항상 동작) ───────────
 async function _fetchAndRender() {
   const grid = document.getElementById('aiAgentGrid');
   try {
-    const res = await fetch(`${AI_API_URL}/ai/agents`);
+    const res = await fetch(CATALOG_URL);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     _catalog = await res.json();
     _renderChips(_catalog);
@@ -36,12 +35,7 @@ async function _fetchAndRender() {
     const icon = _el('div', 'text-3xl mb-2');
     icon.textContent = '⚠️';
     const msg = _el('div', 'text-brand-text-muted text-sm');
-    msg.textContent = 'AI 서버에 연결할 수 없습니다.';
-    const code = document.createElement('code');
-    code.className = 'text-xs';
-    code.textContent = AI_API_URL;
-    msg.appendChild(document.createElement('br'));
-    msg.appendChild(code);
+    msg.textContent = '에이전트 목록을 불러올 수 없습니다.';
     wrap.appendChild(icon);
     wrap.appendChild(msg);
     grid.appendChild(wrap);
@@ -227,7 +221,7 @@ async function _onSubmit(e) {
   output.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
   try {
-    const res = await fetch(`${AI_API_URL}/ai/agent/run`, {
+    const res = await fetch(`${WORKER_URL}/ai/agent/run`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ agent_id: _activeAgentId, inputs }),

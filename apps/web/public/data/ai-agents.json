@@ -1,0 +1,425 @@
+[
+  {
+    "id": "meeting-summarizer",
+    "name": "회의록 요약",
+    "icon": "📝",
+    "personas": [
+      "전직군"
+    ],
+    "category": "문서작성",
+    "model": "gemma4-4b",
+    "estimated_seconds": 8,
+    "inputs": [
+      {
+        "id": "transcript",
+        "label": "회의 내용",
+        "type": "textarea",
+        "placeholder": "회의에서 오간 대화나 메모를 붙여넣으세요. 날짜·참석자 정보가 있으면 같이 넣어주세요.",
+        "required": true
+      }
+    ],
+    "output_format": "markdown"
+  },
+  {
+    "id": "receipt-to-csv",
+    "name": "영수증 CSV 변환",
+    "icon": "🧾",
+    "personas": [
+      "전직군"
+    ],
+    "category": "데이터정리",
+    "model": "gemma4-4b",
+    "estimated_seconds": 6,
+    "inputs": [
+      {
+        "id": "receipt_text",
+        "label": "영수증 내용",
+        "type": "textarea",
+        "placeholder": "영수증 텍스트를 붙여넣으세요. 여러 장이면 줄바꿈으로 구분하세요.\n예) 2024-03-15 스타벅스 아메리카노 4,500원\n    2024-03-15 편의점 물 1,200원",
+        "required": true
+      },
+      {
+        "id": "category_hint",
+        "label": "지출 카테고리 힌트 (선택)",
+        "type": "text",
+        "placeholder": "예: 식비, 교통비, 교육비",
+        "required": false
+      }
+    ],
+    "output_format": "markdown"
+  },
+  {
+    "id": "onboarding-checklist",
+    "name": "신규 직원 온보딩 체크리스트",
+    "icon": "🆕",
+    "personas": [
+      "전직군"
+    ],
+    "category": "인사·행정",
+    "model": "gemma4-24b",
+    "estimated_seconds": 12,
+    "inputs": [
+      {
+        "id": "position",
+        "label": "직책·직종",
+        "type": "text",
+        "placeholder": "예: 간호사 (신규), 행정직 3년차 경력직",
+        "required": true
+      },
+      {
+        "id": "department",
+        "label": "부서",
+        "type": "text",
+        "placeholder": "예: 내과 병동, 원무과, 수술실",
+        "required": true
+      },
+      {
+        "id": "start_date",
+        "label": "입사 예정일",
+        "type": "text",
+        "placeholder": "예: 2026-06-01",
+        "required": false
+      },
+      {
+        "id": "special_notes",
+        "label": "특이사항 (선택)",
+        "type": "textarea",
+        "placeholder": "예: 교대근무 예정, 타 병원 경력 5년",
+        "required": false
+      }
+    ],
+    "output_format": "markdown"
+  },
+  {
+    "id": "sbar-handover",
+    "name": "SBAR 인수인계 작성",
+    "icon": "📋",
+    "personas": [
+      "간호직",
+      "임상직"
+    ],
+    "category": "임상문서",
+    "model": "gemma4-24b",
+    "estimated_seconds": 10,
+    "inputs": [
+      {
+        "id": "patient_info",
+        "label": "환자 기본 정보",
+        "type": "text",
+        "placeholder": "예: 병실 302-2, 김○○(M/65), 폐렴 진단",
+        "required": true
+      },
+      {
+        "id": "situation",
+        "label": "현재 상황 (S - Situation)",
+        "type": "textarea",
+        "placeholder": "현재 환자 상태, 주 증상, 활력징후 등을 간단히 적어주세요.",
+        "required": true
+      },
+      {
+        "id": "background",
+        "label": "배경 (B - Background)",
+        "type": "textarea",
+        "placeholder": "입원 경위, 기저 질환, 현재 치료 중인 내용 등",
+        "required": false
+      },
+      {
+        "id": "assessment",
+        "label": "평가 (A - Assessment)",
+        "type": "textarea",
+        "placeholder": "현재 상태에 대한 간호사 판단, 우려 사항",
+        "required": false
+      },
+      {
+        "id": "recommendation",
+        "label": "권고 (R - Recommendation)",
+        "type": "textarea",
+        "placeholder": "인계 받는 분께 특별히 요청하거나 확인이 필요한 사항",
+        "required": false
+      }
+    ],
+    "output_format": "markdown"
+  },
+  {
+    "id": "patient-education",
+    "name": "환자 교육자료 초안",
+    "icon": "🏥",
+    "personas": [
+      "간호직",
+      "임상직"
+    ],
+    "category": "임상문서",
+    "model": "gemma4-24b",
+    "estimated_seconds": 12,
+    "inputs": [
+      {
+        "id": "diagnosis",
+        "label": "진단명 또는 주제",
+        "type": "text",
+        "placeholder": "예: 당뇨병, 고혈압 약물 복용법, 퇴원 후 상처 관리",
+        "required": true
+      },
+      {
+        "id": "key_points",
+        "label": "반드시 포함할 내용",
+        "type": "textarea",
+        "placeholder": "예: 인슐린 주사 방법, 저혈당 증상 및 대처, 식이요법 기본 원칙",
+        "required": true
+      },
+      {
+        "id": "target",
+        "label": "교육 대상",
+        "type": "text",
+        "placeholder": "예: 60대 이상 환자 본인, 초등학생 자녀를 둔 보호자",
+        "required": false
+      }
+    ],
+    "output_format": "markdown"
+  },
+  {
+    "id": "dept-sop",
+    "name": "부서 SOP 초안",
+    "icon": "📁",
+    "personas": [
+      "전직군"
+    ],
+    "category": "임상문서",
+    "model": "gemma4-24b",
+    "estimated_seconds": 15,
+    "inputs": [
+      {
+        "id": "procedure_name",
+        "label": "절차 이름",
+        "type": "text",
+        "placeholder": "예: 중심정맥관 드레싱 교환 절차, 민원 접수 처리 절차",
+        "required": true
+      },
+      {
+        "id": "procedure_description",
+        "label": "절차 설명",
+        "type": "textarea",
+        "placeholder": "현재 하고 있는 방식이나 포함돼야 할 단계들을 자유롭게 설명해주세요.",
+        "required": true
+      },
+      {
+        "id": "department",
+        "label": "대상 부서",
+        "type": "text",
+        "placeholder": "예: 중환자실, 원무과",
+        "required": false
+      },
+      {
+        "id": "frequency",
+        "label": "수행 빈도",
+        "type": "text",
+        "placeholder": "예: 매일 1회, 필요 시, 월 1회",
+        "required": false
+      }
+    ],
+    "output_format": "markdown"
+  },
+  {
+    "id": "email-draft",
+    "name": "공문·이메일 초안",
+    "icon": "✉️",
+    "personas": [
+      "전직군"
+    ],
+    "category": "문서작성",
+    "model": "gemma4-4b",
+    "estimated_seconds": 6,
+    "inputs": [
+      {
+        "id": "purpose",
+        "label": "이메일 목적",
+        "type": "text",
+        "placeholder": "예: 연가 신청, 장비 구매 요청, 민원 답변",
+        "required": true
+      },
+      {
+        "id": "situation",
+        "label": "상황 설명",
+        "type": "textarea",
+        "placeholder": "전달하고 싶은 내용을 자유롭게 써주세요. 날짜·금액·이름 등 구체적일수록 좋습니다.",
+        "required": true
+      },
+      {
+        "id": "recipient",
+        "label": "수신자",
+        "type": "text",
+        "placeholder": "예: 인사팀장님, 원무과 담당자, 협력업체",
+        "required": false
+      },
+      {
+        "id": "tone",
+        "label": "톤",
+        "type": "select",
+        "options": [
+          "공손하고 격식체",
+          "간결하고 업무적",
+          "친근하고 부드럽게"
+        ],
+        "required": false
+      }
+    ],
+    "output_format": "markdown"
+  },
+  {
+    "id": "weekly-report",
+    "name": "주간 업무보고서",
+    "icon": "📊",
+    "personas": [
+      "전직군"
+    ],
+    "category": "문서작성",
+    "model": "gemma4-4b",
+    "estimated_seconds": 6,
+    "inputs": [
+      {
+        "id": "done_this_week",
+        "label": "이번 주 한 일",
+        "type": "textarea",
+        "placeholder": "이번 주에 처리한 업무를 나열해주세요. (순서, 형식 무관)\n예) 외래 환자 응대 120명, 입원 수속 15건, 장비 점검 3건...",
+        "required": true
+      },
+      {
+        "id": "issues",
+        "label": "이슈·문제점 (선택)",
+        "type": "textarea",
+        "placeholder": "발생한 문제나 미완료 사항이 있으면 적어주세요.",
+        "required": false
+      },
+      {
+        "id": "next_week_plan",
+        "label": "다음 주 계획 (선택)",
+        "type": "textarea",
+        "placeholder": "다음 주 예정 업무나 중점 사항",
+        "required": false
+      },
+      {
+        "id": "week_of",
+        "label": "보고 기간",
+        "type": "text",
+        "placeholder": "예: 2026년 5월 4주차 (5/18~5/22)",
+        "required": false
+      }
+    ],
+    "output_format": "markdown"
+  },
+  {
+    "id": "medical-translate",
+    "name": "의학용어 번역",
+    "icon": "🔤",
+    "personas": [
+      "전직군"
+    ],
+    "category": "번역·정리",
+    "model": "gemma4-4b",
+    "estimated_seconds": 6,
+    "inputs": [
+      {
+        "id": "source_text",
+        "label": "번역할 내용",
+        "type": "textarea",
+        "placeholder": "번역할 의학 문서, 처방명, 진단명, 검사 결과 등을 붙여넣으세요.\n(한국어→영어, 영어→한국어 모두 가능)",
+        "required": true
+      },
+      {
+        "id": "direction",
+        "label": "번역 방향",
+        "type": "select",
+        "options": [
+          "자동 감지",
+          "한국어 → 영어",
+          "영어 → 한국어"
+        ],
+        "required": false
+      },
+      {
+        "id": "context",
+        "label": "문서 유형 (선택)",
+        "type": "text",
+        "placeholder": "예: 처방전, 영상판독문, 퇴원요약지, 간호기록",
+        "required": false
+      }
+    ],
+    "output_format": "markdown"
+  },
+  {
+    "id": "risk-checklist",
+    "name": "리스크 체크리스트",
+    "icon": "⚠️",
+    "personas": [
+      "전직군"
+    ],
+    "category": "인사·행정",
+    "model": "gemma4-24b",
+    "estimated_seconds": 10,
+    "inputs": [
+      {
+        "id": "task_description",
+        "label": "업무·상황 설명",
+        "type": "textarea",
+        "placeholder": "리스크를 점검하고 싶은 업무나 상황을 설명해주세요.\n예: 신규 의료기기 도입 후 첫 사용 전 점검, 병동 인력 감소 시 야간 근무 배치",
+        "required": true
+      },
+      {
+        "id": "domain",
+        "label": "분야",
+        "type": "text",
+        "placeholder": "예: 환자 안전, 의료장비, 감염관리, 행정·법적 리스크",
+        "required": false
+      }
+    ],
+    "output_format": "markdown"
+  },
+  {
+    "id": "proposal-draft",
+    "name": "기획서·제안서 초안",
+    "icon": "💡",
+    "personas": [
+      "전직군"
+    ],
+    "category": "문서작성",
+    "model": "gemma4-24b",
+    "estimated_seconds": 15,
+    "inputs": [
+      {
+        "id": "title",
+        "label": "기획 제목",
+        "type": "text",
+        "placeholder": "예: 병동 낙상 예방 강화 방안, 원무 창구 대기시간 단축 프로젝트",
+        "required": true
+      },
+      {
+        "id": "goal",
+        "label": "목표",
+        "type": "text",
+        "placeholder": "예: 낙상 발생률 30% 감소, 평균 대기시간 15분 → 8분 단축",
+        "required": true
+      },
+      {
+        "id": "background",
+        "label": "배경·현황",
+        "type": "textarea",
+        "placeholder": "왜 이 기획이 필요한지, 현재 상황이나 문제점을 설명해주세요.",
+        "required": true
+      },
+      {
+        "id": "approach",
+        "label": "접근 방법 (선택)",
+        "type": "textarea",
+        "placeholder": "생각하고 있는 해결 방법이 있다면 간략히 적어주세요.",
+        "required": false
+      },
+      {
+        "id": "budget_timeline",
+        "label": "예산·일정 (선택)",
+        "type": "text",
+        "placeholder": "예: 예산 200만원, 3개월 시범 운영",
+        "required": false
+      }
+    ],
+    "output_format": "markdown"
+  }
+]
