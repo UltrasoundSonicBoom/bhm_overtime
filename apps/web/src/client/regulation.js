@@ -1457,14 +1457,9 @@ function mdToHtml(md) {
     }
     // 빈 줄
     if (line === '') { i++; continue; }
-    // blockquote (연속 라인 모음)
+    // blockquote — skip (단협 원문의 부속 합의서 등 인용문은 표시 안 함)
     if (line.startsWith('> ') || line === '>') {
-      var bq = [];
-      while (i < lines.length && (lines[i].startsWith('> ') || lines[i] === '>')) {
-        bq.push(lines[i].replace(/^>\s?/, ''));
-        i++;
-      }
-      out.push('<blockquote>' + bq.map(inlineFmt).join('<br>') + '</blockquote>');
+      while (i < lines.length && (lines[i].startsWith('> ') || lines[i] === '>')) { i++; }
       continue;
     }
     // 표 (| col1 | col2 |) — 다음 줄이 |---|---| 패턴이면 표
