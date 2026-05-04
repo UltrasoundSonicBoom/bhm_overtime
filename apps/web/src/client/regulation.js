@@ -75,6 +75,10 @@ function initSubTabs() {
       if (accent) {
         accent.className = 'reg-tab-accent ' + target;
       }
+      // Plan dazzling-booping-kettle — '전체규정' sub-tab 첫 진입 시 마크다운 fetch+렌더
+      if (target === 'full' && typeof ensureFullRegulationDocLoaded === 'function') {
+        ensureFullRegulationDocLoaded();
+      }
     });
   });
 
@@ -920,10 +924,12 @@ function searchBrowse(query) {
     iconDiv.textContent = '\uD83D\uDD0D';
     var textDiv = document.createElement('div');
     textDiv.className = 'reg-empty-text';
-    textDiv.textContent = '"' + query + '" 검색 결과가 없습니다. 다른 키워드로 검색해보세요.';
+    textDiv.textContent = 'handbook 빠른답변에는 "' + query + '" 결과가 없습니다. 아래 단협 본문 매칭을 확인하세요.';
     emptyDiv.appendChild(iconDiv);
     emptyDiv.appendChild(textDiv);
     container.appendChild(emptyDiv);
+    // Plan dazzling-booping-kettle — handbook 외 union/md 본문 결과는 그래도 보여줌
+    injectExtendedSearchResults(query, container);
     return;
   }
 
@@ -935,6 +941,13 @@ function searchBrowse(query) {
   var articlesDiv = document.createElement('div');
   container.appendChild(articlesDiv);
   renderArticles(results, articlesDiv, { highlight: q, showCategory: true });
+  // Plan dazzling-booping-kettle redesign — handbook 미포함 키워드(장기재직·자기계발·임신검진 등) 도 잡히도록 union+md 확장 결과 주입
+  injectExtendedSearchResults(query, container);
+}
+
+// 빈 검색 결과일 때도 union+md 확장 결과는 띄워서 사용자가 키워드 발견 가능하게
+function searchBrowseShowEmptyExtended(query, container) {
+  injectExtendedSearchResults(query, container);
 }
 
 // ── Helpers ──
@@ -967,10 +980,42 @@ function openPdfPicker() {
   openPdfSheet(getHandbookPdfUrl(), '조합원 수첩 (전체)');
 }
 
+// Plan dazzling-booping-kettle redesign — PDF 원문보기 → 전체규정 sub-tab 으로 이동.
 function openPdfForRef(ref) {
-  var page = getPdfPageForRef(ref);
-  var label = ref ? '조합원 수첩 — ' + ref : '조합원 수첩';
-  openPdfSheet(getHandbookPdfUrl(), label, page);
+  if (!ref) {
+    openPdfSheet(getHandbookPdfUrl(), '조합원 수첩');
+    return;
+  }
+  var artId = articleAnchorIdFromRef(ref);
+  if (!artId) {
+    var page = getPdfPageForRef(ref);
+    openPdfSheet(getHandbookPdfUrl(), '조합원 수첩 — ' + ref, page);
+    return;
+  }
+  switchToFullRegulationTab(artId);
+}
+
+function articleAnchorIdFromRef(ref) {
+  if (!ref) return '';
+  var m = /제\s*(\d+)\s*조(?:의\s*(\d+))?/.exec(String(ref));
+  if (!m) return '';
+  return m[2] ? 'art-' + m[1] + '-' + m[2] : 'art-' + m[1];
+}
+
+function switchToFullRegulationTab(anchorId) {
+  ensureFullRegulationDocLoaded().then(function () {
+    var tabBtn = document.querySelector('#regSubTabs .reg-bookmark-tab[data-subtab="full"]');
+    if (tabBtn) tabBtn.click();
+    requestAnimationFrame(function () {
+      var el = anchorId ? document.getElementById(anchorId) : null;
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        el.classList.remove('reg-art-target');
+        void el.offsetWidth;
+        el.classList.add('reg-art-target');
+      }
+    });
+  });
 }
 
 // AI 챗봇 (물어보기) 섹션 제거됨. 정적 규정 브라우징만 남김.
@@ -1322,6 +1367,334 @@ registerActions({
   openPdfForRef: (el) => openPdfForRef(el.dataset.pdfRef),
   toggleFullRegulation: () => toggleFullRegulation(),
 });
+
+// ═══════════════════════════════════════════════════════════════
+//  📜 전체 규정 (full_union_regulation_2026.md) 렌더링 + 검색
+//  Plan dazzling-booping-kettle redesign
+// ═══════════════════════════════════════════════════════════════
+
+var _fullRegulationMd = null;
+var _fullRegulationLoading = null;
+
+function loadFullRegulationMd() {
+  if (_fullRegulationMd) return Promise.resolve(_fullRegulationMd);
+  if (_fullRegulationLoading) return _fullRegulationLoading;
+  _fullRegulationLoading = fetch('/data/full_union_regulation_2026.md')
+    .then(function (r) { return r.text(); })
+    .then(function (text) { _fullRegulationMd = text; return text; })
+    .catch(function (e) {
+      console.warn('[full-regulation] md load 실패', e);
+      _fullRegulationMd = '';
+      return '';
+    });
+  return _fullRegulationLoading;
+}
+
+function ensureFullRegulationDocLoaded() {
+  var doc = document.getElementById('fullRegulationDoc');
+  if (doc && doc.dataset.rendered === '1') return Promise.resolve();
+  return loadFullRegulationMd().then(function (md) { renderFullRegulationDoc(md); });
+}
+
+function renderFullRegulationDoc(md) {
+  var container = document.getElementById('fullRegulationDoc');
+  if (!container) return;
+  container.textContent = '';
+  if (!md) {
+    var p = document.createElement('p');
+    p.textContent = '전체 규정 본문을 불러오지 못했습니다.';
+    container.appendChild(p);
+    return;
+  }
+  var html = mdToHtml(md);
+  container.innerHTML = html; // 신뢰 가능한 정적 자산 (data/full_union_regulation_2026.md)
+  container.dataset.rendered = '1';
+  attachFullRegulationSearchHandler();
+}
+
+// ── 간이 마크다운 → HTML 렌더러 ─────────────────────────────────
+// 단협 .md 의 패턴만 다룸: H1, H2, blockquote, hr, **제N조**, (1), <개정...>, 표(|), 백틱코드
+function mdToHtml(md) {
+  var lines = md.split('\n');
+  var out = [];
+  var i = 0;
+  function escHtml(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  function inlineFmt(s) {
+    var x = escHtml(s);
+    // 백틱 코드 ` ... `
+    x = x.replace(/`([^`]+)`/g, '<code>$1</code>');
+    // 강조 **bold** → <strong>
+    x = x.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    // <개정 YYYY.MM.DD> 또는 <신설 ...> → 인라인 칩 (escape 후 형태)
+    x = x.replace(/&lt;((?:개정|신설|삭제|시행)\s*[^&]+?)&gt;/g, '<span class="reg-amend">&lt;$1&gt;</span>');
+    return x;
+  }
+  function articleAnchorFromHeader(text) {
+    var m = /제\s*(\d+)\s*조(?:의\s*(\d+))?/.exec(text);
+    if (!m) return '';
+    return m[2] ? 'art-' + m[1] + '-' + m[2] : 'art-' + m[1];
+  }
+
+  while (i < lines.length) {
+    var raw = lines[i];
+    var line = raw.replace(/\s+$/, '');
+
+    // hr
+    if (/^---+\s*$/.test(line)) { out.push('<hr>'); i++; continue; }
+    // h1
+    if (line.startsWith('# ')) { out.push('<h1>' + inlineFmt(line.slice(2)) + '</h1>'); i++; continue; }
+    // h2 (장)
+    if (line.startsWith('## ')) {
+      var head = line.slice(3);
+      var chId = '';
+      var chMatch = /^제\s*(\d+)\s*장/.exec(head);
+      if (chMatch) chId = ' id="ch-' + chMatch[1] + '"';
+      out.push('<h2' + chId + '>' + inlineFmt(head) + '</h2>');
+      i++; continue;
+    }
+    // 빈 줄
+    if (line === '') { i++; continue; }
+    // blockquote (연속 라인 모음)
+    if (line.startsWith('> ') || line === '>') {
+      var bq = [];
+      while (i < lines.length && (lines[i].startsWith('> ') || lines[i] === '>')) {
+        bq.push(lines[i].replace(/^>\s?/, ''));
+        i++;
+      }
+      out.push('<blockquote>' + bq.map(inlineFmt).join('<br>') + '</blockquote>');
+      continue;
+    }
+    // 표 (| col1 | col2 |) — 다음 줄이 |---|---| 패턴이면 표
+    if (line.indexOf('|') !== -1 && i + 1 < lines.length && /^\s*\|?\s*[-:]+/.test(lines[i + 1])) {
+      var headerCells = line.replace(/^\||\|$/g, '').split('|').map(function (c) { return c.trim(); });
+      var rows = [];
+      i += 2;
+      while (i < lines.length && lines[i].indexOf('|') !== -1 && lines[i].trim() !== '') {
+        var cols = lines[i].replace(/^\||\|$/g, '').split('|').map(function (c) { return c.trim(); });
+        rows.push(cols);
+        i++;
+      }
+      var thead = '<thead><tr>' + headerCells.map(function (c) { return '<th>' + inlineFmt(c) + '</th>'; }).join('') + '</tr></thead>';
+      var tbody = '<tbody>' + rows.map(function (r) {
+        return '<tr>' + r.map(function (c) { return '<td>' + inlineFmt(c) + '</td>'; }).join('') + '</tr>';
+      }).join('') + '</tbody>';
+      out.push('<table>' + thead + tbody + '</table>');
+      continue;
+    }
+    // **제N조...** 헤더 (조항 anchor) — 단독 줄 또는 인라인 형태 모두 지원
+    var artHeaderMatch = /^\*\*(제\s*\d+\s*조[^*]*)\*\*(.*)$/.exec(line);
+    if (artHeaderMatch) {
+      var titleText = artHeaderMatch[1].trim();
+      var rest = (artHeaderMatch[2] || '').trim();
+      var aid = articleAnchorFromHeader(titleText);
+      out.push('<h3' + (aid ? ' id="' + aid + '"' : '') + '>' + escHtml(titleText) + '</h3>');
+      if (rest) out.push('<p>' + inlineFmt(rest) + '</p>');
+      i++; continue;
+    }
+    // 일반 단락 — 인접한 비-빈 줄을 모은다 (단협 본문은 줄바꿈으로 절 구분)
+    var para = [];
+    while (i < lines.length) {
+      var ln = lines[i].replace(/\s+$/, '');
+      if (ln === '') break;
+      if (ln.startsWith('## ') || ln.startsWith('# ') || /^---+\s*$/.test(ln)) break;
+      if (/^\*\*제\s*\d+\s*조/.test(ln)) break;
+      if (ln.startsWith('> ')) break;
+      if (ln.indexOf('|') !== -1 && i + 1 < lines.length && /^\s*\|?\s*[-:]+/.test(lines[i + 1])) break;
+      para.push(ln);
+      i++;
+    }
+    if (para.length > 0) {
+      // 줄바꿈을 <br> 로 변환 (clauses 같은 (1)(2) 가 줄로 나뉘어 있음)
+      out.push('<p>' + para.map(inlineFmt).join('<br>') + '</p>');
+    } else {
+      // 안전망 — 어떤 패턴에도 매칭 안 되고 inner loop 가 진전 없을 때 한 줄 강제 진행 (무한루프 방지)
+      i++;
+    }
+  }
+  return out.join('\n');
+}
+
+// ── 전체규정 sub-tab 안 검색 (현재 페이지 내 mark 하이라이트) ──
+function attachFullRegulationSearchHandler() {
+  var input = document.getElementById('fullRegSearch');
+  if (!input || input.dataset.bound) return;
+  input.dataset.bound = '1';
+  var timer;
+  input.addEventListener('input', function () {
+    clearTimeout(timer);
+    timer = setTimeout(function () { highlightFullRegulation(input.value.trim()); }, 200);
+  });
+}
+
+function highlightFullRegulation(query) {
+  var container = document.getElementById('fullRegulationDoc');
+  if (!container) return;
+  // 기존 mark 제거
+  container.querySelectorAll('mark').forEach(function (m) {
+    var t = document.createTextNode(m.textContent);
+    m.replaceWith(t);
+  });
+  // 인접 텍스트 노드 합치기 (정규화)
+  container.normalize();
+  if (!query) return;
+  var q = query.toLowerCase();
+  var firstHit = null;
+  var walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null);
+  var nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  for (var n = 0; n < nodes.length; n++) {
+    var node = nodes[n];
+    var text = node.nodeValue || '';
+    var lower = text.toLowerCase();
+    var idx = lower.indexOf(q);
+    if (idx === -1) continue;
+    var frag = document.createDocumentFragment();
+    var lastIdx = 0;
+    while (idx !== -1) {
+      if (idx > lastIdx) frag.appendChild(document.createTextNode(text.slice(lastIdx, idx)));
+      var mk = document.createElement('mark');
+      mk.textContent = text.slice(idx, idx + q.length);
+      frag.appendChild(mk);
+      if (!firstHit) firstHit = mk;
+      lastIdx = idx + q.length;
+      idx = lower.indexOf(q, lastIdx);
+    }
+    if (lastIdx < text.length) frag.appendChild(document.createTextNode(text.slice(lastIdx)));
+    node.parentNode.replaceChild(frag, node);
+  }
+  if (firstHit && firstHit.scrollIntoView) {
+    firstHit.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  검색 범위 확장 (Plan dazzling-booping-kettle redesign)
+//  - 기존: DATA.handbook 의 title/body/ref 만
+//  - 추가: union_regulation_2026.json 모든 article 의 content+clauses+history+related_agreements
+//  - 추가: full_union_regulation_2026.md 전문 (장기재직·자기계발·임신검진 등 누락 키워드 잡힘)
+// ═══════════════════════════════════════════════════════════════
+
+var _unionArticlesCache = null;
+function loadUnionArticles() {
+  if (_unionArticlesCache) return Promise.resolve(_unionArticlesCache);
+  return fetch('/data/union_regulation_2026.json')
+    .then(function (r) { return r.json(); })
+    .then(function (data) { _unionArticlesCache = data || []; return _unionArticlesCache; })
+    .catch(function () { _unionArticlesCache = []; return []; });
+}
+
+// 검색어로 매칭되는 union article 목록 + full_md 안의 매칭 라인을 반환.
+// 결과는 { unionHits: [{id, title, snippet}], mdHits: [{ref, snippet}] } 형태.
+function searchUnionAndMd(query) {
+  if (!query) return Promise.resolve({ unionHits: [], mdHits: [] });
+  var q = query.toLowerCase();
+  return Promise.all([loadUnionArticles(), loadFullRegulationMd()]).then(function (arr) {
+    var articles = arr[0] || [];
+    var md = arr[1] || '';
+    var unionHits = [];
+    articles.forEach(function (a) {
+      var blob = [a.title || '', a.content || '', (a.clauses || []).join(' '),
+        (a.history || []).map(function (h) { return (h.note || '') + ' ' + (h.type || ''); }).join(' '),
+        (a.related_agreements || []).map(function (r) { return (r.title || '') + ' ' + (r.content || ''); }).join(' ')
+      ].join(' ').toLowerCase();
+      if (blob.indexOf(q) !== -1) {
+        var snippet = (a.content || (a.clauses || [])[0] || '').slice(0, 120);
+        unionHits.push({ id: a.id, title: a.title, snippet: snippet, chapter: a.chapter });
+      }
+    });
+    var mdHits = [];
+    if (md) {
+      var lines = md.split('\n');
+      var currentRef = '';
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i];
+        var hdr = /^\*\*(제\s*\d+\s*조[^*]*)\*\*/.exec(line);
+        if (hdr) currentRef = hdr[1].trim();
+        if (line.toLowerCase().indexOf(q) !== -1 && line.length > q.length + 2) {
+          mdHits.push({ ref: currentRef, snippet: line.replace(/\*\*/g, '').slice(0, 200) });
+          if (mdHits.length >= 12) break;
+        }
+      }
+    }
+    return { unionHits: unionHits, mdHits: mdHits };
+  });
+}
+
+// 검색 결과 영역 하단에 union+md 추가 결과를 비동기로 주입
+function injectExtendedSearchResults(query, container) {
+  if (!query || !container) return;
+  searchUnionAndMd(query).then(function (res) {
+    var hasAny = res.unionHits.length > 0 || res.mdHits.length > 0;
+    if (!hasAny) return;
+    var box = document.createElement('div');
+    box.className = 'reg-extended-results';
+    box.style.cssText = 'margin-top:16px;padding:12px;border:1px dashed var(--accent-indigo,#6366f1);border-radius:10px;background:rgba(99,102,241,0.04);';
+
+    var head = document.createElement('div');
+    head.style.cssText = 'font-size:12px;font-weight:700;color:var(--accent-indigo,#6366f1);margin-bottom:8px;';
+    head.textContent = '🔎 전체 규정 본문에서 추가 매칭 (handbook 외)';
+    box.appendChild(head);
+
+    if (res.unionHits.length > 0) {
+      var unionLbl = document.createElement('div');
+      unionLbl.style.cssText = 'font-size:12px;font-weight:600;margin:8px 0 4px;';
+      unionLbl.textContent = '단협 조항 (' + res.unionHits.length + '건)';
+      box.appendChild(unionLbl);
+      res.unionHits.forEach(function (h) {
+        var line = document.createElement('div');
+        line.style.cssText = 'font-size:12.5px;line-height:1.6;padding:4px 0;border-bottom:1px solid rgba(0,0,0,0.05);';
+        var a = document.createElement('a');
+        a.href = '#';
+        a.textContent = h.title;
+        a.style.cssText = 'color:var(--accent-indigo,#6366f1);font-weight:600;text-decoration:none;';
+        a.addEventListener('click', function (ev) {
+          ev.preventDefault();
+          var anchor = articleAnchorIdFromRef(h.title);
+          switchToFullRegulationTab(anchor);
+        });
+        line.appendChild(a);
+        if (h.snippet) {
+          var sn = document.createElement('div');
+          sn.style.cssText = 'font-size:11.5px;color:var(--text-secondary,#555);';
+          sn.textContent = h.snippet;
+          line.appendChild(sn);
+        }
+        box.appendChild(line);
+      });
+    }
+
+    if (res.mdHits.length > 0) {
+      var mdLbl = document.createElement('div');
+      mdLbl.style.cssText = 'font-size:12px;font-weight:600;margin:10px 0 4px;';
+      mdLbl.textContent = '본문 라인 매치 (최대 12건)';
+      box.appendChild(mdLbl);
+      res.mdHits.forEach(function (h) {
+        var line = document.createElement('div');
+        line.style.cssText = 'font-size:12.5px;line-height:1.6;padding:4px 0;';
+        if (h.ref) {
+          var a = document.createElement('a');
+          a.href = '#';
+          a.textContent = '[' + h.ref + '] ';
+          a.style.cssText = 'color:var(--accent-indigo,#6366f1);font-weight:600;text-decoration:none;';
+          a.addEventListener('click', function (ev) {
+            ev.preventDefault();
+            var anchor = articleAnchorIdFromRef(h.ref);
+            switchToFullRegulationTab(anchor);
+          });
+          line.appendChild(a);
+        }
+        var sn = document.createElement('span');
+        sn.textContent = h.snippet;
+        line.appendChild(sn);
+        box.appendChild(line);
+      });
+    }
+
+    container.appendChild(box);
+  });
+}
 
 // Phase 2-regression: inline onclick window 노출 (ESM 모듈 스코프 회복)
 // Phase 3-F 에서 KEEP/REMOVE 결정 — regulation.js 동적 markup onclick (handleFavClick/openPdfForRef/toggleArticle) 잔존

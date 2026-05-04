@@ -8,8 +8,9 @@
 // Phase 7-5: inline style → Tailwind utility. PDF 바텀시트 / chapter nav 시각 보존.
 ---
 <div class="tab-content" id="tab-reference">
-  <nav class="reg-bookmark-tabs hidden" id="regSubTabs">
-    <button class="reg-bookmark-tab active" data-subtab="browse">규정</button>
+  <nav class="reg-bookmark-tabs" id="regSubTabs">
+    <button class="reg-bookmark-tab active" data-subtab="browse">📋 규정·검색</button>
+    <button class="reg-bookmark-tab" data-subtab="full">📜 전체 규정</button>
   </nav>
 
   <div class="sub-content active" id="subtab-browse">
@@ -56,6 +57,56 @@
       <div id="fullRegulationContent" class="reg-full-content"></div>
     </section>
   </div>
+
+  <!-- ═══════════ 📜 전체 규정 sub-tab ═══════════ -->
+  <div class="sub-content" id="subtab-full">
+    <div class="card px-4 py-3 mb-2">
+      <input type="text" id="fullRegSearch" class="reg-search-input w-full"
+        placeholder="전체 규정 본문 검색... (예: 장기재직, 자기계발, 임신검진)">
+    </div>
+    <div class="reg-info-banner">
+      📜 <b>2026 단체협약 전문 (3,155 lines)</b> — 검색·전체규정 모두 본 전문 기준.
+      <span style="opacity:0.8;">조항을 클릭하면 검색 탭에서 인용·계산이 가능합니다.</span>
+    </div>
+    <div id="fullRegulationDoc" class="reg-full-doc">
+      <div class="px-4 py-8 text-center text-brand-text-muted">
+        <div class="text-2xl mb-2">📚</div>
+        <div>전체 규정을 불러오는 중...</div>
+      </div>
+    </div>
+  </div>
+
+  <style is:global>
+    /* 📜 전체 규정 마크다운 렌더 (Plan dazzling-booping-kettle redesign) */
+    .reg-full-doc {
+      padding: 12px 16px 80px;
+      max-width: 760px;
+      margin: 0 auto;
+      line-height: 1.8;
+      color: var(--text-primary, #1a1a1a);
+    }
+    .reg-full-doc h1 { font-size: 22px; font-weight: 800; margin: 22px 0 14px; padding-bottom: 8px; border-bottom: 2px solid var(--accent-indigo, #6366f1); }
+    .reg-full-doc h2 { font-size: 19px; font-weight: 800; margin: 28px 0 12px; padding: 8px 12px; background: var(--bg-soft, rgba(99,102,241,0.08)); border-left: 4px solid var(--accent-indigo, #6366f1); border-radius: 4px; }
+    .reg-full-doc h3 { font-size: 16px; font-weight: 700; margin: 22px 0 8px; color: var(--accent-indigo, #6366f1); scroll-margin-top: 80px; }
+    .reg-full-doc h3.reg-art-target { animation: regArtFlash 1.6s ease-out; }
+    @keyframes regArtFlash {
+      0% { background: rgba(245, 158, 11, 0.45); }
+      100% { background: transparent; }
+    }
+    .reg-full-doc p { margin: 6px 0; font-size: 14px; }
+    .reg-full-doc ol, .reg-full-doc ul { margin: 6px 0 12px 22px; }
+    .reg-full-doc li { font-size: 14px; line-height: 1.75; margin: 3px 0; }
+    .reg-full-doc strong { color: var(--text-primary, #1a1a1a); font-weight: 700; }
+    .reg-full-doc em { color: var(--text-secondary, #555); font-style: italic; }
+    .reg-full-doc code { background: var(--bg-soft, rgba(0,0,0,0.05)); padding: 1px 6px; border-radius: 4px; font-size: 12px; color: var(--accent-rose, #f43f5e); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .reg-full-doc blockquote { border-left: 3px solid var(--text-muted, #9ca3af); padding: 4px 12px; color: var(--text-secondary, #555); background: var(--bg-soft, rgba(0,0,0,0.02)); margin: 10px 0; border-radius: 0 6px 6px 0; font-size: 13px; }
+    .reg-full-doc table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 13px; }
+    .reg-full-doc th, .reg-full-doc td { border: 1px solid var(--border-default, #e5e7eb); padding: 6px 10px; text-align: left; vertical-align: top; }
+    .reg-full-doc th { background: var(--bg-soft, rgba(99,102,241,0.06)); font-weight: 700; }
+    .reg-full-doc hr { border: none; border-top: 1px dashed var(--border-default, #e5e7eb); margin: 18px 0; }
+    .reg-full-doc .reg-amend { font-size: 11px; color: var(--accent-indigo, #6366f1); background: rgba(99,102,241,0.06); padding: 1px 6px; border-radius: 4px; margin-left: 6px; }
+    .reg-full-doc mark { background: rgba(245, 158, 11, 0.35); padding: 0 2px; border-radius: 2px; }
+  </style>
 
   <!-- ═══════════ PDF 바텀시트 ═══════════ -->
   <div class="pdf-sheet-overlay" id="pdfOverlay">
