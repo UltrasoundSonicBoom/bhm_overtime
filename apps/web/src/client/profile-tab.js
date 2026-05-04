@@ -208,6 +208,24 @@ window._bootstrapProfileTab = (function () {
     pfBirthDateEl.addEventListener('input', (e) => syncBirthDateToRetirement(e.target.value));
   }
 
+  // 병원 + 사번 → 병원 이메일 자동 생성
+  const _HOSPITAL_EMAIL_MAP = {
+    '서울대학교병원': 'snuh.org',
+    '어린이병원':     'snuh.org',
+    '강남센터':       'snuh.org',
+    '보라매병원':     'brmh.org',
+    '국립교통재활병원': 'ntrh.or.kr',
+  };
+  function _updateHospitalEmail() {
+    const hospital = document.getElementById('pfHospital')?.value || '';
+    const empNo    = document.getElementById('pfEmployeeNumber')?.value?.trim() || '';
+    const domain   = _HOSPITAL_EMAIL_MAP[hospital];
+    const emailEl  = document.getElementById('pfHospitalEmail');
+    if (emailEl) emailEl.value = (domain && empNo) ? `${empNo}@${domain}` : '';
+  }
+  document.getElementById('pfHospital')?.addEventListener('change', _updateHospitalEmail);
+  document.getElementById('pfEmployeeNumber')?.addEventListener('input', _updateHospitalEmail);
+
   // 부서 변경 시 근무이력 시드 재평가 (저장 전이라도 즉시 반영)
   const pfDeptEl = document.getElementById('pfDepartment');
   if (pfDeptEl) {

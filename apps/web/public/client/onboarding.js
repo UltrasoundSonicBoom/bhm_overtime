@@ -16,6 +16,21 @@
   const deck = document.getElementById("ob-deck");
   if (!deck) return;
 
+  // ── 병원 → 이메일 도메인 매핑 ──
+  const HOSPITAL_EMAIL_MAP = {
+    "서울대학교병원": "snuh.org",
+    "어린이병원":     "snuh.org",
+    "강남센터":       "snuh.org",
+    "보라매병원":     "brmh.org",
+    "국립교통재활병원": "ntrh.or.kr",
+  };
+
+  function buildHospitalEmail(employeeNumber, hospital) {
+    const domain = HOSPITAL_EMAIL_MAP[hospital];
+    if (!domain || !employeeNumber) return "";
+    return `${employeeNumber}@${domain}`;
+  }
+
   // ── 추천 도메인 (이메일 입력 자동완성용 — 도메인 강제는 일시 해제) ──
   const HOSPITAL_DOMAINS = [
     "snuh.org",
@@ -141,11 +156,15 @@
 
     function readForm() {
       const data = new FormData(form);
+      const employeeNumber = (data.get("employeeNumber") || "").toString().trim();
+      const hospital = (data.get("hospital") || "").toString().trim();
       return {
         name: (data.get("name") || "").toString().trim(),
-        employeeNumber: (data.get("employeeNumber") || "").toString().trim(),
+        employeeNumber,
         department: (data.get("department") || "").toString().trim(),
         jobType: (data.get("jobType") || "").toString().trim(),
+        hospital,
+        hospitalEmail: buildHospitalEmail(employeeNumber, hospital),
         hireDate: (data.get("hireDate") || "").toString().trim(),
         birthDate: (data.get("birthDate") || "").toString().trim(),
         gender: (data.get("gender") || "").toString().trim(),
@@ -160,13 +179,14 @@
     nextBtn?.addEventListener("click", () => {
       const profile = readForm();
       const missing = [];
+      if (!profile.hospital) missing.push("병원");
       if (!profile.name) missing.push("이름");
       if (!profile.employeeNumber) missing.push("사번");
       if (!profile.department) missing.push("부서");
       if (!profile.jobType) missing.push("직종");
       if (missing.length) {
         showError(`필수 항목을 입력해 주세요: ${missing.join(", ")}`);
-        const firstInvalid = ["name", "employeeNumber", "department", "jobType"]
+        const firstInvalid = ["hospital", "name", "employeeNumber", "department", "jobType"]
           .find((k) => !profile[k]);
         const el = form.querySelector(`[name="${firstInvalid}"]`);
         if (el && typeof el.focus === "function") el.focus();

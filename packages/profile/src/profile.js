@@ -14,7 +14,8 @@ export const PROFILE = {
         name: '',
         employeeNumber: '', // 사번 (payslip 업로드 시 자동 채움)
         gender: '',        // 'M' / 'F' / '' (미설정)
-        hospital: '서울대학교병원',  // SNUH 내부 앱 — 기본값 고정
+        hospital: '',              // 소속 병원 (서울대학교병원/어린이병원/강남센터/보라매병원/국립교통재활병원)
+        hospitalEmail: '',         // 사번@병원도메인 — 자동 생성
         department: '',    // 부서 (예: 핵의학과, 중환자실)
         jobType: '간호직',
         grade: 'J3',
@@ -300,6 +301,8 @@ export const PROFILE = {
 export const PROFILE_FIELDS = {
   name: 'pfName',
   employeeNumber: 'pfEmployeeNumber',
+  hospital: 'pfHospital',
+  hospitalEmail: 'pfHospitalEmail',
   gender: 'pfGender',
   jobType: 'pfJobType',
   department: 'pfDepartment',

@@ -20,6 +20,7 @@ const IDENTITY_FIELDS = [
   'name', 'employeeId', 'department', 'position', 'hireDate',
   'employeeNumber', 'jobType', 'grade', 'year',
   'jobLevel', 'rank', 'workHistorySeeded',
+  'hospital', 'hospitalEmail',
 ];
 const PAYROLL_FIELDS = [
   'hourlyWage', 'annualSalary', 'allowancePolicy', 'manualHourly',
