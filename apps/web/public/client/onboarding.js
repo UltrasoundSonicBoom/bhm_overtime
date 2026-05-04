@@ -7,7 +7,7 @@
   const deck = document.getElementById("ob-deck");
   if (!deck) return;
 
-  // ── 허용 도메인 (auth-validators.js 와 동기) ─────────────
+  // ── 추천 도메인 (이메일 입력 자동완성용 — 도메인 강제는 일시 해제) ──
   const HOSPITAL_DOMAINS = [
     "snuh.org",
     "brmh.org",
@@ -15,12 +15,6 @@
     "snudh.org",
     "ntrh.or.kr",
   ];
-  function isHospitalEmail(email) {
-    if (typeof email !== "string") return false;
-    const at = email.lastIndexOf("@");
-    if (at < 0) return false;
-    return HOSPITAL_DOMAINS.includes(email.slice(at + 1).toLowerCase());
-  }
 
   // ── 서울대병원 조직도 (대표 부서 — 차후 canonical 소스에서 import 권장) ──
   const SNUH_DEPARTMENTS = [
@@ -327,11 +321,8 @@
       return;
     }
 
-    // ── 신규 가입 흐름 (병원 도메인 + Firebase password policy 강제) ──
-    if (!isHospitalEmail(email)) {
-      setAuthMsg("병원 도메인 이메일만 가입할 수 있어요 (snuh.org, brmh.org, snubh.org, snudh.org, ntrh.or.kr).", "error");
-      return;
-    }
+    // ── 신규 가입 흐름 (Firebase password policy 만 강제) ──
+    // 도메인 제약 임시 해제: 병원 SMTP 가 외부 발송자 차단 가능 → 외부 이메일로 테스트 가능
     const mod = await import("/src/firebase/auth-service.js");
     const validators = await import("/src/firebase/auth-validators.js");
     const pwErr = validators.validatePassword(password);

@@ -379,7 +379,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             <div class="ob-index ob-reveal">Step 2 / 2 · 시작 방식</div>
             <div class="ob-rule ob-reveal"></div>
             <h2 class="ob-display ob-reveal">병원 이메일로<br>시작해 주세요.</h2>
-            <p class="ob-lede ob-reveal">병원 도메인 이메일만 가입할 수 있어요. 인증 메일 한 번이면 다른 기기에서도 동일하게 보여요.</p>
+            <p class="ob-lede ob-reveal">아무 이메일이나 가입할 수 있어요. 병원 SMTP 가 외부 발송자(@firebaseapp.com) 를 차단할 수 있으니, 가급적 외부 메일(Gmail 등) 권장. 인증 메일 한 번이면 다른 기기에서도 동일하게 보여요.</p>
             <div class="ob-big-grid">
               <button class="ob-tile ob-reveal ob-tc-emerald" data-action="auth-pick" data-choice="email">
                 <div class="ob-tile-icon">
@@ -420,10 +420,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                 <button type="button" class="ob-auth-mode active" id="obAuthModeSignup" aria-pressed="true">신규 가입</button>
                 <button type="button" class="ob-auth-mode" id="obAuthModeSignin" aria-pressed="false">이미 가입함</button>
               </div>
-              <input type="email" name="email" id="obAuthEmail" placeholder="병원 이메일 (예: hong@snuh.org)" autocomplete="email" list="obAuthDomainList">
+              <input type="email" name="email" id="obAuthEmail" placeholder="이메일 (예: hong@gmail.com 또는 hong@snuh.org)" autocomplete="email" list="obAuthDomainList">
               <datalist id="obAuthDomainList"></datalist>
               <input type="password" name="password" id="obAuthPassword" placeholder="비밀번호 (8~12자, 특수문자 포함)" autocomplete="new-password">
-              <div class="ob-auth-domains">허용 도메인: snuh.org · brmh.org · snubh.org · snudh.org · ntrh.or.kr</div>
+              <div class="ob-auth-domains">발송자: noreply@snuhmate.firebaseapp.com — 병원 SMTP 차단 가능 → Gmail 등 외부 메일 권장</div>
               <div class="ob-auth-msg" id="obAuthMsg"></div>
               <div class="ob-auth-actions">
                 <button type="button" class="ob-auth-ghost" id="obAuthCancel">취소</button>

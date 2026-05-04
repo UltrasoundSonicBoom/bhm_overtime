@@ -98,7 +98,7 @@ function _buildDialog() {
   const emailGroup = _el('div', { className: 'form-group mb-2' });
   const emailIn = _el('input', {
     type: 'email', id: 'snuhmateEmail',
-    placeholder: '병원 이메일 (예: hong@snuh.org)',
+    placeholder: '이메일 (예: hong@gmail.com)',
     autocomplete: 'email',
   });
   emailGroup.appendChild(emailIn);

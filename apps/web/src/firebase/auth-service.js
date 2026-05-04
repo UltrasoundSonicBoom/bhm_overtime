@@ -32,18 +32,16 @@ export async function signUpWithEmail(email, password) {
   return cred.user;
 }
 
-// ── 병원 이메일 가입 (도메인 화이트리스트 + 인증 메일) ──
-// onboarding 캐러셀 Auth 슬라이드에서 호출. 도메인 검증 후 createUser → sendEmailVerification.
+// ── 이메일 가입 (인증 메일 발송) ──
+// onboarding 캐러셀 Auth 슬라이드에서 호출. createUser → sendEmailVerification.
 // emailVerified === true 가 될 때까지 onAuthChanged 는 Firestore 동기화/profile 적용을 보류한다.
+//
+// 도메인 제약: 임시로 해제 (병원 SMTP 서버가 외부 발송자 차단 가능성 — 외부 이메일로 테스트 허용).
+// 함수명은 외부 호환을 위해 유지 (호출자 시그니처 변경 없음).
 //
 // 반환: { user, verificationSent: boolean, verificationError: Error|null }
 // — 호출자가 인증 메일 발송 실패를 사용자에게 알릴 수 있도록 결과를 명시적으로 반환.
 export async function signUpWithHospitalEmail(email, password) {
-  if (!isHospitalEmail(email)) {
-    const err = new Error('병원 도메인 이메일만 가입할 수 있어요.');
-    err.code = 'auth/non-hospital-domain';
-    throw err;
-  }
   const { auth, authMod } = await _f();
   const cred = await authMod.createUserWithEmailAndPassword(auth, email, password);
   let verificationSent = false;
