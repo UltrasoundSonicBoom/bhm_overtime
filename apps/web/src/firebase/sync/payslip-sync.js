@@ -127,3 +127,66 @@ async function _f() {
   if (!_firebase) _firebase = await initFirebase(firebaseConfig);
   return { db: _firebase.db, firestoreMod: _firebase.firestoreMod };
 }
+
+// ── Real-time subscription (Task 6) ──
+// Firestore onSnapshot listener for collection users/{uid}/payslips.
+// Returns an unsubscribe function (Firestore SDK convention).
+// Skips snapshots from local pending writes to prevent echo loops.
+function _payslipLocalKey(uid, payMonth, type) {
+  if (!uid || !payMonth) return null;
+  const ymKey = String(payMonth).replace('-', '_');
+  return type && type !== '급여'
+    ? `payslip_${uid}_${ymKey}_${type}`
+    : `payslip_${uid}_${ymKey}`;
+}
+
+export async function subscribeToPayslipsRealtime(uid, onChange) {
+  if (!uid) return () => {};
+  const { db, firestoreMod } = await _f();
+  const key = await deriveKey(uid);
+  const col = firestoreMod.collection(db, COLLECTION(uid));
+  const unsub = firestoreMod.onSnapshot(col, async (snap) => {
+    // Skip echoes from local writes (we already updated localStorage write-side)
+    if (snap.metadata && snap.metadata.hasPendingWrites) return;
+    let mutated = false;
+    const changes = typeof snap.docChanges === 'function' ? snap.docChanges() : [];
+    for (const change of changes) {
+      try {
+        if (change.type === 'removed') {
+          const fallback = _decodeDocId(change.doc.id);
+          const lsKey = _payslipLocalKey(uid, fallback.payMonth, fallback.type);
+          if (lsKey && localStorage.getItem(lsKey) !== null) {
+            localStorage.removeItem(lsKey);
+            mutated = true;
+          }
+          continue;
+        }
+        const dec = await decryptDoc(change.doc.data(), ENC_FIELDS, key);
+        const { parsedFields, lastEditAt, ...meta } = dec;
+        const fallback = _decodeDocId(change.doc.id);
+        const payMonth = meta.payMonth || fallback.payMonth;
+        const type = meta.type || fallback.type || '급여';
+        const lsKey = _payslipLocalKey(uid, payMonth, type);
+        if (!lsKey) continue;
+        const value = JSON.stringify({ ...(parsedFields || {}), payMonth, type });
+        if (localStorage.getItem(lsKey) !== value) {
+          localStorage.setItem(lsKey, value);
+          mutated = true;
+        }
+      } catch (e) {
+        console.warn('[payslip-sync] onSnapshot decode failed', e?.message);
+      }
+    }
+    if (mutated) {
+      try {
+        window.dispatchEvent(new CustomEvent('payslipChanged', { detail: { source: 'snapshot' } }));
+      } catch { /* noop */ }
+    }
+    if (onChange) {
+      try { onChange(snap); } catch { /* noop */ }
+    }
+  }, (err) => {
+    console.warn('[payslip-sync] onSnapshot error', err?.message);
+  });
+  return unsub;
+}

@@ -167,6 +167,13 @@ export async function onAuthChanged(callback) {
       try {
         await import('./auto-sync.js');
       } catch (e) { /* auto-sync 미존재 — 무해 */ }
+      // 실시간 구독 시작 — Firestore onSnapshot (다기기 동기화)
+      try {
+        const rt = await import('./realtime-subscriptions.js');
+        await rt.startRealtime(user.uid);
+      } catch (e) {
+        console.warn('[auth] realtime start 실패', e?.message);
+      }
       // 마이그레이션 다이얼로그 hook — onboarding 흐름은 우회
       if (!onboardingPending) {
         try {
@@ -180,6 +187,11 @@ export async function onAuthChanged(callback) {
       // 로그아웃 시 현재 uid 의 user-scoped active state 만 정리한다.
       // guest/device-local/다른 uid 로컬 백업은 보존한다.
       const prevUid = window.__firebaseUid;
+      // 실시간 구독 정리 — Firestore onSnapshot unsub
+      try {
+        const rt = await import('./realtime-subscriptions.js');
+        rt.stopRealtime();
+      } catch { /* noop */ }
       if (prevUid) {
         try {
           logout(prevUid);

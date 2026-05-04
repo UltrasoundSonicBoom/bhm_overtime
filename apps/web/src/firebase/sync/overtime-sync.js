@@ -98,3 +98,32 @@ async function _f() {
   if (!_firebase) _firebase = await initFirebase(firebaseConfig);
   return { db: _firebase.db, firestoreMod: _firebase.firestoreMod };
 }
+
+// ── Real-time subscription (Task 6) ──
+// Re-read all months on any change → write to localStorage in single batch.
+// (collection-by-yyyymm shape; localStorage stores the whole {YYYY-MM: [...]} map.)
+export async function subscribeToOvertimeRealtime(uid, onChange) {
+  if (!uid) return () => {};
+  const { db, firestoreMod } = await _f();
+  const col = firestoreMod.collection(db, COLLECTION(uid));
+  const unsub = firestoreMod.onSnapshot(col, async (snap) => {
+    if (snap.metadata && snap.metadata.hasPendingWrites) return;
+    try {
+      const all = await readAllOvertime(null, uid);
+      const lsKey = `overtimeRecords_uid_${uid}`;
+      const next = JSON.stringify(all);
+      if (localStorage.getItem(lsKey) !== next) {
+        localStorage.setItem(lsKey, next);
+        try {
+          window.dispatchEvent(new CustomEvent('overtimeChanged', { detail: { source: 'snapshot' } }));
+        } catch { /* noop */ }
+      }
+    } catch (e) {
+      console.warn('[overtime-sync] onSnapshot read-all failed', e?.message);
+    }
+    if (onChange) {
+      try { onChange(snap); } catch { /* noop */ }
+    }
+  }, (err) => console.warn('[overtime-sync] onSnapshot error', err?.message));
+  return unsub;
+}
