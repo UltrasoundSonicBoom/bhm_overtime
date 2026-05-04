@@ -242,7 +242,8 @@ export const SALARY_PARSER = (() => {
           meta.payslipType = tm ? tm[1] : '급여';
         }
         if (!meta.payDate && (cell.includes('급여지급일') || cell.includes('지급일'))) {
-          const adjacent = [cell, String(row[c+1] || ''), String(row[c+2] || '')];
+          const adjacent = [cell];
+          for (let d = 1; d <= 6; d++) adjacent.push(String(row[c+d] || ''));
           for (const s of adjacent) {
             const m = s.match(/(\d{4})[-./\s]+(\d{1,2})[-./\s]+(\d{1,2})/);
             if (m) { meta.payDate = `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`; break; }
@@ -1230,7 +1231,7 @@ export const SALARY_PARSER = (() => {
   // ── 기간 문자열에서 연/월 파싱 ──
   function parsePeriodYearMonth(data) {
     const period = data.metadata?.payPeriod || '';
-    const m = period.match(/(\d{4})년\s*(\d{1,2})월/);
+    const m = period.match(/(\d{4})년도?\s*(\d{1,2})월/);
     const type = data.metadata?.payslipType || '급여';
     if (m) return { year: parseInt(m[1]), month: parseInt(m[2]), type };
     // fallback: payDate
@@ -1545,6 +1546,25 @@ export const SALARY_PARSER = (() => {
     return { mode: 'replace', records, segments, existing };
   }
 
+  // getRecent(n): 최근 n개월 주 급여명세서 { ym: 'YYYYMM', total: grossPay } 배열
+  // retirement-redesign.js 의 명세서 자동 모드에서 사용
+  function getRecent(n) {
+    var months = listSavedMonths();
+    var seen = new Set();
+    var results = [];
+    for (var i = 0; i < months.length && results.length < (n || 3); i++) {
+      var m = months[i];
+      if (m.type !== '급여') continue; // 소급분·연차수당 제외, 주 급여만
+      var ym = String(m.year) + String(m.month).padStart(2, '0');
+      if (seen.has(ym)) continue;
+      seen.add(ym);
+      var d = loadMonthlyData(m.year, m.month, m.type);
+      var total = (d && d.summary && d.summary.grossPay) ? d.summary.grossPay : 0;
+      if (total > 0) results.push({ ym: ym, total: total });
+    }
+    return results;
+  }
+
   return {
     parseFile,
     saveMonthlyData,
@@ -1552,6 +1572,7 @@ export const SALARY_PARSER = (() => {
     loadMonthlyData,
     deleteMonthlyData,
     listSavedMonths,
+    getRecent,
     parsePeriodYearMonth,
     applyStableItemsToProfile,
     compareWithApp,

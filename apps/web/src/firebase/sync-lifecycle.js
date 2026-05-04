@@ -125,14 +125,15 @@ export async function hydrate(uid) {
 
 export function logout(uid) {
   const removed = clearActiveUserLocalData(uid);
-  // 🔧 Task 2 (PRIMARY BUG fix): also clear guest data so the next login starts
-  // clean. Without this, *_guest keys survive logout and pollute the next
-  // session via auto-sync fallback chains (Firestore pollution risk).
-  try {
-    const guestRemoved = clearAllGuestData() || [];
-    removed.push(...guestRemoved);
-  } catch (e) {
-    console.warn('[sync-lifecycle] clearAllGuestData failed', e?.message);
+  // Guest data cleared only on real logout (uid !== null = user was signed in).
+  // logout(null) fires on initial page load with no user — must not wipe guest data.
+  if (uid !== null) {
+    try {
+      const guestRemoved = clearAllGuestData() || [];
+      removed.push(...guestRemoved);
+    } catch (e) {
+      console.warn('[sync-lifecycle] clearAllGuestData failed', e?.message);
+    }
   }
   clearAuthBridge();
   if (typeof window !== 'undefined') delete window.__firebaseUid;
