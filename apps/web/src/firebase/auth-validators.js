@@ -4,12 +4,15 @@
 // `window.SNUHMATE_CONFIG` 모듈 최상위 코드가 실행되어 ReferenceError. 순수 함수만
 // 분리하면 node 환경에서 직접 import 가능.
 
-// 비밀번호 8~12자 클라이언트 검증 (signUp 만 적용; signIn 은 legacy 호환)
-// Firebase Console password policy 와 이중 강제 (defense in depth).
+// 비밀번호 8~12자 + 영문자 + 숫자 + 특수문자 1개 이상
+// (Firebase Console password policy 와 정합 — server-side 정책이 특수문자 강제)
 // 사용자 결정: 길면 까먹는다 → max 12.
 export function validatePassword(pw) {
   if (!pw || pw.length < 8) return '비밀번호는 8자 이상이어야 합니다';
   if (pw.length > 12) return '비밀번호는 12자 이하여야 합니다 (기억성 우선)';
+  if (!/[A-Za-z]/.test(pw)) return '비밀번호에 영문자를 1개 이상 포함해야 합니다';
+  if (!/[0-9]/.test(pw)) return '비밀번호에 숫자를 1개 이상 포함해야 합니다';
+  if (!/[^A-Za-z0-9]/.test(pw)) return '비밀번호에 특수문자를 1개 이상 포함해야 합니다 (예: ! @ # $ %)';
   return null;
 }
 

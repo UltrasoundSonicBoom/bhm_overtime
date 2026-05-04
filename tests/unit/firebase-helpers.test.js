@@ -1,25 +1,26 @@
 // Phase 8 follow-up: 순수 헬퍼 단위 테스트
-//   - validatePassword (auth-ui.js)  : 길이 8~12 검증
+//   - validatePassword (auth-ui.js)  : 8~12자 + 영문자 + 숫자 + 특수문자
 //   - humanReason (migration-dialog.js): Firestore error code → 한국어 매핑
 //
 // 둘 다 DOM/localStorage 의존 없는 pure function — vitest 가 직접 import 가능.
+// 정책 세부 케이스(특수문자/영문자/숫자)는 tests/unit/firebase/auth-validators.test.js 참고.
 import { describe, it, expect } from 'vitest';
 import { validatePassword } from '../../apps/web/src/firebase/auth-validators.js';
 import { humanReason } from '../../apps/web/src/firebase/migration-errors.js';
 
 describe('validatePassword (auth-ui)', () => {
-  it('8자 이상 12자 이하만 허용', () => {
-    expect(validatePassword('Test1234')).toBeNull();      // 8자
-    expect(validatePassword('TestPass2026')).toBeNull();  // 12자
+  it('8자 이상 12자 이하 + 영문/숫자/특수문자 모두 충족 시 허용', () => {
+    expect(validatePassword('Test123!')).toBeNull();      // 8자
+    expect(validatePassword('TestPass26!@')).toBeNull();  // 12자
   });
 
   it('7자 이하 거부', () => {
-    expect(validatePassword('Pass12')).toMatch(/8자 이상/);
+    expect(validatePassword('Pa1!')).toMatch(/8자 이상/);
     expect(validatePassword('A')).toMatch(/8자 이상/);
   });
 
   it('13자 이상 거부 (사용자 결정: 길면 까먹음 → max 12)', () => {
-    expect(validatePassword('TestPassword2026')).toMatch(/12자 이하/);
+    expect(validatePassword('TestPassword2026!')).toMatch(/12자 이하/);
     expect(validatePassword('1'.repeat(13))).toMatch(/12자 이하/);
   });
 
@@ -30,10 +31,9 @@ describe('validatePassword (auth-ui)', () => {
   });
 
   it('공백을 trim 하지 않음 (passwords 의도 보존)', () => {
-    // " 12345678 " = 10자 → null (허용). trim 했다면 8자 → null. 둘 다 null 이므로 별도 케이스.
-    // 9자 + 양 공백 1자씩 = 11자 → null. trim 후 9 → null. 동일 결과.
-    // 핵심: 공백 포함 8자 (예: ' Pass123') → null. trim 시 7자 → 거부. trim 안 함 검증:
-    expect(validatePassword(' Pass123')).toBeNull(); // 8자 → 통과 (trim X)
+    // 공백 자체가 특수문자(non-alphanumeric)로 카운트되므로 ' Pa12345' = 8자 → 통과.
+    // trim 했다면 7자 → 거부. trim 안 함 검증:
+    expect(validatePassword(' Pa12345')).toBeNull();
   });
 });
 
