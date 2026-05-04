@@ -376,6 +376,24 @@ import { RetirementEngine } from '@snuhmate/calculators/retirement-engine';
     box.appendChild(legalNote);
   }
 
+  // ── 외부 데이터 변경 시 자동 갱신 ────────────────────────────
+  // payslipChanged: 급여 명세서 추가/편집/onSnapshot 동기화 시 발화
+  // app:cloud-hydrated: 로그인 후 Firestore hydrate 완료 시 발화
+  // profileChanged: 입사일/생년월일 등 프로필 변경 시 발화
+  function refreshFromLatestData() {
+    var inputs = E.autoLoad();
+    state.wage      = inputs.wage;
+    state.hireDate  = inputs.hireDate;
+    state.birthDate = inputs.birthDate;
+    state.wageSource = inputs.wageSource;
+    if (inputs.isComplete) {
+      showAutoLoadBanner(inputs);
+      compute();
+    } else {
+      showInputForm(inputs);
+    }
+  }
+
   // ── 초기화 ─────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', function () {
     setupTabs();
@@ -383,18 +401,12 @@ import { RetirementEngine } from '@snuhmate/calculators/retirement-engine';
     setupInputForm();
     setupEditBtn();
 
-    var inputs = E.autoLoad();
-    state.wage      = inputs.wage;
-    state.hireDate  = inputs.hireDate;
-    state.birthDate = inputs.birthDate;
-    state.wageSource = inputs.wageSource;
+    refreshFromLatestData();
 
-    if (inputs.isComplete) {
-      showAutoLoadBanner(inputs);
-      compute();
-    } else {
-      showInputForm(inputs);
-    }
+    // 외부 변경 구독 — 사용자가 급여 명세서 추가하거나 다른 기기에서 동기화되면 즉시 반영
+    window.addEventListener('payslipChanged', refreshFromLatestData);
+    window.addEventListener('app:cloud-hydrated', refreshFromLatestData);
+    window.addEventListener('profileChanged', refreshFromLatestData);
   });
 
 })();
