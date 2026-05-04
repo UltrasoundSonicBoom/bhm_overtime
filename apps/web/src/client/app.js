@@ -1597,6 +1597,65 @@ function initRetirementTab(forceReload) {
   // 재설계 모듈 wiring (Wizard nav + scenario toggle)
   try { initRetirementRedesign(); } catch (_) { /* noop */ }
 
+  // 인사과 메일 초안 버튼
+  var mailBtn = document.getElementById('retMailDraftBtn');
+  var mailModal = document.getElementById('retMailModal');
+  var mailClose = document.getElementById('retMailClose');
+  var mailCopy = document.getElementById('retMailCopy');
+  var mailOpen = document.getElementById('retMailOpen');
+  var mailBody = document.getElementById('retMailBody');
+  if (mailBtn && mailModal && !mailBtn.dataset.wired) {
+    mailBtn.dataset.wired = '1';
+    function _buildMailDraft() {
+      var profile = PROFILE.load();
+      var name = (profile && profile.name) ? profile.name : '홍길동';
+      var dept = (profile && profile.dept) ? profile.dept : '○○과';
+      var hireRaw = document.getElementById('retHireDate') && document.getElementById('retHireDate').value;
+      var hireTxt = hireRaw || (profile && profile.hireDate) || '____-__-__';
+      var today = new Date().toLocaleDateString('ko-KR', {year:'numeric',month:'long',day:'numeric'});
+      return [
+        '수신: 인사과',
+        '발신: ' + dept + ' ' + name,
+        '날짜: ' + today,
+        '제목: 퇴직금 산정 관련 문의',
+        '',
+        '안녕하세요,',
+        dept + ' ' + name + '입니다.',
+        '',
+        '퇴직금 산정과 관련하여 아래 사항을 문의드립니다.',
+        '',
+        '■ 입사일: ' + hireTxt,
+        '■ 문의 사항:',
+        '  1. 본인의 퇴직금 기준 평균임금 산정 방법 확인',
+        '  2. 공로연수 선택 시 평균임금 보호 적용 여부 확인 (단협 제52조)',
+        '  3. 2001.8.31 이전 근속분 포함 시 누진배수 적용 여부 확인',
+        '  4. 예상 퇴직금 수령액 확인 요청',
+        '',
+        '바쁘신 중에 번거롭게 해드려 죄송합니다.',
+        '회신 부탁드립니다.',
+        '',
+        '감사합니다.',
+        name + ' 드림',
+      ].join('\n');
+    }
+    mailBtn.addEventListener('click', function() {
+      var draft = _buildMailDraft();
+      mailBody.value = draft;
+      var subject = encodeURIComponent('퇴직금 산정 관련 문의');
+      var body = encodeURIComponent(draft);
+      mailOpen.href = 'mailto:?subject=' + subject + '&body=' + body;
+      mailModal.style.display = 'flex';
+    });
+    mailClose.addEventListener('click', function() { mailModal.style.display = 'none'; });
+    mailModal.addEventListener('click', function(e) { if (e.target === mailModal) mailModal.style.display = 'none'; });
+    mailCopy.addEventListener('click', function() {
+      navigator.clipboard.writeText(mailBody.value).then(function() {
+        mailCopy.textContent = '✅ 복사됨';
+        setTimeout(function() { mailCopy.textContent = '📋 복사'; }, 1800);
+      });
+    });
+  }
+
   // 프로필 자동 로드
   if (_retInitDone && !forceReload) return;
   _retInitDone = true;
