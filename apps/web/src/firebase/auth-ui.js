@@ -107,7 +107,7 @@ function _buildDialog() {
   const passGroup = _el('div', { className: 'form-group mb-2' });
   const passIn = _el('input', {
     type: 'password', id: 'snuhmatePass',
-    placeholder: '비밀번호 (6자 이상)',
+    placeholder: '비밀번호 (8자 이상)',
     autocomplete: 'current-password',
   });
   passGroup.appendChild(passIn);
@@ -120,21 +120,19 @@ function _buildDialog() {
   });
   panel.appendChild(errEl);
 
-  // 이메일 버튼 행 (로그인 + 신규 가입)
-  const emailBtnRow = _el('div', { className: 'flex gap-2 mb-4' });
+  // 이메일 버튼 (로그인 + 신규 가입) — full-width stacked
   const signInBtn = _el('button', {
     type: 'button', id: 'snuhmateSignInBtn',
-    className: 'btn btn-primary flex-1',
+    className: 'btn btn-primary btn-full mb-2',
     text: '이메일 로그인',
   });
+  panel.appendChild(signInBtn);
   const signUpBtn = _el('button', {
     type: 'button', id: 'snuhmateSignUpBtn',
-    className: 'btn btn-outline flex-1',
+    className: 'btn btn-outline btn-full mb-4',
     text: '신규 가입',
   });
-  emailBtnRow.appendChild(signInBtn);
-  emailBtnRow.appendChild(signUpBtn);
-  panel.appendChild(emailBtnRow);
+  panel.appendChild(signUpBtn);
 
   // 구분선 helper
   const _divider = () => {
