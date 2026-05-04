@@ -1282,8 +1282,14 @@ export const SALARY_PARSER = (() => {
       if (gm) {
         const newGrade = gm[1].toUpperCase();
         const newYear = parseInt(gm[2], 10) || 1;
-        if (profile.grade !== newGrade) { profile.grade = newGrade; changed = true; applied.push({ name: '직급', amount: 0, note: newGrade }); }
-        if (profile.year !== newYear) { profile.year = newYear; changed = true; applied.push({ name: '호봉', amount: 0, note: String(newYear) }); }
+        const gradeChanged = profile.grade !== newGrade;
+        const yearChanged = profile.year !== newYear;
+        if (gradeChanged) { profile.grade = newGrade; changed = true; applied.push({ name: '직급', amount: 0, note: newGrade }); }
+        if (yearChanged) { profile.year = newYear; changed = true; applied.push({ name: '호봉', amount: 0, note: String(newYear) }); }
+        // 직급·호봉 변경 시 커리어 시드 재생성 신호 — _gradeHoshongEvents 가 새 grade/year로 재계산
+        if ((gradeChanged || yearChanged) && typeof window !== 'undefined') {
+          try { window.dispatchEvent(new CustomEvent('careerProfileChanged')); } catch {}
+        }
       }
     }
 

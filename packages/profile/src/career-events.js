@@ -449,4 +449,9 @@ export const CAREER = {
 
 if (typeof window !== 'undefined') {
   window.CAREER = CAREER;
+  // 급여명세서 업로드로 직급·호봉 변경 시 → 커리어 시드 재생성
+  // 기존 사용자 이벤트는 보존, autoSeed 이벤트만 새 grade/year 기반으로 교체됨.
+  window.addEventListener('careerProfileChanged', () => {
+    try { regenerateSeed(); } catch {}
+  });
 }
