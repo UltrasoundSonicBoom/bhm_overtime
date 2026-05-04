@@ -68,96 +68,90 @@ function _googleIcon() {
 }
 
 function _buildDialog() {
-  const overlay = _el('div', {
-    id: DIALOG_ID,
-    className: 'fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4',
-  });
+  const overlay = _el('div', { id: DIALOG_ID, className: 'auth-dialog-overlay' });
 
-  const panel = _el('div', {
-    className: [
-      'w-full max-w-[360px]',
-      'bg-[var(--bg-card)]',
-      'border border-[var(--border-glass)]',
-      'rounded-[var(--radius-md)]',
-      'shadow-[var(--shadow-md)]',
-      'p-6',
-    ].join(' '),
-  });
+  const panel = _el('div', { className: 'auth-dialog-panel' });
 
-  // 제목
-  const titleRow = _el('div', { className: 'card-title mb-5' });
+  // 제목 — card-title 디자인 시스템 그대로
+  const titleRow = _el('div', { className: 'card-title' });
   titleRow.appendChild(_el('span', { className: 'icon indigo', text: '👤' }));
   titleRow.appendChild(_el('span', { text: 'SNUH 메이트 로그인' }));
   panel.appendChild(titleRow);
 
-  // 메시지 영역
-  const msgEl = _el('p', { id: 'snuhmateAuthErr', className: 'text-xs mb-2 hidden' });
+  // 메시지 영역 — 상태에 따라 .is-error / .is-ok / .is-info 클래스 전환
+  const msgEl = _el('p', { id: 'snuhmateAuthErr', className: 'auth-dialog-msg' });
   panel.appendChild(msgEl);
 
   // ── 이메일 펼침 폼 (처음엔 숨김) ──
   const emailForm = _el('div', { id: 'snuhmateEmailForm', className: 'hidden' });
+
+  const emailGroup = _el('div', { className: 'auth-form-group' });
   const emailIn = _el('input', {
     type: 'email', id: 'snuhmateEmail',
-    className: 'form-input w-full mb-2',
     placeholder: '이메일 (예: hong@gmail.com)',
     autocomplete: 'email',
   });
+  emailGroup.appendChild(emailIn);
+
+  const passGroup = _el('div', { className: 'auth-form-group' });
   const passIn = _el('input', {
     type: 'password', id: 'snuhmatePass',
-    className: 'form-input w-full mb-2',
     placeholder: '비밀번호 (8~12자, 특수문자 포함)',
     autocomplete: 'current-password',
   });
+  passGroup.appendChild(passIn);
+
   const submitBtn = _el('button', {
     type: 'button', id: 'snuhmateSubmitBtn',
-    className: 'btn btn-primary btn-full mb-2',
+    className: 'btn btn-primary btn-full',
     text: '로그인 / 가입',
   });
   const cancelEmailBtn = _el('button', {
-    type: 'button',
-    className: 'w-full py-1 text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors cursor-pointer bg-transparent border-none mb-3',
+    type: 'button', className: 'auth-dialog-link',
     text: '← 돌아가기',
   });
-  emailForm.appendChild(emailIn);
-  emailForm.appendChild(passIn);
-  emailForm.appendChild(submitBtn);
-  emailForm.appendChild(cancelEmailBtn);
+
+  emailForm.appendChild(emailGroup);
+  emailForm.appendChild(passGroup);
+  const emailBtnGroup = _el('div', { className: 'auth-dialog-btn-group' });
+  emailBtnGroup.appendChild(submitBtn);
+  emailBtnGroup.appendChild(cancelEmailBtn);
+  emailForm.appendChild(emailBtnGroup);
   panel.appendChild(emailForm);
 
   // ── 3개 메인 버튼 ──
-  const mainBtns = _el('div', { id: 'snuhmateMainBtns' });
+  const mainBtns = _el('div', { id: 'snuhmateMainBtns', className: 'auth-dialog-btn-group' });
 
-  // 이메일 버튼 (primary)
   const emailTriggerBtn = _el('button', {
     type: 'button', id: 'snuhmateEmailBtn',
-    className: 'btn btn-primary btn-full mb-3',
+    className: 'btn btn-primary btn-full',
     text: '이메일로 로그인 / 가입',
   });
   mainBtns.appendChild(emailTriggerBtn);
 
-  // Google 버튼
   const googleBtn = _el('button', {
     type: 'button', id: 'snuhmateGoogleBtn',
-    className: 'btn btn-secondary btn-full mb-3',
+    className: 'btn btn-secondary btn-full',
   });
   googleBtn.appendChild(_googleIcon());
   googleBtn.appendChild(document.createTextNode(' Google로 로그인'));
   mainBtns.appendChild(googleBtn);
 
-  // 게스트 버튼
+  mainBtns.appendChild(_el('div', { className: 'auth-dialog-divider' }));
+
   const guestBtn = _el('button', {
     type: 'button', id: 'snuhmateGuestBtn',
-    className: 'btn btn-outline btn-full mb-2',
+    className: 'btn btn-outline btn-full',
     text: '게스트로 계속 (이 기기에만 저장)',
   });
   mainBtns.appendChild(guestBtn);
 
   panel.appendChild(mainBtns);
 
-  // 취소 버튼 (항상 하단)
+  // 취소 (항상 하단)
   const closeBtn = _el('button', {
     type: 'button', id: 'snuhmateAuthClose',
-    className: 'w-full mt-1 py-2 text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors cursor-pointer bg-transparent border-none',
+    className: 'auth-dialog-link',
     text: '취소',
   });
   panel.appendChild(closeBtn);
@@ -166,14 +160,13 @@ function _buildDialog() {
 
   // ── 상태 helpers ──
   const setMsg = (msg, isError, isOk) => {
-    if (!msg) { msgEl.textContent = ''; msgEl.classList.add('hidden'); return; }
-    msgEl.textContent = msg;
-    msgEl.classList.remove('hidden');
-    msgEl.style.color = isOk
-      ? 'var(--accent-emerald, #00b894)'
-      : isError
-        ? 'var(--color-status-error, #ef4444)'
-        : 'var(--text-muted, #7a7a7a)';
+    msgEl.textContent = msg || '';
+    msgEl.className = 'auth-dialog-msg';
+    if (msg) {
+      if (isOk) msgEl.classList.add('is-ok');
+      else if (isError) msgEl.classList.add('is-error');
+      else msgEl.classList.add('is-info');
+    }
   };
 
   const openEmailForm = () => {

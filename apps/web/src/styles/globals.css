@@ -1548,6 +1548,96 @@ html[data-theme="neo"] .logo .logo-main-title {
   border-color: var(--border-active);
 }
 
+/* ── Utility ── */
+.hidden { display: none !important; }
+
+/* ── Auth Dialog ── */
+.auth-dialog-overlay {
+  position: fixed; inset: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.6);
+}
+.auth-dialog-panel {
+  width: 100%; max-width: 360px;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  padding: 24px;
+}
+.auth-dialog-panel .card-title {
+  margin-bottom: 20px;
+}
+.auth-dialog-msg {
+  font-size: var(--text-label-small);
+  line-height: 1.5;
+  margin-bottom: 12px;
+  min-height: 0;
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+}
+.auth-dialog-msg:empty { display: none; }
+.auth-dialog-msg.is-error {
+  background: rgba(244, 63, 94, 0.08);
+  color: var(--accent-rose);
+  border: 1px solid rgba(244, 63, 94, 0.2);
+}
+.auth-dialog-msg.is-ok {
+  background: rgba(0, 184, 148, 0.08);
+  color: var(--accent-emerald);
+  border: 1px solid rgba(0, 184, 148, 0.2);
+}
+.auth-dialog-msg.is-info {
+  background: var(--bg-glass);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-glass);
+}
+.auth-form-group {
+  margin-bottom: 10px;
+}
+.auth-form-group input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  background: var(--bg-glass);
+  border: 1.5px solid var(--border-glass);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: var(--text-body-large);
+  font-family: inherit;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+.auth-form-group input:focus {
+  border-color: var(--accent-indigo);
+  background: var(--bg-glass-hover);
+}
+.auth-dialog-btn-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.auth-dialog-link {
+  width: 100%;
+  padding: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: var(--text-body-normal);
+  color: var(--text-muted);
+  font-family: inherit;
+  text-align: center;
+  transition: color 0.15s;
+}
+.auth-dialog-link:hover { color: var(--text-primary); }
+.auth-dialog-divider {
+  height: 1px;
+  background: var(--border-glass);
+  margin: 4px 0;
+}
+
 /* ── Mini Calendar ── */
 .mini-cal {
   border: 1px solid var(--border-glass);
