@@ -1,0 +1,451 @@
+{
+  "version": "2026.05",
+  "schema": "regulation-actions/v1",
+  "generated_at": "2026-05-04",
+  "comment": "Plan dazzling-booping-kettle Track B 결정형 (Stage 1) — 5대 생활이벤트 → 규정 원문 + 휴가/경조금 + 서류 + 절차 + 연락처 + mailto 템플릿. union_regulation_2026.json 은 mutate 하지 않고 sibling 으로 별개 관리. regulation_articles 는 JSON 에 실제 존재하는 id 만 참조하고, JSON 에 없는 조항(예: 제24조)은 regulation_inline_quotes 에 텍스트 인용. contacts 의 phone/email 은 placeholder — 실제 SNUH HR 전화·이메일 디렉터리 합의 후 별도 commit 으로 채움.",
+  "categories": [
+    { "id": "bereavement", "label": "장례·사망", "icon": "🕊️", "order": 1 },
+    { "id": "wedding",     "label": "결혼",     "icon": "💍", "order": 2 },
+    { "id": "birth",       "label": "출산·육아",  "icon": "🍼", "order": 3 },
+    { "id": "leave",       "label": "휴직",     "icon": "🏠", "order": 4 },
+    { "id": "retirement",  "label": "정년퇴직",   "icon": "🎓", "order": 5 }
+  ],
+  "events": [
+    {
+      "event_id": "bereavement_self",
+      "category": "bereavement",
+      "title": "본인 사망",
+      "regulation_articles": ["art_41", "art_63"],
+      "leave": null,
+      "monetary": { "amount": 1000000, "label": "경조금 (유족 수령)", "article": "제63조(4)" },
+      "documents_required": [
+        { "name": "사망진단서", "issuer": "병원·장례식장" },
+        { "name": "가족관계증명서", "issuer": "주민센터·정부24", "url": "https://www.gov.kr/" },
+        { "name": "유족 신분증 사본", "issuer": "유족" }
+      ],
+      "procedure_steps": [
+        "1. 유족이 부서장 또는 인사팀에 사망 사실 통보",
+        "2. 인사팀 경조금 청구서 + 가족관계증명서 + 사망진단서 제출",
+        "3. 미지급 임금·연차수당·퇴직금 정산 (제52조·제55조에 따라 사망일로부터 15일 이내 지급)"
+      ],
+      "contacts": [
+        { "dept": "인사팀", "phone": "02-2072-XXXX", "email": "hr@snuh.org", "hours": "평일 09–18" },
+        { "dept": "복지팀", "phone": "02-2072-XXXX", "email": "welfare@snuh.org", "hours": "평일 09–18" }
+      ],
+      "email_template": null,
+      "calc_links": []
+    },
+    {
+      "event_id": "bereavement_spouse",
+      "category": "bereavement",
+      "title": "배우자 사망",
+      "regulation_articles": ["art_41", "art_63"],
+      "leave": { "days": 5, "kind": "청원휴가", "article": "제41조(4)", "isPaid": true },
+      "monetary": { "amount": 1000000, "label": "경조금", "article": "제63조(5)" },
+      "documents_required": [
+        { "name": "가족관계증명서", "issuer": "주민센터·정부24", "url": "https://www.gov.kr/" },
+        { "name": "사망진단서 또는 매장(화장)증명서", "issuer": "병원·장례식장" }
+      ],
+      "procedure_steps": [
+        "1. 부서장에게 즉시 구두 통보",
+        "2. 인사팀에 청원휴가 신청서 (5일) 제출",
+        "3. 경조금 청구서 + 가족관계증명서 + 사망확인서 제출 (제55조 비상시 지불 가능)"
+      ],
+      "contacts": [
+        { "dept": "인사팀", "phone": "02-2072-XXXX", "email": "hr@snuh.org", "hours": "평일 09–18" },
+        { "dept": "복지팀", "phone": "02-2072-XXXX", "email": "welfare@snuh.org", "hours": "평일 09–18" }
+      ],
+      "email_template": {
+        "to": "hr@snuh.org",
+        "subject": "[청원휴가·경조금] 배우자 사망 — {{employeeName}}({{employeeId}})",
+        "body": "안녕하십니까.\n\n{{department}} 소속 {{employeeName}}({{employeeId}})입니다.\n배우자 사망으로 단협 제41조(4)에 따라 5일의 청원휴가를 신청합니다.\n\n- 사망일: \n- 휴가 신청 기간: \n- 첨부서류: 가족관계증명서, 사망진단서\n\n또한 단협 제63조(5)에 따라 경조금 100만원을 청구합니다.\n\n감사합니다.\n{{employeeName}} 드림"
+      },
+      "calc_links": []
+    },
+    {
+      "event_id": "bereavement_parent",
+      "category": "bereavement",
+      "title": "본인·배우자 부모 사망",
+      "regulation_articles": ["art_41", "art_63"],
+      "leave": { "days": 5, "kind": "청원휴가", "article": "제41조(4)", "isPaid": true },
+      "monetary": { "amount": 300000, "label": "경조금", "article": "제63조(6)" },
+      "documents_required": [
+        { "name": "가족관계증명서", "issuer": "주민센터·정부24", "url": "https://www.gov.kr/" },
+        { "name": "사망진단서 또는 매장(화장)증명서", "issuer": "병원·장례식장" }
+      ],
+      "procedure_steps": [
+        "1. 부서장에게 즉시 구두 통보",
+        "2. 인사팀에 청원휴가 신청서 (5일) 제출",
+        "3. 경조금 청구서 + 가족관계증명서 + 사망확인서 제출 (제55조 비상시 지불 가능)",
+        "4. 휴가 사용 후 복귀 시 부서 인계 확인"
+      ],
+      "contacts": [
+        { "dept": "인사팀", "phone": "02-2072-XXXX", "email": "hr@snuh.org", "hours": "평일 09–18" }
+      ],
+      "email_template": {
+        "to": "hr@snuh.org",
+        "subject": "[청원휴가·경조금] 부모 사망 — {{employeeName}}({{employeeId}})",
+        "body": "안녕하십니까.\n\n{{department}} 소속 {{employeeName}}({{employeeId}})입니다.\n부모 사망으로 단협 제41조(4)에 따라 5일의 청원휴가를 신청합니다.\n\n- 사망일: \n- 휴가 신청 기간: \n- 첨부서류: 가족관계증명서, 사망진단서\n\n또한 단협 제63조(6)에 따라 경조금 30만원을 청구합니다.\n\n감사합니다.\n{{employeeName}} 드림"
+      },
+      "calc_links": []
+    },
+    {
+      "event_id": "bereavement_child",
+      "category": "bereavement",
+      "title": "자녀·자녀배우자 사망",
+      "regulation_articles": ["art_41", "art_63"],
+      "leave": { "days": 3, "kind": "청원휴가", "article": "제41조(5)", "isPaid": true },
+      "monetary": { "amount": 300000, "label": "경조금 (자녀 본인만 — 자녀배우자는 무지급)", "article": "제63조(7)" },
+      "documents_required": [
+        { "name": "가족관계증명서", "issuer": "주민센터·정부24", "url": "https://www.gov.kr/" },
+        { "name": "사망진단서 또는 매장(화장)증명서", "issuer": "병원·장례식장" }
+      ],
+      "procedure_steps": [
+        "1. 부서장에게 즉시 구두 통보",
+        "2. 인사팀에 청원휴가 신청서 (3일) 제출",
+        "3. 경조금 청구서 + 가족관계증명서 + 사망확인서 제출"
+      ],
+      "contacts": [
+        { "dept": "인사팀", "phone": "02-2072-XXXX", "email": "hr@snuh.org", "hours": "평일 09–18" }
+      ],
+      "email_template": {
+        "to": "hr@snuh.org",
+        "subject": "[청원휴가] 자녀 사망 — {{employeeName}}({{employeeId}})",
+        "body": "안녕하십니까.\n\n{{department}} 소속 {{employeeName}}({{employeeId}})입니다.\n자녀 사망으로 단협 제41조(5)에 따라 3일의 청원휴가를 신청합니다.\n\n- 사망일: \n- 휴가 신청 기간: \n\n감사합니다.\n{{employeeName}} 드림"
+      },
+      "calc_links": []
+    },
+    {
+      "event_id": "bereavement_grandparent",
+      "category": "bereavement",
+      "title": "본인·배우자 (외)조부모 사망",
+      "regulation_articles": ["art_41", "art_63"],
+      "leave": { "days": 3, "kind": "청원휴가", "article": "제41조(6)", "isPaid": true },
+      "monetary": { "amount": 50000, "label": "경조금", "article": "제63조(8)" },
+      "documents_required": [
+        { "name": "가족관계증명서 (조부모 관계 확인용)", "issuer": "주민센터·정부24", "url": "https://www.gov.kr/" },
+        { "name": "사망진단서 또는 매장(화장)증명서", "issuer": "병원·장례식장" }
+      ],
+      "procedure_steps": [
+        "1. 부서장에게 즉시 구두 통보",
+        "2. 인사팀에 청원휴가 신청서 (3일) 제출",
+        "3. 경조금 청구서 제출"
+      ],
+      "contacts": [
+        { "dept": "인사팀", "phone": "02-2072-XXXX", "email": "hr@snuh.org", "hours": "평일 09–18" }
+      ],
+      "email_template": null,
+      "calc_links": []
+    },
+    {
+      "event_id": "bereavement_sibling",
+      "category": "bereavement",
+      "title": "본인·배우자 형제·자매 사망",
+      "regulation_articles": ["art_41", "art_63"],
+      "leave": { "days": 3, "kind": "청원휴가", "article": "제41조(6)", "isPaid": true },
+      "monetary": { "amount": 50000, "label": "경조금", "article": "제63조(8)" },
+      "documents_required": [
+        { "name": "가족관계증명서", "issuer": "주민센터·정부24", "url": "https://www.gov.kr/" },
+        { "name": "사망진단서 또는 매장(화장)증명서", "issuer": "병원·장례식장" }
+      ],
+      "procedure_steps": [
+        "1. 부서장에게 즉시 구두 통보",
+        "2. 인사팀에 청원휴가 신청서 (3일) 제출",
+        "3. 경조금 청구서 제출"
+      ],
+      "contacts": [
+        { "dept": "인사팀", "phone": "02-2072-XXXX", "email": "hr@snuh.org", "hours": "평일 09–18" }
+      ],
+      "email_template": null,
+      "calc_links": []
+    },
+    {
+      "event_id": "bereavement_parent_in_law",
+      "category": "bereavement",
+      "title": "별도 케이스 — 배우자 부모만 분리 청구 시",
+      "regulation_articles": ["art_41", "art_63"],
+      "leave": { "days": 5, "kind": "청원휴가", "article": "제41조(4)", "isPaid": true },
+      "monetary": { "amount": 300000, "label": "경조금", "article": "제63조(6)" },
+      "documents_required": [
+        { "name": "가족관계증명서 (배우자 부모 관계 확인)", "issuer": "주민센터·정부24", "url": "https://www.gov.kr/" },
+        { "name": "사망진단서 또는 매장(화장)증명서", "issuer": "병원·장례식장" }
+      ],
+      "procedure_steps": [
+        "1. 부서장에게 통보",
+        "2. 인사팀에 청원휴가 신청서 (5일) 제출",
+        "3. 경조금 청구서 제출"
+      ],
+      "contacts": [
+        { "dept": "인사팀", "phone": "02-2072-XXXX", "email": "hr@snuh.org", "hours": "평일 09–18" }
+      ],
+      "email_template": null,
+      "calc_links": []
+    },
+    {
+      "event_id": "bereavement_extended_grandparent",
+      "category": "bereavement",
+      "title": "외조부모 (분리 케이스)",
+      "regulation_articles": ["art_41", "art_63"],
+      "leave": { "days": 3, "kind": "청원휴가", "article": "제41조(6)", "isPaid": true },
+      "monetary": { "amount": 50000, "label": "경조금", "article": "제63조(8)" },
+      "documents_required": [
+        { "name": "가족관계증명서", "issuer": "주민센터·정부24", "url": "https://www.gov.kr/" },
+        { "name": "사망진단서 또는 매장(화장)증명서", "issuer": "병원·장례식장" }
+      ],
+      "procedure_steps": [
+        "1. 부서장에게 통보",
+        "2. 인사팀에 청원휴가 신청서 제출",
+        "3. 경조금 청구서 제출"
+      ],
+      "contacts": [
+        { "dept": "인사팀", "phone": "02-2072-XXXX", "email": "hr@snuh.org", "hours": "평일 09–18" }
+      ],
+      "email_template": null,
+      "calc_links": []
+    },
+    {
+      "event_id": "wedding_self",
+      "category": "wedding",
+      "title": "본인 결혼",
+      "regulation_articles": ["art_41", "art_63"],
+      "leave": { "days": 5, "kind": "청원휴가", "article": "제41조(1)", "isPaid": true },
+      "monetary": { "amount": 300000, "label": "경조금", "article": "제63조(1)" },
+      "documents_required": [
+        { "name": "혼인관계증명서", "issuer": "주민센터·정부24", "url": "https://www.gov.kr/" },
+        { "name": "청첩장 사본 (선택)", "issuer": "본인" }
+      ],
+      "procedure_steps": [
+        "1. 결혼 예정일 최소 30일 전 부서장 보고 + 부서 일정 조정",
+        "2. 인사팀에 청원휴가 신청서 (5일) 제출",
+        "3. 경조금 청구서 + 혼인관계증명서 제출 (혼인신고 후 발급 가능)",
+        "4. 휴가 복귀 후 인사팀 가족수당 변경 신청 (배우자 4만원/월 — 제49조)"
+      ],
+      "contacts": [
+        { "dept": "인사팀", "phone": "02-2072-XXXX", "email": "hr@snuh.org", "hours": "평일 09–18" }
+      ],
+      "email_template": {
+        "to": "hr@snuh.org",
+        "subject": "[청원휴가·경조금] 본인 결혼 — {{employeeName}}({{employeeId}})",
+        "body": "안녕하십니까.\n\n{{department}} 소속 {{employeeName}}({{employeeId}})입니다.\n본인 결혼으로 단협 제41조(1)에 따라 5일의 청원휴가를 신청합니다.\n\n- 결혼 예정일: \n- 휴가 신청 기간: \n- 첨부서류: 혼인관계증명서(혼인신고 후 발급)\n\n또한 단협 제63조(1)에 따라 경조금 30만원을 청구합니다.\n\n혼인신고 완료 후 가족수당(배우자 40,000원/월) 변경 신청도 함께 진행하겠습니다.\n\n감사합니다.\n{{employeeName}} 드림"
+      },
+      "calc_links": ["?tab=payroll&sub=pay-calc"]
+    },
+    {
+      "event_id": "wedding_child",
+      "category": "wedding",
+      "title": "자녀 결혼",
+      "regulation_articles": ["art_41", "art_63"],
+      "leave": { "days": 1, "kind": "청원휴가", "article": "제41조(2)", "isPaid": true },
+      "monetary": { "amount": 100000, "label": "경조금", "article": "제63조(2)" },
+      "documents_required": [
+        { "name": "자녀 혼인관계증명서", "issuer": "주민센터·정부24", "url": "https://www.gov.kr/" }
+      ],
+      "procedure_steps": [
+        "1. 부서장에게 결혼 예정일 통보",
+        "2. 인사팀에 청원휴가 신청서 (1일) 제출",
+        "3. 경조금 청구서 제출"
+      ],
+      "contacts": [
+        { "dept": "인사팀", "phone": "02-2072-XXXX", "email": "hr@snuh.org", "hours": "평일 09–18" }
+      ],
+      "email_template": null,
+      "calc_links": []
+    },
+    {
+      "event_id": "birth_self_maternity",
+      "category": "birth",
+      "title": "본인 출산 (산전후 휴가)",
+      "regulation_articles": ["art_41", "art_63", "app_leave_system"],
+      "leave": { "days": 90, "kind": "산전후휴가", "article": "제38조(1)", "isPaid": true, "note": "쌍둥이 이상 120일·산후 45일(쌍둥이 60일) 보장" },
+      "monetary": { "amount": 100000, "label": "경조금 (자녀출산)", "article": "제63조(3)" },
+      "documents_required": [
+        { "name": "출생증명서 또는 출생신고서 사본", "issuer": "병원·주민센터" },
+        { "name": "임신확인서 (휴가 신청 시점)", "issuer": "산부인과" },
+        { "name": "가족관계증명서", "issuer": "주민센터·정부24", "url": "https://www.gov.kr/" }
+      ],
+      "procedure_steps": [
+        "1. 임신 사실을 부서장·인사팀에 사전 통보 (제38조(6) 야간근무 금지 적용)",
+        "2. 출산 예정일 6주 전부터 산전후휴가 사용 가능 — 인사팀 신청서 제출",
+        "3. 산후 45일(쌍둥이 60일) 이상 보장",
+        "4. 출생 후 경조금 청구서 + 가족관계증명서 제출 (제63조(3) 10만원)",
+        "5. 출산 3개월째 임금 차액분(고용보험 산전후휴가급여 vs 통상임금) 정산 — 제38조(7)",
+        "6. 가족수당·맞춤형복지 가족포인트 변경 신청"
+      ],
+      "contacts": [
+        { "dept": "인사팀", "phone": "02-2072-XXXX", "email": "hr@snuh.org", "hours": "평일 09–18" },
+        { "dept": "복지팀", "phone": "02-2072-XXXX", "email": "welfare@snuh.org", "hours": "평일 09–18" }
+      ],
+      "email_template": {
+        "to": "hr@snuh.org",
+        "subject": "[산전후휴가] 본인 출산 — {{employeeName}}({{employeeId}})",
+        "body": "안녕하십니까.\n\n{{department}} 소속 {{employeeName}}({{employeeId}})입니다.\n본인 출산으로 단협 제38조(1)에 따라 산전후 90일(쌍둥이 이상 120일) 유급휴가를 신청합니다.\n\n- 출산 예정일: \n- 휴가 시작 희망일: \n- 첨부서류: 임신확인서, 출생증명서(출산 후 추가 제출)\n\n참고: 제38조(6)에 따라 임신 인지 시점부터 야간근무 금지 적용 부탁드립니다.\n\n감사합니다.\n{{employeeName}} 드림"
+      },
+      "calc_links": ["?tab=leave"]
+    },
+    {
+      "event_id": "spouse_birth",
+      "category": "birth",
+      "title": "배우자 출산",
+      "regulation_articles": ["art_41", "art_63"],
+      "leave": { "days": 20, "kind": "청원휴가 (배우자 출산)", "article": "제41조(3)", "isPaid": true, "note": "별첨 일람표 2026 기준 20일 (본문 10일에서 정정)" },
+      "monetary": { "amount": 100000, "label": "경조금", "article": "제63조(3)" },
+      "documents_required": [
+        { "name": "출생증명서 또는 출생신고서 사본", "issuer": "병원·주민센터" },
+        { "name": "가족관계증명서", "issuer": "주민센터·정부24", "url": "https://www.gov.kr/" }
+      ],
+      "procedure_steps": [
+        "1. 출산 예정일 1~2주 전 부서장 통보",
+        "2. 인사팀에 배우자출산휴가 신청서 (20일) 제출",
+        "3. 경조금 청구서 + 출생증명서 + 가족관계증명서 제출",
+        "4. 가족수당·맞춤형복지 가족포인트 변경 신청"
+      ],
+      "contacts": [
+        { "dept": "인사팀", "phone": "02-2072-XXXX", "email": "hr@snuh.org", "hours": "평일 09–18" }
+      ],
+      "email_template": {
+        "to": "hr@snuh.org",
+        "subject": "[배우자출산휴가·경조금] {{employeeName}}({{employeeId}})",
+        "body": "안녕하십니까.\n\n{{department}} 소속 {{employeeName}}({{employeeId}})입니다.\n배우자 출산으로 단협 제41조(3)에 따라 20일의 청원휴가를 신청합니다.\n\n- 출산 예정일: \n- 휴가 신청 기간: \n- 첨부서류: 출생증명서, 가족관계증명서\n\n또한 제63조(3)에 따라 경조금 10만원을 청구합니다.\n\n감사합니다.\n{{employeeName}} 드림"
+      },
+      "calc_links": []
+    },
+    {
+      "event_id": "leave_childcare",
+      "category": "leave",
+      "title": "육아휴직",
+      "regulation_articles": ["app_leave_system", "art_41"],
+      "leave": { "days": null, "kind": "육아휴직", "article": "제28조(5)", "isPaid": false, "note": "최대 3년 / 만 8세 이하·초2 이하 자녀 / 최초 1년 근속 산입·승진 대상 포함" },
+      "monetary": { "amount": null, "label": "고용보험 육아휴직급여 (1~3개월 통상임금 100% 상한 250만 / 4~6개월 100% 상한 200만 / 7~12개월 80% 상한 160만)", "article": "별첨 휴직제도" },
+      "documents_required": [
+        { "name": "주민등록등본 (자녀 연령 확인)", "issuer": "주민센터·정부24", "url": "https://www.gov.kr/" },
+        { "name": "가족관계증명서", "issuer": "주민센터·정부24", "url": "https://www.gov.kr/" },
+        { "name": "육아휴직 신청서", "issuer": "인사팀 양식" },
+        { "name": "고용보험 육아휴직급여 신청서", "issuer": "고용센터", "url": "https://www.ei.go.kr/" }
+      ],
+      "procedure_steps": [
+        "1. 휴직 시작 30일 전까지 부서장에게 통보 + 인사팀에 신청서 제출",
+        "2. 휴직 동안 가족관계증명서·자녀 주민등록등본 첨부",
+        "3. 휴직 시작 후 고용센터에 육아휴직급여 신청 (월 단위)",
+        "4. 휴직 만료 30일 전 복직원 또는 연장신청서 제출",
+        "5. 복직 시 원직 또는 동등 직책 배치 (제28조(3))"
+      ],
+      "contacts": [
+        { "dept": "인사팀", "phone": "02-2072-XXXX", "email": "hr@snuh.org", "hours": "평일 09–18" },
+        { "dept": "고용복지플러스센터", "phone": "1350", "email": null, "hours": "평일 09–18" }
+      ],
+      "email_template": {
+        "to": "hr@snuh.org",
+        "subject": "[육아휴직 신청] {{employeeName}}({{employeeId}})",
+        "body": "안녕하십니까.\n\n{{department}} 소속 {{employeeName}}({{employeeId}})입니다.\n자녀 양육을 위해 단협 제28조(5)에 따라 육아휴직을 신청합니다.\n\n- 휴직 시작 희망일: \n- 휴직 기간: \n- 자녀 정보 (이름·생년월일): \n- 첨부서류: 주민등록등본, 가족관계증명서, 육아휴직 신청서\n\n복직 시 원직 또는 동등 직책 배치 부탁드립니다 (제28조(3)).\n\n감사합니다.\n{{employeeName}} 드림"
+      },
+      "calc_links": ["?tab=leave"]
+    },
+    {
+      "event_id": "leave_sick",
+      "category": "leave",
+      "title": "질병휴직",
+      "regulation_articles": ["app_leave_system"],
+      "leave": { "days": null, "kind": "질병휴직", "article": "제26조(1)·제28조(2)", "isPaid": true, "note": "1년 이내 / (기준기본급+기준능력급+조정급+상여금) × 70% 지급. 산재보상 휴업보상 시 미지급" },
+      "monetary": null,
+      "documents_required": [
+        { "name": "진단서 (장기 직무 수행 불가 명시)", "issuer": "병원" },
+        { "name": "휴직 신청서", "issuer": "인사팀 양식" }
+      ],
+      "procedure_steps": [
+        "1. 진단서 발급 (장기 직무 수행 불가 의학적 소견 포함)",
+        "2. 부서장 보고 + 인사팀 휴직 신청서 + 진단서 제출",
+        "3. 휴직기간 중 70% 보수 지급 (산재보상 미수령 시)",
+        "4. 휴직 만료 전 복직원 + 진료 결과(완치 또는 직무복귀 가능 여부) 제출"
+      ],
+      "contacts": [
+        { "dept": "인사팀", "phone": "02-2072-XXXX", "email": "hr@snuh.org", "hours": "평일 09–18" }
+      ],
+      "email_template": null,
+      "calc_links": []
+    },
+    {
+      "event_id": "leave_industrial",
+      "category": "leave",
+      "title": "공상(업무상 상병)휴직",
+      "regulation_articles": ["app_leave_system", "art_71"],
+      "leave": { "days": null, "kind": "공상휴직", "article": "제26조(2)·제71조", "isPaid": true, "note": "6개월 유급 병가 후 1년 이내 휴직 / 직무능력급 70% 또는 산재 평균임금 70%" },
+      "monetary": null,
+      "documents_required": [
+        { "name": "산재 요양 승인 통지서", "issuer": "근로복지공단", "url": "https://www.comwel.or.kr/" },
+        { "name": "업무상 재해 입증 서류 (사고 경위서 등)", "issuer": "본인·부서" },
+        { "name": "휴직 신청서", "issuer": "인사팀 양식" }
+      ],
+      "procedure_steps": [
+        "1. 사고·질병 즉시 부서장·안전보건위원회 보고",
+        "2. 근로복지공단에 산재 요양 신청 (제68조 재해발생시 대책)",
+        "3. 6개월 유급 병가 사용 → 직무 수행 불가 시 휴직 신청",
+        "4. 산재 가입자: 산재 휴업보상(평균임금 70%). 미가입자: 직무능력급 70%",
+        "5. 복귀 시 원직 복귀 (제64조의2)"
+      ],
+      "contacts": [
+        { "dept": "인사팀", "phone": "02-2072-XXXX", "email": "hr@snuh.org", "hours": "평일 09–18" },
+        { "dept": "안전보건위원회", "phone": "02-2072-XXXX", "email": "safety@snuh.org", "hours": "평일 09–18" },
+        { "dept": "근로복지공단", "phone": "1588-0075", "email": null, "hours": "평일 09–18" }
+      ],
+      "email_template": null,
+      "calc_links": []
+    },
+    {
+      "event_id": "leave_self_dev",
+      "category": "leave",
+      "title": "자기계발휴직",
+      "regulation_articles": ["app_leave_system"],
+      "leave": { "days": null, "kind": "자기계발휴직", "article": "제26조(2)(7)", "isPaid": false, "note": "재직 5년 이상 / 6개월 또는 1년 단위 최대 1년 이내 / 10년 이상 재직자는 6개월 추가 가능" },
+      "monetary": null,
+      "documents_required": [
+        { "name": "휴직 신청서 (자기계발 계획 포함)", "issuer": "인사팀 양식" },
+        { "name": "재직증명서 (5년 이상 확인)", "issuer": "인사팀" },
+        { "name": "교육·연구 등록증 (선택)", "issuer": "수강 기관" }
+      ],
+      "procedure_steps": [
+        "1. 부서장과 사전 협의 (휴직 시기·기간)",
+        "2. 인사팀에 휴직 신청서 + 자기계발 계획서 제출",
+        "3. 무급 휴직 — 단, 근속에는 산입되지 않음 (제28조(1))",
+        "4. 휴직 만료 전 복직원 또는 연장신청서 제출"
+      ],
+      "contacts": [
+        { "dept": "인사팀", "phone": "02-2072-XXXX", "email": "hr@snuh.org", "hours": "평일 09–18" }
+      ],
+      "email_template": null,
+      "calc_links": []
+    },
+    {
+      "event_id": "retirement_age60",
+      "category": "retirement",
+      "title": "정년퇴직 (만 60세 / 12월 말일)",
+      "regulation_articles": ["art_52", "art_53"],
+      "leave": { "days": 365, "kind": "공로연수 (선택)", "article": "제40조(4)", "isPaid": true, "note": "정년 직전 1년 공로연수 (보수 60%) — 옵션 A. 옵션 B는 100% 보수 + 공로연수 미부여" },
+      "monetary": null,
+      "documents_required": [
+        { "name": "퇴직신청서 (정년퇴직)", "issuer": "인사팀 양식" },
+        { "name": "사학연금 가입자: 사학연금 가입증명서", "issuer": "사학연금공단", "url": "https://www.tp.or.kr/" },
+        { "name": "퇴직금·퇴직수당 청구서", "issuer": "인사팀 양식" }
+      ],
+      "procedure_steps": [
+        "1. 정년 1년 전부터 공로연수 옵션 A/B 선택 (제40조(4)·<2022.12> 합의)",
+        "2. 인사팀에 퇴직신청서 + 공로연수 옵션 통보",
+        "3. 정년퇴직일은 만 60세 도달 해의 12월 말일 (제24조)",
+        "4. 사학연금 가입자: 가입일 전일까지 단협 퇴직금 분리 산정 (제52조(4))",
+        "5. 만 60세 이후 평균임금이 직전보다 낮으면 만 60세 직전 평균임금 보호 (제52조(4)·제53조(2))",
+        "6. 퇴직금은 퇴직일로부터 15일 이내 지급 (제52조(2))",
+        "7. 미사용 연차 수당 정산 (제36조(7))"
+      ],
+      "contacts": [
+        { "dept": "인사팀", "phone": "02-2072-XXXX", "email": "hr@snuh.org", "hours": "평일 09–18" },
+        { "dept": "급여팀", "phone": "02-2072-XXXX", "email": "payroll@snuh.org", "hours": "평일 09–18" },
+        { "dept": "사학연금공단", "phone": "1588-4321", "email": null, "hours": "평일 09–18" }
+      ],
+      "email_template": {
+        "to": "hr@snuh.org",
+        "subject": "[정년퇴직 사전 안내] {{employeeName}}({{employeeId}})",
+        "body": "안녕하십니까.\n\n{{department}} 소속 {{employeeName}}({{employeeId}})입니다.\n단협 제24조에 따라 정년퇴직 절차를 사전 협의하고자 합니다.\n\n- 정년퇴직 예정일 (만 60세 도달 해의 12월 31일): \n- 공로연수 선택 (제40조(4)): A) 1년 60% 보수 / B) 100% 보수·공로연수 미부여 — 결정: \n- 사학연금 가입 여부: \n\n퇴직 직전 평균임금 보호 (제52조(4)·제53조(2)) 및 사학연금 컷오프 적용 여부 확인 부탁드립니다.\n\n감사합니다.\n{{employeeName}} 드림"
+      },
+      "calc_links": ["?tab=payroll&sub=pay-retirement"]
+    }
+  ]
+}
