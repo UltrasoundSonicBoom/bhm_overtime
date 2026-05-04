@@ -3,7 +3,7 @@
 
 const AI_API_URL = (
   (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_AI_API_URL) ||
-  'http://localhost:8000'
+  'https://snuhmate-ai-gateway.kgh1379.workers.dev'
 ).replace(/\/$/, '');
 
 let _catalog = null;
