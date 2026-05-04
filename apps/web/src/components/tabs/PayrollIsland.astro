@@ -270,11 +270,13 @@
               <label class="ret-label" for="retBirthDate">생년월일 <span class="text-[11px] text-brand-text-muted font-normal">(정년 계산용 · 개인정보 동기화)</span></label>
               <input class="ret-input" type="date" id="retBirthDate"
                 oninput="retUpdateQuickDates(); syncBirthDateToProfile(this.value)">
+              <small id="retBirthDateErr" class="pf-input-err"></small>
             </div>
             <div class="ret-form-row">
               <label class="ret-label" for="retHireDate">입사일 <span class="text-[11px] text-brand-text-muted font-normal">(개인정보 동기화)</span></label>
               <input class="ret-input" type="date" id="retHireDate"
                 oninput="retUpdateQuickDates(); syncHireDateToProfile(this.value)">
+              <small id="retHireDateErr" class="pf-input-err"></small>
             </div>
           </div>
         </div>

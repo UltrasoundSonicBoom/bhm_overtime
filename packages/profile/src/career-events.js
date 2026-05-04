@@ -387,14 +387,91 @@ export function deleteEvent(id) {
   return true;
 }
 
+/**
+ * 저장된 급여명세서에서 직급 전환(승진)을 역산하여 커리어 이벤트로 변환.
+ * window.SALARY_PARSER 가 초기화된 후 호출 가능.
+ * 같은 등급 간 호봉 변화(J3-4→J3-5)는 무시하고, 등급 자체가 바뀌는 전환만 감지.
+ * 반환 이벤트는 autoSeed:true + source:'payslip-inferred' — regenerateSeed 에서 합산.
+ */
+export function inferPromotionsFromPayslips() {
+  if (typeof window === 'undefined' || !window.SALARY_PARSER) return [];
+  let months;
+  try { months = window.SALARY_PARSER.listSavedMonths(); } catch { return []; }
+  if (!months || months.length === 0) return [];
+
+  // '급여' 타입만, 시간순 오름차순
+  const paid = months
+    .filter((m) => m.type === '급여')
+    .sort((a, b) => (a.year * 100 + a.month) - (b.year * 100 + b.month));
+  if (paid.length === 0) return [];
+
+  // 각 월의 payGrade 파싱
+  const history = [];
+  for (const m of paid) {
+    let data;
+    try { data = window.SALARY_PARSER.loadMonthlyData(m.year, m.month, m.type); } catch { continue; }
+    if (!data) continue;
+    const pg = data.employeeInfo?.payGrade;
+    if (!pg) continue;
+    const gm = String(pg).match(/([A-Za-z]+\d*)\s*[-—]\s*(\d+)/);
+    if (!gm) continue;
+    history.push({ ym: `${m.year}-${String(m.month).padStart(2, '0')}`, grade: gm[1].toUpperCase() });
+  }
+  if (history.length < 2) return [];
+
+  // 등급 전환 감지 (연속 월 비교)
+  const events = [];
+  const seen = new Set();
+  for (let i = 1; i < history.length; i++) {
+    const prev = history[i - 1];
+    const curr = history[i];
+    if (prev.grade === curr.grade) continue;
+    const transKey = `${prev.grade}→${curr.grade}`;
+    if (seen.has(transKey)) continue; // 같은 전환 중복 방지
+    seen.add(transKey);
+    events.push({
+      id: _genId('pay_'),
+      category: 'promotion',
+      title: `${prev.grade} → ${curr.grade} 승진`,
+      sub: `급여명세서에서 감지 · ${curr.ym} 기준 (수동 날짜 수정 가능)`,
+      dateFrom: curr.ym,
+      badge: { text: curr.grade, tone: 'green' },
+      autoSeed: true,
+      source: 'payslip-inferred',
+    });
+  }
+  return events;
+}
+
 // 시드 재생성 (사용자가 입사일·직종 변경 후 자동 갱신 원할 때)
 export function regenerateSeed() {
   const profile = PROFILE.load();
   if (!profile) return [];
+
+  // 규정 기반 시드
   const newSeed = generateSeedEvents(profile);
+
+  // 명세서 기반 실제 승진 이력 — 규정 추정보다 우선
+  const payslipInferred = inferPromotionsFromPayslips();
+  // 명세서로 확인된 전환 키 집합 (from→to) — 규정 추정 이벤트 중복 제거용
+  const inferredTransitions = new Set(
+    payslipInferred.map((e) => {
+      const m = e.title?.match(/(\S+)\s*→\s*(\S+)/);
+      return m ? `${m[1]}→${m[2]}` : '';
+    }).filter(Boolean)
+  );
+  // 규정 추정 자동승격 이벤트 중 명세서가 이미 커버하는 전환은 제거
+  const filteredSeed = newSeed.filter((e) => {
+    if (!e.autoSeed || e.category !== 'promotion') return true;
+    const m = e.title?.match(/(\S+)\s*→\s*(\S+)/);
+    return !m || !inferredTransitions.has(`${m[1]}→${m[2]}`);
+  });
+
+  const allSeed = [...filteredSeed, ...payslipInferred];
+
   // 새 시드의 workplace 키 집합 (category|dateFrom|title) — 중복 방어용
   const seedWpKeys = new Set(
-    newSeed.filter((e) => e.category === 'workplace').map((e) => `${e.dateFrom || ''}|${e.title || ''}`)
+    allSeed.filter((e) => e.category === 'workplace').map((e) => `${e.dateFrom || ''}|${e.title || ''}`)
   );
   // 사용자 추가 이벤트 보존 (autoSeed=true 제거) + 시드와 겹치는 마이그레이션 workplace 제거
   const userEvents = loadEvents().filter((e) => {
@@ -404,7 +481,7 @@ export function regenerateSeed() {
     }
     return true;
   });
-  const merged = [...newSeed, ...userEvents];
+  const merged = [...allSeed, ...userEvents];
   saveEvents(merged);
   return merged;
 }
@@ -448,7 +525,7 @@ export function computeDynamicLeaveEvents(profile, now = new Date()) {
 
 export const CAREER = {
   loadEvents, saveEvents, addEvent, updateEvent, deleteEvent,
-  generateSeedEvents, regenerateSeed, computeDynamicLeaveEvents,
+  generateSeedEvents, regenerateSeed, inferPromotionsFromPayslips, computeDynamicLeaveEvents,
 };
 
 if (typeof window !== 'undefined') {

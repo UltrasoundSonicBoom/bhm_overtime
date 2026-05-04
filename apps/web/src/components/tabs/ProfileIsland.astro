@@ -70,6 +70,7 @@
             <div class="form-group">
               <label class="whitespace-nowrap">생년월일 <small class="text-brand-text-muted">(정년 산정)</small></label>
               <input type="date" id="pfBirthDate" oninput="syncBirthDateToRetirement(this.value)">
+              <small id="pfBirthDateErr" class="pf-input-err"></small>
             </div>
             <div class="form-group">
               <label>부서</label>
@@ -91,6 +92,7 @@
               <label>입사일</label>
               <input type="text" id="pfHireDate" placeholder="예: 2021-01-01">
               <small id="pfServiceDisplay" class="text-brand-text-muted"></small>
+              <small id="pfHireDateErr" class="pf-input-err"></small>
             </div>
             <div class="form-group">
               <label>호봉 (연차)</label>

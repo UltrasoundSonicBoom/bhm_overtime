@@ -1105,6 +1105,15 @@ html[data-theme="neo"] .logo .logo-main-title {
   color: var(--text-primary);
 }
 
+.pf-input-err {
+  color: var(--accent-rose, #f43f5e);
+  font-size: var(--text-caption, 11px);
+  margin-top: 4px;
+  display: block;
+  min-height: 0;
+}
+.pf-input-err:empty { display: none; }
+
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;

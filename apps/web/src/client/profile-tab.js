@@ -202,10 +202,16 @@ window._bootstrapProfileTab = (function () {
     document.getElementById('pfMilitaryMonthsGroup').style.display = e.target.checked ? 'block' : 'none';
   });
 
-  // 생년월일 → 퇴직금 탭 동기화
+  // 생년월일 → 퇴직금 탭 동기화 + 유효성 검사
   const pfBirthDateEl = document.getElementById('pfBirthDate');
+  const pfBirthErr = document.getElementById('pfBirthDateErr');
   if (pfBirthDateEl) {
-    pfBirthDateEl.addEventListener('input', (e) => syncBirthDateToRetirement(e.target.value));
+    pfBirthDateEl.addEventListener('input', (e) => {
+      const err = _validateBirthDate(e.target.value);
+      if (pfBirthErr) pfBirthErr.textContent = err || '';
+      e.target.setCustomValidity(err || '');
+      if (!err) syncBirthDateToRetirement(e.target.value);
+    });
   }
 
   // 병원 + 사번 → 병원 이메일 자동 생성
@@ -235,23 +241,32 @@ window._bootstrapProfileTab = (function () {
   }
 
   // 입사일 → 근속연수 표시 + 근속가산기본급 자동 감지 (2016.2 이전 입사자) + 호봉 자동 제안
-  document.getElementById('pfHireDate').addEventListener('input', (e) => {
+  const pfHireDateEl = document.getElementById('pfHireDate');
+  const pfHireErr = document.getElementById('pfHireDateErr');
+  pfHireDateEl.addEventListener('input', (e) => {
     const parsed = PROFILE.parseDate(e.target.value);
+    const svcEl = document.getElementById('pfServiceDisplay');
     if (parsed) {
+      const err = _validateHireDate(parsed);
+      if (pfHireErr) pfHireErr.textContent = err || '';
+      e.target.setCustomValidity(err || '');
+      if (err) { if (svcEl) svcEl.textContent = ''; return; }
       const years = PROFILE.calcServiceYears(parsed);
-      document.getElementById('pfServiceDisplay').textContent = `→ ${parsed} (근속 ${years}년)`;
+      if (svcEl) svcEl.textContent = `→ ${parsed} (근속 ${years}년)`;
       const hireDate = new Date(parsed);
       const seniorityThreshold = new Date('2016-02-01');
       document.getElementById('pfSeniority').checked = hireDate < seniorityThreshold;
       // 호봉 자동 제안
       _suggestYear(parsed);
     } else if (e.target.value.length > 0) {
-      document.getElementById('pfServiceDisplay').textContent = '※ YYYY-MM-DD, YYYYMMDD, YYYY.MM.DD 형식';
+      if (svcEl) svcEl.textContent = '※ YYYY-MM-DD, YYYYMMDD, YYYY.MM.DD 형식';
     } else {
-      document.getElementById('pfServiceDisplay').textContent = '';
+      if (svcEl) svcEl.textContent = '';
       document.getElementById('pfSeniority').checked = false;
       const hint = document.getElementById('pfYearHint');
       if (hint) hint.textContent = '';
+      if (pfHireErr) pfHireErr.textContent = '';
+      e.target.setCustomValidity('');
     }
     // 입사일 변경 즉시 근무이력 시드 재평가
     try { if (typeof renderWorkHistory === 'function') renderWorkHistory(); } catch (ex) {}
@@ -851,6 +866,37 @@ function clearProfile() {
   _openClearProfileModal(keys);
 }
 
+// ═══════════ 날짜 유효성 검사 ═══════════
+/**
+ * 생년월일: 만 18세 미만(미성년자) 입력 차단.
+ * 반환값: 오류 문자열 | null (정상).
+ */
+function _validateBirthDate(val) {
+  if (!val) return null;
+  const d = new Date(val);
+  if (isNaN(d.getTime())) return null;
+  const today = new Date();
+  const max = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+  if (d > max) return `만 18세 미만은 입력할 수 없습니다 (${max.getFullYear()}-${String(max.getMonth()+1).padStart(2,'0')}-${String(max.getDate()).padStart(2,'0')} 이전 출생만 허용)`;
+  return null;
+}
+/**
+ * 입사일: 법정 정년(만 60세)을 이미 초과했거나, 미래 날짜 차단.
+ * 최소 입사 연령 18세 기준 최대 재직 42년 — 그 이전이면 이미 퇴직.
+ * 반환값: 오류 문자열 | null (정상).
+ */
+function _validateHireDate(val) {
+  if (!val) return null;
+  const d = new Date(val);
+  if (isNaN(d.getTime())) return null;
+  const today = new Date();
+  if (d > today) return '입사일이 오늘보다 미래입니다';
+  const maxYearsAgo = 42; // 만 18세 입사 + 만 60세 정년 = 최대 42년
+  const minHire = new Date(today.getFullYear() - maxYearsAgo, today.getMonth(), today.getDate());
+  if (d < minHire) return `이 입사일은 법정 정년(만 60세)이 이미 지난 시점입니다 (${minHire.getFullYear()}년 이후만 허용)`;
+  return null;
+}
+
 // ═══════════ 생년월일 양방향 동기화 ═══════════
 /**
  * 개인정보 탭 pfBirthDate → 퇴직금 탭 retBirthDate, retScBirthDate 동기화
@@ -869,8 +915,18 @@ function syncBirthDateToRetirement(val) {
  * → initPayrollTab() 재호출로 Wizard 상태가 초기화되는 문제 방지.
  */
 function syncBirthDateToProfile(val) {
+  const err = _validateBirthDate(val);
+  // 퇴직금 탭의 오류 표시
+  const retErrEl = document.getElementById('retBirthDateErr');
+  if (retErrEl) retErrEl.textContent = err || '';
+  const retEl = document.getElementById('retBirthDate');
+  if (retEl) retEl.setCustomValidity(err || '');
+  // 개인정보 탭 pfBirthDate 동기화 + 오류 표시
   const pfEl = document.getElementById('pfBirthDate');
-  if (pfEl && pfEl.value !== val) pfEl.value = val;
+  if (pfEl) { if (pfEl.value !== val) pfEl.value = val; pfEl.setCustomValidity(err || ''); }
+  const pfErrEl = document.getElementById('pfBirthDateErr');
+  if (pfErrEl) pfErrEl.textContent = err || '';
+  if (err) return; // 유효하지 않으면 저장 중단
 
   ['retBirthDate', 'retScBirthDate'].forEach(id => {
     const el = document.getElementById(id);
@@ -892,8 +948,16 @@ function syncBirthDateToProfile(val) {
  * 퇴직금 탭 retHireDate ↔ 개인정보 탭 pfHireDate 양방향 동기화 + localStorage 직접 저장.
  */
 function syncHireDateToProfile(val) {
+  const err = _validateHireDate(val);
+  const retErrEl = document.getElementById('retHireDateErr');
+  if (retErrEl) retErrEl.textContent = err || '';
+  const retEl = document.getElementById('retHireDate');
+  if (retEl) retEl.setCustomValidity(err || '');
   const pfEl = document.getElementById('pfHireDate');
-  if (pfEl && pfEl.value !== val) pfEl.value = val;
+  if (pfEl) { if (pfEl.value !== val) pfEl.value = val; pfEl.setCustomValidity(err || ''); }
+  const pfErrEl = document.getElementById('pfHireDateErr');
+  if (pfErrEl) pfErrEl.textContent = err || '';
+  if (err) return; // 유효하지 않으면 저장 중단
 
   ['retHireDate', 'retScHireDate'].forEach(id => {
     const el = document.getElementById(id);
