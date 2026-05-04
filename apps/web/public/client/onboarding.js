@@ -201,7 +201,7 @@
     modeSigninBtn?.classList.remove("active");
     modeSigninBtn?.setAttribute("aria-pressed", "false");
     if (passInput) {
-      passInput.placeholder = "비밀번호 (8~12자)";
+      passInput.placeholder = "비밀번호 (8~12자, 특수문자 포함)";
       passInput.autocomplete = "new-password";
     }
     if (authSubmit) authSubmit.textContent = "인증 메일 받기";
@@ -301,7 +301,17 @@
       setAuthMsg("로그인 중...", null);
       try {
         const mod = await import("/src/firebase/auth-service.js");
-        await mod.signInWithEmail(email, password);
+        const cred = await mod.signInWithEmail(email, password);
+        if (cred?.user && !cred.user.emailVerified) {
+          try {
+            await mod.resendVerificationEmail();
+            setAuthMsg("아직 이메일 인증 전이에요. 인증 메일을 다시 보냈으니 메일함을 확인해 주세요.", "ok");
+          } catch (e) {
+            console.warn("[onboarding] resend verification failed", e?.code || e?.message);
+            setAuthMsg("아직 이메일 인증 전이에요. 메일함을 확인해 주세요.", "error");
+          }
+          return;
+        }
         enterApp();
       } catch (err) {
         console.warn("[onboarding] email sign-in failed", err);
@@ -317,21 +327,29 @@
       return;
     }
 
-    // ── 신규 가입 흐름 (병원 도메인 강제) ──
+    // ── 신규 가입 흐름 (병원 도메인 + Firebase password policy 강제) ──
     if (!isHospitalEmail(email)) {
       setAuthMsg("병원 도메인 이메일만 가입할 수 있어요 (snuh.org, brmh.org, snubh.org, snudh.org, ntrh.or.kr).", "error");
       return;
     }
-    if (password.length < 8 || password.length > 12) {
-      setAuthMsg("비밀번호는 8~12자입니다.", "error");
+    const mod = await import("/src/firebase/auth-service.js");
+    const validators = await import("/src/firebase/auth-validators.js");
+    const pwErr = validators.validatePassword(password);
+    if (pwErr) {
+      setAuthMsg(pwErr, "error");
       return;
     }
     authSubmit.disabled = true;
     setAuthMsg("인증 메일을 보내는 중...", null);
     try {
-      const mod = await import("/src/firebase/auth-service.js");
-      await mod.signUpWithHospitalEmail(email, password);
-      setAuthMsg("인증 메일을 보냈습니다. 메일함을 확인하고 인증한 뒤 이 페이지를 새로고침하면 자동으로 진입됩니다.", "ok");
+      const result = await mod.signUpWithHospitalEmail(email, password);
+      if (result?.verificationSent) {
+        setAuthMsg("인증 메일을 보냈습니다. 메일함을 확인하고 인증한 뒤 이 페이지를 새로고침하면 자동으로 진입됩니다.", "ok");
+      } else {
+        const errMsg = result?.verificationError?.message || "잠시 후 다시 시도해 주세요";
+        setAuthMsg(`계정은 만들어졌으나 인증 메일 발송에 실패했어요: ${errMsg}. "이미 가입함" 탭에서 로그인 후 재시도할 수 있어요.`, "error");
+        modeSigninBtn?.click();
+      }
     } catch (err) {
       console.warn("[onboarding] hospital email signup failed", err);
       let msg = `가입 실패: ${err?.message || "다시 시도해 주세요"}`;
@@ -339,7 +357,10 @@
         msg = '이미 가입된 이메일이에요. "이미 가입함" 탭에서 로그인해 주세요.';
         modeSigninBtn?.click();
       }
-      if (err?.code === "auth/weak-password") msg = "비밀번호가 너무 약해요. 8자 이상으로 만들어 주세요.";
+      if (err?.code === "auth/password-does-not-meet-requirements") {
+        msg = '비밀번호 정책 미충족: 8~12자 + 영문자 + 숫자 + 특수문자 1개 이상 (예: Snuh1234!).';
+      }
+      if (err?.code === "auth/weak-password") msg = "비밀번호가 너무 약해요. 8자 이상 + 특수문자 포함.";
       if (err?.code === "auth/invalid-email") msg = "이메일 형식이 올바르지 않아요.";
       if (err?.code === "auth/network-request-failed") msg = "네트워크 오류. 잠시 후 다시 시도해 주세요.";
       setAuthMsg(msg, "error");

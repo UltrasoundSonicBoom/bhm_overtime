@@ -107,7 +107,7 @@ function _buildDialog() {
   const passGroup = _el('div', { className: 'form-group mb-2' });
   const passIn = _el('input', {
     type: 'password', id: 'snuhmatePass',
-    placeholder: '비밀번호 (8~12자)',
+    placeholder: '비밀번호 (8~12자, 특수문자 포함)',
     autocomplete: 'current-password',
   });
   passGroup.appendChild(passIn);
@@ -189,7 +189,7 @@ function _buildDialog() {
     const code = e?.code || '';
     if (code === 'auth/invalid-credential') return '이메일/비밀번호 불일치';
     if (code === 'auth/weak-password') return '비밀번호 8자 이상 12자 이하';
-    if (code === 'auth/password-does-not-meet-requirements') return '비밀번호 정책 미충족 (8~12자)';
+    if (code === 'auth/password-does-not-meet-requirements') return '비밀번호 정책 미충족 (8~12자 + 영문자 + 숫자 + 특수문자, 예: Snuh1234!)';
     if (code === 'auth/email-already-in-use') return '이미 가입된 이메일 — "이메일 로그인"을 사용해 주세요';
     if (code === 'auth/non-hospital-domain') return '병원 도메인 이메일만 가입할 수 있어요 (snuh.org, brmh.org, snubh.org 등)';
     if (code === 'auth/popup-closed-by-user') return '로그인 창이 닫힘';
@@ -213,9 +213,14 @@ function _buildDialog() {
     if (pwErr) { setMsg(pwErr, true); return; }
     signUpBtn.disabled = true;
     try {
-      await signUpWithHospitalEmail(emailIn.value.trim(), passIn.value);
-      setMsg('인증 메일을 보냈습니다! 메일함을 확인하고 링크를 클릭하면 자동으로 진입됩니다.', false, true);
-      setTimeout(closeAuthDialog, 4000);
+      const result = await signUpWithHospitalEmail(emailIn.value.trim(), passIn.value);
+      if (result?.verificationSent) {
+        setMsg('인증 메일을 보냈습니다! 메일함을 확인하고 링크를 클릭하면 자동으로 진입됩니다.', false, true);
+        setTimeout(closeAuthDialog, 4000);
+      } else {
+        const errMsg = result?.verificationError?.message || '잠시 후 다시 시도해 주세요';
+        setMsg(`계정은 만들어졌지만 인증 메일 발송에 실패: ${errMsg}`, true);
+      }
     } catch (e) { setMsg(prettyErr(e), true); }
     finally { signUpBtn.disabled = false; }
   });
