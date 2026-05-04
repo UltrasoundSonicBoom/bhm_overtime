@@ -127,6 +127,27 @@ export const RetirementEngine = (function () {
       peakEnd: legalRetirement
     };
   }
+
+  // ── 단협 제52조(4)·제53조(2): 만60세 직전 평균임금 보호 ──
+  // retireDate 가 만60세 도달일 이후이고 입력된 wage 가 직전 평균임금(peakWage)보다 낮으면 peakWage 로 잠금.
+  // UI/호출자가 simulateSeverance 입력 직전에 호출해 보호된 wage 를 사용한다 (engine 자체는 wage 를 그대로 신뢰).
+  function peakWageGuard({ birthDate, retireDate, wage, peakWage }) {
+    const birth = birthDate ? new Date(birthDate) : null;
+    const retire = retireDate ? new Date(retireDate) : null;
+    if (!birth || !retire || isNaN(birth.getTime()) || isNaN(retire.getTime())) {
+      return { protectedWage: Number(wage) || 0, applied: false, reason: 'invalid_input' };
+    }
+    const age60 = new Date(birth.getFullYear() + 60, birth.getMonth(), birth.getDate());
+    const w = Number(wage) || 0;
+    if (retire < age60) {
+      return { protectedWage: w, applied: false, reason: 'before_age60' };
+    }
+    const pw = Number(peakWage) || 0;
+    if (pw > w) {
+      return { protectedWage: pw, applied: true, reason: 'peak_wage_protection' };
+    }
+    return { protectedWage: w, applied: false, reason: 'no_peak_wage_lower' };
+  }
   function dStr(d) {
     if (!d) return '';
     const dt = typeof d === 'string' ? new Date(d) : d;
@@ -408,7 +429,8 @@ export const RetirementEngine = (function () {
     fmtDate,
     daysUntil,
     dStr,
-    getThreeMonthAverage
+    getThreeMonthAverage,
+    peakWageGuard
   };
 })();
 
