@@ -127,7 +127,6 @@ Key routing rules:
 | UI/CSS/Astro 바꿨어, 디자인시스템 점검, 토큰 확인 | `smate-design-guard` |
 | 계산기·단협·파서·호봉표 바꿨어, 급여 회귀 검토 | `smate-payroll-review` |
 | 커밋푸쉬머지, ship it, PR 올려줘 | `smate-pr-ops` |
-| B6 마스킹, 마스킹 서비스, PII 파이프라인 | `smate-b6-masking` |
 | 새 기능 끝까지, 이 기능 출시까지, 한 사이클 돌려줘 | `smate-feature-ship` |
 
 ## 하네스: SNUHmate
