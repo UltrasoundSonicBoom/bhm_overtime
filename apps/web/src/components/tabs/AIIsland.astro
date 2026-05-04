@@ -1,19 +1,267 @@
 ---
-// AIIsland — 병원 AI 청사진 + SNUHmate AI 포트폴리오
-// 북마크 1: 🏥 병원 AI 청사진 (hospital-ai-ideas 47개 + 하네스 패턴 + 번들 다운로드)
-// 북마크 2: 💡 AI 포트폴리오 (SNUHmate 구현·예정 AI 기능 갤러리)
+// AIIsland — 병원 AI 청사진 (47개 카드 · 9섹션) + SNUHmate AI 포트폴리오
+// 북마크 1: 🏥 병원 AI 청사진 — hospital-ai-ideas 전체 포팅 + 카드별 하네스 다운로드
+// 북마크 2: 💡 AI 포트폴리오 — SNUHmate 구현·예정 AI 기능 갤러리
 
-const ideas = [
-  { icon: '📅', title: '근무표 자동화', color: '#58a6ff', items: ['근무표 사진 → 캘린더 자동 반영', '교대 패턴 예측·알림', '다음달 근무 미리 확인'] },
-  { icon: '🛡️', title: '환자 안전 AI', color: '#3fb950', items: ['낙상 위험 자동 스코어링', '투약 오류 사전 경고', 'SBAR 자동 작성 지원'] },
-  { icon: '📋', title: '행정 문서 자동화', color: '#bc8cff', items: ['회의록 STT → 구조화 요약', '진료 기록 초안 생성', '간호 인수인계 자동 정리'] },
-  { icon: '🎓', title: '커리어 성장 AI', color: '#d29922', items: ['유사 경력 동료 트윈 매핑', '직무 역량 갭 분석', '교육 이수 경로 추천'] },
-  { icon: '💰', title: '급여 투명성', color: '#fb7185', items: ['명세서 항목 한글 해설', '오계산 자동 감지 알림', '수당 조항 인라인 연결'] },
-  { icon: '🗣️', title: '소통·번역 AI', color: '#39c5cf', items: ['다국어 환자 안내문 번역', '부서간 문서 요약 공유', '의학 용어 환자 친화 변환'] },
-  { icon: '🧠', title: '번아웃 예방', color: '#58a6ff', items: ['초과근무 패턴 이상 감지', '웰빙 체크인 리마인더', '업무 부하 분산 알림'] },
-  { icon: '🔐', title: '개인정보 보호', color: '#bc8cff', items: ['PII 자동 탐지·마스킹', '공유 전 민감정보 경고', '로컬 처리 우선 파이프라인'] },
-  { icon: '🏥', title: '환자 경험 AI', color: '#3fb950', items: ['검사 전 설명문 자동 생성', '퇴원 안내 개인화', '부서 위키 AI 검색'] },
+interface AgentNode { emoji: string; role: string; }
+interface AICard {
+  icon: string; title: string; body: string; scenario: string;
+  persona: string[]; techTags: string[]; skillKey: string;
+  agents?: AgentNode[]; pipeline?: string[];
+}
+interface AISection {
+  num: number; label: string; title: string; color: string; cards: AICard[];
+}
+
+const sections: AISection[] = [
+  {
+    num: 1, label: 'CAPTURE & RECOGNIZE', title: '📷 촬영·인식', color: '#4dd0e1',
+    cards: [
+      { icon: '📅', title: '근무표 사진→디지털 스케줄',
+        body: '카메라로 종이 근무표를 찍으면 교대 패턴을 인식해 개인 달력에 자동 반영한다.',
+        scenario: '야간 근무 후 다음달 표 확인 — 수기 입력 없이 30초 완료',
+        persona: ['간호사', '의료기사·보건직'], techTags: ['OCR', '캘린더API', 'B3'], skillKey: 'capture-recognize' },
+      { icon: '🩹', title: '상처·피부 사진→간호 기록',
+        body: '스마트폰으로 촬영한 상처 부위를 분석해 SOAP 형식 간호 기록 초안을 생성한다.',
+        scenario: '욕창 초기 단계를 매일 사진으로 기록하면 진행 상태를 자동 추적',
+        persona: ['간호사'], techTags: ['이미지분석', 'SOAP', '창상관리'], skillKey: 'capture-recognize' },
+      { icon: '💊', title: '약봉지 스캔→복약 지도',
+        body: '처방전·약봉지를 스캔하면 용법·부작용을 환자 언어 수준에 맞게 설명한다.',
+        scenario: '퇴원 시 여러 약을 처방받은 고령 환자에게 복약 안내문 즉시 출력',
+        persona: ['간호사', '의사·전공의'], techTags: ['OCR', 'NLP', '복약안전'], skillKey: 'capture-recognize' },
+      { icon: '📟', title: '의료장비 화면 캡처→검사 수치',
+        body: '모니터·검사장비 화면을 캡처하면 수치를 텍스트로 추출해 EMR에 삽입한다.',
+        scenario: '활력징후 모니터 수치를 재입력 없이 간호 기록에 붙여넣기',
+        persona: ['간호사', '의료기사·보건직'], techTags: ['화면OCR', 'EMR연동', '오류방지'], skillKey: 'capture-recognize' },
+      { icon: '🎙️', title: '음성 인수인계→구조화 SBAR',
+        body: '2분 음성 인수인계를 녹음하면 SBAR 구조로 정리된 텍스트 보고서를 생성한다.',
+        scenario: '3교대 인수인계 시 누락 없이 표준화된 SBAR 문서 자동 완성',
+        persona: ['간호사'], techTags: ['STT', 'SBAR', '인수인계'], skillKey: 'capture-recognize' },
+    ],
+  },
+  {
+    num: 2, label: 'SIMULATION & TRAINING', title: '🎓 시뮬레이션·훈련', color: '#d29922',
+    cards: [
+      { icon: '🫀', title: '코드블루 시뮬레이터',
+        body: 'CPR·제세동·약물 투여 순서를 가상 환자로 반복 훈련하고 실시간 피드백을 받는다.',
+        scenario: '신규 간호사가 실제 상황 전 프로토콜 순서를 틀릴 때마다 피드백 수신',
+        persona: ['간호사', '의사·전공의'], techTags: ['시뮬레이션', 'CPR프로토콜', '신규교육'], skillKey: 'simulation-training' },
+      { icon: '🗣️', title: '환자 설명 커뮤니케이션 코치',
+        body: '진단·처치·수술 설명을 롤플레이로 연습하고 공감·명료성·비언어 피드백을 받는다.',
+        scenario: '어려운 진단 전달을 두려워하는 전공의가 AI 환자와 반복 연습',
+        persona: ['의사·전공의', '간호사'], techTags: ['롤플레이', 'NLP', '커뮤니케이션'], skillKey: 'simulation-training' },
+      { icon: '😤', title: '악성 민원 대응 시뮬레이터',
+        body: '과격한 보호자·환자 민원 시나리오를 AI와 롤플레이하며 de-escalation 기술을 연습한다.',
+        scenario: '응급실 당직 전 감정 격한 보호자 대응 시나리오 3회 반복 연습',
+        persona: ['간호사', '행정사무직', '관리자·파트장'], techTags: ['롤플레이', '감정노동', 'de-escalation'], skillKey: 'simulation-training' },
+      { icon: '🔬', title: '판독 훈련 어시스턴트',
+        body: 'X-ray·CT 영상을 보여주고 질문·힌트를 주며 판독 추론 능력을 단계적으로 훈련한다.',
+        scenario: '레지던트가 지도교수 없이 X-ray·CT 판독을 자기주도 학습',
+        persona: ['의사·전공의', '의료기사·보건직'], techTags: ['의료영상', '판독훈련', '적응형학습'], skillKey: 'simulation-training' },
+      { icon: '🚶', title: '낙상·욕창 예방 판단 훈련',
+        body: '다양한 환자 케이스로 낙상 위험 사정·욕창 예방 조치를 판단하는 훈련을 한다.',
+        scenario: '신규 간호사가 고위험 환자 사정 도구 적용을 케이스 스터디로 연습',
+        persona: ['간호사'], techTags: ['케이스스터디', '위험사정', '안전교육'], skillKey: 'simulation-training' },
+    ],
+  },
+  {
+    num: 3, label: 'LIVE COPILOT', title: '🎯 실시간 코파일럿', color: '#f87171',
+    cards: [
+      { icon: '🖐️', title: '처치 중 핸즈프리 AI 어시스턴트',
+        body: '처치 중 음성 명령으로 약물 용량 계산, 프로토콜 확인, 기록 입력을 핸즈프리로 처리한다.',
+        scenario: '중환자실 간호사가 드레싱 중 "이 약 최대 용량" 음성 질의 즉답',
+        persona: ['간호사', '의사·전공의'], techTags: ['음성인식', '핸즈프리', '처치지원'], skillKey: 'live-copilot' },
+      { icon: '✂️', title: '수술실 체크리스트 코파일럿',
+        body: 'WHO Surgical Safety Checklist를 실시간으로 진행하며 누락 항목을 알림하고 완료를 기록한다.',
+        scenario: '수술 시작 전 팀 타임아웃 체크리스트를 AI가 안내하고 자동 기록',
+        persona: ['의사·전공의', '의료기사·보건직', '간호사'], techTags: ['체크리스트', '수술안전', 'WHO-SSC'], skillKey: 'live-copilot' },
+      { icon: '💉', title: '투약 안전 실시간 확인',
+        body: '투약 전 바코드 스캔 + 환자 정보를 교차 확인해 오투약을 실시간으로 방지한다.',
+        scenario: '비슷한 약명 혼동 방지 — 투약 직전 경고 알림으로 오류 차단',
+        persona: ['간호사'], techTags: ['바코드스캔', '투약안전', '5Rights'], skillKey: 'live-copilot' },
+      { icon: '🚑', title: '응급 트리아지 지원 AI',
+        body: '내원 환자의 주호소·바이탈·증상을 입력하면 KTAS 단계와 우선순위 처치를 즉시 제안한다.',
+        scenario: '응급실 트리아지 간호사가 대기 환자 5명 동시 중증도 분류 지원',
+        persona: ['간호사', '의사·전공의'], techTags: ['KTAS', '중증도분류', '응급의학'], skillKey: 'live-copilot' },
+    ],
+  },
+  {
+    num: 4, label: 'COLLABORATIVE INTELLIGENCE', title: '🤝 협업 인텔리전스', color: '#38bdf8',
+    cards: [
+      { icon: '👨‍👩‍👧', title: '다학제 케어플랜 AI',
+        body: '의사·간호사·영양사·PT 팀의 메모를 통합해 일관된 케어플랜 초안을 생성하고 충돌을 감지한다.',
+        scenario: '주 1회 다학제 컨퍼런스 전에 각 직군 노트를 자동으로 통합·요약',
+        persona: ['의사·전공의', '간호사', '관리자·파트장'], techTags: ['다학제', '케어플랜', '충돌감지'], skillKey: 'collaborative' },
+      { icon: '📨', title: '부서간 의뢰·회신 초안 생성',
+        body: '타과 의뢰 시 환자 요약·의뢰 사유·질문을 자동 생성해 의뢰서 작성 시간을 단축한다.',
+        scenario: '내과에서 신장내과로 AKI 의뢰 시 관련 검사 결과를 자동으로 포함',
+        persona: ['의사·전공의', '간호사'], techTags: ['의뢰서', 'NLP', 'EMR연동'], skillKey: 'collaborative' },
+      { icon: '📚', title: '환자 교육자료 개인화',
+        body: '진단·처방·문해력 수준을 반영해 환자 맞춤 교육 자료를 즉시 생성한다.',
+        scenario: '새로 당뇨 진단받은 60대 환자에게 맞춤형 식이요법 안내문 자동 생성',
+        persona: ['간호사', '의사·전공의'], techTags: ['개인화', '환자교육', '문해력적응'], skillKey: 'collaborative' },
+      { icon: '🌐', title: '보호자·간병인 커뮤니케이션 지원',
+        body: '외국인 환자·보호자 대상 다국어 통역 및 의료 용어의 쉬운 설명을 실시간으로 지원한다.',
+        scenario: '중국어권 보호자에게 수술 후 주의사항을 현지어로 즉시 전달',
+        persona: ['간호사', '행정사무직'], techTags: ['다국어통역', '의료용어', '접근성'], skillKey: 'collaborative' },
+    ],
+  },
+  {
+    num: 5, label: 'GENERATIVE OUTPUTS', title: '✍️ 생성 아웃풋', color: '#bc8cff',
+    cards: [
+      { icon: '📝', title: '간호기록 SOAP 자동 생성',
+        body: '간호사의 짧은 메모와 바이탈 데이터를 기반으로 완성된 SOAP 간호 기록을 생성한다.',
+        scenario: '12시간 근무 후 기록 작성 시간 50% 단축, 누락 항목 자동 보완',
+        persona: ['간호사'], techTags: ['SOAP', 'NLP', 'EMR연동'], skillKey: 'generative' },
+      { icon: '🏠', title: '퇴원 요약 초안 생성',
+        body: '입원 기간의 EMR 데이터를 분석해 퇴원 요약서·진단서 초안을 의사가 검토할 형태로 생성한다.',
+        scenario: '담당 전공의가 30분 걸리던 퇴원 요약서를 5분 안에 검토·완성',
+        persona: ['의사·전공의'], techTags: ['퇴원요약', 'EMR분석', '문서생성'], skillKey: 'generative' },
+      { icon: '📊', title: '행정 보고서 자동화',
+        body: '월별 통계·사고 보고서·질 향상 자료를 구조화된 형식으로 자동 생성한다.',
+        scenario: '간호부장이 월말 보고서를 데이터 입력 없이 클릭 몇 번으로 완성',
+        persona: ['관리자·파트장', '행정사무직'], techTags: ['보고서자동화', '통계', '대시보드'], skillKey: 'generative' },
+      { icon: '📋', title: '환자 맞춤 안내문 생성',
+        body: '검사·수술·처치 전 환자별 상황에 맞는 안내문을 다양한 형식(인쇄·문자·QR)으로 생성한다.',
+        scenario: '내시경 전날 모든 예약 환자에게 개인화된 금식·전처치 안내 자동 발송',
+        persona: ['간호사', '행정사무직'], techTags: ['안내문생성', 'QR코드', '자동발송'], skillKey: 'generative' },
+      { icon: '🧫', title: '연구 지원 문헌 요약',
+        body: 'PubMed·국내 학술지를 검색하고 임상 질문에 관련된 논문 요약과 근거 수준을 제공한다.',
+        scenario: '새 처치 프로토콜 도입 전 관련 RCT 5편을 10분 내 요약·비교',
+        persona: ['의사·전공의', '관리자·파트장'], techTags: ['문헌검색', 'EBP', '근거중심'], skillKey: 'generative' },
+    ],
+  },
+  {
+    num: 6, label: 'PREDICTION & PATTERNS', title: '📊 예측·패턴', color: '#f0a030',
+    cards: [
+      { icon: '🚶‍♀️', title: '낙상 위험 예측 스코어링',
+        body: 'EMR 데이터를 실시간 분석해 낙상 고위험 환자를 자동으로 식별하고 예방 조치를 알림한다.',
+        scenario: '야간에 새로 입원한 환자의 낙상 위험을 5분 내 자동 사정',
+        persona: ['간호사', '관리자·파트장'], techTags: ['예측모델', '낙상예방', '실시간알림'], skillKey: 'prediction' },
+      { icon: '🩸', title: '욕창 발생 조기 경보',
+        body: 'Braden 스케일 변화·체위 변경 간격·영양 데이터를 통합 분석해 욕창 위험을 조기 감지한다.',
+        scenario: '중환자실 72시간 이상 와상 환자의 욕창 위험 임계값 초과 시 알림',
+        persona: ['간호사'], techTags: ['Braden', '욕창예방', '체위관리'], skillKey: 'prediction' },
+      { icon: '🔄', title: '재입원 위험 예측',
+        body: '퇴원 전 환자의 재입원 위험도를 분석해 집중 퇴원 교육·외래 추적 계획을 제안한다.',
+        scenario: '심부전 환자 퇴원 시 30일 재입원 위험 60%↑ → 케어매니저 배정 권고',
+        persona: ['의사·전공의', '관리자·파트장'], techTags: ['재입원예측', '퇴원계획', '케어매니지먼트'], skillKey: 'prediction' },
+      { icon: '🧯', title: '초과근무 번아웃 감지',
+        body: '근무 기록·초과근무 패턴·휴가 소진율을 분석해 번아웃 고위험 직원을 조기에 파악한다.',
+        scenario: '3개월 연속 월 30시간 이상 초과근무 시 관리자에게 자동 알림',
+        persona: ['관리자·파트장', '행정사무직'], techTags: ['번아웃감지', '근무패턴', '인사관리'], skillKey: 'prediction' },
+      { icon: '⚗️', title: '약물 부작용 패턴 분석',
+        body: '병동 내 약물 부작용 보고를 집계·분석해 반복 패턴과 고위험 조합을 식별한다.',
+        scenario: '특정 항생제 병용 처방 후 부작용 증가 패턴 자동 감지 → 처방 경고 추가',
+        persona: ['의사·전공의', '의료기사·보건직'], techTags: ['약물감시', '부작용분석', '처방안전'], skillKey: 'prediction' },
+    ],
+  },
+  {
+    num: 7, label: 'OFFICE PRODUCTIVITY', title: '💼 업무 생산성', color: '#4dd0e1',
+    cards: [
+      { icon: '🎙️', title: '회의록 STT→구조화 요약',
+        body: '회의 음성을 실시간 녹음하면 결정사항·담당자·기한이 정리된 회의록 초안을 즉시 생성한다.',
+        scenario: '부서장 회의 후 회의록 작성 30분 → 5분 검토·보완으로 단축',
+        persona: ['관리자·파트장', '행정사무직'], techTags: ['STT', '회의록', '액션아이템'], skillKey: 'office' },
+      { icon: '🔍', title: '규정·매뉴얼 AI 검색',
+        body: '단협·업무 매뉴얼·법령에서 질문에 맞는 조항을 즉시 찾아 인용과 함께 제공한다.',
+        scenario: '산전 검진 휴가 신청 시 해당 단협 조항과 신청 절차를 30초 내 확인',
+        persona: ['간호사', '행정사무직', '관리자·파트장'], techTags: ['단협검색', '법령', 'RAG'], skillKey: 'office' },
+      { icon: '🔀', title: '인수인계 자동화',
+        body: '교대 전 간호사의 업무 노트를 분석해 다음 담당자가 즉시 파악할 수 있는 인수인계서를 생성한다.',
+        scenario: '3교대 인수인계 시간 15분 → 7분으로 단축, 누락 항목 0건',
+        persona: ['간호사'], techTags: ['인수인계', '자동화', 'SBAR'], skillKey: 'office' },
+      { icon: '💴', title: '급여 명세서 AI 분석',
+        body: '급여 명세서를 스캔하면 각 항목을 한글로 설명하고 전월 대비 차이와 오계산 가능성을 분석한다.',
+        scenario: '초과근무수당 항목이 예상보다 적을 때 계산 근거 자동 확인',
+        persona: ['간호사', '의료기사·보건직', '행정사무직'], techTags: ['명세서파싱', '수당분석', 'B4'], skillKey: 'office' },
+      { icon: '🔐', title: 'PII 마스킹 서비스',
+        body: '환자 데이터를 포함한 문서를 외부 공유 전 Presidio + LLM으로 자동 마스킹 처리한다.',
+        scenario: '연구용 환자 데이터 50건을 5분 내 자동 마스킹 → 수동 검토 없이 공유',
+        persona: ['행정사무직', '의료기사·보건직', '관리자·파트장'], techTags: ['Presidio', 'PII', 'B6'], skillKey: 'office' },
+      { icon: '👥', title: '커리어 트윈 매핑',
+        body: '나와 유사한 경력 경로를 걸은 선배의 이직·역할 전환 데이터를 보여줘 진로 탐색을 돕는다.',
+        scenario: '병동 3년차 간호사가 NP·PA·임상교육자 경로를 실제 사례로 탐색',
+        persona: ['간호사', '의료기사·보건직'], techTags: ['커리어트윈', 'CareRoleOS', 'B2'], skillKey: 'office' },
+      { icon: '📖', title: '부서 위키 자동화',
+        body: '업무 절차·공지사항·FAQ를 자동으로 정리해 신규 직원이 즉시 검색할 수 있는 위키를 구축한다.',
+        scenario: '담당자 퇴직 시 지식 소멸 방지 — 구전으로 전달되던 절차 100% 문서화',
+        persona: ['관리자·파트장', '행정사무직'], techTags: ['위키', '지식관리', 'B9'], skillKey: 'office' },
+    ],
+  },
+  {
+    num: 8, label: 'AGENT TEAM HARNESS', title: '🤖 에이전트팀 하네스', color: '#fb7185',
+    cards: [
+      { icon: '🏥', title: '임상 콘퍼런스 준비 팀',
+        body: '케이스 컨퍼런스를 위해 문헌 검색·케이스 요약·슬라이드 생성을 에이전트팀이 자동 수행한다.',
+        scenario: '주 1회 CPC 준비를 4시간 → 45분으로 단축',
+        persona: ['의사·전공의', '관리자·파트장'], techTags: ['에이전트팀', '문헌검색', '발표자료'], skillKey: 'harness-conference',
+        agents: [{ emoji: '🧠', role: '오케스트레이터' }, { emoji: '🔍', role: '문헌검색' }, { emoji: '📋', role: '케이스요약' }, { emoji: '📊', role: '슬라이드생성' }] },
+      { icon: '📋', title: '의무기록 감사 팀',
+        body: '의무기록 정확성·코딩 오류·누락 항목을 에이전트팀이 자동으로 감사하고 보고서를 생성한다.',
+        scenario: '월 100건 기록 감사를 2일 → 4시간으로 단축',
+        persona: ['관리자·파트장', '행정사무직'], techTags: ['기록감사', '코딩검증', '컴플라이언스'], skillKey: 'harness-audit',
+        agents: [{ emoji: '🧠', role: '오케스트레이터' }, { emoji: '📝', role: '기록분석' }, { emoji: '✅', role: '코딩검증' }, { emoji: '📄', role: '보고서생성' }] },
+      { icon: '⚖️', title: '규정 준수 모니터링 팀',
+        body: '법령·단협·병원 정책 변경을 실시간 추적하고 영향받는 부서에 맞춤 알림을 자동 발송한다.',
+        scenario: '개정 간호법 공포 후 24시간 내 관련 부서에 변경 사항 요약 배포',
+        persona: ['관리자·파트장', '행정사무직'], techTags: ['법령추적', '컴플라이언스', '자동알림'], skillKey: 'harness-compliance',
+        agents: [{ emoji: '🧠', role: '오케스트레이터' }, { emoji: '📡', role: '규정추적' }, { emoji: '🔍', role: '영향분석' }, { emoji: '📣', role: '알림발송' }] },
+      { icon: '🎓', title: '교육 콘텐츠 자동 생성 팀',
+        body: '직원 교육 목표를 입력하면 커리큘럼·학습 자료·평가 문항을 에이전트팀이 완성한다.',
+        scenario: '신규 간호사 오리엔테이션 교재를 1주 → 하루 만에 제작',
+        persona: ['관리자·파트장', '간호사'], techTags: ['교육콘텐츠', '커리큘럼설계', 'e러닝'], skillKey: 'harness-training',
+        agents: [{ emoji: '🧠', role: '오케스트레이터' }, { emoji: '📐', role: '커리큘럼설계' }, { emoji: '✍️', role: '콘텐츠생성' }, { emoji: '🔍', role: 'QA검증' }] },
+      { icon: '📡', title: '병동 지표 모니터링 팀',
+        body: '낙상·감염·욕창·재입원 지표를 실시간 수집·분석하고 이상 감지 시 자동 알림한다.',
+        scenario: '병동 감염률이 임계값 초과 시 즉시 감염관리팀에 자동 보고',
+        persona: ['관리자·파트장'], techTags: ['병동지표', '실시간대시보드', '이상감지'], skillKey: 'harness-monitoring',
+        agents: [{ emoji: '🧠', role: '오케스트레이터' }, { emoji: '📥', role: '데이터수집' }, { emoji: '📊', role: '패턴분석' }, { emoji: '🚨', role: '알림발송' }] },
+      { icon: '📱', title: '병원 콘텐츠 생성 팀',
+        body: '병원 뉴스·건강 정보·부서 소개를 다양한 채널 형식에 맞게 자동 제작한다.',
+        scenario: '월 4건 건강 칼럼을 SNS·웹사이트·환자 뉴스레터 형식으로 동시 배포',
+        persona: ['행정사무직', '관리자·파트장'], techTags: ['콘텐츠생성', 'SNS', '건강커뮤니케이션'], skillKey: 'harness-content',
+        agents: [{ emoji: '🧠', role: '오케스트레이터' }, { emoji: '🔍', role: '주제리서치' }, { emoji: '✍️', role: '초안생성' }, { emoji: '📱', role: '채널최적화' }] },
+    ],
+  },
+  {
+    num: 9, label: 'PIPELINE AUTOMATION', title: '⚙️ 파이프라인 자동화', color: '#818cf8',
+    cards: [
+      { icon: '🏥', title: '환자 입원 온보딩 파이프라인',
+        body: '입원 접수부터 케어플랜 수립까지 모든 단계를 자동화해 온보딩 시간을 단축한다.',
+        scenario: '입원 수속 평균 45분 → 20분 단축, 서류 누락 0건',
+        persona: ['간호사', '행정사무직'], techTags: ['온보딩', '프로세스자동화', 'EMR'], skillKey: 'pipeline',
+        pipeline: ['입원 접수', '초기 평가', '케어플랜 수립', '팀 알림 발송'] },
+      { icon: '🚪', title: '퇴원 계획 파이프라인',
+        body: '퇴원 기준 충족 시 요약 생성·안내문 발송·외래 예약·팔로업 알림이 자동으로 실행된다.',
+        scenario: '퇴원 지연 없이 퇴원 당일 모든 절차를 오전 내 완료',
+        persona: ['의사·전공의', '간호사', '행정사무직'], techTags: ['퇴원계획', '자동발송', '외래연계'], skillKey: 'pipeline',
+        pipeline: ['퇴원 예고', '요약 생성', '안내문 발송', '외래 예약'] },
+      { icon: '🔪', title: '수술 전 체크리스트 파이프라인',
+        body: '수술 전날부터 수술실 입장까지 필요한 모든 확인 단계를 자동으로 조율한다.',
+        scenario: '수술 취소·지연 건수 30% 감소 — 사전 확인 누락으로 인한 지연 제거',
+        persona: ['의사·전공의', '간호사'], techTags: ['수술안전', '체크리스트', 'WHO-SSC'], skillKey: 'pipeline',
+        pipeline: ['환자 확인', '동의서 확인', '검사 완료 확인', '팀 브리핑'] },
+      { icon: '🆕', title: '직원 온보딩 파이프라인',
+        body: '신규 입사자의 계정 생성·오리엔테이션 배정·멘토 매칭·교육 이수를 자동으로 진행한다.',
+        scenario: '신규 간호사 온보딩 준비 관리자 소요 시간 4시간 → 30분',
+        persona: ['관리자·파트장', '행정사무직'], techTags: ['온보딩', 'HR자동화', '멘토링'], skillKey: 'pipeline',
+        pipeline: ['계정 생성', '오리엔테이션 배정', '멘토 매칭', '교육 이수 추적'] },
+      { icon: '📜', title: '규정 업데이트 배포 파이프라인',
+        body: '법령·단협 개정 시 변경 내용 분석·부서별 교육 자료 생성·전체 공지를 자동 실행한다.',
+        scenario: '개정 의료법 시행일 이전에 전 부서 교육 자료 배포 완료',
+        persona: ['관리자·파트장', '행정사무직'], techTags: ['규정관리', '교육자동화', '공지시스템'], skillKey: 'pipeline',
+        pipeline: ['변경 감지', '영향 분석', '교육 자료 생성', '전체 공지'] },
+      { icon: '🧪', title: '연구 데이터 전처리 파이프라인',
+        body: '연구용 환자 데이터를 수집·PII 마스킹·정제·품질 검증까지 자동화해 분석 준비 시간을 단축한다.',
+        scenario: 'IRB 승인 후 데이터 준비 2주 → 2일로 단축',
+        persona: ['의사·전공의', '행정사무직'], techTags: ['연구데이터', 'PII마스킹', '데이터품질'], skillKey: 'pipeline',
+        pipeline: ['데이터 수집', 'PII 마스킹', '정제·검증', '분석 준비'] },
+    ],
+  },
 ];
+
+const totalCards = sections.reduce((sum, s) => sum + s.cards.length, 0);
 
 const portfolio = [
   { icon: '⏰', title: '시간외수당 계산', status: 'done', badge: '✅ 완료', desc: '제33조 휴게시간 미사용·연장근무 자동 계산. 시급 경고 배너 포함.', tags: ['규정기반', '순수계산', '조항인라인'] },
@@ -44,60 +292,97 @@ const portfolio = [
     <div class="ai-hero">
       <div class="ai-hero-label">HOSPITAL AI BLUEPRINT</div>
       <h2 class="ai-hero-title">병원 일하는 방식을<br>AI로 다시 설계한다</h2>
-      <p class="ai-hero-sub">SNUH 채용공고 897건 · 역할 레코드 2,034건 · 직원 설문 135명 기반<br>47개 AI 아이디어 · 9개 카테고리</p>
+      <p class="ai-hero-sub">SNUH 채용공고 897건 · 역할 레코드 2,034건 · 직원 설문 135명 기반<br>{totalCards}개 AI 아이디어 · 9개 카테고리</p>
     </div>
 
-    <!-- 아이디어 카드 그리드 -->
-    <div class="ai-ideas-grid">
-      {ideas.map((idea, i) => (
-        <div class="ai-idea-card" style={`transition-delay:${i * 0.04}s`}>
-          <div class="ai-idea-card-bar" style={`background:${idea.color}`}></div>
-          <span class="ai-idea-card-icon">{idea.icon}</span>
-          <div class="ai-idea-card-title">{idea.title}</div>
-          <ul class="ai-idea-list">
-            {idea.items.map(item => <li>{item}</li>)}
-          </ul>
-        </div>
-      ))}
+    <!-- 설치 안내 -->
+    <div class="ai-install-box">
+      <div class="ai-install-label">CLAUDE CODE PLUGIN</div>
+      <code class="ai-install-cmd">/plugin install github:UltrasoundSonicBoom/bhm_overtime?path=packages/snuhmate-harness</code>
+      <div class="ai-install-sub">smate-feature-ship · payroll-review · design-guard · b6-masking · pr-ops · pii-patterns</div>
     </div>
 
-    <!-- 하네스 패턴 시각화 -->
-    <div class="ai-harness-section">
-      <div class="ai-section-label">HARNESS PATTERN</div>
-      <h3 class="ai-section-title">오케스트레이터 + 전문 에이전트 패턴</h3>
-      <div class="ai-harness-flow">
-        <div class="ai-harness-node ai-harness-orch">
-          <span class="ai-harness-icon">🧠</span>
-          <span>smate-feature-ship</span>
-          <span class="ai-harness-role">오케스트레이터</span>
+    <!-- 페르소나 필터 -->
+    <div class="ai-persona-bar">
+      <button class="ai-pchip active" data-persona="all" type="button">전체</button>
+      <button class="ai-pchip" data-persona="간호사" type="button">간호사</button>
+      <button class="ai-pchip" data-persona="의사·전공의" type="button">의사·전공의</button>
+      <button class="ai-pchip" data-persona="의료기사·보건직" type="button">의료기사·보건직</button>
+      <button class="ai-pchip" data-persona="행정사무직" type="button">행정사무직</button>
+      <button class="ai-pchip" data-persona="관리자·파트장" type="button">관리자·파트장</button>
+    </div>
+
+    <!-- ── 9개 섹션 루프 ─────────────────────────────────── -->
+    {sections.map(section => (
+      <div class="ai-section-group" data-sec={section.num}>
+        <div class="ai-section-head">
+          <div class="ai-section-num" style={`background:${section.color};color:#0d1117`}>{section.num}</div>
+          <div>
+            <div class="ai-section-en" style={`color:${section.color}`}>{section.label}</div>
+            <div class="ai-section-kr">{section.title}</div>
+          </div>
         </div>
-        <div class="ai-harness-arrow-wrap">
-          <div class="ai-harness-arrow"></div>
-        </div>
-        <div class="ai-harness-agents">
-          <div class="ai-harness-node ai-harness-spec">📋 payroll-review</div>
-          <div class="ai-harness-node ai-harness-spec">🎨 design-guard</div>
-          <div class="ai-harness-node ai-harness-spec">🧪 test-impact</div>
-          <div class="ai-harness-node ai-harness-spec">🚀 pr-ops</div>
-          <div class="ai-harness-node ai-harness-spec">🔒 pii-masker</div>
+
+        <div class="ai-bp-grid">
+          {section.cards.map((card, ci) => (
+            <div
+              class="ai-bpcard"
+              data-personas={card.persona.join(' ')}
+              style={`--sec-color:${section.color};transition-delay:${ci * 0.04}s`}
+            >
+              <div class="ai-bpcard-top">
+                <span class="ai-bpcard-icon">{card.icon}</span>
+                <div class="ai-bpcard-title">{card.title}</div>
+              </div>
+
+              <div class="ai-bpcard-body">{card.body}</div>
+
+              <div class="ai-bpcard-scenario">
+                <span class="ai-scenario-dot"></span>
+                {card.scenario}
+              </div>
+
+              {/* Section 8: agent stack */}
+              {card.agents && (
+                <div class="ai-agent-stack">
+                  <div class="ai-agent-orch">
+                    <span>{card.agents[0]!.emoji}</span>
+                    <span>{card.agents[0]!.role}</span>
+                  </div>
+                  <div class="ai-agent-arrow">↓</div>
+                  <div class="ai-agent-specs">
+                    {card.agents.slice(1).map(ag => (
+                      <span class="ai-agent-spec">{ag.emoji} {ag.role}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Section 9: pipeline */}
+              {card.pipeline && (
+                <div class="ai-pipe-flow">
+                  {card.pipeline.map(step => (
+                    <span class="ai-pipe-node">{step}</span>
+                  ))}
+                </div>
+              )}
+
+              <div class="ai-bpcard-foot">
+                <div class="ai-bpcard-tags">
+                  {card.techTags.map(tag => <span class="ai-tag">{tag}</span>)}
+                </div>
+                <button
+                  class="ai-card-dl"
+                  data-skill={card.skillKey}
+                  type="button"
+                  aria-label={`${card.title} 하네스 다운로드`}
+                >⬇ 하네스</button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
-      <p class="ai-harness-desc">
-        각 기능 슬롯(B2–B9)은 페르소나 게이트 → 스펙 → 구현 → QA → 배포까지<br>
-        하나의 오케스트레이터가 전문 에이전트를 조율해 자동 완주한다.
-      </p>
-    </div>
-
-    <!-- 다운로드 -->
-    <div class="ai-download-wrap">
-      <button class="ai-download-btn" id="aiDownloadBtn" type="button">
-        <span class="ai-dl-icon">📦</span>
-        <span>
-          <strong>하네스 번들 다운로드</strong>
-          <small>docs/harness/* + smate-* 스킬 참조 문서 (Markdown)</small>
-        </span>
-      </button>
-    </div>
+    ))}
 
   </div><!-- /blueprint -->
 
@@ -112,7 +397,6 @@ const portfolio = [
       <p class="ai-hero-sub">규정 기반 계산 + AI 파싱 + 개인정보 보호를 하나의 앱에</p>
     </div>
 
-    <!-- 진행 현황 스탯 바 -->
     <div class="ai-stats">
       <div class="ai-stat-item">
         <div class="ai-stat-num" style="color:var(--ai-green)">5</div>
@@ -130,7 +414,6 @@ const portfolio = [
       </div>
     </div>
 
-    <!-- 포트폴리오 카드 그리드 -->
     <div class="ai-portfolio-grid">
       {portfolio.map((item, i) => (
         <div class={`ai-pcard ai-pcard--${item.status}`} style={`transition-delay:${i * 0.04}s`}>
@@ -181,221 +464,191 @@ const portfolio = [
   background: var(--ai-surf);
 }
 #tab-ai .ai-btab {
-  flex: 1;
-  padding: 13px 10px;
-  font-size: 0.84rem;
-  font-weight: 600;
-  color: var(--ai-muted);
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  cursor: pointer;
+  flex: 1; padding: 13px 10px; font-size: 0.84rem; font-weight: 600;
+  color: var(--ai-muted); background: transparent; border: none;
+  border-bottom: 2px solid transparent; cursor: pointer;
   transition: color 0.18s, border-color 0.18s;
 }
-#tab-ai .ai-btab.active {
-  color: var(--ai-accent);
-  border-bottom-color: var(--ai-accent);
-}
+#tab-ai .ai-btab.active { color: var(--ai-accent); border-bottom-color: var(--ai-accent); }
 #tab-ai .ai-btab:hover:not(.active) { color: var(--ai-text); }
 
-/* ── Panel toggle ─────────────────────────────────────────── */
-#tab-ai .ai-panel { display: none; padding: 18px 14px 28px; }
+/* ── Panel ────────────────────────────────────────────────── */
+#tab-ai .ai-panel { display: none; padding: 16px 14px 32px; }
 #tab-ai .ai-panel.active { display: block; }
 
 /* ── Hero ─────────────────────────────────────────────────── */
-#tab-ai .ai-hero {
-  text-align: center;
-  padding: 22px 8px 18px;
-}
+#tab-ai .ai-hero { text-align: center; padding: 20px 8px 14px; }
 #tab-ai .ai-hero-label {
-  font-size: 0.67rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  color: var(--ai-accent);
-  margin-bottom: 10px;
+  font-size: 0.67rem; font-weight: 700; letter-spacing: 0.14em;
+  color: var(--ai-accent); margin-bottom: 10px;
   font-family: 'IBM Plex Mono', ui-monospace, monospace;
 }
 #tab-ai .ai-hero-title {
-  font-size: 1.38rem;
-  font-weight: 700;
-  color: var(--ai-text);
-  line-height: 1.35;
-  margin: 0 0 10px;
+  font-size: 1.32rem; font-weight: 700; color: var(--ai-text);
+  line-height: 1.35; margin: 0 0 10px;
 }
-#tab-ai .ai-hero-sub {
-  font-size: 0.77rem;
-  color: var(--ai-muted);
-  line-height: 1.65;
-}
+#tab-ai .ai-hero-sub { font-size: 0.76rem; color: var(--ai-muted); line-height: 1.65; }
 
-/* ── Idea grid ────────────────────────────────────────────── */
-#tab-ai .ai-ideas-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 9px;
-  margin-top: 12px;
+/* ── Install box ──────────────────────────────────────────── */
+#tab-ai .ai-install-box {
+  background: rgba(88,166,255,0.05);
+  border: 1px solid rgba(88,166,255,0.2);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
 }
-@media (max-width: 460px) {
-  #tab-ai .ai-ideas-grid { grid-template-columns: 1fr; }
+#tab-ai .ai-install-label {
+  font-size: 0.61rem; font-weight: 700; letter-spacing: 0.12em;
+  color: var(--ai-accent); font-family: 'IBM Plex Mono', monospace;
+  margin-bottom: 6px;
+}
+#tab-ai .ai-install-cmd {
+  display: block; font-size: 0.69rem; color: #e6edf3;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  word-break: break-all; line-height: 1.5; margin-bottom: 5px;
+}
+#tab-ai .ai-install-sub { font-size: 0.65rem; color: var(--ai-muted); }
+
+/* ── Persona filter chips ────────────────────────────────── */
+#tab-ai .ai-persona-bar {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-bottom: 14px; padding: 2px 0;
+}
+#tab-ai .ai-pchip {
+  font-size: 0.69rem; font-weight: 600; padding: 4px 10px;
+  border-radius: 999px; border: 1px solid var(--ai-border);
+  background: var(--ai-surf); color: var(--ai-muted); cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+#tab-ai .ai-pchip.active {
+  background: rgba(88,166,255,0.12); color: var(--ai-accent);
+  border-color: rgba(88,166,255,0.35);
+}
+#tab-ai .ai-pchip:hover:not(.active) { color: var(--ai-text); }
+
+/* ── Section group ────────────────────────────────────────── */
+#tab-ai .ai-section-group { margin-top: 20px; }
+#tab-ai .ai-section-group.ai-sec-hidden { display: none; }
+
+#tab-ai .ai-section-head {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 10px; padding-bottom: 8px;
+  border-bottom: 1px solid var(--ai-border);
+}
+#tab-ai .ai-section-num {
+  width: 26px; height: 26px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.72rem; font-weight: 800; flex-shrink: 0;
+}
+#tab-ai .ai-section-en {
+  font-size: 0.61rem; font-weight: 700; letter-spacing: 0.1em;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+}
+#tab-ai .ai-section-kr { font-size: 0.88rem; font-weight: 700; color: var(--ai-text); }
+
+/* ── Blueprint card grid ──────────────────────────────────── */
+#tab-ai .ai-bp-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+}
+@media (max-width: 440px) {
+  #tab-ai .ai-bp-grid { grid-template-columns: 1fr; }
   #tab-ai .ai-portfolio-grid { grid-template-columns: 1fr; }
 }
 
-#tab-ai .ai-idea-card {
-  position: relative;
-  background: var(--ai-surf);
-  border: 1px solid var(--ai-border);
-  border-radius: 8px;
-  padding: 12px 12px 12px 16px;
-  overflow: hidden;
-  opacity: 0;
-  transform: translateY(12px);
-  transition: opacity 0.4s ease, transform 0.4s ease, box-shadow 0.18s;
+#tab-ai .ai-bpcard {
+  background: var(--ai-surf); border: 1px solid var(--ai-border);
+  border-radius: 8px; padding: 12px; display: flex;
+  flex-direction: column; gap: 7px;
+  opacity: 0; transform: translateY(10px);
+  transition: opacity 0.38s ease, transform 0.38s ease, box-shadow 0.18s;
+  border-top: 2px solid var(--sec-color, var(--ai-accent));
 }
-#tab-ai .ai-idea-card.ai-visible { opacity: 1; transform: none; }
-#tab-ai .ai-idea-card:hover { box-shadow: 0 0 0 1.5px var(--ai-accent); }
+#tab-ai .ai-bpcard.ai-visible { opacity: 1; transform: none; }
+#tab-ai .ai-bpcard:hover { box-shadow: 0 0 0 1px var(--sec-color, var(--ai-accent)); }
+#tab-ai .ai-bpcard.ai-card-hidden { display: none; }
 
-#tab-ai .ai-idea-card-bar {
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 3px;
-  border-radius: 2px 0 0 2px;
+#tab-ai .ai-bpcard-top { display: flex; align-items: flex-start; gap: 8px; }
+#tab-ai .ai-bpcard-icon { font-size: 1.2rem; line-height: 1; flex-shrink: 0; margin-top: 1px; }
+#tab-ai .ai-bpcard-title {
+  font-size: 0.82rem; font-weight: 700; color: var(--ai-text); line-height: 1.35;
 }
-#tab-ai .ai-idea-card-icon { font-size: 1.25rem; margin-bottom: 6px; display: block; }
-#tab-ai .ai-idea-card-title {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--ai-text);
-  margin-bottom: 6px;
+#tab-ai .ai-bpcard-body { font-size: 0.71rem; color: var(--ai-muted); line-height: 1.6; }
+
+#tab-ai .ai-bpcard-scenario {
+  font-size: 0.68rem; color: var(--ai-muted); line-height: 1.5;
+  display: flex; align-items: flex-start; gap: 5px;
 }
-#tab-ai .ai-idea-list {
-  list-style: none;
-  padding: 0; margin: 0;
-  font-size: 0.72rem;
-  color: var(--ai-muted);
-  line-height: 1.65;
-}
-#tab-ai .ai-idea-list li::before {
-  content: '›';
-  margin-right: 5px;
-  color: var(--ai-accent);
+#tab-ai .ai-scenario-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--sec-color, var(--ai-accent));
+  flex-shrink: 0; margin-top: 4px;
 }
 
-/* ── Section label / title ────────────────────────────────── */
-#tab-ai .ai-section-label {
-  font-size: 0.66rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: var(--ai-purple);
+/* ── Agent stack (Section 8) ─────────────────────────────── */
+#tab-ai .ai-agent-stack {
+  background: var(--ai-surf2); border: 1px solid var(--ai-border);
+  border-radius: 6px; padding: 8px; margin-top: 2px;
+}
+#tab-ai .ai-agent-orch {
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  font-size: 0.69rem; font-weight: 700; color: var(--ai-rose);
+  padding-bottom: 5px;
+}
+#tab-ai .ai-agent-arrow {
+  text-align: center; font-size: 0.65rem; color: var(--ai-muted);
+  line-height: 1; padding: 2px 0;
+}
+#tab-ai .ai-agent-specs { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
+#tab-ai .ai-agent-spec {
+  font-size: 0.64rem; padding: 2px 7px; border-radius: 4px;
+  background: rgba(251,113,133,0.08); color: var(--ai-rose);
+  border: 1px solid rgba(251,113,133,0.18);
+}
+
+/* ── Pipeline flow (Section 9) ───────────────────────────── */
+#tab-ai .ai-pipe-flow {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 3px;
+  background: var(--ai-surf2); border-radius: 6px; padding: 7px 8px;
+  margin-top: 2px;
+}
+#tab-ai .ai-pipe-node {
+  font-size: 0.62rem; color: #818cf8; font-weight: 600;
+  padding: 2px 6px; background: rgba(129,140,248,0.1);
+  border-radius: 4px; border: 1px solid rgba(129,140,248,0.2);
+}
+#tab-ai .ai-pipe-node::after {
+  content: ' →'; color: var(--ai-muted); font-weight: 400;
+}
+#tab-ai .ai-pipe-node:last-child::after { content: ''; }
+
+/* ── Card footer ─────────────────────────────────────────── */
+#tab-ai .ai-bpcard-foot {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 6px; margin-top: auto;
+}
+#tab-ai .ai-bpcard-tags { display: flex; flex-wrap: wrap; gap: 3px; }
+#tab-ai .ai-card-dl {
+  flex-shrink: 0; font-size: 0.63rem; font-weight: 700;
+  padding: 3px 8px; border-radius: 5px; cursor: pointer;
+  background: rgba(88,166,255,0.08); color: var(--ai-accent);
+  border: 1px solid rgba(88,166,255,0.25);
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+#tab-ai .ai-card-dl:hover { background: rgba(88,166,255,0.18); }
+
+/* ── Tag ──────────────────────────────────────────────────── */
+#tab-ai .ai-tag {
+  font-size: 0.6rem; padding: 1px 5px; border-radius: 4px;
+  background: var(--ai-surf2); color: var(--ai-muted);
   font-family: 'IBM Plex Mono', ui-monospace, monospace;
-  margin-bottom: 4px;
 }
-#tab-ai .ai-section-title {
-  font-size: 0.97rem;
-  font-weight: 700;
-  color: var(--ai-text);
-  margin: 0 0 14px;
-}
-
-/* ── Harness section ──────────────────────────────────────── */
-#tab-ai .ai-harness-section {
-  margin-top: 22px;
-  padding: 18px;
-  background: var(--ai-surf);
-  border: 1px solid var(--ai-border);
-  border-radius: 10px;
-}
-#tab-ai .ai-harness-flow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 14px;
-}
-#tab-ai .ai-harness-node {
-  background: var(--ai-surf2);
-  border: 1px solid var(--ai-border);
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--ai-text);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-#tab-ai .ai-harness-orch {
-  flex-direction: column;
-  gap: 4px;
-  text-align: center;
-  border-color: var(--ai-accent);
-  background: rgba(88,166,255,0.06);
-  padding: 10px 14px;
-}
-#tab-ai .ai-harness-icon { font-size: 1.25rem; }
-#tab-ai .ai-harness-role {
-  font-size: 0.61rem;
-  color: var(--ai-accent);
-  font-weight: 400;
-}
-#tab-ai .ai-harness-arrow-wrap { display: flex; align-items: center; }
-#tab-ai .ai-harness-arrow {
-  width: 22px;
-  height: 2px;
-  background: linear-gradient(90deg, var(--ai-accent), transparent);
-  position: relative;
-}
-#tab-ai .ai-harness-arrow::after {
-  content: '';
-  position: absolute;
-  right: -4px; top: -3px;
-  border: 4px solid transparent;
-  border-left-color: var(--ai-accent);
-}
-#tab-ai .ai-harness-agents { display: flex; flex-wrap: wrap; gap: 5px; }
-#tab-ai .ai-harness-spec { font-size: 0.71rem; padding: 6px 10px; }
-#tab-ai .ai-harness-desc {
-  font-size: 0.75rem;
-  color: var(--ai-muted);
-  line-height: 1.65;
-  text-align: center;
-}
-
-/* ── Download button ──────────────────────────────────────── */
-#tab-ai .ai-download-wrap {
-  margin-top: 20px;
-  display: flex;
-  justify-content: center;
-}
-#tab-ai .ai-download-btn {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  background: rgba(88,166,255,0.08);
-  border: 1.5px solid var(--ai-accent);
-  border-radius: 10px;
-  padding: 14px 22px;
-  color: var(--ai-text);
-  cursor: pointer;
-  transition: background 0.2s;
-  text-align: left;
-  width: 100%;
-  max-width: 360px;
-}
-#tab-ai .ai-download-btn:hover { background: rgba(88,166,255,0.16); }
-#tab-ai .ai-dl-icon { font-size: 1.85rem; flex-shrink: 0; }
-#tab-ai .ai-download-btn strong { display: block; font-size: 0.87rem; color: var(--ai-accent); margin-bottom: 2px; }
-#tab-ai .ai-download-btn small { font-size: 0.7rem; color: var(--ai-muted); }
 
 /* ── Stats bar ────────────────────────────────────────────── */
 #tab-ai .ai-stats {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 14px 16px;
-  margin-top: 8px;
-  background: var(--ai-surf);
-  border: 1px solid var(--ai-border);
-  border-radius: 8px;
+  display: flex; justify-content: center; align-items: center;
+  padding: 14px 16px; margin-top: 8px;
+  background: var(--ai-surf); border: 1px solid var(--ai-border); border-radius: 8px;
 }
 #tab-ai .ai-stat-item { text-align: center; padding: 0 20px; }
 #tab-ai .ai-stat-num { font-size: 1.5rem; font-weight: 700; line-height: 1; }
@@ -404,148 +657,36 @@ const portfolio = [
 
 /* ── Portfolio grid ───────────────────────────────────────── */
 #tab-ai .ai-portfolio-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 9px;
-  margin-top: 14px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 14px;
 }
 #tab-ai .ai-pcard {
-  background: var(--ai-surf);
-  border: 1px solid var(--ai-border);
-  border-radius: 8px;
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  opacity: 0;
-  transform: translateY(10px);
+  background: var(--ai-surf); border: 1px solid var(--ai-border);
+  border-radius: 8px; padding: 14px; display: flex;
+  flex-direction: column; gap: 7px;
+  opacity: 0; transform: translateY(10px);
   transition: opacity 0.38s ease, transform 0.38s ease, box-shadow 0.18s;
 }
 #tab-ai .ai-pcard.ai-visible { opacity: 1; transform: none; }
 #tab-ai .ai-pcard:hover { box-shadow: 0 0 0 1.5px var(--ai-border); }
-
 #tab-ai .ai-pcard-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 6px;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 6px;
 }
 #tab-ai .ai-pcard-icon { font-size: 1.4rem; line-height: 1; }
 #tab-ai .ai-status-badge {
-  font-size: 0.62rem;
-  font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 999px;
-  white-space: nowrap;
-  flex-shrink: 0;
+  font-size: 0.62rem; font-weight: 700; padding: 2px 7px;
+  border-radius: 999px; white-space: nowrap; flex-shrink: 0;
 }
 #tab-ai .ai-status-done   { background: rgba(63,185,80,0.12);   color: var(--ai-green);  border: 1px solid rgba(63,185,80,0.28); }
 #tab-ai .ai-status-design { background: rgba(188,140,255,0.10); color: var(--ai-purple); border: 1px solid rgba(188,140,255,0.28); }
 #tab-ai .ai-status-pending{ background: rgba(139,148,158,0.08); color: var(--ai-muted);  border: 1px solid rgba(139,148,158,0.18); }
-
 #tab-ai .ai-pcard-title { font-size: 0.86rem; font-weight: 700; color: var(--ai-text); line-height: 1.3; }
 #tab-ai .ai-pcard-desc  { font-size: 0.72rem; color: var(--ai-muted); line-height: 1.55; }
 #tab-ai .ai-pcard-tags  { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
-#tab-ai .ai-tag {
-  font-size: 0.61rem;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: var(--ai-surf2);
-  color: var(--ai-muted);
-  font-family: 'IBM Plex Mono', ui-monospace, monospace;
-}
 </style>
 
 <script>
 // @ts-nocheck
 (function () {
-  /* ── 하네스 번들 콘텐츠 (Blob 다운로드용) ────────────────── */
-  var BUNDLE = [
-    '# SNUHmate Harness Bundle',
-    '',
-    '---',
-    '',
-    '## B 카탈로그 — 사용자 기능 슬롯',
-    '',
-    '각 기능은 페르소나 게이트 통과 후 smate-feature-ship 으로 구현한다.',
-    '',
-    '| ID | 기능명 | 상태 | 비고 |',
-    '|----|--------|------|------|',
-    '| B1 | 수당 최적화 어드바이저 | ❌ 폐기 | 병원 고정 스케줄 특성 미반영 |',
-    '| B2 | 커리어 트윈 | 🔲 미시작 | CareRole OS 분석 완료 |',
-    '| B3 | 근무표→스케줄 자동화 | 🔲 미시작 | CareRole OS 분석 완료 |',
-    '| B4 | 명세서 AI 분석 | 🔲 미시작 | CareRole OS 분석 완료 |',
-    '| B6 | 개인정보 마스킹 서비스 | 🔧 설계 완료 | smate-b6-masking 스킬 있음 |',
-    '| B9 | 부서 위키 | 🔲 미시작 | Schedule Tab Phase 3 연동 예정 |',
-    '',
-    '---',
-    '',
-    '## smate-feature-ship 워크플로우',
-    '',
-    '### Step 1: 페르소나 게이트',
-    '- docs/harness/persona-matrix.md 해당 슬롯 행 확인',
-    '- 비어있으면 사용자 인터뷰 먼저 (B1 폐기 교훈)',
-    '',
-    '### Step 2: 브레인스토밍 → spec',
-    '- superpowers:brainstorming 호출',
-    '- docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md 에 저장',
-    '',
-    '### Step 3: plan 작성',
-    '- superpowers:writing-plans 호출',
-    '- TDD 원칙 · 작은 task 단위',
-    '',
-    '### Step 4: 도메인 사전 점검',
-    '- 급여·계산기 변경 → /smate-payroll-review',
-    '- UI 변경 → /smate-design-guard',
-    '- B6 마스킹 → /smate-b6-masking',
-    '',
-    '### Step 5: 구현 → 검증 → 배포',
-    '- pnpm test:unit + pnpm test:integration + pnpm test:smoke',
-    '- /smate-pr-ops 로 PR 생성 및 머지',
-    '',
-    '---',
-    '',
-    '## 개발자 페르소나',
-    '',
-    '**김계환 (Jayce), 핵의학과 · 서울대학교병원**',
-    '',
-    '"내가 이 병원 사람이고, 이 규정을 읽었고, 동료가 억울하게 손해보는 걸 알고 있다. 그래서 만든다."',
-    '',
-    '### 기능 추가 판단 기준',
-    '1. 내가 이번 달에 실제로 쓸 기능인가? → YES: 만든다',
-    '2. 동료 인터뷰에서 "이게 있으면 좋겠다"가 나왔는가? → YES: 만든다',
-    '3. 둘 다 NO → 아이디어 목록에만 남긴다',
-    '',
-    '---',
-    '',
-    '## 페르소나 매트릭스 (B2~B9)',
-    '',
-    '데이터 출처: CareRole OS — SNUH 채용공고 897건 · 역할 레코드 2,034건 + 직원 설문 135명',
-    '',
-    '| ID | 기능명 | 대상 직종 | 핵심 페인포인트 |',
-    '|----|--------|-----------|----------------|',
-    '| B2 | 커리어 트윈 | 간호직 (61.5%) | 병원 내 경력 경로 불투명 |',
-    '| B3 | 근무표 자동화 | 간호직 3교대 | 월간 근무표 수동 달력 입력 |',
-    '| B4 | 명세서 AI 분석 | 운영기능직·간호직 | 수십개 약어 항목 해독 불가 |',
-    '| B6 | PII 마스킹 | 연구지원/CRC·행정직 | 환자 데이터 수동 검토 실수 |',
-    '| B9 | 부서 위키 | 운영지원·행정/총무 | 절차 구전 전달, 담당자 공백 시 지식 소멸 |',
-    '',
-    '---',
-    '',
-    '## 병원 5대 Pain Point (CareRole OS 분석)',
-    '',
-    '1. 스케줄 불투명성 — 근무표 수기 관리, 교대 패턴 예측 불가',
-    '2. 급여 불투명성 — 수십개 항목 약어, 오계산 확인 불가',
-    '3. 행정 반복 작업 — 문서화 구전 전달, 인수인계 비효율',
-    '4. 경력 경로 불투명 — 역할 이동 경로 비공개, 시장 가치 인식 부재',
-    '5. 개인정보 처리 부담 — 환자 데이터 수동 마스킹, 실수 위험',
-    '',
-    '---',
-    '',
-    '이 번들은 SNUHmate 개발 하네스의 핵심 문서를 요약한 것입니다.',
-    '전체 문서: docs/harness/ 디렉토리 참조',
-    '스킬 파일: .claude/skills/smate-*/skill.md 참조'
-  ].join('\n');
 
   /* ── Sub-tab 전환 ────────────────────────────────────────── */
   function initTabs() {
@@ -568,7 +709,7 @@ const portfolio = [
 
   /* ── IntersectionObserver 카드 등장 ─────────────────────── */
   function observePanel(panel) {
-    var cards = panel.querySelectorAll('.ai-idea-card, .ai-pcard');
+    var cards = panel.querySelectorAll('.ai-bpcard, .ai-pcard');
     if (!cards.length) return;
     var obs = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
@@ -577,31 +718,86 @@ const portfolio = [
           obs.unobserve(entry.target);
         }
       });
-    }, { threshold: 0.05 });
+    }, { threshold: 0.04 });
     cards.forEach(function (card) { obs.observe(card); });
   }
 
-  /* ── Blob 다운로드 ───────────────────────────────────────── */
-  function initDownload() {
-    var btn = document.getElementById('aiDownloadBtn');
-    if (!btn) return;
-    btn.addEventListener('click', function () {
-      var blob = new Blob([BUNDLE], { type: 'text/markdown;charset=utf-8' });
-      var url = URL.createObjectURL(blob);
-      var a = document.createElement('a');
-      a.href = url;
-      a.download = 'snuhmate-harness-bundle.md';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+  /* ── 페르소나 필터 ───────────────────────────────────────── */
+  function initPersonaFilter() {
+    var chips = document.querySelectorAll('#tab-ai .ai-pchip');
+    chips.forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        chips.forEach(function (c) { c.classList.remove('active'); });
+        chip.classList.add('active');
+        var persona = chip.getAttribute('data-persona');
+        filterByPersona(persona);
+      });
+    });
+  }
+
+  function filterByPersona(persona) {
+    var allCards = document.querySelectorAll('#tab-ai .ai-bpcard');
+    allCards.forEach(function (card) {
+      if (persona === 'all') {
+        card.classList.remove('ai-card-hidden');
+      } else {
+        var personas = (card.getAttribute('data-personas') || '').split(' ');
+        if (personas.indexOf(persona) !== -1) {
+          card.classList.remove('ai-card-hidden');
+        } else {
+          card.classList.add('ai-card-hidden');
+        }
+      }
+    });
+    // 모든 카드가 숨겨진 섹션은 숨김
+    var groups = document.querySelectorAll('#tab-ai .ai-section-group');
+    groups.forEach(function (grp) {
+      var visible = grp.querySelectorAll('.ai-bpcard:not(.ai-card-hidden)');
+      if (visible.length === 0) {
+        grp.classList.add('ai-sec-hidden');
+      } else {
+        grp.classList.remove('ai-sec-hidden');
+      }
+    });
+  }
+
+  /* ── 카드별 하네스 다운로드 ──────────────────────────────── */
+  function initCardDownloads() {
+    var btns = document.querySelectorAll('#tab-ai .ai-card-dl');
+    btns.forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var skillKey = btn.getAttribute('data-skill');
+        if (!skillKey) return;
+        var url = '/harness/' + skillKey + '.md';
+        fetch(url)
+          .then(function (res) {
+            if (!res.ok) throw new Error('not found');
+            return res.text();
+          })
+          .then(function (text) {
+            var blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
+            var burl = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = burl;
+            a.download = 'snuhmate-' + skillKey + '.md';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(burl);
+          })
+          .catch(function () {
+            window.open(url, '_blank');
+          });
+      });
     });
   }
 
   /* ── 초기화 ─────────────────────────────────────────────── */
   function init() {
     initTabs();
-    initDownload();
+    initPersonaFilter();
+    initCardDownloads();
     var bp = document.getElementById('ai-panel-blueprint');
     if (bp) requestAnimationFrame(function () { observePanel(bp); });
   }

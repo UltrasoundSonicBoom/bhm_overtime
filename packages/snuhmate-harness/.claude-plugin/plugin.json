@@ -1,0 +1,10 @@
+{
+  "name": "snuhmate-harness",
+  "description": "SNUHmate 병원 AI 에이전트 하네스 — smate-feature-ship(기능 끝-끝), smate-payroll-review(급여 회귀), smate-design-guard(디자인시스템), smate-b6-masking(PII 마스킹), smate-pr-ops(PR 자동화), smate-pii-patterns(한국 PII 패턴) 6개 스킬 포함. SNUH 병원 직원을 위한 Claude Code 에이전트 팀 프레임워크.",
+  "version": "1.0.0",
+  "author": { "name": "kgh1379", "url": "https://github.com/UltrasoundSonicBoom" },
+  "homepage": "https://github.com/UltrasoundSonicBoom/bhm_overtime",
+  "repository": "https://github.com/UltrasoundSonicBoom/bhm_overtime",
+  "license": "MIT",
+  "keywords": ["snuhmate","hospital","harness","claude-code","claude-code-plugin","agent-team","payroll","pii-masking","design-guard","multi-agent"]
+}

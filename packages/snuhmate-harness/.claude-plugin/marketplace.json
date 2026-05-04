@@ -1,0 +1,7 @@
+{
+  "name": "snuhmate-harness-marketplace",
+  "owner": { "name": "kgh1379", "url": "https://github.com/UltrasoundSonicBoom" },
+  "plugins": [
+    { "name": "snuhmate-harness", "source": "./", "description": "SNUHmate 병원 AI 에이전트 하네스 — 6개 smate-* 스킬 포함.", "version": "1.0.0" }
+  ]
+}
