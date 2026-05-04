@@ -96,6 +96,10 @@ function _gradeHoshongEvents(profile) {
   const grade = profile.grade;
   const currentYear = Math.max(1, Math.min(8, profile.year || 1));
   if (!grade) return [];
+  // 자동승격 경로가 있는 중간 등급(J1, J2, J3, A1~A3, SA1~SA3)은
+  // PROMO_* 이벤트가 이미 생성되므로 호봉 이벤트 중복 생성 불필요.
+  const allPromoSequences = [...PROMO_GENERAL, ...PROMO_OPERATION, ...PROMO_SUPPORT];
+  if (allPromoSequences.some((step) => step.from === grade)) return [];
   const jobType = profile.jobType || '간호직';
   const now = new Date();
   const nowYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
