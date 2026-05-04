@@ -43,17 +43,17 @@ test.describe('규정 sub-tab + 전체규정 + 검색 확장', () => {
     expect(articles).toBeGreaterThanOrEqual(50);
   });
 
-  test('검색 확장 — 누락 키워드 5종 모두 매칭', async ({ page }) => {
+  test('검색 확장 — 누락 키워드 5종 모두 본문 매칭 (extended results 박스 노출)', async ({ page }) => {
     await page.goto('/app?tab=reference');
     await page.waitForFunction(() => document.querySelector('.reg-article'));
+    // 공백·표현 차이 보정 동의어 매칭 검증
     const keywords = ['장기재직', '자기계발', '배우자출산', '임신검진', '보건휴가'];
     for (const kw of keywords) {
+      await page.fill('#browseSearch', '');
       await page.fill('#browseSearch', kw);
-      // 확장 결과 박스 또는 기본 결과 중 하나가 키워드 포함
       await expect.poll(async () => {
-        const text = await page.locator('#browseArticles').textContent();
-        return text || '';
-      }, { timeout: 3000 }).toContain(kw);
+        return await page.locator('.reg-extended-results').count();
+      }, { timeout: 3000, message: `"${kw}" 검색 시 extended-results 미출현` }).toBeGreaterThan(0);
     }
   });
 

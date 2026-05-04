@@ -897,14 +897,15 @@ function searchBrowse(query) {
   }
 
   var q = query.toLowerCase();
+  var qNorm = q.replace(/\s+/g, ''); // 공백 무시 매칭 (장기재직 ↔ 장기 재직)
   var results = [];
 
-  // Search handbook articles
+  // Search handbook articles (공백 무시)
   DATA.handbook.forEach(function(section) {
     section.articles.forEach(function(article) {
-      var inTitle = article.title.toLowerCase().includes(q);
-      var inBody = article.body.toLowerCase().includes(q);
-      var inRef = article.ref.toLowerCase().includes(q);
+      var inTitle = (article.title || '').toLowerCase().replace(/\s+/g, '').indexOf(qNorm) !== -1;
+      var inBody = (article.body || '').toLowerCase().replace(/\s+/g, '').indexOf(qNorm) !== -1;
+      var inRef = (article.ref || '').toLowerCase().replace(/\s+/g, '').indexOf(qNorm) !== -1;
 
       if (inTitle || inBody || inRef) {
         results.push(Object.assign({}, article, {
@@ -1585,11 +1586,49 @@ function loadUnionArticles() {
     .catch(function () { _unionArticlesCache = []; return []; });
 }
 
+// 공백 무시 정규화 — "장기 재직" / "장기재직" / "장기  재직" 모두 동일하게 매칭
+function normSearch(s) {
+  return String(s || '').toLowerCase().replace(/\s+/g, '');
+}
+
+// 사용자 검색어 → 공식 단협 용어 동의어 (사용자가 자주 쓰는 표현 보정)
+// Plan dazzling-booping-kettle redesign — '보건휴가' 같은 일반 통용어 → '생리휴가' 등 공식 용어
+var SEARCH_SYNONYMS = {
+  '보건휴가': ['생리휴가'],
+  '생리휴가': ['보건휴가', '생리'],
+  '경조사휴가': ['경조사', '경조금', '청원휴가'],
+  '돌봄휴가': ['가족돌봄'],
+  '병가': ['병가', '질병'],
+  '공로연수': ['공로연수', '임금피크'],
+  '간병': ['간병', '가족돌봄', '간병휴직'],
+  '연차': ['연차', '연차유급휴가'],
+};
+
+// 검색어 + 동의어 모두 시도해서 OR 매칭. 공백 무시 normSearch 적용.
+function expandSearchTerms(query) {
+  var base = normSearch(query);
+  var terms = [base];
+  Object.keys(SEARCH_SYNONYMS).forEach(function (key) {
+    if (normSearch(query).indexOf(normSearch(key)) !== -1) {
+      SEARCH_SYNONYMS[key].forEach(function (syn) {
+        var ns = normSearch(syn);
+        if (terms.indexOf(ns) === -1) terms.push(ns);
+      });
+    }
+  });
+  return terms;
+}
+
 // 검색어로 매칭되는 union article 목록 + full_md 안의 매칭 라인을 반환.
 // 결과는 { unionHits: [{id, title, snippet}], mdHits: [{ref, snippet}] } 형태.
 function searchUnionAndMd(query) {
   if (!query) return Promise.resolve({ unionHits: [], mdHits: [] });
-  var q = query.toLowerCase();
+  var terms = expandSearchTerms(query); // 공백 무시 + 동의어 확장
+  function blobHit(text) {
+    var n = normSearch(text);
+    for (var i = 0; i < terms.length; i++) if (terms[i] && n.indexOf(terms[i]) !== -1) return true;
+    return false;
+  }
   return Promise.all([loadUnionArticles(), loadFullRegulationMd()]).then(function (arr) {
     var articles = arr[0] || [];
     var md = arr[1] || '';
@@ -1598,8 +1637,8 @@ function searchUnionAndMd(query) {
       var blob = [a.title || '', a.content || '', (a.clauses || []).join(' '),
         (a.history || []).map(function (h) { return (h.note || '') + ' ' + (h.type || ''); }).join(' '),
         (a.related_agreements || []).map(function (r) { return (r.title || '') + ' ' + (r.content || ''); }).join(' ')
-      ].join(' ').toLowerCase();
-      if (blob.indexOf(q) !== -1) {
+      ].join(' ');
+      if (blobHit(blob)) {
         var snippet = (a.content || (a.clauses || [])[0] || '').slice(0, 120);
         unionHits.push({ id: a.id, title: a.title, snippet: snippet, chapter: a.chapter });
       }
@@ -1612,7 +1651,7 @@ function searchUnionAndMd(query) {
         var line = lines[i];
         var hdr = /^\*\*(제\s*\d+\s*조[^*]*)\*\*/.exec(line);
         if (hdr) currentRef = hdr[1].trim();
-        if (line.toLowerCase().indexOf(q) !== -1 && line.length > q.length + 2) {
+        if (blobHit(line) && line.length > query.length + 2) {
           mdHits.push({ ref: currentRef, snippet: line.replace(/\*\*/g, '').slice(0, 200) });
           if (mdHits.length >= 12) break;
         }
