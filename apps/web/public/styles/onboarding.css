@@ -747,23 +747,40 @@ body {
 .ob-auth-panel .ob-auth-actions button {
   flex: 1;
   padding: 10px;
-  border-radius: 8px;
-  border: none;
+  border-radius: var(--radius-sm, 8px);
   font-weight: 700;
   font-size: 14px;
   cursor: pointer;
   font-family: "Noto Sans KR", "Inter", sans-serif;
+  border: 2px solid var(--border-glass, #1a1a1a);
+  box-shadow: var(--shadow-sm, 2px 2px 0px #1a1a1a);
+  transition: transform 0.12s, box-shadow 0.12s;
 }
-.ob-auth-panel .ob-auth-primary { background: #6c5ce7; color: #ffffff; }
-.ob-auth-panel .ob-auth-primary:disabled { opacity: 0.55; cursor: progress; }
-.ob-auth-panel .ob-auth-ghost { background: transparent; color: #6b7280; border: 1px solid rgba(0, 0, 0, 0.12); }
+.ob-auth-panel .ob-auth-actions button:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: var(--shadow-md, 4px 4px 0px #1a1a1a);
+}
+.ob-auth-panel .ob-auth-primary {
+  background: var(--accent-indigo, #6c5ce7);
+  color: #ffffff;
+}
+.ob-auth-panel .ob-auth-primary:disabled {
+  opacity: 0.55;
+  cursor: progress;
+  transform: none;
+  box-shadow: var(--shadow-sm, 2px 2px 0px #1a1a1a);
+}
+.ob-auth-panel .ob-auth-ghost {
+  background: var(--bg-card, #ffffff);
+  color: var(--text-secondary, #4a4a4a);
+}
 .ob-auth-msg {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--text-muted, #7a7a7a);
   min-height: 16px;
 }
-.ob-auth-msg.error { color: #b91c1c; }
-.ob-auth-msg.ok { color: #047857; }
+.ob-auth-msg.error { color: var(--color-status-error, #b91c1c); }
+.ob-auth-msg.ok { color: var(--accent-emerald, #047857); }
 .ob-auth-domains {
   font-size: 10px;
   opacity: 0.6;
