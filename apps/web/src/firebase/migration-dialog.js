@@ -86,13 +86,18 @@ export function captureGuestMigrationSnapshot() {
 }
 
 function _clearAllGuestData(snapshot = null) {
+  const removed = [];
   const sharedKeys = ['leaveRecords', 'snuhmate_schedule_records', 'overtimePayslipData'];
   for (const k of GUEST_FLAT_KEYS) {
     if (sharedKeys.includes(k) || k === 'snuhmate_settings') continue;
+    if (localStorage.getItem(k) !== null) removed.push(k);
     localStorage.removeItem(k);
   }
   const payslipKeys = Object.keys(localStorage).filter(k => PAYSLIP_GUEST_KEY_RE.test(k));
-  for (const k of payslipKeys) localStorage.removeItem(k);
+  for (const k of payslipKeys) {
+    removed.push(k);
+    localStorage.removeItem(k);
+  }
 
   // leaveRecords / schedule_records / legacy overtimePayslipData 는 공유 키라서
   // 로그인 후 hydrate 가 이미 cloud 값을 써둔 경우까지 지우면 안 된다.
@@ -101,9 +106,20 @@ function _clearAllGuestData(snapshot = null) {
     if (snapValue === undefined) continue;
     const current = _parseStored(localStorage.getItem(k));
     if (_stringifyComparable(current) === _stringifyComparable(snapValue)) {
+      removed.push(k);
       localStorage.removeItem(k);
     }
   }
+  return removed;
+}
+
+// Public wrapper — Task 2 (PRIMARY BUG fix): allow sync-lifecycle.logout() to
+// wipe all guest-scoped localStorage keys after clearing uid keys.
+// Accepts the same optional snapshot used internally so callers (e.g. migration
+// flow) can preserve cloud-hydrated shared keys; logout() passes nothing → all
+// non-shared guest keys plus payslip_guest_* are removed.
+export function clearAllGuestData(snapshot) {
+  return _clearAllGuestData(snapshot);
 }
 
 // ── 카테고리 정의 ──────────────────────────────────────────────────────────

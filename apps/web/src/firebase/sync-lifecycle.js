@@ -2,6 +2,7 @@
 // Central lifecycle boundary for auth-scoped local state and UI refresh.
 
 import { KEY_REGISTRY, localKeyFor, localScopeOf, syncKeys } from './key-registry.js';
+import { clearAllGuestData } from './migration-dialog.js';
 
 export const AUTH_BRIDGE_FIELDS = ['googleSub', 'googleEmail', 'cachedProfile', 'displayName'];
 export const DOMAIN_REFRESH_EVENTS = [
@@ -124,6 +125,15 @@ export async function hydrate(uid) {
 
 export function logout(uid) {
   const removed = clearActiveUserLocalData(uid);
+  // 🔧 Task 2 (PRIMARY BUG fix): also clear guest data so the next login starts
+  // clean. Without this, *_guest keys survive logout and pollute the next
+  // session via auto-sync fallback chains (Firestore pollution risk).
+  try {
+    const guestRemoved = clearAllGuestData() || [];
+    removed.push(...guestRemoved);
+  } catch (e) {
+    console.warn('[sync-lifecycle] clearAllGuestData failed', e?.message);
+  }
   clearAuthBridge();
   if (typeof window !== 'undefined') delete window.__firebaseUid;
   emitDomainRefresh({ uid, reason: 'logout', removed }, { cloudHydrated: false });

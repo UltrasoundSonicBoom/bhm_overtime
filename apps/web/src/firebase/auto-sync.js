@@ -107,6 +107,11 @@ function _booleanFromStorage(raw) {
 
 function _firstLocalValue(keys, fallback) {
   for (const key of keys) {
+    // 🔧 Task 2: never fall back to a guest-scoped key during a hydrated
+    // session. logout() now wipes *_guest, but as defense-in-depth we also
+    // skip any '_guest' key so a transient race can't leak guest data into
+    // a uid-scoped Firestore write.
+    if (typeof key === 'string' && key.includes('_guest')) continue;
     const value = _localValue(key);
     if (value !== null) return value;
   }
