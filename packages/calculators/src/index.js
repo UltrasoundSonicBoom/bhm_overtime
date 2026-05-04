@@ -648,11 +648,57 @@ export const CALC = {
      * 야간근무 가산금 및 리커버리 데이 계산 (교대근무자 전용)
      * @param {number} nightShiftCount - 당월 야간근무 횟수
      * @param {number} prevCumulative - 이전 누적 미지급 야간횟수 (profile.nightShiftsUnrewarded, 기본 0)
-     * @returns {object} { 야간근무가산금, 횟수, 리커버리데이, 누적리커버리데이(잔여), 초과경고 }
+     * @param {string|null} jobType
+     * @param {object} [opts] — 야간금지 예외 게이트
+     *   @param {string} [opts.birthDate]                   YYYY-MM-DD (제32조8: 만 40세↑ 간호직 미배치)
+     *   @param {boolean} [opts.pregnancy]                  임신부 (제38조6)
+     *   @param {number}  [opts.postpartumMonthsElapsed]   산후 경과 개월 (1년 미만이면 야간 금지)
+     *   @param {string}  [opts.referenceDate]             연령 기준일 YYYY-MM-DD (기본: 오늘)
+     * @returns {object} { 야간근무가산금, 횟수, 리커버리데이, 누적리커버리데이, 초과경고, warnings, policyHits }
      */
-    calcNightShiftBonus(nightShiftCount, prevCumulative = 0, jobType = null) {
-        const bonus = nightShiftCount * DATA.allowances.nightShiftBonus;
+    calcNightShiftBonus(nightShiftCount, prevCumulative = 0, jobType = null, opts = {}) {
         const rd = DATA.recoveryDay;
+
+        // ── 야간금지 예외 게이트 (제32조8·제38조6) ──
+        // 발견 시 야간근무가산금 0 으로 리턴 + warnings 반환 (정책상 미배치이므로 simulator 가 "0" 으로 안내).
+        const warnings = [];
+        const policyHits = [];
+
+        if (opts && opts.pregnancy === true) {
+            warnings.push('pregnancy_night_block');
+            policyHits.push({ rule: '제38조(6)', reason: '임신부 야간근무 금지' });
+        }
+        if (opts && typeof opts.postpartumMonthsElapsed === 'number' && opts.postpartumMonthsElapsed < 12) {
+            warnings.push('postpartum_night_block');
+            policyHits.push({ rule: '제38조(6)', reason: '산후 1년 미만 산부 야간근무 금지' });
+        }
+        if (opts && opts.birthDate && jobType === '간호직') {
+            const birth = new Date(opts.birthDate);
+            const ref = opts.referenceDate ? new Date(opts.referenceDate) : new Date();
+            if (!isNaN(birth.getTime()) && !isNaN(ref.getTime())) {
+                let age = ref.getFullYear() - birth.getFullYear();
+                const m = ref.getMonth() - birth.getMonth();
+                if (m < 0 || (m === 0 && ref.getDate() < birth.getDate())) age--;
+                if (age >= 40) {
+                    warnings.push('age_40_nurse_night_block');
+                    policyHits.push({ rule: '제32조(8)', reason: '만 40세 이상 간호부 교대근무자 야간 미배치 원칙' });
+                }
+            }
+        }
+
+        if (policyHits.length > 0) {
+            return {
+                야간근무가산금: 0,
+                횟수: nightShiftCount,
+                리커버리데이: 0,
+                누적리커버리데이: prevCumulative,
+                초과경고: '',
+                warnings,
+                policyHits
+            };
+        }
+
+        const bonus = nightShiftCount * DATA.allowances.nightShiftBonus;
 
         // Bug #6 — handbook p.25 제32조 (2)-2:
         // 시설지원직/환경미화직/지원직: 누적 20회 트리거
@@ -682,7 +728,9 @@ export const CALC = {
             횟수: nightShiftCount,
             리커버리데이: recoveryDaysEarned,
             누적리커버리데이: newCumulative,  // 이월 잔여 누적 횟수
-            초과경고: nightShiftCount > 9 ? '⚠️ 월 9일 초과! 시간외수당 처리 필요' : ''
+            초과경고: nightShiftCount > 9 ? '⚠️ 월 9일 초과! 시간외수당 처리 필요' : '',
+            warnings,
+            policyHits
         };
     },
 
