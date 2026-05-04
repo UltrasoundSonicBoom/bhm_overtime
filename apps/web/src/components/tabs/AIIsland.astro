@@ -1,138 +1,615 @@
 ---
-// AIIsland — AI 도구 탭 (에이전트 갤러리)
-// ai-gallery.js 가 탭 진입 시 dynamic import 되어 카탈로그 렌더 + 에이전트 실행.
-// 백엔드: GET /ai/agents, POST /ai/agent/run (SSE)
-// 환경변수: PUBLIC_AI_API_URL (기본값 http://localhost:8000)
+// AIIsland — 병원 AI 청사진 + SNUHmate AI 포트폴리오
+// 북마크 1: 🏥 병원 AI 청사진 (hospital-ai-ideas 47개 + 하네스 패턴 + 번들 다운로드)
+// 북마크 2: 💡 AI 포트폴리오 (SNUHmate 구현·예정 AI 기능 갤러리)
+
+const ideas = [
+  { icon: '📅', title: '근무표 자동화', color: '#58a6ff', items: ['근무표 사진 → 캘린더 자동 반영', '교대 패턴 예측·알림', '다음달 근무 미리 확인'] },
+  { icon: '🛡️', title: '환자 안전 AI', color: '#3fb950', items: ['낙상 위험 자동 스코어링', '투약 오류 사전 경고', 'SBAR 자동 작성 지원'] },
+  { icon: '📋', title: '행정 문서 자동화', color: '#bc8cff', items: ['회의록 STT → 구조화 요약', '진료 기록 초안 생성', '간호 인수인계 자동 정리'] },
+  { icon: '🎓', title: '커리어 성장 AI', color: '#d29922', items: ['유사 경력 동료 트윈 매핑', '직무 역량 갭 분석', '교육 이수 경로 추천'] },
+  { icon: '💰', title: '급여 투명성', color: '#fb7185', items: ['명세서 항목 한글 해설', '오계산 자동 감지 알림', '수당 조항 인라인 연결'] },
+  { icon: '🗣️', title: '소통·번역 AI', color: '#39c5cf', items: ['다국어 환자 안내문 번역', '부서간 문서 요약 공유', '의학 용어 환자 친화 변환'] },
+  { icon: '🧠', title: '번아웃 예방', color: '#58a6ff', items: ['초과근무 패턴 이상 감지', '웰빙 체크인 리마인더', '업무 부하 분산 알림'] },
+  { icon: '🔐', title: '개인정보 보호', color: '#bc8cff', items: ['PII 자동 탐지·마스킹', '공유 전 민감정보 경고', '로컬 처리 우선 파이프라인'] },
+  { icon: '🏥', title: '환자 경험 AI', color: '#3fb950', items: ['검사 전 설명문 자동 생성', '퇴원 안내 개인화', '부서 위키 AI 검색'] },
+];
+
+const portfolio = [
+  { icon: '⏰', title: '시간외수당 계산', status: 'done', badge: '✅ 완료', desc: '제33조 휴게시간 미사용·연장근무 자동 계산. 시급 경고 배너 포함.', tags: ['규정기반', '순수계산', '조항인라인'] },
+  { icon: '📆', title: '연차·휴가 계산', status: 'done', badge: '✅ 완료', desc: '입사일 기준 연차 발생 자동 계산. 보건휴가·특별휴가 전 항목 포함.', tags: ['연차법', '날짜계산'] },
+  { icon: '💴', title: '급여 시뮬레이터', status: 'done', badge: '✅ 완료', desc: '호봉·직종별 기본급 + 각종 수당 + 4대보험 공제 예측 시뮬레이션.', tags: ['호봉표', '세금계산', '퇴직금'] },
+  { icon: '🎯', title: '생활이벤트 가이드', status: 'done', badge: '✅ 완료', desc: '5카테고리 17케이스 결정형 카드 — 출산·육아·장기재직 상황별 안내.', tags: ['결정트리', '규정연결'] },
+  { icon: '🔍', title: '단협 규정 검색', status: 'done', badge: '✅ 완료', desc: '동의어·공백 무시 의미 기반 검색. 전체 규정 브라우저 + MD 렌더링.', tags: ['검색', '단협', 'MD렌더'] },
+  { icon: '🔒', title: 'PII 마스킹 (B6)', status: 'design', badge: '🔧 설계완료', desc: 'Presidio(로컬) → LLM(opt-in) 2단계 파이프라인. 환자 데이터 공유 전 처리.', tags: ['Presidio', 'FastAPI', 'Privacy'] },
+  { icon: '👥', title: '커리어 트윈 (B2)', status: 'pending', badge: '🔲 예정', desc: '유사 경력 동료의 진로 경로 참고. CareRole OS 2,034건 분석 완료.', tags: ['B2', '페르소나완료'] },
+  { icon: '📊', title: '명세서 AI 분석 (B4)', status: 'pending', badge: '🔲 예정', desc: '항목별 한글 설명 + 전월 대비 차이 하이라이트. LLM 파싱 연동.', tags: ['B4', 'LLM파싱'] },
+  { icon: '📖', title: '부서 위키 (B9)', status: 'pending', badge: '🔲 예정', desc: '부서 절차 체계화 + AI 검색. Schedule Tab Phase 3와 통합 예정.', tags: ['B9', 'RAG', 'Schedule연동'] },
+];
 ---
+
 <div class="tab-content" id="tab-ai">
 
-  <!-- 배너 -->
-  <div class="info-note-banner mb-3">
-    <span>🤖</span>
-    <div>
-      <strong>AI 도구 갤러리</strong><br>
-      병원·직장 업무에 바로 쓸 수 있는 AI 에이전트. 입력만 하면 문서가 완성됩니다.
-    </div>
+  <!-- ── 북마크 탭 네비게이션 ───────────────────────────── -->
+  <div class="ai-btabs">
+    <button class="ai-btab active" data-aitab="blueprint">🏥 병원 AI 청사진</button>
+    <button class="ai-btab" data-aitab="portfolio">💡 AI 포트폴리오</button>
   </div>
 
-  <!-- 필터 -->
-  <div class="card p-3 mb-3">
-    <div class="flex flex-wrap items-center gap-2 mb-2" id="aiCategoryChips">
-      <button class="ai-chip active" data-cat="all" type="button">전체</button>
-    </div>
-    <input type="search" id="aiSearch"
-      class="w-full p-2 rounded-md border border-brand-text-muted text-brand-body-normal"
-      placeholder="에이전트 검색 (예: 회의록, SBAR, 번역)" />
-  </div>
+  <!-- ═══════════════════════════════════════════════════════
+       북마크 1: 병원 AI 청사진
+       ═══════════════════════════════════════════════════════ -->
+  <div class="ai-panel active" id="ai-panel-blueprint">
 
-  <!-- 에이전트 카드 그리드 -->
-  <div id="aiAgentGrid" class="grid grid-cols-1 md:grid-cols-2 gap-3">
-    <p class="text-brand-text-muted text-center p-6 col-span-full">에이전트를 불러오는 중…</p>
-  </div>
-
-  <!-- 실행 패널 (선택된 에이전트) -->
-  <div id="aiRunPanel" class="card p-4 mt-3" style="display:none;">
-    <div class="flex items-center justify-between mb-3">
-      <h3 class="font-semibold text-brand-body-normal" id="aiRunTitle">에이전트 실행</h3>
-      <button type="button" id="aiRunClose"
-        class="text-brand-text-muted text-xl leading-none"
-        aria-label="닫기">×</button>
+    <div class="ai-hero">
+      <div class="ai-hero-label">HOSPITAL AI BLUEPRINT</div>
+      <h2 class="ai-hero-title">병원 일하는 방식을<br>AI로 다시 설계한다</h2>
+      <p class="ai-hero-sub">SNUH 채용공고 897건 · 역할 레코드 2,034건 · 직원 설문 135명 기반<br>47개 AI 아이디어 · 9개 카테고리</p>
     </div>
-    <form id="aiRunForm" class="flex flex-col gap-3">
-      <div id="aiRunInputs"></div>
-      <button type="submit" id="aiRunBtn"
-        class="btn-primary w-full py-2 rounded-lg font-semibold">
-        ✨ 실행
+
+    <!-- 아이디어 카드 그리드 -->
+    <div class="ai-ideas-grid">
+      {ideas.map((idea, i) => (
+        <div class="ai-idea-card" style={`transition-delay:${i * 0.04}s`}>
+          <div class="ai-idea-card-bar" style={`background:${idea.color}`}></div>
+          <span class="ai-idea-card-icon">{idea.icon}</span>
+          <div class="ai-idea-card-title">{idea.title}</div>
+          <ul class="ai-idea-list">
+            {idea.items.map(item => <li>{item}</li>)}
+          </ul>
+        </div>
+      ))}
+    </div>
+
+    <!-- 하네스 패턴 시각화 -->
+    <div class="ai-harness-section">
+      <div class="ai-section-label">HARNESS PATTERN</div>
+      <h3 class="ai-section-title">오케스트레이터 + 전문 에이전트 패턴</h3>
+      <div class="ai-harness-flow">
+        <div class="ai-harness-node ai-harness-orch">
+          <span class="ai-harness-icon">🧠</span>
+          <span>smate-feature-ship</span>
+          <span class="ai-harness-role">오케스트레이터</span>
+        </div>
+        <div class="ai-harness-arrow-wrap">
+          <div class="ai-harness-arrow"></div>
+        </div>
+        <div class="ai-harness-agents">
+          <div class="ai-harness-node ai-harness-spec">📋 payroll-review</div>
+          <div class="ai-harness-node ai-harness-spec">🎨 design-guard</div>
+          <div class="ai-harness-node ai-harness-spec">🧪 test-impact</div>
+          <div class="ai-harness-node ai-harness-spec">🚀 pr-ops</div>
+          <div class="ai-harness-node ai-harness-spec">🔒 pii-masker</div>
+        </div>
+      </div>
+      <p class="ai-harness-desc">
+        각 기능 슬롯(B2–B9)은 페르소나 게이트 → 스펙 → 구현 → QA → 배포까지<br>
+        하나의 오케스트레이터가 전문 에이전트를 조율해 자동 완주한다.
+      </p>
+    </div>
+
+    <!-- 다운로드 -->
+    <div class="ai-download-wrap">
+      <button class="ai-download-btn" id="aiDownloadBtn" type="button">
+        <span class="ai-dl-icon">📦</span>
+        <span>
+          <strong>하네스 번들 다운로드</strong>
+          <small>docs/harness/* + smate-* 스킬 참조 문서 (Markdown)</small>
+        </span>
       </button>
-    </form>
+    </div>
 
-    <!-- 출력 영역 -->
-    <div id="aiOutputWrap" class="mt-4" style="display:none;">
-      <div class="flex items-center justify-between mb-2">
-        <span class="text-sm font-medium text-brand-text-muted">결과</span>
-        <button type="button" id="aiCopyBtn"
-          class="text-xs text-brand-primary border border-brand-primary rounded px-2 py-1">
-          복사
-        </button>
+  </div><!-- /blueprint -->
+
+  <!-- ═══════════════════════════════════════════════════════
+       북마크 2: SNUHmate AI 포트폴리오
+       ═══════════════════════════════════════════════════════ -->
+  <div class="ai-panel" id="ai-panel-portfolio">
+
+    <div class="ai-hero">
+      <div class="ai-hero-label">AI PORTFOLIO</div>
+      <h2 class="ai-hero-title">SNUHmate에 녹아든<br>AI 기능들</h2>
+      <p class="ai-hero-sub">규정 기반 계산 + AI 파싱 + 개인정보 보호를 하나의 앱에</p>
+    </div>
+
+    <!-- 진행 현황 스탯 바 -->
+    <div class="ai-stats">
+      <div class="ai-stat-item">
+        <div class="ai-stat-num" style="color:var(--ai-green)">5</div>
+        <div class="ai-stat-label">완료</div>
       </div>
-      <div id="aiOutput"
-        class="bg-brand-surface-alt rounded-lg p-4 text-sm whitespace-pre-wrap min-h-[120px] max-h-[60vh] overflow-y-auto font-mono">
+      <div class="ai-stat-divider"></div>
+      <div class="ai-stat-item">
+        <div class="ai-stat-num" style="color:var(--ai-purple)">1</div>
+        <div class="ai-stat-label">설계완료</div>
+      </div>
+      <div class="ai-stat-divider"></div>
+      <div class="ai-stat-item">
+        <div class="ai-stat-num" style="color:var(--ai-muted)">3</div>
+        <div class="ai-stat-label">예정</div>
       </div>
     </div>
-  </div>
 
-</div>
+    <!-- 포트폴리오 카드 그리드 -->
+    <div class="ai-portfolio-grid">
+      {portfolio.map((item, i) => (
+        <div class={`ai-pcard ai-pcard--${item.status}`} style={`transition-delay:${i * 0.04}s`}>
+          <div class="ai-pcard-head">
+            <span class="ai-pcard-icon">{item.icon}</span>
+            <span class={`ai-status-badge ai-status-${item.status}`}>{item.badge}</span>
+          </div>
+          <div class="ai-pcard-title">{item.title}</div>
+          <div class="ai-pcard-desc">{item.desc}</div>
+          <div class="ai-pcard-tags">
+            {item.tags.map(tag => <span class="ai-tag">{tag}</span>)}
+          </div>
+        </div>
+      ))}
+    </div>
+
+  </div><!-- /portfolio -->
+
+</div><!-- #tab-ai -->
 
 <style is:global>
-  .ai-chip {
-    display: inline-flex;
-    align-items: center;
-    padding: 4px 10px;
-    border-radius: 999px;
-    border: 1.5px solid var(--border-subtle, #e5e7eb);
-    background: var(--surface, #fff);
-    color: var(--text-secondary, #6b7280);
-    font-size: 0.8rem;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .ai-chip.active {
-    background: var(--brand-primary, #6366f1);
-    border-color: var(--brand-primary, #6366f1);
-    color: #fff;
-  }
+/* ════════════════════════════════════════════════════════════
+   Dark canvas — #tab-ai 내부 전용 스코프
+   ════════════════════════════════════════════════════════════ */
+#tab-ai {
+  --ai-bg:     #0d1117;
+  --ai-surf:   #161b22;
+  --ai-surf2:  #21262d;
+  --ai-border: rgba(240,246,252,0.09);
+  --ai-text:   #e6edf3;
+  --ai-muted:  #8b949e;
+  --ai-accent: #58a6ff;
+  --ai-green:  #3fb950;
+  --ai-purple: #bc8cff;
+  --ai-amber:  #d29922;
+  --ai-rose:   #fb7185;
+  background: var(--ai-bg);
+  color: var(--ai-text);
+  border-radius: 12px;
+  overflow: hidden;
+  min-height: 480px;
+}
 
-  .ai-agent-card {
-    background: var(--surface, #fff);
-    border: 1.5px solid var(--border-subtle, #e5e7eb);
-    border-radius: 12px;
-    padding: 14px 16px;
-    cursor: pointer;
-    transition: box-shadow 0.15s, border-color 0.15s;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-  .ai-agent-card:hover {
-    box-shadow: 0 2px 12px rgba(99,102,241,0.12);
-    border-color: var(--brand-primary, #6366f1);
-  }
-  .ai-agent-card-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .ai-agent-icon {
-    font-size: 1.5rem;
-    flex-shrink: 0;
-  }
-  .ai-agent-name {
-    font-weight: 600;
-    font-size: 0.95rem;
-    color: var(--text-primary, #111827);
-  }
-  .ai-agent-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin-top: 2px;
-  }
-  .ai-agent-tag {
-    font-size: 0.7rem;
-    padding: 2px 7px;
-    border-radius: 999px;
-    background: var(--surface-alt, #f3f4f6);
-    color: var(--text-muted, #9ca3af);
-  }
-  .ai-agent-est {
-    font-size: 0.75rem;
-    color: var(--text-muted, #9ca3af);
-    margin-top: auto;
-  }
+/* ── Bookmark tabs ────────────────────────────────────────── */
+#tab-ai .ai-btabs {
+  display: flex;
+  border-bottom: 1px solid var(--ai-border);
+  background: var(--ai-surf);
+}
+#tab-ai .ai-btab {
+  flex: 1;
+  padding: 13px 10px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--ai-muted);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.18s, border-color 0.18s;
+}
+#tab-ai .ai-btab.active {
+  color: var(--ai-accent);
+  border-bottom-color: var(--ai-accent);
+}
+#tab-ai .ai-btab:hover:not(.active) { color: var(--ai-text); }
 
-  #aiOutput.streaming::after {
-    content: '▌';
-    animation: ai-blink 0.7s step-end infinite;
-  }
-  @keyframes ai-blink { 50% { opacity: 0; } }
+/* ── Panel toggle ─────────────────────────────────────────── */
+#tab-ai .ai-panel { display: none; padding: 18px 14px 28px; }
+#tab-ai .ai-panel.active { display: block; }
+
+/* ── Hero ─────────────────────────────────────────────────── */
+#tab-ai .ai-hero {
+  text-align: center;
+  padding: 22px 8px 18px;
+}
+#tab-ai .ai-hero-label {
+  font-size: 0.67rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--ai-accent);
+  margin-bottom: 10px;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+}
+#tab-ai .ai-hero-title {
+  font-size: 1.38rem;
+  font-weight: 700;
+  color: var(--ai-text);
+  line-height: 1.35;
+  margin: 0 0 10px;
+}
+#tab-ai .ai-hero-sub {
+  font-size: 0.77rem;
+  color: var(--ai-muted);
+  line-height: 1.65;
+}
+
+/* ── Idea grid ────────────────────────────────────────────── */
+#tab-ai .ai-ideas-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+  margin-top: 12px;
+}
+@media (max-width: 460px) {
+  #tab-ai .ai-ideas-grid { grid-template-columns: 1fr; }
+  #tab-ai .ai-portfolio-grid { grid-template-columns: 1fr; }
+}
+
+#tab-ai .ai-idea-card {
+  position: relative;
+  background: var(--ai-surf);
+  border: 1px solid var(--ai-border);
+  border-radius: 8px;
+  padding: 12px 12px 12px 16px;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.4s ease, transform 0.4s ease, box-shadow 0.18s;
+}
+#tab-ai .ai-idea-card.ai-visible { opacity: 1; transform: none; }
+#tab-ai .ai-idea-card:hover { box-shadow: 0 0 0 1.5px var(--ai-accent); }
+
+#tab-ai .ai-idea-card-bar {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  border-radius: 2px 0 0 2px;
+}
+#tab-ai .ai-idea-card-icon { font-size: 1.25rem; margin-bottom: 6px; display: block; }
+#tab-ai .ai-idea-card-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--ai-text);
+  margin-bottom: 6px;
+}
+#tab-ai .ai-idea-list {
+  list-style: none;
+  padding: 0; margin: 0;
+  font-size: 0.72rem;
+  color: var(--ai-muted);
+  line-height: 1.65;
+}
+#tab-ai .ai-idea-list li::before {
+  content: '›';
+  margin-right: 5px;
+  color: var(--ai-accent);
+}
+
+/* ── Section label / title ────────────────────────────────── */
+#tab-ai .ai-section-label {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--ai-purple);
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  margin-bottom: 4px;
+}
+#tab-ai .ai-section-title {
+  font-size: 0.97rem;
+  font-weight: 700;
+  color: var(--ai-text);
+  margin: 0 0 14px;
+}
+
+/* ── Harness section ──────────────────────────────────────── */
+#tab-ai .ai-harness-section {
+  margin-top: 22px;
+  padding: 18px;
+  background: var(--ai-surf);
+  border: 1px solid var(--ai-border);
+  border-radius: 10px;
+}
+#tab-ai .ai-harness-flow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+#tab-ai .ai-harness-node {
+  background: var(--ai-surf2);
+  border: 1px solid var(--ai-border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ai-text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+#tab-ai .ai-harness-orch {
+  flex-direction: column;
+  gap: 4px;
+  text-align: center;
+  border-color: var(--ai-accent);
+  background: rgba(88,166,255,0.06);
+  padding: 10px 14px;
+}
+#tab-ai .ai-harness-icon { font-size: 1.25rem; }
+#tab-ai .ai-harness-role {
+  font-size: 0.61rem;
+  color: var(--ai-accent);
+  font-weight: 400;
+}
+#tab-ai .ai-harness-arrow-wrap { display: flex; align-items: center; }
+#tab-ai .ai-harness-arrow {
+  width: 22px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--ai-accent), transparent);
+  position: relative;
+}
+#tab-ai .ai-harness-arrow::after {
+  content: '';
+  position: absolute;
+  right: -4px; top: -3px;
+  border: 4px solid transparent;
+  border-left-color: var(--ai-accent);
+}
+#tab-ai .ai-harness-agents { display: flex; flex-wrap: wrap; gap: 5px; }
+#tab-ai .ai-harness-spec { font-size: 0.71rem; padding: 6px 10px; }
+#tab-ai .ai-harness-desc {
+  font-size: 0.75rem;
+  color: var(--ai-muted);
+  line-height: 1.65;
+  text-align: center;
+}
+
+/* ── Download button ──────────────────────────────────────── */
+#tab-ai .ai-download-wrap {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+#tab-ai .ai-download-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(88,166,255,0.08);
+  border: 1.5px solid var(--ai-accent);
+  border-radius: 10px;
+  padding: 14px 22px;
+  color: var(--ai-text);
+  cursor: pointer;
+  transition: background 0.2s;
+  text-align: left;
+  width: 100%;
+  max-width: 360px;
+}
+#tab-ai .ai-download-btn:hover { background: rgba(88,166,255,0.16); }
+#tab-ai .ai-dl-icon { font-size: 1.85rem; flex-shrink: 0; }
+#tab-ai .ai-download-btn strong { display: block; font-size: 0.87rem; color: var(--ai-accent); margin-bottom: 2px; }
+#tab-ai .ai-download-btn small { font-size: 0.7rem; color: var(--ai-muted); }
+
+/* ── Stats bar ────────────────────────────────────────────── */
+#tab-ai .ai-stats {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 14px 16px;
+  margin-top: 8px;
+  background: var(--ai-surf);
+  border: 1px solid var(--ai-border);
+  border-radius: 8px;
+}
+#tab-ai .ai-stat-item { text-align: center; padding: 0 20px; }
+#tab-ai .ai-stat-num { font-size: 1.5rem; font-weight: 700; line-height: 1; }
+#tab-ai .ai-stat-label { font-size: 0.66rem; color: var(--ai-muted); margin-top: 3px; }
+#tab-ai .ai-stat-divider { width: 1px; height: 30px; background: var(--ai-border); }
+
+/* ── Portfolio grid ───────────────────────────────────────── */
+#tab-ai .ai-portfolio-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+  margin-top: 14px;
+}
+#tab-ai .ai-pcard {
+  background: var(--ai-surf);
+  border: 1px solid var(--ai-border);
+  border-radius: 8px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.38s ease, transform 0.38s ease, box-shadow 0.18s;
+}
+#tab-ai .ai-pcard.ai-visible { opacity: 1; transform: none; }
+#tab-ai .ai-pcard:hover { box-shadow: 0 0 0 1.5px var(--ai-border); }
+
+#tab-ai .ai-pcard-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
+}
+#tab-ai .ai-pcard-icon { font-size: 1.4rem; line-height: 1; }
+#tab-ai .ai-status-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+#tab-ai .ai-status-done   { background: rgba(63,185,80,0.12);   color: var(--ai-green);  border: 1px solid rgba(63,185,80,0.28); }
+#tab-ai .ai-status-design { background: rgba(188,140,255,0.10); color: var(--ai-purple); border: 1px solid rgba(188,140,255,0.28); }
+#tab-ai .ai-status-pending{ background: rgba(139,148,158,0.08); color: var(--ai-muted);  border: 1px solid rgba(139,148,158,0.18); }
+
+#tab-ai .ai-pcard-title { font-size: 0.86rem; font-weight: 700; color: var(--ai-text); line-height: 1.3; }
+#tab-ai .ai-pcard-desc  { font-size: 0.72rem; color: var(--ai-muted); line-height: 1.55; }
+#tab-ai .ai-pcard-tags  { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+#tab-ai .ai-tag {
+  font-size: 0.61rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--ai-surf2);
+  color: var(--ai-muted);
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+}
 </style>
+
+<script>
+// @ts-nocheck
+(function () {
+  /* ── 하네스 번들 콘텐츠 (Blob 다운로드용) ────────────────── */
+  var BUNDLE = [
+    '# SNUHmate Harness Bundle',
+    '',
+    '---',
+    '',
+    '## B 카탈로그 — 사용자 기능 슬롯',
+    '',
+    '각 기능은 페르소나 게이트 통과 후 smate-feature-ship 으로 구현한다.',
+    '',
+    '| ID | 기능명 | 상태 | 비고 |',
+    '|----|--------|------|------|',
+    '| B1 | 수당 최적화 어드바이저 | ❌ 폐기 | 병원 고정 스케줄 특성 미반영 |',
+    '| B2 | 커리어 트윈 | 🔲 미시작 | CareRole OS 분석 완료 |',
+    '| B3 | 근무표→스케줄 자동화 | 🔲 미시작 | CareRole OS 분석 완료 |',
+    '| B4 | 명세서 AI 분석 | 🔲 미시작 | CareRole OS 분석 완료 |',
+    '| B6 | 개인정보 마스킹 서비스 | 🔧 설계 완료 | smate-b6-masking 스킬 있음 |',
+    '| B9 | 부서 위키 | 🔲 미시작 | Schedule Tab Phase 3 연동 예정 |',
+    '',
+    '---',
+    '',
+    '## smate-feature-ship 워크플로우',
+    '',
+    '### Step 1: 페르소나 게이트',
+    '- docs/harness/persona-matrix.md 해당 슬롯 행 확인',
+    '- 비어있으면 사용자 인터뷰 먼저 (B1 폐기 교훈)',
+    '',
+    '### Step 2: 브레인스토밍 → spec',
+    '- superpowers:brainstorming 호출',
+    '- docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md 에 저장',
+    '',
+    '### Step 3: plan 작성',
+    '- superpowers:writing-plans 호출',
+    '- TDD 원칙 · 작은 task 단위',
+    '',
+    '### Step 4: 도메인 사전 점검',
+    '- 급여·계산기 변경 → /smate-payroll-review',
+    '- UI 변경 → /smate-design-guard',
+    '- B6 마스킹 → /smate-b6-masking',
+    '',
+    '### Step 5: 구현 → 검증 → 배포',
+    '- pnpm test:unit + pnpm test:integration + pnpm test:smoke',
+    '- /smate-pr-ops 로 PR 생성 및 머지',
+    '',
+    '---',
+    '',
+    '## 개발자 페르소나',
+    '',
+    '**김계환 (Jayce), 핵의학과 · 서울대학교병원**',
+    '',
+    '"내가 이 병원 사람이고, 이 규정을 읽었고, 동료가 억울하게 손해보는 걸 알고 있다. 그래서 만든다."',
+    '',
+    '### 기능 추가 판단 기준',
+    '1. 내가 이번 달에 실제로 쓸 기능인가? → YES: 만든다',
+    '2. 동료 인터뷰에서 "이게 있으면 좋겠다"가 나왔는가? → YES: 만든다',
+    '3. 둘 다 NO → 아이디어 목록에만 남긴다',
+    '',
+    '---',
+    '',
+    '## 페르소나 매트릭스 (B2~B9)',
+    '',
+    '데이터 출처: CareRole OS — SNUH 채용공고 897건 · 역할 레코드 2,034건 + 직원 설문 135명',
+    '',
+    '| ID | 기능명 | 대상 직종 | 핵심 페인포인트 |',
+    '|----|--------|-----------|----------------|',
+    '| B2 | 커리어 트윈 | 간호직 (61.5%) | 병원 내 경력 경로 불투명 |',
+    '| B3 | 근무표 자동화 | 간호직 3교대 | 월간 근무표 수동 달력 입력 |',
+    '| B4 | 명세서 AI 분석 | 운영기능직·간호직 | 수십개 약어 항목 해독 불가 |',
+    '| B6 | PII 마스킹 | 연구지원/CRC·행정직 | 환자 데이터 수동 검토 실수 |',
+    '| B9 | 부서 위키 | 운영지원·행정/총무 | 절차 구전 전달, 담당자 공백 시 지식 소멸 |',
+    '',
+    '---',
+    '',
+    '## 병원 5대 Pain Point (CareRole OS 분석)',
+    '',
+    '1. 스케줄 불투명성 — 근무표 수기 관리, 교대 패턴 예측 불가',
+    '2. 급여 불투명성 — 수십개 항목 약어, 오계산 확인 불가',
+    '3. 행정 반복 작업 — 문서화 구전 전달, 인수인계 비효율',
+    '4. 경력 경로 불투명 — 역할 이동 경로 비공개, 시장 가치 인식 부재',
+    '5. 개인정보 처리 부담 — 환자 데이터 수동 마스킹, 실수 위험',
+    '',
+    '---',
+    '',
+    '이 번들은 SNUHmate 개발 하네스의 핵심 문서를 요약한 것입니다.',
+    '전체 문서: docs/harness/ 디렉토리 참조',
+    '스킬 파일: .claude/skills/smate-*/skill.md 참조'
+  ].join('\n');
+
+  /* ── Sub-tab 전환 ────────────────────────────────────────── */
+  function initTabs() {
+    var tabs = document.querySelectorAll('#tab-ai .ai-btab');
+    var panels = document.querySelectorAll('#tab-ai .ai-panel');
+    tabs.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var target = btn.getAttribute('data-aitab');
+        tabs.forEach(function (b) { b.classList.remove('active'); });
+        panels.forEach(function (p) { p.classList.remove('active'); });
+        btn.classList.add('active');
+        var panel = document.getElementById('ai-panel-' + target);
+        if (panel) {
+          panel.classList.add('active');
+          requestAnimationFrame(function () { observePanel(panel); });
+        }
+      });
+    });
+  }
+
+  /* ── IntersectionObserver 카드 등장 ─────────────────────── */
+  function observePanel(panel) {
+    var cards = panel.querySelectorAll('.ai-idea-card, .ai-pcard');
+    if (!cards.length) return;
+    var obs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('ai-visible');
+          obs.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.05 });
+    cards.forEach(function (card) { obs.observe(card); });
+  }
+
+  /* ── Blob 다운로드 ───────────────────────────────────────── */
+  function initDownload() {
+    var btn = document.getElementById('aiDownloadBtn');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      var blob = new Blob([BUNDLE], { type: 'text/markdown;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'snuhmate-harness-bundle.md';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+  }
+
+  /* ── 초기화 ─────────────────────────────────────────────── */
+  function init() {
+    initTabs();
+    initDownload();
+    var bp = document.getElementById('ai-panel-blueprint');
+    if (bp) requestAnimationFrame(function () { observePanel(bp); });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
