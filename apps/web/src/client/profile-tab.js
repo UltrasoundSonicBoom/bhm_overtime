@@ -1487,6 +1487,27 @@ function _careerFmtDate(ev, now) {
   return s;
 }
 
+// 단협 원문(full_union_regulation_2026.md) 기준 — 자동승격 정의가 없는 자격등급 = 심사승진 대상
+const _REVIEW_PROMO_GRADES = new Set([
+  'S1', 'S2', 'S3', 'M1', 'M2',
+  'C1', 'C2', 'C3', 'L1', 'L2',
+  'SC1', 'SC2', 'SC3', 'SL1', 'SL2',
+]);
+const _TOP_GRADES = new Set(['M3', 'L3', 'SL3']);
+
+function _resolveNextPromoLabel(grade, nextPromo) {
+  if (nextPromo) {
+    return `${nextPromo.dateFrom} (${(nextPromo.title || '').replace(/^.*→\s*/, '')})`;
+  }
+  if (_TOP_GRADES.has(grade)) return '최상위 자격등급';
+  if (_REVIEW_PROMO_GRADES.has(grade)) return '심사승진 대상';
+  return '없음';
+}
+
+if (typeof window !== 'undefined') {
+  window.__test_resolveNextPromoLabel = _resolveNextPromoLabel;
+}
+
 function _careerHeroStat() {
   const profile = PROFILE.load();
   const wrap = document.getElementById('careerHeroStat');
@@ -1518,7 +1539,7 @@ function _careerHeroStat() {
   const rows = [
     { lbl: '근속', val: `${hireYears}년 / ${totalYears}년 (${pctNum}%)` },
     { lbl: '현재 자격등급', val: `${profile.grade || '-'}${profile.year ? ` · ${profile.year}년차` : ''}` },
-    { lbl: '다음 자동승격', val: nextPromo ? `${nextPromo.dateFrom} (${(nextPromo.title || '').replace(/^.*→ /, '')})` : '없음' },
+    { lbl: '다음 자동승격', val: _resolveNextPromoLabel(profile.grade || '', nextPromo) },
     { lbl: '정년까지', val: retire?.dateFrom ? `${remainingYears}년 남음 · ${retire.dateFrom.slice(0, 4)}.12` : '미설정' },
   ];
   rows.forEach((r) => {
@@ -1593,7 +1614,31 @@ function _careerHeroStat() {
   }
 }
 
+function _careerBuildHobonDot(ev, now) {
+  const status = _careerEventStatus(ev, now);
+  const wrap = document.createElement('div');
+  wrap.className = 'career-hobon-dot' + (status === 'past' ? ' is-past' : '');
+  wrap.title = ev.sub || ev.title || '호봉 변동';
+  wrap.setAttribute('role', 'button');
+  wrap.setAttribute('tabindex', '0');
+
+  const dot = document.createElement('span');
+  dot.className = 'dot';
+  wrap.appendChild(dot);
+
+  const lbl = document.createElement('span');
+  lbl.className = 'lbl';
+  const ymTxt = (ev.dateFrom || '').replace('-', '.');
+  lbl.textContent = `${ymTxt} · ${ev.title || ''}`;
+  wrap.appendChild(lbl);
+
+  wrap.onclick = () => openCareerEventSheet(ev);
+  wrap.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openCareerEventSheet(ev); } };
+  return wrap;
+}
+
 function _careerBuildEventEl(ev, now) {
+  if (ev.category === 'hobon-change') return _careerBuildHobonDot(ev, now);
   const el = document.createElement('div');
   const status = _careerEventStatus(ev, now);
   el.className = `career-event status-${status} cat-${ev.category || 'workplace'}`;
@@ -1952,10 +1997,21 @@ if (typeof window !== 'undefined') {
   // 일찍 끝날 수 있어 listener 는 가장 빨리 거는 게 안전).
   if (!window._careerEventsHandlerBound) {
     window._careerEventsHandlerBound = true;
-    const rerender = () => { try { renderCareerTimeline(); } catch {} };
+    let _rerenderTimer = null;
+    const rerender = () => {
+      try { renderCareerTimeline(); } catch {}
+      try { _careerHeroStat(); } catch {}
+    };
+    const rerenderDebounced = () => {
+      if (_rerenderTimer) clearTimeout(_rerenderTimer);
+      _rerenderTimer = setTimeout(() => { _rerenderTimer = null; rerender(); }, 50);
+    };
     window.addEventListener('careerEventsChanged', rerender);
     window.addEventListener('app:cloud-hydrated', rerender);
     window.addEventListener('workHistoryChanged', rerender);
+    // 명세서 추가/편집 → profile.grade/year 갱신 → hero card + timeline 재렌더
+    window.addEventListener('payslipChanged', rerenderDebounced);
+    window.addEventListener('careerProfileChanged', rerenderDebounced);
   }
 }
 export {};

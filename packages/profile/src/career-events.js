@@ -421,30 +421,54 @@ export function inferPromotionsFromPayslips() {
     if (!pg) continue;
     const gm = String(pg).match(/([A-Za-z]+\d*)\s*[-—]\s*(\d+)/);
     if (!gm) continue;
-    history.push({ ym: `${m.year}-${String(m.month).padStart(2, '0')}`, grade: gm[1].toUpperCase() });
+    history.push({
+      ym: `${m.year}-${String(m.month).padStart(2, '0')}`,
+      grade: gm[1].toUpperCase(),
+      step: parseInt(gm[2], 10) || null,
+    });
   }
   if (history.length < 2) return [];
 
-  // 등급 전환 감지 (연속 월 비교)
+  // 등급 전환(자동승격/심사승진) + 호봉 변동(재급연수) 감지
   const events = [];
-  const seen = new Set();
+  const seenPromo = new Set();
+  const seenHobon = new Set();
   for (let i = 1; i < history.length; i++) {
     const prev = history[i - 1];
     const curr = history[i];
-    if (prev.grade === curr.grade) continue;
-    const transKey = `${prev.grade}→${curr.grade}`;
-    if (seen.has(transKey)) continue; // 같은 전환 중복 방지
-    seen.add(transKey);
-    events.push({
-      id: _genId('pay_'),
-      category: 'promotion',
-      title: `${prev.grade} → ${curr.grade} 승진`,
-      sub: `급여명세서에서 감지 · ${curr.ym} 기준 (수동 날짜 수정 가능)`,
-      dateFrom: curr.ym,
-      badge: { text: curr.grade, tone: 'green' },
-      autoSeed: true,
-      source: 'payslip-inferred',
-    });
+
+    if (prev.grade !== curr.grade) {
+      const transKey = `${prev.grade}→${curr.grade}`;
+      if (seenPromo.has(transKey)) continue;
+      seenPromo.add(transKey);
+      events.push({
+        id: _genId('pay_'),
+        category: 'promotion',
+        title: `${prev.grade} → ${curr.grade} 자격등급 전환`,
+        sub: `급여명세서에서 감지 · ${curr.ym} 기준 (수동 날짜 수정 가능)`,
+        dateFrom: curr.ym,
+        badge: { text: curr.grade, tone: 'green' },
+        autoSeed: true,
+        source: 'payslip-inferred',
+      });
+      continue;
+    }
+
+    if (prev.step != null && curr.step != null && prev.step !== curr.step) {
+      const hobonKey = `${curr.grade}-${prev.step}->${curr.step}@${curr.ym}`;
+      if (seenHobon.has(hobonKey)) continue;
+      seenHobon.add(hobonKey);
+      events.push({
+        id: _genId('pay_'),
+        category: 'hobon-change',
+        title: `${curr.grade}·${curr.step}년차 (호봉 ${prev.step}→${curr.step})`,
+        sub: `급여명세서 호봉 변동 감지 · ${curr.ym} (제20조 재급연수)`,
+        dateFrom: curr.ym,
+        tone: 'subtle',
+        autoSeed: true,
+        source: 'payslip-inferred',
+      });
+    }
   }
   return events;
 }

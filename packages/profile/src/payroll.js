@@ -647,19 +647,21 @@ export const PAYROLL = {
           ? '+' + unionAdj + '호봉 보정 적용 (노조협의)'
           : (rawAdj === '0' ? '해당 없음 (수동 지정)' : '해당 없음');
 
-        // ── 승진연한 결정 (autoPromotion 우선, 없으면 추정) ──
+        // ── 승진연한 결정 (autoPromotion 우선, 없으면 심사승진 분기) ──
+        // 단협 원문(full_union_regulation_2026.md): S1·S2·S3·M1+·C1+·L1+ 자격등급은
+        // "자동승격" 정의 없음 = 심사승진. referenceYears 는 표시 참고용 (계산 미반영).
         var PROMO_FALLBACK = {
-          S1: { years: 8,  next: 'S2', isEstimate: true },
-          S2: { years: 8,  next: 'S3', isEstimate: true },
-          S3: { years: null, next: 'M1', isSelection: true },
-          M1: { years: null, next: 'M2', isSelection: true },
-          M2: { years: null, next: 'M3', isSelection: true },
-          M3: { years: null, next: null,  isSelection: true },
-          C1: { years: 7,  next: 'C2', isEstimate: true },
-          C2: { years: 7,  next: 'C3', isEstimate: true },
-          C3: { years: null, next: 'L1', isSelection: true },
-          L1: { years: null, next: 'L2', isSelection: true },
-          L2: { years: null, next: 'L3', isSelection: true },
+          S1: { years: null, next: 'S2', isPromotionByReview: true, isSelection: true, referenceYears: 8 },
+          S2: { years: null, next: 'S3', isPromotionByReview: true, isSelection: true, referenceYears: 8 },
+          S3: { years: null, next: 'M1', isPromotionByReview: true, isSelection: true },
+          M1: { years: null, next: 'M2', isPromotionByReview: true, isSelection: true },
+          M2: { years: null, next: 'M3', isPromotionByReview: true, isSelection: true },
+          M3: { years: null, next: null, isPromotionByReview: true, isSelection: true },
+          C1: { years: null, next: 'C2', isPromotionByReview: true, isSelection: true, referenceYears: 7 },
+          C2: { years: null, next: 'C3', isPromotionByReview: true, isSelection: true, referenceYears: 7 },
+          C3: { years: null, next: 'L1', isPromotionByReview: true, isSelection: true },
+          L1: { years: null, next: 'L2', isPromotionByReview: true, isSelection: true },
+          L2: { years: null, next: 'L3', isPromotionByReview: true, isSelection: true },
         };
         var promo = (table && table.autoPromotion && table.autoPromotion[useGrade]) || PROMO_FALLBACK[useGrade];
         var nextGrade = promo ? promo.next : null;
