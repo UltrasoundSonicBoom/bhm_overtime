@@ -149,8 +149,12 @@ describe('_resolveNextPromoLabel — 단협 단어 분기', () => {
     _resolveNextPromoLabel = window.__test_resolveNextPromoLabel;
   });
 
-  it('S1_등급_nextPromo_없음_심사승진_대상', () => {
-    expect(_resolveNextPromoLabel('S1', null)).toBe('심사승진 대상');
+  it('M1_등급_nextPromo_없음_심사승진_대상', () => {
+    expect(_resolveNextPromoLabel('M1', null)).toBe('심사승진 대상');
+  });
+  it('S1_등급_nextPromo_없음_없음_(자동승격이라_seed에서_채워짐)', () => {
+    // S1 은 PROMO_GENERAL 의 from 에 있으므로 nextPromo 가 채워지지 않은 edge case 만 '없음'
+    expect(_resolveNextPromoLabel('S1', null)).toBe('없음');
   });
   it('M3_등급_nextPromo_없음_최상위_자격등급', () => {
     expect(_resolveNextPromoLabel('M3', null)).toBe('최상위 자격등급');

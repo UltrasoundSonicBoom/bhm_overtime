@@ -648,11 +648,11 @@ export const PAYROLL = {
           : (rawAdj === '0' ? '해당 없음 (수동 지정)' : '해당 없음');
 
         // ── 승진연한 결정 (autoPromotion 우선, 없으면 심사승진 분기) ──
-        // 단협 원문(full_union_regulation_2026.md): S1·S2·S3·M1+·C1+·L1+ 자격등급은
-        // "자동승격" 정의 없음 = 심사승진. referenceYears 는 표시 참고용 (계산 미반영).
+        // S 등급(S1·S2·S3)은 8년 자동승격. M1+·C1+·L1+ 는 단협상 자동승격 정의 없음 = 심사승진.
+        // S3→M1 은 심사승진 (M 등급 진입은 자동 아님).
         var PROMO_FALLBACK = {
-          S1: { years: null, next: 'S2', isPromotionByReview: true, isSelection: true, referenceYears: 8 },
-          S2: { years: null, next: 'S3', isPromotionByReview: true, isSelection: true, referenceYears: 8 },
+          S1: { years: 8, next: 'S2' },
+          S2: { years: 8, next: 'S3' },
           S3: { years: null, next: 'M1', isPromotionByReview: true, isSelection: true },
           M1: { years: null, next: 'M2', isPromotionByReview: true, isSelection: true },
           M2: { years: null, next: 'M3', isPromotionByReview: true, isSelection: true },

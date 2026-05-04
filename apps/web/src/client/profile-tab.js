@@ -1488,8 +1488,9 @@ function _careerFmtDate(ev, now) {
 }
 
 // 단협 원문(full_union_regulation_2026.md) 기준 — 자동승격 정의가 없는 자격등급 = 심사승진 대상
+// S 등급은 8년 자동승격 (PROMO_GENERAL 에 포함) → M·C·L·SC·SL 만 심사승진
 const _REVIEW_PROMO_GRADES = new Set([
-  'S1', 'S2', 'S3', 'M1', 'M2',
+  'M1', 'M2',
   'C1', 'C2', 'C3', 'L1', 'L2',
   'SC1', 'SC2', 'SC3', 'SL1', 'SL2',
 ]);

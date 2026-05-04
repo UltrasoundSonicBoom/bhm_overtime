@@ -29,11 +29,14 @@ function _fmtSign(n) {
 }
 
 // 단협 자동승격 연수 (data/index.js DATA.payTables.general.promotionRules 와 정합)
-// 일반직: J1 4년 → J2 / J2 7년 → J3 / J3 8년 → S1 (시니어 진입)
+// 일반직: J1 4년 → J2 / J2 7년 → J3 / J3 8년 → S1 / S1 8년 → S2 / S2 8년 → S3
+// (S 등급은 8년 자동승격 — 사용자 단협 확인). M 등급은 심사승진 (자동 아님).
 const PROMO_GENERAL = [
   { from: 'J1', to: 'J2', years: 4, monthly: 280500 },
   { from: 'J2', to: 'J3', years: 7, monthly: 459300 },
   { from: 'J3', to: 'S1', years: 8, monthly: 437500 },
+  { from: 'S1', to: 'S2', years: 8, monthly: 321500 },  // S1 1년차→S2 1년차 기준급 차액 (월할)
+  { from: 'S2', to: 'S3', years: 8, monthly: 325000 },  // S2 1년차→S3 1년차 기준급 차액 (월할)
 ];
 // 운영기능직 — A·C grade (간호직 외, 시설/이송 분야 분기)
 const PROMO_OPERATION = [
