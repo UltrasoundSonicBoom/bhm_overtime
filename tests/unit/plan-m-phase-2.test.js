@@ -29,18 +29,18 @@ describe('M2-1 장기재직휴가 5/7일 자동부여 (<2025.10>)', () => {
   });
 });
 
-describe('M2-8 연장근로 한도 검증 (제34조(1))', () => {
-  it('1일 2시간 / 주 12시간 이내: 한도 OK', () => {
+describe('M2-8 연장근로 한도 검증 (제34조(1)) — 주간 기준만 적용, 일 한도 없음', () => {
+  it('주 12시간 이내: 한도 OK', () => {
     const r = CALC.checkOvertimeLimit({ daily: 2, weekly: 10 });
     expect(r.exceedsDaily).toBe(false);
     expect(r.exceedsWeekly).toBe(false);
     expect(r.warning).toBe(null);
   });
 
-  it('1일 2.5시간: 일 한도 초과 경고', () => {
-    const r = CALC.checkOvertimeLimit({ daily: 2.5, weekly: 5 });
-    expect(r.exceedsDaily).toBe(true);
-    expect(r.warning).toContain('1일 2시간');
+  it('일 4시간이어도 주간 합계 5시간이면 경고 없음 (일 한도 규정 없음)', () => {
+    const r = CALC.checkOvertimeLimit({ daily: 4, weekly: 5 });
+    expect(r.exceedsDaily).toBe(false);
+    expect(r.warning).toBe(null);
   });
 
   it('주 12시간 초과: 주 한도 위반 경고 (법정 상한)', () => {

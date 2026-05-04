@@ -427,18 +427,17 @@ export const CALC = {
 
     /**
      * 연장근로 한도 검증 (제34조(1))
-     * 1일 2시간 / 주 10시간 (부득이 시 12시간 상한)
+     * 주 12시간 상한 (부득이 시 허용, 10시간 초과부터 안내)
+     * 일 한도는 단협에 명시 없음 — daily 파라미터는 호환용으로만 유지
      * @param {{daily: number, weekly: number}} hours
      * @returns {{exceedsDaily: boolean, exceedsWeekly: boolean, warning: string|null}}
      */
     checkOvertimeLimit({ daily = 0, weekly = 0 } = {}) {
-        const exceedsDaily = daily > 2;
+        const exceedsDaily = false; // 제34조에 일 한도 규정 없음
         const exceedsWeekly = weekly > 12;
         const isOverFlex = !exceedsWeekly && weekly > 10;
         let warning = null;
-        if (exceedsDaily) {
-            warning = '⚠️ 1일 2시간 한도 초과 (제34조(1))';
-        } else if (exceedsWeekly) {
+        if (exceedsWeekly) {
             warning = '⚠️ 주 12시간 법정 상한 초과 (제34조(1) 위반)';
         } else if (isOverFlex) {
             warning = 'ℹ️ 주 10시간 초과 — 부득이한 경우만 허용 (주 12시간 상한)';
