@@ -107,7 +107,7 @@ function _buildDialog() {
   const passGroup = _el('div', { className: 'form-group mb-2' });
   const passIn = _el('input', {
     type: 'password', id: 'snuhmatePass',
-    placeholder: '비밀번호 (8자 이상)',
+    placeholder: '비밀번호 (8~12자)',
     autocomplete: 'current-password',
   });
   passGroup.appendChild(passIn);
