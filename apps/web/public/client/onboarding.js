@@ -2,8 +2,17 @@
 // 2026-05-03 redesign. Slides: 히어로 → 근무 → 휴가 → 시간외 → 급여 → 퇴직금 → 규정 → 개인정보 → Auth.
 // 임시 프로필은 snuhmate_hr_profile_guest 에 저장되고, auth 성공 시 auth-service 가
 // applyOnboardingProfile() 로 _uid_{uid} 키에 자동 승급한다.
+//
+// NOTE: index.astro의 <script> 블록이 auth-service.js를 Astro-bundle하여
+// window.OB_AUTH / window.OB_VALIDATORS 로 노출. DOMContentLoaded 이후 'ob-auth-ready'
+// 이벤트로 신호. 이 파일은 public/ static이므로 /src/ 경로를 import할 수 없음.
 
 (function () {
+  // auth 모듈이 준비되면 콜백 실행. 이미 준비된 경우 즉시 실행.
+  function _whenAuthReady(cb) {
+    if (window.OB_AUTH) { cb(window.OB_AUTH); return; }
+    window.addEventListener('ob-auth-ready', function () { cb(window.OB_AUTH); }, { once: true });
+  }
   const deck = document.getElementById("ob-deck");
   if (!deck) return;
 
@@ -256,7 +265,8 @@
       if (choice === "google") {
         try {
           setAuthMsg("Google 로그인 중...", null);
-          const mod = await import("/src/firebase/auth-service.js");
+          const mod = window.OB_AUTH;
+          if (!mod) throw new Error("auth not ready");
           await mod.signInWithGoogle();
           // applyOnboardingProfile 은 auth-service onAuthChanged 에서 자동 호출됨
           enterApp();
@@ -294,7 +304,8 @@
       authSubmit.disabled = true;
       setAuthMsg("로그인 중...", null);
       try {
-        const mod = await import("/src/firebase/auth-service.js");
+        const mod = window.OB_AUTH;
+        if (!mod) throw new Error("auth not ready");
         const user = await mod.signInWithEmail(email, password);
         if (user && !user.emailVerified) {
           try {
@@ -323,8 +334,9 @@
 
     // ── 신규 가입 흐름 (Firebase password policy 만 강제) ──
     // 도메인 제약 임시 해제: 병원 SMTP 가 외부 발송자 차단 가능 → 외부 이메일로 테스트 가능
-    const mod = await import("/src/firebase/auth-service.js");
-    const validators = await import("/src/firebase/auth-validators.js");
+    const mod = window.OB_AUTH;
+    const validators = window.OB_VALIDATORS;
+    if (!mod || !validators) { setAuthMsg("인증 모듈을 불러오는 중이에요. 잠시 후 다시 시도해 주세요.", "error"); return; }
     const pwErr = validators.validatePassword(password);
     if (pwErr) {
       setAuthMsg(pwErr, "error");
@@ -372,25 +384,23 @@
   }
 
   // 인증된 사용자가 다시 방문했을 때 자동 /app 으로 보내기 (signed-in + verified 인 경우)
-  // onAuthChanged 가 user.emailVerified === true 를 인식하면 applyOnboardingProfile 후 진입.
-  (async () => {
+  // OB_AUTH는 Astro 모듈 스크립트가 DOMContentLoaded 이후에 노출하므로 _whenAuthReady로 대기.
+  _whenAuthReady(async function (mod) {
+    if (!mod?.onAuthChanged) return;
     try {
-      const mod = await import("/src/firebase/auth-service.js");
-      if (mod.onAuthChanged) {
-        await mod.onAuthChanged((user) => {
-          if (!user) return;
-          if (!user.emailVerified) return;
-          // verified 사용자가 이 페이지에 떨어졌다 → 바로 /app 으로
-          if (localStorage.getItem("snuhmate_onboarding_pending")) {
-            // applyOnboardingProfile 은 auth-service 가 onAuthChanged 안에서 처리
-            enterApp();
-          }
-        });
-      }
+      await mod.onAuthChanged(function (user) {
+        if (!user) return;
+        if (!user.emailVerified) return;
+        // verified 사용자가 이 페이지에 떨어졌다 → 바로 /app 으로
+        if (localStorage.getItem("snuhmate_onboarding_pending")) {
+          // applyOnboardingProfile 은 auth-service 가 onAuthChanged 안에서 처리
+          enterApp();
+        }
+      });
     } catch (e) {
       // firebase 초기화 실패는 게스트 흐름과 무관 — 무해
     }
-  })();
+  });
 
   go(0);
 })();

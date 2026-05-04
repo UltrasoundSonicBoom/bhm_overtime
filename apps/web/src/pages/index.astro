@@ -448,6 +448,17 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   </div><!-- /.ob-frame -->
 
   <script src="/client/onboarding.js" is:inline></script>
+
+  <script>
+    // onboarding.js는 public/ static 파일이라 Vite 번들러를 거치지 않음.
+    // auth-service.js를 여기서 Astro-bundle하여 window.OB_AUTH로 노출.
+    // onboarding.js가 먼저 실행되므로 ob-auth-ready 이벤트로 준비 신호 전달.
+    import * as AuthService from '../firebase/auth-service.js';
+    import * as AuthValidators from '../firebase/auth-validators.js';
+    (window as any).OB_AUTH = AuthService;
+    (window as any).OB_VALIDATORS = AuthValidators;
+    window.dispatchEvent(new CustomEvent('ob-auth-ready'));
+  </script>
 </BaseLayout>
 
 <style is:global>
