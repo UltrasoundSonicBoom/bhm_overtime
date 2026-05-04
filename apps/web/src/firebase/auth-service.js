@@ -35,6 +35,9 @@ export async function signUpWithEmail(email, password) {
 // ── 병원 이메일 가입 (도메인 화이트리스트 + 인증 메일) ──
 // onboarding 캐러셀 Auth 슬라이드에서 호출. 도메인 검증 후 createUser → sendEmailVerification.
 // emailVerified === true 가 될 때까지 onAuthChanged 는 Firestore 동기화/profile 적용을 보류한다.
+//
+// 반환: { user, verificationSent: boolean, verificationError: Error|null }
+// — 호출자가 인증 메일 발송 실패를 사용자에게 알릴 수 있도록 결과를 명시적으로 반환.
 export async function signUpWithHospitalEmail(email, password) {
   if (!isHospitalEmail(email)) {
     const err = new Error('병원 도메인 이메일만 가입할 수 있어요.');
@@ -43,11 +46,37 @@ export async function signUpWithHospitalEmail(email, password) {
   }
   const { auth, authMod } = await _f();
   const cred = await authMod.createUserWithEmailAndPassword(auth, email, password);
-  if (authMod.sendEmailVerification && cred.user) {
-    try { await authMod.sendEmailVerification(cred.user); }
-    catch (e) { console.warn('[auth] sendEmailVerification 실패', e?.message); }
+  let verificationSent = false;
+  let verificationError = null;
+  try {
+    if (authMod.sendEmailVerification && cred?.user) {
+      await authMod.sendEmailVerification(cred.user);
+      verificationSent = true;
+    }
+  } catch (e) {
+    console.warn('[auth] sendEmailVerification 실패', e?.message);
+    verificationError = e;
   }
-  return cred.user;
+  return { user: cred.user, verificationSent, verificationError };
+}
+
+// ── 인증 메일 재발송 ──
+// 미인증 사용자에게 인증 메일 재발송. signIn 직후 emailVerified === false 일 때 호출.
+export async function resendVerificationEmail() {
+  const { auth, authMod } = await _f();
+  const u = auth.currentUser;
+  if (!u) {
+    const e = new Error('not signed in');
+    e.code = 'auth/no-current-user';
+    throw e;
+  }
+  if (u.emailVerified) {
+    const e = new Error('already verified');
+    e.code = 'auth/already-verified';
+    throw e;
+  }
+  await authMod.sendEmailVerification(u);
+  return true;
 }
 
 // ── Google ──
