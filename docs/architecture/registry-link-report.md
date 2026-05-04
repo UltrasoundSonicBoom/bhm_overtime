@@ -1,7 +1,7 @@
 # Registry Link Report
 
 > 자동 생성: `scripts/check-regulation-link.cjs`
-> 생성 시각: 2026-05-04T11:06:49.800Z
+> 생성 시각: 2026-05-04T11:34:30.899Z
 > 입력: `data/calc-registry.json` (24 data_values) ↔ `data/full_union_regulation_2026.md`
 
 ## 요약

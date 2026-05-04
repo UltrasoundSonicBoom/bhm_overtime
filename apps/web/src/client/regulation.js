@@ -687,7 +687,78 @@ function renderArticles(articles, container, options) {
   } else {
     // Content from trusted DATA.handbook — no user input
     container.innerHTML = result;
+    // Plan dazzling-booping-kettle B4 — 생활이벤트 cross-link 주입 (post-render, 안전 DOM API)
+    injectLifeEventCrossLinks(container);
   }
+}
+
+// ── 생활이벤트 cross-link 캐시 + 주입 (Plan dazzling-booping-kettle B4) ──
+var _lifeEventActionsCache = null; // Map<articleId, [{event_id, title, catLabel}]>
+var _lifeEventActionsLoading = null;
+
+function loadLifeEventActions() {
+  if (_lifeEventActionsCache) return Promise.resolve(_lifeEventActionsCache);
+  if (_lifeEventActionsLoading) return _lifeEventActionsLoading;
+  _lifeEventActionsLoading = fetch('/data/regulation-actions.json')
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      var byArticle = new Map();
+      var catLabels = {};
+      (data.categories || []).forEach(function (c) { catLabels[c.id] = c.label; });
+      (data.events || []).forEach(function (ev) {
+        (ev.regulation_articles || []).forEach(function (aid) {
+          if (!byArticle.has(aid)) byArticle.set(aid, []);
+          byArticle.get(aid).push({
+            event_id: ev.event_id,
+            title: ev.title,
+            catLabel: catLabels[ev.category] || ev.category,
+          });
+        });
+      });
+      _lifeEventActionsCache = byArticle;
+      return byArticle;
+    })
+    .catch(function (e) {
+      console.warn('[regulation] life-event cross-link 로드 실패', e);
+      _lifeEventActionsCache = new Map();
+      return _lifeEventActionsCache;
+    });
+  return _lifeEventActionsLoading;
+}
+
+function injectLifeEventCrossLinks(container) {
+  if (!container) return;
+  loadLifeEventActions().then(function (byArticle) {
+    if (!byArticle || byArticle.size === 0) return;
+    var nodes = container.querySelectorAll('.reg-article[data-article-id]');
+    nodes.forEach(function (node) {
+      if (node.querySelector('.reg-life-event-link')) return; // 중복 방지
+      var aid = node.getAttribute('data-article-id');
+      var events = byArticle.get(aid);
+      if (!events || events.length === 0) return;
+      var body = node.querySelector('.reg-article-body');
+      if (!body) return;
+      // 안전 DOM API — innerHTML 사용 금지
+      var box = document.createElement('div');
+      box.className = 'reg-life-event-link';
+      box.style.cssText = 'margin-top:10px;padding:10px 12px;border:1px dashed var(--accent-indigo,#6366f1);border-radius:8px;background:rgba(99,102,241,0.04);';
+      var label = document.createElement('div');
+      label.style.cssText = 'font-size:12px;font-weight:700;color:var(--accent-indigo,#6366f1);margin-bottom:6px;';
+      label.textContent = '🌱 이 조항을 사용하는 생활이벤트';
+      box.appendChild(label);
+      var list = document.createElement('div');
+      list.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;';
+      events.forEach(function (ev) {
+        var a = document.createElement('a');
+        a.href = '/app?tab=lifeEvent&event=' + encodeURIComponent(ev.event_id);
+        a.textContent = ev.title + ' (' + ev.catLabel + ')';
+        a.style.cssText = 'font-size:12px;padding:3px 10px;border-radius:999px;background:#fff;border:1px solid var(--accent-indigo,#6366f1);color:var(--accent-indigo,#6366f1);text-decoration:none;';
+        list.appendChild(a);
+      });
+      box.appendChild(list);
+      body.appendChild(box);
+    });
+  });
 }
 
 function toggleArticle(headerEl) {

@@ -548,6 +548,18 @@ function switchTab(tabName) {
     });
   }
   if (tabName === 'feedback') _afterLoad('feedback', function () {});
+  if (tabName === 'lifeEvent') {
+    _afterLoad('lifeEvent', function () {
+      // life-event.js 동적 import → initLifeEventFragment() 호출 (idempotent).
+      import('./life-event.js').then(function (mod) {
+        if (mod && typeof mod.initLifeEventFragment === 'function') {
+          mod.initLifeEventFragment();
+        } else if (typeof window.initLifeEventFragment === 'function') {
+          window.initLifeEventFragment();
+        }
+      }).catch(function (e) { console.warn('[lifeEvent] life-event.js load 실패', e); });
+    });
+  }
 
   return true;
 }

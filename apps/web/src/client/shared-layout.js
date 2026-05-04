@@ -135,6 +135,7 @@
       // 사용자 보고: "규정 클릭하고 info 가면 화면 초기화된 것처럼 나옴" 회귀 fix
       // tab-reference.html 안에 iframe 으로 regulation.html 임베드
       { icon: '📖', text: '규정', tab: 'reference', href: homeHref('reference'), active: isRegulation },
+      { icon: '🌱', text: '생활', tab: 'lifeEvent', href: homeHref('lifeEvent') },
       // 뉴스 탭 비활성 (차후 복구 시 주석 해제)
       // { icon: '📰', text: '뉴스', href: 'cardnews.html', active: isCardNews },
       { icon: '👤', text: 'info', tab: 'profile', href: homeHref('profile') }

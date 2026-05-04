@@ -1,0 +1,97 @@
+---
+// LifeEventIsland — Plan dazzling-booping-kettle Track B
+// 생활이벤트 (장례·결혼·출산·휴직·정년퇴직) 카드 그리드.
+// 데이터 소스: /data/regulation-actions.json + /data/union_regulation_2026.json
+// life-event.js 가 탭 진입 시 dynamic import 되어 카드 렌더 + 체크리스트 + mailto 핸들링.
+---
+<div class="tab-content" id="tab-lifeEvent">
+  <div class="info-note-banner mb-3">
+    <span>🌱</span>
+    <div>
+      <strong>생활이벤트 가이드</strong><br>
+      장례·결혼·출산·휴직·정년퇴직 시 단협 휴가일수·경조금·필요 서류·절차·연락처를 한 카드로 정리.
+      이메일 버튼으로 인사팀에 자동 작성된 신청서 초안을 보낼 수 있습니다.
+    </div>
+  </div>
+
+  <!-- 카테고리 필터 칩 + 검색 -->
+  <div class="card p-3 mb-3">
+    <div class="flex flex-wrap items-center gap-2 mb-2" id="lifeEventCategoryChips">
+      <button class="le-chip active" data-cat="all" type="button">전체</button>
+      <!-- categories injected by life-event.js -->
+    </div>
+    <input type="search" id="lifeEventSearch"
+      class="w-full p-2 rounded-md border border-brand-text-muted text-brand-body-normal"
+      placeholder="이벤트·조항 검색 (예: 결혼, 제41조, 장례)" />
+  </div>
+
+  <!-- 카드 그리드 -->
+  <div id="lifeEventGrid" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <p class="text-brand-text-muted text-center p-6">데이터 로드 중…</p>
+  </div>
+</div>
+
+<style is:global>
+  .le-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border-default, #e5e7eb);
+    background: var(--bg-card, #fff);
+    color: var(--text-secondary, #555);
+    font-size: 12px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .le-chip.active {
+    background: var(--accent-indigo, #6366f1);
+    color: #fff;
+    border-color: transparent;
+  }
+  .life-event-card {
+    background: var(--bg-card, #fff);
+    border: 1px solid var(--border-default, #e5e7eb);
+    border-radius: 12px;
+    padding: 14px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .life-event-card[data-expanded="true"] { outline: 2px solid var(--accent-indigo, #6366f1); }
+  .life-event-card header { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .life-event-card header h3 { margin: 0; font-size: 15px; font-weight: 700; }
+  .life-event-card .cat { font-size: 11px; color: var(--text-muted, #888); }
+  .life-event-card .summary { display: flex; flex-wrap: wrap; gap: 6px; }
+  .life-event-card .summary > span {
+    font-size: 12px; padding: 2px 8px; border-radius: 6px;
+    background: var(--bg-soft, rgba(99,102,241,0.08));
+    color: var(--accent-indigo, #6366f1);
+  }
+  .life-event-card details { font-size: 12px; color: var(--text-secondary, #555); }
+  .life-event-card details summary { cursor: pointer; font-weight: 600; }
+  .life-event-card .reg-quote {
+    margin-top: 6px; padding: 8px; background: var(--bg-soft, rgba(0,0,0,0.03));
+    border-left: 3px solid var(--accent-indigo, #6366f1); border-radius: 4px;
+    font-size: 11.5px; line-height: 1.6; white-space: pre-line;
+  }
+  .life-event-card section h4 { margin: 0 0 4px 0; font-size: 12.5px; font-weight: 700; color: var(--text-primary, #1a1a1a); }
+  .life-event-card .docs ul, .life-event-card .steps ol { margin: 0; padding-left: 20px; font-size: 12px; line-height: 1.6; }
+  .life-event-card .docs li label { cursor: pointer; }
+  .life-event-card .docs li a { margin-left: 6px; color: var(--accent-indigo, #6366f1); text-decoration: underline; font-size: 11px; }
+  .life-event-card .contacts .contact-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 12px; padding: 4px 0; }
+  .life-event-card .contacts .contact-row strong { min-width: 70px; }
+  .life-event-card .contacts a { color: var(--accent-indigo, #6366f1); text-decoration: none; }
+  .life-event-card .actions { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 6px; border-top: 1px dashed var(--border-default, #e5e7eb); }
+  .life-event-card .actions .btn-mailto {
+    background: var(--accent-indigo, #6366f1); color: #fff; border: none;
+    padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .life-event-card .actions .btn-mailto:disabled { opacity: 0.5; cursor: not-allowed; }
+  .life-event-card .actions .btn-link {
+    background: transparent; color: var(--accent-indigo, #6366f1); border: 1px solid var(--accent-indigo, #6366f1);
+    padding: 7px 12px; border-radius: 8px; font-size: 12.5px; cursor: pointer; text-decoration: none;
+  }
+</style>
