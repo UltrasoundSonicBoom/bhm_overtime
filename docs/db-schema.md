@@ -1,372 +1,358 @@
-# SNUH Mate — DB 스키마 정의서 + 데이터 흐름 ERD
+# SNUHmate 데이터베이스 스키마 & 흐름도
 
-> 기준일: 2026-04-30 / Phase 8 (Firebase Auth + Firestore E2E 암호화)
-
----
-
-## 1. 저장소 이중 구조
-
-```
-┌──────────────────────────────────────────────────────────┐
-│  브라우저 (localStorage)                                  │
-│  – 기기 로컬 캐시 / 즉시 읽기                             │
-│  – uid 스코프 분리: {base}_uid_{uid}                      │
-└─────────────────────┬────────────────────────────────────┘
-                      │ auto-sync (200ms debounce)
-                      │ hydrateFromFirestore (로그인 1회)
-                      ▼
-┌──────────────────────────────────────────────────────────┐
-│  Firestore (Google Cloud)                                 │
-│  – Source of Truth                                        │
-│  – 민감 필드: AES-GCM 256-bit 암호화                      │
-│  – 접근 규칙: request.auth.uid == userId only             │
-└──────────────────────────────────────────────────────────┘
-```
+> 최종 업데이트: 2026-05-04  
+> 진실 원천: `apps/web/src/firebase/key-registry.js`
 
 ---
 
-## 2. Firestore 컬렉션 정의
-
-### 2-1. `users/{uid}/profile/identity`
-
-| 필드명 | 타입 | 암호화 | 설명 |
-|---|---|---|---|
-| `name` | string | ✅ | 이름 |
-| `employeeId` | string | ✅ | 사번 |
-| `department` | string | ✅ | 부서 |
-| `position` | string | ✅ | 직급 |
-| `hireDate` | string | ✅ | 입사일 (YYYY-MM-DD) |
-| `jobLevel` | string | ✅ | 직무등급 |
-| `rank` | string | ✅ | 호봉 |
-| `workHistorySeeded` | boolean | ❌ | 근무이력 초기화 플래그 |
-| `lastEditAt` | number | ❌ | Unix ms (LWW 인덱싱) |
-
-### 2-2. `users/{uid}/profile/payroll`
-
-| 필드명 | 타입 | 암호화 | 설명 |
-|---|---|---|---|
-| `hourlyWage` | number | ✅ | 기본 시급 |
-| `annualSalary` | number | ✅ | 연봉 |
-| `manualHourly` | number | ✅ | 수동 시급 |
-| `allowancePolicy` | object | ✅ | 수당 정책 |
-| `paymentDay` | number | ✅ | 급여일 |
-| `baseHours` | number | ✅ | 소정근로시간 |
-| `paymentType` | string | ✅ | 급여 유형 |
-| `lastEditAt` | number | ❌ | Unix ms |
-
-### 2-3. `users/{uid}/overtime/{yyyymm}`  
-문서 ID: `YYYYMM` (예: `202604`)
-
-| 필드명 | 타입 | 암호화 | 설명 |
-|---|---|---|---|
-| `entries` | array | 부분 | 시간외 기록 배열 |
-| `entries[].id` | string | ❌ | `ot_{ts}_{rand}` |
-| `entries[].date` | string | ❌ | YYYY-MM-DD (인덱싱) |
-| `entries[].type` | string | ❌ | `overtime\|oncall\|holiday` |
-| `entries[].hours` | number | ✅ | 총 시간 |
-| `entries[].duration` | string | ✅ | 포맷 "NhMMm" |
-| `entries[].notes` | string | ✅ | 메모 |
-| `entries[].breakdown` | object | ✅ | 시간대별 분해 |
-| `entries[].estimatedPay` | number | ✅ | 추정 수당 |
-| `lastEditAt` | number | ❌ | Unix ms |
-
-### 2-4. `users/{uid}/leave/{yyyy}`
-문서 ID: 연도 (예: `2026`)
-
-| 필드명 | 타입 | 암호화 | 설명 |
-|---|---|---|---|
-| `entries` | array | 부분 | 휴가 기록 배열 |
-| `entries[].id` | string | ❌ | UUID |
-| `entries[].startDate` | string | ❌ | YYYY-MM-DD |
-| `entries[].endDate` | string | ❌ | YYYY-MM-DD |
-| `entries[].type` | string | ❌ | `연차\|청원휴가` 등 |
-| `entries[].days` | number | ❌ | 일수 |
-| `entries[].hours` | number | ❌ | 시간수 |
-| `entries[].duration` | string | ✅ | 포맷 "Nd" / "Nh" |
-| `entries[].notes` | string | ✅ | 메모 |
-| `entries[].salaryImpact` | number | ✅ | 급여 영향액 |
-| `lastEditAt` | number | ❌ | Unix ms |
-
-### 2-5. `users/{uid}/payslips/{payMonth}`
-문서 ID: `YYYY-MM` (예: `2026-04`)
-
-| 필드명 | 타입 | 암호화 | 설명 |
-|---|---|---|---|
-| `parsedFields` | object | ✅ | PDF 파싱 결과 전체 |
-| `payMonth` | string | ❌ | YYYY-MM (문서 ID와 동일) |
-| `driveFileId` | string | ❌ | Google Drive 파일 ID |
-| `lastEditAt` | number | ❌ | Unix ms |
-
-### 2-6. `users/{uid}/work_history/{entryId}`
-
-| 필드명 | 타입 | 암호화 | 설명 |
-|---|---|---|---|
-| `id` | string | ❌ | entryId |
-| `workplace` | string | ❌ | 근무처 (인덱싱) |
-| `from` | string | ❌ | 시작일 YYYY-MM-DD |
-| `to` | string | ❌ | 종료일 YYYY-MM-DD |
-| `dept` | string | ✅ | 부서 |
-| `role` | string | ✅ | 직책 |
-| `desc` | string | ✅ | 설명 |
-| `source` | string | ❌ | `manual\|seeded` |
-| `lastEditAt` | number | ❌ | Unix ms |
-
-### 2-7. `users/{uid}/schedule/{yyyymm}`
-
-| 필드명 | 타입 | 암호화 | 설명 |
-|---|---|---|---|
-| `entries` | array | 부분 | 본인 근무표 |
-| `entries[].date` | string | ❌ | YYYY-MM-DD |
-| `entries[].duty` | string | ✅ | D/E/N/O/AL 등 근무 코드 |
-| `entries[].memo` | string | ✅ | 메모 |
-| `team` | object | ✅ | 팀원별 근무표 |
-| `sourceFile` | string | ❌ | 업로드 파일명 |
-| `lastEditAt` | number | ❌ | Unix ms |
-
-### 2-8. `users/{uid}/settings/app`
-
-| 필드명 | 타입 | 암호화 | 설명 |
-|---|---|---|---|
-| `theme` | string | ❌ | `neo\|dark` |
-| `appLockPin` | string | ✅ | 앱 잠금 PIN |
-| `customNotes` | string | ✅ | 사용자 메모 |
-| `lastEditAt` | number | ❌ | Unix ms |
-
-### 2-9. `users/{uid}/settings/reference`
-
-| 필드명 | 타입 | 암호화 | 설명 |
-|---|---|---|---|
-| `favorites` | string[] | ❌ | 규정 article ID 배열 |
-| `lastEditAt` | number | ❌ | Unix ms |
-
----
-
-## 3. localStorage 키 정의서
-
-> Legacy unsupported: old BHM-prefixed localStorage keys are no longer read,
-> written, or migrated. Runtime storage is limited to `snuhmate_*`, `_guest`,
-> and `_uid_{uid}` scoped keys.
-
-### 동기화 대상 (Firestore ↔ localStorage)
-
-| 키명 | uid 스코프 | 타입 | Firestore 경로 |
-|---|---|---|---|
-| `snuhmate_hr_profile_uid_{uid}` | ✅ | JSON object | `users/{uid}/profile/*` |
-| `snuhmate_work_history_uid_{uid}` | ✅ | JSON array | `users/{uid}/work_history/*` |
-| `overtimeRecords_uid_{uid}` | ✅ | `{yyyymm: records[]}` | `users/{uid}/overtime/{yyyymm}` |
-| `leaveRecords` | ❌ (공유) | `{yyyy: records[]}` | `users/{uid}/leave/{yyyy}` |
-| `snuhmate_schedule_records` | ❌ (공유) | `{yyyymm: monthData}` | `users/{uid}/schedule/{yyyymm}` |
-| `overtimePayslipData_uid_{uid}` | ✅ | `{payMonth: data}` | `users/{uid}/payslips/{payMonth}` |
-| `payslip_{uid}_{yyyy}_{mm}` | ✅ | JSON object | `users/{uid}/payslips/{YYYY-MM}` |
-| `snuhmate_settings` | ❌ (기기) | JSON object | `users/{uid}/settings/app` |
-| `snuhmate_reg_favorites_uid_{uid}` | ✅ | string[] | `users/{uid}/settings/reference` |
-
-### 기기 로컬 전용
-
-| 키명 | 타입 | 용도 |
-|---|---|---|
-| `snuhmate_local_uid` | string | 로컬 uid 식별 |
-| `snuhmate_anon_id` | string | 익명 텔레메트리 ID |
-| `snuhmate_device_id` | string | 기기 ID |
-| `snuhmate_llm_consent_v1` | `opted-in\|opted-out` | LLM 사용 동의 |
-| `snuhmate_demo_mode` | `'1'` | 데모 모드 |
-| `snuhmate_last_edit_{base}` | ISO 8601 | LWW 타임스탬프 |
-| `theme` | `neo\|dark` | UI 테마 |
-| `hwBannerDismissed` | `'1'` | 시급 경고 배너 |
-
----
-
-## 4. 암호화 아키텍처
-
-```
-uid  ──── SHA-256(uid + '|snuh-mate-2026') ────► AES-GCM 256-bit key
-                                                         │
-                              ┌──────────────────────────┘
-                              │  encrypt(plaintext, randomIV)
-                              ▼
-                     { _v: 1, iv: <base64>, c: <base64> }
-                              │
-                              │  Firestore 저장
-                              │
-                              │  decrypt(c, iv, key)
-                              ▼
-                           plaintext
-```
-
-**암호화 대상 필드 요약:**
-- ✅ 신원 정보: name, employeeId, department, position, hireDate
-- ✅ 급여 정보: hourlyWage, annualSalary, allowancePolicy, parsedFields
-- ✅ 민감 메모: notes, duration, customNotes, appLockPin
-- ❌ 인덱싱 필드: date, type, year/month, workplace, lastEditAt
-
----
-
-## 5. 데이터 흐름 ERD
+## 1. 저장소 레이어 구조
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                      사용자 액션 (UI)                            │
-│  overtime 입력 | leave 입력 | 프로필 저장 | 설정 변경 | 명세서 업로드│
-└──────────────────────────────┬──────────────────────────────────┘
-                               │
-                               ▼
-┌──────────────────────────────────────────────────────────────────┐
-│               localStorage (기기 캐시)                            │
+│                        브라우저 (Client)                         │
 │                                                                  │
-│  overtimeRecords_uid_{uid}  ──────────────────────► overtime tab │
-│  leaveRecords               ──────────────────────► leave tab    │
-│  snuhmate_hr_profile_uid_{uid} ───────────────────► profile tab  │
-│  payslip_{uid}_{yyyy}_{mm}  ──────────────────────► payroll tab  │
-│  snuhmate_settings          ──────────────────────► settings tab │
-│  snuhmate_reg_favorites_uid_{uid} ────────────────► 규정 탭       │
-└──────────────────┬───────────────────────────────────────────────┘
-                   │
-     recordLocalEdit(base)
-     → app:local-edit 이벤트
-                   │
-     ┌─────────────▼────────────────┐
-     │   auto-sync.js               │
-     │   200ms debounce             │
-     │   로그인 상태 체크            │
-     └──────┬───────────────────────┘
-            │ writeXXX(uid, data)
-            │
-     ┌──────▼──────────────────────────────────────────────────────┐
-     │  crypto.js AES-GCM 필드별 암호화                             │
-     └──────┬──────────────────────────────────────────────────────┘
-            │
-     ┌──────▼──────────────────────────────────────────────────────┐
-     │              Firestore (Source of Truth)                    │
-     │                                                             │
-     │  users/{uid}/                                               │
-     │    ├─ profile/                                              │
-     │    │    ├─ identity  (name, employeeId, ...)                │
-     │    │    └─ payroll   (hourlyWage, allowance, ...)           │
-     │    ├─ overtime/                                             │
-     │    │    └─ {yyyymm}  (entries[], lastEditAt)                │
-     │    ├─ leave/                                                │
-     │    │    └─ {yyyy}    (entries[], lastEditAt)                │
-     │    ├─ payslips/                                             │
-     │    │    └─ {YYYY-MM} (parsedFields, driveFileId)            │
-     │    ├─ work_history/                                         │
-     │    │    └─ {entryId} (workplace, dept, role, ...)           │
-     │    └─ settings/                                             │
-     │         ├─ app       (theme, appLockPin, ...)               │
-     │         └─ reference (favorites[])                          │
-     └──────┬──────────────────────────────────────────────────────┘
-            │
-            │ (로그인 시 1회)
-            │ hydrateFromFirestore(uid)
-            │ readXXX() → 복호화 → localStorage 덮어쓰기
-            │
-     ┌──────▼──────────────────────────────────────────────────────┐
-     │  auth-service.js onAuthChanged                              │
-     │                                                             │
-     │  로그인  → hydrateFromFirestore + import auto-sync          │
-     │  로그아웃 → clearLocalUserData (uid 키 전부 삭제)            │
-     └─────────────────────────────────────────────────────────────┘
+│   onboarding.js                   /app 탭들 (profile, payroll…)  │
+│        │                                    │                    │
+│        ▼                                    ▼                    │
+│   localStorage (guest 키)       localStorage (uid or guest 키)   │
+│        │                                    │                    │
+│        └──────────────── ▼ ─────────────────┘                   │
+│                     PROFILE.save()                               │
+│                     auto-sync.js (write-through)                 │
+│                          │                                       │
+└──────────────────────────┼──────────────────────────────────────┘
+                           │ (로그인 시만)
+                           ▼
+              ┌─────────────────────────┐
+              │       Firestore         │
+              │   users/{uid}/…         │
+              └─────────────────────────┘
 ```
 
 ---
 
-## 6. auto-sync HANDLERS 매핑
+## 2. localStorage 키 목록 (Key Registry)
 
-| app:local-edit base | 호출 함수 | Firestore 경로 |
-|---|---|---|
-| `snuhmate_hr_profile` | `writeProfile(uid, data)` | `users/{uid}/profile/{identity,payroll}` |
-| `overtimeRecords` | `writeOvertimeMonth(uid, yyyymm, records)` | `users/{uid}/overtime/{yyyymm}` |
-| `leaveRecords` | `writeLeaveYear(uid, yyyy, records)` | `users/{uid}/leave/{yyyy}` |
-| `snuhmate_work_history` | `writeAllWorkHistory(uid, entries)` | `users/{uid}/work_history/{entryId}` |
-| `snuhmate_settings` | `writeSettings(uid, data)` | `users/{uid}/settings/app` |
-| `snuhmate_reg_favorites` | `writeFavorites(uid, arr)` | `users/{uid}/settings/reference` |
-| `payslip_{uid}_{YYYY}_{MM}` | `writePayslip(uid, payMonth, data)` | `users/{uid}/payslips/{YYYY-MM}` |
+### 2-A. 키 명명 규칙
+
+| 상태 | 패턴 | 예시 |
+|------|------|------|
+| 게스트 | `{baseKey}_guest` | `snuhmate_hr_profile_guest` |
+| 로그인 | `{baseKey}_uid_{uid}` | `snuhmate_hr_profile_uid_abc123` |
+| 공용(기기) | `{baseKey}` | `snuhmate_settings` |
+| 기기전용 | `{baseKey}` | `snuhmate_local_uid` |
+
+### 2-B. 전체 키 인벤토리
+
+| baseKey | scope | localScope | Firestore shape | 카테고리 |
+|---------|-------|------------|-----------------|---------|
+| `snuhmate_hr_profile` | sync | user | `split-identity-payroll` | identity |
+| `snuhmate_work_history` | sync | user | `collection-by-id` | workHistory |
+| `snuhmate_work_history_seeded` | sync | user | `doc-merge` | workHistory |
+| `snuhmate_career_events` | sync | user | `collection-by-id` | workHistory |
+| `overtimeRecords` | sync | user | `collection-by-yyyymm` | overtime |
+| `otManualHourly` | sync | user | `doc-merge` | payroll |
+| `overtimePayslipData` | sync | user | `collection-by-id` | payroll |
+| `leaveRecords` | sync | user | `collection-by-yyyy` | leave |
+| `snuhmate_schedule_records` | sync | shared | `collection-by-yyyymm` | schedule |
+| `snuhmate_settings` | sync | shared | `doc` | settings |
+| `theme` | sync | shared | `doc-merge` | settings |
+| `snuhmate_reg_favorites` | sync | user | `doc` | reference |
+| `snuhmate_local_uid` | device-local | — | — | — |
+| `snuhmate_anon_id` | device-local | — | — | — |
+| `snuhmate_device_id` | device-local | — | — | — |
 
 ---
 
-## 7. Firestore Rules 요약
+## 3. 프로필 스키마 (snuhmate_hr_profile)
 
-```
-users/{userId}/** 
-  읽기/쓰기: request.auth.uid == userId 만 허용
-  그 외 모든 경로: 거부
-```
+localStorage 에는 합쳐진 shape 하나로 저장.  
+Firestore 에는 identity / payroll 두 doc 으로 분리 저장 (암호화).
 
-- Admin 백도어 없음
-- Public read 없음
-- UID 기반 완전 격리
-
-### 7-1. Anonymous Corpus Policy
-
-`anonymous_corpus`는 현재 Firestore 컬렉션으로 운영하지 않는다. 브라우저는 익명화된 근무표 코퍼스를 로컬 FastAPI 백엔드 `POST /corpus/submit`으로만 제출하고, Firestore rules는 `users/{uid}/**` 밖의 top-level write를 의도적으로 차단한다.
-
----
-
-## 8. LM Studio Gateway 스키마
-
-### 급여명세서 파이프라인 (2-stage)
-
-```
-이미지 → qwen3-vl-8b → ExtractedTable (행/열 raw)
-                ↓
-         gemma-4-26b-a4b → NormalizedPayslip (금액/분류 정규화)
-                ↓
-         validate_payslip() → ValidationResult
-                ↓
-         ParsePipelineResult → ReviewRecord (data/lmstudio-review-queue.json)
-```
-
-### 근무표 파이프라인 (1-stage)
-
-```
-이미지 → qwen3-vl-8b → NormalizedSchedule (직원×날짜×코드 직접)
-                ↓
-         validate_schedule() → ValidationResult
-                ↓
-         SchedulePipelineResult → ScheduleReviewRecord (data/schedule-review-queue.json)
-```
-
-### NormalizedSchedule 필드
+### 3-A. Identity 필드 → `users/{uid}/profile/identity`
 
 | 필드 | 타입 | 설명 |
-|---|---|---|
-| `period.year` | int | 2000~2100 |
-| `period.month` | int | 1~12 |
-| `employees[].name` | string\|null | 직원 이름 |
-| `employees[].role` | string\|null | 직책 |
-| `employees[].entries[].date` | string | YYYY-MM-DD |
-| `employees[].entries[].code` | string | D/E/N/OFF/AL/RD (대문자 정규화) |
-| `employees[].entries[].confidence` | float | 0.0~1.0 |
-| `codes_found` | string[] | 문서에서 발견된 코드 목록 |
+|------|------|------|
+| `name` | string | 이름 (별칭) |
+| `employeeNumber` | string | 사번 |
+| `hospital` | string | 소속 병원 |
+| `hospitalEmail` | string | 사번@병원도메인 (자동 생성) |
+| `department` | string | 부서 |
+| `jobType` | string | 직종 |
+| `grade` | string | 직급·등급 (예: J1, J3) |
+| `year` | number | 호봉(연차) |
+| `hireDate` | string | 입사일 (YYYY-MM-DD) |
+| `birthDate` | string | 생년월일 (YYYY-MM-DD) |
+| `gender` | string | 성별 (M/F/'') |
+| `hasMilitary` | boolean | 군복무 여부 |
+| `militaryMonths` | number | 군복무 기간(개월) |
+| `hasSeniority` | boolean | 근속가산기본급 적용 여부 |
+| `workHistorySeeded` | boolean | 자동 시드 완료 플래그 |
+| `lastEditAt` | number | 마지막 수정 타임스탬프 (**평문** — 인덱싱용) |
 
-### 알려진 근무 코드
+### 3-B. Payroll 필드 → `users/{uid}/profile/payroll`
 
-| 코드 | 의미 |
-|---|---|
-| D | 데이 (07:00~15:00) |
-| E | 이브닝 (15:00~23:00) |
-| N | 나이트 (23:00~07:00) |
-| OFF / O | 오프 |
-| AL | 연차 |
-| RD | 리커버리 |
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `adjustPay` | number | 조정급 |
+| `upgradeAdjustPay` | number | 승진 조정급 |
+| `numFamily` | number | 가족 수 |
+| `numChildren` | number | 자녀 수 |
+| `childrenUnder6Pay` | number | 6세이하 자녀수당 월액 |
+| `specialPay` | number | 특수직 수당 |
+| `positionPay` | number | 보직 수당 |
+| `workSupportPay` | number | 업무지원비 |
+| `weeklyHours` | number | 월 소정근로시간 (기본 209) |
+| `unionStepAdjust` | string | 노조협의 호봉 보정 |
+| `manualHourly` | number | 수동 시급 입력 |
+
+### 3-C. 병원 이메일 도메인 매핑
+
+| 병원 | 이메일 도메인 | 예시 |
+|------|-------------|------|
+| 서울대학교병원 (본원) | `snuh.org` | `20320@snuh.org` |
+| 어린이병원 | `snuh.org` | `20320@snuh.org` |
+| 강남센터 | `snuh.org` | `20320@snuh.org` |
+| 보라매병원 | `brmh.org` | `20320@brmh.org` |
+| 국립교통재활병원 | `ntrh.or.kr` | `20320@ntrh.or.kr` |
 
 ---
 
-## 9. 데이터 생명주기
+## 4. Firestore 컬렉션 구조
 
 ```
-게스트
-  └─ localStorage: {base}_guest 키 사용
-  └─ Firestore: 없음
+users/
+  {uid}/
+    profile/
+      identity          ← 이름·사번·병원·hospitalEmail·직종·호봉 (AES-GCM 암호화)
+      payroll           ← 조정급·수당 정책 (AES-GCM 암호화)
+    overtime/
+      {YYYYMM}          ← { entries: [...] }  해당 월 시간외 기록
+    leave/
+      {YYYY}            ← { entries: [...] }  해당 연도 휴가 기록
+    payslips/
+      {docId}           ← 급여명세서 파싱 결과 (암호화)
+    schedule/
+      {YYYYMM}          ← 해당 월 근무표 기록
+    careerEvents/
+      {eventId}         ← 커리어 이벤트 (입사·승급·표창 등)
+    work_history/
+      {entryId}         ← 근무이력 항목 (legacy — careerEvents 로 통합 예정)
+    settings/
+      app               ← 앱 설정·테마
+      reference         ← 규정 즐겨찾기
+```
 
-로그인
-  └─ hydrateFromFirestore: cloud → localStorage 덮어쓰기
-  └─ localStorage: {base}_uid_{uid} 키로 전환
-  └─ auto-sync 활성화: 편집 → 200ms → Firestore write
+---
 
-로그아웃
-  └─ clearLocalUserData(uid): _uid_{uid} 키 전부 삭제
-  └─ leaveRecords 삭제
-  └─ payslip_{uid}_* 삭제
-  └─ snuhmate_last_edit_* 삭제
-  └─ 다시 게스트 상태 (빈 로컬)
+## 5. 데이터 흐름도
+
+### 5-A. 온보딩 → 앱 진입
+
+```
+snuhmate.com/
+
+  [카드 8: 개인정보 입력]
+  병원 select + 사번 입력
+        │
+        │  buildHospitalEmail(사번, 병원) → 예: "20320@brmh.org"
+        ▼
+  localStorage['snuhmate_hr_profile_guest'] = {
+    name, employeeNumber, hospital, hospitalEmail,
+    department, jobType, hireDate, birthDate, gender
+  }
+  localStorage['snuhmate_onboarding_pending'] = '1'
+        │
+        ▼
+  [카드 9: 시작 방식]
+        │
+        ├─ 게스트 ──────────────────────────────► /app (guest 키 사용)
+        │
+        └─ 이메일/Google 로그인 성공
+                  │
+                  ▼
+           applyOnboardingProfile(uid)
+           guest 키 → uid 키로 승급
+           writeProfile(uid, profile) → Firestore
+                  │
+                  ▼
+                /app
+```
+
+### 5-B. 로그인 후 데이터 동기화
+
+```
+Firebase onAuthChanged(user)
+        │
+        ├─ user = null (비로그인)
+        │     sync-lifecycle.logout(null)
+        │     → guest 데이터 보존 (uid=null이면 guest 정리 스킵)
+        │
+        └─ user (emailVerified = true)
+              │
+              ├─ sync-lifecycle.login(uid)
+              │   → googleSub·email·displayName → snuhmate_settings
+              │
+              ├─ hydrate(uid)
+              │   Firestore → localStorage pull (LWW 비교)
+              │   profile/identity, profile/payroll
+              │   overtime/{YYYYMM}, leave/{YYYY}
+              │   payslips/{id}, careerEvents/{id}
+              │
+              ├─ (마이그레이션 다이얼로그)
+              │   guest 키 데이터 → Firestore 업로드 여부 선택
+              │
+              └─ emitDomainRefresh()
+                  → 모든 탭 UI 갱신
+```
+
+### 5-C. 프로필 저장 write-through
+
+```
+/app info 탭 → 저장하기 클릭
+        │
+        ▼
+PROFILE.collectFromForm(PROFILE_FIELDS)
+→ { name, employeeNumber, hospital, hospitalEmail, … }
+        │
+        ▼
+PROFILE.save(data)
+→ localStorage[STORAGE_KEY] = JSON.stringify(merged)
+→ recordLocalEdit('snuhmate_hr_profile')
+→ dispatchEvent('profileChanged')
+        │
+        │  (로그인 상태일 때만)
+        ▼
+profile-sync.js → writeProfile(uid, profile)
+        │
+        ├─ _splitFields(profile)
+        │   identity: { name, employeeNumber, hospital, hospitalEmail,
+        │               department, jobType, grade, year, hireDate, … }
+        │   payroll:  { adjustPay, specialPay, weeklyHours, … }
+        │
+        ├─ encryptDoc(identity, key) → AES-GCM cipher
+        ├─ encryptDoc(payroll, key)  → AES-GCM cipher
+        │
+        └─ Firestore setDoc(users/{uid}/profile/identity, encrypted, merge:true)
+           Firestore setDoc(users/{uid}/profile/payroll,   encrypted, merge:true)
+```
+
+### 5-D. 로그아웃
+
+```
+로그아웃 버튼 클릭
+        │
+        ▼
+sync-lifecycle.logout(uid)
+        │
+        ├─ clearActiveUserLocalData(uid)
+        │   removes: snuhmate_hr_profile_uid_{uid}
+        │            overtimeRecords_uid_{uid}
+        │            leaveRecords_uid_{uid}
+        │            payslip_{uid}_*
+        │            snuhmate_career_events_uid_{uid}  … (KEY_REGISTRY user-scope 전체)
+        │
+        ├─ clearAllGuestData()      ← _guest 키 전체 정리
+        │
+        ├─ clearAuthBridge()        ← googleSub, googleEmail, displayName 삭제
+        │
+        └─ emitDomainRefresh({ reason: 'logout' })
+           dispatchEvent('app:auth-data-reset')
+           → 모든 탭 빈 상태로 재렌더
+```
+
+---
+
+## 6. 암호화 정책
+
+| 항목 | 내용 |
+|------|------|
+| 알고리즘 | AES-GCM 256-bit (Web Crypto API) |
+| 키 파생 | `HKDF(SHA-256, uid_bytes, salt)` → 256-bit 키 |
+| 암호화 범위 | identity 전 필드, payroll 전 필드, 급여명세서 민감 필드 |
+| 평문 저장 | `lastEditAt` (타임스탬프 인덱싱용)만 평문 |
+| 서버 접근 | Firebase 서버는 암호화된 blob만 보관 — 복호화 불가 |
+| 키 보관 | 브라우저 메모리 + uid 파생 (서버 저장 없음) |
+
+---
+
+## 7. 이벤트 버스
+
+| 이벤트명 | 발행 시점 | 주요 구독자 |
+|---------|---------|-----------|
+| `profileChanged` | PROFILE.save() | profile-tab, overtime-tab, retirement |
+| `payslipChanged` | 급여명세서 추가/수정 | retirement auto-recompute |
+| `overtimeChanged` | 시간외 기록 변경 | home summary, overtime-tab |
+| `leaveChanged` | 휴가 기록 변경 | leave-tab, home summary |
+| `careerEventsChanged` | 커리어 이벤트 변경 | work-history timeline 재렌더 |
+| `app:cloud-hydrated` | Firestore hydrate 완료 | 모든 탭 데이터 갱신 |
+| `app:sync-login` | 로그인 성공 | auto-sync write-through 시작 |
+| `app:auth-data-reset` | 로그아웃 완료 | UI 초기화, guest 모드 복원 |
+
+---
+
+## 8. 스키마 ERD (Mermaid)
+
+```mermaid
+erDiagram
+    USER {
+        string uid PK
+        string email
+        string displayName
+    }
+    PROFILE_IDENTITY {
+        string name
+        string employeeNumber
+        string hospital
+        string hospitalEmail
+        string department
+        string jobType
+        string grade
+        int year
+        string hireDate
+        string birthDate
+        string gender
+    }
+    PROFILE_PAYROLL {
+        number adjustPay
+        number specialPay
+        number positionPay
+        number weeklyHours
+        number numFamily
+        number numChildren
+    }
+    OVERTIME_RECORD {
+        string id PK
+        string date
+        string type
+        number hours
+        number amount
+    }
+    LEAVE_RECORD {
+        string id PK
+        string date
+        string type
+        number days
+    }
+    PAYSLIP {
+        string id PK
+        string yearMonth
+        number basePay
+        number totalPay
+        json parsedFields
+    }
+    CAREER_EVENT {
+        string id PK
+        string date
+        string type
+        string workplace
+        string description
+    }
+
+    USER ||--|| PROFILE_IDENTITY : "profile/identity"
+    USER ||--|| PROFILE_PAYROLL : "profile/payroll"
+    USER ||--o{ OVERTIME_RECORD : "overtime/{YYYYMM}"
+    USER ||--o{ LEAVE_RECORD : "leave/{YYYY}"
+    USER ||--o{ PAYSLIP : "payslips/{id}"
+    USER ||--o{ CAREER_EVENT : "careerEvents/{id}"
 ```
