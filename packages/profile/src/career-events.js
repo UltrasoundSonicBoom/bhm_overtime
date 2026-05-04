@@ -90,6 +90,37 @@ function _resolvePromoSequence(jobType) {
   return PROMO_GENERAL; // 간호직·의료기술직·일반직 모두 J 패턴 사용
 }
 
+// 현재 직급 내 연차별 호봉 상승 이벤트 (미래분만)
+// grade/year는 profile 에서 읽어, 현재 호봉 기준으로 다음 호봉부터 8년차까지 생성.
+function _gradeHoshongEvents(profile) {
+  const grade = profile.grade;
+  const currentYear = Math.max(1, Math.min(8, profile.year || 1));
+  if (!grade) return [];
+  const jobType = profile.jobType || '간호직';
+  const now = new Date();
+  const nowYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const events = [];
+  for (let yr = currentYear + 1; yr <= 8; yr++) {
+    const wagePrev = CALC.calcOrdinaryWage(jobType, grade, yr - 1, {});
+    const wageNext = CALC.calcOrdinaryWage(jobType, grade, yr, {});
+    if (!wagePrev || !wageNext) continue;
+    const dBase = (wageNext.breakdown?.['기준기본급'] || 0) - (wagePrev.breakdown?.['기준기본급'] || 0);
+    if (dBase <= 0) continue;
+    const yearsFromNow = yr - currentYear;
+    events.push({
+      id: _genId('seed_'),
+      category: 'promotion',
+      title: `${grade} ${yr}년차 호봉 상승`,
+      sub: `${grade}등급 ${yr - 1}→${yr}년차 · 기준기본급 월 +₩${Math.round(dBase).toLocaleString()} (제20조)`,
+      dateFrom: _addYears(nowYM, yearsFromNow),
+      amount: `+₩${Math.round(dBase).toLocaleString()} /월`,
+      badge: { text: `${yr}년차`, tone: 'indigo' },
+      autoSeed: true,
+    });
+  }
+  return events;
+}
+
 function _retirementYM(hireYM) {
   // 만 60세 12월 말일 — 단순화: 입사일 기반 추정 불가 (생년월일 필요).
   // 일반적 가정: 입사 시점 만 25세 → 정년 = 입사 + 35년 12월
@@ -262,6 +293,14 @@ export function generateSeedEvents(profile) {
     autoSeed: true,
   });
 
+  // 6. 현재 직급 내 연차별 호봉 상승 (미래분, grade/year 기반)
+  // 자동승격 체인이 끝난 이후(S1·C1·SC1 등)에도 8년차까지 호봉이 오름.
+  // profile.year 가 있을 때만 생성 — 없으면 hireDate만으로는 현재 호봉 특정 불가.
+  if (profile.grade && profile.year) {
+    const yearProgressEvents = _gradeHoshongEvents(profile);
+    events.push(...yearProgressEvents);
+  }
+
   return events;
 }
 
@@ -349,8 +388,18 @@ export function regenerateSeed() {
   const profile = PROFILE.load();
   if (!profile) return [];
   const newSeed = generateSeedEvents(profile);
-  // 사용자 추가 이벤트는 보존
-  const userEvents = loadEvents().filter((e) => !e.autoSeed);
+  // 새 시드의 workplace 키 집합 (category|dateFrom|title) — 중복 방어용
+  const seedWpKeys = new Set(
+    newSeed.filter((e) => e.category === 'workplace').map((e) => `${e.dateFrom || ''}|${e.title || ''}`)
+  );
+  // 사용자 추가 이벤트 보존 (autoSeed=true 제거) + 시드와 겹치는 마이그레이션 workplace 제거
+  const userEvents = loadEvents().filter((e) => {
+    if (e.autoSeed) return false;
+    if (e.category === 'workplace' && e.legacyOrigin === 'work_history') {
+      return !seedWpKeys.has(`${e.dateFrom || ''}|${e.title || ''}`);
+    }
+    return true;
+  });
   const merged = [...newSeed, ...userEvents];
   saveEvents(merged);
   return merged;

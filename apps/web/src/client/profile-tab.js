@@ -1389,7 +1389,7 @@ if (typeof window !== 'undefined') {
 
 // ── 커리어 타임라인 렌더 + CRUD ──────────────────────────────
 // 단일 키 `snuhmate_career_events` 통합. work_history 와 자동승격·장기근속·공로연수·정년을 한 시점에서 본다.
-let _careerCurrentFilter = 'promotion'; // 기본 = 승격·승진
+let _careerCurrentFilter = 'all'; // 기본 = 전체 (필터별 토글은 사용자 선택)
 
 function _careerEventStatus(ev, now) {
   if (!ev?.dateFrom) return 'future';
@@ -1538,9 +1538,18 @@ function _careerBuildEventEl(ev, now) {
 
   const yr = document.createElement('div');
   yr.className = 'career-event-year';
+  const yrLeft = document.createElement('div');
+  yrLeft.style.cssText = 'display:flex;align-items:center;gap:6px;';
   const yrText = document.createElement('span');
   yrText.textContent = _careerFmtDate(ev, now);
-  yr.appendChild(yrText);
+  yrLeft.appendChild(yrText);
+  if (status === 'now') {
+    const nowPill = document.createElement('span');
+    nowPill.className = 'career-now-pill';
+    nowPill.textContent = '지금';
+    yrLeft.appendChild(nowPill);
+  }
+  yr.appendChild(yrLeft);
   const editBtn = document.createElement('button');
   editBtn.className = 'career-edit-btn';
   editBtn.type = 'button';
@@ -1693,7 +1702,15 @@ function renderCareerTimeline() {
   const dedupeKey = (ev) => `${ev.category || ''}|${ev.dateFrom || ''}|${ev.title || ''}`;
   const seen = new Set(events.map(dedupeKey));
   const legacyMerged = legacyEvents.filter((ev) => !seen.has(dedupeKey(ev)));
-  const allEvents = [...events, ...legacyMerged, ...dynamicLeave];
+  // 모든 소스 통합 후 category|dateFrom|title 기준 dedupe
+  // (regenerateSeed 후 career_events 내부에 seed+migrated 중복 발생 방어)
+  const seenDedup = new Set();
+  const allEvents = [...events, ...legacyMerged, ...dynamicLeave].filter((ev) => {
+    const k = dedupeKey(ev);
+    if (seenDedup.has(k)) return false;
+    seenDedup.add(k);
+    return true;
+  });
   const filtered = allEvents
     .filter((ev) => _careerCurrentFilter === 'all' || ev.category === _careerCurrentFilter)
     .slice()

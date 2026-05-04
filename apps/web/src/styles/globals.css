@@ -5176,11 +5176,11 @@ html[data-theme="neo"] .pay-upload-zone {
   background: var(--accent-indigo); border-color: var(--accent-indigo);
   box-shadow: 0 0 0 4px rgba(108,92,231,0.18);
 }
-.career-event.now::after {
-  content: '지금'; position: absolute; left: 0; top: 28px;
-  background: var(--accent-indigo); color: white; font-size: var(--text-caption);
-  font-weight: 700; padding: 2px 6px; border-radius: 9999px;
-  letter-spacing: 0.04em;
+.career-now-pill {
+  background: var(--accent-indigo); color: white;
+  font-size: var(--text-caption); font-weight: 700;
+  padding: 2px 8px; border-radius: 9999px;
+  letter-spacing: 0.04em; white-space: nowrap;
 }
 .career-event-year {
   font-family: "Space Grotesk","Inter",sans-serif;
