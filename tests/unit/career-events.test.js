@@ -83,42 +83,15 @@ describe('generateSeedEvents — 자동승격 항목별 차액', () => {
   });
 });
 
-describe('generateSeedEvents — 호봉 이벤트 가드', () => {
-  it('자동승격_경로가_있는_J1_등급에서는_호봉이벤트_미생성', () => {
-    // J1은 PROMO_GENERAL에 from:'J1' 있음 → 호봉 이벤트 생성 불필요
-    const events = generateSeedEvents({
-      hireDate: '2022-03-01', jobType: '간호직', grade: 'J1', year: 2,
-    });
-    const hobon = events.filter((e) => e.autoSeed && /호봉 상승/.test(e.title));
-    expect(hobon).toHaveLength(0);
-  });
-  it('자동승격_경로가_있는_J2_등급에서는_호봉이벤트_미생성', () => {
-    const events = generateSeedEvents({
-      hireDate: '2018-03-01', jobType: '간호직', grade: 'J2', year: 3,
-    });
-    const hobon = events.filter((e) => e.autoSeed && /호봉 상승/.test(e.title));
-    expect(hobon).toHaveLength(0);
-  });
-  it('S1_등급_현재_2년차이면_나머지_6개_호봉이벤트_생성', () => {
-    // S1은 PROMO_GENERAL에 없음 → 3~8년차 호봉 이벤트 6개 생성
-    const events = generateSeedEvents({
-      hireDate: '2006-07-01', jobType: '간호직', grade: 'S1', year: 2,
-    });
-    const hobon = events.filter((e) => e.autoSeed && /S1.*호봉 상승/.test(e.title));
-    expect(hobon.length).toBeGreaterThanOrEqual(1);
-    // 모든 호봉 이벤트의 dateFrom이 오늘 이후여야 함 (미래 이벤트)
-    const today = new Date().toISOString().slice(0, 7);
-    hobon.forEach((ev) => {
-      expect(ev.dateFrom >= today).toBe(true);
-    });
-  });
-  it('S1_호봉이벤트_amount는_양수_금액_포함', () => {
-    const events = generateSeedEvents({
-      hireDate: '2006-07-01', jobType: '간호직', grade: 'S1', year: 1,
-    });
-    const hobon = events.filter((e) => e.autoSeed && /S1.*호봉 상승/.test(e.title));
-    hobon.forEach((ev) => {
-      expect(ev.amount).toMatch(/^\+₩[\d,]+/);
+describe('generateSeedEvents — 호봉 이벤트 없음 (사용자 요청: 연도별 호봉 상승 이벤트 제거)', () => {
+  it('어떤_등급에서도_호봉_상승_이벤트_미생성', () => {
+    const grades = ['J1', 'J2', 'J3', 'S1'];
+    grades.forEach((grade) => {
+      const events = generateSeedEvents({
+        hireDate: '2006-07-01', jobType: '간호직', grade, year: 2,
+      });
+      const hobon = events.filter((e) => e.autoSeed && /호봉 상승/.test(e.title));
+      expect(hobon).toHaveLength(0);
     });
   });
 });

@@ -297,18 +297,24 @@ export function generateSeedEvents(profile) {
     autoSeed: true,
   });
 
-  // 6. 현재 직급 내 연차별 호봉 상승 (미래분, grade/year 기반)
-  // 자동승격 체인이 끝난 이후(S1·C1·SC1 등)에도 8년차까지 호봉이 오름.
-  // profile.year 가 있을 때만 생성 — 없으면 hireDate만으로는 현재 호봉 특정 불가.
-  if (profile.grade && profile.year) {
-    const yearProgressEvents = _gradeHoshongEvents(profile);
-    events.push(...yearProgressEvents);
-  }
-
   return events;
 }
 
 // ── 마이그레이션: 기존 work_history → 신규 career_events 의 workplace 항목 변환 ──
+function _normLegacyYM(str) {
+  if (!str) return '';
+  // PROFILE.parseDate 로 정규화 시도 (2자리 연도, YYYY-MM 등 모두 처리)
+  const parsed = PROFILE.parseDate(String(str).trim());
+  if (parsed) return parsed.slice(0, 7); // YYYY-MM
+  // parseDate 도 실패하면: 점/슬래시를 대시로 교체 후 YYYY-MM 매칭
+  const norm = String(str).trim().replace(/[./\s]/g, '-');
+  const m = norm.match(/^(\d{1,4})-(\d{1,2})(?:-\d+)?$/);
+  if (!m) return '';
+  let y = m[1];
+  if (y.length <= 2) { const yi = parseInt(y, 10); y = String(yi <= 30 ? 2000 + yi : 1900 + yi); }
+  return `${y}-${m[2].padStart(2, '0')}`;
+}
+
 function _migrateLegacyWorkHistory() {
   try {
     const legacyRaw = localStorage.getItem(_legacyKey());
@@ -319,8 +325,8 @@ function _migrateLegacyWorkHistory() {
       category: 'workplace',
       title: wh.dept || wh.workplace || '근무처',
       sub: [wh.workplace, wh.role, wh.desc].filter(Boolean).join(' · '),
-      dateFrom: (wh.from || '').slice(0, 7),
-      dateTo: (wh.to || '').slice(0, 7),
+      dateFrom: _normLegacyYM(wh.from),
+      dateTo: _normLegacyYM(wh.to),
       legacyOrigin: 'work_history',
     })).filter((ev) => ev.dateFrom);
   } catch { return []; }

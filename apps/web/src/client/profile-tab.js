@@ -1763,11 +1763,20 @@ function renderCareerTimeline() {
   // 이벤트가 career_events 에 있으면 (career-events.js loadEvents 의 1회 마이그레이션
   // 결과) 중복을 피한다.
   const legacyEvents = _legacyWorkHistoryAsEvents();
-  const dedupeKey = (ev) => `${ev.category || ''}|${ev.dateFrom || ''}|${ev.title || ''}`;
+  // dateFrom 정규화: "6-07"·"2006.07"·"6.07" 모두 "2006-07"로 통일해서 dedup key 구성
+  function _normDedupYM(s) {
+    if (!s) return '';
+    const norm = String(s).trim().replace(/[./]/g, '-');
+    const mp = norm.match(/^(\d{1,4})-(\d{1,2})(?:-\d+)?$/);
+    if (!mp) return s;
+    let y = mp[1];
+    if (y.length <= 2) { const yi = parseInt(y, 10); y = String(yi <= 30 ? 2000 + yi : 1900 + yi); }
+    return `${y}-${mp[2].padStart(2, '0')}`;
+  }
+  const dedupeKey = (ev) => `${ev.category || ''}|${_normDedupYM(ev.dateFrom || '')}|${ev.title || ''}`;
   const seen = new Set(events.map(dedupeKey));
   const legacyMerged = legacyEvents.filter((ev) => !seen.has(dedupeKey(ev)));
-  // 모든 소스 통합 후 category|dateFrom|title 기준 dedupe
-  // (regenerateSeed 후 career_events 내부에 seed+migrated 중복 발생 방어)
+  // 모든 소스 통합 후 정규화 key 기준 dedupe
   const seenDedup = new Set();
   const allEvents = [...events, ...legacyMerged, ...dynamicLeave].filter((ev) => {
     const k = dedupeKey(ev);

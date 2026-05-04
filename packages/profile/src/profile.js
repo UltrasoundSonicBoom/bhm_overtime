@@ -146,23 +146,33 @@ export const PROFILE = {
 
         let y, m, d;
 
-        // YYYYMMDD (8자리 숫자)
+        // YYYYMMDD (8자리)
         if (/^\d{8}$/.test(str)) {
-            y = str.slice(0, 4);
-            m = str.slice(4, 6);
-            d = str.slice(6, 8);
+            y = str.slice(0, 4); m = str.slice(4, 6); d = str.slice(6, 8);
         }
-        // YYYY-MM-DD, YYYY.MM.DD, YYYY/MM/DD
+        // YYYYMM (6자리) → 일=01
+        else if (/^\d{6}$/.test(str)) {
+            y = str.slice(0, 4); m = str.slice(4, 6); d = '01';
+        }
         else {
-            const parts = str.split(/[-./]/);
-            if (parts.length === 3) {
-                y = parts[0];
-                m = parts[1].padStart(2, '0');
-                d = parts[2].padStart(2, '0');
+            const parts = str.split(/[-./\s]+/);
+            if (parts.length >= 3) {
+                y = parts[0]; m = parts[1].padStart(2, '0'); d = parts[2].padStart(2, '0');
+            }
+            // YYYY-MM 또는 YY-MM (2파트, 일=01)
+            else if (parts.length === 2) {
+                y = parts[0]; m = parts[1].padStart(2, '0'); d = '01';
             }
         }
 
         if (!y || !m || !d) return null;
+
+        // 2자리 연도 → 4자리로 확장 (00-30 → 2000년대, 31-99 → 1900년대)
+        if (y.length <= 2) {
+            const yi = parseInt(y, 10);
+            y = String(yi <= 30 ? 2000 + yi : 1900 + yi);
+        }
+
         const date = new Date(`${y}-${m}-${d}`);
         if (isNaN(date.getTime())) return null;
         return `${y}-${m}-${d}`;
