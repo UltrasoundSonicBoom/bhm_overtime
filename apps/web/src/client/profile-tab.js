@@ -1622,6 +1622,37 @@ function _buildPastSummary(pastEvents, expanded) {
   return wrap;
 }
 
+// Task 4 (UI merge): legacy `snuhmate_work_history` 아이템을 workplace 이벤트로
+// 변환해 타임라인에 병합. career-events.js 의 `loadEvents()` migration 은 신규 키가
+// 비어있을 때만 1회 실행되므로, 시드 이벤트만 있고 work_history 데이터가 따로
+// 동기화되어 있는 경우 사용자가 등록한 근무처가 보이지 않는 회귀가 발생.
+// 여기선 매 렌더 시점에 양쪽을 합쳐 보여준다 (data 보존, UI 통합).
+function _legacyWorkHistoryAsEvents() {
+  try {
+    const k = (typeof window !== 'undefined' && window.getUserStorageKey)
+      ? window.getUserStorageKey('snuhmate_work_history')
+      : 'snuhmate_work_history_guest';
+    const list = JSON.parse(localStorage.getItem(k) || '[]') || [];
+    if (!Array.isArray(list) || list.length === 0) return [];
+    return list.map((wh) => ({
+      // legacy id 그대로 사용 (충돌 방지 prefix) — 동일 work_history 가 이미
+      // career_events workplace 로 마이그레이션된 케이스 dedupe 는 아래 merge 단계.
+      id: 'wh-' + (wh.id || ''),
+      category: 'workplace',
+      title: wh.dept || wh.workplace || '근무처',
+      sub: [
+        wh.workplace && wh.workplace !== '서울대학교병원' ? wh.workplace : null,
+        wh.role,
+        wh.desc,
+      ].filter(Boolean).join(' · '),
+      dateFrom: (wh.from || '').slice(0, 7),
+      dateTo: (wh.to || '').slice(0, 7),
+      legacyOrigin: 'work_history',
+      _legacyId: wh.id,  // edit 라우팅용 (현재는 미사용 — Task 5 시 활용)
+    })).filter((ev) => ev.dateFrom);
+  } catch { return []; }
+}
+
 function renderCareerTimeline() {
   const tl = document.getElementById('workHistoryList');
   const empty = document.getElementById('careerEmptyMsg');
@@ -1636,7 +1667,15 @@ function renderCareerTimeline() {
       ? CAREER.computeDynamicLeaveEvents(PROFILE.load(), new Date())
       : [];
   } catch (e) { /* leave 모듈 미초기화 무해 */ }
-  const allEvents = [...events, ...dynamicLeave];
+
+  // Task 4: legacy work_history merge. 이미 같은 dateFrom+title 의 workplace
+  // 이벤트가 career_events 에 있으면 (career-events.js loadEvents 의 1회 마이그레이션
+  // 결과) 중복을 피한다.
+  const legacyEvents = _legacyWorkHistoryAsEvents();
+  const dedupeKey = (ev) => `${ev.category || ''}|${ev.dateFrom || ''}|${ev.title || ''}`;
+  const seen = new Set(events.map(dedupeKey));
+  const legacyMerged = legacyEvents.filter((ev) => !seen.has(dedupeKey(ev)));
+  const allEvents = [...events, ...legacyMerged, ...dynamicLeave];
   const filtered = allEvents
     .filter((ev) => _careerCurrentFilter === 'all' || ev.category === _careerCurrentFilter)
     .slice()
@@ -1781,13 +1820,34 @@ if (typeof window !== 'undefined') {
   window.closeCareerEventSheet = closeCareerEventSheet;
   window.saveCareerEvent = saveCareerEvent;
   window.deleteCareerEvent = deleteCareerEvent;
-  // 기존 renderWorkHistory 콜사이트도 새 타임라인으로 라우팅 (back-compat 호환층)
-  window.renderWorkHistory = function () {
+  // 기존 renderWorkHistory 콜사이트도 새 타임라인으로 라우팅 (back-compat 호환층).
+  // work-history.js 의 module-init 이 이 키를 덮어쓰는 회귀를 막기 위해 매 호출마다
+  // 우리 함수로 재고정 (work-history 의 legacy 렌더는 더 이상 사용 안 함).
+  function _renderWorkHistoryShim() {
     _initCareerTimelineHandlers();
     renderCareerTimeline();
-  };
-  // 커리어 카드 ID 가 DOM 에 들어오는 즉시 바인딩 (탭 전환 시점)
-  if (document.readyState !== 'loading') _initCareerTimelineHandlers();
-  else document.addEventListener('DOMContentLoaded', _initCareerTimelineHandlers);
+  }
+  window.renderWorkHistory = _renderWorkHistoryShim;
+  // 커리어 카드 ID 가 DOM 에 들어오는 즉시 바인딩 (탭 전환 시점).
+  // _initCareerTimelineHandlers 는 idempotent (data-bound 가드 + flag 가드).
+  // DOMContentLoaded 이후엔 work-history.js module-init 가 이미 끝났으므로
+  // 여기서 다시 한 번 window.renderWorkHistory 를 우리 shim 으로 고정해 회귀 방지.
+  function _ensureCareerRouting() {
+    window.renderWorkHistory = _renderWorkHistoryShim;
+    _initCareerTimelineHandlers();
+  }
+  if (document.readyState !== 'loading') _ensureCareerRouting();
+  else document.addEventListener('DOMContentLoaded', _ensureCareerRouting);
+
+  // Task 4: career_events / cloud-hydrate / legacy work_history 변경 시 재렌더.
+  // 모듈 init 시점에 한 번만 바인딩 (DOMContentLoaded 와 무관 — hydrate 가 더
+  // 일찍 끝날 수 있어 listener 는 가장 빨리 거는 게 안전).
+  if (!window._careerEventsHandlerBound) {
+    window._careerEventsHandlerBound = true;
+    const rerender = () => { try { renderCareerTimeline(); } catch {} };
+    window.addEventListener('careerEventsChanged', rerender);
+    window.addEventListener('app:cloud-hydrated', rerender);
+    window.addEventListener('workHistoryChanged', rerender);
+  }
 }
 export {};
