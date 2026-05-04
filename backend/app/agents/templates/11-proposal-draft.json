@@ -1,0 +1,49 @@
+{
+  "id": "proposal-draft",
+  "name": "기획서·제안서 초안",
+  "icon": "💡",
+  "personas": ["전직군"],
+  "category": "문서작성",
+  "model": "gemma4-24b",
+  "estimated_seconds": 15,
+  "inputs": [
+    {
+      "id": "title",
+      "label": "기획 제목",
+      "type": "text",
+      "placeholder": "예: 병동 낙상 예방 강화 방안, 원무 창구 대기시간 단축 프로젝트",
+      "required": true
+    },
+    {
+      "id": "goal",
+      "label": "목표",
+      "type": "text",
+      "placeholder": "예: 낙상 발생률 30% 감소, 평균 대기시간 15분 → 8분 단축",
+      "required": true
+    },
+    {
+      "id": "background",
+      "label": "배경·현황",
+      "type": "textarea",
+      "placeholder": "왜 이 기획이 필요한지, 현재 상황이나 문제점을 설명해주세요.",
+      "required": true
+    },
+    {
+      "id": "approach",
+      "label": "접근 방법 (선택)",
+      "type": "textarea",
+      "placeholder": "생각하고 있는 해결 방법이 있다면 간략히 적어주세요.",
+      "required": false
+    },
+    {
+      "id": "budget_timeline",
+      "label": "예산·일정 (선택)",
+      "type": "text",
+      "placeholder": "예: 예산 200만원, 3개월 시범 운영",
+      "required": false
+    }
+  ],
+  "system_prompt": "당신은 병원 경영 기획 전문가입니다. 입력된 정보를 바탕으로 설득력 있는 A4 1-2장 분량의 기획서 초안을 작성합니다. 명확한 문제 정의, 측정 가능한 목표, 실행 가능한 방안을 포함하세요. 한국어로 답변하세요.",
+  "user_prompt_template": "다음 정보를 바탕으로 기획서 초안을 작성해주세요.\n\n- 제목: {{title}}\n- 목표: {{goal}}\n- 배경: {{background}}{{#approach}}\n- 접근 방법: {{approach}}{{/approach}}{{#budget_timeline}}\n- 예산·일정: {{budget_timeline}}{{/budget_timeline}}\n\n아래 형식으로 작성하세요:\n\n# {{title}}\n\n## 1. 추진 배경 및 현황\n\n## 2. 목표\n- 정량 목표:\n- 정성 목표:\n\n## 3. 추진 방안\n### 3.1 단기 (1개월)\n### 3.2 중기 (2-3개월)\n\n## 4. 기대 효과\n\n## 5. 소요 예산 및 일정\n| 항목 | 금액 | 일정 |\n|------|------|------|\n\n## 6. 리스크 및 대응\n\n---\n*작성: _______ | 부서: _______ | 일자: _______*",
+  "output_format": "markdown"
+}

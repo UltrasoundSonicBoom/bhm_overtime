@@ -560,6 +560,15 @@ function switchTab(tabName) {
       }).catch(function (e) { console.warn('[lifeEvent] life-event.js load 실패', e); });
     });
   }
+  if (tabName === 'ai') {
+    _afterLoad('ai', function () {
+      import('./ai-gallery.js').then(function (mod) {
+        if (mod && typeof mod.initAIGallery === 'function') {
+          mod.initAIGallery();
+        }
+      }).catch(function (e) { console.warn('[ai] ai-gallery.js load 실패', e); });
+    });
+  }
 
   return true;
 }

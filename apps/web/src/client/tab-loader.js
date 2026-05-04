@@ -22,7 +22,7 @@
   var ALLOWED_TABS = [
     'home', 'payroll', 'overtime', 'leave', 'schedule',
     'reference', 'profile', 'settings', 'feedback',
-    'lifeEvent'
+    'lifeEvent', 'ai'
   ];
 
   var cache = Object.create(null);

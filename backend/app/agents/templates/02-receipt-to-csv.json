@@ -1,0 +1,28 @@
+{
+  "id": "receipt-to-csv",
+  "name": "영수증 CSV 변환",
+  "icon": "🧾",
+  "personas": ["전직군"],
+  "category": "데이터정리",
+  "model": "gemma4-4b",
+  "estimated_seconds": 6,
+  "inputs": [
+    {
+      "id": "receipt_text",
+      "label": "영수증 내용",
+      "type": "textarea",
+      "placeholder": "영수증 텍스트를 붙여넣으세요. 여러 장이면 줄바꿈으로 구분하세요.\n예) 2024-03-15 스타벅스 아메리카노 4,500원\n    2024-03-15 편의점 물 1,200원",
+      "required": true
+    },
+    {
+      "id": "category_hint",
+      "label": "지출 카테고리 힌트 (선택)",
+      "type": "text",
+      "placeholder": "예: 식비, 교통비, 교육비",
+      "required": false
+    }
+  ],
+  "system_prompt": "당신은 회계·경비 처리 전문가입니다. 영수증 텍스트를 CSV 형식으로 변환합니다. 숫자는 쉼표 없이 숫자만, 날짜는 YYYY-MM-DD 형식으로 통일하세요. 한국어로 답변하세요.",
+  "user_prompt_template": "다음 영수증 내용을 CSV로 변환해주세요.{{#category_hint}}\n지출 카테고리 힌트: {{category_hint}}{{/category_hint}}\n\n영수증 내용:\n{{receipt_text}}\n\n아래 형식의 CSV 표로 출력하세요:\n```csv\n날짜,상호명,품목,금액(원),카테고리,비고\n```\n\nCSV 아래에 총합계도 표시해주세요.",
+  "output_format": "markdown"
+}

@@ -1,0 +1,138 @@
+---
+// AIIsland — AI 도구 탭 (에이전트 갤러리)
+// ai-gallery.js 가 탭 진입 시 dynamic import 되어 카탈로그 렌더 + 에이전트 실행.
+// 백엔드: GET /ai/agents, POST /ai/agent/run (SSE)
+// 환경변수: PUBLIC_AI_API_URL (기본값 http://localhost:8000)
+---
+<div class="tab-content" id="tab-ai">
+
+  <!-- 배너 -->
+  <div class="info-note-banner mb-3">
+    <span>🤖</span>
+    <div>
+      <strong>AI 도구 갤러리</strong><br>
+      병원·직장 업무에 바로 쓸 수 있는 AI 에이전트. 입력만 하면 문서가 완성됩니다.
+    </div>
+  </div>
+
+  <!-- 필터 -->
+  <div class="card p-3 mb-3">
+    <div class="flex flex-wrap items-center gap-2 mb-2" id="aiCategoryChips">
+      <button class="ai-chip active" data-cat="all" type="button">전체</button>
+    </div>
+    <input type="search" id="aiSearch"
+      class="w-full p-2 rounded-md border border-brand-text-muted text-brand-body-normal"
+      placeholder="에이전트 검색 (예: 회의록, SBAR, 번역)" />
+  </div>
+
+  <!-- 에이전트 카드 그리드 -->
+  <div id="aiAgentGrid" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <p class="text-brand-text-muted text-center p-6 col-span-full">에이전트를 불러오는 중…</p>
+  </div>
+
+  <!-- 실행 패널 (선택된 에이전트) -->
+  <div id="aiRunPanel" class="card p-4 mt-3" style="display:none;">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="font-semibold text-brand-body-normal" id="aiRunTitle">에이전트 실행</h3>
+      <button type="button" id="aiRunClose"
+        class="text-brand-text-muted text-xl leading-none"
+        aria-label="닫기">×</button>
+    </div>
+    <form id="aiRunForm" class="flex flex-col gap-3">
+      <div id="aiRunInputs"></div>
+      <button type="submit" id="aiRunBtn"
+        class="btn-primary w-full py-2 rounded-lg font-semibold">
+        ✨ 실행
+      </button>
+    </form>
+
+    <!-- 출력 영역 -->
+    <div id="aiOutputWrap" class="mt-4" style="display:none;">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-sm font-medium text-brand-text-muted">결과</span>
+        <button type="button" id="aiCopyBtn"
+          class="text-xs text-brand-primary border border-brand-primary rounded px-2 py-1">
+          복사
+        </button>
+      </div>
+      <div id="aiOutput"
+        class="bg-brand-surface-alt rounded-lg p-4 text-sm whitespace-pre-wrap min-h-[120px] max-h-[60vh] overflow-y-auto font-mono">
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<style is:global>
+  .ai-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1.5px solid var(--border-subtle, #e5e7eb);
+    background: var(--surface, #fff);
+    color: var(--text-secondary, #6b7280);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .ai-chip.active {
+    background: var(--brand-primary, #6366f1);
+    border-color: var(--brand-primary, #6366f1);
+    color: #fff;
+  }
+
+  .ai-agent-card {
+    background: var(--surface, #fff);
+    border: 1.5px solid var(--border-subtle, #e5e7eb);
+    border-radius: 12px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: box-shadow 0.15s, border-color 0.15s;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .ai-agent-card:hover {
+    box-shadow: 0 2px 12px rgba(99,102,241,0.12);
+    border-color: var(--brand-primary, #6366f1);
+  }
+  .ai-agent-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .ai-agent-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+  .ai-agent-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-primary, #111827);
+  }
+  .ai-agent-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 2px;
+  }
+  .ai-agent-tag {
+    font-size: 0.7rem;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: var(--surface-alt, #f3f4f6);
+    color: var(--text-muted, #9ca3af);
+  }
+  .ai-agent-est {
+    font-size: 0.75rem;
+    color: var(--text-muted, #9ca3af);
+    margin-top: auto;
+  }
+
+  #aiOutput.streaming::after {
+    content: '▌';
+    animation: ai-blink 0.7s step-end infinite;
+  }
+  @keyframes ai-blink { 50% { opacity: 0; } }
+</style>

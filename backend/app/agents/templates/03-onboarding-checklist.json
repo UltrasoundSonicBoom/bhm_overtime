@@ -1,0 +1,42 @@
+{
+  "id": "onboarding-checklist",
+  "name": "신규 직원 온보딩 체크리스트",
+  "icon": "🆕",
+  "personas": ["전직군"],
+  "category": "인사·행정",
+  "model": "gemma4-24b",
+  "estimated_seconds": 12,
+  "inputs": [
+    {
+      "id": "position",
+      "label": "직책·직종",
+      "type": "text",
+      "placeholder": "예: 간호사 (신규), 행정직 3년차 경력직",
+      "required": true
+    },
+    {
+      "id": "department",
+      "label": "부서",
+      "type": "text",
+      "placeholder": "예: 내과 병동, 원무과, 수술실",
+      "required": true
+    },
+    {
+      "id": "start_date",
+      "label": "입사 예정일",
+      "type": "text",
+      "placeholder": "예: 2026-06-01",
+      "required": false
+    },
+    {
+      "id": "special_notes",
+      "label": "특이사항 (선택)",
+      "type": "textarea",
+      "placeholder": "예: 교대근무 예정, 타 병원 경력 5년",
+      "required": false
+    }
+  ],
+  "system_prompt": "당신은 서울대학교병원 인사·교육 전문가입니다. 신규 직원이 첫 2주를 빠짐없이 준비할 수 있도록 상세한 온보딩 체크리스트를 작성합니다. 병원 특유의 필수 절차(감염관리교육, 의료폐기물 교육, 심폐소생술 인증 등)를 반드시 포함하세요. 한국어로 답변하세요.",
+  "user_prompt_template": "다음 신규 직원 정보를 바탕으로 온보딩 체크리스트를 작성해주세요.\n\n- 직책·직종: {{position}}\n- 부서: {{department}}{{#start_date}}\n- 입사 예정일: {{start_date}}{{/start_date}}{{#special_notes}}\n- 특이사항: {{special_notes}}{{/special_notes}}\n\n아래 항목별로 체크리스트를 작성하세요:\n\n## D-7 (입사 전)\n- [ ] ...\n\n## 첫날 (Day 1)\n- [ ] ...\n\n## 첫 주 (Day 2-5)\n- [ ] ...\n\n## 둘째 주 (Day 6-10)\n- [ ] ...\n\n## 필수 교육·인증 (1개월 이내)\n- [ ] ...\n\n## 담당자 연락처 안내\n(인사팀, 부서 수간호사/팀장, 원무과 등 역할별 연락처 구조만 안내)",
+  "output_format": "markdown"
+}

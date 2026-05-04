@@ -1,0 +1,28 @@
+{
+  "id": "risk-checklist",
+  "name": "리스크 체크리스트",
+  "icon": "⚠️",
+  "personas": ["전직군"],
+  "category": "인사·행정",
+  "model": "gemma4-24b",
+  "estimated_seconds": 10,
+  "inputs": [
+    {
+      "id": "task_description",
+      "label": "업무·상황 설명",
+      "type": "textarea",
+      "placeholder": "리스크를 점검하고 싶은 업무나 상황을 설명해주세요.\n예: 신규 의료기기 도입 후 첫 사용 전 점검, 병동 인력 감소 시 야간 근무 배치",
+      "required": true
+    },
+    {
+      "id": "domain",
+      "label": "분야",
+      "type": "text",
+      "placeholder": "예: 환자 안전, 의료장비, 감염관리, 행정·법적 리스크",
+      "required": false
+    }
+  ],
+  "system_prompt": "당신은 병원 리스크 관리 전문가입니다. 주어진 상황의 잠재적 리스크를 식별하고 각각의 대응 방안을 체계적으로 정리합니다. 의료 환경의 환자 안전과 법적 책임을 특히 중요하게 다루세요. 한국어로 답변하세요.",
+  "user_prompt_template": "다음 업무·상황의 리스크 체크리스트를 작성해주세요.\n\n- 상황: {{task_description}}{{#domain}}\n- 분야: {{domain}}{{/domain}}\n\n아래 형식으로 작성하세요:\n\n## 리스크 요약\n\n## 리스크 목록\n| # | 리스크 | 심각도 | 발생 가능성 | 대응 방안 |\n|---|--------|--------|------------|----------|\n\n(심각도: 높음🔴 / 보통🟡 / 낮음🟢)\n\n## 즉시 조치 필요 항목\n\n## 예방 체크리스트\n- [ ] ...\n\n## 참고 지침 / 관련 규정",
+  "output_format": "markdown"
+}

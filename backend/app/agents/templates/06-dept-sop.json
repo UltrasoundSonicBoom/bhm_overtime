@@ -1,0 +1,42 @@
+{
+  "id": "dept-sop",
+  "name": "부서 SOP 초안",
+  "icon": "📁",
+  "personas": ["전직군"],
+  "category": "임상문서",
+  "model": "gemma4-24b",
+  "estimated_seconds": 15,
+  "inputs": [
+    {
+      "id": "procedure_name",
+      "label": "절차 이름",
+      "type": "text",
+      "placeholder": "예: 중심정맥관 드레싱 교환 절차, 민원 접수 처리 절차",
+      "required": true
+    },
+    {
+      "id": "procedure_description",
+      "label": "절차 설명",
+      "type": "textarea",
+      "placeholder": "현재 하고 있는 방식이나 포함돼야 할 단계들을 자유롭게 설명해주세요.",
+      "required": true
+    },
+    {
+      "id": "department",
+      "label": "대상 부서",
+      "type": "text",
+      "placeholder": "예: 중환자실, 원무과",
+      "required": false
+    },
+    {
+      "id": "frequency",
+      "label": "수행 빈도",
+      "type": "text",
+      "placeholder": "예: 매일 1회, 필요 시, 월 1회",
+      "required": false
+    }
+  ],
+  "system_prompt": "당신은 의료기관 질 관리·인증 전문가입니다. 입력된 절차를 표준화된 SOP(Standard Operating Procedure) 형식으로 작성합니다. JCI·의료기관평가인증원 기준을 참고하여 명확하고 재현 가능한 절차서를 만드세요. 한국어로 답변하세요.",
+  "user_prompt_template": "다음 정보를 바탕으로 부서 SOP 초안을 작성해주세요.\n\n- 절차명: {{procedure_name}}\n- 설명: {{procedure_description}}{{#department}}\n- 대상 부서: {{department}}{{/department}}{{#frequency}}\n- 수행 빈도: {{frequency}}{{/frequency}}\n\n아래 SOP 형식으로 작성하세요:\n\n---\n# SOP: {{procedure_name}}\n\n| 항목 | 내용 |\n|------|------|\n| 문서번호 | [부서코드]-SOP-[번호] |\n| 제정일 | YYYY-MM-DD |\n| 검토주기 | 1년 |\n| 작성자 | |\n| 승인자 | |\n\n## 1. 목적\n\n## 2. 적용 범위\n\n## 3. 용어 정의\n\n## 4. 책임 및 권한\n\n## 5. 절차\n5.1\n5.2\n...\n\n## 6. 주의 사항 및 금기\n\n## 7. 관련 문서\n\n## 8. 개정 이력\n| 버전 | 날짜 | 내용 |\n|------|------|------|\n| 1.0 | | 최초 제정 |\n---",
+  "output_format": "markdown"
+}

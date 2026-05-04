@@ -138,6 +138,7 @@
       { icon: '🌱', text: '생활', tab: 'lifeEvent', href: homeHref('lifeEvent') },
       // 뉴스 탭 비활성 (차후 복구 시 주석 해제)
       // { icon: '📰', text: '뉴스', href: 'cardnews.html', active: isCardNews },
+      { icon: '🤖', text: 'AI', tab: 'ai', href: homeHref('ai') },
       { icon: '👤', text: 'info', tab: 'profile', href: homeHref('profile') }
     ].filter(function (item) {
       if (item.gate === 'nurse' && !_showSchedule) return false;

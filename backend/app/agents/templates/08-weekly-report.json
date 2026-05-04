@@ -1,0 +1,42 @@
+{
+  "id": "weekly-report",
+  "name": "주간 업무보고서",
+  "icon": "📊",
+  "personas": ["전직군"],
+  "category": "문서작성",
+  "model": "gemma4-4b",
+  "estimated_seconds": 6,
+  "inputs": [
+    {
+      "id": "done_this_week",
+      "label": "이번 주 한 일",
+      "type": "textarea",
+      "placeholder": "이번 주에 처리한 업무를 나열해주세요. (순서, 형식 무관)\n예) 외래 환자 응대 120명, 입원 수속 15건, 장비 점검 3건...",
+      "required": true
+    },
+    {
+      "id": "issues",
+      "label": "이슈·문제점 (선택)",
+      "type": "textarea",
+      "placeholder": "발생한 문제나 미완료 사항이 있으면 적어주세요.",
+      "required": false
+    },
+    {
+      "id": "next_week_plan",
+      "label": "다음 주 계획 (선택)",
+      "type": "textarea",
+      "placeholder": "다음 주 예정 업무나 중점 사항",
+      "required": false
+    },
+    {
+      "id": "week_of",
+      "label": "보고 기간",
+      "type": "text",
+      "placeholder": "예: 2026년 5월 4주차 (5/18~5/22)",
+      "required": false
+    }
+  ],
+  "system_prompt": "당신은 행정 문서 작성 전문가입니다. 입력된 업무 내용을 간결하고 전문적인 주간 업무보고서로 정리합니다. 성과 중심으로 작성하고 수치가 있으면 강조하세요. 한국어로 답변하세요.",
+  "user_prompt_template": "다음 정보를 바탕으로 주간 업무보고서를 작성해주세요.\n{{#week_of}}\n- 보고 기간: {{week_of}}{{/week_of}}\n\n**이번 주 업무**:\n{{done_this_week}}{{#issues}}\n\n**이슈·문제점**:\n{{issues}}{{/issues}}{{#next_week_plan}}\n\n**다음 주 계획**:\n{{next_week_plan}}{{/next_week_plan}}\n\n아래 형식으로 작성해주세요:\n\n# 주간 업무보고{{#week_of}} — {{week_of}}{{/week_of}}\n\n## 1. 이번 주 주요 업무 실적\n| 업무 | 건수/결과 | 비고 |\n|------|----------|------|\n\n## 2. 특이사항 및 이슈\n\n## 3. 다음 주 업무 계획\n\n---\n*작성자: _______ | 부서: _______*",
+  "output_format": "markdown"
+}

@@ -6,14 +6,36 @@
 - POST /cache/put    : 캐시 저장
 - GET  /cache/dept-month-status : (dept, month) 호출 카운터
 - GET  /health       : 헬스체크
+- GET  /ai/agents    : 에이전트 카탈로그
+- POST /ai/agent/run : 에이전트 SSE 스트리밍 실행
 """
 from contextlib import asynccontextmanager
+from pathlib import Path
 import re
 from typing import Optional
 
+# .env 로드 (python-dotenv 없이 직접 파싱)
+def _load_dotenv() -> None:
+    env_path = Path(__file__).parent.parent / ".env"
+    if not env_path.exists():
+        return
+    import os
+    for line in env_path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, val = line.partition("=")
+        key = key.strip()
+        val = val.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = val
+
+_load_dotenv()
+
 from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import ValidationError
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel, ValidationError
 
 from app.cache.sqlite import (
     DEPT_MONTH_CALL_LIMIT,
@@ -71,21 +93,64 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS — Cloudflare Pages 도메인 + localhost
+# CORS — Cloudflare Pages 도메인 + localhost (모든 포트 허용)
+_LOCALHOST_PORTS = [str(p) for p in range(4320, 4340)] + ["8088"]
+_ALLOW_ORIGINS = (
+    [f"http://localhost:{p}" for p in _LOCALHOST_PORTS] +
+    ["https://snuhmate.com", "https://snuhmate.pages.dev"]
+)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:4321",
-        "http://localhost:4323",
-        "http://localhost:8088",
-        "https://snuhmate.com",
-        "https://snuhmate.pages.dev",
-    ],
+    allow_origins=_ALLOW_ORIGINS,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+
+# ── AI 에이전트 갤러리 ──────────────────────────────────────────
+
+MAX_INPUT_BYTES = 8 * 1024
+
+
+class AgentRunRequest(BaseModel):
+    agent_id: str
+    inputs: dict[str, str]
+
+
+@app.get("/ai/agents")
+async def list_agents():
+    from app.agents.registry import get_catalog
+    return get_catalog()
+
+
+@app.post("/ai/agent/run")
+async def run_agent(req: AgentRunRequest):
+    from app.agents.registry import get_template
+    from app.agents.runner import stream_agent
+
+    template = get_template(req.agent_id)
+    if template is None:
+        raise HTTPException(status_code=404, detail=f"agent not found: {req.agent_id}")
+
+    for key, val in req.inputs.items():
+        if len(val.encode("utf-8")) > MAX_INPUT_BYTES:
+            raise HTTPException(status_code=413, detail=f"input '{key}' too large")
+
+    async def _sse():
+        try:
+            async for chunk in stream_agent(template, req.inputs):
+                yield f"data: {chunk}\n\n"
+        except ValueError as e:
+            yield f"data: [ERROR] {e}\n\n"
+        except Exception as e:
+            yield f"data: [ERROR] LM Studio 연결 실패: {e}\n\n"
+        yield "data: [DONE]\n\n"
+
+    return StreamingResponse(_sse(), media_type="text/event-stream")
+
+
+# ── 기존 엔드포인트 ──────────────────────────────────────────────
 
 @app.get("/health", response_model=HealthResponse)
 async def health() -> HealthResponse:

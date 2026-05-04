@@ -119,3 +119,25 @@ Key routing rules:
 - Architecture review → invoke plan-eng-review
 - Save progress, checkpoint, resume → invoke checkpoint
 - Code quality, health check → invoke health
+
+### SNUHmate 전용 smate-* 라우팅
+
+| 트리거 표현 | 스킬 |
+|-----------|------|
+| UI/CSS/Astro 바꿨어, 디자인시스템 점검, 토큰 확인 | `smate-design-guard` |
+| 계산기·단협·파서·호봉표 바꿨어, 급여 회귀 검토 | `smate-payroll-review` |
+| 커밋푸쉬머지, ship it, PR 올려줘 | `smate-pr-ops` |
+| B6 마스킹, 마스킹 서비스, PII 파이프라인 | `smate-b6-masking` |
+| 새 기능 끝까지, 이 기능 출시까지, 한 사이클 돌려줘 | `smate-feature-ship` |
+
+## 하네스: SNUHmate
+
+**목표:** SNUH 의료진의 초과근무·급여·퇴직금을 정확하게 계산·안내하는 앱 SNUHmate의 개발·검증·배포 워크플로우 자동화
+
+**트리거:** 위 smate-* 라우팅 표를 참조. 복합 작업(신규 기능 전체 사이클)은 `smate-feature-ship` 스킬을 사용.
+
+**변경 이력:**
+| 날짜 | 변경 내용 | 대상 | 사유 |
+|------|----------|------|------|
+| 2026-05-01 | 초기 구성 완료 | 전체 (6 agents, 6 skills) | SNUHmate 도메인 전용 하네스 |
+| 2026-05-04 | CLAUDE.md 하네스 포인터 등록 | CLAUDE.md | harness 스킬 규격 준수 |
