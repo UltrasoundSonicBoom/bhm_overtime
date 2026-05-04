@@ -301,8 +301,8 @@
       setAuthMsg("로그인 중...", null);
       try {
         const mod = await import("/src/firebase/auth-service.js");
-        const cred = await mod.signInWithEmail(email, password);
-        if (cred?.user && !cred.user.emailVerified) {
+        const user = await mod.signInWithEmail(email, password);
+        if (user && !user.emailVerified) {
           try {
             await mod.resendVerificationEmail();
             setAuthMsg("아직 이메일 인증 전이에요. 인증 메일을 다시 보냈으니 메일함을 확인해 주세요.", "ok");
