@@ -2007,12 +2007,31 @@ if (typeof window !== 'undefined') {
       if (_rerenderTimer) clearTimeout(_rerenderTimer);
       _rerenderTimer = setTimeout(() => { _rerenderTimer = null; rerender(); }, 50);
     };
+    // 페이지/탭 진입 시 가장 최근 명세서로 profile.grade/year 자동 동기화 후 재렌더
+    const _syncFromLatestPayslip = () => {
+      try {
+        if (!window.SALARY_PARSER || typeof window.SALARY_PARSER.listSavedMonths !== 'function') return;
+        const months = window.SALARY_PARSER.listSavedMonths();
+        const paid = (months || []).filter((m) => m.type === '급여');
+        if (paid.length === 0) return;
+        // 가장 최근 (year*100+month 최대)
+        paid.sort((a, b) => (b.year * 100 + b.month) - (a.year * 100 + a.month));
+        const latest = paid[0];
+        const data = window.SALARY_PARSER.loadMonthlyData(latest.year, latest.month, latest.type);
+        if (data && typeof window.SALARY_PARSER.applyStableItemsToProfile === 'function') {
+          window.SALARY_PARSER.applyStableItemsToProfile(data);
+          // careerProfileChanged 가 applyStableItems 안에서 grade/year 변경 시 자동 발화
+        }
+      } catch {}
+    };
     window.addEventListener('careerEventsChanged', rerender);
-    window.addEventListener('app:cloud-hydrated', rerender);
+    window.addEventListener('app:cloud-hydrated', () => { _syncFromLatestPayslip(); rerender(); });
     window.addEventListener('workHistoryChanged', rerender);
     // 명세서 추가/편집 → profile.grade/year 갱신 → hero card + timeline 재렌더
-    window.addEventListener('payslipChanged', rerenderDebounced);
+    window.addEventListener('payslipChanged', () => { _syncFromLatestPayslip(); rerenderDebounced(); });
     window.addEventListener('careerProfileChanged', rerenderDebounced);
+    // 모듈 초기 로드 시점에도 한 번 시도 (SALARY_PARSER 가 이미 노출돼 있으면 즉시 동기화)
+    setTimeout(_syncFromLatestPayslip, 200);
   }
 }
 export {};
