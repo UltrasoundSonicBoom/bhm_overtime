@@ -1,17 +1,16 @@
 // firebase/auth-ui.js — Phase 8 Task 5: 로그인 다이얼로그 + status pill
 //
+// UX: 3버튼 시작 (이메일 / Google / 게스트) → 이메일 클릭 시 폼 펼침
+// 이메일 로그인 실패(없는 계정) 시 자동 신규 가입 + 인증 메일 발송.
 // XSS 회피: createElement + textContent + setAttribute only (innerHTML 금지).
 // non-pushy: URL 파라미터 자동 오픈 금지, ESC 닫기, '취소' = 다이얼로그 닫기.
-//
-// 1차 provider: Email + Google. 카카오는 Phase 10 에서 추가.
 
 import {
   signInWithEmail, signUpWithHospitalEmail, signInWithGoogle,
-  signOutUser, onAuthChanged, getCurrentUser,
+  signOutUser, onAuthChanged, getCurrentUser, resendVerificationEmail,
 } from './auth-service.js';
 import { validatePassword } from './auth-validators.js';
 
-// validatePassword 는 단위 테스트를 위해 별도 모듈에서 정의. 외부 호환을 위해 re-export.
 export { validatePassword };
 
 const DIALOG_ID = 'snuhmateAuthDialog';
@@ -46,7 +45,6 @@ function _el(tag, attrs, children) {
   return e;
 }
 
-// Google G 로고 SVG — DOM API만 사용 (innerHTML 금지)
 function _googleIcon() {
   const NS = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(NS, 'svg');
@@ -54,7 +52,6 @@ function _googleIcon() {
   svg.setAttribute('width', '18');
   svg.setAttribute('height', '18');
   svg.setAttribute('aria-hidden', 'true');
-
   const paths = [
     { fill: '#4285F4', d: 'M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z' },
     { fill: '#34A853', d: 'M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z' },
@@ -76,7 +73,6 @@ function _buildDialog() {
     className: 'fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4',
   });
 
-  // 디자인 시스템 card 패턴 (margin-bottom 없는 모달용)
   const panel = _el('div', {
     className: [
       'w-full max-w-[360px]',
@@ -88,83 +84,77 @@ function _buildDialog() {
     ].join(' '),
   });
 
-  // 제목 (card-title 패턴)
+  // 제목
   const titleRow = _el('div', { className: 'card-title mb-5' });
   titleRow.appendChild(_el('span', { className: 'icon indigo', text: '👤' }));
   titleRow.appendChild(_el('span', { text: 'SNUH 메이트 로그인' }));
   panel.appendChild(titleRow);
 
-  // ── 병원 이메일 섹션 ──
-  const emailGroup = _el('div', { className: 'form-group mb-2' });
+  // 메시지 영역
+  const msgEl = _el('p', { id: 'snuhmateAuthErr', className: 'text-xs mb-2 hidden' });
+  panel.appendChild(msgEl);
+
+  // ── 이메일 펼침 폼 (처음엔 숨김) ──
+  const emailForm = _el('div', { id: 'snuhmateEmailForm', className: 'hidden' });
   const emailIn = _el('input', {
     type: 'email', id: 'snuhmateEmail',
+    className: 'form-input w-full mb-2',
     placeholder: '이메일 (예: hong@gmail.com)',
     autocomplete: 'email',
   });
-  emailGroup.appendChild(emailIn);
-  panel.appendChild(emailGroup);
-
-  const passGroup = _el('div', { className: 'form-group mb-2' });
   const passIn = _el('input', {
     type: 'password', id: 'snuhmatePass',
+    className: 'form-input w-full mb-2',
     placeholder: '비밀번호 (8~12자, 특수문자 포함)',
     autocomplete: 'current-password',
   });
-  passGroup.appendChild(passIn);
-  panel.appendChild(passGroup);
-
-  // 에러/성공 메시지 (인라인 색상 — JS 가 setMsg 로 덮어씀)
-  const errEl = _el('p', {
-    id: 'snuhmateAuthErr',
-    className: 'text-xs mb-2 hidden',
-  });
-  panel.appendChild(errEl);
-
-  // 이메일 버튼 (로그인 + 신규 가입) — full-width stacked
-  const signInBtn = _el('button', {
-    type: 'button', id: 'snuhmateSignInBtn',
+  const submitBtn = _el('button', {
+    type: 'button', id: 'snuhmateSubmitBtn',
     className: 'btn btn-primary btn-full mb-2',
-    text: '이메일 로그인',
+    text: '로그인 / 가입',
   });
-  panel.appendChild(signInBtn);
-  const signUpBtn = _el('button', {
-    type: 'button', id: 'snuhmateSignUpBtn',
-    className: 'btn btn-outline btn-full mb-4',
-    text: '신규 가입',
+  const cancelEmailBtn = _el('button', {
+    type: 'button',
+    className: 'w-full py-1 text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors cursor-pointer bg-transparent border-none mb-3',
+    text: '← 돌아가기',
   });
-  panel.appendChild(signUpBtn);
+  emailForm.appendChild(emailIn);
+  emailForm.appendChild(passIn);
+  emailForm.appendChild(submitBtn);
+  emailForm.appendChild(cancelEmailBtn);
+  panel.appendChild(emailForm);
 
-  // 구분선 helper
-  const _divider = () => {
-    const row = _el('div', { className: 'flex items-center gap-3 mb-4' });
-    row.appendChild(_el('div', { className: 'flex-1 h-px bg-[var(--border-glass)]' }));
-    row.appendChild(_el('span', { className: 'text-xs text-[var(--text-muted)]', text: '또는' }));
-    row.appendChild(_el('div', { className: 'flex-1 h-px bg-[var(--border-glass)]' }));
-    return row;
-  };
-  panel.appendChild(_divider());
+  // ── 3개 메인 버튼 ──
+  const mainBtns = _el('div', { id: 'snuhmateMainBtns' });
 
-  // Google 로그인 버튼 (btn-secondary)
+  // 이메일 버튼 (primary)
+  const emailTriggerBtn = _el('button', {
+    type: 'button', id: 'snuhmateEmailBtn',
+    className: 'btn btn-primary btn-full mb-3',
+    text: '이메일로 로그인 / 가입',
+  });
+  mainBtns.appendChild(emailTriggerBtn);
+
+  // Google 버튼
   const googleBtn = _el('button', {
     type: 'button', id: 'snuhmateGoogleBtn',
-    className: 'btn btn-secondary btn-full mb-4',
+    className: 'btn btn-secondary btn-full mb-3',
   });
   googleBtn.appendChild(_googleIcon());
-  googleBtn.appendChild(document.createTextNode(' Google 로 로그인'));
-  panel.appendChild(googleBtn);
+  googleBtn.appendChild(document.createTextNode(' Google로 로그인'));
+  mainBtns.appendChild(googleBtn);
 
-  // 구분선 2
-  panel.appendChild(_divider());
-
-  // 게스트로 계속 버튼
+  // 게스트 버튼
   const guestBtn = _el('button', {
     type: 'button', id: 'snuhmateGuestBtn',
     className: 'btn btn-outline btn-full mb-2',
     text: '게스트로 계속 (이 기기에만 저장)',
   });
-  panel.appendChild(guestBtn);
+  mainBtns.appendChild(guestBtn);
 
-  // 취소 버튼 (텍스트 링크)
+  panel.appendChild(mainBtns);
+
+  // 취소 버튼 (항상 하단)
   const closeBtn = _el('button', {
     type: 'button', id: 'snuhmateAuthClose',
     className: 'w-full mt-1 py-2 text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors cursor-pointer bg-transparent border-none',
@@ -174,61 +164,106 @@ function _buildDialog() {
 
   overlay.appendChild(panel);
 
-  // ── 이벤트 핸들러 ──
+  // ── 상태 helpers ──
   const setMsg = (msg, isError, isOk) => {
-    if (!msg) { errEl.textContent = ''; errEl.classList.add('hidden'); return; }
-    errEl.textContent = msg;
-    errEl.classList.remove('hidden');
-    errEl.style.color = isOk
+    if (!msg) { msgEl.textContent = ''; msgEl.classList.add('hidden'); return; }
+    msgEl.textContent = msg;
+    msgEl.classList.remove('hidden');
+    msgEl.style.color = isOk
       ? 'var(--accent-emerald, #00b894)'
       : isError
         ? 'var(--color-status-error, #ef4444)'
         : 'var(--text-muted, #7a7a7a)';
   };
-  const prettyErr = (e) => {
-    const code = e?.code || '';
-    if (code === 'auth/invalid-credential') return '이메일/비밀번호 불일치';
-    if (code === 'auth/weak-password') return '비밀번호 8자 이상 12자 이하';
-    if (code === 'auth/password-does-not-meet-requirements') return '비밀번호 정책 미충족 (8~12자 + 영문자 + 숫자 + 특수문자, 예: Snuh1234!)';
-    if (code === 'auth/email-already-in-use') return '이미 가입된 이메일 — "이메일 로그인"을 사용해 주세요';
-    if (code === 'auth/non-hospital-domain') return '병원 도메인 이메일만 가입할 수 있어요 (snuh.org, brmh.org, snubh.org 등)';
-    if (code === 'auth/popup-closed-by-user') return '로그인 창이 닫힘';
-    if (code === 'auth/invalid-email') return '이메일 형식 오류';
-    return code || ('로그인 실패: ' + (e?.message || ''));
+
+  const openEmailForm = () => {
+    mainBtns.classList.add('hidden');
+    emailForm.classList.remove('hidden');
+    setMsg('');
+    emailIn.focus();
   };
 
-  signInBtn.addEventListener('click', async () => {
+  const closeEmailForm = () => {
+    emailForm.classList.add('hidden');
+    mainBtns.classList.remove('hidden');
     setMsg('');
-    signInBtn.disabled = true;
+  };
+
+  const prettyErr = (code) => {
+    if (code === 'auth/invalid-credential') return '이메일/비밀번호 불일치';
+    if (code === 'auth/weak-password') return '비밀번호 8~12자 + 특수문자 포함';
+    if (code === 'auth/password-does-not-meet-requirements') return '비밀번호 정책 미충족 (8~12자 + 영문자 + 숫자 + 특수문자, 예: Snuh1234!)';
+    if (code === 'auth/email-already-in-use') return '이미 가입된 이메일이에요 — 비밀번호를 확인해 주세요';
+    if (code === 'auth/popup-closed-by-user') return '로그인 창이 닫혔어요';
+    if (code === 'auth/invalid-email') return '이메일 형식을 확인해 주세요';
+    if (code === 'auth/too-many-requests') return '잠시 후 다시 시도해 주세요';
+    if (code === 'auth/network-request-failed') return '네트워크 오류 — 연결을 확인해 주세요';
+    return '오류: ' + (code || '다시 시도해 주세요');
+  };
+
+  // ── 이벤트 핸들러 ──
+
+  emailTriggerBtn.addEventListener('click', openEmailForm);
+  cancelEmailBtn.addEventListener('click', closeEmailForm);
+
+  // 스마트 로그인: signIn 시도 → 없는 계정이면 자동 signUp + 인증 메일
+  submitBtn.addEventListener('click', async () => {
+    const email = emailIn.value.trim();
+    const password = passIn.value;
+    if (!email || !password) { setMsg('이메일과 비밀번호를 입력해 주세요.', true); return; }
+
+    setMsg('로그인 중...', false);
+    submitBtn.disabled = true;
     try {
-      await signInWithEmail(emailIn.value.trim(), passIn.value);
+      // 1단계: 로그인 시도
+      const user = await signInWithEmail(email, password);
+      if (user && !user.emailVerified) {
+        try { await resendVerificationEmail(); } catch {}
+        setMsg('이메일 인증이 필요해요. 인증 메일을 다시 보냈어요 — 메일함과 스팸함을 확인해 주세요.', false, false);
+        submitBtn.disabled = false;
+        return;
+      }
       closeAuthDialog();
-    } catch (e) { setMsg(prettyErr(e), true); }
-    finally { signInBtn.disabled = false; }
+    } catch (signInErr) {
+      const code = signInErr?.code || '';
+      // 2단계: 로그인 실패 → 없는 계정일 가능성 → 신규 가입 시도
+      if (code === 'auth/invalid-credential' || code === 'auth/user-not-found') {
+        const pwErr = validatePassword(password);
+        if (pwErr) { setMsg(pwErr, true); submitBtn.disabled = false; return; }
+        setMsg('가입 중...', false);
+        try {
+          const result = await signUpWithHospitalEmail(email, password);
+          if (result?.verificationSent) {
+            setMsg('가입 완료! 📧 인증 메일을 보냈어요. 메일함(스팸함/Gmail 프로모션 탭 포함)을 확인하고 링크를 클릭하면 로그인됩니다.', false, true);
+          } else {
+            setMsg('가입은 됐지만 인증 메일 발송에 실패했어요 — 잠시 후 다시 시도해 주세요.', true);
+          }
+        } catch (signUpErr) {
+          const upCode = signUpErr?.code || '';
+          if (upCode === 'auth/email-already-in-use') {
+            // 이미 가입된 계정인데 비밀번호가 틀린 것
+            setMsg('이메일/비밀번호가 맞지 않아요. 비밀번호를 확인해 주세요.', true);
+          } else {
+            setMsg(prettyErr(upCode), true);
+          }
+        }
+      } else {
+        setMsg(prettyErr(code), true);
+      }
+    } finally {
+      submitBtn.disabled = false;
+    }
   });
 
-  signUpBtn.addEventListener('click', async () => {
-    setMsg('');
-    const pwErr = validatePassword(passIn.value);
-    if (pwErr) { setMsg(pwErr, true); return; }
-    signUpBtn.disabled = true;
-    try {
-      const result = await signUpWithHospitalEmail(emailIn.value.trim(), passIn.value);
-      if (result?.verificationSent) {
-        setMsg('인증 메일을 보냈습니다! 📧 메일함과 스팸함(Gmail: 프로모션 탭 포함)을 확인하고 링크를 클릭하면 자동으로 진입됩니다.', false, true);
-        setTimeout(closeAuthDialog, 4000);
-      } else {
-        const errMsg = result?.verificationError?.message || '잠시 후 다시 시도해 주세요';
-        setMsg(`계정은 만들어졌지만 인증 메일 발송에 실패: ${errMsg}`, true);
-      }
-    } catch (e) { setMsg(prettyErr(e), true); }
-    finally { signUpBtn.disabled = false; }
+  // Enter 키로 제출
+  [emailIn, passIn].forEach(el => {
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitBtn.click(); });
   });
 
   googleBtn.addEventListener('click', async () => {
     setMsg('');
     try { await signInWithGoogle(); closeAuthDialog(); }
-    catch (e) { setMsg(prettyErr(e), true); }
+    catch (e) { setMsg(prettyErr(e?.code || ''), true); }
   });
 
   guestBtn.addEventListener('click', closeAuthDialog);
@@ -245,12 +280,10 @@ export async function refreshAuthPill(pillEl) {
   if (user) {
     const name = user.displayName || user.email || '로그인됨';
     pillEl.textContent = name.length > 18 ? name.slice(0, 18) + '…' : name;
-    // 로그인 상태: btn-secondary (색상 없음, 이름 표시)
     pillEl.className = 'btn btn-secondary';
     pillEl.dataset.signedIn = '1';
   } else {
     pillEl.textContent = '로그인';
-    // 비로그인 상태: btn-primary (인디고 강조)
     pillEl.className = 'btn btn-primary';
     pillEl.dataset.signedIn = '0';
   }
@@ -260,8 +293,6 @@ export async function logout() {
   await signOutUser();
 }
 
-// ── pill 자동 업데이트: onAuthChanged 구독 ──
-// SettingsIsland 가 1회 호출 — auth state 변화 시 pill 자동 갱신
 export function bindAuthPill(pillEl) {
   refreshAuthPill(pillEl);
   onAuthChanged(() => refreshAuthPill(pillEl));

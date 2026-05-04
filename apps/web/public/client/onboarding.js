@@ -186,43 +186,36 @@
   }
 
   // ── Auth 슬라이드 ─────────────────────────────────────────
-  const emailPanel = document.getElementById("obAuthEmailPanel");
-  const emailInput = document.getElementById("obAuthEmail");
-  const passInput = document.getElementById("obAuthPassword");
-  const authMsg = document.getElementById("obAuthMsg");
-  const authSubmit = document.getElementById("obAuthSubmit");
-  const authCancel = document.getElementById("obAuthCancel");
+  const emailPanel   = document.getElementById("obAuthEmailPanel");
+  const mainBtns     = document.getElementById("obAuthMainBtns");
+  const emailInput   = document.getElementById("obAuthEmail");
+  const passInput    = document.getElementById("obAuthPassword");
+  const authMsg      = document.getElementById("obAuthMsg");
+  const authSubmit   = document.getElementById("obAuthSubmit");
+  const authCancel   = document.getElementById("obAuthCancel");
 
-  const modeSignupBtn = document.getElementById("obAuthModeSignup");
-  const modeSigninBtn = document.getElementById("obAuthModeSignin");
-  let _signInMode = false;
+  function setAuthMsg(msg, kind) {
+    if (!authMsg) return;
+    authMsg.textContent = msg || "";
+    authMsg.className = "ob-auth-msg" + (kind === "error" ? " error" : kind === "ok" ? " ok" : "");
+  }
 
-  modeSignupBtn?.addEventListener("click", () => {
-    _signInMode = false;
-    modeSignupBtn.classList.add("active");
-    modeSignupBtn.setAttribute("aria-pressed", "true");
-    modeSigninBtn?.classList.remove("active");
-    modeSigninBtn?.setAttribute("aria-pressed", "false");
-    if (passInput) {
-      passInput.placeholder = "비밀번호 (8~12자, 특수문자 포함)";
-      passInput.autocomplete = "new-password";
-    }
-    if (authSubmit) authSubmit.textContent = "인증 메일 받기";
-  });
-  modeSigninBtn?.addEventListener("click", () => {
-    _signInMode = true;
-    modeSigninBtn.classList.add("active");
-    modeSigninBtn.setAttribute("aria-pressed", "true");
-    modeSignupBtn?.classList.remove("active");
-    modeSignupBtn?.setAttribute("aria-pressed", "false");
-    if (passInput) {
-      passInput.placeholder = "비밀번호";
-      passInput.autocomplete = "current-password";
-    }
-    if (authSubmit) authSubmit.textContent = "로그인";
-  });
+  function openEmailPanel() {
+    mainBtns?.classList.add("hidden");
+    emailPanel?.classList.add("on");
+    emailPanel?.setAttribute("aria-hidden", "false");
+    setAuthMsg("", null);
+    setTimeout(() => emailInput?.focus(), 60);
+  }
 
-  // 이메일 input 타이핑 → local part 기반으로 도메인 후보 재시드
+  function closeEmailPanel() {
+    emailPanel?.classList.remove("on");
+    emailPanel?.setAttribute("aria-hidden", "true");
+    mainBtns?.classList.remove("hidden");
+    setAuthMsg("", null);
+  }
+
+  // 이메일 input → 도메인 자동완성
   emailInput?.addEventListener("input", () => {
     const v = emailInput.value;
     const at = v.indexOf("@");
@@ -230,146 +223,104 @@
     setEmailOptions(local);
   });
 
-  function setAuthMsg(msg, kind) {
-    if (!authMsg) return;
-    authMsg.textContent = msg || "";
-    authMsg.classList.toggle("error", kind === "error");
-    authMsg.classList.toggle("ok", kind === "ok");
-  }
-  function openEmailPanel() {
-    if (!emailPanel) return;
-    emailPanel.classList.add("on");
-    emailPanel.setAttribute("aria-hidden", "false");
-    setTimeout(() => emailInput?.focus(), 60);
-  }
-  function closeEmailPanel() {
-    if (!emailPanel) return;
-    emailPanel.classList.remove("on");
-    emailPanel.setAttribute("aria-hidden", "true");
-    setAuthMsg("", null);
-  }
+  // 이메일 버튼 트리거 → 폼 펼침
+  document.getElementById("obAuthEmailTrigger")?.addEventListener("click", openEmailPanel);
 
-  document.querySelectorAll('[data-action="auth-pick"]').forEach((b) => {
-    b.addEventListener("click", async () => {
-      document
-        .querySelectorAll('[data-action="auth-pick"]')
-        .forEach((x) => x.classList.remove("picked"));
-      b.classList.add("picked");
-      const choice = b.dataset.choice || "local";
-      localStorage.setItem("snuhmate_auth_preference", choice);
+  // 돌아가기
+  authCancel?.addEventListener("click", closeEmailPanel);
 
-      if (choice === "email") {
-        openEmailPanel();
-        return;
-      }
-      if (choice === "google") {
-        try {
-          setAuthMsg("Google 로그인 중...", null);
-          const mod = window.OB_AUTH;
-          if (!mod) throw new Error("auth not ready");
-          await mod.signInWithGoogle();
-          // applyOnboardingProfile 은 auth-service onAuthChanged 에서 자동 호출됨
-          enterApp();
-        } catch (err) {
-          console.warn("[onboarding] google sign-in failed", err);
-          setAuthMsg(`Google 로그인 실패: ${err?.message || "다시 시도해 주세요"}`, "error");
-          b.classList.remove("picked");
-        }
-        return;
-      }
-      // 게스트 — 임시 프로필이 이미 _guest 키에 있음
-      localStorage.removeItem("snuhmate_onboarding_pending");
-      setTimeout(enterApp, 280);
-    });
-  });
-
-  authCancel?.addEventListener("click", () => {
-    closeEmailPanel();
-    document
-      .querySelectorAll('[data-action="auth-pick"]')
-      .forEach((x) => x.classList.remove("picked"));
-  });
-
+  // 스마트 로그인/가입: signIn 시도 → 없는 계정이면 자동 signUp + 인증 메일
   authSubmit?.addEventListener("click", async () => {
     const email = (emailInput?.value || "").trim();
     const password = passInput?.value || "";
-
     if (!email || !password) {
       setAuthMsg("이메일과 비밀번호를 입력해 주세요.", "error");
       return;
     }
-
-    if (_signInMode) {
-      // ── 로그인 흐름 (도메인 제약 없음 — 기가입자 누구나 로그인 가능) ──
-      authSubmit.disabled = true;
-      setAuthMsg("로그인 중...", null);
-      try {
-        const mod = window.OB_AUTH;
-        if (!mod) throw new Error("auth not ready");
-        const user = await mod.signInWithEmail(email, password);
-        if (user && !user.emailVerified) {
-          try {
-            await mod.resendVerificationEmail();
-            setAuthMsg("아직 이메일 인증 전이에요. 인증 메일을 다시 보냈으니 메일함을 확인해 주세요.", "ok");
-          } catch (e) {
-            console.warn("[onboarding] resend verification failed", e?.code || e?.message);
-            setAuthMsg("아직 이메일 인증 전이에요. 메일함을 확인해 주세요.", "error");
-          }
-          return;
-        }
-        enterApp();
-      } catch (err) {
-        console.warn("[onboarding] email sign-in failed", err);
-        const code = err?.code || "";
-        let msg = "로그인 실패. 이메일/비밀번호를 확인해 주세요.";
-        if (code === "auth/invalid-credential") msg = "이메일/비밀번호가 맞지 않아요.";
-        if (code === "auth/too-many-requests") msg = "잠시 후 다시 시도해 주세요.";
-        if (code === "auth/network-request-failed") msg = "네트워크 오류. 잠시 후 다시 시도해 주세요.";
-        setAuthMsg(msg, "error");
-      } finally {
-        authSubmit.disabled = false;
-      }
-      return;
-    }
-
-    // ── 신규 가입 흐름 (Firebase password policy 만 강제) ──
-    // 도메인 제약 임시 해제: 병원 SMTP 가 외부 발송자 차단 가능 → 외부 이메일로 테스트 가능
     const mod = window.OB_AUTH;
     const validators = window.OB_VALIDATORS;
-    if (!mod || !validators) { setAuthMsg("인증 모듈을 불러오는 중이에요. 잠시 후 다시 시도해 주세요.", "error"); return; }
-    const pwErr = validators.validatePassword(password);
-    if (pwErr) {
-      setAuthMsg(pwErr, "error");
-      return;
-    }
+    if (!mod) { setAuthMsg("인증 모듈을 불러오는 중이에요. 잠시 후 다시 시도해 주세요.", "error"); return; }
+
     authSubmit.disabled = true;
-    setAuthMsg("인증 메일을 보내는 중...", null);
+    setAuthMsg("로그인 중...", null);
     try {
-      const result = await mod.signUpWithHospitalEmail(email, password);
-      if (result?.verificationSent) {
-        setAuthMsg("인증 메일을 보냈습니다. 📧 메일함과 스팸함(Gmail: '프로모션' 탭 포함)을 확인하세요. 인증 후 새로고침하면 자동으로 진입됩니다.", "ok");
+      // 1단계: 로그인 시도
+      const user = await mod.signInWithEmail(email, password);
+      if (user && !user.emailVerified) {
+        try { await mod.resendVerificationEmail(); } catch {}
+        setAuthMsg("이메일 인증이 필요해요. 인증 메일을 다시 보냈어요 — 메일함과 스팸함을 확인해 주세요.", "ok");
+        authSubmit.disabled = false;
+        return;
+      }
+      enterApp();
+    } catch (signInErr) {
+      const code = signInErr?.code || "";
+      // 2단계: 로그인 실패 → 없는 계정일 가능성 → 신규 가입 시도
+      if (code === "auth/invalid-credential" || code === "auth/user-not-found") {
+        if (validators) {
+          const pwErr = validators.validatePassword(password);
+          if (pwErr) { setAuthMsg(pwErr, "error"); authSubmit.disabled = false; return; }
+        }
+        setAuthMsg("가입 중...", null);
+        try {
+          const result = await mod.signUpWithHospitalEmail(email, password);
+          if (result?.verificationSent) {
+            setAuthMsg("가입 완료! 📧 인증 메일을 보냈어요. 메일함(스팸함/Gmail 프로모션 탭 포함)을 확인하고 링크를 클릭하면 로그인됩니다.", "ok");
+          } else {
+            setAuthMsg("가입은 됐지만 인증 메일 발송에 실패했어요 — 잠시 후 다시 시도해 주세요.", "error");
+          }
+        } catch (signUpErr) {
+          const upCode = signUpErr?.code || "";
+          if (upCode === "auth/email-already-in-use") {
+            setAuthMsg("이메일/비밀번호가 맞지 않아요. 비밀번호를 확인해 주세요.", "error");
+          } else if (upCode === "auth/password-does-not-meet-requirements") {
+            setAuthMsg("비밀번호 정책 미충족: 8~12자 + 영문자 + 숫자 + 특수문자 1개 이상 (예: Snuh1234!).", "error");
+          } else {
+            setAuthMsg(`오류: ${signUpErr?.message || "다시 시도해 주세요"}`, "error");
+          }
+        }
+      } else if (code === "auth/too-many-requests") {
+        setAuthMsg("잠시 후 다시 시도해 주세요.", "error");
+      } else if (code === "auth/network-request-failed") {
+        setAuthMsg("네트워크 오류 — 연결을 확인해 주세요.", "error");
       } else {
-        const errMsg = result?.verificationError?.message || "잠시 후 다시 시도해 주세요";
-        setAuthMsg(`계정은 만들어졌으나 인증 메일 발송에 실패했어요: ${errMsg}. "이미 가입함" 탭에서 로그인 후 재시도할 수 있어요.`, "error");
-        modeSigninBtn?.click();
+        setAuthMsg("로그인/가입에 실패했어요. 다시 시도해 주세요.", "error");
       }
-    } catch (err) {
-      console.warn("[onboarding] hospital email signup failed", err);
-      let msg = `가입 실패: ${err?.message || "다시 시도해 주세요"}`;
-      if (err?.code === "auth/email-already-in-use") {
-        msg = '이미 가입된 이메일이에요. "이미 가입함" 탭에서 로그인해 주세요.';
-        modeSigninBtn?.click();
-      }
-      if (err?.code === "auth/password-does-not-meet-requirements") {
-        msg = '비밀번호 정책 미충족: 8~12자 + 영문자 + 숫자 + 특수문자 1개 이상 (예: Snuh1234!).';
-      }
-      if (err?.code === "auth/weak-password") msg = "비밀번호가 너무 약해요. 8자 이상 + 특수문자 포함.";
-      if (err?.code === "auth/invalid-email") msg = "이메일 형식이 올바르지 않아요.";
-      if (err?.code === "auth/network-request-failed") msg = "네트워크 오류. 잠시 후 다시 시도해 주세요.";
-      setAuthMsg(msg, "error");
     } finally {
       authSubmit.disabled = false;
     }
+  });
+
+  // Enter 키 제출
+  [emailInput, passInput].forEach((el) => {
+    el?.addEventListener("keydown", (e) => { if (e.key === "Enter") authSubmit?.click(); });
+  });
+
+  // Google / 게스트
+  document.querySelectorAll('[data-action="auth-pick"]').forEach((b) => {
+    b.addEventListener("click", async () => {
+      const choice = b.dataset.choice || "local";
+      localStorage.setItem("snuhmate_auth_preference", choice);
+
+      if (choice === "email") { openEmailPanel(); return; }
+
+      if (choice === "google") {
+        setAuthMsg("Google 로그인 중...", null);
+        try {
+          const mod = window.OB_AUTH;
+          if (!mod) throw new Error("auth not ready");
+          await mod.signInWithGoogle();
+          enterApp();
+        } catch (err) {
+          console.warn("[onboarding] google sign-in failed", err);
+          setAuthMsg("Google 로그인 실패 — 다시 시도해 주세요.", "error");
+        }
+        return;
+      }
+      // 게스트
+      localStorage.removeItem("snuhmate_onboarding_pending");
+      setTimeout(enterApp, 280);
+    });
   });
 
   // ── /app 진입 ─────────────────────────────────────────────

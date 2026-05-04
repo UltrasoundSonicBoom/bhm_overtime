@@ -815,6 +815,75 @@ body {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
 
+/* ── Auth 3버튼 레이아웃 ──────────────────────────────────── */
+.hidden { display: none !important; }
+
+.ob-auth-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+  width: 100%;
+  max-width: 460px;
+}
+
+/* 공통 베이스 */
+.ob-auth-btn-primary,
+.ob-auth-btn-google,
+.ob-auth-btn-outline {
+  width: 100%;
+  padding: 13px 18px;
+  border-radius: var(--radius-md, 12px);
+  font-weight: 700;
+  font-size: 15px;
+  font-family: "Noto Sans KR", "Inter", sans-serif;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 2px solid var(--border-glass, #1a1a1a);
+  box-shadow: var(--shadow-sm, 2px 2px 0px #1a1a1a);
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+.ob-auth-btn-primary:hover,
+.ob-auth-btn-google:hover,
+.ob-auth-btn-outline:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: var(--shadow-md, 4px 4px 0px #1a1a1a);
+}
+
+/* 이메일 버튼 (primary: 인디고) */
+.ob-auth-btn-primary {
+  background: var(--accent-indigo, #6c5ce7);
+  color: #ffffff;
+  border-color: var(--accent-indigo, #6c5ce7);
+  box-shadow: 2px 2px 0px rgba(108, 92, 231, 0.4);
+}
+.ob-auth-btn-primary:hover {
+  box-shadow: 4px 4px 0px rgba(108, 92, 231, 0.5);
+}
+
+/* Google 버튼 (secondary: 흰/크림 배경) */
+.ob-auth-btn-google {
+  background: var(--bg-card, #ffffff);
+  color: var(--text-primary, #1a1a1a);
+}
+
+/* 게스트 버튼 (outline: 투명 배경) */
+.ob-auth-btn-outline {
+  background: transparent;
+  color: var(--text-secondary, #4a4a4a);
+}
+
+/* 힌트 텍스트 (스팸함 안내 등) */
+.ob-auth-hint {
+  font-size: 10px;
+  opacity: 0.55;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+}
+
 /* ── CTA buttons ──────────────────────────────────────────── */
 .ob-cta-row {
   display: flex;
