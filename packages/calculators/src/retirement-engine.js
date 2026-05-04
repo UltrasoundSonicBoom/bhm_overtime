@@ -190,13 +190,35 @@ export const RetirementEngine = (function () {
     };
   }
 
+  // ── 단협 제52조(4): 사학연금 2016.03.01+ 분리 퇴직금 ──
+  // 사학연금 가입자의 단협 퇴직금은 가입일 전일까지의 근속연수로 분리 산정.
+  // pensionEnrollDate 가 retireDate 보다 이전이면 effectiveEndDate = pensionEnrollDate - 1d.
+  function applyPensionCutoff(retireDateStr, pensionEnrollDate) {
+    if (!pensionEnrollDate) {
+      return { effectiveEndDate: retireDateStr, applied: false, reason: 'no_enrollment' };
+    }
+    const enroll = new Date(pensionEnrollDate);
+    const retire = new Date(retireDateStr);
+    if (isNaN(enroll.getTime()) || isNaN(retire.getTime())) {
+      return { effectiveEndDate: retireDateStr, applied: false, reason: 'invalid_date' };
+    }
+    if (enroll > retire) {
+      return { effectiveEndDate: retireDateStr, applied: false, reason: 'enrollment_after_retire' };
+    }
+    const dayBefore = new Date(enroll.getTime() - 86400000);
+    return { effectiveEndDate: dStr(dayBefore), applied: true, reason: 'pension_cutoff_2016' };
+  }
+
   // ── 퇴직금 계산 핵심 (retireDate 명시) ────────────────────
   //   wage        : 기준 평균임금 (월)
   //   hireDateStr : 입사일 YYYY-MM-DD
   //   retireDateStr: 퇴직(예정)일 YYYY-MM-DD
-  function calcSev(wage, hireDateStr, retireDateStr) {
+  //   opts.pensionEnrollDate?: YYYY-MM-DD — 사학연금 가입일 (제52조4 컷오프)
+  function calcSev(wage, hireDateStr, retireDateStr, opts) {
+    const cutoff = applyPensionCutoff(retireDateStr, opts && opts.pensionEnrollDate);
+    const effectiveEndStr = cutoff.effectiveEndDate;
     const hire    = new Date(hireDateStr);
-    const service = calcUnionService(hireDateStr, retireDateStr);
+    const service = calcUnionService(hireDateStr, effectiveEndStr);
     const precise = service.calculationYears;
     const years   = service.calculationYearsInt;
 
@@ -225,7 +247,8 @@ export const RetirementEngine = (function () {
       yearsDisplay: service.yearsDisplay,
       precise, method,
       isPre2001: hire <= CUT2001,
-      isPre2015: hire <= CUT2015
+      isPre2015: hire <= CUT2015,
+      pensionCutoff: cutoff
     };
   }
 
@@ -430,7 +453,8 @@ export const RetirementEngine = (function () {
     daysUntil,
     dStr,
     getThreeMonthAverage,
-    peakWageGuard
+    peakWageGuard,
+    applyPensionCutoff
   };
 })();
 
