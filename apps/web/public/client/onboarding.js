@@ -335,7 +335,7 @@
     try {
       const result = await mod.signUpWithHospitalEmail(email, password);
       if (result?.verificationSent) {
-        setAuthMsg("인증 메일을 보냈습니다. 메일함을 확인하고 인증한 뒤 이 페이지를 새로고침하면 자동으로 진입됩니다.", "ok");
+        setAuthMsg("인증 메일을 보냈습니다. 📧 메일함과 스팸함(Gmail: '프로모션' 탭 포함)을 확인하세요. 인증 후 새로고침하면 자동으로 진입됩니다.", "ok");
       } else {
         const errMsg = result?.verificationError?.message || "잠시 후 다시 시도해 주세요";
         setAuthMsg(`계정은 만들어졌으나 인증 메일 발송에 실패했어요: ${errMsg}. "이미 가입함" 탭에서 로그인 후 재시도할 수 있어요.`, "error");

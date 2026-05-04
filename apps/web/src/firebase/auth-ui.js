@@ -215,7 +215,7 @@ function _buildDialog() {
     try {
       const result = await signUpWithHospitalEmail(emailIn.value.trim(), passIn.value);
       if (result?.verificationSent) {
-        setMsg('인증 메일을 보냈습니다! 메일함을 확인하고 링크를 클릭하면 자동으로 진입됩니다.', false, true);
+        setMsg('인증 메일을 보냈습니다! 📧 메일함과 스팸함(Gmail: 프로모션 탭 포함)을 확인하고 링크를 클릭하면 자동으로 진입됩니다.', false, true);
         setTimeout(closeAuthDialog, 4000);
       } else {
         const errMsg = result?.verificationError?.message || '잠시 후 다시 시도해 주세요';
