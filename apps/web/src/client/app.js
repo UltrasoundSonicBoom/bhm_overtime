@@ -961,8 +961,9 @@ function retUpdateQuickDates() {
     var dRetire = Math.ceil((_retPeakEndDate - now) / 86400000);
     var dPeakEl = document.getElementById('retDdayPeak');
     var dRetireEl = document.getElementById('retDdayRetire');
-    if (dPeakEl)   dPeakEl.textContent   = dPeak > 0   ? 'D-' + dPeak.toLocaleString('ko-KR')   + ' (' + _retPeakDate.getFullYear()    + ')' : '도달';
-    if (dRetireEl) dRetireEl.textContent = dRetire > 0 ? 'D-' + dRetire.toLocaleString('ko-KR') + ' (' + _retPeakEndDate.getFullYear() + ')' : '도달';
+    // 단협 제24조: 정년퇴직일은 12월 말일 → D-day 카드에 YYYY.MM.DD 까지 가시화
+    if (dPeakEl)   dPeakEl.textContent   = dPeak > 0   ? 'D-' + dPeak.toLocaleString('ko-KR')   + ' · ' + retFmtDate(_retPeakDate)    : '도달 · ' + retFmtDate(_retPeakDate);
+    if (dRetireEl) dRetireEl.textContent = dRetire > 0 ? 'D-' + dRetire.toLocaleString('ko-KR') + ' · ' + retFmtDate(_retPeakEndDate) : '도달 · ' + retFmtDate(_retPeakEndDate);
 
     // 퇴직(예정)일 — 생년월일 기준 법정 정년퇴직일로 자동 설정 (퇴직일 카드 제거 후)
     var retireInput = document.getElementById('retRetireDate');

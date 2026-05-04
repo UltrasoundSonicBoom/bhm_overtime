@@ -1,8 +1,21 @@
 # Regulation → Calculator/UI Coverage Audit
 
-> 작성일: 2026-04-24 (Plan L Tier 4)
+> 작성일: 2026-04-24 (Plan L Tier 4) · 갱신: 2026-05-04 (Plan dazzling-booping-kettle baseline refresh)
 > 소스: `data/full_union_regulation_2026.md` (2025.10.23 단협 전문 전사 · 3,145 lines / 95 조), `data/2026_handbook.pdf` (canonical PDF)
 > 목적: 규정의 모든 수치/공식 항목을 `calculators.js` + `DATA_STATIC` + UI 와 대조해 **구현 유무 + 누락 리스트** 산출. Plan M (누락 계산기 신규 구현) 의 입력 문서.
+
+### Plan dazzling-booping-kettle 진행 중 갭 (2026-05-04)
+
+본 플랜에서 fix 예정인 5개 결정성 갭. 각 행 비고에 `(Plan dazzling-booping-kettle 에서 fix)` 마커 부착.
+
+| 조항 | 갭 | Fix 방식 | 본 플랜 Task |
+|------|----|---------|-------------|
+| 제24조 정년퇴직일 | engine 은 12/31 정확하나 hero 카드/요약 UI 미노출 | 퇴직금 탭 hero element 추가 | A1 |
+| 제32조(8) 40세↑ 간호 야간 미배치 | 현재 `N/A (HR 정책)` — 정책이 아니라 계산 가능한 게이트 | `calcNightShiftBonus` 에 birthDate gate | A4 |
+| 제33조(2)(4) 휴게시간 미사용분 | 자동 변환 로직 없음 | 시간외 탭에 안내 카드 (계산 자체는 EMR outsource) | A5 |
+| 제38조(6) 임신·산후 1년 야간 금지 | 현재 행 없음 | 신규 행 추가 + `calcNightShiftBonus` 에 pregnancy/postpartum gate | A4 |
+| 제52조(4) 사학연금 2016.3.1 분리 | 현재 ❌ 누락 | `simulateSeverance` 에 `pensionEnrollDate` 분기 | A3 |
+| 제52조(4)·제53조(2) 만60세 평균임금 보호 | 현재 🟡 부분 | `peakWageGuard` 함수 + simulateSeverance 호출 | A2 |
 
 ## 범례
 
@@ -58,7 +71,7 @@
 | 제20조(1) 승진 T/O | 4급 이하 T/O 발생 시 승진발령 한도 | 1개월 | ❌ | ❌ | N/A (HR 절차) | N/A |
 | 제21조 명단통지 | 신규·퇴직자 명단 통보 기한 | 7일 / 1개월 | ❌ | ❌ | N/A (HR 절차) | N/A |
 | 제23조 이의제기 | 부당 인사처분 이의제기 기한 | 10일 | ❌ | ❌ | N/A (HR 절차) | N/A |
-| 제24조 정년 | 정년 연령 / 퇴직일 | 만 60세 / 12월 말일 | 🟡 retirement.js `_retPeakDate` 계산 (만 60세 + 임금피크 만 61세) | tab-payroll (퇴직금) | 🟡 부분 | Medium |
+| 제24조 정년 | 정년 연령 / 퇴직일 | 만 60세 / 12월 말일 | 🟡 retirement.js `_retPeakDate` 계산 (만 60세 + 임금피크 만 61세). hero 카드 12/31 노출 (Plan dazzling-booping-kettle A1 에서 fix) | tab-payroll (퇴직금) | 🟡 부분 | Medium |
 | 제26조(2)(2) 병가 후 공상휴직 | 업무상 상병 6개월간 병가 후 복직 불가 시 휴직 | 6개월 | 🟡 DATA.leaveOfAbsence '공상휴직' `tenure:true` | tab-leave (읽기 전용 표) | 🟡 부분 | Low |
 | 제26조(1)(4) 육아휴직 대상 연령 | 만 8세 이하 또는 초2 이하 자녀 | 만 8세 / 초2 | 🟡 DATA.leaveOfAbsence '육아휴직' 설명 문자열 | tab-leave | 🟡 부분 | Low |
 | 제26조(2)(6) 국외유학 재직요건 | 국외유학휴직 최소 재직기간 | 8년 | 🟡 DATA.leaveOfAbsence '국외유학휴직' condition | tab-leave | 🟡 부분 | Low |
@@ -88,7 +101,8 @@
 | 제32조(3) 유해위험작업 단축 | 1일 6시간 / 주 35시간 (인가시 +2h/+12h) | 6h / 35h | ❌ | ❌ | ❌ 누락 | Low |
 | 제32조(4) 통상근무 시간 | 9시 ~ 18시 | 09:00–18:00 | ❌ (상수 없음, UI 서술만) | ❌ | N/A (서술) | N/A |
 | **제32조(6) 공휴일 근무 가산** | 법정공휴일 근무 시 통상임금 50% | 50% | ✅ `CALC.calcOvertimePay` + `OVERTIME.calcEstimatedPay` 둘 다 publicHoliday 0.5 참조 (Plan M M1-1 D5 해소) | tab-overtime (날짜 API 자동 판별) | ✅ 구현 | **High** |
-| 제32조(8) 간호부 야간 연령 제한 | 만 40세↑ 야간근무 미배치 원칙 | 40세 | ❌ | ❌ | N/A (HR 정책) | N/A |
+| 제32조(8) 간호부 야간 연령 제한 | 만 40세↑ 야간근무 미배치 원칙 | 40세 | ❌ → `calcNightShiftBonus` birthDate gate (Plan dazzling-booping-kettle A4 에서 fix) | tab-overtime | ❌ 누락 → fix 진행 | Medium |
+| 제38조(6) 임신·산후 1년 야간 금지 | 임신부 + 산후 1년 미만 산부 야간근무 금지 | 12개월 | ❌ → `calcNightShiftBonus` pregnancy/postpartumMonthsElapsed gate (Plan dazzling-booping-kettle A4 에서 fix) | tab-overtime | ❌ 누락 → fix 진행 | Medium |
 | **제32조(9) 온콜 교통비** | 1회 5만원 | 50,000원 | ✅ `DATA.allowances.onCallTransport=50000` + `CALC.calcOnCallPay` + tab-overtime 라디오 버튼 (온콜대기/온콜출근) + 도움말 카드 (Plan M M2-6 확인) | tab-overtime | ✅ 구현 | Medium |
 | 제32조(9) 온콜 출퇴근 인정시간 | 출퇴근 2시간 근무시간 인정 | 2시간 | ✅ `DATA.allowances.onCallCommuteHours=2` + `CALC.calcOnCallPay` (commute 자동 산입) | tab-overtime | ✅ 구현 | Medium |
 | <2019.11> 온콜대기수당 | 1일당 1만원 (2022.01~) | 10,000원/일 | ✅ `DATA.allowances.onCallStandby=10000` + `CALC.calcOnCallPay` + 온콜대기 라디오 진입 | tab-overtime | ✅ 구현 | Medium |
@@ -96,7 +110,7 @@
 | <2022.12> 예비간호인력 대체근무가산금 | 근무일당 2만원 | 20,000원/일 | ✅ `DATA.allowances.nurseSubstituteBonus=20000` + `CALC.calcNurseSubstituteBonus(days)` + FAQ (Plan M M3-4) | (계산기 + FAQ — UI 진입 후속) | ✅ 구현 (계산기) | Low |
 | <2021.11> 긴급 대체근무 통상 150% | 휴일 긴급 대체 시 | 150% | 🟡 `overtimeRates.holiday=1.5` 로 계산 가능하나 명시적 대체근무 입력 경로 없음 | ❌ | 🟡 부분 | Low |
 | 제33조(1) 휴게시간 | 정오 1시간 | 60분 | ❌ (상수 없음) | tab-overtime 안내 | N/A (서술) | N/A |
-| 제33조(2)(4) 휴게시간 미사용 → 시간외수당 | 미사용분 시간외 인정 | 수당화 | ❌ (자동 변환 로직 없음) | ❌ | ❌ 누락 | Medium |
+| 제33조(2)(4) 휴게시간 미사용 → 시간외수당 | 미사용분 시간외 인정 | 수당화 | ❌ (자동 변환 로직 없음) → 시간외 탭 안내 카드 (Plan dazzling-booping-kettle A5 에서 fix) | tab-overtime (안내) | ❌ 누락 → fix 진행 (안내만) | Medium |
 | <2001.07> 교대 근무간 휴식 | 근무-근무 사이 16시간 보장 | 16시간 | ❌ | ❌ | N/A (정책) | N/A |
 | <2020.10> 야간→다음근무 시차 | 최소 30시간 | 30시간 | ❌ | ❌ | N/A (정책) | N/A |
 | **제34조(1) 연장근로 한도** | 1일 2시간 / 주 10시간 (부득이 시 1일 초과, 주 12h 상한) | 1일 2h / 주 10~12h | ✅ `CALC.checkOvertimeLimit` + `OVERTIME.calcWeeklyLimitCheck` + tab-overtime `#otLimitWarning` 배너 자동 노출 (Plan M M2-8 D10 해소) | tab-overtime | ✅ 구현 | Medium |
@@ -184,9 +198,9 @@
 | 제52조(1) 단수 계산 | 6개월↑ = 1년 / 6개월 미만 월할 | 6개월 경계 | 🟡 `calcSeveranceFullPay` 은 일 단위 정밀 (`preciseYears = totalDays/365`) — 규정의 6개월 반올림과 비교 drift 가능 ³ | tab-payroll | 🟡 부분 | Low |
 | 제52조(2) 퇴직금 지급기한 | 퇴직일로부터 15일 이내 | 15일 | N/A (사용자 계산 불필요, HR 절차) | ❌ | N/A (HR 절차) | N/A |
 | 제52조(3) 중간정산 재원 | 전년 충당금의 12% | 12% | ❌ | ❌ | ❌ 누락 | Low |
-| **제52조(4) 사학연금 2016.03+ 분리** | 사학연금 가입일 전일까지 근속+평균임금으로 분리 산정 | 2016.03.01 | ❌ (`calcSeveranceFullPay` 는 cutoff2001/cutoff2015 만 분기, 2016 사학연금 컷오프 없음) | tab-payroll | ❌ 누락 | Medium |
+| **제52조(4) 사학연금 2016.03+ 분리** | 사학연금 가입일 전일까지 근속+평균임금으로 분리 산정 | 2016.03.01 | ❌ (`calcSeveranceFullPay` 는 cutoff2001/cutoff2015 만 분기, 2016 사학연금 컷오프 없음) → `simulateSeverance` 에 `pensionEnrollDate` 추가 (Plan dazzling-booping-kettle A3 에서 fix) | tab-payroll | ❌ 누락 → fix 진행 | Medium |
 | **제53조(1) 퇴직수당 5구간** | 20년↑ 60% / 15~19 50% / 10~14 45% / 5~9 35% / 1~4 10% | 10/35/45/50/60% | ✅ `DATA.severancePay` (`data.js:353-359`) + `calcSeveranceFullPay` L341-347 (2015.06.30 이전 입사자) | tab-payroll | ✅ 구현 | **High** |
-| 제53조(2) 만 60세 이후 퇴직자 | 만 60세 직전 평균임금 기준 | 만 60세 컷오프 | 🟡 `retirement.js` 임금피크 전후 평균임금 분기 로직은 있으나 제53조(2) 명시적 구현 여부 추가확인 필요 | tab-payroll | 🟡 부분 | Low |
+| 제53조(2) 만 60세 이후 퇴직자 | 만 60세 직전 평균임금 기준 | 만 60세 컷오프 | 🟡 `retirement.js` 임금피크 전후 평균임금 분기 로직은 있으나 제53조(2) 명시적 구현 여부 추가확인 필요 → `peakWageGuard` 신규 (Plan dazzling-booping-kettle A2 에서 fix) | tab-payroll | 🟡 부분 → fix 진행 | Low |
 | <2016.05> 근속가산기본급/명절지원비 조정급 가산 | 조정급 1/2 가산 | +조정급/2 | ✅ `calcOrdinaryWage` L69 `(monthlyBase + adjustPay/2) × rate` + L103 명절지원비 동일 적용 | tab-payroll | ✅ 구현 | Medium |
 | 제54조 공제금 | 소득세·주민세·조합비·사학연금·건강보험 등 | 다항목 | 🟡 `calcPayrollSimulation` L608-634 에 건강보험·장기요양·국민연금·고용보험·소득세·주민세 구현 — 조합비·새마을금고는 미포함 | tab-payroll | 🟡 부분 | Medium |
 | 제55조 비상시 지불 | 결혼·출산·사망·입학·휴직·퇴직·해고·재해 시 임금 선지급 | 사유 6가지 | N/A (HR 절차) | ❌ | N/A (HR 절차) | N/A |
