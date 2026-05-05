@@ -718,4 +718,31 @@
       <a id="retMailOpen" href="#" style="flex:1;display:flex;align-items:center;justify-content:center;padding:10px;border-radius:8px;border:none;background:#818cf8;color:#fff;font-size:13px;font-weight:700;text-decoration:none;font-family:inherit;">메일 앱으로 열기 →</a>
     </div>
   </div>
+
+  <!-- ── Desktop right-context panel (≥1280px only) ── -->
+  <aside class="tab-desktop-context" aria-label="급여 컨텍스트">
+    <div class="ds-ctx-section">실시간 컨텍스트 · 급여</div>
+    <div class="ds-ctx-card">
+      <div class="ds-ctx-title">👤 내 정보 <small>anchor</small></div>
+      <div class="ds-ctx-row"><span class="k">직종</span><span class="v" id="payCtxJobType">—</span></div>
+      <div class="ds-ctx-row"><span class="k">호봉</span><span class="v" id="payCtxStep">—</span></div>
+      <div class="ds-ctx-row"><span class="k">기준 시급</span><span class="v" id="payCtxRate">—</span></div>
+      <div class="ds-ctx-row"><span class="k">입사</span><span class="v" id="payCtxJoinDate">—</span></div>
+    </div>
+    <div class="ds-ctx-card">
+      <div class="ds-ctx-title">📊 6개월 실수령</div>
+      <div class="ds-mini-bar" id="payCtxTrend"></div>
+      <div class="ds-ctx-row" style="margin-top:6px;"><span class="k">평균</span><span class="v" id="payCtxAvg">—</span></div>
+      <div class="ds-ctx-row"><span class="k">이번 달</span><span class="v" style="color:var(--accent-indigo);" id="payCtxThis">—</span></div>
+    </div>
+    <div class="ds-ctx-card" id="payCtxInsight" style="display:none; border-color:var(--accent-rose); background:rgba(253,121,168,0.05);">
+      <div class="ds-ctx-title">🤖 AI 인사이트</div>
+      <div style="font-size:11px;line-height:1.5;" id="payCtxInsightMsg">—</div>
+    </div>
+    <div class="ds-ctx-card">
+      <div class="ds-ctx-title">⚡ 빠른 액션</div>
+      <div class="ds-ctx-row" style="cursor:pointer;"><span class="k">📤</span><span class="v">PDF 업로드</span></div>
+      <div class="ds-ctx-row" style="cursor:pointer;" onclick="if(window.switchTab)switchTab('overtime')"><span class="k">🧮</span><span class="v">시간외 시뮬</span></div>
+    </div>
+  </aside>
 </div>

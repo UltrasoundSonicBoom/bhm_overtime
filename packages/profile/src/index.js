@@ -8,3 +8,4 @@ export {
 export { OVERTIME } from './overtime.js';
 export { LEAVE } from './leave.js';
 export { PAYROLL } from './payroll.js';
+export { SCHEDULE } from './schedule.js';

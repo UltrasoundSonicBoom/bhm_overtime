@@ -11,7 +11,8 @@
     "./career-events": "./src/career-events.js",
     "./overtime": "./src/overtime.js",
     "./leave": "./src/leave.js",
-    "./payroll": "./src/payroll.js"
+    "./payroll": "./src/payroll.js",
+    "./schedule": "./src/schedule.js"
   },
   "dependencies": {
     "@snuhmate/calculators": "workspace:*",

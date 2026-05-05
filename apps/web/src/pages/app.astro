@@ -12,6 +12,7 @@ import PayrollIsland from '../components/tabs/PayrollIsland.astro';
 import OvertimeIsland from '../components/tabs/OvertimeIsland.astro';
 import LeaveIsland from '../components/tabs/LeaveIsland.astro';
 import ScheduleIsland from '../components/tabs/ScheduleIsland.astro';
+import ScheduleSuiteIsland from '../components/tabs/ScheduleSuiteIsland.astro';
 import ReferenceIsland from '../components/tabs/ReferenceIsland.astro';
 import LifeEventIsland from '../components/tabs/LifeEventIsland.astro';
 import SettingsIsland from '../components/tabs/SettingsIsland.astro';
@@ -133,6 +134,9 @@ import AIIsland from '../components/tabs/AIIsland.astro';
 
     <!-- ═══════════ 🗓️ 근무표 ═══════════ -->
     <ScheduleIsland />
+
+    <!-- ═══════════ 🗓️ 근무·휴가·시간외 통합 (≥1024px 전용) ═══════════ -->
+    <ScheduleSuiteIsland />
 
     <!-- ═══════════ ⏰ 시간외·온콜 관리 ═══════════ -->
     <OvertimeIsland />

@@ -170,7 +170,7 @@ export const HANDLERS = {
     if (Array.isArray(arr)) return _writeAllCareerEvents(null, uid, arr);
   },
   'snuhmate_schedule_records': (uid) => {
-    const all = _localValue('snuhmate_schedule_records') || {};
+    const all = _localValue(localKeyFor('snuhmate_schedule_records', uid)) || {};
     return _writeAllSchedule(null, uid, all);
   },
   'snuhmate_settings': (uid) => {

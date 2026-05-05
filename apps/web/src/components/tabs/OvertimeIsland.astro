@@ -223,4 +223,30 @@
       </p>
     </div>
   </div>
+
+  <!-- ── Desktop right-context panel (≥1280px only) ── -->
+  <aside class="tab-desktop-context" aria-label="시간외 컨텍스트">
+    <div class="ds-ctx-section">실시간 컨텍스트 · 시간외</div>
+    <div class="ds-ctx-card">
+      <div class="ds-ctx-title">⚠️ 한도 진행 <small id="otCtxLimitPct">—</small></div>
+      <div class="home-progress-wrap" style="height:8px;"><div class="home-progress-bar" id="otCtxLimitBar" style="width:0%; background:var(--accent-amber);"></div></div>
+      <div class="ds-ctx-row" style="margin-top:6px;"><span class="k">누적</span><span class="v" id="otCtxAccrued">— / 60h</span></div>
+      <div style="font-size:10px;color:var(--accent-amber-text);font-weight:700;margin-top:3px;" id="otCtxLimitWarn"></div>
+    </div>
+    <div class="ds-ctx-card">
+      <div class="ds-ctx-title">💰 이번 달 예상</div>
+      <div class="ds-ctx-row"><span class="k">시간</span><span class="v" id="otCtxHours">— h</span></div>
+      <div class="ds-ctx-row"><span class="k">×1.5 가산</span><span class="v" id="otCtxRate">— /h</span></div>
+      <div class="ds-ctx-row"><span class="k">예상 수당</span><span class="v" style="color:var(--accent-indigo);" id="otCtxPay">—</span></div>
+    </div>
+    <div class="ds-ctx-card">
+      <div class="ds-ctx-title">📈 6개월 추이</div>
+      <div class="ds-mini-bar" id="otCtxTrend"></div>
+      <div class="ds-ctx-row" style="margin-top:6px;"><span class="k">평균</span><span class="v" id="otCtxAvg">— h</span></div>
+    </div>
+    <div class="ds-ctx-card">
+      <div class="ds-ctx-title">📌 단협 알림</div>
+      <div style="font-size:11px; line-height:1.5; color:var(--text-secondary);">제33조 시간외 한도 월 60h. 80% 도달 시 휴식 권고.</div>
+    </div>
+  </aside>
 </div>

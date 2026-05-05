@@ -130,16 +130,10 @@
       { icon: '🗓️', text: '근무', tab: 'schedule', href: homeHref('schedule'), gate: 'nurse' },
       { icon: '📅', text: '휴가', tab: 'leave', href: homeHref('leave') },
       { icon: '⏰', text: '시간외', tab: 'overtime', href: homeHref('overtime') },
+      // 통합 캘린더 — 근무표 → 시간외/휴가 자동 추출. 모바일·데스크탑 모두 노출.
+      { icon: '🧩', text: '통합', tab: 'schedule-suite', href: homeHref('schedule-suite'), gate: 'nurse' },
       { icon: '💰', text: '급여', tab: 'payroll', href: homeHref('payroll') },
-      // Phase 5-followup: 규정 탭도 SPA 방식 — full page navigation 제거 → in-memory state 보존
-      // 사용자 보고: "규정 클릭하고 info 가면 화면 초기화된 것처럼 나옴" 회귀 fix
-      // tab-reference.html 안에 iframe 으로 regulation.html 임베드
       { icon: '📖', text: '규정', tab: 'reference', href: homeHref('reference'), active: isRegulation },
-      // 생활·AI 탭 — 기능 완성 전 임시 비노출 (주석 해제로 복구)
-      // { icon: '🌱', text: '생활', tab: 'lifeEvent', href: homeHref('lifeEvent') },
-      // { icon: '🤖', text: 'AI', tab: 'ai', href: homeHref('ai') },
-      // 뉴스 탭 비활성 (차후 복구 시 주석 해제)
-      // { icon: '📰', text: '뉴스', href: 'cardnews.html', active: isCardNews },
       { icon: '👤', text: 'info', tab: 'profile', href: homeHref('profile') }
     ].filter(function (item) {
       if (item.gate === 'nurse' && !_showSchedule) return false;
@@ -147,15 +141,19 @@
     });
 
     items.forEach(function (item) {
+      var extraCls = '';
+      if (item.mobileOnly) extraCls += ' nav-tab-mobile-only';
+      if (item.desktopOnly) extraCls += ' nav-tab-desktop-only';
+
       if (isApp && item.tab) {
-        var btn = el('button', { className: 'nav-tab' });
+        var btn = el('button', { className: 'nav-tab' + extraCls });
         btn.dataset.tab = item.tab;
         addTabContent(btn, item.icon, item.text);
         inner.appendChild(btn);
         return;
       }
 
-      var a = el('a', { className: 'nav-tab' + (item.active ? ' active' : ''), href: item.href });
+      var a = el('a', { className: 'nav-tab' + extraCls + (item.active ? ' active' : ''), href: item.href });
       a.style.textDecoration = 'none';
       addTabContent(a, item.icon, item.text);
       inner.appendChild(a);

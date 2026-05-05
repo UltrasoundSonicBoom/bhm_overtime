@@ -575,13 +575,16 @@ import Card from '../ui/Card.astro';
     #tab-schedule .sch-duty:hover { transform: translateY(-1px); }
     #tab-schedule .sch-duty.is-mine.is-clickable:hover { box-shadow: 0 0 0 2px var(--color-brand-primary); }
 
-    #tab-schedule .sch-duty-D  { background: var(--color-status-info-bg); color: var(--color-status-info); }
-    #tab-schedule .sch-duty-E  { background: var(--color-status-warning-bg); color: var(--color-status-warning); }
-    #tab-schedule .sch-duty-N  { background: var(--color-brand-primary); color: var(--color-text-inverse); }
-    #tab-schedule .sch-duty-O  { background: var(--color-bg-muted); color: var(--color-text-secondary); font-size: 9px; }
-    #tab-schedule .sch-duty-AL { background: var(--color-status-error-bg); color: var(--color-status-error); }
-    #tab-schedule .sch-duty-RD { background: var(--color-status-success-bg); color: var(--color-status-success); }
-    #tab-schedule .sch-duty-empty { background: transparent; color: transparent; cursor: default; }
+    /* duty 셀은 --cal-badge-fg 토큰으로 자체 대비색을 주입한다.
+       (globals.css 의 neo theme override 가 .cal-badge color 를 일률적으로 잡지 않도록.)
+       N 처럼 짙은 배경 위에는 흰 글자, 옅은 배경 위에는 토큰 색. */
+    #tab-schedule .sch-duty-D  { background: var(--color-status-info-bg);    color: var(--color-status-info);    --cal-badge-fg: var(--color-status-info); }
+    #tab-schedule .sch-duty-E  { background: var(--color-status-warning-bg); color: var(--color-status-warning); --cal-badge-fg: var(--color-status-warning); }
+    #tab-schedule .sch-duty-N  { background: var(--color-brand-primary);     color: var(--color-text-inverse);   --cal-badge-fg: var(--color-text-inverse); }
+    #tab-schedule .sch-duty-O  { background: var(--color-bg-muted);          color: var(--color-text-secondary); --cal-badge-fg: var(--color-text-secondary); font-size: 9px; }
+    #tab-schedule .sch-duty-AL { background: var(--color-status-error-bg);   color: var(--color-status-error);   --cal-badge-fg: var(--color-status-error); }
+    #tab-schedule .sch-duty-RD { background: var(--color-status-success-bg); color: var(--color-status-success); --cal-badge-fg: var(--color-status-success); }
+    #tab-schedule .sch-duty-empty { background: transparent; color: transparent; --cal-badge-fg: transparent; cursor: default; }
 
     /* 합계 */
     #tab-schedule .sch-total-cell {
@@ -842,4 +845,29 @@ import Card from '../ui/Card.astro';
       box-shadow: 2px 2px 0 var(--color-border-strong);
     }
   </style>
+
+  <!-- ── Desktop right-context panel (≥1280px only) ── -->
+  <aside class="tab-desktop-context" aria-label="근무 컨텍스트">
+    <div class="ds-ctx-section">실시간 컨텍스트 · 근무</div>
+    <div class="ds-ctx-card" style="border-color:var(--accent-indigo); background:rgba(108,92,231,0.06);">
+      <div class="ds-ctx-title">🌙 다음 N (야근)</div>
+      <div style="font-size:18px; font-weight:800; color:var(--accent-indigo); font-family:'Space Grotesk','Inter',sans-serif;" id="schedCtxNextN">—</div>
+      <div style="font-size:10px; color:var(--text-muted); margin-top:2px;" id="schedCtxNextNSub">22:30 → 06:30 · 8h</div>
+    </div>
+    <div class="ds-ctx-card">
+      <div class="ds-ctx-title">📊 이번 달 분포</div>
+      <div class="ds-ctx-row"><span class="k">D 데이</span><span class="v" id="schedCtxD">— 회</span></div>
+      <div class="ds-ctx-row"><span class="k">E 이브닝</span><span class="v" id="schedCtxE">— 회</span></div>
+      <div class="ds-ctx-row"><span class="k">N 나이트</span><span class="v" id="schedCtxN" style="color:var(--accent-indigo);">— 회</span></div>
+      <div class="ds-ctx-row"><span class="k">OFF</span><span class="v" id="schedCtxO">— 회</span></div>
+    </div>
+    <div class="ds-ctx-card">
+      <div class="ds-ctx-title">📈 야간 누적 <small>6개월</small></div>
+      <div class="ds-mini-bar" id="schedCtxNTrend"></div>
+    </div>
+    <div class="ds-ctx-card" id="schedCtxPattern">
+      <div class="ds-ctx-title">🔄 패턴 점검</div>
+      <div style="font-size:11px; line-height:1.5;" id="schedCtxPatternMsg">—</div>
+    </div>
+  </aside>
 </div>

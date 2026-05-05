@@ -47,6 +47,8 @@ import './pay-estimation.js';
 import './payslip-tab.js';
 import './leave-tab.js';
 import './schedule-tab.js';
+import './schedule-suite.js';
+import './dashboard-home.js';
 // app.js 이후 로드되던 것들도 통합 (HTML <script src=...> 24~28번)
 import './settings-ui.js';
 import './inline-ui-helpers.js';
@@ -138,6 +140,10 @@ function initHomeTab() {
 
   loadNotice();
   loadChangelog();
+  // 진정한 대시보드 섹션 (KPI / 차트 / 액션 / 커리어) — 신규
+  if (typeof window.renderHomeDashboard === 'function') {
+    try { window.renderHomeDashboard(); } catch (e) { console.warn('[home] renderHomeDashboard 실패', e); }
+  }
   // 프로필 미저장 힌트 배너
   const homeNudge = document.getElementById('homeProfileNudge');
   if (homeNudge) homeNudge.style.display = (!profile || !profile.jobType) ? 'block' : 'none';
@@ -4289,6 +4295,8 @@ if (typeof window !== 'undefined') {
   window.retSetRetireDate = retSetRetireDate;
   window.retToggleRateCard = retToggleRateCard;
   window.saveOtRecord = saveOtRecord;
+  window.onOtDateClick = onOtDateClick;
+  window.closeOtBottomSheet = closeOtBottomSheet;
   window.switchNewsTab = switchNewsTab;
   window.toggleOtHelp = toggleOtHelp;
   window.toggleOtHelpDetail = toggleOtHelpDetail;

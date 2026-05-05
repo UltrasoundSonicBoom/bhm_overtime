@@ -639,6 +639,7 @@ const USER_DATA_PATTERNS = [
   /^snuhmate_hr_profile/,              // PROFILE
   /^overtimeRecords/,                   // OVERTIME (prefix 없음)
   /^leaveRecords/,                      // LEAVE
+  /^snuhmate_schedule_records/,         // SCHEDULE (근무표)
   /^snuhmate_work_history/,             // 근무이력
   /^snuhmate_last_edit_/,               // 새 snake_case
   /^payslip_/,                          // 급여명세서
@@ -1128,7 +1129,7 @@ function downloadBackup() {
 // canonical key 매핑 — 다른 디바이스/브라우저에서 복원 시 현재 namespace 로 변환
 function _restoreKeyForCurrent(key) {
   // _<uid> / _guest / _demo suffix 제거 → 현재 환경의 same-base 키로
-  const KNOWN_BASES = ['snuhmate_hr_profile', 'overtimeRecords', 'leaveRecords', 'snuhmate_work_history', 'otManualHourly', 'overtimePayslipData'];
+  const KNOWN_BASES = ['snuhmate_hr_profile', 'overtimeRecords', 'leaveRecords', 'snuhmate_schedule_records', 'snuhmate_work_history', 'otManualHourly', 'overtimePayslipData'];
   const getKey = (typeof window.getUserStorageKey === 'function') ? window.getUserStorageKey : null;
   for (const base of KNOWN_BASES) {
     if (key === base || key.startsWith(base + '_')) {

@@ -125,4 +125,30 @@
       </div>
     </div>
   </div>
+
+  <!-- ── Desktop right-context panel (≥1280px only) ── -->
+  <aside class="tab-desktop-context" aria-label="찾아보기 컨텍스트">
+    <div class="ds-ctx-section">실시간 컨텍스트 · 찾아보기</div>
+    <div class="ds-ctx-card">
+      <div class="ds-ctx-title">⭐ 자주 본 조항 <small>top 5</small></div>
+      <div id="refCtxFavorites" style="font-size:11px; color:var(--text-secondary);">즐겨찾기한 조항이 없어요</div>
+    </div>
+    <div class="ds-ctx-card">
+      <div class="ds-ctx-title">🕒 최근 본</div>
+      <div id="refCtxRecent" style="font-size:11px; color:var(--text-secondary);">—</div>
+    </div>
+    <div class="ds-ctx-card" style="background: var(--bg-glass);">
+      <div class="ds-ctx-title">🔗 관련 조항 <small id="refCtxRelatedTitle">—</small></div>
+      <div id="refCtxRelated" style="font-size:11px; color:var(--text-secondary);">조항을 선택하세요</div>
+    </div>
+    <div class="ds-ctx-card">
+      <div class="ds-ctx-title">🆘 자주 묻는 질문</div>
+      <div style="display:flex; gap:4px; flex-wrap:wrap; margin-top:4px;">
+        <span class="ref-faq-chip" data-q="연차" style="padding:3px 8px; border:1px solid var(--border-active); border-radius:99px; font-size:10px; font-weight:700; background:var(--bg-card); cursor:pointer;">연차</span>
+        <span class="ref-faq-chip" data-q="야간수당" style="padding:3px 8px; border:1px solid var(--border-active); border-radius:99px; font-size:10px; font-weight:700; background:var(--bg-card); cursor:pointer;">야간수당</span>
+        <span class="ref-faq-chip" data-q="경조비" style="padding:3px 8px; border:1px solid var(--border-active); border-radius:99px; font-size:10px; font-weight:700; background:var(--bg-card); cursor:pointer;">경조비</span>
+        <span class="ref-faq-chip" data-q="퇴직금" style="padding:3px 8px; border:1px solid var(--border-active); border-radius:99px; font-size:10px; font-weight:700; background:var(--bg-card); cursor:pointer;">퇴직금</span>
+      </div>
+    </div>
+  </aside>
 </div>

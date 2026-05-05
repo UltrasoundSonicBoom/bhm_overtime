@@ -100,4 +100,133 @@
     <span>모든 데이터는 내 브라우저에만 저장됩니다.<br> 개발자도, 서버도 절대 볼 수 없어요.</span>
   </div>
 
+  <!-- ── Desktop right-context panel (≥1280px only — desktop-shell.css) ── -->
+  <aside class="tab-desktop-context" aria-label="홈 컨텍스트">
+    <div class="ds-ctx-section">실시간 컨텍스트 · 홈</div>
+    <div class="ds-ctx-card" id="homeCtxProfile">
+      <div class="ds-ctx-title">👤 프로필 완성도 <small id="homeCtxProfilePct">—</small></div>
+      <div class="ds-ring-wrap">
+        <div class="ds-ring">
+          <svg width="52" height="52"><circle cx="26" cy="26" r="22" fill="none" stroke="#e5e7eb" stroke-width="6"></circle><circle id="homeCtxRing" cx="26" cy="26" r="22" fill="none" stroke="#6C5CE7" stroke-width="6" stroke-dasharray="0 138" stroke-linecap="round"></circle></svg>
+          <div class="ds-ring-pct" id="homeCtxRingPct">—</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);" id="homeCtxMissing">완료까지 — 항목</div>
+          <a onclick="if(window.switchTab)switchTab('profile')" style="font-size:10px;color:var(--accent-indigo);cursor:pointer;">→ 채우기</a>
+        </div>
+      </div>
+    </div>
+    <div class="ds-ctx-card">
+      <div class="ds-ctx-title">⏰ 이번 주 시간외 <small id="homeCtxOtPct">—</small></div>
+      <div class="home-progress-wrap" style="height:8px;"><div class="home-progress-bar" id="homeCtxOtBar" style="width:0%; background:var(--accent-amber);"></div></div>
+      <div class="ds-ctx-row" style="margin-top:6px;"><span class="k">누적</span><span class="v" id="homeCtxOtSum">— h</span></div>
+    </div>
+    <div class="ds-ctx-card">
+      <div class="ds-ctx-title">📢 최신 공지</div>
+      <div id="homeCtxNotices" style="font-size:11px; color:var(--text-secondary);">불러오는 중…</div>
+    </div>
+    <div class="ds-ctx-card">
+      <div class="ds-ctx-title">⚡ 빠른 액션</div>
+      <div class="ds-ctx-row" style="cursor:pointer;" onclick="if(window.switchTab)switchTab('payroll')"><span class="k">📤</span><span class="v">명세서 업로드</span></div>
+      <div class="ds-ctx-row" style="cursor:pointer;" onclick="if(window.switchTab)switchTab('overtime')"><span class="k">⏱️</span><span class="v">시간외 입력</span></div>
+      <div class="ds-ctx-row" style="cursor:pointer;" onclick="if(window.switchTab)switchTab('reference')"><span class="k">📖</span><span class="v">규정 검색</span></div>
+    </div>
+  </aside>
+
+  <!-- 홈 대시보드 스타일 (KPI / 차트 / 액션 / 커리어) -->
+  <style is:global>
+    .home-dashboard { display: flex; flex-direction: column; gap: 0; }
+
+    /* 모바일 — KPI strip 5칸 → 2 col + 마지막 full */
+    .home-dashboard .dash-kpi { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .home-dashboard .dash-kpi > :nth-child(5) { grid-column: 1 / -1; }
+    .home-dashboard .dash-kpi .ds-kpi {
+      background: var(--bg-card);
+      border: 1.5px solid var(--border-active);
+      border-radius: var(--radius-md, 12px);
+      padding: 10px 12px;
+      box-shadow: var(--shadow-sm);
+    }
+    .home-dashboard .dash-kpi .ds-kpi-label { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+    .home-dashboard .dash-kpi .ds-kpi-value { font-size: 18px; font-weight: 800; color: var(--text-primary); margin-top: 2px; font-family: 'Space Grotesk','Inter',sans-serif; line-height: 1.1; }
+    .home-dashboard .dash-kpi .ds-kpi-trend { font-size: 10px; color: var(--text-muted); font-weight: 600; margin-top: 4px; }
+    .home-dashboard .dash-kpi .ds-kpi.indigo { background: var(--accent-indigo); }
+    .home-dashboard .dash-kpi .ds-kpi.cyan { background: var(--accent-cyan); }
+    .home-dashboard .dash-kpi .ds-kpi.amber { background: var(--accent-amber); }
+    .home-dashboard .dash-kpi .ds-kpi.emerald { background: var(--accent-emerald); }
+    .home-dashboard .dash-kpi .ds-kpi.indigo .ds-kpi-label,
+    .home-dashboard .dash-kpi .ds-kpi.indigo .ds-kpi-value,
+    .home-dashboard .dash-kpi .ds-kpi.indigo .ds-kpi-trend,
+    .home-dashboard .dash-kpi .ds-kpi.emerald .ds-kpi-label,
+    .home-dashboard .dash-kpi .ds-kpi.emerald .ds-kpi-value,
+    .home-dashboard .dash-kpi .ds-kpi.emerald .ds-kpi-trend { color: white; }
+    .home-dashboard .dash-kpi .ds-kpi.indigo .ds-kpi-label,
+    .home-dashboard .dash-kpi .ds-kpi.indigo .ds-kpi-trend,
+    .home-dashboard .dash-kpi .ds-kpi.emerald .ds-kpi-label,
+    .home-dashboard .dash-kpi .ds-kpi.emerald .ds-kpi-trend { opacity: 0.85; }
+
+    /* 차트 row */
+    .home-dashboard .dash-charts { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    .home-dashboard .dash-meta {
+      display: flex; justify-content: space-between;
+      font-size: 11px; color: var(--text-muted);
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px dashed var(--border-glass);
+    }
+    .home-dashboard .dash-empty {
+      padding: 16px 8px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      background: var(--bg-elevated, rgba(0,0,0,0.02));
+      border-radius: 8px;
+    }
+    .home-dashboard .dash-donut-row {
+      display: flex; align-items: center; gap: 16px; padding: 4px 0;
+    }
+    .home-dashboard .dash-donut-legend {
+      display: flex; flex-direction: column; gap: 6px;
+      font-size: 12px; color: var(--text-secondary);
+    }
+    .home-dashboard .dash-donut-legend strong { color: var(--text-primary); margin-left: 4px; }
+    .home-dashboard .dash-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+
+    /* 다음 액션 */
+    .home-dashboard .dash-actions { display: flex; flex-direction: column; gap: 8px; }
+    .home-dashboard .dash-action {
+      display: flex; gap: 10px; align-items: center;
+      padding: 10px 12px;
+      border: 1px solid var(--border-glass);
+      border-radius: 10px;
+      background: var(--bg-card);
+      transition: background 0.15s;
+    }
+    .home-dashboard .dash-action[data-action-tab]:hover { background: var(--bg-glass-hover, rgba(0,0,0,0.04)); }
+    .home-dashboard .dash-action.amber { border-left: 3px solid var(--accent-amber); }
+    .home-dashboard .dash-action.rose { border-left: 3px solid var(--accent-rose); }
+    .home-dashboard .dash-action.emerald { border-left: 3px solid var(--accent-emerald); }
+    .home-dashboard .dash-action-icon { font-size: 22px; flex-shrink: 0; }
+    .home-dashboard .dash-action-label { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+    .home-dashboard .dash-action-desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+    /* 커리어 타임라인 */
+    .home-dashboard .dash-career { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .home-dashboard .dash-career-item {
+      padding: 10px;
+      background: var(--bg-elevated, rgba(0,0,0,0.02));
+      border-radius: 10px;
+      text-align: center;
+    }
+    .home-dashboard .dash-career-label { font-size: 10px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+    .home-dashboard .dash-career-value { font-size: 16px; font-weight: 800; color: var(--text-primary); margin-top: 4px; font-family: 'Space Grotesk','Inter',sans-serif; }
+    .home-dashboard .dash-career-meta { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+
+    /* 데스크탑 — KPI 5 col / 차트 2 col */
+    @media (min-width: 769px) {
+      .home-dashboard .dash-kpi { grid-template-columns: repeat(5, 1fr); }
+      .home-dashboard .dash-kpi > :nth-child(5) { grid-column: auto; }
+      .home-dashboard .dash-charts { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
 </div>

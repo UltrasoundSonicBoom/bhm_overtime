@@ -1209,6 +1209,9 @@ if (typeof window !== 'undefined') {
   window.initLeaveTab = initLeaveTab;
   window.openLvTypeBottomSheet = openLvTypeBottomSheet;
   window.saveLvRecord = saveLvRecord;
+  // schedule-suite portal deep-link 진입점
+  window.onLvDateClick = onLvDateClick;
+  window.editLvRecord = editLvRecord;
 }
 
 // Phase 3-regression: cross-module bare 호출 → window 호환층 복원

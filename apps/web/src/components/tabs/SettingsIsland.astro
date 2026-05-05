@@ -144,6 +144,33 @@
       <div id="orphanList" class="flex flex-col gap-2"></div>
     </div>
   </div>
+
+  <!-- ── Desktop right-context panel (≥1280px only) ── -->
+  <aside class="tab-desktop-context" aria-label="설정 컨텍스트">
+    <div class="ds-ctx-section">실시간 컨텍스트 · 설정</div>
+    <div class="ds-ctx-card">
+      <div class="ds-ctx-title">💾 백업 상태</div>
+      <div class="ds-ctx-row"><span class="k">로컬</span><span class="v" id="settingsCtxLocal" style="color:var(--accent-emerald);">실시간</span></div>
+      <div class="ds-ctx-row"><span class="k">Firebase</span><span class="v" id="settingsCtxFirebase">—</span></div>
+      <div class="ds-ctx-row"><span class="k">Google Drive</span><span class="v" id="settingsCtxDrive">—</span></div>
+      <div class="ds-ctx-row"><span class="k">크기</span><span class="v" id="settingsCtxSize">—</span></div>
+    </div>
+    <div class="ds-ctx-card">
+      <div class="ds-ctx-title">📱 등록된 디바이스 <small id="settingsCtxDevCount">—</small></div>
+      <div id="settingsCtxDevices" style="font-size:11px; color:var(--text-secondary);">—</div>
+    </div>
+    <div class="ds-ctx-card">
+      <div class="ds-ctx-title">🛡️ 개인정보 처리</div>
+      <div style="font-size:11px; line-height:1.5;">민감정보는 <b>본인 기기에만 저장</b>. 동의한 항목만 동기화.</div>
+      <div class="ds-ctx-row" style="margin-top:6px;"><a href="/terms" target="_blank" style="font-size:11px;color:var(--accent-indigo);">이용약관 →</a></div>
+      <div class="ds-ctx-row"><a href="/privacy" target="_blank" style="font-size:11px;color:var(--accent-indigo);">개인정보처리방침 →</a></div>
+    </div>
+    <div class="ds-ctx-card">
+      <div class="ds-ctx-title">ℹ️ 앱 정보</div>
+      <div class="ds-ctx-row"><span class="k">버전</span><span class="v">v2.4.1</span></div>
+      <div class="ds-ctx-row"><span class="k">빌드</span><span class="v" id="settingsCtxBuild">—</span></div>
+    </div>
+  </aside>
 </div>
 
 <script>

@@ -206,7 +206,7 @@ export async function hydrateFromFirestore(uid) {
       run: async () => {
         const data = await _readAllSchedule(null, uid);
         if (!data || Object.keys(data).length === 0) return;
-        _setLocal('snuhmate_schedule_records', data);
+        _setLocal(localKeyFor('snuhmate_schedule_records', uid), data);
       },
     },
     {

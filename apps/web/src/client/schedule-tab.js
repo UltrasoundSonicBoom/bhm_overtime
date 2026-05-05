@@ -12,6 +12,7 @@
 import { OVERTIME } from '@snuhmate/profile/overtime';
 import { LEAVE } from '@snuhmate/profile/leave';
 import { PROFILE } from '@snuhmate/profile/profile';
+import { SCHEDULE } from '@snuhmate/profile/schedule';
 import { HOLIDAYS } from '@snuhmate/calculators/holidays';
 
 // `@snuhmate/profile/profile` 등은 모듈 초기화 시 `window.PROFILE`/`window.OVERTIME`/`window.LEAVE` 도 export.
@@ -30,7 +31,8 @@ import {
   mineMapToRecords,
 } from './schedule-calc.js';
 
-const STORAGE_KEY = 'snuhmate_schedule_records';
+// SCHEDULE 모듈이 user-scoped 키 getter 를 소유 — 직접 import 해서 사용.
+// 기존 'snuhmate_schedule_records' 단일 키는 SCHEDULE._migrateLegacyKeys 가 1회성 흡수.
 
 const DUTY_LABELS = {
   D: '데이', E: '이브닝', N: '나이트',
@@ -121,24 +123,10 @@ function _initials(name) {
 
 // ── localStorage I/O ──
 function _loadAll() {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-  } catch (_e) {
-    return {};
-  }
+  return SCHEDULE._loadAll();
 }
 function _saveAll(all, opts = {}) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
-    if (opts.recordEdit !== false && typeof window.recordLocalEdit === 'function') {
-      window.recordLocalEdit(STORAGE_KEY);
-    }
-    if (opts.recordEdit !== false && typeof window !== 'undefined') {
-      try { window.dispatchEvent(new CustomEvent('scheduleChanged', { detail: { source: 'local' } })); } catch (_e) {}
-    }
-  } catch (e) {
-    console.warn('[schedule] localStorage save failed', e);
-  }
+  SCHEDULE._saveAll(all, opts);
 }
 function _yyyymm(year, month) {
   return `${year}-${String(month).padStart(2, '0')}`;

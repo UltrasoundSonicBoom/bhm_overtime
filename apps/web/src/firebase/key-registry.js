@@ -72,7 +72,7 @@ export const KEY_REGISTRY = {
   },
   // ── Schedule (근무표) ──
   'snuhmate_schedule_records': {
-    scope: 'sync', shape: 'collection-by-yyyymm',
+    scope: 'sync', localScope: 'user', shape: 'collection-by-yyyymm',
     firestorePath: (uid) => `users/${uid}/schedule`,
     category: 'schedule',
   },

@@ -1,0 +1,533 @@
+---
+// ScheduleSuiteIsland — 통합 근무·휴가·시간외
+// 단일 캘린더 + 다중 lens 체크 + 셀 클릭 CRUD.
+// 데스크탑(≥1024): 좌측 nav 'schedule-suite' 항목으로 진입. 캘린더 큰 셀 + 우측 컨텍스트.
+// 모바일(<1024): 하단 nav '근무·휴가·시간' 항목으로 진입. 작은 셀 + 바텀시트 편집.
+// 데이터: SCHEDULE / OVERTIME / LEAVE store 직결. 별도 localStorage 키 없음.
+// 컨트롤러: apps/web/src/client/schedule-suite.js (ESM, app.js 가 import).
+// 단협 §32 야간 = ×1.5 가산 통상임금 (기준 시급 × 1.5).
+---
+<div class="tab-content" id="tab-schedule-suite">
+
+  <!-- Banner -->
+  <div class="suite-banner-row">
+    <div class="info-note-banner" style="margin-bottom:0;">
+      <span>🗓️</span>
+      <div><strong>근무표 한 번 업로드</strong>로 시간외·휴가가 자동 계산. 단일 캘린더에서 lens 토글로 한눈에. <span class="text-brand-text-muted">데이터 source = 근무표</span></div>
+    </div>
+  </div>
+
+  <!-- ═══════════ Calendar (모바일·데스크탑 우선 노출) ═══════════ -->
+  <div class="suite-cal-row card mt-3 p-0 sch-main-card">
+    <div class="ot-cal">
+      <div class="ot-cal-header">
+        <button class="cal-nav-btn" id="suiteCalPrev" type="button">‹</button>
+        <span class="cal-nav-title" id="suiteCalMonth">2026년 6월</span>
+        <button class="cal-nav-btn" id="suiteCalNext" type="button">›</button>
+      </div>
+      <div class="suite-lens-bar">
+        <span class="suite-lens-bar-label">시각 표시</span>
+        <button class="suite-lens-pill active" data-lens="all" type="button">통합</button>
+        <button class="suite-lens-pill" data-lens="duty" type="button">📅 근무</button>
+        <button class="suite-lens-pill" data-lens="ot" type="button">⏰ 시간외</button>
+        <button class="suite-lens-pill" data-lens="leave" type="button">🌴 휴가</button>
+        <button id="suiteResetBtn" class="cal-nav-btn suite-reset-btn" type="button" title="초기화">↻</button>
+      </div>
+      <div class="ot-cal-grid">
+        <div class="ot-cal-dow sun">일</div>
+        <div class="ot-cal-dow">월</div>
+        <div class="ot-cal-dow">화</div>
+        <div class="ot-cal-dow">수</div>
+        <div class="ot-cal-dow">목</div>
+        <div class="ot-cal-dow">금</div>
+        <div class="ot-cal-dow sat">토</div>
+      </div>
+      <div id="suiteMergedCal" class="suite-merged-cal ot-cal-grid" data-lens="all"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════ KPI strip ═══════════ -->
+  <div class="suite-kpi-row ds-row cols-5 mt-3">
+    <div class="ds-kpi">
+      <div class="ds-kpi-label">이번 달 근무</div>
+      <div class="ds-kpi-value" id="suiteKpiTotal">—</div>
+      <div class="ds-kpi-trend" id="suiteKpiTotalSub">—</div>
+    </div>
+    <div class="ds-kpi indigo">
+      <div class="ds-kpi-label">시간외 (자동)</div>
+      <div class="ds-kpi-value" id="suiteKpiOt">—</div>
+      <div class="ds-kpi-trend" id="suiteKpiOtSub">—</div>
+    </div>
+    <div class="ds-kpi emerald">
+      <div class="ds-kpi-label">남은 연차</div>
+      <div class="ds-kpi-value" id="suiteKpiLeave">—</div>
+      <div class="ds-kpi-trend" id="suiteKpiLeaveSub">—</div>
+    </div>
+    <div class="ds-kpi amber">
+      <div class="ds-kpi-label">한도</div>
+      <div class="ds-kpi-value" id="suiteKpiLimit">—</div>
+      <div class="ds-kpi-trend" id="suiteKpiLimitSub">—</div>
+    </div>
+    <div class="ds-kpi cyan">
+      <div class="ds-kpi-label">다음 N (야근)</div>
+      <div class="ds-kpi-value" id="suiteKpiNextN">—</div>
+      <div class="ds-kpi-trend" id="suiteKpiNextNSub">—</div>
+    </div>
+  </div>
+
+  <div class="suite-side-row ds-row cols-2 mt-3">
+
+    <div class="card p-3">
+      <div class="card-title text-brand-body-large">⚡ 빠른 추가 <span class="text-brand-text-muted text-brand-label-small">오늘에 추가</span></div>
+      <div class="suite-quick-grid">
+        <button class="btn btn-outline suite-quick" data-action="ot1" type="button">⏱️ 시간외 +1h</button>
+        <button class="btn btn-outline suite-quick" data-action="ot2" type="button">⏱️ 시간외 +2h</button>
+        <button class="btn btn-outline suite-quick" data-action="oncall" type="button">📞 온콜</button>
+        <button class="btn btn-outline suite-quick" data-action="leave" type="button">🌴 연차</button>
+      </div>
+    </div>
+    <div class="card p-3">
+      <div class="card-title text-brand-body-large">📊 lens 별 인사이트</div>
+      <div class="suite-insights">
+        <div class="suite-ins-row"><span><span class="suite-ins-dot" style="background:rgba(99,102,241,0.6);"></span>야간 누적</span><span id="suiteInsN" class="suite-ins-num">—</span></div>
+        <div class="suite-ins-row hl"><span><span class="suite-ins-dot" style="background:var(--accent-rose);"></span>시간외 합계</span><span id="suiteInsOt" class="suite-ins-num">—</span></div>
+        <div class="suite-ins-row"><span><span class="suite-ins-dot" style="background:var(--accent-emerald);"></span>휴가 사용</span><span id="suiteInsLeave" class="suite-ins-num">—</span></div>
+        <div class="suite-ins-row"><span>패턴 점검</span><span id="suiteInsPattern" class="suite-ins-num">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right context panel (≥1280px) -->
+  <aside class="tab-desktop-context" aria-label="통합 컨텍스트">
+    <div class="ds-ctx-section">실시간 컨텍스트 · 통합</div>
+    <div class="ds-ctx-card" style="border-color:var(--accent-indigo); background:rgba(108,92,231,0.06);">
+      <div class="ds-ctx-title">🌙 다음 N <small id="suiteCtxNextNSub">—</small></div>
+      <div style="font-size:18px; font-weight:800; color:var(--accent-indigo); font-family:'Space Grotesk','Inter',sans-serif;" id="suiteCtxNextN">—</div>
+      <div style="font-size:10px; color:var(--text-muted); margin-top:2px;">22:30 → 06:30 · 8h</div>
+    </div>
+    <div class="ds-ctx-card">
+      <div class="ds-ctx-title">⏰ 시간외 한도 <small id="suiteCtxLimitPct">—</small></div>
+      <div class="home-progress-wrap" style="height:8px;"><div class="home-progress-bar" id="suiteCtxLimitBar" style="width:0%; background:var(--accent-amber);"></div></div>
+      <div class="ds-ctx-row" style="margin-top:6px;"><span class="k">누적</span><span class="v" id="suiteCtxLimitTxt">— / 60h</span></div>
+      <div style="font-size:10px;color:var(--accent-amber-text);font-weight:700;margin-top:3px;" id="suiteCtxLimitWarn"></div>
+    </div>
+    <div class="ds-ctx-card">
+      <div class="ds-ctx-title">🌴 연차 잔여 <small id="suiteCtxLeavePct">—</small></div>
+      <div class="ds-ring-wrap">
+        <div class="ds-ring">
+          <svg width="52" height="52"><circle cx="26" cy="26" r="22" fill="none" stroke="#e5e7eb" stroke-width="6"></circle><circle id="suiteCtxLeaveRing" cx="26" cy="26" r="22" fill="none" stroke="#00B894" stroke-width="6" stroke-dasharray="0 138" stroke-linecap="round"></circle></svg>
+          <div class="ds-ring-pct" id="suiteCtxLeaveRingLabel">—</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);">D-185 소멸</div>
+          <div style="font-size:10px;color:var(--text-muted);">12.31 까지</div>
+        </div>
+      </div>
+    </div>
+    <div class="ds-ctx-card">
+      <div class="ds-ctx-title">💰 이번 달 예상 수당</div>
+      <div class="ds-ctx-row"><span class="k">시간외</span><span class="v" style="color:var(--accent-indigo);" id="suiteCtxOtPay">—</span></div>
+      <div class="ds-ctx-row"><span class="k">야간 가산</span><span class="v" id="suiteCtxNightPay">—</span></div>
+      <div class="ds-ctx-row"><span class="k">합계 +</span><span class="v" style="color:var(--accent-indigo);" id="suiteCtxTotalPay">—</span></div>
+    </div>
+    <div class="ds-ctx-card" id="suiteCtxPattern">
+      <div class="ds-ctx-title">🔄 패턴 검사</div>
+      <div style="font-size:11px; line-height:1.5;" id="suiteCtxPatternMsg">—</div>
+    </div>
+  </aside>
+
+  <!-- 셀 클릭 시 책갈피 탭 바텀시트 — 휴가(기본) / 시간외·온콜 -->
+  <!-- 두 탭 내용은 LeaveIsland 의 #lvInputSheet 와 OvertimeIsland 의 #otInputPanel 노드를
+       통째로 portal 하여 재사용. 패널 닫을 때 원래 위치(body)로 복귀. -->
+  <div id="suitePanelOverlay" class="suite-panel-overlay" data-open="0" aria-hidden="true">
+    <div id="suitePanelBox" class="suite-panel-box" role="dialog" aria-modal="true" aria-labelledby="suitePanelDate">
+      <div class="suite-panel-head">
+        <div id="suitePanelDate" class="suite-panel-date">—</div>
+        <button id="suitePanelClose" class="suite-panel-x" type="button" aria-label="닫기">×</button>
+      </div>
+
+      <!-- 듀티 빠른 변경 — D / E / N / OFF (현재 듀티 = active) -->
+      <div class="suite-panel-duty-row" role="group" aria-label="근무 유형">
+        <button class="suite-duty-btn" data-duty="D" type="button">D</button>
+        <button class="suite-duty-btn" data-duty="E" type="button">E</button>
+        <button class="suite-duty-btn" data-duty="N" type="button">N</button>
+        <button class="suite-duty-btn" data-duty="OFF" type="button">/</button>
+      </div>
+
+      <!-- 책갈피 탭 헤더 — '휴가' 기본 active -->
+      <div class="suite-panel-tabs" role="tablist">
+        <button id="suitePanelTabLeave" class="suite-panel-tab active" data-suite-tab="leave" type="button" role="tab" aria-selected="true">🌴 휴가</button>
+        <button id="suitePanelTabOt" class="suite-panel-tab" data-suite-tab="ot" type="button" role="tab" aria-selected="false">⏰ 시간외/온콜</button>
+      </div>
+
+      <!-- 휴가 폼 슬롯 — openPanel 시 lvInputSheet 가 portal -->
+      <div id="suitePanelLeaveSlot" class="suite-panel-slot" role="tabpanel"></div>
+      <!-- 시간외 폼 슬롯 -->
+      <div id="suitePanelOtSlot" class="suite-panel-slot" role="tabpanel" hidden></div>
+    </div>
+  </div>
+
+  <style is:global>
+    /* Lens pill */
+    .suite-lens-pill { padding:5px 11px; border:1.5px solid var(--border-active); border-radius:99px; background:var(--bg-card); font-size:11px; font-weight:700; cursor:pointer; font-family:inherit; }
+    .suite-lens-pill.active { background:var(--accent-indigo); color:white; box-shadow:var(--shadow-sm); border-color:var(--accent-indigo); }
+
+    /* ─── Suite calendar — 시간외 캘린더(globals.css .ot-cal-grid / .ot-cal-day) 와 메트릭 일치 ───
+       grid: gap 2px, padding 8px (globals 기본 그대로 사용)
+       day: padding 8px 2px 4px, min-height 38px, font-size var(--text-body-normal)
+       day-num: font-size var(--text-body-normal)
+       day-duty: font-size var(--text-body-normal) (Space Grotesk 유지로 듀티 식별성)
+       day-ot: font-size 9px (셀 안 모서리 배지) */
+    .suite-merged-cal { min-width: 0; }
+    .suite-merged-cal .ot-cal-day {
+      display: flex; flex-direction: column;
+      min-width: 0; overflow: hidden;
+      cursor: pointer;
+    }
+    .suite-merged-cal .ot-cal-day .day-num { font-weight: 700; font-size: var(--text-body-normal); line-height: 1; }
+    .suite-merged-cal .ot-cal-day .day-duty { font-weight: 800; font-size: var(--text-body-normal); line-height: 1.1; align-self: center; margin: auto 0 2px; font-family: 'Space Grotesk','Inter',sans-serif; }
+    .suite-merged-cal .ot-cal-day .day-ot { position: absolute; right: 3px; bottom: 3px; font-size: 9px; font-weight: 800; color: var(--accent-rose); background: var(--bg-card); padding: 0 4px; border-radius: 3px; border: 1px solid var(--accent-rose); font-family: 'Space Grotesk','Inter',sans-serif; }
+    .suite-merged-cal .ot-cal-day .day-leave { position: absolute; left: 3px; bottom: 3px; font-size: 11px; }
+    /* Duty 배경 — 셀별 글자가 배경과 대비되도록 --suite-duty-fg 토큰 주입.
+       토큰 기반이라 배경/테마가 바뀌면 fg 토큰만 갱신하면 자동 대비. */
+    .suite-merged-cal .ot-cal-day[data-duty="D"] {
+      --suite-duty-bg: rgba(14,165,233,0.14);
+      --suite-duty-fg: #075985; /* sky-800 — 옅은 sky 배경 위 가독성 */
+      background: var(--suite-duty-bg);
+    }
+    .suite-merged-cal .ot-cal-day[data-duty="E"] {
+      --suite-duty-bg: rgba(245,158,11,0.18);
+      --suite-duty-fg: #92400e; /* amber-800 */
+      background: var(--suite-duty-bg);
+    }
+    .suite-merged-cal .ot-cal-day[data-duty="N"] {
+      --suite-duty-bg: rgba(99,102,241,0.85); /* 짙은 indigo — 야간 식별성 강화 */
+      --suite-duty-fg: #ffffff;               /* 짙은 배경 → 흰 글자 */
+      background: var(--suite-duty-bg);
+    }
+    .suite-merged-cal .ot-cal-day[data-duty="D"] .day-duty,
+    .suite-merged-cal .ot-cal-day[data-duty="E"] .day-duty,
+    .suite-merged-cal .ot-cal-day[data-duty="N"] .day-duty { color: var(--suite-duty-fg); }
+    .suite-merged-cal .ot-cal-day[data-duty="N"] .day-num { color: rgba(255,255,255,0.85); }
+    .suite-merged-cal .ot-cal-day[data-duty="OFF"] .day-duty { color: var(--text-muted); font-size: 11px; opacity: 0.7; }
+    .suite-merged-cal .ot-cal-day[data-leave="1"] { background: rgba(16,185,129,0.18) !important; }
+    .suite-merged-cal .ot-cal-day[data-leave="1"] .day-duty { color: var(--accent-emerald); }
+    .suite-merged-cal .ot-cal-day[data-today="1"] { box-shadow: inset 0 0 0 2px var(--accent-indigo); }
+    .suite-merged-cal .ot-cal-day[data-prev="1"] { opacity: 0.35; pointer-events: none; }
+    .suite-merged-cal .ot-cal-day:hover { transform: scale(1.04); z-index: 1; }
+
+    /* Multi-select lens fade */
+    .suite-merged-cal.has-filter:not(.show-duty) .day-duty { opacity: 0.25; }
+    .suite-merged-cal.has-filter:not(.show-ot) .day-ot { opacity: 0.18; }
+    .suite-merged-cal.has-filter:not(.show-leave) .day-leave { opacity: 0.22; }
+    .suite-merged-cal.has-filter.show-ot .ot-cal-day:not([data-ot="0"]) .day-ot { background: var(--accent-rose); color: white; }
+    .suite-merged-cal.has-filter.show-leave .ot-cal-day[data-leave="1"] { box-shadow: inset 0 0 0 2px var(--accent-emerald); }
+    .suite-merged-cal.has-filter:not(.show-duty) .ot-cal-day { background: var(--bg-card) !important; }
+    .suite-merged-cal.has-filter:not(.show-duty) .ot-cal-day[data-leave="1"] { background: rgba(16,185,129,0.18) !important; }
+
+    /* Lens bar (캘린더 헤더 아래) */
+    .suite-lens-bar {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 12px;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-glass);
+      flex-wrap: wrap;
+    }
+    .suite-lens-bar-label { font-size: var(--text-label-small); color: var(--text-muted); font-weight: 600; }
+    .suite-lens-pill {
+      padding: 5px 10px; border: 1px solid var(--border-glass);
+      border-radius: var(--radius-full);
+      background: var(--bg-card); cursor: pointer;
+      font-size: var(--text-label-small); font-weight: 600;
+      color: var(--text-secondary); font-family: inherit;
+    }
+    .suite-lens-pill:hover { background: var(--bg-glass-hover); color: var(--text-primary); }
+    .suite-lens-pill.active {
+      background: var(--accent-indigo); color: white;
+      border-color: var(--accent-indigo);
+      box-shadow: var(--shadow-sm);
+    }
+    .suite-lens-pill[data-lens="all"] { font-weight: 800; }
+    .suite-reset-btn { margin-left: auto; }
+
+    /* Quick-action grid + insights */
+    .suite-quick-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 8px; }
+    .suite-insights { font-size: var(--text-body-normal); margin-top: 4px; }
+    .suite-ins-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed var(--border-glass); }
+    .suite-ins-row:last-child { border-bottom: 0; }
+    .suite-ins-row.hl { background: rgba(108,92,231,0.06); border-radius: 4px; padding-left: 6px; padding-right: 6px; }
+    .suite-ins-dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; }
+    .suite-ins-num { font-family: 'Space Grotesk','Inter',sans-serif; font-weight: 700; }
+
+    /* ─── 셀 클릭 패널 (deep-link 방식) ─── */
+    .suite-panel-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 9999;
+      backdrop-filter: blur(2px);
+      align-items: center;
+      justify-content: center;
+    }
+    .suite-panel-overlay[data-open="1"] { display: flex; }
+    .suite-panel-box {
+      background: var(--bg-card);
+      border: 2px solid var(--border-active);
+      border-radius: 14px;
+      padding: 12px 14px 14px;
+      box-shadow: var(--shadow-md);
+      font-family: inherit;
+      width: 380px;
+      max-width: 92vw;
+    }
+    .suite-panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .suite-panel-date { font-size: 14px; color: var(--text-primary); font-weight: 800; letter-spacing: 0.02em; }
+    .suite-panel-x {
+      background: transparent;
+      border: 0;
+      font-size: 22px;
+      color: var(--text-muted);
+      cursor: pointer;
+      line-height: 1;
+      padding: 0 4px;
+    }
+    /* 듀티 빠른 변경 (D/E/N/OFF) */
+    .suite-panel-duty-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .suite-duty-btn {
+      padding: 8px 0;
+      border: 1.5px solid var(--border-active);
+      border-radius: 8px;
+      background: var(--bg-card);
+      font-family: 'Space Grotesk','Inter',sans-serif;
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: background 0.12s, color 0.12s, border-color 0.12s, transform 0.08s;
+    }
+    .suite-duty-btn:hover { background: var(--bg-glass-hover, rgba(0,0,0,0.04)); }
+    .suite-duty-btn:active { transform: scale(0.96); }
+    .suite-duty-btn[data-duty="D"].active { background: rgba(14,165,233,0.18); color: #075985; border-color: #0ea5e9; }
+    .suite-duty-btn[data-duty="E"].active { background: rgba(245,158,11,0.22); color: #92400e; border-color: #f59e0b; }
+    .suite-duty-btn[data-duty="N"].active { background: rgba(99,102,241,0.85); color: #fff; border-color: #6366f1; }
+    .suite-duty-btn[data-duty="OFF"].active { background: var(--bg-glass, rgba(0,0,0,0.04)); color: var(--text-primary); border-color: var(--border-active); }
+    /* 책갈피 탭 헤더 — ReferenceIsland .reg-bookmark-tabs 패턴 차용 */
+    .suite-panel-tabs {
+      display: flex;
+      gap: 6px;
+      padding: 0 4px;
+      margin-bottom: 0;
+    }
+    .suite-panel-tab {
+      flex: 1;
+      padding: 12px 8px 10px;
+      border: none;
+      border-radius: 12px 12px 0 0;
+      font-size: var(--text-body-large);
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s ease-out;
+      -webkit-tap-highlight-color: transparent;
+      position: relative;
+      text-align: center;
+      background: rgba(96, 165, 250, 0.15);
+      color: #1d4ed8;
+      border-bottom: 3px solid transparent;
+    }
+    .suite-panel-tab[data-suite-tab="ot"] {
+      background: rgba(245, 158, 11, 0.18);
+      color: #92400e;
+    }
+    .suite-panel-tab.active {
+      background: #60a5fa;
+      color: #fff;
+      border-bottom: 3px solid #2563eb;
+      box-shadow: 0 2px 8px rgba(96, 165, 250, 0.3);
+    }
+    .suite-panel-tab[data-suite-tab="ot"].active {
+      background: var(--accent-amber, #f59e0b);
+      color: #fff;
+      border-bottom: 3px solid #d97706;
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+    }
+    /* Neo theme — 굵은 검정 테두리 + offset shadow */
+    html[data-theme="neo"] .suite-panel-tab {
+      border: 2.5px solid #1a1a1a;
+      border-bottom: none;
+    }
+    html[data-theme="neo"] .suite-panel-tab.active {
+      color: #1a1a1a;
+      box-shadow: 3px -2px 0px #1a1a1a;
+    }
+    /* tab content 의 강조 띠 (탭 색상과 매칭) */
+    .suite-panel-slot {
+      border-top: 3px solid #2563eb;
+      padding-top: 12px;
+      margin-top: -3px;
+    }
+    #suitePanelTabOt.active ~ #suitePanelOtSlot,
+    #suitePanelOtSlot.active-accent { border-top-color: #d97706; }
+
+    /* portal slot — 두 입력폼이 들어갈 자리 */
+    .suite-panel-slot { min-height: 0; }
+    .suite-panel-slot[hidden] { display: none !important; }
+
+    /* portal된 lvInputSheet/otInputPanel 의 fixed positioning 무력화 + 컴팩트화 */
+    #suitePanelOverlay #lvInputSheet,
+    #suitePanelOverlay #otInputPanel {
+      position: static !important;
+      transform: none !important;
+      box-shadow: none !important;
+      border-radius: 0 !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      max-height: none !important;
+      padding: 0 !important;
+      background: transparent !important;
+      margin: 0 !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+    /* portal 안에서 폼 여백/요약 박스 컴팩트 */
+    #suitePanelOverlay .form-group { margin-bottom: 8px !important; }
+    #suitePanelOverlay .form-group label { font-size: 11px !important; margin-bottom: 3px !important; display: block; }
+    #suitePanelOverlay input,
+    #suitePanelOverlay select,
+    #suitePanelOverlay textarea {
+      padding: 7px 10px !important;
+      font-size: 13px !important;
+      min-height: 0 !important;
+      height: auto !important;
+    }
+    #suitePanelOverlay button { padding: 8px 12px !important; font-size: 13px !important; }
+    /* 시간외 결과 carousel — 총 근무시간 / 연장 4h × 150% / 0원 박스 (이미지 참조) */
+    #suitePanelOverlay #otCalcPreview,
+    #suitePanelOverlay #otVerifyPanel,
+    #suitePanelOverlay #lvPreview,
+    #suitePanelOverlay #otPreview,
+    #suitePanelOverlay #lvCeremonyInfo,
+    #suitePanelOverlay #lvQuotaBadge,
+    #suitePanelOverlay #lvTimeInputArea {
+      padding: 8px 10px !important;
+      margin: 6px 0 !important;
+      font-size: 12px !important;
+      line-height: 1.35 !important;
+    }
+    #suitePanelOverlay #otCalcPreview h3,
+    #suitePanelOverlay #otCalcPreview h4,
+    #suitePanelOverlay #lvPreview h3,
+    #suitePanelOverlay #lvPreview h4 { font-size: 12px !important; margin: 0 0 4px !important; }
+    #suitePanelOverlay #otCalcPreview > div,
+    #suitePanelOverlay #lvPreview > div { padding: 2px 0 !important; }
+    /* 저장 버튼 강조 유지하되 패딩 축소 */
+    #suitePanelOverlay #lvSaveBtn,
+    #suitePanelOverlay #otSaveBtn { padding: 10px 14px !important; font-size: 14px !important; font-weight: 800 !important; }
+    /* time picker / number input 축소 */
+    #suitePanelOverlay .time-picker-premium,
+    #suitePanelOverlay input[type="time"],
+    #suitePanelOverlay input[type="date"],
+    #suitePanelOverlay input[type="number"] {
+      padding: 6px 8px !important;
+      font-size: 13px !important;
+    }
+    /* 폼 row gap 축소 */
+    #suitePanelOverlay .form-row { gap: 6px !important; margin-bottom: 6px !important; }
+    /* type-selector / segment chip 컴팩트 */
+    #suitePanelOverlay .ot-type-selector { gap: 4px !important; }
+    #suitePanelOverlay .ot-type-option { padding: 6px 8px !important; font-size: 12px !important; }
+    /* lvTypeBtn 트리거 버튼 (휴가 유형) 높이 축소 */
+    #suitePanelOverlay #lvTypeBtn { height: 36px !important; }
+    /* portal된 폼 안의 sheet-handle / 헤더(날짜+×)는 통합 패널이 자체 헤더 가지므로 숨김 */
+    #suitePanelOverlay #lvInputSheet > .ot-sheet-handle,
+    #suitePanelOverlay #otInputPanel > .ot-sheet-handle,
+    #suitePanelOverlay #lvInputSheet > .flex.justify-between,
+    #suitePanelOverlay #otInputPanel > .ot-panel-header-v2 { display: none !important; }
+    /* portal 활성 시 원래 overlay 두 개는 안 보이게 */
+    body > #lvInputOverlay[data-suite-portal="1"],
+    body > #otInputOverlay[data-suite-portal="1"] { display: none !important; }
+
+    /* ─── Mobile (<769) — 캘린더 우선 reorder + KPI 압축 ─── */
+    /* WARNING: display:flex 는 .active 일 때만 적용해야 한다. 그렇지 않으면
+       비활성 상태에서도 통합 탭이 보여 휴가·시간외 탭과 동시 렌더되어 시각 누설. */
+    @media (max-width: 768px) {
+      #tab-schedule-suite.active {
+        display: flex !important;
+        flex-direction: column !important;
+        /* 하단 fixed nav-tabs(약 71px) 와 KPI strip 겹침 방지.
+           모바일 .main padding-bottom 이 72px 로 짧아지므로 통합 탭 자체에서 추가. */
+        padding-bottom: 96px !important;
+      }
+      #tab-schedule-suite > .suite-banner-row { order: 1; }
+      #tab-schedule-suite > .suite-cal-row { order: 2; }
+      #tab-schedule-suite > .suite-kpi-row { order: 3; }
+      #tab-schedule-suite > .suite-side-row { order: 4; }
+      #tab-schedule-suite > .tab-desktop-context { order: 99; }
+
+      #tab-schedule-suite .ds-row { display: grid !important; gap: 10px !important; }
+      #tab-schedule-suite .ds-row.cols-5 { grid-template-columns: 1fr 1fr !important; }
+      #tab-schedule-suite .ds-row.cols-5 > :nth-child(5) { grid-column: 1 / -1 !important; }
+      #tab-schedule-suite .ds-row.cols-2 { grid-template-columns: 1fr !important; }
+
+      /* desktop-shell.css 의 .ds-kpi 박스 스타일은 ≥769px 스코프이므로
+         모바일에서는 raw text 로 보인다. 통합 탭 모바일에서도 카드 시각화 강제. */
+      #tab-schedule-suite .ds-kpi {
+        background: var(--bg-card);
+        border: 1.5px solid var(--border-active);
+        border-radius: var(--radius-md, 12px);
+        padding: 10px 12px !important;
+        box-shadow: var(--shadow-sm);
+      }
+      #tab-schedule-suite .ds-kpi-label { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+      #tab-schedule-suite .ds-kpi-value { font-size: 18px !important; font-weight: 800; color: var(--text-primary); margin-top: 2px; font-family: 'Space Grotesk','Inter',sans-serif; line-height: 1.1; }
+      #tab-schedule-suite .ds-kpi-trend { font-size: 10px; font-weight: 600; margin-top: 4px; color: var(--text-muted); }
+      /* 컬러 KPI variant — 데스크탑과 동일한 톤으로 모바일에도 적용 */
+      #tab-schedule-suite .ds-kpi.indigo { background: var(--accent-indigo); }
+      #tab-schedule-suite .ds-kpi.cyan { background: var(--accent-cyan); }
+      #tab-schedule-suite .ds-kpi.amber { background: var(--accent-amber); }
+      #tab-schedule-suite .ds-kpi.emerald { background: var(--accent-emerald); }
+      #tab-schedule-suite .ds-kpi.indigo .ds-kpi-label,
+      #tab-schedule-suite .ds-kpi.indigo .ds-kpi-value,
+      #tab-schedule-suite .ds-kpi.indigo .ds-kpi-trend,
+      #tab-schedule-suite .ds-kpi.emerald .ds-kpi-label,
+      #tab-schedule-suite .ds-kpi.emerald .ds-kpi-value,
+      #tab-schedule-suite .ds-kpi.emerald .ds-kpi-trend { color: white; }
+      #tab-schedule-suite .ds-kpi.indigo .ds-kpi-label,
+      #tab-schedule-suite .ds-kpi.indigo .ds-kpi-trend,
+      #tab-schedule-suite .ds-kpi.emerald .ds-kpi-label,
+      #tab-schedule-suite .ds-kpi.emerald .ds-kpi-trend { opacity: 0.85; }
+
+      /* 모바일에서도 시간외 캘린더와 동일 메트릭 유지 (별도 축소 없음) */
+      .suite-merged-cal .ot-cal-day .day-ot { font-size: 8px; padding: 0 2px; }
+      .suite-lens-pill { padding: 4px 9px; font-size: 11px; }
+      /* deep-link panel as bottom-sheet on mobile */
+      .suite-panel-overlay { align-items: flex-end !important; }
+      .suite-panel-box {
+        width: 100% !important;
+        max-width: 100% !important;
+        border-radius: 16px 16px 0 0 !important;
+        padding-bottom: max(20px, env(safe-area-inset-bottom)) !important;
+      }
+    }
+
+    /* 769+ 보조 카드 2-col side-row */
+    @media (min-width: 769px) {
+      #tab-schedule-suite .suite-side-row { grid-template-columns: 1fr 1fr; }
+    }
+
+    /* Extra-narrow 별도 축소 제거 — 시간외 탭과 동일 메트릭 유지. */
+  </style>
+
+</div>
+
+<!-- 컨트롤러: apps/web/src/client/schedule-suite.js (app.js ESM 로드) -->

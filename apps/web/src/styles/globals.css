@@ -3194,9 +3194,11 @@ html[data-theme="neo"] .logo .logo-main-title {
    Activated via data-theme="neo" on <html>
    ============================================ */
 
-/* ── Neo: Calendar badge readability ── */
+/* ── Neo: Calendar badge readability ──
+   --cal-badge-fg 토큰을 통해 각 duty 셀이 자체 대비색을 주입한다.
+   기본값(미주입)은 ink 검정. 듀티별 fg 는 ScheduleIsland.astro 에서 정의. */
 html[data-theme="neo"] .cal-badge {
-  color: #1a1a1a !important;
+  color: var(--cal-badge-fg, #1a1a1a) !important;
 }
 
 html[data-theme="neo"] .ot-cal-legend span {

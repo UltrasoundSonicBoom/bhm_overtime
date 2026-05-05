@@ -7,7 +7,9 @@
   "exports": {
     ".": "./src/index.js",
     "./holidays": "./src/holidays.js",
-    "./retirement-engine": "./src/retirement-engine.js"
+    "./retirement-engine": "./src/retirement-engine.js",
+    "./derive-suite": "./src/derive-suite.js",
+    "./payslip-suite-diff": "./src/payslip-suite-diff.js"
   },
   "dependencies": {
     "@snuhmate/data": "workspace:*"

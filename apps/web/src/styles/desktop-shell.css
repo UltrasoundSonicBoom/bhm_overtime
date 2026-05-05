@@ -1,0 +1,307 @@
+/* ============================================
+   SNUH Mate — Desktop Shell (≥1024px wrapper)
+
+   Rule: 이 파일은 @media (min-width: 1024px) 안에서만 동작한다.
+   기존 globals.css 클래스/토큰을 *override 만* 한다 — 새 토큰 정의 금지.
+   1024px 미만에서는 어떤 규칙도 적용되지 않으므로 모바일 시각·동작 무손실.
+
+   Layout @ ≥1024:
+     ┌──────────────────────────────────────────────┐
+     │ #sharedHeader (full width sticky)             │
+     ├──────┬───────────────────────────┬───────────┤
+     │ Left │  .tab-content.active      │ tab-       │
+     │ Rail │  (main canvas)            │ desktop-   │
+     │ 220  │                           │ context    │
+     │      │                           │ 320 (≥1280)│
+     └──────┴───────────────────────────┴───────────┘
+   ============================================ */
+
+:root {
+  --desktop-header-h: 76px;
+  --desktop-rail-w: 220px;
+  --desktop-context-w: 320px;
+}
+
+/* ── 모바일 (<1024) — desktop-only 패널 hide ──────────────────── */
+.tab-desktop-context { display: none; }
+
+/* ── 가로 overflow 가드 — 어떤 자식도 viewport 폭 초과해 잘려나가지 않게 ─── */
+html, body { max-width: 100%; overflow-x: hidden; }
+.tab-content, .tab-content > * { min-width: 0; }
+.ds-row > * { min-width: 0; }
+.ds-kpi { min-width: 0; }
+
+/* ─── ≥769px (태블릿+) — globals.css 의 .tab-content max-width:600px /
+   .main max-width:640px 강제 cap 을 풀어 콘텐츠가 viewport 에 맞춰 늘어나게 함.
+   이전에는 모바일-퍼스트 시기에 '데스크탑에서도 모바일 폭으로 보기' 목적으로 cap 했지만
+   이제 데스크탑·태블릿에서 콘텐츠를 풀-폭으로 활용. 768px 이하 모바일은 영향 없음. */
+@media (min-width: 769px) {
+  body > main.main { max-width: none !important; padding-left: 24px !important; padding-right: 24px !important; }
+  .tab-content { max-width: none !important; margin: 0 auto !important; }
+}
+
+/* ── nav 가시성 분기 (deprecated — 현재 모든 탭이 두 폭 모두 노출) ──── */
+@media (max-width: 1023px) {
+  .nav-tab-desktop-only { display: none !important; }
+}
+@media (min-width: 1024px) {
+  .nav-tab-mobile-only { display: none !important; }
+}
+
+/* ═════════════ ≥1024px DESKTOP SHELL ═════════════════════════════ */
+@media (min-width: 1024px) {
+
+  /* Body 좌측 220px 비워 좌측 rail 자리 확보. 하단 nav-tabs 제거 padding. */
+  body {
+    padding-left: var(--desktop-rail-w) !important;
+    padding-bottom: 0 !important;
+    overflow-x: hidden;
+  }
+
+  /* Header — left rail 위로 풀-폭 */
+  body > #sharedHeader.header {
+    margin-left: calc(var(--desktop-rail-w) * -1) !important;
+    padding-left: calc(var(--desktop-rail-w) + 20px) !important;
+    padding-right: 24px !important;
+    z-index: 100;
+  }
+
+  /* nav-tabs (sharedFooter) → 좌측 수직 rail 로 변환 */
+  body > #sharedFooter.nav-tabs,
+  body > .nav-tabs {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    right: auto !important;
+    width: var(--desktop-rail-w) !important;
+    height: 100vh !important;
+    z-index: 90;
+    background: var(--bg-primary) !important;
+    border-top: 0 !important;
+    border-right: 2px solid var(--border-glass) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    overflow-y: auto;
+  }
+
+  body > .nav-tabs .nav-tabs-inner {
+    flex-direction: column !important;
+    max-width: none !important;
+    width: 100% !important;
+    gap: 3px !important;
+    padding: calc(var(--desktop-header-h) + 12px) 10px 16px !important;
+    margin: 0 !important;
+  }
+
+  body > .nav-tabs .nav-tab {
+    flex: 0 0 auto !important;
+    flex-direction: row !important;
+    justify-content: flex-start !important;
+    width: 100% !important;
+    max-width: none !important;
+    padding: 9px 12px !important;
+    border-radius: var(--radius-sm, 8px) !important;
+    gap: 10px !important;
+    border: 2px solid transparent !important;
+    background: transparent !important;
+    color: var(--text-secondary) !important;
+  }
+  body > .nav-tabs .nav-tab:hover {
+    background: var(--bg-glass) !important;
+    color: var(--text-primary) !important;
+  }
+  body > .nav-tabs .nav-tab .nav-tab-icon { font-size: 16px !important; flex: 0 0 20px; text-align: center; }
+  body > .nav-tabs .nav-tab .nav-tab-text { font-size: 13px !important; font-weight: 600 !important; }
+  body > .nav-tabs .nav-tab.active {
+    background: var(--bg-secondary) !important;
+    border-color: var(--border-active) !important;
+    color: var(--text-primary) !important;
+    box-shadow: var(--shadow-sm) !important;
+    font-weight: 700 !important;
+  }
+
+  /* main 도 데스크탑에선 풀-폭 (모바일에선 globals.css 의 max-width:640 유지) */
+  body > main.main {
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* tab-content — 본문은 모바일과 비슷한 폭(720px)으로 제한.
+     "캘린더 폭만 늘리지 말고 우측에 정보 배치" 원칙. ≥1280 에서는
+     .tab-desktop-context 가 우측에 별도 column 으로 깔린다. */
+  .tab-content {
+    max-width: 720px !important;
+    margin: 0 !important;
+    padding: 18px 28px 40px !important;
+  }
+
+  /* mobile-only utility — show only on mobile */
+  .desktop-hide-on-mobile { display: block; }
+}
+
+/* ── Common desktop/tablet helpers (≥769px — 모바일 제외 모든 폭) ─── */
+@media (min-width: 769px) {
+  .ds-row { display: grid; gap: 14px; margin-bottom: 14px; }
+  .ds-row.cols-2 { grid-template-columns: 1fr 1fr; }
+  .ds-row.cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .ds-row.cols-4 { grid-template-columns: repeat(4, 1fr); }
+  .ds-row.cols-5 { grid-template-columns: repeat(5, 1fr); }
+  .ds-row.cols-6 { grid-template-columns: repeat(6, 1fr); }
+  .ds-row.split-7-5 { grid-template-columns: 7fr 5fr; }
+  .ds-row.split-8-4 { grid-template-columns: 8fr 4fr; }
+  .ds-row.split-5-4 { grid-template-columns: 5fr 4fr; }
+
+  .ds-kpi {
+    background: var(--bg-card);
+    border: 1.5px solid var(--border-active);
+    border-radius: var(--radius-md, 12px);
+    padding: 11px 14px;
+    box-shadow: var(--shadow-sm);
+  }
+  .ds-kpi-label { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+  .ds-kpi-value { font-size: 22px; font-weight: 800; color: var(--text-primary); margin-top: 2px; font-family: 'Space Grotesk', 'Inter', sans-serif; line-height: 1.1; }
+  .ds-kpi-trend { font-size: 11px; font-weight: 600; margin-top: 4px; color: var(--text-muted); }
+  .ds-kpi.indigo { background: var(--accent-indigo); }
+  .ds-kpi.indigo .ds-kpi-label, .ds-kpi.indigo .ds-kpi-trend, .ds-kpi.indigo .ds-kpi-value { color: white; }
+  .ds-kpi.indigo .ds-kpi-label, .ds-kpi.indigo .ds-kpi-trend { opacity: 0.85; }
+  .ds-kpi.cyan { background: var(--accent-cyan); }
+  .ds-kpi.amber { background: var(--accent-amber); }
+  .ds-kpi.emerald { background: var(--accent-emerald); }
+  .ds-kpi.emerald .ds-kpi-label, .ds-kpi.emerald .ds-kpi-trend, .ds-kpi.emerald .ds-kpi-value { color: white; }
+  .ds-kpi.emerald .ds-kpi-label, .ds-kpi.emerald .ds-kpi-trend { opacity: 0.85; }
+}
+
+/* ═════════════ ≥1280px — RIGHT CONTEXT PANEL ═════════════════════ */
+@media (min-width: 1280px) {
+
+  body { padding-right: var(--desktop-context-w) !important; }
+
+  /* tab-desktop-context: positioned fixed on the right column.
+     Visible only when its parent .tab-content is .active.
+     Mobile/<1280: stays display:none. */
+  .tab-content.active > .tab-desktop-context,
+  .tab-content.active .tab-desktop-context {
+    display: block !important;
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: var(--desktop-context-w);
+    background: var(--bg-secondary);
+    border-left: 2px solid var(--border-glass);
+    padding: calc(var(--desktop-header-h) + 12px) 16px 20px;
+    overflow-y: auto;
+    z-index: 80;
+  }
+
+  .tab-content:not(.active) .tab-desktop-context { display: none !important; }
+
+  /* Context panel components */
+  .ds-ctx-section {
+    font-size: 10px; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.06em;
+    font-weight: 700; margin-bottom: 8px; padding: 0 4px;
+  }
+  .ds-ctx-card {
+    background: var(--bg-card);
+    border: 1.5px solid var(--border-active);
+    border-radius: var(--radius-sm, 8px);
+    padding: 11px 12px;
+    margin-bottom: 9px;
+    box-shadow: var(--shadow-sm);
+  }
+  .ds-ctx-title { font-size: 12px; font-weight: 700; margin-bottom: 7px; color: var(--text-primary); display: flex; justify-content: space-between; align-items: center; }
+  .ds-ctx-title small { font-size: 10px; color: var(--text-muted); font-weight: 500; }
+  .ds-ctx-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 12px; border-bottom: 1px dashed var(--border-glass); }
+  .ds-ctx-row:last-child { border-bottom: 0; }
+  .ds-ctx-row .k { color: var(--text-muted); }
+  .ds-ctx-row .v { font-weight: 600; color: var(--text-primary); font-family: 'Space Grotesk', 'Inter', sans-serif; }
+
+  .ds-ring { width: 52px; height: 52px; position: relative; flex-shrink: 0; }
+  .ds-ring svg { transform: rotate(-90deg); }
+  .ds-ring-pct { position: absolute; inset: 0; display: grid; place-items: center; font-size: 14px; font-weight: 800; color: var(--text-primary); }
+  .ds-ring-wrap { display: flex; align-items: center; gap: 10px; }
+
+  .ds-mini-bar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; align-items: end; height: 42px; margin-top: 8px; }
+  .ds-mini-bar-col { background: var(--accent-cyan); border: 1px solid var(--border-active); border-radius: 3px; }
+}
+
+/* ═════════════ 1024–1279 — single column (no right context) ════════ */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .tab-desktop-context { display: none !important; }
+  /* narrow desktop — rail 살짝 줄여 main 콘텐츠 영역 확보 */
+  :root { --desktop-rail-w: 200px; }
+  .tab-content { padding: 16px 20px 32px !important; }
+  /* KPI 강제 5-col 대신 auto-fit 으로 좁은 화면에서 자동 wrap */
+  .ds-row.cols-5 { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important; }
+  .ds-row.cols-4 { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important; }
+}
+
+/* ═════════════ ≥1600px ULTRAWIDE — wider rail + 2-col context ═══════
+   넓은 모니터(QHD/4K/ultrawide)에서 우측 빈 공간을 줄이고 정보 밀도 ↑
+   ────────────────────────────────────────────────────────────── */
+@media (min-width: 1600px) {
+  :root {
+    --desktop-rail-w: 240px;
+    --desktop-context-w: 400px;
+  }
+  /* 메인 canvas: max 안쓰고 fluid */
+  .tab-content { padding: 22px 36px 50px !important; }
+
+  /* 컨텍스트 패널을 2-col 그리드로 — 카드 4-6개 가로 분포 */
+  .tab-content.active > .tab-desktop-context,
+  .tab-content.active .tab-desktop-context {
+    width: var(--desktop-context-w);
+    padding: calc(var(--desktop-header-h) + 14px) 18px 24px;
+    column-count: 1;
+  }
+
+  /* KPI strip auto-fit — 넓은 화면에서 자동으로 칸 추가.
+     minmax 임계값을 낮춰 5장이 한 줄에 fit (1600px main ~960 / 5 cards = ~190) */
+  .ds-row.cols-4 { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important; }
+  .ds-row.cols-5 { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important; }
+  .ds-row.cols-6 { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important; }
+
+  /* KPI 카드 자체도 약간 더 큰 글자 */
+  .ds-kpi { padding: 13px 16px; }
+  .ds-kpi-value { font-size: 24px; }
+}
+
+/* ═════════════ ≥1920px 4K — context-card 2-col ═════════════════════
+   QHD/4K 모니터에서 컨텍스트 패널 카드를 2-col 으로 분할
+   ────────────────────────────────────────────────────────────── */
+@media (min-width: 1920px) {
+  :root {
+    --desktop-context-w: 480px;
+  }
+  /* 컨텍스트 카드를 2-col 마sonry 흐름으로 */
+  .tab-content.active > .tab-desktop-context,
+  .tab-content.active .tab-desktop-context {
+    column-count: 2;
+    column-gap: 12px;
+    column-fill: balance;
+  }
+  .tab-content.active .tab-desktop-context > .ds-ctx-card,
+  .tab-content.active .tab-desktop-context > .ds-ctx-section {
+    break-inside: avoid;
+    -webkit-column-break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .tab-content.active .tab-desktop-context > .ds-ctx-section {
+    column-span: all;
+  }
+}
+
+/* ═════════════ Container Queries — 컨텍스트 카드가 자기 컨테이너 폭 인지 ════ */
+@supports (container-type: inline-size) {
+  .tab-desktop-context { container-type: inline-size; container-name: ctxpanel; }
+  /* 좁은 컨테이너 (320px ~ 400px) — 기본 단일열 흐름 */
+  /* 넓은 컨테이너 (≥440px) — ds-ctx-card 안 row 가 더 dense 하게 */
+  @container ctxpanel (min-width: 440px) {
+    .ds-ctx-card { padding: 13px 14px; }
+    .ds-ctx-row { padding: 5px 0; font-size: 12.5px; }
+  }
+}
