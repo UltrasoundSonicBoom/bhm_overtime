@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "summary_keys": ["D", "E", "N", "/", "필", "T"],
+  "codes": {
+    "D": {
+      "kind": "work",
+      "summary_key": "D",
+      "aliases": ["D*", "Do", "7", "7*", "0r", "Or", "Qr", "7r", "9", "9*", "10", "11", "12", "P-7/45", "7/45", "9r", "P-D/82", "P-0/82", "P-0r/01", "P-9r/91"]
+    },
+    "E": {
+      "kind": "work",
+      "summary_key": "E",
+      "aliases": ["E*", "Eo", "En", "Fo", "15", "15*", "P-E/82", "P-F/82"]
+    },
+    "N": {
+      "kind": "work",
+      "summary_key": "N",
+      "aliases": ["N*", "No"]
+    },
+    "/": {
+      "kind": "off",
+      "summary_key": "/",
+      "aliases": ["/*"]
+    },
+    "T": {
+      "kind": "special",
+      "summary_key": "T",
+      "aliases": ["T*"]
+    },
+    "필": {
+      "kind": "required",
+      "summary_key": "필",
+      "aliases": ["필*"]
+    },
+    "연*": {
+      "kind": "leave",
+      "summary_key": null,
+      "aliases": ["연"]
+    },
+    "생*": {
+      "kind": "leave",
+      "summary_key": null,
+      "aliases": ["생", "생⋆", "생★"]
+    },
+    "보*": {
+      "kind": "leave",
+      "summary_key": null,
+      "aliases": ["보"]
+    },
+    "청*": {
+      "kind": "leave",
+      "summary_key": null,
+      "aliases": ["청", "청★", "청⋆"]
+    },
+    "교*": {
+      "kind": "leave",
+      "summary_key": null,
+      "aliases": ["교"]
+    },
+    "리2": {
+      "kind": "special",
+      "summary_key": null,
+      "aliases": ["212", "리"]
+    },
+    "병": {
+      "kind": "leave",
+      "summary_key": null,
+      "aliases": []
+    },
+    "김": {
+      "kind": "leave",
+      "summary_key": null,
+      "aliases": []
+    },
+    "디": {
+      "kind": "leave",
+      "summary_key": null,
+      "aliases": []
+    },
+    "ignore": {
+      "kind": "ignore",
+      "summary_key": null,
+      "aliases": ["2|2", "Î", "Ï"]
+    }
+  }
+}

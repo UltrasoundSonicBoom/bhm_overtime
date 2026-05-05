@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "department_id": "82",
+  "description": "82 ward OCR aliases promoted from reviewed schedule cells.",
+  "codes": {
+    "D": {
+      "aliases": ["0r", "Or", "Qr", "7r", "P-D/82", "P-7/45", "P-0/82", "P-0r/01", "P-9r/91"]
+    },
+    "E": {
+      "aliases": ["P-E/82", "P-F/82"]
+    }
+  }
+}

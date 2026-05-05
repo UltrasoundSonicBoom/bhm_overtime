@@ -60,3 +60,6 @@ tmp/
 .env*
 firestore-debug.log
 firebase-debug.log
+services/surya-ocr/runtime/
+services/surya-ocr/output/
+services/surya-ocr/work_schedule_ocr/corrections/*.json

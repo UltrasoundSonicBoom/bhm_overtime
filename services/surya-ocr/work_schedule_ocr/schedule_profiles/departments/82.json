@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "profile_id": "82-default-v1",
+  "department_id": "82",
+  "description": "Initial column schedule profile learned from reviewed 82 ward March/April schedules.",
+  "column_expectations": {
+    "D": { "min": 5, "max": 9 },
+    "E": { "min": 4, "max": 7 },
+    "N": { "min": 4, "max": 5, "preferred": 4 },
+    "/": { "min": 3, "max": 12 },
+    "필": { "min": 0, "max": 1 },
+    "T": { "min": 0, "max": 2 },
+    "work_total": { "min": 14, "max": 18 }
+  }
+}

@@ -57,6 +57,7 @@ from app.corpus.store import (
 )
 from app.corpus.validation import sanitize_corpus_payload
 from app.parsers.excel import parse_csv_text, parse_excel_bytes
+from app.ocr_proxy import router as ocr_router
 from app.schemas.schedule import DutyGrid, HealthResponse
 from app.security import require_admin_token
 
@@ -106,6 +107,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(ocr_router)
 
 
 # ── AI 에이전트 갤러리 ──────────────────────────────────────────
