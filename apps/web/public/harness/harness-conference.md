@@ -59,5 +59,5 @@ Step 5: 발표자 최종 검토 후 확정
 ## 설치
 
 ```bash
-/plugin install github:UltrasoundSonicBoom/bhm_overtime?path=packages/snuhmate-harness
+/plugin install github:UltrasoundSonicBoom/snuhmate?path=packages/snuhmate-harness
 ```

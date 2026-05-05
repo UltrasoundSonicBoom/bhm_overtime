@@ -60,5 +60,5 @@ Step 4: 담당자 검토 → 원클릭 배포
 ## 설치
 
 ```bash
-/plugin install github:UltrasoundSonicBoom/bhm_overtime?path=packages/snuhmate-harness
+/plugin install github:UltrasoundSonicBoom/snuhmate?path=packages/snuhmate-harness
 ```

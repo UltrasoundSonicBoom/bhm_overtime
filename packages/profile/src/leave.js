@@ -15,8 +15,9 @@ export const LEAVE = {
     },
 
     // ── 구버전 키 마이그레이션 ──
-    // `leaveRecords` 공유 키는 더 이상 active key 로 쓰지 않는다.
-    // 현재 사용자/게스트 scoped key 가 비어 있을 때 1회성 legacy source 로만 흡수한다.
+    // `leaveRecords` 공유 키는 legacy/source-of-truth 백업으로 보존한다.
+    // 현재 사용자/게스트 scoped key 가 비어 있을 때 scoped key 로 복사 병합하되,
+    // 탭 이동이나 렌더 초기화만으로 기존 로컬 데이터를 삭제하지 않는다.
     _migrateLegacyKeys() {
         try {
             const targetKey = this.STORAGE_KEY;
@@ -44,9 +45,8 @@ export const LEAVE = {
             }
 
             localStorage.setItem(targetKey, JSON.stringify(merged));
-            localStorage.removeItem('leaveRecords');
             localStorage.setItem('snuhmate_leave_scope_migrated_v2', '1');
-            console.log('[LEAVE] legacy leaveRecords → ' + targetKey + ' 이전');
+            console.log('[LEAVE] legacy leaveRecords → ' + targetKey + ' copied');
         } catch (e) {
             console.warn('[LEAVE] 레거시 키 마이그레이션 실패:', e);
         }

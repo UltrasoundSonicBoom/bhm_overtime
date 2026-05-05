@@ -28,13 +28,13 @@ describe('LEAVE storage scope', () => {
     expect(LEAVE.STORAGE_KEY).toBe('leaveRecords_uid_uid-123');
   });
 
-  it('migrates legacy shared leaveRecords into the current scoped key once', async () => {
+  it('copies legacy shared leaveRecords into the current scoped key without deleting local backup', async () => {
     const { LEAVE } = await import('@snuhmate/profile/leave');
     window.__firebaseUid = 'uid-123';
     localStorage.setItem('leaveRecords', JSON.stringify({ '2026': [{ id: 'lv1' }] }));
 
     expect(LEAVE.getYearRecords(2026)[0].id).toBe('lv1');
-    expect(localStorage.getItem('leaveRecords')).toBeNull();
+    expect(JSON.parse(localStorage.getItem('leaveRecords'))['2026'][0].id).toBe('lv1');
     expect(JSON.parse(localStorage.getItem('leaveRecords_uid_uid-123'))['2026'][0].id).toBe('lv1');
   });
 });

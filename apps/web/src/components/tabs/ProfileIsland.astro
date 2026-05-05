@@ -128,10 +128,9 @@
             </div>
           </div>
           <div class="form-row">
-            <div class="form-group" style="grid-column:1/-1">
+            <div class="form-group form-group-wide">
               <label>병원 이메일 <small class="text-brand-text-muted">(사번+병원 자동 생성)</small></label>
-              <input type="email" id="pfHospitalEmail" placeholder="예: 20842@snuh.org" autocomplete="off" readonly
-                style="background:var(--bg-hover,#f5f5f5);cursor:default;">
+              <input class="input-readonly" type="email" id="pfHospitalEmail" placeholder="예: 20842@snuh.org" autocomplete="off" readonly>
             </div>
           </div>
           <div class="form-row">
@@ -528,14 +527,14 @@
           <div class="ds-ring-pct" id="profileCtxRingLabel">—</div>
         </div>
         <div>
-          <div style="font-size:11px;color:var(--text-muted);" id="profileCtxMissing">— 항목 남음</div>
+          <div class="ds-ctx-muted" id="profileCtxMissing">— 항목 남음</div>
         </div>
       </div>
     </div>
     <div class="ds-ctx-card">
       <div class="ds-ctx-title">⏰ 다음 호봉 승급 <small id="profileCtxNextStep">—</small></div>
-      <div style="font-size:18px; font-weight:800; color:var(--accent-indigo); font-family:'Space Grotesk','Inter',sans-serif;" id="profileCtxNextDate">—</div>
-      <div style="font-size:10px; color:var(--text-muted); margin-top:2px;" id="profileCtxNextSub">통상임금 변동 예고</div>
+      <div class="ds-ctx-stat-indigo" id="profileCtxNextDate">—</div>
+      <div class="ds-ctx-caption ds-ctx-caption-tight" id="profileCtxNextSub">통상임금 변동 예고</div>
     </div>
     <div class="ds-ctx-card">
       <div class="ds-ctx-title">💾 백업 상태</div>
@@ -545,7 +544,7 @@
     </div>
     <div class="ds-ctx-card">
       <div class="ds-ctx-title">🕒 최근 변경</div>
-      <div id="profileCtxChanges" style="font-size:11px;color:var(--text-secondary);">—</div>
+      <div id="profileCtxChanges" class="ds-ctx-note">—</div>
     </div>
   </aside>
 </div>

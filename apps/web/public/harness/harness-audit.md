@@ -54,5 +54,5 @@ Step 5: 오케스트레이터 → 통합 검토
 ## 설치
 
 ```bash
-/plugin install github:UltrasoundSonicBoom/bhm_overtime?path=packages/snuhmate-harness
+/plugin install github:UltrasoundSonicBoom/snuhmate?path=packages/snuhmate-harness
 ```

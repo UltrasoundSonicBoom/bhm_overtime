@@ -111,25 +111,25 @@
           <div class="ds-ring-pct" id="homeCtxRingPct">—</div>
         </div>
         <div>
-          <div style="font-size:11px;color:var(--text-muted);" id="homeCtxMissing">완료까지 — 항목</div>
-          <a onclick="if(window.switchTab)switchTab('profile')" style="font-size:10px;color:var(--accent-indigo);cursor:pointer;">→ 채우기</a>
+          <div class="ds-ctx-muted" id="homeCtxMissing">완료까지 — 항목</div>
+          <a class="ds-ctx-link-xs" onclick="if(window.switchTab)switchTab('profile')">→ 채우기</a>
         </div>
       </div>
     </div>
     <div class="ds-ctx-card">
       <div class="ds-ctx-title">⏰ 이번 주 시간외 <small id="homeCtxOtPct">—</small></div>
-      <div class="home-progress-wrap" style="height:8px;"><div class="home-progress-bar" id="homeCtxOtBar" style="width:0%; background:var(--accent-amber);"></div></div>
-      <div class="ds-ctx-row" style="margin-top:6px;"><span class="k">누적</span><span class="v" id="homeCtxOtSum">— h</span></div>
+      <div class="home-progress-wrap ds-ctx-progress-compact"><div class="home-progress-bar ds-ctx-progress-amber" id="homeCtxOtBar"></div></div>
+      <div class="ds-ctx-row ds-ctx-row-spaced"><span class="k">누적</span><span class="v" id="homeCtxOtSum">— h</span></div>
     </div>
     <div class="ds-ctx-card">
       <div class="ds-ctx-title">📢 최신 공지</div>
-      <div id="homeCtxNotices" style="font-size:11px; color:var(--text-secondary);">불러오는 중…</div>
+      <div id="homeCtxNotices" class="ds-ctx-note">불러오는 중…</div>
     </div>
     <div class="ds-ctx-card">
       <div class="ds-ctx-title">⚡ 빠른 액션</div>
-      <div class="ds-ctx-row" style="cursor:pointer;" onclick="if(window.switchTab)switchTab('payroll')"><span class="k">📤</span><span class="v">명세서 업로드</span></div>
-      <div class="ds-ctx-row" style="cursor:pointer;" onclick="if(window.switchTab)switchTab('overtime')"><span class="k">⏱️</span><span class="v">시간외 입력</span></div>
-      <div class="ds-ctx-row" style="cursor:pointer;" onclick="if(window.switchTab)switchTab('reference')"><span class="k">📖</span><span class="v">규정 검색</span></div>
+      <div class="ds-ctx-row ds-ctx-action" onclick="if(window.switchTab)switchTab('payroll')"><span class="k">📤</span><span class="v">명세서 업로드</span></div>
+      <div class="ds-ctx-row ds-ctx-action" onclick="if(window.switchTab)switchTab('overtime')"><span class="k">⏱️</span><span class="v">시간외 입력</span></div>
+      <div class="ds-ctx-row ds-ctx-action" onclick="if(window.switchTab)switchTab('reference')"><span class="k">📖</span><span class="v">규정 검색</span></div>
     </div>
   </aside>
 

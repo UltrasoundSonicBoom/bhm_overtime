@@ -59,5 +59,5 @@ SNUHmate 단협 검색 탭 자동 업데이트 연동 가능
 ## 설치
 
 ```bash
-/plugin install github:UltrasoundSonicBoom/bhm_overtime?path=packages/snuhmate-harness
+/plugin install github:UltrasoundSonicBoom/snuhmate?path=packages/snuhmate-harness
 ```

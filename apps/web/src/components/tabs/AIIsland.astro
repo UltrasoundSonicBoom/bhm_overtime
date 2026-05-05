@@ -269,6 +269,8 @@ const portfolio = [
   { icon: '💴', title: '급여 시뮬레이터', status: 'done', badge: '✅ 완료', desc: '호봉·직종별 기본급 + 각종 수당 + 4대보험 공제 예측 시뮬레이션.', tags: ['호봉표', '세금계산', '퇴직금'] },
   { icon: '🎯', title: '생활이벤트 가이드', status: 'done', badge: '✅ 완료', desc: '5카테고리 17케이스 결정형 카드 — 출산·육아·장기재직 상황별 안내.', tags: ['결정트리', '규정연결'] },
   { icon: '🔍', title: '단협 규정 검색', status: 'done', badge: '✅ 완료', desc: '동의어·공백 무시 의미 기반 검색. 전체 규정 브라우저 + MD 렌더링.', tags: ['검색', '단협', 'MD렌더'] },
+  { icon: '🧭', title: '사용자 코파일럿', status: 'done', badge: '✅ 완료', desc: '급여·시간외·휴가·근무표·규정 탭을 연결해 사용자가 다음 확인 경로를 바로 찾도록 안내.', tags: ['Cloudflare Agents', 'SSE', 'User'] },
+  { icon: '🛡️', title: '운영 관리자 에이전트', status: 'done', badge: '✅ 완료', desc: 'Firebase·localStorage sync·보안 게이트·데이터 드리프트 장애를 운영 런북 형식으로 분류.', tags: ['Admin Token', 'Ops', 'Security'] },
   { icon: '🔒', title: 'PII 마스킹 (B6)', status: 'design', badge: '🔧 설계완료', desc: 'Presidio(로컬) → LLM(opt-in) 2단계 파이프라인. 환자 데이터 공유 전 처리.', tags: ['Presidio', 'FastAPI', 'Privacy'] },
   { icon: '👥', title: '커리어 트윈 (B2)', status: 'pending', badge: '🔲 예정', desc: '유사 경력 동료의 진로 경로 참고. CareRole OS 2,034건 분석 완료.', tags: ['B2', '페르소나완료'] },
   { icon: '📊', title: '명세서 AI 분석 (B4)', status: 'pending', badge: '🔲 예정', desc: '항목별 한글 설명 + 전월 대비 차이 하이라이트. LLM 파싱 연동.', tags: ['B4', 'LLM파싱'] },
@@ -298,7 +300,7 @@ const portfolio = [
     <!-- 설치 안내 -->
     <div class="ai-install-box">
       <div class="ai-install-label">CLAUDE CODE PLUGIN</div>
-      <code class="ai-install-cmd">/plugin install github:UltrasoundSonicBoom/bhm_overtime?path=packages/snuhmate-harness</code>
+      <code class="ai-install-cmd">/plugin install github:UltrasoundSonicBoom/snuhmate?path=packages/snuhmate-harness</code>
       <div class="ai-install-sub">smate-feature-ship · payroll-review · design-guard · b6-masking · pr-ops · pii-patterns</div>
     </div>
 
@@ -399,7 +401,7 @@ const portfolio = [
 
     <div class="ai-stats">
       <div class="ai-stat-item">
-        <div class="ai-stat-num" style="color:var(--ai-green)">5</div>
+        <div class="ai-stat-num" style="color:var(--ai-green)">7</div>
         <div class="ai-stat-label">완료</div>
       </div>
       <div class="ai-stat-divider"></div>
@@ -429,6 +431,37 @@ const portfolio = [
         </div>
       ))}
     </div>
+
+    <section class="ai-runner" aria-label="SNUHmate AI agent runner">
+      <div class="ai-runner-head">
+        <div>
+          <div class="ai-runner-kicker">LIVE AGENTS</div>
+          <h3 class="ai-runner-title">바로 실행</h3>
+        </div>
+        <input id="aiSearch" class="ai-search" type="search" placeholder="검색" autocomplete="off" />
+      </div>
+
+      <div id="aiCategoryChips" class="ai-category-chips"></div>
+      <div id="aiAgentGrid" class="ai-agent-grid"></div>
+
+      <div id="aiRunPanel" class="ai-run-panel">
+        <div class="ai-run-panel-head">
+          <h3 id="aiRunTitle" class="ai-run-title">에이전트</h3>
+          <button id="aiRunClose" class="ai-run-close" type="button" aria-label="닫기">×</button>
+        </div>
+        <form id="aiRunForm" class="ai-run-form">
+          <div id="aiRunInputs" class="ai-run-inputs"></div>
+          <button id="aiRunBtn" class="ai-run-btn" type="submit">✨ 실행</button>
+        </form>
+        <div id="aiOutputWrap" class="ai-output-wrap">
+          <div class="ai-output-head">
+            <span>결과</span>
+            <button id="aiCopyBtn" class="ai-copy-btn" type="button">복사</button>
+          </div>
+          <pre id="aiOutput" class="ai-output"></pre>
+        </div>
+      </div>
+    </section>
 
   </div><!-- /portfolio -->
 
@@ -701,6 +734,194 @@ const portfolio = [
 #tab-ai .ai-pcard-title { font-size: 0.86rem; font-weight: 700; color: var(--ai-text); line-height: 1.3; }
 #tab-ai .ai-pcard-desc  { font-size: 0.72rem; color: var(--ai-muted); line-height: 1.55; }
 #tab-ai .ai-pcard-tags  { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+
+/* ── Runnable agent gallery ───────────────────────────────── */
+#tab-ai .ai-runner {
+  margin-top: 16px;
+  padding: 14px;
+  background: var(--ai-surf);
+  border: 1px solid var(--ai-border);
+  border-radius: 8px;
+}
+#tab-ai .ai-runner-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+#tab-ai .ai-runner-kicker {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--ai-accent);
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+}
+#tab-ai .ai-runner-title {
+  margin: 2px 0 0;
+  font-size: 1rem;
+  line-height: 1.3;
+  color: var(--ai-text);
+}
+#tab-ai .ai-search {
+  width: min(45%, 180px);
+  min-height: 36px;
+  padding: 8px 10px;
+  border: 1px solid var(--ai-border);
+  border-radius: 8px;
+  background: var(--ai-bg);
+  color: var(--ai-text);
+  font-size: 0.78rem;
+  outline: none;
+}
+#tab-ai .ai-category-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+#tab-ai .ai-chip {
+  padding: 5px 9px;
+  border: 1px solid var(--ai-border);
+  border-radius: 999px;
+  background: var(--ai-surf2);
+  color: var(--ai-muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+#tab-ai .ai-chip.active {
+  color: var(--ai-bg);
+  background: var(--ai-accent);
+  border-color: var(--ai-accent);
+}
+#tab-ai .ai-agent-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 8px;
+}
+#tab-ai .ai-agent-card {
+  min-height: 112px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--ai-border);
+  border-radius: 8px;
+  background: var(--ai-bg);
+  cursor: pointer;
+}
+#tab-ai .ai-agent-card:hover { border-color: rgba(88,166,255,0.45); }
+#tab-ai .ai-agent-card-header {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+#tab-ai .ai-agent-icon { font-size: 1.2rem; line-height: 1; }
+#tab-ai .ai-agent-name { font-size: 0.84rem; font-weight: 700; color: var(--ai-text); line-height: 1.3; }
+#tab-ai .ai-agent-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+#tab-ai .ai-agent-tag {
+  font-size: 0.62rem;
+  color: var(--ai-muted);
+  background: var(--ai-surf2);
+  border-radius: 4px;
+  padding: 2px 5px;
+}
+#tab-ai .ai-agent-est {
+  margin-top: auto;
+  font-size: 0.66rem;
+  color: var(--ai-muted);
+}
+#tab-ai .ai-run-panel {
+  display: none;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid rgba(88,166,255,0.22);
+  border-radius: 8px;
+  background: rgba(88,166,255,0.04);
+}
+#tab-ai .ai-run-panel-head,
+#tab-ai .ai-output-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+#tab-ai .ai-run-title {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--ai-text);
+}
+#tab-ai .ai-run-close,
+#tab-ai .ai-copy-btn {
+  border: 1px solid var(--ai-border);
+  border-radius: 8px;
+  background: var(--ai-surf2);
+  color: var(--ai-text);
+  cursor: pointer;
+}
+#tab-ai .ai-run-close {
+  width: 32px;
+  height: 32px;
+  font-size: 1.1rem;
+}
+#tab-ai .ai-run-form,
+#tab-ai .ai-run-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+#tab-ai .ai-run-form { margin-top: 10px; }
+#tab-ai .ai-run-inputs input,
+#tab-ai .ai-run-inputs select,
+#tab-ai .ai-run-inputs textarea {
+  background: var(--ai-bg);
+  color: var(--ai-text);
+  border: 1px solid var(--ai-border);
+}
+#tab-ai .ai-run-btn {
+  min-height: 38px;
+  border: none;
+  border-radius: 8px;
+  background: var(--ai-accent);
+  color: var(--ai-bg);
+  font-weight: 800;
+  cursor: pointer;
+}
+#tab-ai .ai-run-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+#tab-ai .ai-output-wrap {
+  display: none;
+  margin-top: 12px;
+}
+#tab-ai .ai-copy-btn {
+  padding: 5px 9px;
+  font-size: 0.72rem;
+}
+#tab-ai .ai-output {
+  min-height: 140px;
+  max-height: 360px;
+  overflow: auto;
+  white-space: pre-wrap;
+  margin: 8px 0 0;
+  padding: 12px;
+  border: 1px solid var(--ai-border);
+  border-radius: 8px;
+  background: var(--ai-bg);
+  color: var(--ai-text);
+  font-size: 0.78rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 520px) {
+  #tab-ai .ai-runner-head { align-items: stretch; flex-direction: column; }
+  #tab-ai .ai-search { width: 100%; }
+}
 </style>
 
 <script>

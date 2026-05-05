@@ -9,8 +9,8 @@
 ---
 <div class="tab-content" id="tab-reference">
   <nav class="reg-bookmark-tabs" id="regSubTabs">
-    <button class="reg-bookmark-tab active" data-subtab="browse">📋 규정·검색</button>
-    <button class="reg-bookmark-tab" data-subtab="full">📜 전체 규정</button>
+    <button type="button" class="reg-bookmark-tab active" data-subtab="browse">📋 규정·검색</button>
+    <button type="button" class="reg-bookmark-tab" data-subtab="full">📜 전체 규정</button>
   </nav>
 
   <div class="sub-content active" id="subtab-browse">
@@ -24,6 +24,16 @@
     <div class="reg-info-banner">
       📘 <b>2026 단체협약 원문</b> 기준.
       <span style="opacity:0.8;">일부 조항 번호(예: 제13~17조, 제19~31조)는 단체협약 갱신 과정에서 <b>삭제·통합된 번호</b>이며 현행 협약에 존재하지 않습니다.</span>
+    </div>
+
+    <div class="card px-4 py-3 mb-2">
+      <button
+        type="button"
+        id="fullRegulationToggle"
+        class="btn btn-outline"
+        data-action="toggleFullRegulation"
+        aria-expanded="false"
+      >전체 규정</button>
     </div>
 
     <!-- 📖 목차 (장 가로 스크롤 탭 + 좌우 화살표) -->

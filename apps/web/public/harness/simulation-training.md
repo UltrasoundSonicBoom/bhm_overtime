@@ -49,5 +49,5 @@ description: "병원 직원 AI 시뮬레이션·훈련 패턴. 코드블루, 환
 ## 설치 (SNUHmate 하네스 전체)
 
 ```bash
-/plugin install github:UltrasoundSonicBoom/bhm_overtime?path=packages/snuhmate-harness
+/plugin install github:UltrasoundSonicBoom/snuhmate?path=packages/snuhmate-harness
 ```

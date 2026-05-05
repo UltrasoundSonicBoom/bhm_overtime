@@ -32,7 +32,7 @@ def _load_dotenv() -> None:
 
 _load_dotenv()
 
-from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ValidationError
@@ -123,12 +123,15 @@ class AgentRunRequest(BaseModel):
 
 @app.get("/ai/agents")
 async def list_agents():
-    from app.agents.registry import get_catalog
-    return get_catalog()
+    from app.agents.registry import get_public_catalog
+    return get_public_catalog()
 
 
 @app.post("/ai/agent/run")
-async def run_agent(req: AgentRunRequest):
+async def run_agent(
+    req: AgentRunRequest,
+    authorization: str | None = Header(default=None),
+):
     from app.agents.registry import get_template
     from app.agents.runner import stream_agent
 
@@ -136,6 +139,16 @@ async def run_agent(req: AgentRunRequest):
     if template is None:
         raise HTTPException(status_code=404, detail=f"agent not found: {req.agent_id}")
 
+    if template.get("requires_admin"):
+        require_admin_token(authorization)
+
+    for spec in template.get("inputs", []):
+        value = req.inputs.get(spec.get("id", ""))
+        if spec.get("required") and not str(value or "").strip():
+            raise HTTPException(
+                status_code=422,
+                detail=f"input '{spec.get('id')}' required",
+            )
     for key, val in req.inputs.items():
         if len(val.encode("utf-8")) > MAX_INPUT_BYTES:
             raise HTTPException(status_code=413, detail=f"input '{key}' too large")

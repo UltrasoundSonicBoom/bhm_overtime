@@ -50,5 +50,5 @@ description: "병원 다학제·부서간 협업 AI 패턴. 케어플랜 통합,
 ## 설치 (SNUHmate 하네스 전체)
 
 ```bash
-/plugin install github:UltrasoundSonicBoom/bhm_overtime?path=packages/snuhmate-harness
+/plugin install github:UltrasoundSonicBoom/snuhmate?path=packages/snuhmate-harness
 ```

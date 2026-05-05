@@ -55,5 +55,5 @@ Claude 실행 흐름:
 ## 설치 (SNUHmate 하네스 전체)
 
 ```bash
-/plugin install github:UltrasoundSonicBoom/bhm_overtime?path=packages/snuhmate-harness
+/plugin install github:UltrasoundSonicBoom/snuhmate?path=packages/snuhmate-harness
 ```

@@ -25,6 +25,18 @@ def get_catalog() -> list[dict[str, Any]]:
     return _catalog
 
 
+def get_public_catalog() -> list[dict[str, Any]]:
+    """Return catalog metadata without prompt internals."""
+    return [
+        {
+            key: value
+            for key, value in template.items()
+            if key not in {"system_prompt", "user_prompt_template"}
+        }
+        for template in get_catalog()
+    ]
+
+
 def get_template(agent_id: str) -> dict[str, Any] | None:
     for t in get_catalog():
         if t.get("id") == agent_id:

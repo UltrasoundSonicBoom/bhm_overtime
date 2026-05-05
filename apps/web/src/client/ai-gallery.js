@@ -1,12 +1,13 @@
 // ai-gallery.js — AI 에이전트 갤러리 (탭 진입 시 dynamic import)
-// 카탈로그: /data/ai-agents.json (정적, 항상 로드)
+// 카탈로그: /data/ai-agents*.json (정적, 항상 로드)
 // 실행: POST /ai/agent/run → Cloudflare Worker (DeepSeek 키 서버사이드 보관)
 
-const CATALOG_URL = '/data/ai-agents.json';
+const CATALOG_URLS = ['/data/ai-agents.json', '/data/ai-agents-product.json'];
 const WORKER_URL = 'https://snuhmate-ai-gateway.kgh1379.workers.dev';
 
 let _catalog = null;
 let _activeAgentId = null;
+let _activeAgent = null;
 
 // ── 초기화 (idempotent) ────────────────────────────────────────
 export async function initAIGallery() {
@@ -24,9 +25,12 @@ export async function initAIGallery() {
 async function _fetchAndRender() {
   const grid = document.getElementById('aiAgentGrid');
   try {
-    const res = await fetch(CATALOG_URL);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    _catalog = await res.json();
+    const catalogs = await Promise.all(CATALOG_URLS.map(async url => {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`${url} HTTP ${res.status}`);
+      return res.json();
+    }));
+    _catalog = _visibleCatalog(catalogs.flat());
     _renderChips(_catalog);
     _renderCards(_catalog);
   } catch (e) {
@@ -91,7 +95,7 @@ function _renderCards(agents) {
 
     // 태그
     const meta = _el('div', 'ai-agent-meta');
-    [agent.category, ...agent.personas].forEach(tag => {
+    [agent.category, ...(agent.personas || [])].forEach(tag => {
       const span = _el('span', 'ai-agent-tag');
       span.textContent = tag;
       meta.appendChild(span);
@@ -123,7 +127,8 @@ function _applyFilter() {
     const textMatch = !query ||
       a.name.toLowerCase().includes(query) ||
       a.category.toLowerCase().includes(query) ||
-      a.personas.some(p => p.toLowerCase().includes(query));
+      (a.personas || []).some(p => p.toLowerCase().includes(query)) ||
+      String(a.framework || '').toLowerCase().includes(query);
     return catMatch && textMatch;
   });
   _renderCards(filtered);
@@ -138,6 +143,7 @@ function _bindRunPanel() {
 
 function _openRunPanel(agent) {
   _activeAgentId = agent.id;
+  _activeAgent = agent;
   const panel = document.getElementById('aiRunPanel');
   const titleEl = document.getElementById('aiRunTitle');
   const inputsWrap = document.getElementById('aiRunInputs');
@@ -199,6 +205,7 @@ function _openRunPanel(agent) {
 function _closeRunPanel() {
   document.getElementById('aiRunPanel').style.display = 'none';
   _activeAgentId = null;
+  _activeAgent = null;
 }
 
 async function _onSubmit(e) {
@@ -221,9 +228,13 @@ async function _onSubmit(e) {
   output.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
   try {
+    const headers = { 'Content-Type': 'application/json' };
+    const adminToken = _activeAgent?.requires_admin ? _adminToken() : '';
+    if (adminToken) headers.Authorization = `Bearer ${adminToken}`;
+
     const res = await fetch(`${WORKER_URL}/ai/agent/run`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ agent_id: _activeAgentId, inputs }),
     });
 
@@ -248,7 +259,7 @@ async function _onSubmit(e) {
         if (!line.startsWith('data: ')) continue;
         const chunk = line.slice(6);
         if (chunk === '[DONE]') break;
-        output.textContent += chunk;
+        output.textContent += _decodeSseChunk(chunk);
       }
     }
   } catch (err) {
@@ -273,4 +284,35 @@ function _el(tag, className) {
   const el = document.createElement(tag);
   if (className) el.className = className;
   return el;
+}
+
+function _visibleCatalog(catalog) {
+  const adminMode = _isAdminMode();
+  return catalog.filter(agent => agent.audience !== 'admin' || adminMode);
+}
+
+function _isAdminMode() {
+  try {
+    return sessionStorage.getItem('snuhmate_admin_mode') === '1' ||
+      localStorage.getItem('snuhmate_admin_mode') === '1' ||
+      new URLSearchParams(window.location.search).get('aiAdmin') === '1';
+  } catch {
+    return false;
+  }
+}
+
+function _adminToken() {
+  try {
+    return sessionStorage.getItem('snuhmate_admin_token') || '';
+  } catch {
+    return '';
+  }
+}
+
+function _decodeSseChunk(chunk) {
+  try {
+    return JSON.parse(chunk);
+  } catch {
+    return chunk;
+  }
 }

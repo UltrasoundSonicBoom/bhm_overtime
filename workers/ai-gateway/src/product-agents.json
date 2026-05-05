@@ -1,0 +1,84 @@
+[
+  {
+    "id": "snuhmate-user-copilot",
+    "name": "SNUHmate 사용자 코파일럿",
+    "icon": "🧭",
+    "personas": ["전직군"],
+    "category": "SNUHmate Agent",
+    "audience": "user",
+    "framework": "cloudflare-agents-sdk-ready-sse",
+    "model": "gemma4-4b",
+    "estimated_seconds": 8,
+    "inputs": [
+      {
+        "id": "question",
+        "label": "질문",
+        "type": "textarea",
+        "placeholder": "예: 이번 달 시간외가 급여명세서와 왜 다른지 확인하고 싶어요.",
+        "required": true
+      },
+      {
+        "id": "current_tab",
+        "label": "현재 탭",
+        "type": "select",
+        "options": ["홈", "개인정보", "시간외", "급여", "휴가", "근무표", "규정", "설정"],
+        "required": false
+      },
+      {
+        "id": "context_summary",
+        "label": "현재 데이터 요약",
+        "type": "textarea",
+        "placeholder": "예: 5월 시간외 18h, 급여명세서 업로드 완료, 연차 잔여 9일",
+        "required": false
+      }
+    ],
+    "system_prompt": "당신은 SNUH Mate 사용자용 코파일럿입니다. 사용자가 제공한 앱 컨텍스트와 질문만 근거로 급여, 시간외, 휴가, 근무표, 규정 탭을 연결해 다음 확인 경로를 제안합니다. 의료 진단·치료 조언, 법률 확정 판단, 개인정보 수집을 하지 마세요. 근거가 부족하면 추측하지 말고 어떤 탭이나 데이터를 확인해야 하는지 말하세요. 한국어로 간결하게 답변하세요.",
+    "user_prompt_template": "사용자 질문:\n{{question}}{{#current_tab}}\n\n현재 탭: {{current_tab}}{{/current_tab}}{{#context_summary}}\n\n현재 데이터 요약:\n{{context_summary}}{{/context_summary}}\n\n아래 형식으로 답변하세요:\n\n## 바로 할 일\n- 사용자가 눌러야 할 탭/버튼 또는 확인할 필드\n\n## 왜 그런지\n- 시간외·급여·휴가·규정 사이의 연결 근거\n\n## 주의\n- 개인정보, 계산 한계, 최종 확인이 필요한 항목",
+    "output_format": "markdown"
+  },
+  {
+    "id": "snuhmate-ops-admin-copilot",
+    "name": "운영 관리자 에이전트",
+    "icon": "🛡️",
+    "personas": ["관리자·파트장", "운영자"],
+    "category": "SNUHmate Agent",
+    "audience": "admin",
+    "requires_admin": true,
+    "framework": "cloudflare-agents-sdk-ready-sse",
+    "model": "gemma4-24b",
+    "estimated_seconds": 12,
+    "inputs": [
+      {
+        "id": "incident_summary",
+        "label": "증상 요약",
+        "type": "textarea",
+        "placeholder": "예: 로그인 후 급여 탭만 Firebase 동기화가 안 되고 콘솔에 403이 보임",
+        "required": true
+      },
+      {
+        "id": "affected_area",
+        "label": "영향 영역",
+        "type": "select",
+        "options": ["Firebase/Firestore", "localStorage sync", "급여/명세서", "규정/데이터", "보안/권한", "UI/탭 연동", "빌드/배포"],
+        "required": true
+      },
+      {
+        "id": "recent_logs",
+        "label": "최근 로그",
+        "type": "textarea",
+        "placeholder": "콘솔 오류, 서버 로그, 실패한 테스트 출력 등을 붙여넣으세요.",
+        "required": false
+      },
+      {
+        "id": "requested_action",
+        "label": "원하는 조치",
+        "type": "select",
+        "options": ["원인 분석", "복구 순서", "보안 점검", "릴리즈 전 체크리스트"],
+        "required": false
+      }
+    ],
+    "system_prompt": "당신은 SNUH Mate 운영·보안 관리자 에이전트입니다. Firebase/Firestore rules, localStorage sync, 급여명세서 lifecycle, 규정/paytable 데이터, CI 보안 게이트, runbook 관점에서 장애를 분류하고 복구 순서를 제시합니다. 파괴적 조치나 데이터 삭제를 권하지 말고, 먼저 백업·재현·최소 검증을 제안하세요. 민감정보가 보이면 마스킹하라고 지시하세요. 한국어로 답변하세요.",
+    "user_prompt_template": "운영 증상:\n{{incident_summary}}\n\n영향 영역: {{affected_area}}{{#recent_logs}}\n\n최근 로그:\n{{recent_logs}}{{/recent_logs}}{{#requested_action}}\n\n요청 조치: {{requested_action}}{{/requested_action}}\n\n아래 형식으로 답변하세요:\n\n## 심각도와 영향 범위\n\n## 가장 가능성 높은 원인\n\n## 즉시 복구 순서\n1. \n2. \n3. \n\n## 확인할 테스트/게이트\n- pnpm verify:data / security:rules / verify:security / test:smoke 중 필요한 항목\n\n## 재발 방지\n- 코드, 룰, 런북, 모니터링 개선안",
+    "output_format": "markdown"
+  }
+]

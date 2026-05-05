@@ -219,6 +219,31 @@ html, body { max-width: 100%; overflow-x: hidden; }
   .ds-ctx-row:last-child { border-bottom: 0; }
   .ds-ctx-row .k { color: var(--text-muted); }
   .ds-ctx-row .v { font-weight: 600; color: var(--text-primary); font-family: 'Space Grotesk', 'Inter', sans-serif; }
+  .ds-ctx-row-spaced { margin-top: 6px; }
+  .ds-ctx-action { cursor: pointer; }
+  .ds-ctx-muted { font-size: 11px; color: var(--text-muted); }
+  .ds-ctx-caption { font-size: 10px; color: var(--text-muted); }
+  .ds-ctx-caption-tight { margin-top: 1px; }
+  .ds-ctx-note { font-size: 11px; line-height: 1.5; color: var(--text-secondary); }
+  .ds-ctx-note-plain { font-size: 11px; line-height: 1.5; }
+  .ds-ctx-link { font-size: 11px; color: var(--accent-indigo); }
+  .ds-ctx-link-xs { font-size: 10px; color: var(--accent-indigo); cursor: pointer; }
+  .ds-ctx-value-indigo { color: var(--accent-indigo) !important; }
+  .ds-ctx-value-emerald { color: var(--accent-emerald) !important; }
+  .ds-ctx-value-amber { color: var(--accent-amber-text) !important; }
+  .ds-ctx-warning { font-size: 10px; color: var(--accent-amber-text); font-weight: 700; margin-top: 3px; }
+  .ds-ctx-card-amber { border-color: var(--accent-amber); background: rgba(253,203,110,0.1); }
+  .ds-ctx-card-danger { border-color: var(--accent-rose); background: rgba(253,121,168,0.05); }
+  .ds-ctx-progress-compact { height: 8px; }
+  .ds-ctx-progress-amber { width: 0%; background: var(--accent-amber); }
+  .ds-ctx-stat-indigo,
+  .ds-ctx-stat-amber {
+    font-size: 18px;
+    font-weight: 800;
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+  }
+  .ds-ctx-stat-indigo { color: var(--accent-indigo); }
+  .ds-ctx-stat-amber { color: var(--accent-amber-text); }
 
   .ds-ring { width: 52px; height: 52px; position: relative; flex-shrink: 0; }
   .ds-ring svg { transform: rotate(-90deg); }

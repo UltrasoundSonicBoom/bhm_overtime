@@ -1,0 +1,80 @@
+[
+  {
+    "id": "snuhmate-user-copilot",
+    "name": "SNUHmate 사용자 코파일럿",
+    "icon": "🧭",
+    "personas": ["전직군"],
+    "category": "SNUHmate Agent",
+    "audience": "user",
+    "framework": "cloudflare-agents-sdk-ready-sse",
+    "model": "gemma4-4b",
+    "estimated_seconds": 8,
+    "inputs": [
+      {
+        "id": "question",
+        "label": "질문",
+        "type": "textarea",
+        "placeholder": "예: 이번 달 시간외가 급여명세서와 왜 다른지 확인하고 싶어요.",
+        "required": true
+      },
+      {
+        "id": "current_tab",
+        "label": "현재 탭",
+        "type": "select",
+        "options": ["홈", "개인정보", "시간외", "급여", "휴가", "근무표", "규정", "설정"],
+        "required": false
+      },
+      {
+        "id": "context_summary",
+        "label": "현재 데이터 요약",
+        "type": "textarea",
+        "placeholder": "예: 5월 시간외 18h, 급여명세서 업로드 완료, 연차 잔여 9일",
+        "required": false
+      }
+    ],
+    "output_format": "markdown"
+  },
+  {
+    "id": "snuhmate-ops-admin-copilot",
+    "name": "운영 관리자 에이전트",
+    "icon": "🛡️",
+    "personas": ["관리자·파트장", "운영자"],
+    "category": "SNUHmate Agent",
+    "audience": "admin",
+    "requires_admin": true,
+    "framework": "cloudflare-agents-sdk-ready-sse",
+    "model": "gemma4-24b",
+    "estimated_seconds": 12,
+    "inputs": [
+      {
+        "id": "incident_summary",
+        "label": "증상 요약",
+        "type": "textarea",
+        "placeholder": "예: 로그인 후 급여 탭만 Firebase 동기화가 안 되고 콘솔에 403이 보임",
+        "required": true
+      },
+      {
+        "id": "affected_area",
+        "label": "영향 영역",
+        "type": "select",
+        "options": ["Firebase/Firestore", "localStorage sync", "급여/명세서", "규정/데이터", "보안/권한", "UI/탭 연동", "빌드/배포"],
+        "required": true
+      },
+      {
+        "id": "recent_logs",
+        "label": "최근 로그",
+        "type": "textarea",
+        "placeholder": "콘솔 오류, 서버 로그, 실패한 테스트 출력 등을 붙여넣으세요.",
+        "required": false
+      },
+      {
+        "id": "requested_action",
+        "label": "원하는 조치",
+        "type": "select",
+        "options": ["원인 분석", "복구 순서", "보안 점검", "릴리즈 전 체크리스트"],
+        "required": false
+      }
+    ],
+    "output_format": "markdown"
+  }
+]

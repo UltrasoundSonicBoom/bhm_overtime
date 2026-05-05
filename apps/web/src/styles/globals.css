@@ -1120,6 +1120,15 @@ html[data-theme="neo"] .logo .logo-main-title {
   gap: 12px;
 }
 
+.form-group-wide {
+  grid-column: 1 / -1;
+}
+
+.input-readonly {
+  background: var(--bg-hover, #f5f5f5);
+  cursor: default;
+}
+
 /* ── Buttons ── */
 .btn {
   padding: 10px 20px;
@@ -5938,6 +5947,12 @@ html[data-theme="neo"] .ret-calc-btn:active { box-shadow: 2px 2px 0px #1a1a1a; t
   border: 1px solid var(--border-glass);
   border-radius: 10px;
 }
+.ret-contact-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 2px;
+}
 .ret-contact-row {
   display: flex;
   gap: 8px;
@@ -5966,6 +5981,89 @@ html[data-theme="neo"] .ret-calc-btn:active { box-shadow: 2px 2px 0px #1a1a1a; t
 .ret-contact-btn.email:hover { background: rgba(99,102,241,0.14); }
 html[data-theme="neo"] .ret-contact-btn { border: 2px solid #1a1a1a; border-radius: 6px; }
 html[data-theme="neo"] .ret-contact-btn.email { background: #e0e7ff; }
+
+.ret-mail-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0,0,0,0.45);
+  align-items: flex-end;
+  justify-content: center;
+}
+.ret-mail-sheet {
+  width: 100%;
+  max-width: 480px;
+  background: var(--bg-card);
+  border-radius: 20px 20px 0 0;
+  padding: 20px 16px 32px;
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.18);
+}
+.ret-mail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.ret-mail-title {
+  font-size: 15px;
+  font-weight: 700;
+}
+.ret-mail-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+.ret-mail-help {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.ret-mail-body {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 12px;
+  line-height: 1.7;
+  padding: 10px;
+  border: 1.5px solid var(--border-glass);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-family: inherit;
+  resize: vertical;
+}
+.ret-mail-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.ret-mail-copy,
+.ret-mail-open {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+}
+.ret-mail-copy {
+  border: 1.5px solid var(--border-glass);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-weight: 600;
+  cursor: pointer;
+}
+.ret-mail-open {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: var(--accent-indigo);
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+}
 
 /* AI 제안 카드 */
 .ret-ai-card {

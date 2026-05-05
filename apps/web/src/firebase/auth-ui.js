@@ -6,7 +6,7 @@
 // non-pushy: URL 파라미터 자동 오픈 금지, ESC 닫기, '취소' = 다이얼로그 닫기.
 
 import {
-  signInWithEmail, signUpWithHospitalEmail, signInWithGoogle,
+  signInWithEmail, signUpWithEmail, signUpWithHospitalEmail, signInWithGoogle,
   signOutUser, onAuthChanged, getCurrentUser, resendVerificationEmail,
 } from './auth-service.js';
 import { validatePassword } from './auth-validators.js';
@@ -106,6 +106,16 @@ function _buildDialog() {
     className: 'btn btn-primary btn-full',
     text: '로그인 / 가입',
   });
+  const signInBtn = _el('button', {
+    type: 'button', id: 'snuhmateSignInBtn',
+    className: 'btn btn-secondary btn-full',
+    text: '로그인',
+  });
+  const signUpBtn = _el('button', {
+    type: 'button', id: 'snuhmateSignUpBtn',
+    className: 'btn btn-outline btn-full',
+    text: '가입',
+  });
   const cancelEmailBtn = _el('button', {
     type: 'button', className: 'auth-dialog-link',
     text: '← 돌아가기',
@@ -114,6 +124,8 @@ function _buildDialog() {
   emailForm.appendChild(emailGroup);
   emailForm.appendChild(passGroup);
   const emailBtnGroup = _el('div', { className: 'auth-dialog-btn-group' });
+  emailBtnGroup.appendChild(signInBtn);
+  emailBtnGroup.appendChild(signUpBtn);
   emailBtnGroup.appendChild(submitBtn);
   emailBtnGroup.appendChild(cancelEmailBtn);
   emailForm.appendChild(emailBtnGroup);
@@ -199,11 +211,51 @@ function _buildDialog() {
   emailTriggerBtn.addEventListener('click', openEmailForm);
   cancelEmailBtn.addEventListener('click', closeEmailForm);
 
-  // 스마트 로그인: signIn 시도 → 없는 계정이면 자동 signUp + 인증 메일
-  submitBtn.addEventListener('click', async () => {
+  const readEmailCredentials = () => {
     const email = emailIn.value.trim();
     const password = passIn.value;
-    if (!email || !password) { setMsg('이메일과 비밀번호를 입력해 주세요.', true); return; }
+    if (!email || !password) {
+      setMsg('이메일과 비밀번호를 입력해 주세요.', true);
+      return null;
+    }
+    return { email, password };
+  };
+
+  signInBtn.addEventListener('click', async () => {
+    const creds = readEmailCredentials();
+    if (!creds) return;
+    setMsg('로그인 중...', false);
+    signInBtn.disabled = true;
+    try {
+      await signInWithEmail(creds.email, creds.password);
+      closeAuthDialog();
+    } catch (e) {
+      setMsg(prettyErr(e?.code || ''), true);
+    } finally {
+      signInBtn.disabled = false;
+    }
+  });
+
+  signUpBtn.addEventListener('click', async () => {
+    const creds = readEmailCredentials();
+    if (!creds) return;
+    setMsg('가입 중...', false);
+    signUpBtn.disabled = true;
+    try {
+      await signUpWithEmail(creds.email, creds.password);
+      setMsg('가입 완료! 이메일 인증 후 로그인해 주세요.', false, true);
+    } catch (e) {
+      setMsg(prettyErr(e?.code || ''), true);
+    } finally {
+      signUpBtn.disabled = false;
+    }
+  });
+
+  // 스마트 로그인: signIn 시도 → 없는 계정이면 자동 signUp + 인증 메일
+  submitBtn.addEventListener('click', async () => {
+    const creds = readEmailCredentials();
+    if (!creds) return;
+    const { email, password } = creds;
 
     setMsg('로그인 중...', false);
     submitBtn.disabled = true;

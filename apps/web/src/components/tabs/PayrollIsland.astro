@@ -362,7 +362,7 @@
         <div id="retAiSuggestion" style="display:none;"></div>
         <p class="ret-notice">⚠️ 실제 금액은 개인별 수당·세금 공제에 따라 달라집니다. 최종 확인은 반드시 인사과에 문의하세요.</p>
         <div class="ret-contact-box">
-          <div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:2px;">📞 인사과 문의</div>
+          <div class="ret-contact-label">📞 인사과 문의</div>
           <div class="ret-contact-row">
             <a class="ret-contact-btn" href="tel:02-2072-2193">
               📞 인사과 전화
@@ -705,19 +705,20 @@
 </div>
 
 <!-- 퇴직금 메일 초안 모달 -->
-<div id="retMailModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.45);align-items:flex-end;justify-content:center;">
-  <div style="width:100%;max-width:480px;background:var(--bg-card);border-radius:20px 20px 0 0;padding:20px 16px 32px;box-shadow:0 -4px 24px rgba(0,0,0,0.18);">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-      <span style="font-size:15px;font-weight:700;">✉️ 인사과 메일 초안</span>
-      <button id="retMailClose" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted);">✕</button>
+<div id="retMailModal" class="ret-mail-modal">
+  <div class="ret-mail-sheet">
+    <div class="ret-mail-header">
+      <span class="ret-mail-title">✉️ 인사과 메일 초안</span>
+      <button id="retMailClose" class="ret-mail-close">✕</button>
     </div>
-    <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">수신: 인사과 (주소 확인 후 입력) · 아래 내용을 복사하거나 메일 앱으로 전송하세요.</div>
-    <textarea id="retMailBody" rows="11" style="width:100%;box-sizing:border-box;font-size:12px;line-height:1.7;padding:10px;border:1.5px solid var(--border-glass);border-radius:8px;background:var(--bg-secondary);color:var(--text-primary);font-family:inherit;resize:vertical;"></textarea>
-    <div style="display:flex;gap:8px;margin-top:10px;">
-      <button id="retMailCopy" style="flex:1;padding:10px;border-radius:8px;border:1.5px solid var(--border-glass);background:var(--bg-secondary);color:var(--text-primary);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">📋 복사</button>
-      <a id="retMailOpen" href="#" style="flex:1;display:flex;align-items:center;justify-content:center;padding:10px;border-radius:8px;border:none;background:#818cf8;color:#fff;font-size:13px;font-weight:700;text-decoration:none;font-family:inherit;">메일 앱으로 열기 →</a>
+    <div class="ret-mail-help">수신: 인사과 (주소 확인 후 입력) · 아래 내용을 복사하거나 메일 앱으로 전송하세요.</div>
+    <textarea id="retMailBody" rows="11" class="ret-mail-body"></textarea>
+    <div class="ret-mail-actions">
+      <button id="retMailCopy" class="ret-mail-copy">📋 복사</button>
+      <a id="retMailOpen" href="#" class="ret-mail-open">메일 앱으로 열기 →</a>
     </div>
   </div>
+</div>
 
   <!-- ── Desktop right-context panel (≥1280px only) ── -->
   <aside class="tab-desktop-context" aria-label="급여 컨텍스트">
@@ -732,17 +733,16 @@
     <div class="ds-ctx-card">
       <div class="ds-ctx-title">📊 6개월 실수령</div>
       <div class="ds-mini-bar" id="payCtxTrend"></div>
-      <div class="ds-ctx-row" style="margin-top:6px;"><span class="k">평균</span><span class="v" id="payCtxAvg">—</span></div>
-      <div class="ds-ctx-row"><span class="k">이번 달</span><span class="v" style="color:var(--accent-indigo);" id="payCtxThis">—</span></div>
+      <div class="ds-ctx-row ds-ctx-row-spaced"><span class="k">평균</span><span class="v" id="payCtxAvg">—</span></div>
+      <div class="ds-ctx-row"><span class="k">이번 달</span><span class="v ds-ctx-value-indigo" id="payCtxThis">—</span></div>
     </div>
-    <div class="ds-ctx-card" id="payCtxInsight" style="display:none; border-color:var(--accent-rose); background:rgba(253,121,168,0.05);">
+    <div class="ds-ctx-card ds-ctx-card-danger" id="payCtxInsight" style="display:none;">
       <div class="ds-ctx-title">🤖 AI 인사이트</div>
-      <div style="font-size:11px;line-height:1.5;" id="payCtxInsightMsg">—</div>
+      <div class="ds-ctx-note-plain" id="payCtxInsightMsg">—</div>
     </div>
     <div class="ds-ctx-card">
       <div class="ds-ctx-title">⚡ 빠른 액션</div>
-      <div class="ds-ctx-row" style="cursor:pointer;"><span class="k">📤</span><span class="v">PDF 업로드</span></div>
-      <div class="ds-ctx-row" style="cursor:pointer;" onclick="if(window.switchTab)switchTab('overtime')"><span class="k">🧮</span><span class="v">시간외 시뮬</span></div>
+      <div class="ds-ctx-row ds-ctx-action" onclick="if(window.retGoToPayslipUpload)retGoToPayslipUpload();document.getElementById('payPayslipHeader')?.scrollIntoView({behavior:'smooth',block:'nearest'});"><span class="k">📤</span><span class="v">PDF 업로드</span></div>
+      <div class="ds-ctx-row ds-ctx-action" onclick="if(window.switchTab)switchTab('overtime')"><span class="k">🧮</span><span class="v">시간외 시뮬</span></div>
     </div>
   </aside>
-</div>

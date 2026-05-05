@@ -51,5 +51,5 @@ description: "병원 처치·수술·투약·응급 현장에서 AI가 실시간
 ## 설치 (SNUHmate 하네스 전체)
 
 ```bash
-/plugin install github:UltrasoundSonicBoom/bhm_overtime?path=packages/snuhmate-harness
+/plugin install github:UltrasoundSonicBoom/snuhmate?path=packages/snuhmate-harness
 ```

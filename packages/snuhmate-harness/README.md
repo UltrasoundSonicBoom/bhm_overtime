@@ -5,7 +5,7 @@ SNUHmate 전용 Claude Code 에이전트 하네스. SNUH 병원 직원의 초과
 ## 설치
 
 ```bash
-/plugin install github:UltrasoundSonicBoom/bhm_overtime?path=packages/snuhmate-harness
+/plugin install github:UltrasoundSonicBoom/snuhmate?path=packages/snuhmate-harness
 ```
 
 ## 포함 스킬
@@ -80,6 +80,6 @@ packages/snuhmate-harness/
 
 ## 관련 링크
 
-- SNUHmate 프로젝트: [github.com/UltrasoundSonicBoom/bhm_overtime](https://github.com/UltrasoundSonicBoom/bhm_overtime)
+- SNUHmate 프로젝트: [github.com/UltrasoundSonicBoom/snuhmate](https://github.com/UltrasoundSonicBoom/snuhmate)
 - 하네스 문서: `docs/harness/` (b-catalog.md, persona-matrix.md)
 - 에이전트 정의: `.claude/agents/` (smate-payroll-domain, smate-test-impact, smate-pii-masker, smate-ds-guard, smate-pr-reviewer, smate-ship-it)

@@ -1459,7 +1459,11 @@ function mdToHtml(md) {
     if (line === '') { i++; continue; }
     // blockquote — skip (단협 원문의 부속 합의서 등 인용문은 표시 안 함)
     if (line.startsWith('> ') || line === '>') {
-      while (i < lines.length && (lines[i].startsWith('> ') || lines[i] === '>')) { i++; }
+      while (i < lines.length) {
+        var quoteLine = lines[i].replace(/\s+$/, '');
+        if (!(quoteLine.startsWith('> ') || quoteLine === '>')) break;
+        i++;
+      }
       continue;
     }
     // 표 (| col1 | col2 |) — 다음 줄이 |---|---| 패턴이면 표
