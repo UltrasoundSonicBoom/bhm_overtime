@@ -32,7 +32,7 @@
     "web:build": "pnpm --filter @snuhmate/web build",
     "web:check": "pnpm --filter @snuhmate/web check",
     "backend:dev": "cd backend && poetry run uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload",
-    "backend:test": "cd backend && poetry run pytest",
+    "backend:test": "node scripts/run-backend-tests.cjs",
     "ocr:dev": "cd services/surya-ocr && python app.py --host 127.0.0.1 --port 8030",
     "ocr:test": "cd services/surya-ocr && python -m pytest tests",
     "turbo:build": "turbo run build"

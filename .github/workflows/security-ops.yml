@@ -5,7 +5,7 @@ on:
   push:
     branches:
       - main
-      - codex/backend
+      - 'codex/**'
   workflow_dispatch:
 
 concurrency:
@@ -40,8 +40,20 @@ jobs:
           distribution: temurin
           java-version: '21'
 
+      - name: Setup Python for backend tests
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip poetry
+          poetry install --no-interaction --no-root
 
       - name: Astro check
         run: pnpm check
@@ -60,6 +72,9 @@ jobs:
 
       - name: Security contract and Firestore rules
         run: pnpm verify:security
+
+      - name: Backend security tests
+        run: pnpm backend:test
 
       - name: Install Playwright browser
         run: pnpm exec playwright install --with-deps chromium

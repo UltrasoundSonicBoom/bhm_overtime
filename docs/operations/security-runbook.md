@@ -1,7 +1,7 @@
 # SNUH Mate Security Operations Runbook
 
 > Scope: Firebase Auth/Firestore sync, browser localStorage lifecycle, local FastAPI parser backend, corpus/review operations, telemetry/log hygiene, data drift checks, incident severity, and rollback.
-> Last repo check: 2026-05-02 on `codex/backend`.
+> Last repo check: 2026-05-06 on `codex/surya-payroll-schedule-ocr`.
 
 ## 1. Operator Quick Start
 
@@ -21,9 +21,11 @@ Security-critical gates currently exposed by `package.json`:
 | `pnpm security:rules` | Firestore emulator rules test from `tests/integration/firebase/security-rules.test.js`. |
 | `pnpm verify:security` | Firebase/security integration tests plus Firestore rules. |
 | `pnpm security:ops` | App check/build, data drift gates, unit/integration tests, security verification, and Playwright smoke. |
-| `pnpm backend:test` | FastAPI backend tests, including admin token and corpus behavior. |
+| `pnpm backend:test` | FastAPI backend tests, including admin token and corpus behavior. Uses Poetry when available, otherwise falls back to the current Python environment. |
 
 If one gate fails, stop the deploy. Do not bypass by weakening rules, deleting tests, or switching to live production data.
+
+The Security Operations Gate workflow runs on pull requests, `main`, and `codex/**` pushes so feature branches get the same security checks before landing.
 
 ## 2. Runtime Security Map
 
