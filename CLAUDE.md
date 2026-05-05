@@ -7,16 +7,31 @@
 3. 아직 해결 안 된 에러 메시지
 4. 하드 제약: "마이그레이션 파일 수정 금지", "게스트 데이터 Firestore 저장 금지"
 
-## 브라우저 스모크 (자동화)
+## 브라우저 스모크 (자동화) — **자체 테스트·수정·재테스트 사이클 필수**
 
-리팩토링·탭 분할·스크립트 변경 후 수동 확인 요청 대신 **Playwright MCP로 직접 실행**한다.
+리팩토링·탭 분할·스크립트 변경·UI 수정 후 **사용자에게 "확인해 주세요" 라고 떠넘기지 말고 직접 Playwright MCP 로 검증·수정·재검증 사이클**을 돌린다.
+
+### 자체 이터레이션 규칙 (HARD RULE)
+UI/CSS/Astro/HTML 변경 후 사용자에게 "완료" 보고하기 전에 **반드시 다음을 직접 수행**:
+
+1. `pnpm --filter @snuhmate/web dev` 실행 (이미 실행 중이면 스킵)
+2. `browser_resize` 로 변경 영향 받는 폭들에서 직접 검증:
+   - 모바일: 360 / 600
+   - 태블릿: 768 / 900
+   - 데스크탑: 1024 / 1280 / 1440 / 1600 / 1920
+   - **Playwright MCP DPR 보정**: 현재 환경 DPR=0.75 → CSS 뷰포트 = device px / 0.75. 즉 CSS 1024 px 검증하려면 device 768 로 resize. 매번 `browser_evaluate` 로 `window.innerWidth` 와 `matchMedia('(min-width:1024px)').matches` 를 같이 확인.
+3. 각 폭에서 `browser_take_screenshot` + `browser_console_messages level=error` (0건) 확인
+4. **결함 발견 시**: 추측하지 말고 `browser_evaluate` 로 `getComputedStyle`, `offsetWidth`, `getBoundingClientRect` 같은 측정값을 가져와 **근본 원인** 진단 → 수정 → 재검증
+5. 모든 검증 폭에서 통과할 때까지 사이클 반복
+6. **사이클 횟수 무제한**. "한 번 돌리고 끝" 금지. 사용자에게 보고는 시각적·수치적 검증이 모두 통과한 후에만.
+7. 사용자가 "안된다" 라고 하면 → 추측 변명 금지. 즉시 위 사이클 재개.
 
 ### 실행 규약
 1. 스모크 필요 시 사용자에게 "확인 부탁합니다" 대신 `browser_navigate` → `browser_snapshot`/`browser_take_screenshot` 로 시작
 2. 로컬 HTTP 서버가 필요하면 Astro dev server로 실행 후 테스트 (`pnpm --filter @snuhmate/web dev`)
 3. 각 탭 전환 후 `browser_console_messages` 로 에러 0건 확인
 4. 완료 후 `browser_close`로 브라우저 종료
-5. 스크린샷은 /tmp 에 저장 → 필요 시 사용자에게 경로 제공
+5. 스크린샷은 `/tmp` 또는 작업 디렉터리에 저장 → 시각적 결함 발견 시 다음 이터레이션의 reference 로 활용
 
 ### 필수 체크리스트 (Plan A/B/C 공통)
 - 홈 탭 요약 카드
@@ -140,3 +155,27 @@ Key routing rules:
 |------|----------|------|------|
 | 2026-05-01 | 초기 구성 완료 | 전체 (6 agents, 6 skills) | SNUHmate 도메인 전용 하네스 |
 | 2026-05-04 | CLAUDE.md 하네스 포인터 등록 | CLAUDE.md | harness 스킬 규격 준수 |
+
+## gstack (REQUIRED — global install)
+
+**Before doing ANY work, verify gstack is installed:**
+
+```bash
+test -d ~/.claude/skills/gstack/bin && echo "GSTACK_OK" || echo "GSTACK_MISSING"
+```
+
+If GSTACK_MISSING: STOP. Do not proceed. Tell the user:
+
+> gstack is required for all AI-assisted work in this repo.
+> Install it:
+> ```bash
+> git clone --depth 1 https://github.com/garrytan/gstack.git ~/.claude/skills/gstack
+> cd ~/.claude/skills/gstack && ./setup --team
+> ```
+> Then restart your AI coding tool.
+
+Do not skip skills, ignore gstack errors, or work around missing gstack.
+
+Using gstack skills: After install, skills like /qa, /ship, /review, /investigate,
+and /browse are available. Use /browse for all web browsing.
+Use ~/.claude/skills/gstack/... for gstack file paths (the global path).
