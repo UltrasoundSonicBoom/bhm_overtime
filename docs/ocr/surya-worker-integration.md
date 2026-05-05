@@ -36,6 +36,15 @@ The existing FastAPI backend exposes:
 
 Set `SNUHMATE_OCR_SERVICE_URL` to point the backend at the GPU worker. The local default is `http://127.0.0.1:8030`.
 
+## Web Contract
+
+The web app uses `apps/web/src/client/ocr-api.js`.
+
+- Payroll uploads call server OCR first from `SALARY_PARSER.parseFile()`, then fall back to the existing browser parser.
+- Work schedule uploads call server OCR first from `parseScheduleFile()`, then fall back to the existing Excel/CSV/Vision path.
+- Local dev probes `http://127.0.0.1:8051`, `http://localhost:8001`, and `http://127.0.0.1:8001`.
+- Production should set `PUBLIC_SNUHMATE_BACKEND_URL` or `PUBLIC_SNUHMATE_OCR_BACKEND_URL`.
+
 ## Worker Contract
 
 The worker exposes:

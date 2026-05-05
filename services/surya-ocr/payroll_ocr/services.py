@@ -90,6 +90,7 @@ class PayrollParseService:
                     "validation": statement.get("validation"),
                     "totals": statement.get("totals"),
                     "employee": statement.get("employee"),
+                    "statement": statement,
                     "supplemental": statement.get("supplemental", {}),
                     "files": parse_result,
                     "storage": save_result,

@@ -4,6 +4,8 @@
 
 window.SNUHMATE_CONFIG = {
   env: 'production',
+  backendUrl: import.meta.env.PUBLIC_SNUHMATE_BACKEND_URL || '',
+  ocrBackendUrl: import.meta.env.PUBLIC_SNUHMATE_OCR_BACKEND_URL || '',
 
   // Sentry 텔레메트리 (선택)
   // 발급 방법: https://sentry.io 무료 계정 → New Project → Browser JavaScript → DSN 복사

@@ -18,6 +18,7 @@ import { parseCsvFile } from './csv-parser.js';
 import { parseIcsFile, parseIcsText, fetchAndParseIcsUrl } from './ical-parser.js';
 import { pdfToBase64Image, imageToBase64 } from './pdf-utils.js';
 import { routeVision } from './ai-providers/vision-router.js';
+import { parseWithServerOcr, toClientDutyGrid } from '../ocr-api.js';
 import {
   buildCacheKey,
   getCache,
@@ -79,6 +80,27 @@ export async function parseScheduleFile(file, opts = {}) {
   let grid = null;
   let provider = 'none';
   let errorMsg = '';
+
+  try {
+    const serverEnvelope = await parseWithServerOcr(file, {
+      docType: 'work_schedule',
+      uid: window.__firebaseUid || 'anonymous',
+      departmentId: opts.deptHint || '',
+    });
+    const serverGrid = toClientDutyGrid(serverEnvelope, opts);
+    if (serverGrid) {
+      await putCache(sha256, serverGrid, cacheKey.normalizedTitle);
+      return {
+        grid: serverGrid,
+        fromCache: false,
+        provider: 'server-surya',
+        tier: accuracyTier(serverGrid.confidence),
+        sha256,
+      };
+    }
+  } catch (e) {
+    console.warn('[schedule-parser] server OCR unavailable; falling back to browser parser', e?.message);
+  }
 
   if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls') || fileType.includes('spreadsheet')) {
     const raw = await parseExcelFile(file);

@@ -11,6 +11,7 @@ import { PROFILE, PROFILE_FIELDS } from '@snuhmate/profile/profile';
 import { CALC } from '@snuhmate/calculators';
 import { DATA } from '@snuhmate/data';
 import { _loadWorkHistory, _saveWorkHistory, renderWorkHistory, _showWorkHistoryUpdateBanner } from '@snuhmate/profile/work-history';
+import { parseWithServerOcr, toClientPayslip } from './ocr-api.js';
 
 export const SALARY_PARSER = (() => {
   'use strict';
@@ -1077,6 +1078,21 @@ export const SALARY_PARSER = (() => {
 
   async function parseFile(file, onProgress) {
     const ext = file.name.split('.').pop().toLowerCase();
+    try {
+      const serverEnvelope = await parseWithServerOcr(file, {
+        docType: 'payroll',
+        uid: window.__firebaseUid || 'anonymous',
+      });
+      const serverParsed = toClientPayslip(serverEnvelope);
+      if (serverParsed && (serverParsed.salaryItems.length || serverParsed.deductionItems.length)) {
+        serverParsed.sourceFile = file.name;
+        debug('[PayslipParser] server OCR used', serverParsed._serverOcr);
+        return serverParsed;
+      }
+    } catch (e) {
+      console.warn('[PayslipParser] server OCR unavailable; falling back to browser parser', e?.message);
+    }
+
     let result;
     if (ext === 'pdf') result = await parsePDF(file);
     else if (ext === 'xlsx' || ext === 'xls') result = await parseExcel(file);
